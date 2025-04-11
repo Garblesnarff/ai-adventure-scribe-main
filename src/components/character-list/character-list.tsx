@@ -7,8 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Character } from '@/types/character';
 import { races } from '@/data/raceOptions';
 import { classes } from '@/data/classOptions';
-import CharacterCard from './CharacterCard';
-import EmptyState from './EmptyState';
+import CharacterCard from './character-card';
+import EmptyState from './empty-state';
 
 /**
  * CharacterList component displays all characters for the current user

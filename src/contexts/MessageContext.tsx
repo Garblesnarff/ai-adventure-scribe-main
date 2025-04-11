@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { ChatMessage } from '@/types/game';
-import { useMessages } from '@/hooks/useMessages';
-import { useMessageQueue } from '@/hooks/useMessageQueue';
+import { useMessages } from '@/hooks/use-messages';
+import { useMessageQueue } from '@/hooks/use-message-queue';
 
 interface MessageContextType {
   messages: ChatMessage[];

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import CampaignList from '@/components/campaign-list/CampaignList';
+import CampaignList from '@/components/campaign-list/campaign-list';
 
 /**
  * Index page component serving as the landing page

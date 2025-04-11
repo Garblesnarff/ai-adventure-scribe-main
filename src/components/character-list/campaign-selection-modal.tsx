@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import CampaignCard from './campaign-card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -85,31 +86,23 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-lg w-full max-h-[80vh] p-6 rounded-lg shadow-lg bg-white overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Choose a Campaign</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="py-2">
           {isLoading ? (
             <p>Loading campaigns...</p>
           ) : campaigns?.length ? (
-            campaigns.map((campaign) => (
-              <Button
-                key={campaign.id}
-                onClick={() => handleStartSession(campaign.id)}
-                className="justify-start h-auto py-4"
-                variant="outline"
-              >
-                <div className="text-left">
-                  <h3 className="font-semibold">{campaign.name}</h3>
-                  {campaign.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {campaign.description}
-                    </p>
-                  )}
-                </div>
-              </Button>
-            ))
+            <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto">
+              {campaigns.map((campaign) => (
+                <CampaignCard
+                  key={campaign.id}
+                  campaign={campaign}
+                  onSelect={handleStartSession}
+                />
+              ))}
+            </div>
           ) : (
             <p className="text-center text-muted-foreground">
               No available campaigns found

@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
-import { useAIResponse } from '@/hooks/useAIResponse';
+import { useAIResponse } from '@/hooks/use-ai-response';
 import { useSessionValidator } from '../session/SessionValidator';
 
 interface MessageHandlerProps {

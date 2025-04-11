@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Index from './pages/Index';
-import CharacterSheet from './components/character-sheet/CharacterSheet';
-import CharacterList from './components/character-list/CharacterList';
-import CharacterWizard from './components/character-creation/CharacterWizard';
-import CampaignWizard from './components/campaign-creation/CampaignWizard';
+import CharacterSheet from './components/character-sheet/character-sheet';
+import CharacterList from './components/character-list/character-list';
+import CharacterWizard from './components/character-creation/character-wizard';
+import CampaignWizard from './components/campaign-creation/campaign-wizard';
 import CampaignView from './components/campaign-view/CampaignView';
-import Navigation from './components/layout/Navigation';
-import Breadcrumbs from './components/layout/Breadcrumbs';
+import Navigation from './components/layout/navigation';
+import Breadcrumbs from './components/layout/breadcrumbs';
 
 /**
  * Create a new QueryClient instance

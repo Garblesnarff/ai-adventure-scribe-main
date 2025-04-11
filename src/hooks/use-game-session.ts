@@ -85,20 +85,30 @@ export const useGameSession = () => {
    * @returns {Promise<string>} The generated summary
    */
   const generateSessionSummary = async (sessionId: string): Promise<string> => {
-    const { data: messages } = await supabase
-      .from('dialogue_history')
-      .select('message, speaker_type, context')
-      .eq('session_id', sessionId)
-      .order('timestamp', { ascending: true });
+    try {
+      const { data: messages, error } = await supabase
+        .from('dialogue_history')
+        .select('message, speaker_type, context')
+        .eq('session_id', sessionId)
+        .order('timestamp', { ascending: true });
 
-    if (!messages?.length) return "No activity recorded in this session";
+      if (error) {
+        console.error('Error fetching dialogue history:', error);
+        return "No activity recorded in this session";
+      }
 
-    // Simple summary generation - can be enhanced with AI later
-    const messageCount = messages.length;
-    const playerActions = messages.filter(m => m.speaker_type === 'player').length;
-    const dmResponses = messages.filter(m => m.speaker_type === 'dm').length;
+      if (!messages?.length) return "No activity recorded in this session";
 
-    return `Session completed with ${messageCount} total interactions: ${playerActions} player actions and ${dmResponses} DM responses.`;
+      // Simple summary generation - can be enhanced with AI later
+      const messageCount = messages.length;
+      const playerActions = messages.filter(m => m.speaker_type === 'player').length;
+      const dmResponses = messages.filter(m => m.speaker_type === 'dm').length;
+
+      return `Session completed with ${messageCount} total interactions: ${playerActions} player actions and ${dmResponses} DM responses.`;
+    } catch (err) {
+      console.error('Error generating session summary:', err);
+      return "No activity recorded in this session";
+    }
   };
 
   /**

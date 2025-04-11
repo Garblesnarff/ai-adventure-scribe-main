@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { useMemories } from '@/hooks/useMemories';
+import { useMemories } from '@/hooks/use-memories';
 
 interface MemoryContextType {
   memories: any[];

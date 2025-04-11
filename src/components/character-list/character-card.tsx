@@ -6,7 +6,7 @@ import { ArrowRight, Play, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import CampaignSelectionModal from './CampaignSelectionModal';
+import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
 
 /**

@@ -29,7 +29,7 @@ import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
  // ============================
  // Messaging services
  // ============================
-import { AgentMessagingService } from './messaging/AgentMessagingService';
+import { AgentMessagingService } from './messaging/agent-messaging-service';
 
  // ============================
  // CrewAI communication types

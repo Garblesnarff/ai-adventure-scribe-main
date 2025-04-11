@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { GameInterface } from '@/components/GameInterface';
+import { GameInterface } from '@/components/game-interface';
 import { Button } from '@/components/ui/button';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';

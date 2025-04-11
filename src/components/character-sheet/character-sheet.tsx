@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { useCharacterData } from '@/hooks/useCharacterData';
+import { useCharacterData } from '@/hooks/use-character-data';
 import BasicInfo from './sections/BasicInfo';
 import CombatStats from './sections/CombatStats';
 import AbilityScores from './sections/AbilityScores';

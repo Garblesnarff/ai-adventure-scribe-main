@@ -28,7 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
  // ============================
  // Project hooks
  // ============================
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
  // ============================
  // Feature components

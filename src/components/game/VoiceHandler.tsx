@@ -2,7 +2,7 @@ import React from 'react';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { AudioControls } from './AudioControls';
 import { AudioPlayer } from './audio/AudioPlayer';
-import { useAudioState } from '@/hooks/useAudioState';
+import { useAudioState } from '@/hooks/use-audio-state';
 
 export const VoiceHandler: React.FC = () => {
   const { messages } = useMessageContext();
