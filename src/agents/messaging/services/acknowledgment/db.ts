@@ -1,5 +1,28 @@
+/**
+ * Message Acknowledgment DB Utilities
+ * 
+ * This file provides utility functions for interacting with the
+ * `message_acknowledgments` table in the Supabase database. These functions
+ * handle the creation, updating, and retrieval of message acknowledgment records.
+ * 
+ * Key Functions:
+ * - createAcknowledgment: Creates a new acknowledgment record for a message.
+ * - updateAcknowledgment: Updates the status and details of an existing acknowledgment.
+ * - getAcknowledgmentStatus: Retrieves the current status of an acknowledgment.
+ * 
+ * Dependencies:
+ * - Supabase client (`@/integrations/supabase/client`)
+ * - Acknowledgment types (`./types.ts`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
+
+// Project Types
 import { AcknowledgmentData, AcknowledgmentStatus } from './types';
+
 
 export async function createAcknowledgment(messageId: string): Promise<void> {
   try {

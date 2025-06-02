@@ -1,4 +1,23 @@
-import { RuleRequirement } from '@/types/agent';
+/**
+ * Rule Requirement Checker Utility
+ * 
+ * This file defines the RuleRequirementChecker class, responsible for checking
+ * various types of requirements for game rules or actions. It evaluates
+ * prerequisites, proficiencies, spell slots, action economy, and material
+ * components based on a given context.
+ * 
+ * Main Class:
+ * - RuleRequirementChecker: Checks if rule requirements are met.
+ * 
+ * Key Dependencies:
+ * - RuleRequirement type (likely from `@/types/agent` or a more specific rule type definition).
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Types
+import { RuleRequirement } from '@/types/agent'; // Assuming RuleRequirement is a defined type
+
 
 export class RuleRequirementChecker {
   async check(requirement: RuleRequirement): Promise<boolean> {

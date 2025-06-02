@@ -19,35 +19,28 @@
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // External integrations
- // ============================
+// ============================
+// External Integrations
+// ============================
 import { supabase } from '@/integrations/supabase/client';
 
- // ============================
- // Project types
- // ============================
-import { DMResponse, CampaignContext } from '@/types/dm';
+// ============================
+// Project Services & Generators (assuming kebab-case filenames)
+// ============================
+import { CampaignContextLoader } from './campaign/campaign-context-loader';
+import { CharacterInteractionGenerator } from './response/character-interaction-generator';
+import { EnvironmentGenerator } from './response/environment-generator';
+import { MechanicsGenerator } from './response/mechanics-generator';
+import { MemoryManager } from './memory/memory-manager';
+import { OpportunityGenerator } from './response/opportunity-generator';
+
+// ============================
+// Project Types
+// ============================
 import { Memory } from '@/components/game/memory/types';
-import { Character, CharacterRace, CharacterClass, CharacterBackground } from '@/types/character';
+import { Character, CharacterBackground, CharacterClass, CharacterRace } from '@/types/character';
+import { CampaignContext, DMResponse } from '@/types/dm';
 
- // ============================
- // Campaign context loading
- // ============================
-import { CampaignContextLoader } from './campaign/CampaignContextLoader';
-
- // ============================
- // Memory management
- // ============================
-import { MemoryManager } from './memory/MemoryManager';
-
- // ============================
- // Response generators
- // ============================
-import { EnvironmentGenerator } from './response/EnvironmentGenerator';
-import { CharacterInteractionGenerator } from './response/CharacterInteractionGenerator';
-import { OpportunityGenerator } from './response/OpportunityGenerator';
-import { MechanicsGenerator } from './response/MechanicsGenerator';
 
 interface ConversationState {
   currentNPC: string | null;

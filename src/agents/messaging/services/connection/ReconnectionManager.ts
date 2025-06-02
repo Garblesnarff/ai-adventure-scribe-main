@@ -1,5 +1,27 @@
+/**
+ * Reconnection Manager
+ * 
+ * This file defines the ReconnectionManager class, responsible for handling
+ * the logic of attempting to reconnect to a service after a connection loss.
+ * It implements an exponential backoff strategy with jitter to schedule
+ * reconnection attempts and emits events related to these attempts.
+ * 
+ * Main Class:
+ * - ReconnectionManager: Manages reconnection attempts with backoff.
+ * 
+ * Key Dependencies:
+ * - EventEmitter (./event-emitter.ts)
+ * - ReconnectionConfig and ReconnectionState types (`./types.ts`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Utilities (assuming kebab-case for EventEmitter)
+import { EventEmitter } from './event-emitter';
+
+// Project Types
 import { ReconnectionConfig, ReconnectionState } from './types';
-import { EventEmitter } from './EventEmitter';
+
 
 export class ReconnectionManager {
   private state: ReconnectionState = {

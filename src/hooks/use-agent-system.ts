@@ -14,7 +14,7 @@
  */
 
 import { useState } from 'react';
-import { DungeonMasterAgent } from '@/agents/DungeonMasterAgent';
+import { DungeonMasterAgent } from '@/agents/dungeon-master-agent';
 import { AgentTask, AgentResult } from '@/agents/types';
 import { useToast } from '@/components/ui/use-toast';
 

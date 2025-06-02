@@ -1,8 +1,39 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Character, transformCharacterForStorage } from '@/types/character';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+/**
+ * Character Context
+ * 
+ * This file defines the CharacterContext for managing global character data
+ * within the application. It includes the context provider, a reducer for state
+ * updates (e.g., during character creation or when loading a character), and
+ * a custom hook for accessing the character state and dispatch function.
+ * 
+ * Main Components:
+ * - CharacterContext: The React context object.
+ * - CharacterProvider: The provider component.
+ * - useCharacter: Custom hook to consume the context.
+ * 
+ * Key State:
+ * - character: Object containing details of the currently active/selected character.
+ * - isDirty, currentStep, isLoading, error: UI state related to character management.
+ * 
+ * Dependencies:
+ * - React
+ * - Supabase client (`@/integrations/supabase/client`) - (Note: supabase client is imported but not directly used in this file's current code, might be for future use or removed if unused)
+ * - Character types (`@/types/character`)
+ * - useToast hook (`@/components/ui/use-toast`)
+ * 
+ * @author AI Dungeon Master Team
+ */
 
+// SDK Imports
+import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+
+// Project Modules & Hooks
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client'; // Imported but not directly used in the provided snippet
+import { Character, transformCharacterForStorage } from '@/types/character';
+
+
+// Interfaces and Types (defined in-file, specific to this context)
 /**
  * Interface defining the shape of the character state
  * Includes the character data, UI state, and error handling

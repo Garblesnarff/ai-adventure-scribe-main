@@ -1,4 +1,22 @@
+/**
+ * Queue Validator
+ * 
+ * This file defines the QueueValidator class, which provides static methods
+ * for validating individual messages and the integrity and order of the
+ * message queue itself.
+ * 
+ * Main Class:
+ * - QueueValidator: Contains static validation methods for the message queue.
+ * 
+ * Key Dependencies:
+ * - QueuedMessage type from `../../types`.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Types
 import { QueuedMessage } from '../../types';
+
 
 export class QueueValidator {
   public static validateMessage(message: QueuedMessage): boolean {

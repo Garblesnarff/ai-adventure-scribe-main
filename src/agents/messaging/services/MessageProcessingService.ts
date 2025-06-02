@@ -1,8 +1,34 @@
-import { QueuedMessage, MessageType, MessagePriority } from '../types';
-import { MessageQueueService } from './MessageQueueService';
-import { MessageDeliveryService } from './MessageDeliveryService';
-import { MessagePersistenceService } from './storage/MessagePersistenceService';
-import { useToast } from '@/hooks/use-toast';
+/**
+ * Message Processing Service
+ * 
+ * This file defines the MessageProcessingService class, a singleton service
+ * responsible for processing individual messages from the message queue.
+ * It coordinates message delivery, persistence updates, and retry logic.
+ * 
+ * Main Class:
+ * - MessageProcessingService: Processes messages for delivery.
+ * 
+ * Key Dependencies:
+ * - MessageQueueService (./message-queue-service.ts)
+ * - MessageDeliveryService (./message-delivery-service.ts)
+ * - MessagePersistenceService (./storage/message-persistence-service.ts)
+ * - useToast hook (`@/hooks/use-toast`) - (Note: useToast usage in a class is unconventional)
+ * - Various message types from '../types'.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services (assuming kebab-case filenames)
+import { MessageDeliveryService } from './message-delivery-service';
+import { MessagePersistenceService } from './storage/message-persistence-service';
+import { MessageQueueService } from './message-queue-service';
+
+// Project Hooks
+import { useToast } from '@/hooks/use-toast'; // Note: useToast usage in a class is unconventional.
+
+// Project Types
+import { MessagePriority, MessageType, QueuedMessage } from '../types';
+
 
 export class MessageProcessingService {
   private static instance: MessageProcessingService;

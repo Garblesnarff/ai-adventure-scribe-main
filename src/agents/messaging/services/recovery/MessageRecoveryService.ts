@@ -1,6 +1,30 @@
-import { IndexedDBService } from '../storage/IndexedDBService';
-import { MessageQueueService } from '../MessageQueueService';
+/**
+ * Message Recovery Service
+ * 
+ * This file defines the MessageRecoveryService class, a singleton service
+ * responsible for recovering pending messages from persistent storage (IndexedDB)
+ * and re-enqueuing them into the MessageQueueService. This is crucial for ensuring
+ * message durability across application sessions or after unexpected closures.
+ * It also provides a method to validate queue integrity against stored state.
+ * 
+ * Main Class:
+ * - MessageRecoveryService: Handles recovery of pending messages.
+ * 
+ * Key Dependencies:
+ * - IndexedDBService (`../storage/indexed-db-service.ts`)
+ * - MessageQueueService (`../message-queue-service.ts`)
+ * - QueuedMessage type from `../../types`.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services (assuming kebab-case filenames)
+import { IndexedDBService } from '../storage/indexed-db-service';
+import { MessageQueueService } from '../message-queue-service';
+
+// Project Types
 import { QueuedMessage } from '../../types';
+
 
 export class MessageRecoveryService {
   private static instance: MessageRecoveryService;
