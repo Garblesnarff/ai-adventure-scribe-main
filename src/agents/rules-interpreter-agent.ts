@@ -16,37 +16,23 @@
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // Project types and interfaces
- // ============================
+// ============================
+// Project Imports
+// ============================
+
+// Agent Core & Types
 import { Agent, AgentResult, AgentTask } from './types';
-
- // ============================
- // Utilities
- // ============================
-import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
-
- // ============================
- // Messaging services
- // ============================
-import { AgentMessagingService } from './messaging/agent-messaging-service';
-
- // ============================
- // CrewAI communication types
- // ============================
-import { MessageType, MessagePriority } from './crewai/types/communication';
-
- // ============================
- // Error handling
- // ============================
-import { ErrorHandlingService } from './error/services/ErrorHandlingService';
 import { ErrorCategory, ErrorSeverity } from './error/types';
+import { MessagePriority, MessageType } from './crewai/types/communication';
 
- // ============================
- // Validation services
- // ============================
-import { ValidationService } from './rules/services/ValidationService';
-import { ValidationResultsProcessor } from './rules/services/ValidationResultsProcessor';
+// Services
+import { AgentMessagingService } from './messaging/agent-messaging-service';
+import { ErrorHandlingService } from './error/services/error-handling-service'; // Assuming kebab-case
+import { ValidationResultsProcessor } from './rules/services/validation-results-processor'; // Assuming kebab-case
+import { ValidationService } from './rules/services/validation-service'; // Assuming kebab-case
+
+// Utilities
+import { callEdgeFunction } from '@/utils/edge-function-handler'; // Assuming kebab-case for the util file itself
 
 export class RulesInterpreterAgent implements Agent {
   id: string;

@@ -1,10 +1,43 @@
+/**
+ * useCharacterData Hook
+ * 
+ * This hook is responsible for fetching and managing detailed character data
+ * from Supabase, including basic info, stats, and equipment. It also handles
+ * validation of the character ID and navigation in case of errors or if the
+ * character is not found.
+ * 
+ * Main Hook:
+ * - useCharacterData: Fetches and provides character data.
+ * 
+ * Helper Functions (internal):
+ * - transformAbilityScores: Formats raw stat data.
+ * - transformCharacterData: Consolidates various DB records into a Character object.
+ * 
+ * Key Dependencies:
+ * - React (useState, useEffect)
+ * - React Router (useNavigate)
+ * - Supabase client (`@/integrations/supabase/client`)
+ * - useToast hook (`@/hooks/use-toast`)
+ * - Character type (`@/types/character`)
+ * - isValidUUID utility (`@/utils/validation`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// SDK Imports
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Character } from '@/types/character';
-import { isValidUUID } from '@/utils/validation';
 
+// Project Imports
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast'; // Assuming kebab-case from previous steps
+import { isValidUUID } from '@/utils/validation'; // Assuming kebab-case
+
+// Project Types
+import { Character } from '@/types/character';
+
+
+// Helper Functions (defined in-file)
 /**
  * Transforms database stats into Character ability scores format
  * @param statsData - Raw stats data from database

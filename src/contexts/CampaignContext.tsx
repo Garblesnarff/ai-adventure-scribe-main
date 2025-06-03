@@ -1,5 +1,29 @@
-import React, { createContext, useContext, useReducer } from 'react';
+/**
+ * Campaign Context
+ * 
+ * This file defines the CampaignContext for managing global campaign data
+ * within the application. It includes the context provider, a reducer for state
+ * updates, and a custom hook for accessing the campaign state and dispatch function.
+ * 
+ * Main Components:
+ * - CampaignContext: The React context object.
+ * - CampaignProvider: The provider component that wraps parts of the app.
+ * - useCampaign: Custom hook to consume the context.
+ * 
+ * Key State:
+ * - campaign: Object containing details of the currently active/selected campaign.
+ * 
+ * Dependencies:
+ * - React
+ * 
+ * @author AI Dungeon Master Team
+ */
 
+// SDK Imports
+import React, { createContext, useContext, useReducer, ReactNode } from 'react'; // Added ReactNode
+
+
+// Interfaces and Types (defined in-file, specific to this context)
 interface Campaign {
   name: string;
   description?: string;
@@ -60,7 +84,7 @@ function campaignReducer(state: CampaignState, action: CampaignAction): Campaign
  * Provider component for campaign context
  * @param children - Child components that will have access to campaign context
  */
-export function CampaignProvider({ children }: { children: React.ReactNode }) {
+export function CampaignProvider({ children }: { children: ReactNode }) { // Used ReactNode
   const [state, dispatch] = useReducer(campaignReducer, initialState);
 
   return (

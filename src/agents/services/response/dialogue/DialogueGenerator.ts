@@ -1,5 +1,24 @@
+/**
+ * Dialogue Generator
+ * 
+ * This file defines the DialogueGenerator class, responsible for creating
+ * contextual and initial dialogue snippets for NPCs based on player character
+ * details, NPC personality, and conversation history.
+ * 
+ * Main Class:
+ * - DialogueGenerator: Generates NPC dialogue.
+ * 
+ * Key Dependencies:
+ * - Character type (from `@/types/character`)
+ * - DialogueHistory type (from `@/types/dialogue`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Types
 import { Character } from '@/types/character';
 import { DialogueHistory } from '@/types/dialogue';
+
 
 export class DialogueGenerator {
   generateContextualDialogue(

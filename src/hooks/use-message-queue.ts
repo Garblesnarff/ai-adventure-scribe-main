@@ -1,8 +1,14 @@
+// SDK Imports
 import { useState } from 'react';
-import { ChatMessage } from '@/types/game';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Project Imports
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast'; // Assuming kebab-case
+
+// Project Types
+import { ChatMessage } from '@/types/game';
+
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;

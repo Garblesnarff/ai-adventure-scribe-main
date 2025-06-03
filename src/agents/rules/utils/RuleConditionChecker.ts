@@ -1,4 +1,23 @@
-import { RuleCondition } from '@/types/agent';
+/**
+ * Rule Condition Checker Utility
+ * 
+ * This file defines the RuleConditionChecker class, responsible for checking
+ * various types of conditions related to game rules. It evaluates conditions
+ * such as ability score requirements, class/race requirements, level requirements,
+ * equipment, and resource availability based on a given context.
+ * 
+ * Main Class:
+ * - RuleConditionChecker: Checks if rule conditions are met.
+ * 
+ * Key Dependencies:
+ * - RuleCondition type (likely from `@/types/agent` or a more specific rule type definition).
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Types
+import { RuleCondition } from '@/types/agent'; // Assuming RuleCondition is a defined type
+
 
 export class RuleConditionChecker {
   async check(condition: RuleCondition): Promise<boolean> {

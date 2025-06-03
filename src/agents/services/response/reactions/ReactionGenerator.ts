@@ -1,4 +1,22 @@
+/**
+ * NPC Reaction Generator
+ * 
+ * This file defines the ReactionGenerator class, responsible for generating
+ * Non-Player Character (NPC) reactions based on the player character's attributes
+ * (like race, class) and the NPC's personality.
+ * 
+ * Main Class:
+ * - ReactionGenerator: Generates NPC reactions.
+ * 
+ * Key Dependencies:
+ * - Character type (from `@/types/character`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Types
 import { Character } from '@/types/character';
+
 
 export class ReactionGenerator {
   generateNPCReactions(character: Character, personality: string = 'neutral'): string[] {

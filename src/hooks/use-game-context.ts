@@ -1,5 +1,27 @@
+/**
+ * useGameContext Hook
+ * 
+ * This hook is responsible for fetching, caching, and validating the complete
+ * game context. It utilizes functions from `gameContextBuilder` to construct
+ * the context and uses `@tanstack/react-query` for data fetching and caching.
+ * If context is missing or invalid, it provides a default context.
+ * 
+ * Main Hook:
+ * - useGameContext: Provides the overall game context.
+ * 
+ * Key Dependencies:
+ * - @tanstack/react-query (useQuery)
+ * - Game context builder utilities (`@/utils/context/game-context-builder.ts`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// SDK Imports
 import { useQuery } from '@tanstack/react-query';
-import { buildGameContext, validateGameContext, createDefaultContext } from '@/utils/context/gameContextBuilder';
+
+// Project Utilities (assuming kebab-case for gameContextBuilder)
+import { buildGameContext, validateGameContext, createDefaultContext } from '@/utils/context/game-context-builder';
+
 
 /**
  * Hook for managing game context

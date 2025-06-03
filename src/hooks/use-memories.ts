@@ -1,9 +1,25 @@
 /**
- * Main hook for memory system functionality
- * Combines creation and retrieval operations
+ * useMemories Hook
+ * 
+ * This hook serves as a central point for interacting with the game's memory system.
+ * It combines functionalities for memory creation (including extraction from content)
+ * and memory retrieval, by leveraging more specialized hooks like `useMemoryCreation`
+ * and `useMemoryRetrieval`.
+ * 
+ * Main Hook:
+ * - useMemories: Provides an aggregated API for memory operations.
+ * 
+ * Key Dependencies:
+ * - useMemoryCreation hook (`./memory/use-memory-creation.ts`)
+ * - useMemoryRetrieval hook (`./memory/use-memory-retrieval.ts`)
+ * 
+ * @author AI Dungeon Master Team
  */
-import { useMemoryCreation } from './memory/useMemoryCreation';
-import { useMemoryRetrieval } from './memory/useMemoryRetrieval';
+
+// Project Hooks (assuming kebab-case filenames)
+import { useMemoryCreation } from './memory/use-memory-creation';
+import { useMemoryRetrieval } from './memory/use-memory-retrieval';
+
 
 /**
  * Primary hook for managing game memories
