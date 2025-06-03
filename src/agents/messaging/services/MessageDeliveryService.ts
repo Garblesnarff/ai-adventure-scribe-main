@@ -1,9 +1,36 @@
+/**
+ * Message Delivery Service
+ * 
+ * This file defines the MessageDeliveryService class, a singleton service
+ * responsible for delivering messages within the agent messaging system.
+ * It interacts with Supabase to persist communications and uses other services
+ * like Acknowledgment, ErrorHandling, and CircuitBreaker to ensure reliable delivery.
+ * 
+ * Main Class:
+ * - MessageDeliveryService: Handles the delivery of queued messages.
+ * 
+ * Key Dependencies:
+ * - Supabase client (`@/integrations/supabase/client`)
+ * - MessageAcknowledgmentService (./message-acknowledgment-service.ts)
+ * - ErrorHandlingService (`../../error/services/error-handling-service.ts`)
+ * - CircuitBreakerService (`../../error/services/circuit-breaker-service.ts`)
+ * - Various message and error types.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
-import { QueuedMessage } from '../types';
-import { MessageAcknowledgmentService } from './MessageAcknowledgmentService';
-import { ErrorHandlingService } from '../../error/services/ErrorHandlingService';
+
+// Project Services (assuming kebab-case filenames)
+import { CircuitBreakerService } from '../../error/services/circuit-breaker-service';
+import { ErrorHandlingService } from '../../error/services/error-handling-service';
+import { MessageAcknowledgmentService } from './message-acknowledgment-service';
+
+// Project Types
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
-import { CircuitBreakerService } from '../../error/services/CircuitBreakerService';
+import { QueuedMessage } from '../types';
+
 
 export class MessageDeliveryService {
   private static instance: MessageDeliveryService;

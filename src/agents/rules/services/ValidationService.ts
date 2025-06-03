@@ -1,4 +1,23 @@
+/**
+ * Validation Service
+ * 
+ * This file defines the ValidationService class, responsible for validating
+ * game rules based on a given context. It fetches rule validation data from
+ * Supabase and implements a caching mechanism to optimize performance for
+ * repeated validation checks.
+ * 
+ * Main Class:
+ * - ValidationService: Validates rules against data fetched from the backend.
+ * 
+ * Key Dependencies:
+ * - Supabase client (`@/integrations/supabase/client`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
+
 
 export class ValidationService {
   private validationCache: Map<string, any>;

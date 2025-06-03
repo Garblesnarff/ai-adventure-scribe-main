@@ -11,9 +11,13 @@
  * @author AI Dungeon Master Team
  */
 
+// SDK Imports
 import React from 'react';
-import { useToast } from './use-toast';
+
+// Project Imports
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from './use-toast'; // Already kebab-case
+
 
 /**
  * React hook for managing audio playback, API key, volume, mute, and voice mode.

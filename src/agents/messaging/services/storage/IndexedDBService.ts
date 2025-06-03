@@ -1,6 +1,29 @@
-import { StoredMessage, QueueState, OfflineState } from './types';
-import { DatabaseInitializer } from './core/DatabaseInitializer';
-import { DEFAULT_STORAGE_CONFIG } from './config/StorageConfig';
+/**
+ * IndexedDB Service
+ * 
+ * This file defines the IndexedDBService class, a singleton service that provides
+ * an interface for interacting with the browser's IndexedDB. It is used for
+ * persistent client-side storage of messages, queue state, and offline state,
+ * supporting the offline capabilities of the messaging system.
+ * 
+ * Main Class:
+ * - IndexedDBService: Manages IndexedDB operations (init, store, get, update, clear).
+ * 
+ * Key Dependencies:
+ * - DatabaseInitializer (`./core/database-initializer.ts`)
+ * - DEFAULT_STORAGE_CONFIG (`./config/storage-config.ts`)
+ * - Various storage types from `./types.ts`.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Utilities & Config (assuming kebab-case filenames)
+import { DEFAULT_STORAGE_CONFIG } from './config/storage-config';
+import { DatabaseInitializer } from './core/database-initializer';
+
+// Project Types
+import { OfflineState, QueueState, StoredMessage } from './types';
+
 
 export class IndexedDBService {
   private static instance: IndexedDBService;

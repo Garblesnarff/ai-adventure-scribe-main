@@ -1,10 +1,36 @@
-import { IndexedDBService } from '../storage/IndexedDBService';
-import { MessageQueueService } from '../MessageQueueService';
-import { MessagePersistenceService } from '../storage/MessagePersistenceService';
-import { MessageRecoveryService } from '../recovery/MessageRecoveryService';
-import { QueueStateManager } from '../queue/QueueStateManager';
-import { QueuedMessage, MessageType, MessagePriority } from '../../types';
-import { StoredMessage, OfflineState } from '../storage/types';
+/**
+ * Offline State Service
+ * 
+ * This file defines the OfflineStateService class, a singleton service
+ * responsible for managing the application's online/offline state. It listens
+ * to browser online/offline events, attempts to synchronize pending messages
+ * upon reconnection, and manages reconnection attempts with backoff.
+ * 
+ * Main Class:
+ * - OfflineStateService: Manages and tracks online/offline status and synchronization.
+ * 
+ * Key Dependencies:
+ * - IndexedDBService (`../storage/indexed-db-service.ts`)
+ * - MessageQueueService (`../message-queue-service.ts`)
+ * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
+ * - MessageRecoveryService (`../recovery/message-recovery-service.ts`)
+ * - QueueStateManager (`../queue/queue-state-manager.ts`)
+ * - Various message and storage types.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services & Utilities (assuming kebab-case filenames)
+import { MessageQueueService } from '../message-queue-service';
+import { QueueStateManager } from '../queue/queue-state-manager';
+import { MessageRecoveryService } from '../recovery/message-recovery-service';
+import { IndexedDBService } from '../storage/indexed-db-service';
+import { MessagePersistenceService } from '../storage/message-persistence-service';
+
+// Project Types
+import { MessagePriority, MessageType, QueuedMessage } from '../../types';
+import { OfflineState, StoredMessage } from '../storage/types';
+
 
 export class OfflineStateService {
   private static instance: OfflineStateService;
