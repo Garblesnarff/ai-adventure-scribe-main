@@ -14,7 +14,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ currentStep, tota
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   return (
-    <div className="w-full mb-6">
+    <div className="w-full mb-6" data-testid="progress-indicator">
       <Progress value={progress} className="h-2" />
       <p className="text-sm text-center mt-2 text-muted-foreground">
         Step {currentStep + 1} of {totalSteps}
