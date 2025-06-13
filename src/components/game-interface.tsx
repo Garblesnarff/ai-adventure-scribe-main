@@ -42,7 +42,7 @@ import React from 'react';
  // ============================
  // Feature components
  // ============================
-import GameContent from './game/GameContent';
+import GameContent from './game/game-content';
 
 
 /**

@@ -22,7 +22,7 @@
  */
 
 // Project types
-import { QueuedMessage, MessageType, MessagePriority, OfflineState } from './types';
+import { QueuedMessage, MessageType, MessagePriority, OfflineState } from '@/types/messaging';
 
 // Messaging Sub-Services (assuming kebab-case filenames)
 import { ConnectionStateService } from './services/connection/connection-state-service';

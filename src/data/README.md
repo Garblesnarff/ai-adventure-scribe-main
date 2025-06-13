@@ -44,7 +44,7 @@ Provide **predefined data sets** to populate:
 ## **Usage Example**
 
 ```typescript
-import { classOptions } from '@/data/classOptions';
+import { classOptions } from '@/data/class-options';
 
 console.log('Available classes:', classOptions);
 ```

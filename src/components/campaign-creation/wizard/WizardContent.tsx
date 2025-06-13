@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { useCampaign } from '@/contexts/CampaignContext';
+import { useCampaign } from '@/contexts/campaign-context';
 import { useToast } from '@/components/ui/use-toast';
 import StepNavigation from '../shared/StepNavigation';
 import ProgressIndicator from '../shared/ProgressIndicator';

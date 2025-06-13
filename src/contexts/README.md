@@ -44,7 +44,7 @@ Provide **centralized, accessible state** across the app for:
 
 ```typescript
 import { useContext } from 'react';
-import { CampaignContext } from '@/contexts/CampaignContext';
+import { CampaignContext } from '@/contexts/campaign-context';
 
 const { campaign, setCampaign } = useContext(CampaignContext);
 ```

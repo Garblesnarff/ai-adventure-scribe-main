@@ -1,10 +1,9 @@
 import { Campaign } from '@/types/campaign';
 import { Character } from '@/types/character';
 import { Memory, MemoryContext } from '@/types/memory';
-import { GameContext } from '@/types/game';
-import { buildCampaignContext } from './campaignContext';
-import { buildCharacterContext } from './characterContext';
-import { buildMemoryContext } from './memoryContext';
+import { buildCampaignContext } from './campaign-context';
+import { buildCharacterContext } from './character-context';
+import { buildMemoryContext } from './memory-context';
 
 /**
  * Validates the game context structure

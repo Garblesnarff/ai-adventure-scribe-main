@@ -4,11 +4,11 @@ import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 // WizardContent will be imported dynamically later
 // import WizardContent from './WizardContent';
-import { CampaignProvider, useCampaign } from '@/contexts/CampaignContext';
+import { CampaignProvider, useCampaign } from '@/contexts/campaign-context';
 // Constants will be mocked with vi.doMock, so no direct import needed for it here for mocking purposes.
 // import * as Constants from './constants';
 import { useToast } from '@/components/ui/use-toast';
-import { useNavigate } from 'react-router-dom';
+import * as Validation from '@/utils/validation';
 import { useCampaignSave } from './useCampaignSave';
 // Validation will be mocked with vi.mock as it doesn't have hoisting issues with its dependencies.
 import * as Validation from './validation';

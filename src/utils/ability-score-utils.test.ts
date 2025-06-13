@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { POINT_BUY_COSTS, calculateModifier, getPointCostDifference } from './abilityScoreUtils';
+import { POINT_BUY_COSTS, calculateModifier, getPointCostDifference } from './ability-score-utils';
 
 describe('abilityScoreUtils', () => {
   describe('POINT_BUY_COSTS', () => {

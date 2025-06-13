@@ -29,8 +29,8 @@ This directory provides utility functions and helpers specifically designed to s
 // Conceptual example of using a context utility:
 // Within a CampaignContext provider or a related hook
 
-import { validateCampaignData } from '@/utils/context/contextValidation'; // Assuming this function exists
-import { DEFAULT_CAMPAIGN_STATE } from '@/utils/context/contextDefaults'; // Assuming this exists
+import { validateCampaignData } from '@/utils/context/context-validation'; // Assuming this function exists
+import { DEFAULT_CAMPAIGN_STATE } from '@/utils/context/context-defaults'; // Assuming this exists
 
 function useMyCampaignContextLogic(initialData) {
   let currentCampaignData = initialData || DEFAULT_CAMPAIGN_STATE;

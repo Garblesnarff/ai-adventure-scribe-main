@@ -20,7 +20,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
-import { ErrorCategory, ErrorMetadata } from '../types';
+import { ErrorCategory, ErrorMetadata } from '@/types/error';
 
 
 export class ErrorTrackingService {

@@ -30,11 +30,10 @@ import { SyncStateManager } from './managers/sync-state-manager';
 import { ConsistencyValidator } from './validators/consistency-validator';
 
 // Project Types
-import { ErrorCategory, ErrorSeverity } from '../../../error/types';
-import { QueuedMessage } // Assuming QueuedMessage is from a higher-level type definition if not explicitly used here
-    // If QueuedMessage from '../../types' is needed, add: import { QueuedMessage } from '../../types';
-    from './types'; // Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
-import { MessageSequence, MessageSyncOptions, SyncStatus } from './types';
+import { ErrorCategory, ErrorSeverity } from '@/types/error'; // Updated path
+import { QueuedMessage, MessageSequence, MessageSyncOptions, SyncStatus } from '@/types/messaging';
+// QueuedMessage was also in './types' but has been removed from there.
+// MessageSequence, MessageSyncOptions, SyncStatus were also in './types' but now imported from global
 
 
 export class MessageSynchronizationService {

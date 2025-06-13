@@ -1,7 +1,7 @@
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { Card } from '@/components/ui/card';
-import { classes } from '@/data/classOptions';
+import { classes } from '@/data/class-options';
 import { CharacterClass } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 

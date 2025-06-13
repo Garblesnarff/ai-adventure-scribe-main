@@ -1,5 +1,5 @@
-import { AgentTask } from '../../types';
-import { MessagePriority } from './communication';
+import { AgentTask } from '@/types/agent'; // Assuming AgentTask will be moved here
+import { MessagePriority } from '@/types/messaging'; // Updated path
 
 /**
  * Enhanced task interface that works with both systems

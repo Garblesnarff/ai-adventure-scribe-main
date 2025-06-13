@@ -1,4 +1,4 @@
-import { MessageSequence, QueuedMessage, ConflictResolutionStrategy } from '../types';
+import { QueuedMessage, MessageSequence, ConflictResolutionStrategy } from '@/types/messaging';
 import { DatabaseAdapter } from '../adapters/DatabaseAdapter';
 import { supabase } from '@/integrations/supabase/client';
 

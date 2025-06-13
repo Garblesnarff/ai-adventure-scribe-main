@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { processContent } from '@/utils/memoryClassification';
+import { processContent } from '@/utils/memory-classification';
 import { Memory, MemoryType, isValidMemoryType } from '@/components/game/memory/types';
 
 export const useMemoryCreation = (sessionId: string | null) => {

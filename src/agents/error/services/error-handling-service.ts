@@ -26,7 +26,7 @@ import { RetryService } from './retry-service';
 import { ErrorTrackingService } from './error-tracking-service';
 
 // Project Types
-import { ErrorCategory, ErrorSeverity, ErrorMetadata } from '../types';
+import { ErrorCategory, ErrorSeverity, ErrorMetadata } from '@/types/error';
 
 // Hooks
 import { useToast } from '@/hooks/use-toast'; // Note: useToast usage in a class is unconventional.

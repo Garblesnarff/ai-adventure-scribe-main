@@ -28,8 +28,8 @@ import { ErrorHandlingService } from '../../error/services/error-handling-servic
 import { MessageAcknowledgmentService } from './message-acknowledgment-service';
 
 // Project Types
-import { ErrorCategory, ErrorSeverity } from '../../error/types';
-import { QueuedMessage } from '../types';
+import { ErrorCategory, ErrorSeverity } from '@/types/error'; // Updated path
+import { QueuedMessage } from '@/types/messaging';
 
 
 export class MessageDeliveryService {

@@ -23,7 +23,7 @@ import { IndexedDBService } from '../storage/indexed-db-service';
 import { MessageQueueService } from '../message-queue-service';
 
 // Project Types
-import { QueuedMessage } from '../../types';
+import { QueuedMessage } from '@/types/messaging';
 
 
 export class MessageRecoveryService {

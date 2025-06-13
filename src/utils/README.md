@@ -58,7 +58,7 @@ Centralize **reusable, stateless helper functions** to:
 ## **Usage Example**
 
 ```typescript
-import { rollDice } from '@/utils/diceRolls';
+import { rollDice } from '@/utils/dice-rolls';
 
 const result = rollDice('2d6+3');
 console.log(`You rolled: ${result}`);

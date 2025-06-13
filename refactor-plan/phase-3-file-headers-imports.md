@@ -60,7 +60,7 @@ import React from 'react';
 import { useState } from 'react';
 
 // Project modules
-import { CampaignContext } from '@/contexts/CampaignContext';
+import { CampaignContext } from '@/contexts/campaign-context';
 import { StepOne } from './steps/StepOne';
 
 // Utilities

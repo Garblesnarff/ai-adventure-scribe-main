@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useMemoryContext } from '@/contexts/MemoryContext';
-import { useMessageContext } from '@/contexts/MessageContext';
+import { useMemoryContext } from '@/contexts/memory-context';
+import { useMessageContext } from '@/contexts/message-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';

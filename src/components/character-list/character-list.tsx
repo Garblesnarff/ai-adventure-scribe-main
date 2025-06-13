@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Character } from '@/types/character';
-import { races } from '@/data/raceOptions';
-import { classes } from '@/data/classOptions';
+import { races } from '@/data/race-options';
+import { classes } from '@/data/class-options';
 import CharacterCard from './character-card';
 import EmptyState from './empty-state';
 

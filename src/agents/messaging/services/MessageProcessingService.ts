@@ -27,7 +27,7 @@ import { MessageQueueService } from './message-queue-service';
 import { useToast } from '@/hooks/use-toast'; // Note: useToast usage in a class is unconventional.
 
 // Project Types
-import { MessagePriority, MessageType, QueuedMessage } from '../types';
+import { MessagePriority, MessageType, QueuedMessage } from '@/types/messaging';
 
 
 export class MessageProcessingService {

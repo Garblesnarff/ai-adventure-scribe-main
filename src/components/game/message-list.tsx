@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChatMessage } from '@/types/game';
-import { useMessageContext } from '@/contexts/MessageContext';
+import { useMessageContext } from '@/contexts/message-context';
 
 /**
  * MessageList Component

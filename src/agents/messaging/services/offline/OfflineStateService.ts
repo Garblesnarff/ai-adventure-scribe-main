@@ -28,8 +28,8 @@ import { IndexedDBService } from '../storage/indexed-db-service';
 import { MessagePersistenceService } from '../storage/message-persistence-service';
 
 // Project Types
-import { MessagePriority, MessageType, QueuedMessage } from '../../types';
-import { OfflineState, StoredMessage } from '../storage/types';
+import { MessagePriority, MessageType, QueuedMessage, OfflineState } from '@/types/messaging';
+import { StoredMessage } from '../storage/types'; // Local OfflineState removed from here
 
 
 export class OfflineStateService {

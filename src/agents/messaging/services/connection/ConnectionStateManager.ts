@@ -27,7 +27,7 @@ import { OfflineStateService } from '../offline/offline-state-service';
 import { MessagePersistenceService } from '../storage/message-persistence-service';
 
 // Project Types
-import { MessagePriority, MessageType, QueuedMessage } from '../../types';
+import { MessagePriority, MessageType, QueuedMessage } from '@/types/messaging';
 import { ConnectionState } from './types';
 
 

@@ -6,13 +6,13 @@ import { useCampaign } from '@/contexts/CampaignContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Character } from '@/types/character'; // Assuming this type aligns with what CharacterContext expects
 import { Campaign as CampaignType } from '@/types/campaign'; // Assuming this type aligns
-import { MessageList } from './MessageList';
-import { ChatInput } from './ChatInput';
-import { VoiceHandler } from './VoiceHandler';
-import { MemoryPanel } from './MemoryPanel'; // Will modify this later for notes
+import { MessageList } from './message-list';
+import { ChatInput } from './chat-input';
+import { VoiceHandler } from './voice-handler';
+import { MemoryPanel } from './memory-panel'; // Will modify this later for notes
 import { MessageHandler } from './message/MessageHandler';
-import { MemoryProvider } from '@/contexts/MemoryContext';
-import { MessageProvider } from '@/contexts/MessageContext';
+import { MemoryProvider } from '@/contexts/memory-context';
+import { MessageProvider } from '@/contexts/message-context';
 import { useGameSession } from '@/hooks/use-game-session';
 
 /**

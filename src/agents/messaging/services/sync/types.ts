@@ -1,62 +1,11 @@
-import { MessageType, MessagePriority } from '../../types';
-import { Json } from '@/integrations/supabase/types';
+// All types originally defined in this file (VectorClock, SyncState, MessageSequence, SyncStatus,
+// ConflictResolutionStrategy, MessageSyncOptions, and the local QueuedMessage)
+// have been moved to src/types/messaging.ts.
 
-export interface VectorClock {
-  [agentId: string]: number;
-}
+// Please update imports to point to '@/types/messaging'.
+// For example:
+// import { VectorClock, QueuedMessage, MessageType, MessagePriority } from '@/types/messaging';
 
-export interface SyncState {
-  lastSequenceNumber: number;
-  vectorClock: VectorClock;
-  pendingMessages: string[];
-  conflicts: string[];
-}
-
-export interface MessageSequence {
-  id: string;
-  messageId: string;
-  sequenceNumber: number;
-  vectorClock: VectorClock;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SyncStatus {
-  id: string;
-  agentId: string;
-  lastSyncTimestamp: string;
-  syncState: SyncState;
-  vectorClock: VectorClock;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ConflictResolutionStrategy {
-  type: 'timestamp' | 'priority' | 'custom';
-  resolve: (messages: QueuedMessage[]) => QueuedMessage;
-}
-
-export interface MessageSyncOptions {
-  maxRetries?: number;
-  retryDelay?: number;
-  conflictStrategy?: ConflictResolutionStrategy;
-  consistencyCheckInterval?: number;
-}
-
-export interface QueuedMessage {
-  id: string;
-  type: MessageType;
-  content: Json;
-  priority: MessagePriority;
-  sender: string;
-  receiver: string;
-  timestamp: Date;
-  deliveryStatus: {
-    delivered: boolean;
-    timestamp: Date;
-    attempts: number;
-    error?: string;
-  };
-  retryCount: number;
-  maxRetries: number;
-}
+// Original imports that might no longer be needed here if no types remain:
+// import { MessageType, MessagePriority } from '../../types'; // Now from @/types/messaging
+// import { Json } from '@/integrations/supabase/types';

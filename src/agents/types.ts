@@ -1,39 +1,9 @@
-/**
- * Base interface for all agents in the system
- */
-export interface Agent {
-  id: string;
-  role: string;
-  goal: string;
-  backstory: string;
-  verbose?: boolean;
-  allowDelegation?: boolean;
-}
+// All types (Agent, AgentResult, AgentTask, AgentType)
+// have been moved to src/types/agent.ts.
 
-/**
- * Interface for agent execution results
- */
-export interface AgentResult {
-  success: boolean;
-  message: string;
-  data?: any;
-}
+// RuleCondition and RuleRequirement are also expected to be in src/types/agent.ts
+// (and were found to be already defined there).
 
-/**
- * Interface for agent tasks
- */
-export interface AgentTask {
-  id: string;
-  description: string;
-  expectedOutput: string;
-  context?: Record<string, any>;
-}
-
-/**
- * Types of agents available in the system
- */
-export enum AgentType {
-  DungeonMaster = 'dungeon_master',
-  Narrator = 'narrator',
-  RulesInterpreter = 'rules_interpreter'
-}
+// Please update imports to point to '@/types/agent'.
+// For example:
+// import { Agent, AgentTask } from '@/types/agent';

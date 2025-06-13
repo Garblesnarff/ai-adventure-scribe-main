@@ -1,8 +1,8 @@
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { getStartingEquipment } from '@/data/equipmentOptions';
+import { getStartingEquipment } from '@/data/equipment-options';
 
 /**
  * Equipment Selection component for character creation

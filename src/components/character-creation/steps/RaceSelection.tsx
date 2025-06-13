@@ -1,7 +1,7 @@
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { Card } from '@/components/ui/card';
-import { races } from '@/data/raceOptions';
+import { races } from '@/data/race-options';
 import { CharacterRace } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 

@@ -20,7 +20,7 @@
 import { IndexedDBService } from '../storage/indexed-db-service';
 
 // Project Types
-import { QueuedMessage } from '../../types';
+import { QueuedMessage } from '@/types/messaging';
 import { QueueState } from '../storage/types';
 
 

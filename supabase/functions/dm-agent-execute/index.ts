@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { CharacterInteractionGenerator } from "./generators/CharacterInteractionGenerator.ts";
-import { EnvironmentGenerator } from "./generators/EnvironmentGenerator.ts";
-import { buildPrompt } from "./promptBuilder.ts";
+import { CharacterInteractionGenerator } from "./generators/character-interaction-generator.ts";
+import { EnvironmentGenerator } from "./generators/environment-generator.ts";
+import { buildPrompt } from "./prompt-builder.ts";
 import { DMResponse } from "./types.ts";
 
 const corsHeaders = {

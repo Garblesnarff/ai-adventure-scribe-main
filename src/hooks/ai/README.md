@@ -27,8 +27,8 @@ This directory contains custom React hooks and utility functions specifically de
 // Assuming ai-utils.ts has a function like formatContextForAI
 
 import { formatContextForAI } from '@/hooks/ai/ai-utils';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { useCampaign } from '@/contexts/CampaignContext';
+import { useCharacter } from '@/contexts/character-context';
+import { useCampaign } from '@/contexts/campaign-context';
 
 const MyComponent = () => {
   const { character } = useCharacter().state;

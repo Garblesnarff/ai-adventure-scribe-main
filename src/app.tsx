@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Index from './pages/Index';
+import Index from './pages/index';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
 import CharacterWizard from './components/character-creation/character-wizard';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
-import CampaignView from './components/campaign-view/CampaignView';
+import CampaignView from './components/campaign-view/campaign-view';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
 

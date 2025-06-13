@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { useCharacterSave } from '@/hooks/use-character-save';
 import { useToast } from '@/components/ui/use-toast';
 import StepNavigation from '../shared/StepNavigation';

@@ -1,11 +1,11 @@
-import { buildCampaignContext } from './campaignContext';
-import { buildCharacterContext } from './characterContext';
-import { buildMemoryContext } from './memoryContext';
+import { buildCampaignContext } from './campaign-context';
+import { buildCharacterContext } from './character-context';
+import { buildMemoryContext } from './memory-context';
 import { Campaign } from '@/types/campaign';
 
-export { buildCampaignContext } from './campaignContext';
-export { buildCharacterContext } from './characterContext';
-export { buildMemoryContext } from './memoryContext';
+export { buildCampaignContext } from './campaign-context';
+export { buildCharacterContext } from './character-context';
+export { buildMemoryContext } from './memory-context';
 
 /**
  * Builds complete game context by combining campaign, character, and memory data

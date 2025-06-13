@@ -1,5 +1,5 @@
 import React from 'react';
-import { CharacterProvider } from '@/contexts/CharacterContext';
+import { CharacterProvider } from '@/contexts/character-context';
 import WizardContent from './wizard/WizardContent';
 
 /**

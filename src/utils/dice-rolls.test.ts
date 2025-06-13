@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { rollDie, roll4d6DropLowest, generateAbilityScores } from './diceRolls';
+import { rollDie, roll4d6DropLowest, generateAbilityScores } from './dice-rolls';
 
 describe('diceRolls utilities', () => {
   describe('rollDie', () => {

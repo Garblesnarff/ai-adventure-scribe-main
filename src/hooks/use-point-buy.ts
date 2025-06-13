@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AbilityScores } from '@/types/character';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { calculateModifier, getPointCostDifference } from '@/utils/abilityScoreUtils';
+import { useCharacter } from '@/contexts/character-context';
+import { calculateModifier, getPointCostDifference } from '@/utils/ability-score-utils';
 
 /**
  * Custom hook for managing the point buy system in ability score selection

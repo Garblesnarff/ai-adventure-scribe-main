@@ -1,7 +1,8 @@
-import { Agent } from '../../types';
+import { Agent } from '@/types/agent'; // Assuming Agent will be moved here
 import { AgentTool } from './tasks';
 import { AgentMemory } from './memory';
-import { AgentMessage, MessageType, MessagePriority } from './communication';
+import { AgentMessage } from './communication'; // MessageType, MessagePriority no longer exported from here
+import { MessageType, MessagePriority } from '@/types/messaging';
 
 /**
  * Enum for CrewAI agent roles

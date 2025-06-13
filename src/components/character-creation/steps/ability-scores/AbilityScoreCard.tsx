@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AbilityScores } from '@/types/character';
-import { POINT_BUY_COSTS } from '@/utils/abilityScoreUtils';
+import { POINT_BUY_COSTS } from '@/utils/ability-score-utils';
 
 interface AbilityScoreCardProps {
   ability: keyof AbilityScores;

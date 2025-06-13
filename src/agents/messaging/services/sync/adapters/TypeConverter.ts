@@ -1,6 +1,5 @@
 import { Json } from '@/integrations/supabase/types';
-import { VectorClock, SyncState, MessageSequence, QueuedMessage, SyncStatus } from '../types';
-import { MessageType, MessagePriority } from '@/agents/messaging/types';
+import { MessageType, MessagePriority, QueuedMessage, VectorClock, SyncState, MessageSequence, SyncStatus } from '@/types/messaging';
 
 export class TypeConverter {
   static toJson(value: VectorClock | SyncState): Json {

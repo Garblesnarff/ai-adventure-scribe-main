@@ -1,8 +1,8 @@
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage } from '@/types/game';
-import { useMessageContext } from '@/contexts/MessageContext';
-import { useMemoryContext } from '@/contexts/MemoryContext';
+import { useMessageContext } from '@/contexts/message-context';
+import { useMemoryContext } from '@/contexts/memory-context';
 import { useAIResponse } from '@/hooks/use-ai-response';
 import { useSessionValidator } from '../session/SessionValidator';
 

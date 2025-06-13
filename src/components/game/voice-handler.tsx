@@ -1,6 +1,6 @@
 import React from 'react';
-import { useMessageContext } from '@/contexts/MessageContext';
-import { AudioControls } from './AudioControls';
+import { useMessageContext } from '@/contexts/message-context';
+import { AudioControls } from './audio-controls';
 import { AudioPlayer } from './audio/AudioPlayer';
 import { useAudioState } from '@/hooks/use-audio-state';
 

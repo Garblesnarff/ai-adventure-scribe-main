@@ -1,12 +1,12 @@
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { AbilityScores } from '@/types/character';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { generateAbilityScores } from '@/utils/diceRolls';
-import { calculateModifier } from '@/utils/abilityScoreUtils';
+import { generateAbilityScores } from '@/utils/dice-rolls';
+import { calculateModifier } from '@/utils/ability-score-utils';
 
 /**
  * Component for handling ability score selection in character creation

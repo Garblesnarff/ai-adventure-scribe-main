@@ -1,6 +1,6 @@
 import { AgentState, StateChange } from './state';
-import { MessageType, MessagePriority } from './communication';
-import { AgentTask } from '../../types';
+import { MessageType, MessagePriority } from '@/types/messaging'; // Updated path
+import { AgentTask } from '@/types/agent'; // Assuming AgentTask will be moved here
 
 export interface BaseMessagePayload {
   timestamp?: Date;

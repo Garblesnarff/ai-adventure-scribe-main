@@ -1,22 +1,6 @@
-export enum ErrorCategory {
-  NETWORK = 'network',
-  DATABASE = 'database',
-  VALIDATION = 'validation',
-  AGENT = 'agent',
-  SYSTEM = 'system'
-}
+// All types (ErrorCategory, ErrorSeverity, ErrorMetadata)
+// have been moved to src/types/error.ts.
 
-export enum ErrorSeverity {
-  LOW = 1,
-  MEDIUM = 2,
-  HIGH = 3,
-  CRITICAL = 4
-}
-
-export interface ErrorMetadata {
-  agentId?: string;
-  sessionId?: string;
-  taskId?: string;
-  lastKnownGoodState?: any;
-  [key: string]: any;
-}
+// Please update imports to point to '@/types/error'.
+// For example:
+// import { ErrorCategory, ErrorSeverity } from '@/types/error';

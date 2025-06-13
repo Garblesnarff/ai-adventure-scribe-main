@@ -1,5 +1,5 @@
 import { Json } from '@/integrations/supabase/types';
-import { QueuedMessage } from '../../types';
+import { QueuedMessage } from '@/types/messaging';
 
 export interface StoredMessage {
   id: string;
@@ -36,14 +36,4 @@ export interface StorageConfig {
   version: number;
 }
 
-/**
- * Interface for offline state management
- */
-export interface OfflineState {
-  isOnline: boolean;
-  lastOnlineTimestamp: string;
-  lastOfflineTimestamp: string;
-  pendingSync: boolean;
-  queueSize: number;
-  reconnectionAttempts: number;
-}
+// OfflineState has been moved to src/types/messaging.ts

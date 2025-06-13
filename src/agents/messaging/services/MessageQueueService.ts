@@ -23,7 +23,8 @@ import { QueueStateManager } from './queue/queue-state-manager';
 import { QueueValidator } from './queue/queue-validator';
 
 // Project Types
-import { QueuedMessage, MessageQueueConfig } from '../types';
+import { QueuedMessage } from '@/types/messaging';
+import { MessageQueueConfig } from '../types'; // MessageQueueConfig remains local
 
 
 export class MessageQueueService {

@@ -1,10 +1,10 @@
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { AbilityScores } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { generateAbilityScores } from '@/utils/diceRolls';
+import { generateAbilityScores } from '@/utils/dice-rolls';
 import { calculateModifier } from '@/utils/abilityScoreUtils';
 import { usePointBuy } from '@/hooks/usePointBuy';
 import AbilityScoreCard from './AbilityScoreCard';

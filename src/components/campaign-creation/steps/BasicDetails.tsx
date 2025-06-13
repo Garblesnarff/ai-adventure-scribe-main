@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Wand2 } from 'lucide-react';
-import { useCampaign } from '@/contexts/CampaignContext';
+import { useCampaign } from '@/contexts/campaign-context';
 import { WizardStepProps } from '../wizard/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';

@@ -15,7 +15,7 @@
  */
 
 // Project Types
-import { QueuedMessage } from '../../types';
+import { QueuedMessage } from '@/types/messaging';
 
 
 export class QueueValidator {

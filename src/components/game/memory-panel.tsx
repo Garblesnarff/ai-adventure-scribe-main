@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
-import { useMemoryContext } from '@/contexts/MemoryContext';
+import { useMemoryContext } from '@/contexts/memory-context';
 import { List, ChevronDown, ChevronUp } from 'lucide-react';
 import { MemoryCard } from './memory/MemoryCard';
 import { MemoryFilter } from './memory/MemoryFilter';
-import { useMemoryFiltering } from './memory/useMemoryFiltering';
+import { useMemoryFiltering } from './memory/use-memory-filtering';
 import { Textarea } from '../ui/textarea'; // Added for session notes
 import { ExtendedGameSession } from '@/hooks/use-game-session'; // Added for type
 

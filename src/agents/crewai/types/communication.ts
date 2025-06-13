@@ -1,22 +1,6 @@
-/**
- * Enum for CrewAI message types
- */
-export enum MessageType {
-  TASK = 'TASK',
-  RESULT = 'RESULT',
-  QUERY = 'QUERY',
-  RESPONSE = 'RESPONSE',
-  STATE_UPDATE = 'STATE_UPDATE'
-}
-
-/**
- * Enum for message priorities
- */
-export enum MessagePriority {
-  HIGH = 'HIGH',
-  MEDIUM = 'MEDIUM',
-  LOW = 'LOW'
-}
+// MessageType and MessagePriority moved to src/types/messaging.ts
+// Import them from '@/types/messaging' if AgentMessage or other types in this file need them.
+import { MessageType, MessagePriority } from '@/types/messaging';
 
 /**
  * Interface for CrewAI agent messages

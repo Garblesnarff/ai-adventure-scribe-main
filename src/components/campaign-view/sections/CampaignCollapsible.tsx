@@ -6,8 +6,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger 
 } from '@/components/ui/collapsible';
-import { CampaignDetails } from './CampaignDetails';
-import { CampaignParameters } from './CampaignParameters';
+import { CampaignDetails } from './campaign-details';
+import { CampaignParameters } from './campaign-parameters';
 
 interface CampaignCollapsibleProps {
   campaign: Campaign;

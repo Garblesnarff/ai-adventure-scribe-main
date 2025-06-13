@@ -20,7 +20,7 @@ import React from 'react';
  // ============================
  // Project modules
  // ============================
-import { CampaignProvider } from '@/contexts/CampaignContext';
+import { CampaignProvider } from '@/contexts/campaign-context';
 import WizardContent from './wizard/WizardContent';
 
 /**

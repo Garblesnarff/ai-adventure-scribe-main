@@ -1,7 +1,7 @@
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+import { useCharacter } from '@/contexts/character-context';
 import { Card } from '@/components/ui/card';
-import { backgrounds } from '@/data/backgroundOptions';
+import { backgrounds } from '@/data/background-options';
 import { CharacterBackground } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 

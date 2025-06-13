@@ -29,8 +29,8 @@ This directory contains custom React hooks dedicated to managing the game's memo
 // Conceptual example within a component or another hook:
 // This functionality is likely abstracted by MemoryContext
 
-import { useMemoryCreation } from '@/hooks/memory/useMemoryCreation'; // Direct use is less common
-import { useMemoryRetrieval } from '@/hooks/memory/useMemoryRetrieval'; // Direct use is less common
+import { useMemoryCreation } from '@/hooks/memory/use-memory-creation'; // Direct use is less common
+import { useMemoryRetrieval } from '@/hooks/memory/use-memory-retrieval'; // Direct use is less common
 
 const MyGameComponent = ({ sessionId }) => {
   // Usually, you'd get these from useMemoryContext, which uses useMemories internally
