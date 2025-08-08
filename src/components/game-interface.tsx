@@ -20,40 +20,44 @@
  // ============================
 import React from 'react';
 
- // ============================
- // Project hooks
- // ============================
-import { useGameSession } from '@/hooks/use-game-session';
+// Context providers and Feature components remain the same
+// We remove useGameSession from here as it will be initialized in GameContent
+// where campaignId and characterId are available.
 
- // ============================
- // Context providers
- // ============================
-import { MessageProvider } from '@/contexts/MessageContext';
-import { MemoryProvider } from '@/contexts/MemoryContext';
+// ============================
+// Context providers
+// ============================
+// MessageProvider and MemoryProvider will get sessionId from GameContent
+// This means GameContent will need to be structured to initialize useGameSession
+// and then pass the sessionId to these providers if they are children of GameContent.
+// Alternatively, if MessageProvider/MemoryProvider are siblings or parents,
+// this becomes more complex.
+
+// For now, let's assume GameContent will render these providers internally
+// or GameInterface will be simplified if GameContent handles provider setup too.
+// The prompt implies GameInterface sets up providers.
+
+// Let's adjust GameContent to take over provider setup based on its own session.
 
  // ============================
  // Feature components
  // ============================
 import GameContent from './game/GameContent';
 
+
 /**
  * Main gameplay interface component.
  * 
- * Provides message and memory context, initializes the game session,
- * and renders the core game content.
+ * Renders the core game content. Session and context providers
+ * will be handled within or by GameContent.
  * 
  * @returns {JSX.Element} The gameplay interface UI
  */
 export const GameInterface: React.FC = () => {
-  const { sessionId } = useGameSession();
-
   return (
     <div className="min-h-screen bg-[url('/parchment-bg.png')] bg-cover p-4">
-      <MessageProvider sessionId={sessionId}>
-        <MemoryProvider sessionId={sessionId}>
-          <GameContent />
-        </MemoryProvider>
-      </MessageProvider>
+      {/* GameContent will now be responsible for its own session and context providers */}
+      <GameContent />
     </div>
   );
 };

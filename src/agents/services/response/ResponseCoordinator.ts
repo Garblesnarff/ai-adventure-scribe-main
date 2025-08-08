@@ -1,11 +1,41 @@
+/**
+ * Response Coordinator Service
+ * 
+ * This file defines the ResponseCoordinator class, responsible for orchestrating
+ * the generation of AI Dungeon Master responses. It coordinates various services
+ * including intent detection, campaign context providing, conversation state management,
+ * and the core DM response generation. It also handles calling the
+ * `dm-agent-execute` Edge Function.
+ * 
+ * Main Class:
+ * - ResponseCoordinator: Orchestrates the DM response generation flow.
+ * 
+ * Key Dependencies:
+ * - DMResponseGenerator (`../dm-response-generator.ts`)
+ * - ConversationStateManager (`../conversation/conversation-state-manager.ts`)
+ * - PlayerIntentDetector (`../intent/player-intent-detector.ts`)
+ * - CampaignContextProvider (`../campaign/campaign-context-provider.ts`)
+ * - ErrorHandlingService (`../../error/services/error-handling-service.ts`)
+ * - callEdgeFunction utility (`@/utils/edge-function-handler.ts`)
+ * - Various Agent and Error types.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services (assuming kebab-case filenames)
+import { CampaignContextProvider } from '../campaign/campaign-context-provider';
+import { ConversationStateManager } from '../conversation/conversation-state-manager';
+import { DMResponseGenerator } from '../dm-response-generator';
+import { ErrorHandlingService } from '../../error/services/error-handling-service';
+import { PlayerIntentDetector } from '../intent/player-intent-detector';
+
+// Project Utilities (assuming kebab-case filenames)
+import { callEdgeFunction } from '@/utils/edge-function-handler';
+
+// Project Types
 import { AgentResult, AgentTask } from '../../types';
-import { DMResponseGenerator } from '../DMResponseGenerator';
-import { ConversationStateManager } from '../conversation/ConversationStateManager';
-import { PlayerIntentDetector } from '../intent/PlayerIntentDetector';
-import { CampaignContextProvider } from '../campaign/CampaignContextProvider';
-import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
-import { ErrorHandlingService } from '../../error/services/ErrorHandlingService';
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
+
 
 export class ResponseCoordinator {
   private responseGenerator: DMResponseGenerator | null = null;

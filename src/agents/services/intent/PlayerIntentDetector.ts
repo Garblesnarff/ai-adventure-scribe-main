@@ -1,3 +1,18 @@
+/**
+ * Player Intent Detector
+ * 
+ * This file defines the PlayerIntentDetector class, responsible for detecting
+ * the player's intent based on their input message. It uses keyword matching
+ * to classify intent into categories like 'dialogue', 'exploration', or 'other'.
+ * 
+ * Main Class:
+ * - PlayerIntentDetector: Detects player intent from text messages.
+ * 
+ * Key Dependencies: None external.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
 export type PlayerIntent = 'dialogue' | 'exploration' | 'other';
 
 export class PlayerIntentDetector {

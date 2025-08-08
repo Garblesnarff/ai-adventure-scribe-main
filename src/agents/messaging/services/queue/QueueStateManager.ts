@@ -1,6 +1,28 @@
+/**
+ * Queue State Manager
+ * 
+ * This file defines the QueueStateManager class, a singleton service responsible
+ * for managing the state of the message queue. This includes saving snapshots
+ * of the queue to persistent storage (IndexedDB), validating the queue state
+ * against stored snapshots, and tracking metrics related to queue processing.
+ * 
+ * Main Class:
+ * - QueueStateManager: Manages and persists the state of the message queue.
+ * 
+ * Key Dependencies:
+ * - IndexedDBService (`../storage/indexed-db-service.ts`)
+ * - Message and Queue state types.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services (assuming kebab-case filenames)
+import { IndexedDBService } from '../storage/indexed-db-service';
+
+// Project Types
 import { QueuedMessage } from '../../types';
-import { IndexedDBService } from '../storage/IndexedDBService';
 import { QueueState } from '../storage/types';
+
 
 export class QueueStateManager {
   private static instance: QueueStateManager;

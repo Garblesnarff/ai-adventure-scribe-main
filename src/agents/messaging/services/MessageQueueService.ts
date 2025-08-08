@@ -1,6 +1,30 @@
+/**
+ * Message Queue Service
+ * 
+ * This file defines the MessageQueueService class, a singleton service
+ * responsible for managing an in-memory queue of messages. It handles
+ * enqueuing, dequeuing, peeking, and clearing messages, as well as
+ * queue validation and configuration. It uses QueueStateManager for 
+ * persisting queue snapshots and metrics, and QueueValidator for integrity checks.
+ * 
+ * Main Class:
+ * - MessageQueueService: Manages the message queue.
+ * 
+ * Key Dependencies:
+ * - QueueStateManager (`./queue/queue-state-manager.ts`)
+ * - QueueValidator (`./queue/queue-validator.ts`)
+ * - Message types from '../types'.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Utilities (assuming kebab-case filenames)
+import { QueueStateManager } from './queue/queue-state-manager';
+import { QueueValidator } from './queue/queue-validator';
+
+// Project Types
 import { QueuedMessage, MessageQueueConfig } from '../types';
-import { QueueStateManager } from './queue/QueueStateManager';
-import { QueueValidator } from './queue/QueueValidator';
+
 
 export class MessageQueueService {
   private static instance: MessageQueueService;

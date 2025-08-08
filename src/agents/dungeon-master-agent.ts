@@ -17,41 +17,22 @@
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // Project types and interfaces
- // ============================
+// ============================
+// Project Imports
+// ============================
+
+// Agent Core & Types
 import { Agent, AgentResult, AgentTask } from './types';
-
- // ============================
- // Messaging services
- // ============================
-import { AgentMessagingService } from './messaging/agent-messaging-service';
-
- // ============================
- // CrewAI communication types
- // ============================
-import { MessageType, MessagePriority } from './crewai/types/communication';
-
- // ============================
- // Error handling
- // ============================
-import { ErrorHandlingService } from './error/services/ErrorHandlingService';
 import { ErrorCategory, ErrorSeverity } from './error/types';
+import { GameState } from '../types/gameState'; // Path needs to be @/types for consistency or checked
+import { MessagePriority, MessageType } from './crewai/types/communication';
 
- // ============================
- // Response coordination
- // ============================
-import { ResponseCoordinator } from './services/response/ResponseCoordinator';
+// Services
+import { AgentMessagingService } from './messaging/agent-messaging-service';
+import { ErrorHandlingService } from './error/services/error-handling-service'; // Assuming kebab-case
+import { EnhancedMemoryManager } from './services/memory/enhanced-memory-manager'; // Assuming kebab-case
+import { ResponseCoordinator } from './services/response/response-coordinator'; // Assuming kebab-case
 
- // ============================
- // Game state types
- // ============================
-import { GameState } from '../types/gameState';
-
- // ============================
- // Memory management
- // ============================
-import { EnhancedMemoryManager } from './services/memory/EnhancedMemoryManager';
 
 export class DungeonMasterAgent implements Agent {
   // ====================================

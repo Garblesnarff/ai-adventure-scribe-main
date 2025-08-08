@@ -8,10 +8,10 @@ To encapsulate all logic related to autonomous agents, including the Dungeon Mas
 
 ## Structure and Important Files
 
-- **`DungeonMasterAgent.ts`**  
+- **`dungeon-master-agent.ts`**  
   Main Dungeon Master agent class responsible for guiding gameplay, managing game state, and generating narrative responses.
 
-- **`RulesInterpreterAgent.ts`**  
+- **`rules-interpreter-agent.ts`**  
   Agent that interprets and enforces game rules, assists the DM agent.
 
 - **`crewai/`**  
@@ -41,7 +41,7 @@ To encapsulate all logic related to autonomous agents, including the Dungeon Mas
 Instantiate and execute a DM agent task:
 
 ```typescript
-import { DungeonMasterAgent } from './DungeonMasterAgent';
+import { DungeonMasterAgent } from './dungeon-master-agent';
 
 const dmAgent = new DungeonMasterAgent();
 const result = await dmAgent.executeTask({

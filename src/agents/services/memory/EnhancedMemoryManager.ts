@@ -1,6 +1,30 @@
+/**
+ * Enhanced Memory Manager
+ * 
+ * This file defines the EnhancedMemoryManager class, responsible for managing
+ * a more sophisticated memory system for agents. It handles storing memories
+ * with calculated importance, retrieving memories based on various options
+ * (category, timeframe, limit), and maintaining a basic scene state derived
+ * from memories.
+ * 
+ * Main Class:
+ * - EnhancedMemoryManager: Manages storage, retrieval, and context-aware processing of memories.
+ * 
+ * Key Dependencies:
+ * - Supabase client (`@/integrations/supabase/client`)
+ * - CrewAI memory types (`@/agents/crewai/types/memory`)
+ * - Json type from Supabase (`@/integrations/supabase/types`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
+
+// Project Types
 import { EnhancedMemory, MemoryQueryOptions } from '@/agents/crewai/types/memory';
-import { Json } from '@/integrations/supabase/types';
+import { Json } from '@/integrations/supabase/types'; // Though Json is not directly used in class signature, it might be relevant for metadata.
+
 
 export class EnhancedMemoryManager {
   private sessionId: string;

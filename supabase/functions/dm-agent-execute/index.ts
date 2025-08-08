@@ -50,35 +50,36 @@ serve(async (req) => {
       memories: relevantMemories
     });
 
-    // Call OpenAI with the enhanced prompt
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
+    // Call Google Gemini with the enhanced prompt
+    const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const chat = model.startChat({
+      history: [
+        {
+          role: 'user', // User role for the initial system prompt
+          parts: prompt,
+        },
+        {
+          role: 'model', // Model role for an example of expected output structure or tone (optional)
+          parts: "Understood. I will generate a narrative response based on the provided context and task."
+        }
+      ],
+      generationConfig: {
+        temperature: 0.7, // Adjusted for narrative generation
+        topK: 1,
+        topP: 0.9, // Adjusted for narrative generation
+        maxOutputTokens: 2048,
       },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          { 
-            role: 'system', 
-            content: prompt 
-          },
-          {
-            role: 'user',
-            content: task.description
-          }
-        ],
-        temperature: 0.7,
-      }),
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
+    const result = await chat.sendMessage(task.description);
+    const aiResponse = await result.response;
+    const narrativeText = aiResponse.text();
 
-    const aiResponse = await response.json();
-    const narrativeText = aiResponse.choices[0].message.content;
+    if (!narrativeText) {
+      throw new Error(`Gemini API error: No text in response`);
+    }
 
     // Generate environment and interactions using the AI response
     const environment = environmentGen.generateEnvironment(campaignDetails, characterDetails);

@@ -1,12 +1,40 @@
+/**
+ * Agent Messaging Service
+ * 
+ * Provides a centralized service for handling inter-agent communication.
+ * Manages message queuing, processing, persistence, recovery, offline state,
+ * connection status, and synchronization. This service is designed as a singleton.
+ * 
+ * Key functionalities:
+ * - Enqueuing messages for sending.
+ * - Processing the message queue.
+ * - Persisting messages for durability.
+ * - Recovering messages after interruptions.
+ * - Managing online/offline state.
+ * - Synchronizing messages (e.g., with a backend or other clients).
+ * 
+ * Dependencies:
+ * - Various messaging sub-services (Queue, Processing, Persistence, Recovery, Offline, Connection, Sync).
+ * - Message types from './types'.
+ * - useToast hook for notifications.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project types
 import { QueuedMessage, MessageType, MessagePriority, OfflineState } from './types';
-import { MessageQueueService } from './services/MessageQueueService';
-import { MessageProcessingService } from './services/MessageProcessingService';
-import { MessagePersistenceService } from './services/storage/MessagePersistenceService';
-import { MessageRecoveryService } from './services/recovery/MessageRecoveryService';
-import { OfflineStateService } from './services/offline/OfflineStateService';
-import { ConnectionStateService } from './services/connection/ConnectionStateService';
-import { MessageSynchronizationService } from './services/sync/MessageSynchronizationService';
-import { useToast } from '@/hooks/use-toast';
+
+// Messaging Sub-Services (assuming kebab-case filenames)
+import { ConnectionStateService } from './services/connection/connection-state-service';
+import { MessagePersistenceService } from './services/storage/message-persistence-service';
+import { MessageProcessingService } from './services/message-processing-service';
+import { MessageQueueService } from './services/message-queue-service';
+import { MessageRecoveryService } from './services/recovery/message-recovery-service';
+import { MessageSynchronizationService } from './services/sync/message-synchronization-service';
+import { OfflineStateService } from './services/offline/offline-state-service';
+
+// Hooks
+import { useToast } from '@/hooks/use-toast'; // Note: useToast is a hook, direct usage in a class might be unconventional. Consider if this is intended or if notifications should be handled differently.
 
 export class AgentMessagingService {
   private static instance: AgentMessagingService;

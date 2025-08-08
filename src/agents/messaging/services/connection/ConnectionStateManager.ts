@@ -1,9 +1,35 @@
+/**
+ * Connection State Manager
+ * 
+ * This file defines the ConnectionStateManager class, responsible for managing
+ * and reacting to changes in the application's connection state (e.g., to a
+ * backend service or network). It handles events for connection restoration
+ * and loss, and attempts to synchronize state upon reconnection.
+ * 
+ * Main Class:
+ * - ConnectionStateManager: Manages connection state and related events.
+ * 
+ * Key Dependencies:
+ * - EventEmitter (./event-emitter.ts)
+ * - MessageQueueService (`../message-queue-service.ts`)
+ * - OfflineStateService (`../offline/offline-state-service.ts`)
+ * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
+ * - ConnectionState type (`./types.ts`)
+ * - General message types (`../../types.ts`)
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services & Utilities (assuming kebab-case filenames)
+import { EventEmitter } from './event-emitter';
+import { MessageQueueService } from '../message-queue-service';
+import { OfflineStateService } from '../offline/offline-state-service';
+import { MessagePersistenceService } from '../storage/message-persistence-service';
+
+// Project Types
+import { MessagePriority, MessageType, QueuedMessage } from '../../types';
 import { ConnectionState } from './types';
-import { EventEmitter } from './EventEmitter';
-import { MessageQueueService } from '../MessageQueueService';
-import { MessagePersistenceService } from '../storage/MessagePersistenceService';
-import { OfflineStateService } from '../offline/OfflineStateService';
-import { MessageType, QueuedMessage, MessagePriority } from '../../types';
+
 
 export class ConnectionStateManager {
   private state: ConnectionState = {
