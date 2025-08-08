@@ -1,8 +1,16 @@
-import { ChatMessage } from '@/types/game';
+// External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
-import { selectRelevantMemories } from '@/utils/memorySelection';
+
+// Project Hooks
 import { useToast } from '@/hooks/use-toast';
+
+// Project Utilities (assuming kebab-case for memorySelection)
+import { selectRelevantMemories } from '@/utils/memory-selection';
+
+// Project Types
 import { Memory, isValidMemoryType } from '@/components/game/memory/types';
+import { ChatMessage } from '@/types/game';
+
 
 /**
  * useAIResponse Hook

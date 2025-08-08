@@ -1,4 +1,23 @@
+/**
+ * Conversation State Manager
+ * 
+ * This file defines the ConversationStateManager class, responsible for managing
+ * the state of a conversation within the game. This includes tracking the
+ * current NPC involved in a dialogue, the history of the conversation, available
+ * player choices, and the last response from the AI/NPC.
+ * 
+ * Main Class:
+ * - ConversationStateManager: Manages and provides access to conversation state.
+ * 
+ * Key Dependencies:
+ * - DialogueHistory type (from `@/types/dialogue`).
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Types
 import { DialogueHistory } from '@/types/dialogue';
+
 
 export interface ConversationState {
   currentNPC: string | null;

@@ -1,14 +1,41 @@
-import { MessageQueueService } from '../MessageQueueService';
-import { ConnectionStateService } from '../connection/ConnectionStateService';
-import { OfflineStateService } from '../offline/OfflineStateService';
-import { MessageSequence, MessageSyncOptions, QueuedMessage, SyncStatus } from './types';
-import { SyncStateManager } from './managers/SyncStateManager';
-import { ConflictHandler } from './handlers/ConflictHandler';
-import { ConsistencyValidator } from './validators/ConsistencyValidator';
-import { DatabaseAdapter } from './adapters/DatabaseAdapter';
-import { ErrorHandlingService } from '../../../error/services/ErrorHandlingService';
+/**
+ * Message Synchronization Service
+ * 
+ * This file defines the MessageSynchronizationService class, a singleton responsible
+ * for synchronizing messages and their sequence information, likely in a distributed
+ * or multi-agent scenario. It uses vector clocks for managing message order and
+ * consistency, handles conflicts, and interacts with various other services for
+ * queue management, connection state, error handling, and persistence.
+ * 
+ * Main Class:
+ * - MessageSynchronizationService: Manages message synchronization and consistency.
+ * 
+ * Key Dependencies:
+ * - Various messaging sub-services (Queue, Connection, Offline, ErrorHandling, Recovery).
+ * - Sync-specific components (SyncStateManager, ConflictHandler, ConsistencyValidator, DatabaseAdapter).
+ * - Message and Sync types.
+ * 
+ * @author AI Dungeon Master Team
+ */
+
+// Project Services & Utilities (assuming kebab-case filenames)
+import { ErrorHandlingService } from '../../../error/services/error-handling-service';
+import { RecoveryService } from '../../../error/services/recovery-service';
+import { ConnectionStateService } from '../connection/connection-state-service';
+import { MessageQueueService } from '../message-queue-service';
+import { OfflineStateService } from '../offline/offline-state-service';
+import { DatabaseAdapter } from './adapters/database-adapter';
+import { ConflictHandler } from './handlers/conflict-handler';
+import { SyncStateManager } from './managers/sync-state-manager';
+import { ConsistencyValidator } from './validators/consistency-validator';
+
+// Project Types
 import { ErrorCategory, ErrorSeverity } from '../../../error/types';
-import { RecoveryService } from '../../../error/services/RecoveryService';
+import { QueuedMessage } // Assuming QueuedMessage is from a higher-level type definition if not explicitly used here
+    // If QueuedMessage from '../../types' is needed, add: import { QueuedMessage } from '../../types';
+    from './types'; // Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
+import { MessageSequence, MessageSyncOptions, SyncStatus } from './types';
+
 
 export class MessageSynchronizationService {
   private static instance: MessageSynchronizationService;
