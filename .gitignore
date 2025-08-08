@@ -1,3 +1,10 @@
+node_modules
+dist
+server/dist
+.env
+server/.env
+*.log
+**/.DS_Store
 # Logs
 logs
 *.log
@@ -11,7 +18,7 @@ node_modules
 dist
 dist-ssr
 *.local
-
+*.md
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
