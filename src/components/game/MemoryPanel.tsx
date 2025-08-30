@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -75,7 +75,7 @@ export const MemoryPanel: React.FC<MemoryPanelProps> = ({ sessionData, updateGam
               rows={3}
               className="mb-2 text-xs"
             />
-            <Button onClick={handleSaveNotes} size="xs" variant="outline">Save Notes</Button>
+            <Button onClick={handleSaveNotes} size="sm" variant="outline">Save Notes</Button>
           </div>
 
           {/* Memories Section */}

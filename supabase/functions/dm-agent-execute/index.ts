@@ -59,11 +59,11 @@ serve(async (req) => {
       history: [
         {
           role: 'user', // User role for the initial system prompt
-          parts: prompt,
+          parts: [prompt],
         },
         {
           role: 'model', // Model role for an example of expected output structure or tone (optional)
-          parts: "Understood. I will generate a narrative response based on the provided context and task."
+          parts: ["Understood. I will generate a narrative response based on the provided context and task."]
         }
       ],
       generationConfig: {
@@ -84,7 +84,7 @@ serve(async (req) => {
 
     // Generate environment and interactions using the AI response
     const environment = environmentGen.generateEnvironment(campaignDetails, characterDetails);
-    const interactions = await interactionGen.generateInteractions(
+    const interactions = interactionGen.generateInteractions(
       campaignDetails.world_id,
       characterDetails
     );

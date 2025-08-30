@@ -55,7 +55,7 @@ export interface ExtendedGameSession extends GameSession {
 
 export const useGameSession = (campaignId?: string, characterId?: string) => {
   const [sessionData, setSessionData] = useState<ExtendedGameSession | null>(null);
-  const [sessionState, setSessionState] = useState<'active' | 'expired' | 'ending' | 'loading'>('loading');
+  const [sessionState, setSessionState] = useState<'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle'>('loading');
   const { toast } = useToast();
 
   const currentSessionId = sessionData?.id || null;

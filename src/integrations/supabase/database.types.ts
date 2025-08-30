@@ -401,36 +401,45 @@ export type Database = {
           campaign_id: string | null
           character_id: string | null
           created_at: string | null
+          current_scene_description: string | null
           end_time: string | null
           id: string
+          session_notes: string | null
           session_number: number | null
           start_time: string | null
           status: string | null
           summary: string | null
+          turn_count: number | null
           updated_at: string | null
         }
         Insert: {
           campaign_id?: string | null
           character_id?: string | null
           created_at?: string | null
+          current_scene_description?: string | null
           end_time?: string | null
           id?: string
+          session_notes?: string | null
           session_number?: number | null
           start_time?: string | null
           status?: string | null
           summary?: string | null
+          turn_count?: number | null
           updated_at?: string | null
         }
         Update: {
           campaign_id?: string | null
           character_id?: string | null
           created_at?: string | null
+          current_scene_description?: string | null
           end_time?: string | null
           id?: string
+          session_notes?: string | null
           session_number?: number | null
           start_time?: string | null
           status?: string | null
           summary?: string | null
+          turn_count?: number | null
           updated_at?: string | null
         }
         Relationships: [
