@@ -4,11 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 // Project Hooks
 import { useToast } from '@/hooks/use-toast';
 
-// Project Utilities (assuming kebab-case for memorySelection)
-import { selectRelevantMemories } from '@/utils/memory-selection';
+// Project Utilities
+import { selectRelevantMemories } from '@/utils/memorySelection';
 
 // Project Types
-import { Memory, isValidMemoryType } from '@/components/game/memory/types';
+import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
 import { ChatMessage } from '@/types/game';
 
 
@@ -119,16 +119,36 @@ export const useAIResponse = () => {
         .eq('session_id', sessionId);
 
       // Validate and transform memories
-      const memories: Memory[] = (memoriesData || []).map((memory): Memory => {
-        if (!isValidMemoryType(memory.type)) {
-          console.warn(`[Memory] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
-          memory.type = 'general';
-        }
-        return {
-          ...memory,
-          type: isValidMemoryType(memory.type) ? memory.type : 'general'
-        };
-      });
+      const memories: Memory[] = (memoriesData || [])
+        .filter(memory => memory.created_at && memory.updated_at) // Filter out incomplete records
+        .map((memory): Memory => {
+          if (!isValidMemoryType(memory.type)) {
+            console.warn(`[Memory] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
+            memory.type = 'general';
+          }
+          
+          // Handle subcategory validation and conversion
+          let subcategory: Memory['subcategory'] = undefined;
+          if (memory.subcategory && isValidMemorySubcategory(memory.subcategory)) {
+            subcategory = memory.subcategory;
+          }
+          
+          return {
+            id: memory.id,
+            type: isValidMemoryType(memory.type) ? memory.type : 'general',
+            subcategory,
+            content: memory.content,
+            importance: memory.importance ?? 1, // Default importance if null
+            embedding: memory.embedding,
+            metadata: memory.metadata,
+            created_at: memory.created_at!, // We filtered for non-null above
+            session_id: memory.session_id,
+            updated_at: memory.updated_at!, // We filtered for non-null above
+            context_id: memory.context_id || undefined,
+            related_memories: memory.related_memories || undefined,
+            tags: memory.tags || undefined
+          };
+        });
 
       const selectedMemories = selectRelevantMemories(memories, latestMessage.context);
 
