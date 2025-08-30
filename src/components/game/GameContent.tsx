@@ -36,7 +36,7 @@ const GameContent: React.FC = () => {
     sessionState, 
     updateGameSessionState, 
     // createGameSession // if manual creation is needed elsewhere
-  } = useGameSession(campaignIdFromParams, characterIdFromParams);
+  } = useGameSession(campaignIdFromParams, characterIdFromParams || undefined);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +122,7 @@ const GameContent: React.FC = () => {
         if (!campaignData) throw new Error('Campaign not found.');
         
         // Assuming CampaignContext UPDATE_CAMPAIGN can handle partial updates of CampaignType
-        campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as Partial<CampaignType> });
+        campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as unknown as Partial<CampaignType> });
 
       } catch (err: any) {
         console.error("Error loading game data:", err);
@@ -173,8 +173,10 @@ const GameContent: React.FC = () => {
                 <VoiceHandler />
                 <MessageHandler
                   sessionId={sessionId} // Use sessionId from useGameSession
-                  campaignId={campaignIdForHandler}
+                  campaignId={campaignIdForHandler || null}
                   characterId={characterIdForHandler}
+                  turnCount={sessionData.turn_count ?? 0}
+                  updateGameSessionState={updateGameSessionState}
                 >
                   {({ handleSendMessage, isProcessing }) => (
                     <ChatInput 

@@ -9,6 +9,8 @@ import CampaignWizard from './components/campaign-creation/campaign-wizard';
 import CampaignView from './components/campaign-view/CampaignView';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
+import { CharacterProvider } from './contexts/CharacterContext';
+import { CampaignProvider } from './contexts/CampaignContext';
 
 /**
  * Create a new QueryClient instance
@@ -30,23 +32,27 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="min-h-screen bg-background">
-          <Navigation />
-          <Breadcrumbs />
-          <main className="container mx-auto px-4 py-8">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/characters" element={<CharacterList />} />
-              <Route path="/characters/create" element={<CharacterWizard />} />
-              <Route path="/character/:id" element={<CharacterSheet />} />
-              <Route path="/campaigns/create" element={<CampaignWizard />} />
-              <Route path="/campaign/:id" element={<CampaignView />} />
-            </Routes>
-          </main>
-          <Toaster />
-        </div>
-      </Router>
+      <CharacterProvider>
+        <CampaignProvider>
+          <Router>
+            <div className="min-h-screen bg-background">
+              <Navigation />
+              <Breadcrumbs />
+              <main className="container mx-auto px-4 py-8">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/characters" element={<CharacterList />} />
+                  <Route path="/characters/create" element={<CharacterWizard />} />
+                  <Route path="/character/:id" element={<CharacterSheet />} />
+                  <Route path="/campaigns/create" element={<CampaignWizard />} />
+                  <Route path="/campaign/:id" element={<CampaignView />} />
+                </Routes>
+              </main>
+              <Toaster />
+            </div>
+          </Router>
+        </CampaignProvider>
+      </CharacterProvider>
     </QueryClientProvider>
   );
 }
