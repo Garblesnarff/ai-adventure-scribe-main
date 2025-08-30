@@ -10,15 +10,15 @@
  * - useMemories: Provides an aggregated API for memory operations.
  * 
  * Key Dependencies:
- * - useMemoryCreation hook (`./memory/use-memory-creation.ts`)
- * - useMemoryRetrieval hook (`./memory/use-memory-retrieval.ts`)
+ * - useMemoryCreation hook (`./memory/useMemoryCreation.ts`)
+ * - useMemoryRetrieval hook (`./memory/useMemoryRetrieval.ts`)
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Hooks (assuming kebab-case filenames)
-import { useMemoryCreation } from './memory/use-memory-creation';
-import { useMemoryRetrieval } from './memory/use-memory-retrieval';
+// Project Hooks
+import { useMemoryCreation } from './memory/useMemoryCreation';
+import { useMemoryRetrieval } from './memory/useMemoryRetrieval';
 
 
 /**

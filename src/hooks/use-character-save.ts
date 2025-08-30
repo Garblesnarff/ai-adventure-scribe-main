@@ -4,7 +4,7 @@ import { useState } from 'react';
 // Project Imports
 import { useToast } from '@/components/ui/use-toast'; // Assuming kebab-case
 import { supabase } from '@/integrations/supabase/client';
-import { transformAbilityScoresForStorage, transformEquipmentForStorage } from '@/utils/character-transformations'; // Assuming kebab-case
+import { transformAbilityScoresForStorage, transformEquipmentForStorage } from '@/utils/characterTransformations';
 
 // Project Types
 import { Character, transformCharacterForStorage } from '@/types/character';

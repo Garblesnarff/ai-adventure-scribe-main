@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Cerebras from 'npm:@cerebras/cerebras_cloud_sdk';
+import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,32 +18,25 @@ serve(async (req) => {
     
     console.log('Generating campaign description for:', { genre, difficulty, length, tone });
 
-    // Initialize Cerebras client
-    const client = new Cerebras({
-      apiKey: Deno.env.get('CEREBRAS_API_KEY'),
-    });
+    // Initialize Gemini client
+    const apiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new Error('GOOGLE_GEMINI_API_KEY environment variable not set');
+    }
+    
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
-    // Create chat completion using SDK
-    const completion = await client.chat.completions.create({
-      model: 'llama-3.3-70b',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a creative D&D campaign description writer. Create engaging and thematic campaign descriptions.'
-        },
-        {
-          role: 'user',
-          content: `Generate a compelling campaign description for a ${genre} campaign with ${difficulty} difficulty, ${length} length, and a ${tone} tone. The description should be 2-3 paragraphs long.`
-        }
-      ]
-    });
+    const prompt = `Generate a compelling campaign description for a ${genre} campaign with ${difficulty} difficulty, ${length} length, and a ${tone} tone. The description should be 2-3 paragraphs long and capture the essence of an exciting D&D adventure.`;
 
-    console.log('Cerebras API response:', completion);
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const description = response.text();
+
+    console.log('Gemini API response generated successfully');
 
     return new Response(
-      JSON.stringify({ 
-        description: completion.choices[0].message.content 
-      }), 
+      JSON.stringify({ description }), 
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }

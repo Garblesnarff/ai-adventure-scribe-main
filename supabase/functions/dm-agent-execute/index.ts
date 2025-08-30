@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 import { CharacterInteractionGenerator } from "./generators/CharacterInteractionGenerator.ts";
 import { EnvironmentGenerator } from "./generators/EnvironmentGenerator.ts";
 import { buildPrompt } from "./promptBuilder.ts";
