@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sword, Users, Map, Home } from 'lucide-react';
+import { Sword, Users, Map, Home, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Main navigation component that provides consistent navigation across the application
@@ -8,6 +10,7 @@ import { Sword, Users, Map, Home } from 'lucide-react';
  */
 const Navigation: React.FC = () => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   
   /**
    * Helper function to determine if a path is active
@@ -16,6 +19,10 @@ const Navigation: React.FC = () => {
    */
   const isActive = (path: string) => {
     return location.pathname.startsWith(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -32,31 +39,41 @@ const Navigation: React.FC = () => {
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex space-x-4">
-            <Link
-              to="/"
-              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                ${isActive('/') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
-            >
-              <Home className="h-4 w-4" />
-              <span>Home</span>
-            </Link>
-            <Link
-              to="/characters"
-              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                ${isActive('/characters') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
-            >
-              <Users className="h-4 w-4" />
-              <span>Characters</span>
-            </Link>
-            <Link
-              to="/campaigns"
-              className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                ${isActive('/campaigns') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
-            >
-              <Map className="h-4 w-4" />
-              <span>Campaigns</span>
-            </Link>
+          <div className="flex items-center space-x-4">
+            <div className="flex space-x-4">
+              <Link
+                to="/"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                  ${isActive('/') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </Link>
+              <Link
+                to="/characters"
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                  ${isActive('/characters') ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'}`}
+              >
+                <Users className="h-4 w-4" />
+                <span>Characters</span>
+              </Link>
+            </div>
+            
+            {/* User Info and Sign Out */}
+            <div className="flex items-center space-x-2 border-l border-border pl-4">
+              <span className="text-sm text-muted-foreground">
+                {user?.email}
+              </span>
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                size="sm"
+                className="flex items-center space-x-1"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

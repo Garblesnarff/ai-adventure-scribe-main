@@ -1,16 +1,18 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from 'sonner';
 import Index from './pages/Index';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
 import CharacterWizard from './components/character-creation/character-wizard';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
-import CampaignView from './components/campaign-view/CampaignView';
+import { SimpleCampaignView } from './components/campaign-view/SimpleCampaignView';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
 import { CharacterProvider } from './contexts/CharacterContext';
 import { CampaignProvider } from './contexts/CampaignContext';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 /**
  * Create a new QueryClient instance
@@ -32,27 +34,31 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CharacterProvider>
-        <CampaignProvider>
-          <Router>
-            <div className="min-h-screen bg-background">
-              <Navigation />
-              <Breadcrumbs />
-              <main className="container mx-auto px-4 py-8">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/characters" element={<CharacterList />} />
-                  <Route path="/characters/create" element={<CharacterWizard />} />
-                  <Route path="/character/:id" element={<CharacterSheet />} />
-                  <Route path="/campaigns/create" element={<CampaignWizard />} />
-                  <Route path="/campaign/:id" element={<CampaignView />} />
-                </Routes>
-              </main>
-              <Toaster />
-            </div>
-          </Router>
-        </CampaignProvider>
-      </CharacterProvider>
+      <AuthProvider>
+        <CharacterProvider>
+          <CampaignProvider>
+            <Router>
+              <ProtectedRoute>
+                <div className="min-h-screen bg-background">
+                  <Navigation />
+                  <Breadcrumbs />
+                  <main className="container mx-auto px-4 py-8">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/characters" element={<CharacterList />} />
+                      <Route path="/characters/create" element={<CharacterWizard />} />
+                      <Route path="/character/:id" element={<CharacterSheet />} />
+                      <Route path="/campaigns/create" element={<CampaignWizard />} />
+                      <Route path="/campaign/:id" element={<SimpleCampaignView />} />
+                    </Routes>
+                  </main>
+                  <Toaster />
+                </div>
+              </ProtectedRoute>
+            </Router>
+          </CampaignProvider>
+        </CharacterProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

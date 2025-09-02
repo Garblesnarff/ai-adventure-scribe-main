@@ -1,0 +1,241 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, Loader2 } from 'lucide-react';
+import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
+import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
+import { toast } from 'sonner';
+
+interface SimpleGameChatProps {
+  campaignId: string;
+  characterId: string;
+  campaignDetails?: any;
+  characterDetails?: any;
+}
+
+export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
+  campaignId,
+  characterId,
+  campaignDetails,
+  characterDetails,
+}) => {
+  const { session, loading: sessionLoading } = useSimpleGameSession(campaignId, characterId);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Load conversation history when session is available
+  useEffect(() => {
+    if (session?.id) {
+      loadConversationHistory();
+    }
+  }, [session?.id]);
+
+  const loadConversationHistory = async () => {
+    if (!session?.id) return;
+
+    setIsLoadingHistory(true);
+    try {
+      const history = await AIService.getConversationHistory(session.id);
+      setMessages(history);
+    } catch (error) {
+      console.error('Failed to load conversation history:', error);
+      toast.error('Failed to load conversation history');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentMessage.trim() || !session?.id || isSending) return;
+
+    const userMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      role: 'user',
+      content: currentMessage.trim(),
+      timestamp: new Date(),
+    };
+
+    // Add user message to UI immediately
+    setMessages(prev => [...prev, userMessage]);
+    setCurrentMessage('');
+    setIsSending(true);
+
+    try {
+      // Save user message to database
+      await AIService.saveChatMessage({
+        sessionId: session.id,
+        role: 'user',
+        content: userMessage.content,
+        speakerId: characterId,
+      });
+
+      // Get AI response
+      const context: GameContext = {
+        campaignId,
+        characterId,
+        sessionId: session.id,
+        campaignDetails,
+        characterDetails,
+      };
+
+      const aiResponse = await AIService.chatWithDM({
+        message: userMessage.content,
+        context,
+        conversationHistory: messages,
+      });
+
+      // Save AI response to database
+      await AIService.saveChatMessage({
+        sessionId: session.id,
+        role: 'assistant',
+        content: aiResponse,
+      });
+
+      // Add AI response to UI
+      const assistantMessage: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message. Please try again.');
+      
+      // Remove the user message from UI on error
+      setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(e as any);
+    }
+  };
+
+  if (sessionLoading) {
+    return (
+      <Card className="h-full">
+        <CardContent className="flex items-center justify-center h-96">
+          <div className="flex flex-col items-center space-y-2">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">Setting up your adventure...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <span>Adventure Chat</span>
+          {session && (
+            <span className="text-sm font-normal text-muted-foreground">
+              Session #{session.session_number}
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="flex-1 flex flex-col p-0">
+        <ScrollArea className="flex-1 p-4">
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span className="text-muted-foreground">Loading conversation...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Welcome to your adventure! What would you like to do?</p>
+                </div>
+              )}
+              
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground ml-4'
+                        : 'bg-muted mr-4'
+                    }`}
+                  >
+                    <div className="text-sm font-medium mb-1">
+                      {message.role === 'user' ? 'You' : 'Dungeon Master'}
+                    </div>
+                    <div className="whitespace-pre-wrap">{message.content}</div>
+                    <div className="text-xs opacity-70 mt-2">
+                      {message.timestamp.toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-lg px-4 py-2 mr-4">
+                    <div className="text-sm font-medium mb-1">Dungeon Master</div>
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </ScrollArea>
+        
+        <div className="border-t p-4">
+          <form onSubmit={sendMessage} className="flex space-x-2">
+            <Input
+              value={currentMessage}
+              onChange={(e) => setCurrentMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="What do you do next?"
+              disabled={isSending || !session}
+              className="flex-1"
+            />
+            <Button 
+              type="submit" 
+              disabled={!currentMessage.trim() || isSending || !session}
+              className="px-3"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

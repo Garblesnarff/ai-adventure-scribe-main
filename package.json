@@ -14,7 +14,9 @@
     "server:start": "node server/dist/index.js",
     "server:migrate": "ts-node --project server/tsconfig.json server/src/scripts/migrate.ts",
     "server:seed": "ts-node --project server/tsconfig.json server/src/scripts/seed.ts",
-    "server:test": "vitest run --dir server"
+    "server:test": "vitest run --dir server",
+    "mvp:setup": "echo 'Setting up MVP...' && npm install && echo 'Next: Copy .env.example to .env.local and configure your Supabase credentials'",
+    "mvp:build": "npm run lint && npm run build"
   },
   "dependencies": {
     "@11labs/react": "^0.0.4",
