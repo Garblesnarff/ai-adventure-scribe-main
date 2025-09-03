@@ -1,5 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { GeminiApiManager } from './gemini-api-manager';
+import { MemoryManager, MemoryContext } from './memory-manager';
+import { WorldBuilderService } from './world-builders/world-builder-service';
 
 export interface ChatMessage {
   id: string;
@@ -82,6 +84,21 @@ export class AIService {
     console.log('Using local Gemini API for chat...');
     
     try {
+      // Retrieve relevant memories to enhance context
+      let relevantMemories: any[] = [];
+      if (params.context.sessionId) {
+        try {
+          relevantMemories = await MemoryManager.getRelevantMemories(
+            params.context.sessionId,
+            params.message,
+            8 // Get top 8 relevant memories
+          );
+          console.log(`📚 Retrieved ${relevantMemories.length} relevant memories`);
+        } catch (memoryError) {
+          console.warn('Failed to retrieve memories:', memoryError);
+        }
+      }
+      
       // Use local Gemini API
       const geminiManager = this.getGeminiManager();
       
@@ -97,6 +114,15 @@ export class AIService {
           
           if (params.context.characterDetails) {
             contextPrompt += `Player Character: ${params.context.characterDetails.name}, a level ${params.context.characterDetails.level} ${params.context.characterDetails.race} ${params.context.characterDetails.class}. `;
+          }
+          
+          // Add relevant memories to context
+          if (relevantMemories.length > 0) {
+            contextPrompt += `\n\nIMPORTANT MEMORIES from this adventure:\n`;
+            relevantMemories.forEach((memory, index) => {
+              contextPrompt += `${index + 1}. [${memory.type.toUpperCase()}] ${memory.content}\n`;
+            });
+            contextPrompt += `\nUse these memories to maintain consistency and continuity.\n`;
           }
           
           contextPrompt += `Respond as the DM in an engaging, immersive way. Keep responses 1-3 paragraphs.`;
@@ -144,11 +170,55 @@ export class AIService {
             const result = await response.response;
             return result.text();
           }
-      });
-      
-      console.log('Successfully generated DM response using local Gemini API');
-      return result;
-      
+        });
+        
+        console.log('Successfully generated DM response using local Gemini API');
+        
+        // Extract memories from this conversation exchange
+        if (params.context.sessionId) {
+          try {
+            const memoryContext: MemoryContext = {
+              sessionId: params.context.sessionId,
+              campaignId: params.context.campaignId,
+              characterId: params.context.characterId,
+              currentMessage: params.message,
+              recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
+            };
+            
+            const extractionResult = await MemoryManager.extractMemories(
+              memoryContext,
+              params.message,
+              result
+            );
+            
+            if (extractionResult.memories.length > 0) {
+              await MemoryManager.saveMemories(extractionResult.memories);
+              console.log(`🧠 Extracted and saved ${extractionResult.memories.length} memories`);
+            }
+          } catch (memoryError) {
+            console.warn('Memory extraction failed (non-fatal):', memoryError);
+          }
+          
+          // Expand world based on player action and AI response
+          try {
+            const worldExpansion = await WorldBuilderService.respondToPlayerAction(
+              params.context.campaignId,
+              params.context.sessionId!,
+              params.context.characterId,
+              params.message,
+              result
+            );
+            
+            if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
+              console.log(`🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+            }
+          } catch (worldError) {
+            console.warn('World building failed (non-fatal):', worldError);
+          }
+        }
+        
+        return result;
+        
     } catch (geminiError) {
       console.error('Local Gemini API failed:', geminiError);
       throw new Error('Failed to get DM response - AI service unavailable');
