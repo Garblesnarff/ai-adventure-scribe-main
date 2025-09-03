@@ -53,7 +53,7 @@ serve(async (req) => {
 
     // Call Google Gemini with the enhanced prompt
     const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const chat = model.startChat({
       history: [

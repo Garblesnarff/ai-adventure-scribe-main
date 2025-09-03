@@ -17,11 +17,18 @@ interface GeminiError extends Error {
 export class GeminiApiManager {
   private apiKeys: string[];
   private keyStats: Map<string, KeyUsageStats> = new Map();
-  private currentKeyIndex: number = 0;
+  private currentKeyIndex: number = 1; // Start with second key
   private lastRotation: Date = new Date();
   private readonly rotationCooldown = 60 * 1000; // 1 minute cooldown
   private readonly maxErrorsBeforeDisable = 3;
   private readonly errorResetTime = 15 * 60 * 1000; // 15 minutes
+  
+  // Free tier rate limiting for gemini-2.5-flash-lite
+  private readonly maxRequestsPerMinute = 15;
+  private readonly maxRequestsPerDay = 1000;
+  private requestTimestamps: Date[] = [];
+  private dailyRequestCount = 0;
+  private lastResetDate = new Date().toDateString();
 
   constructor() {
     // Get API keys from environment variable
@@ -48,7 +55,69 @@ export class GeminiApiManager {
       });
     });
 
-    console.log(`Gemini API Manager initialized with ${this.apiKeys.length} keys`);
+    console.log(`🔑 Gemini API Manager initialized with ${this.apiKeys.length} keys:`);
+    this.apiKeys.forEach((key, index) => {
+      const truncated = key.substring(0, 10) + '...';
+      console.log(`  Key ${index + 1}: ${truncated}`);
+    });
+  }
+
+  /**
+   * Check if we can make a request within rate limits
+   */
+  private checkRateLimit(): { canProceed: boolean; waitTime?: number } {
+    const now = new Date();
+    const currentDateString = now.toDateString();
+    
+    // Reset daily count if it's a new day
+    if (this.lastResetDate !== currentDateString) {
+      this.dailyRequestCount = 0;
+      this.lastResetDate = currentDateString;
+      this.requestTimestamps = [];
+    }
+    
+    // Check daily limit
+    if (this.dailyRequestCount >= this.maxRequestsPerDay) {
+      return { 
+        canProceed: false, 
+        waitTime: this.getTimeUntilMidnight() 
+      };
+    }
+    
+    // Check per-minute limit
+    const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+    this.requestTimestamps = this.requestTimestamps.filter(timestamp => timestamp > oneMinuteAgo);
+    
+    if (this.requestTimestamps.length >= this.maxRequestsPerMinute) {
+      const oldestRequest = Math.min(...this.requestTimestamps.map(t => t.getTime()));
+      const waitTime = oldestRequest + (60 * 1000) - now.getTime();
+      return { 
+        canProceed: false, 
+        waitTime: Math.max(0, waitTime) 
+      };
+    }
+    
+    return { canProceed: true };
+  }
+  
+  /**
+   * Record a successful request for rate limiting
+   */
+  private recordRequest(): void {
+    const now = new Date();
+    this.requestTimestamps.push(now);
+    this.dailyRequestCount++;
+  }
+  
+  /**
+   * Get milliseconds until midnight for daily reset
+   */
+  private getTimeUntilMidnight(): number {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.getTime() - now.getTime();
   }
 
   /**
@@ -154,12 +223,20 @@ export class GeminiApiManager {
    * Check if error warrants key rotation
    */
   private shouldRotateOnError(error: GeminiError): boolean {
+    // Check various error formats from Google's API
+    const errorStatus = error.status || (error as any).response?.status;
+    const errorCode = error.code || (error as any).response?.code;
+    const errorMessage = error.message || '';
+    
     // Rotate on authentication errors, rate limits, or quota exceeded
-    return error.status === 401 || // Unauthorized
-           error.status === 403 || // Forbidden
-           error.status === 429 || // Too Many Requests
-           error.code === 'QUOTA_EXCEEDED' ||
-           error.code === 'API_KEY_INVALID';
+    return errorStatus === 400 || // Bad Request (invalid API key)
+           errorStatus === 401 || // Unauthorized
+           errorStatus === 403 || // Forbidden
+           errorStatus === 429 || // Too Many Requests
+           errorCode === 'QUOTA_EXCEEDED' ||
+           errorCode === 'API_KEY_INVALID' ||
+           errorMessage.includes('API key') ||
+           errorMessage.includes('Invalid');
   }
 
   /**
@@ -170,42 +247,68 @@ export class GeminiApiManager {
   }
 
   /**
-   * Execute a function with automatic key rotation on failure
+   * Execute a function with automatic key rotation on failure and rate limiting
    */
   async executeWithRotation<T>(
     operation: (genAI: GoogleGenerativeAI) => Promise<T>,
     maxRetries: number = 3
   ): Promise<T> {
+    // Check rate limits before attempting request
+    const rateLimitCheck = this.checkRateLimit();
+    if (!rateLimitCheck.canProceed) {
+      const waitTimeMinutes = Math.ceil((rateLimitCheck.waitTime || 0) / 60000);
+      throw new Error(
+        `Rate limit exceeded. Please wait ${waitTimeMinutes} minute(s) before making another request. ` +
+        `Daily usage: ${this.dailyRequestCount}/${this.maxRequestsPerDay}, ` +
+        `Recent requests: ${this.requestTimestamps.length}/${this.maxRequestsPerMinute} per minute`
+      );
+    }
+    
     let lastError: GeminiError | null = null;
     let attempts = 0;
+    const triedKeys = new Set<string>();
 
     while (attempts < maxRetries) {
+      // Get current key AFTER potential rotation from previous iteration
       const currentKey = this.getCurrentKey();
+      const keyStats = this.keyStats.get(currentKey);
+      console.log(`🔑 Attempt ${attempts + 1}: Using API key ${keyStats?.key || 'unknown'} (index: ${this.currentKeyIndex})`);
+      
+      // Track which keys we've tried
+      triedKeys.add(currentKey);
+      
       const genAI = this.createClient(currentKey);
 
       try {
         const result = await operation(genAI);
         this.recordSuccess(currentKey);
+        this.recordRequest(); // Record for rate limiting
         return result;
         
       } catch (error) {
         attempts++;
         lastError = error as GeminiError;
         
+        // Log full error for debugging
+        console.error(`Full error object:`, error);
+        console.error(`Error status:`, (error as any).status);
+        console.error(`Error code:`, (error as any).code);
+        console.error(`Error response:`, (error as any).response);
+        
         this.recordError(currentKey, lastError);
         
-        // If this error warrants rotation and we have more attempts
-        if (this.shouldRotateOnError(lastError) && attempts < maxRetries) {
-          // Only rotate if cooldown period has passed
-          if (Date.now() - this.lastRotation.getTime() > this.rotationCooldown) {
-            const rotated = this.rotateToNextAvailableKey();
-            if (!rotated) {
-              // No keys available, break early
+        // Always try to rotate to next key if we have more attempts
+        if (attempts < maxRetries) {
+          console.log(`🔄 Rotating to next key after error...`);
+          const rotated = this.rotateToNextAvailableKey();
+          if (!rotated) {
+            console.warn('❌ No more keys available for rotation');
+            // If all keys have been tried, break
+            if (triedKeys.size >= this.apiKeys.length) {
+              console.warn('All keys have been tried');
               break;
             }
           }
-        } else if (attempts >= maxRetries) {
-          break;
         }
         
         // Wait before retry (exponential backoff)
@@ -224,6 +327,25 @@ export class GeminiApiManager {
    */
   getStats(): KeyUsageStats[] {
     return Array.from(this.keyStats.values());
+  }
+
+  /**
+   * Get rate limiting statistics
+   */
+  getRateLimitStats(): any {
+    const now = new Date();
+    const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+    const recentRequests = this.requestTimestamps.filter(t => t > oneMinuteAgo).length;
+    
+    return {
+      dailyUsage: this.dailyRequestCount,
+      dailyLimit: this.maxRequestsPerDay,
+      recentRequests,
+      minutelyLimit: this.maxRequestsPerMinute,
+      remainingDaily: this.maxRequestsPerDay - this.dailyRequestCount,
+      remainingMinutely: this.maxRequestsPerMinute - recentRequests,
+      resetTime: this.getTimeUntilMidnight(),
+    };
   }
 
   /**

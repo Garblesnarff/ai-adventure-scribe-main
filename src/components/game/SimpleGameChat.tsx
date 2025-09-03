@@ -26,6 +26,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
   const [currentMessage, setCurrentMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change
@@ -85,7 +86,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
         speakerId: characterId,
       });
 
-      // Get AI response
+      // Get AI response with streaming
       const context: GameContext = {
         campaignId,
         characterId,
@@ -94,10 +95,15 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
         characterDetails,
       };
 
+      setStreamingMessage(''); // Reset streaming message
+      
       const aiResponse = await AIService.chatWithDM({
         message: userMessage.content,
         context,
         conversationHistory: messages,
+        onStream: (chunk: string) => {
+          setStreamingMessage(prev => prev + chunk);
+        },
       });
 
       // Save AI response to database
@@ -119,11 +125,27 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       
     } catch (error) {
       console.error('Failed to send message:', error);
-      toast.error('Failed to send message. Please try again.');
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('Rate limit exceeded')) {
+        toast.error('Rate limit exceeded. Please wait before sending another message.', {
+          description: 'You\'ve hit the daily or per-minute API limit. Check the API Stats for details.',
+          duration: 5000,
+        });
+      } else if (errorMessage.includes('all AI services unavailable')) {
+        toast.error('AI services are currently unavailable', {
+          description: 'Both Edge Functions and local API failed. Please try again later.',
+          duration: 5000,
+        });
+      } else {
+        toast.error('Failed to send message. Please try again.');
+      }
       
       // Remove the user message from UI on error
       setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
     } finally {
+      setStreamingMessage(''); // Clear streaming message
       setIsSending(false);
     }
   };
@@ -151,13 +173,35 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <span>Adventure Chat</span>
-          {session && (
-            <span className="text-sm font-normal text-muted-foreground">
-              Session #{session.session_number}
-            </span>
-          )}
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span>Adventure Chat</span>
+            {session && (
+              <span className="text-sm font-normal text-muted-foreground">
+                Session #{session.session_number}
+              </span>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const stats = AIService.getApiStats();
+              console.log('API Stats:', stats);
+              
+              const rateLimits = stats.rateLimits;
+              if (rateLimits) {
+                toast.success('API Stats', {
+                  description: `Daily: ${rateLimits.remainingDaily}/${rateLimits.dailyLimit} | Minute: ${rateLimits.remainingMinutely}/${rateLimits.minutelyLimit}`,
+                  duration: 4000,
+                });
+              } else {
+                toast.success('API stats logged to console');
+              }
+            }}
+          >
+            API Stats
+          </Button>
         </CardTitle>
       </CardHeader>
       
@@ -201,12 +245,19 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
               
               {isSending && (
                 <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2 mr-4">
+                  <div className="bg-muted rounded-lg px-4 py-2 mr-4 max-w-[80%]">
                     <div className="text-sm font-medium mb-1">Dungeon Master</div>
-                    <div className="flex items-center space-x-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Thinking...</span>
-                    </div>
+                    {streamingMessage ? (
+                      <div className="whitespace-pre-wrap">
+                        {streamingMessage}
+                        <span className="animate-pulse">|</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Thinking...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
