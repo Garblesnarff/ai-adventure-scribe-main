@@ -15,6 +15,7 @@
     "server:migrate": "ts-node --project server/tsconfig.json server/src/scripts/migrate.ts",
     "server:seed": "ts-node --project server/tsconfig.json server/src/scripts/seed.ts",
     "server:test": "vitest run --dir server",
+    "seed:test-data": "node scripts/seed-test-data.js",
     "mvp:setup": "echo 'Setting up MVP...' && npm install && echo 'Next: Copy .env.example to .env.local and configure your Supabase credentials'",
     "mvp:build": "npm run lint && npm run build"
   },
@@ -22,6 +23,7 @@
     "@11labs/react": "^0.0.4",
     "@anthropic-ai/sdk": "^0.32.0",
     "@fontsource/medievalsharp": "^5.1.0",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -109,13 +111,13 @@
     "globals": "^15.9.0",
     "lovable-tagger": "^1.0.19",
     "postcss": "^8.4.47",
+    "supertest": "^7.0.0",
     "tailwindcss": "^3.4.11",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
-    "supertest": "^7.0.0",
     "vitest": "^2.0.5"
   }
 }
