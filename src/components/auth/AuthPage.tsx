@@ -6,11 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, TestTube } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
+  
+  // Check if we're in development mode
+  const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development';
+  const testEmail = import.meta.env.VITE_DEV_TEST_EMAIL || 'test@example.com';
+  const testPassword = import.meta.env.VITE_DEV_TEST_PASSWORD || 'testpass123';
 
   const [signInData, setSignInData] = useState({
     email: '',
@@ -72,16 +77,81 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  const handleTestAccountLogin = async () => {
+    setLoading(true);
+    
+    try {
+      const { error } = await signIn(testEmail, testPassword);
+      
+      if (error) {
+        toast.error(`Test account login failed: ${error.message}`);
+      } else {
+        toast.success('Logged in with test account!');
+      }
+    } catch (error) {
+      toast.error('Failed to login with test account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fillTestCredentials = () => {
+    setSignInData({
+      email: testEmail,
+      password: testPassword,
+    });
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
             <Sparkles className="h-12 w-12 text-purple-400" />
+            {isDevelopment && (
+              <div className="ml-2 bg-yellow-500/20 text-yellow-300 text-xs px-2 py-1 rounded">
+                DEV MODE
+              </div>
+            )}
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">AI Adventure Scribe</h1>
           <p className="text-purple-200">Your AI Dungeon Master awaits</p>
         </div>
+
+        {/* Development Test Account Section */}
+        {isDevelopment && (
+          <Card className="bg-yellow-500/10 backdrop-blur-md border-yellow-500/30">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-yellow-300 text-center flex items-center justify-center gap-2">
+                <TestTube className="h-5 w-5" />
+                Development Test Account
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={handleTestAccountLogin}
+                  className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
+                  disabled={loading}
+                >
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Quick Login
+                </Button>
+                <Button
+                  onClick={fillTestCredentials}
+                  variant="outline"
+                  className="flex-1 border-yellow-500/50 text-yellow-300 hover:bg-yellow-500/10"
+                  disabled={loading}
+                >
+                  Fill Form
+                </Button>
+              </div>
+              <p className="text-xs text-yellow-200/70 text-center">
+                Email: {testEmail} • Password: {testPassword}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-white/10 backdrop-blur-md border-purple-500/30">
           <CardHeader>
