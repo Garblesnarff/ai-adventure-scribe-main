@@ -42,87 +42,51 @@ export class AIService {
     length: string;
     tone: string;
   }): Promise<string> {
+    // Skip Edge Function - use local Gemini API directly
+    console.log('Using local Gemini API for campaign description...');
+    
     try {
-      // Try Supabase Edge Function first
-      const { data, error } = await supabase.functions.invoke('generate-campaign-description', {
-        body: params,
+      // Use local Gemini API
+      const geminiManager = this.getGeminiManager();
+      
+      const result = await geminiManager.executeWithRotation(async (genAI) => {
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        
+        const prompt = `Generate a compelling campaign description for a ${params.genre} campaign with ${params.difficulty} difficulty, ${params.length} length, and a ${params.tone} tone. The description should be 2-3 paragraphs long and capture the essence of an exciting D&D adventure.`;
+        
+        const response = await model.generateContent(prompt);
+        const result = await response.response;
+        return result.text();
       });
-
-      if (error) {
-        console.warn('Edge Function failed, trying local Gemini API:', error);
-        throw new Error('Edge Function failed');
-      }
-
-      return data.description;
       
-    } catch (edgeFunctionError) {
-      console.log('Falling back to local Gemini API for campaign description...');
+      console.log('Successfully generated campaign description using local Gemini API');
+      return result;
       
-      try {
-        // Fallback to local Gemini API
-        const geminiManager = this.getGeminiManager();
-        
-        const result = await geminiManager.executeWithRotation(async (genAI) => {
-          const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-          
-          const prompt = `Generate a compelling campaign description for a ${params.genre} campaign with ${params.difficulty} difficulty, ${params.length} length, and a ${params.tone} tone. The description should be 2-3 paragraphs long and capture the essence of an exciting D&D adventure.`;
-          
-          const response = await model.generateContent(prompt);
-          const result = await response.response;
-          return result.text();
-        });
-        
-        console.log('Successfully generated campaign description using local Gemini API');
-        return result;
-        
-      } catch (geminiError) {
-        console.error('Both Edge Function and local Gemini API failed:', geminiError);
-        throw new Error('Failed to generate campaign description - all AI services unavailable');
-      }
+    } catch (geminiError) {
+      console.error('Local Gemini API failed:', geminiError);
+      throw new Error('Failed to generate campaign description - AI service unavailable');
     }
   }
 
   /**
-   * Simplified chat with AI DM for MVP with fallback
+   * Simplified chat with AI DM for MVP with fallback and streaming support
    * Uses a single AI call instead of complex agent system
    */
   static async chatWithDM(params: {
     message: string;
     context: GameContext;
     conversationHistory?: ChatMessage[];
+    onStream?: (chunk: string) => void;
   }): Promise<string> {
+    // Skip Edge Function - use local Gemini API directly
+    console.log('Using local Gemini API for chat...');
+    
     try {
-      // Try Supabase Edge Function first
-      const aiContext = {
-        message: params.message,
-        campaignId: params.context.campaignId,
-        characterId: params.context.characterId,
-        sessionId: params.context.sessionId,
-        conversationHistory: params.conversationHistory || [],
-        campaignDetails: params.context.campaignDetails,
-        characterDetails: params.context.characterDetails,
-      };
-
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: aiContext,
-      });
-
-      if (error) {
-        console.warn('Edge Function failed, trying local Gemini API:', error);
-        throw new Error('Edge Function failed');
-      }
-
-      return data.response;
+      // Use local Gemini API
+      const geminiManager = this.getGeminiManager();
       
-    } catch (edgeFunctionError) {
-      console.log('Falling back to local Gemini API for chat...');
-      
-      try {
-        // Fallback to local Gemini API
-        const geminiManager = this.getGeminiManager();
-        
-        const result = await geminiManager.executeWithRotation(async (genAI) => {
-          const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const result = await geminiManager.executeWithRotation(async (genAI) => {
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
           
           // Build context for DM
           let contextPrompt = `You are an expert Dungeon Master running a D&D 5e campaign. `;
@@ -139,8 +103,8 @@ export class AIService {
           
           // Build conversation history
           const messages = [
-            { role: 'user', parts: contextPrompt },
-            { role: 'model', parts: 'Understood! I\'m ready to be your Dungeon Master.' }
+            { role: 'user', parts: [{ text: contextPrompt }] },
+            { role: 'model', parts: [{ text: 'Understood! I\'m ready to be your Dungeon Master.' }] }
           ];
           
           // Add conversation history
@@ -148,7 +112,7 @@ export class AIService {
             params.conversationHistory.forEach(msg => {
               messages.push({
                 role: msg.role === 'user' ? 'user' : 'model',
-                parts: msg.content
+                parts: [{ text: msg.content }]
               });
             });
           }
@@ -163,18 +127,31 @@ export class AIService {
             },
           });
           
-          const response = await chat.sendMessage(params.message);
-          const result = await response.response;
-          return result.text();
-        });
-        
-        console.log('Successfully generated DM response using local Gemini API');
-        return result;
-        
-      } catch (geminiError) {
-        console.error('Both Edge Function and local Gemini API failed:', geminiError);
-        throw new Error('Failed to get DM response - all AI services unavailable');
-      }
+          // Use streaming if callback provided
+          if (params.onStream) {
+            const response = await chat.sendMessageStream(params.message);
+            let fullResponse = '';
+            
+            for await (const chunk of response.stream) {
+              const chunkText = chunk.text();
+              fullResponse += chunkText;
+              params.onStream(chunkText);
+            }
+            
+            return fullResponse;
+          } else {
+            const response = await chat.sendMessage(params.message);
+            const result = await response.response;
+            return result.text();
+          }
+      });
+      
+      console.log('Successfully generated DM response using local Gemini API');
+      return result;
+      
+    } catch (geminiError) {
+      console.error('Local Gemini API failed:', geminiError);
+      throw new Error('Failed to get DM response - AI service unavailable');
     }
   }
 
@@ -244,6 +221,7 @@ export class AIService {
       return {
         currentKey: manager.getCurrentKeyInfo(),
         allKeyStats: manager.getStats(),
+        rateLimits: manager.getRateLimitStats(),
       };
     } catch (error) {
       return { error: 'Gemini API manager not available' };

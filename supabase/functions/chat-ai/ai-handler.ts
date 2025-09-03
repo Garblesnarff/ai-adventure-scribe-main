@@ -25,20 +25,20 @@ export async function generateAIResponse(
   messages: ChatMessage[],
   memoryContext: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
   try {
     // Prepare chat history with memory context
     const chatHistory = messages.map(msg => ({
       role: mapRole(msg.sender),
-      parts: msg.text,
+      parts: [{ text: msg.text }],
     }));
     
     // Add memory context to the system message
     if (memoryContext) {
       chatHistory.unshift({
         role: 'model',
-        parts: `You are a Dungeon Master. Use this context to inform your responses:${memoryContext}`,
+        parts: [{ text: `You are a Dungeon Master. Use this context to inform your responses:${memoryContext}` }],
       });
     }
 
