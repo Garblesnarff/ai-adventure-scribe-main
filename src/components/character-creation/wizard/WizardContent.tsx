@@ -57,7 +57,7 @@ const WizardContent: React.FC = () => {
               title: "Success",
               description: "Character created successfully!",
             });
-            navigate(`/character/${savedCharacter.id}`);
+            navigate('/characters');
           }
         } catch (error) {
           console.error('Error saving character:', error);
