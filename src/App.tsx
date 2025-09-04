@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import Index from './pages/Index';
+import Landing from './pages/Landing';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
 import CharacterWizard from './components/character-creation/character-wizard';
@@ -38,23 +39,31 @@ function App() {
         <CharacterProvider>
           <CampaignProvider>
             <Router>
-              <ProtectedRoute>
-                <div className="min-h-screen">
-                  <Navigation />
-                  <Breadcrumbs />
-                  <main>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/characters" element={<CharacterList />} />
-                      <Route path="/characters/create" element={<CharacterWizard />} />
-                      <Route path="/character/:id" element={<CharacterSheet />} />
-                      <Route path="/campaigns/create" element={<CampaignWizard />} />
-                      <Route path="/campaign/:id" element={<SimpleCampaignView />} />
-                    </Routes>
-                  </main>
-                  <Toaster />
-                </div>
-              </ProtectedRoute>
+              <div className="min-h-screen">
+                <Routes>
+                  {/* Public landing page */}
+                  <Route path="/welcome" element={<Landing />} />
+                  
+                  {/* Protected app routes */}
+                  <Route path="/*" element={
+                    <ProtectedRoute>
+                      <Navigation />
+                      <Breadcrumbs />
+                      <main>
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/characters" element={<CharacterList />} />
+                          <Route path="/characters/create" element={<CharacterWizard />} />
+                          <Route path="/character/:id" element={<CharacterSheet />} />
+                          <Route path="/campaigns/create" element={<CampaignWizard />} />
+                          <Route path="/campaign/:id" element={<SimpleCampaignView />} />
+                        </Routes>
+                      </main>
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+                <Toaster />
+              </div>
             </Router>
           </CampaignProvider>
         </CharacterProvider>
