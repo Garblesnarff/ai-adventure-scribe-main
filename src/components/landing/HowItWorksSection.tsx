@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -73,6 +74,11 @@ const steps: Step[] = [
 ];
 
 export const HowItWorksSection: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleCreateWorld = () => {
+    navigate('/');
+  };
   return (
     <section className="py-24 bg-gradient-to-b from-card/5 to-infinite-dark/50 relative overflow-hidden">
       {/* Background elements */}
@@ -225,7 +231,8 @@ export const HowItWorksSection: React.FC = () => {
             </p>
             <Button
               size="lg"
-              className="bg-gradient-to-r from-infinite-purple to-infinite-teal hover:from-infinite-purple/90 hover:to-infinite-teal/90 text-white px-8 py-4 rounded-xl shadow-2xl hover:shadow-infinite-purple/25 transition-all duration-300 flex items-center gap-3 text-lg font-semibold mx-auto"
+              onClick={handleCreateWorld}
+              className="bg-gradient-to-r from-infinite-purple to-infinite-teal hover:from-infinite-purple/90 hover:to-infinite-teal/90 text-white px-8 py-4 rounded-xl shadow-2xl hover:shadow-infinite-purple/25 transition-all duration-300 flex items-center gap-3 text-lg font-semibold mx-auto cursor-pointer"
             >
               Create Your First World
               <ArrowRight className="w-5 h-5" />
