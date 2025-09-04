@@ -84,7 +84,7 @@ const additionalFeatures = [
 
 export const FeaturesSection: React.FC = () => {
   return (
-    <section className="py-24 bg-gradient-to-b from-infinite-dark to-card/5">
+    <section id="features" className="py-24 bg-gradient-to-b from-infinite-dark to-card/5">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center mb-16">

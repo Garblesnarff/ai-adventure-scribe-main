@@ -1,8 +1,21 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, Sparkles, Globe, Clock } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleStartStory = () => {
+    navigate('/');
+  };
+
+  const handleWatchDemo = () => {
+    const featuresSection = document.getElementById('features');
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-infinite-dark via-infinite-purple/20 to-infinite-dark">
       {/* Animated Background Elements */}
@@ -66,7 +79,8 @@ export const HeroSection: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              className="bg-gradient-to-r from-infinite-purple to-infinite-teal hover:from-infinite-purple/90 hover:to-infinite-teal/90 text-white px-8 py-4 rounded-xl shadow-2xl hover:shadow-infinite-purple/25 transition-all duration-300 flex items-center gap-3 text-lg font-semibold"
+              onClick={handleStartStory}
+              className="bg-gradient-to-r from-infinite-purple to-infinite-teal hover:from-infinite-purple/90 hover:to-infinite-teal/90 text-white px-8 py-4 rounded-xl shadow-2xl hover:shadow-infinite-purple/25 transition-all duration-300 flex items-center gap-3 text-lg font-semibold cursor-pointer"
             >
               Start Your Infinite Story
               <ArrowRight className="w-5 h-5" />
@@ -75,7 +89,8 @@ export const HeroSection: React.FC = () => {
             <Button
               variant="outline"
               size="lg"
-              className="border-2 border-infinite-gold/30 hover:border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10 px-8 py-4 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center gap-3 text-lg font-semibold"
+              onClick={handleWatchDemo}
+              className="border-2 border-infinite-gold/30 hover:border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10 px-8 py-4 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center gap-3 text-lg font-semibold cursor-pointer"
             >
               <Play className="w-5 h-5" />
               Watch Demo
