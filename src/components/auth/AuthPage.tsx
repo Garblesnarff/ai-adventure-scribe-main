@@ -114,8 +114,8 @@ const AuthPage: React.FC = () => {
               </div>
             )}
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">AI Adventure Scribe</h1>
-          <p className="text-purple-200">Your AI Dungeon Master awaits</p>
+          <h1 className="text-4xl font-bold text-white mb-2">InfiniteRealms</h1>
+          <p className="text-purple-200">Your World, Your Story, Forever</p>
         </div>
 
         {/* Development Test Account Section */}

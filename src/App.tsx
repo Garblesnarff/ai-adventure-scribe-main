@@ -39,10 +39,10 @@ function App() {
           <CampaignProvider>
             <Router>
               <ProtectedRoute>
-                <div className="min-h-screen bg-background">
+                <div className="min-h-screen">
                   <Navigation />
                   <Breadcrumbs />
-                  <main className="container mx-auto px-4 py-8">
+                  <main>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/characters" element={<CharacterList />} />

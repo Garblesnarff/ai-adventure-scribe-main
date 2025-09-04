@@ -44,16 +44,17 @@ export const MemoryPanel: React.FC<MemoryPanelProps> = ({ sessionData, updateGam
   };
 
   return (
-    <Card className="w-full md:w-96 h-[calc(100vh-4rem)] bg-white/90 backdrop-blur-sm flex flex-col"> {/* Adjusted width and flex behavior */}
-      <div className="p-4 border-b flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <List className="h-5 w-5" />
-          <h3 className="font-semibold">Session Log</h3> {/* Changed title */}
+    <Card className="h-[80vh] bg-white shadow-sm border-0 flex flex-col">
+      <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <List className="h-5 w-5 text-gray-600" />
+          <h3 className="font-semibold text-gray-900">Session Log</h3>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-400 hover:text-gray-600"
         >
           {isExpanded ? (
             <ChevronDown className="h-4 w-4" />
@@ -66,16 +67,22 @@ export const MemoryPanel: React.FC<MemoryPanelProps> = ({ sessionData, updateGam
       {isExpanded && (
         <div className="flex-grow flex flex-col overflow-hidden"> {/* Ensure content can scroll if panel fixed height */}
           {/* Session Notes Section */}
-          <div className="p-4 border-b">
-            <h4 className="font-semibold mb-2 text-sm">Session Notes</h4>
+          <div className="p-6 border-b border-gray-100">
+            <h4 className="font-semibold mb-3 text-gray-900">Session Notes</h4>
             <Textarea
               value={localSessionNotes}
               onChange={(e) => setLocalSessionNotes(e.target.value)}
               placeholder="Type your session notes here..."
-              rows={3}
-              className="mb-2 text-xs"
+              rows={4}
+              className="mb-3 text-sm bg-gray-50 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
-            <Button onClick={handleSaveNotes} size="sm" variant="outline">Save Notes</Button>
+            <Button
+              onClick={handleSaveNotes}
+              size="sm"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              Save Notes
+            </Button>
           </div>
 
           {/* Memories Section */}

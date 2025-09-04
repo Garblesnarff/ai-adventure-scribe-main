@@ -55,7 +55,7 @@ import GameContent from './game/GameContent';
  */
 export const GameInterface: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[url('/parchment-bg.png')] bg-cover p-4">
+    <div className="min-h-screen bg-gray-50">
       {/* GameContent will now be responsible for its own session and context providers */}
       <GameContent />
     </div>

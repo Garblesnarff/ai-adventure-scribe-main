@@ -1,9 +1,9 @@
 
-#### **AI Adventure Scribe: A D&D Platform with a Multi-Agent AI Dungeon Master**
+#### **InfiniteRealms: Persistent Worlds That Evolve Forever**
 
 **The Problem:** Solo Dungeons & Dragons is difficult, and finding a reliable human Dungeon Master (DM) is even harder. Existing AI storytelling tools suffer from short-term memory, leading to generic, repetitive, and forgetful campaigns that lack the depth of a human-led adventure.
 
-**The Solution:** AI Adventure Scribe provides a persistent, always-available AI Dungeon Master that remembers every character, decision, and plot twist in your campaign. It’s powered by a team of specialized AI agents—a creative Storyteller and a meticulous Rules-Expert—that collaborate in real-time. This unique architecture creates a dynamic, coherent, and deeply personalized narrative that evolves with your choices, delivering the rich, emergent storytelling of a human-led D&D game.
+**The Solution:** InfiniteRealms provides persistent worlds that evolve across generations. Create campaigns, characters, and stories that live forever in your own personal universe. It’s powered by a team of specialized AI agents—a creative Storyteller and a meticulous Rules-Expert—that collaborate in real-time. This unique architecture creates a dynamic, coherent, and deeply personalized narrative that evolves with your choices, delivering the rich, emergent storytelling of a human-led D&D game.
 
 #### **Key Features**
 *   🧠 **Multi-Agent AI Core**: A Dungeon Master agent for storytelling and a Rules Interpreter for mechanics collaborate to ensure creative yet fair gameplay, mimicking the cognitive processes of a human DM.
@@ -26,8 +26,8 @@
 1.  **Prerequisites**: Node.js and npm installed.
 2.  **Clone the repository**:
     ```bash
-    git clone https://github.com/rob-smith/ai-adventure-scribe.git
-    cd ai-adventure-scribe
+    git clone https://github.com/rob-smith/infinite-realms.git
+    cd infinite-realms
     ```
 3.  **Install dependencies**:
     ```bash

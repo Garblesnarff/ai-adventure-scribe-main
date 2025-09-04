@@ -26,16 +26,16 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b border-border/40">
+    <nav className="bg-infinite-dark/95 backdrop-blur supports-[backdrop-filter]:bg-infinite-dark/60 sticky top-0 z-50 w-full border-b border-infinite-purple/30">
       <div className="container mx-auto px-4">
         <div className="flex h-14 items-center justify-between">
           {/* Logo/Home */}
-          <Link 
-            to="/" 
-            className="flex items-center space-x-2 font-bold text-xl"
+          <Link
+            to="/"
+            className="flex items-center space-x-2 font-bold text-xl text-infinite-gold hover:text-infinite-gold/80 transition-colors"
           >
-            <Sword className="h-6 w-6" />
-            <span>D&D AI</span>
+            <Sword className="h-6 w-6 text-infinite-purple" />
+            <span>InfiniteRealms</span>
           </Link>
 
           {/* Navigation Links */}

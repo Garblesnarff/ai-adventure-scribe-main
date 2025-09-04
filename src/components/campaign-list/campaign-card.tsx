@@ -59,49 +59,71 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
   };
 
   return (
-    <Card className="p-6 hover:shadow-lg transition-shadow">
-      <div 
-        className="cursor-pointer"
+    <Card className="group relative overflow-hidden border border-border/50 bg-card/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-card hover:border-infinite-purple/30">
+      <div
+        className="p-6 cursor-pointer"
         onClick={() => navigate(`/campaign/${campaign.id}`)}
       >
-        <h3 className="text-xl font-semibold mb-2">{campaign.name}</h3>
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-lg font-semibold text-card-foreground group-hover:text-infinite-gold transition-colors">
+            {campaign.name}
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+
         {campaign.description && (
-          <p className="text-muted-foreground mb-4 line-clamp-2">
+          <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">
             {campaign.description}
           </p>
         )}
-        <div className="space-y-2">
+
+        <div className="space-y-3">
           {campaign.genre && (
-            <p className="text-sm"><span className="font-medium">Genre:</span> {campaign.genre}</p>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="font-medium text-card-foreground mr-2">Genre:</span>
+              <span className="bg-infinite-purple/20 text-infinite-purple px-2 py-1 rounded-full border border-infinite-purple/30">{campaign.genre}</span>
+            </div>
           )}
           {campaign.difficulty_level && (
-            <p className="text-sm"><span className="font-medium">Difficulty:</span> {campaign.difficulty_level}</p>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="font-medium text-card-foreground mr-2">Difficulty:</span>
+              <span className="bg-infinite-teal/20 text-infinite-teal px-2 py-1 rounded-full border border-infinite-teal/30">{campaign.difficulty_level}</span>
+            </div>
           )}
           {campaign.campaign_length && (
-            <p className="text-sm"><span className="font-medium">Length:</span> {campaign.campaign_length}</p>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="font-medium text-card-foreground mr-2">Length:</span>
+              <span className="bg-infinite-gold/20 text-infinite-gold px-2 py-1 rounded-full border border-infinite-gold/30">{campaign.campaign_length}</span>
+            </div>
           )}
           {campaign.tone && (
-            <p className="text-sm"><span className="font-medium">Tone:</span> {campaign.tone}</p>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="font-medium text-card-foreground mr-2">Tone:</span>
+              <span className="bg-accent/20 text-accent px-2 py-1 rounded-full border border-accent/30">{campaign.tone}</span>
+            </div>
           )}
         </div>
       </div>
-      <div className="flex justify-between mt-6">
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete();
-          }}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+
+      <div className="px-6 pb-6">
         <Button
           variant="outline"
           size="sm"
+          className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 hover:border-primary text-primary-foreground hover:text-infinite-gold transition-all duration-200"
           onClick={() => navigate(`/campaign/${campaign.id}`)}
         >
-          View Campaign <ArrowRight className="w-4 h-4 ml-2" />
+          Enter Realm
+          <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
     </Card>

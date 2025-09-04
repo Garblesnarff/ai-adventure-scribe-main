@@ -11,6 +11,7 @@ import { ChatInput } from './ChatInput';
 import { VoiceHandler } from './VoiceHandler';
 import { MemoryPanel } from './MemoryPanel'; // Will modify this later for notes
 import { MessageHandler } from './message/MessageHandler';
+import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
 import { MessageProvider } from '@/contexts/MessageContext';
 import { useGameSession } from '@/hooks/use-game-session';
@@ -140,15 +141,15 @@ const GameContent: React.FC = () => {
   const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
 
   if (combinedIsLoading) {
-    return <div className="text-center p-10">Loading game data...</div>;
+    return <div className="text-center p-10 text-muted-foreground">Loading your realm...</div>;
   }
 
   if (combinedError) {
-    return <div className="text-center p-10 text-red-600">Error: {combinedError}</div>;
+    return <div className="text-center p-10 text-destructive">Error: {combinedError}</div>;
   }
-  
+
   if (!sessionId || !sessionData) {
-    return <div className="text-center p-10">Initializing session... If this persists, check campaign/character selection.</div>;
+    return <div className="text-center p-10 text-muted-foreground">Initializing your infinite story... If this persists, check campaign/character selection.</div>;
   }
 
   // These are validated ones from params, used for data loading.
@@ -160,36 +161,78 @@ const GameContent: React.FC = () => {
     // Now GameContent sets up the providers with its own session
     <MessageProvider sessionId={sessionId}>
       <MemoryProvider sessionId={sessionId}>
-        <div className="flex gap-4 max-w-7xl mx-auto">
-          <Card className="flex-1 bg-white/90 backdrop-blur-sm shadow-xl p-6">
-            <h1 className="text-4xl text-center mb-6 text-primary">
-              {sessionData.campaign_id ? `Adventure in ${sessionData.campaign_id}` : "D&D Adventure"}
-            </h1>
-            <div>Turn: {sessionData.turn_count ?? 0}</div>
-            <div>Scene: {sessionData.current_scene_description ?? "The adventure unfolds..."}</div>
-            <div className="flex flex-col">
-              <MessageList />
-              <div className="mt-4">
-                <VoiceHandler />
-                <MessageHandler
-                  sessionId={sessionId} // Use sessionId from useGameSession
-                  campaignId={campaignIdForHandler || null}
-                  characterId={characterIdForHandler}
-                  turnCount={sessionData.turn_count ?? 0}
-                  updateGameSessionState={updateGameSessionState}
-                >
-                  {({ handleSendMessage, isProcessing }) => (
-                    <ChatInput 
-                      onSendMessage={handleSendMessage}
-                      isDisabled={isProcessing}
-                    />
-                  )}
-                </MessageHandler>
+        <div className="min-h-screen bg-background">
+          <div className="max-w-7xl mx-auto p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Chat Area */}
+              <div className="lg:col-span-2">
+                <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden">
+                  {/* Enhanced Header */}
+                  <div className="p-6 border-b border-border/60 bg-gradient-to-r from-infinite-dark/80 to-card/60">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h1 className="text-2xl font-semibold text-card-foreground mb-2">
+                          {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
+                        </h1>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
+                            <span>Chapter {sessionData.turn_count ?? 0}</span>
+                          </div>
+                          <span>•</span>
+                          <span className="max-w-md truncate text-muted-foreground/80">
+                            {sessionData.current_scene_description ?? "Your infinite story unfolds..."}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Status indicators */}
+                      <div className="flex items-center gap-3 ml-4">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-infinite-purple/20 rounded-full border border-infinite-purple/30">
+                          <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse"></div>
+                          <span className="text-xs font-medium text-infinite-teal">Active Realm</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Messages Area */}
+                  <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50">
+                    <MessageList />
+
+                    {/* Typing Indicator */}
+                    <div className="absolute bottom-24 left-6 z-10">
+                      {/* This could be connected to a typing state in the future */}
+                    </div>
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
+                    <VoiceHandler />
+                    <MessageHandler
+                      sessionId={sessionId} // Use sessionId from useGameSession
+                      campaignId={campaignIdForHandler || null}
+                      characterId={characterIdForHandler}
+                      turnCount={sessionData.turn_count ?? 0}
+                      updateGameSessionState={updateGameSessionState}
+                    >
+                      {({ handleSendMessage, isProcessing }) => (
+                        <ChatInput
+                          onSendMessage={handleSendMessage}
+                          isDisabled={isProcessing}
+                        />
+                      )}
+                    </MessageHandler>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Memory Panel */}
+              <div className="lg:col-span-1">
+                <MemoryPanel sessionData={sessionData} updateGameSessionState={updateGameSessionState} />
               </div>
             </div>
-          </Card>
-          {/* Pass sessionData and updateGameSessionState to MemoryPanel for notes */}
-          <MemoryPanel sessionData={sessionData} updateGameSessionState={updateGameSessionState} />
+          </div>
         </div>
       </MemoryProvider>
     </MessageProvider>
