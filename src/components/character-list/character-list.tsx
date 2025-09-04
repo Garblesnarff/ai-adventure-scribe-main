@@ -36,31 +36,32 @@ const CharacterList: React.FC = () => {
   /**
    * Fetches all characters for the current user from Supabase
    */
-  React.useEffect(() => {
-    const fetchCharacters = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('characters')
-          .select('id, name, description, race, class, level')
-          .order('created_at', { ascending: false });
+  const fetchCharacters = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('characters')
+        .select('id, name, description, race, class, level')
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        const transformedData = transformCharacterData(data || []);
-        setCharacters(transformedData);
-      } catch (error) {
-        console.error('Error fetching characters:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load characters",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCharacters();
+      if (error) throw error;
+      const transformedData = transformCharacterData(data || []);
+      setCharacters(transformedData);
+    } catch (error) {
+      console.error('Error fetching characters:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load characters",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
+
+  React.useEffect(() => {
+    fetchCharacters();
+  }, [fetchCharacters]);
 
   /**
    * Navigates to character creation page
@@ -96,6 +97,7 @@ const CharacterList: React.FC = () => {
             <CharacterCard
               key={character.id}
               character={character as Partial<Character> & { id: string; name: string }}
+              onDelete={fetchCharacters}
             />
           );
         })}
