@@ -5,7 +5,16 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
 
@@ -15,6 +24,7 @@ import { Character } from '@/types/character';
  */
 interface CharacterCardProps {
   character: Partial<Character> & Required<Pick<Character, 'id' | 'name'>>;
+  onDelete?: () => void;
 }
 
 /**
@@ -22,14 +32,22 @@ interface CharacterCardProps {
  * Includes options to view, play, or delete the character
  * @param character - Character data to display
  */
-const CharacterCard = ({ character }: CharacterCardProps) => {
+const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   /**
-   * Handles character deletion
+   * Handles character deletion confirmation
+   * Shows delete dialog when user clicks delete button
+   */
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  /**
+   * Handles actual character deletion
    * Removes character from database and updates UI
    */
   const handleDelete = async () => {
@@ -46,8 +64,12 @@ const CharacterCard = ({ character }: CharacterCardProps) => {
         description: "The character has been successfully removed.",
       });
 
-      // Invalidate characters query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['characters'] });
+      setShowDeleteDialog(false);
+      
+      // Call parent callback to refresh character list
+      if (onDelete) {
+        onDelete();
+      }
     } catch (error) {
       console.error('Error deleting character:', error);
       toast({
@@ -55,6 +77,7 @@ const CharacterCard = ({ character }: CharacterCardProps) => {
         description: "Failed to delete character. Please try again.",
         variant: "destructive",
       });
+      setShowDeleteDialog(false);
     }
   };
 
@@ -90,7 +113,7 @@ const CharacterCard = ({ character }: CharacterCardProps) => {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                handleDelete();
+                handleDeleteClick();
               }}
             >
               <Trash2 className="w-4 h-4" />
@@ -121,6 +144,23 @@ const CharacterCard = ({ character }: CharacterCardProps) => {
         onClose={() => setShowCampaignModal(false)}
         characterId={character.id}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Character</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{character.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Character
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
