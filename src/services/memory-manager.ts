@@ -8,11 +8,7 @@ export interface Memory {
   category?: string;
   content: string;
   importance: number;
-  narrative_weight: number;
   emotional_tone?: string;
-  story_arc?: string;
-  prose_quality: boolean;
-  chapter_marker: boolean;
   metadata?: any;
   embedding?: string;
   created_at: string;
@@ -26,7 +22,6 @@ export type MemoryType =
 
 export interface MemoryExtractionResult {
   memories: Omit<Memory, 'id' | 'created_at' | 'updated_at'>[];
-  chapterMarker?: boolean;
 }
 
 export interface MemoryContext {
@@ -86,15 +81,10 @@ Extract 1-4 key memories in this JSON format:
       "category": "brief category",
       "content": "concise memory description",
       "importance": 1-10,
-      "narrative_weight": 1-10,
       "emotional_tone": "peaceful|mysterious|foreboding|intense|triumphant|humorous|melancholy|neutral",
-      "story_arc": "main_quest|side_quest|character_development|world_building|specific_arc_name",
-      "prose_quality": true/false,
-      "chapter_marker": false,
       "metadata": {}
     }
-  ],
-  "chapter_marker": false
+  ]
 }
 
 GUIDELINES:
@@ -173,7 +163,6 @@ GUIDELINES:
         .from('memories')
         .select('*')
         .eq('session_id', sessionId)
-        .order('narrative_weight', { ascending: false })
         .order('importance', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(limit);
