@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, LogOut } from 'lucide-react';
 import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
 import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { toast } from 'sonner';
@@ -21,13 +22,14 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
   campaignDetails,
   characterDetails,
 }) => {
-  const { session, loading: sessionLoading } = useSimpleGameSession(campaignId, characterId);
+  const { session, loading: sessionLoading, endSession } = useSimpleGameSession(campaignId, characterId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -43,22 +45,97 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
     if (session?.id) {
       loadConversationHistory();
     }
-  }, [session?.id]);
+  }, [session?.id, loadConversationHistory]);
 
-  const loadConversationHistory = async () => {
+  const loadConversationHistory = useCallback(async () => {
     if (!session?.id) return;
 
     setIsLoadingHistory(true);
     try {
       const history = await AIService.getConversationHistory(session.id);
       setMessages(history);
+      
+      // If this is a new session with no messages, generate an opening message
+      if (history.length === 0) {
+        await generateOpeningMessage();
+      }
     } catch (error) {
       console.error('Failed to load conversation history:', error);
       toast.error('Failed to load conversation history');
     } finally {
       setIsLoadingHistory(false);
     }
+  }, [session?.id, generateOpeningMessage]);
+
+  /**
+   * Handle ending the current session
+   */
+  const handleEndSession = async () => {
+    if (!session?.id) return;
+
+    try {
+      // Generate a session summary based on the conversation
+      const conversationSummary = messages.length > 0 
+        ? `Session concluded with ${messages.length} messages exchanged.` 
+        : 'Session ended without gameplay.';
+
+      await endSession(session.id, conversationSummary);
+      
+      toast.success('Session ended successfully!', {
+        description: 'Your progress has been saved.',
+      });
+
+      // Navigate back to campaign page
+      navigate(`/campaign/${campaignId}`);
+    } catch (error) {
+      console.error('Error ending session:', error);
+      toast.error('Failed to end session properly');
+    }
   };
+
+  /**
+   * Generate an opening message for a new session
+   */
+  const generateOpeningMessage = useCallback(async () => {
+    if (!session?.id) return;
+
+    try {
+      const context: GameContext = {
+        campaignId,
+        characterId,
+        sessionId: session.id,
+        campaignDetails,
+        characterDetails,
+      };
+
+      // Generate the opening message
+      const openingContent = await AIService.generateOpeningMessage({ context });
+
+      // Create the DM message
+      const dmMessage: ChatMessage = {
+        id: `dm-opening-${Date.now()}`,
+        role: 'assistant',
+        content: openingContent,
+        timestamp: new Date(),
+      };
+
+      // Save to database
+      await AIService.saveChatMessage({
+        sessionId: session.id,
+        role: 'assistant',
+        content: openingContent,
+        speakerId: 'dm',
+      });
+
+      // Add to UI
+      setMessages([dmMessage]);
+      
+      console.log('Opening message generated and saved');
+    } catch (error) {
+      console.error('Failed to generate opening message:', error);
+      toast.error('Failed to generate opening message');
+    }
+  }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,26 +259,37 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
               </span>
             )}
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              const stats = AIService.getApiStats();
-              console.log('API Stats:', stats);
-              
-              const rateLimits = stats.rateLimits;
-              if (rateLimits) {
-                toast.success('API Stats', {
-                  description: `Daily: ${rateLimits.remainingDaily}/${rateLimits.dailyLimit} | Minute: ${rateLimits.remainingMinutely}/${rateLimits.minutelyLimit}`,
-                  duration: 4000,
-                });
-              } else {
-                toast.success('API stats logged to console');
-              }
-            }}
-          >
-            API Stats
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const stats = AIService.getApiStats();
+                console.log('API Stats:', stats);
+                
+                const rateLimits = stats.rateLimits;
+                if (rateLimits) {
+                  toast.success('API Stats', {
+                    description: `Daily: ${rateLimits.remainingDaily}/${rateLimits.dailyLimit} | Minute: ${rateLimits.remainingMinutely}/${rateLimits.minutelyLimit}`,
+                    duration: 4000,
+                  });
+                } else {
+                  toast.success('API stats logged to console');
+                }
+              }}
+            >
+              API Stats
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleEndSession}
+              disabled={isSending}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              End Session
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       

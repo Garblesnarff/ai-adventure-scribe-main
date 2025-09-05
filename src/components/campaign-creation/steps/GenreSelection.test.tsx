@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 
 // Mock CampaignContext
 const mockDispatch = vi.fn();
-let mockCampaignState = {
+const mockCampaignState = {
   campaign: {
     genre: '',
     name: 'Test Campaign', // Add other required fields if validation runs
