@@ -29,6 +29,7 @@ interface CampaignCardProps {
     tone: string | null;
   };
   isFeatured?: boolean;
+  coverImage?: string;
 }
 
 /**
@@ -36,7 +37,7 @@ interface CampaignCardProps {
  * Displays individual campaign information in a card format
  * @param campaign - Campaign data to display
  */
-const CampaignCard = ({ campaign, isFeatured = false }: CampaignCardProps) => {
+const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -84,6 +85,8 @@ const CampaignCard = ({ campaign, isFeatured = false }: CampaignCardProps) => {
     }
   };
 
+  const resolvedImage = coverImage ? new URL(coverImage, import.meta.url).href : (isFeatured ? new URL('/card-background.jpeg', import.meta.url).href : undefined);
+
   return (
     <Card
       className={"campaign-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl " + (isFeatured ? 'featured-card' : '')}
@@ -93,7 +96,7 @@ const CampaignCard = ({ campaign, isFeatured = false }: CampaignCardProps) => {
       <div
         className={"campaign-hero flex items-end p-4 cursor-pointer " + (isFeatured ? 'featured' : '')}
         onClick={() => navigate(`/campaign/${campaign.id}`)}
-        style={isFeatured ? { backgroundImage: `url(${new URL('/card-background.jpeg', import.meta.url).href})` } : undefined}
+  style={resolvedImage ? { backgroundImage: `url(${resolvedImage})` } : undefined}
       >
         {isFeatured && (
           <>
