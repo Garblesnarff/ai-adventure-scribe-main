@@ -107,11 +107,31 @@ const CampaignList = () => {
   }
 
   // Render campaign grid
+  // map known campaign names to public cover images
+  const getCoverFor = (name: string | null) => {
+    if (!name) return undefined;
+    const n = name.toLowerCase();
+  if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
+  if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
+  if (n.includes('tenebrous')) return '/tenebrous.jpeg';
+    return undefined;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {campaigns.map((campaign, i) => (
-        <CampaignCard key={campaign.id} campaign={campaign} isFeatured={i === 0} />
-      ))}
+      {campaigns.map((campaign, i) => {
+        // prefer explicit mapping; fall back to default test image for the first card
+        const mapped = getCoverFor(campaign.name);
+        const cover = mapped ?? (i === 0 ? '/card-background.jpeg' : undefined);
+        return (
+          <CampaignCard
+            key={campaign.id}
+            campaign={campaign}
+            isFeatured={Boolean(cover)}
+            coverImage={cover}
+          />
+        );
+      })}
     </div>
   );
 };
