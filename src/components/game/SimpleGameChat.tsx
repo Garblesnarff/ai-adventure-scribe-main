@@ -304,7 +304,8 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4">
+        <div className="parchment-panel flex-1 overflow-hidden">
+          <ScrollArea className="flex-1 p-4 chat-scroll">
           {isLoadingHistory ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
@@ -342,11 +343,10 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
                             <button
                               key={i}
                               type="button"
-                              className={`choice-btn ${i === 0 ? 'primary' : ''}`}
+                              className={`choice-btn`}
                               onClick={() => setCurrentMessage(c)}
                               onDoubleClick={async () => {
                                 setCurrentMessage(c);
-                                // small delay so the UI updates before sending
                                 setTimeout(() => {
                                   const fakeEvent = { preventDefault() {} } as unknown as React.FormEvent;
                                   sendMessage(fakeEvent);
@@ -388,9 +388,10 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
               <div ref={messagesEndRef} />
             </div>
           )}
-        </ScrollArea>
-        
-        <div className="border-t p-4 chat-composer">
+  </ScrollArea>
+  </div>
+
+  <div className="border-t p-4 chat-composer">
           <form onSubmit={sendMessage} className="flex space-x-2 items-center">
             <Input
               aria-label="Chat input"

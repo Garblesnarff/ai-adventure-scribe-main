@@ -307,7 +307,8 @@
   }
   .choice-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(35,25,15,0.12); }
   .choice-btn:active { transform: translateY(-1px); }
-  .choice-btn.primary { background: linear-gradient(180deg,#efe9ff,#e6ddff); border-color: rgba(107,70,193,0.12); }
+  /* primary choice uses warm gold accent rather than purple */
+  .choice-btn.primary { background: linear-gradient(180deg,#fff4db,#ffedbf); border-color: rgba(245,158,11,0.16); color: #2b1f00; }
 
   /* Message grouping — soften gaps for grouped messages */
   .group + .group { margin-top: 8px; }
