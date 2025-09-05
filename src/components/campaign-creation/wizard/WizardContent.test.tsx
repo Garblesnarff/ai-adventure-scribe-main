@@ -55,7 +55,7 @@ vi.mock('./useCampaignSave', () => ({
 }));
 
 const mockCampaignDispatch = vi.fn();
-let mockCampaignState = { campaign: { name: 'Test Campaign', setting: {}, genre: '', campaignParameters: {}, basicDetails: {} } };
+const mockCampaignState = { campaign: { name: 'Test Campaign', setting: {}, genre: '', campaignParameters: {}, basicDetails: {} } };
 vi.mock('@/contexts/CampaignContext', async (importOriginal) => {
   const actual = await importOriginal() as any;
   return {

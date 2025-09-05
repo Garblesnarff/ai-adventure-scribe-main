@@ -283,6 +283,66 @@ export class AIService {
   }
 
   /**
+   * Generate an opening message for a new campaign session
+   * Creates an engaging introduction based on campaign and character context
+   */
+  static async generateOpeningMessage(params: {
+    context: GameContext;
+  }): Promise<string> {
+    console.log('Generating opening message for new session...');
+    
+    try {
+      // Use local Gemini API
+      const geminiManager = this.getGeminiManager();
+      
+      const result = await geminiManager.executeWithRotation(async (genAI) => {
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        
+        // Build context for opening message
+        let contextPrompt = `You are an expert Dungeon Master starting a new D&D 5e adventure. Create an engaging opening scene that introduces the player to their adventure.`;
+        
+        if (params.context.campaignDetails) {
+          contextPrompt += `\n\nCAMPAIGN CONTEXT:\nTitle: "${params.context.campaignDetails.name}"\nDescription: ${params.context.campaignDetails.description}`;
+        }
+        
+        if (params.context.characterDetails) {
+          const char = params.context.characterDetails;
+          contextPrompt += `\n\nPLAYER CHARACTER:\nName: ${char.name}\nRace: ${char.race}\nClass: ${char.class}\nLevel: ${char.level}`;
+          if (char.background) {
+            contextPrompt += `\nBackground: ${char.background}`;
+          }
+          if (char.description) {
+            contextPrompt += `\nDescription: ${char.description}`;
+          }
+        }
+        
+        contextPrompt += `\n\nCreate an opening scene that:
+1. Sets the mood and atmosphere of the campaign
+2. Introduces the character's starting situation
+3. Provides clear context for where they are and why
+4. Includes sensory details (what they see, hear, feel)
+5. Ends with a clear prompt for the player to take action
+6. Is 2-3 paragraphs long
+7. Speaks directly to the player using "you" perspective
+
+Make it immersive, engaging, and true to the campaign's tone. Don't wait for the player to ask - dive right into the adventure!`;
+        
+        const response = await model.generateContent(contextPrompt);
+        const result = await response.response;
+        return result.text();
+      });
+      
+      console.log('Successfully generated opening message');
+      return result;
+      
+    } catch (error) {
+      console.error('Failed to generate opening message:', error);
+      // Fallback generic opening
+      return `Welcome to your adventure! You find yourself at the beginning of an epic journey. Your character stands ready to face whatever challenges lie ahead. What would you like to do?`;
+    }
+  }
+
+  /**
    * Get Gemini API manager statistics (for debugging)
    */
   static getApiStats(): any {

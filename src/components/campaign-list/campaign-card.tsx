@@ -1,10 +1,22 @@
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Trash2 } from 'lucide-react';
+import { ArrowRight, Trash2, Play } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import CharacterSelectionModal from './character-selection-modal';
 
 interface CampaignCardProps {
   campaign: {
@@ -27,9 +39,19 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCharacterModal, setShowCharacterModal] = useState(false);
 
   /**
-   * Handles campaign deletion
+   * Handles campaign deletion confirmation
+   * Shows delete dialog when user clicks delete button
+   */
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  /**
+   * Handles actual campaign deletion
    * Removes campaign from database and updates UI
    */
   const handleDelete = async () => {
@@ -46,6 +68,8 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
         description: "The campaign has been successfully removed.",
       });
 
+      setShowDeleteDialog(false);
+      
       // Invalidate campaigns query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     } catch (error) {
@@ -55,6 +79,7 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
         description: "Failed to delete campaign. Please try again.",
         variant: "destructive",
       });
+      setShowDeleteDialog(false);
     }
   };
 
@@ -74,7 +99,7 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
             className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete();
+              handleDeleteClick();
             }}
           >
             <Trash2 className="w-4 h-4" />
@@ -115,17 +140,55 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
         </div>
       </div>
 
-      <div className="px-6 pb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 hover:border-primary text-primary-foreground hover:text-infinite-gold transition-all duration-200"
-          onClick={() => navigate(`/campaign/${campaign.id}`)}
-        >
-          Enter Realm
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+      <div className="px-6 pb-6 space-y-2">
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1 bg-primary hover:bg-primary/90"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCharacterModal(true);
+            }}
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Quick Play
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 bg-primary/10 hover:bg-primary/20 border-primary/30 hover:border-primary text-primary-foreground hover:text-infinite-gold transition-all duration-200"
+            onClick={() => navigate(`/campaign/${campaign.id}`)}
+          >
+            Enter Realm
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{campaign.name}"? This will permanently remove the campaign and all associated game sessions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Campaign
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <CharacterSelectionModal
+        isOpen={showCharacterModal}
+        onClose={() => setShowCharacterModal(false)}
+        campaignId={campaign.id}
+        campaignName={campaign.name}
+      />
     </Card>
   );
 };
