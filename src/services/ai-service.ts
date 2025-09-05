@@ -54,7 +54,35 @@ export class AIService {
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
         
-        const prompt = `Generate a compelling campaign description for a ${params.genre} campaign with ${params.difficulty} difficulty, ${params.length} length, and a ${params.tone} tone. The description should be 2-3 paragraphs long and capture the essence of an exciting D&D adventure.`;
+        const prompt = `Create an engaging D&D 5e campaign description that hooks players immediately and sets up an epic adventure.
+
+**Campaign Parameters:**
+- Genre: ${params.genre}
+- Difficulty: ${params.difficulty}
+- Expected Length: ${params.length}
+- Tone: ${params.tone}
+
+**Requirements:**
+1. **Hook**: Start with a compelling central mystery, threat, or opportunity that demands heroes
+2. **Stakes**: Make it clear what happens if the heroes don't act (people die, world ends, etc.)
+3. **Unique Elements**: Include distinctive locations, NPCs, or plot devices that make this campaign memorable
+4. **Player Agency**: Hint at meaningful choices and multiple approaches to challenges
+5. **World Integration**: Suggest how character backgrounds might connect to the plot
+6. **Adventure Potential**: Indicate specific types of encounters (exploration, political intrigue, combat, puzzles)
+
+**Tone Guidelines:**
+- ${params.tone === 'dark' ? 'Emphasize moral dilemmas, harsh consequences, and atmospheric dread. Heroes face difficult choices with no clear "right" answer.' : ''}
+- ${params.tone === 'heroic' ? 'Focus on noble quests, clear good vs evil, and inspiring moments. Heroes are destined for greatness and legendary deeds.' : ''}
+- ${params.tone === 'comedic' ? 'Include absurd situations, witty NPCs, and opportunities for humor. Serious threats exist but approached with levity.' : ''}
+- ${params.tone === 'mysterious' ? 'Layer in secrets, hidden agendas, and puzzles to solve. Nothing is quite what it seems on the surface.' : ''}
+- ${params.tone === 'gritty' ? 'Realistic consequences, resource management, and survival elements. Combat is dangerous and magic is rare.' : ''}
+
+**Structure:**
+- **Paragraph 1**: The central hook and immediate threat/opportunity
+- **Paragraph 2**: The unique world elements, key NPCs, and what makes this adventure special
+- **Paragraph 3**: What players can expect - types of challenges, character integration, and why this matters
+
+Create a campaign description that makes players say "I want to play in this world right now!"`;  
         
         const response = await model.generateContent(prompt);
         const result = await response.response;
@@ -105,27 +133,66 @@ export class AIService {
       const result = await geminiManager.executeWithRotation(async (genAI) => {
           const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
           
-          // Build context for DM
-          let contextPrompt = `You are an expert Dungeon Master running a D&D 5e campaign. `;
+          // Build enhanced context for DM interactions
+          let contextPrompt = `You are a skilled D&D 5e Dungeon Master who creates immersive, mechanically-sound adventures. You balance compelling narrative with proper game mechanics, always giving players meaningful choices with clear consequences.`;
           
           if (params.context.campaignDetails) {
-            contextPrompt += `Campaign: "${params.context.campaignDetails.name}" - ${params.context.campaignDetails.description}. `;
+            contextPrompt += `\n\nCAMPAIGN: "${params.context.campaignDetails.name}" - ${params.context.campaignDetails.description}`;
           }
           
           if (params.context.characterDetails) {
-            contextPrompt += `Player Character: ${params.context.characterDetails.name}, a level ${params.context.characterDetails.level} ${params.context.characterDetails.race} ${params.context.characterDetails.class}. `;
+            const char = params.context.characterDetails;
+            contextPrompt += `\n\nPLAYER CHARACTER: ${char.name}, a level ${char.level} ${char.race} ${char.class}`;
+            if (char.background) {
+              contextPrompt += ` (${char.background} background)`;
+            }
+            contextPrompt += `.`;
           }
           
           // Add relevant memories to context
           if (relevantMemories.length > 0) {
-            contextPrompt += `\n\nIMPORTANT MEMORIES from this adventure:\n`;
+            contextPrompt += `\n\nIMPORTANT STORY MEMORIES:\n`;
             relevantMemories.forEach((memory, index) => {
               contextPrompt += `${index + 1}. [${memory.type.toUpperCase()}] ${memory.content}\n`;
             });
-            contextPrompt += `\nUse these memories to maintain consistency and continuity.\n`;
+            contextPrompt += `\nReference these memories naturally to maintain story continuity.`;
           }
           
-          contextPrompt += `Respond as the DM in an engaging, immersive way. Keep responses 1-3 paragraphs.`;
+          contextPrompt += `\n\nDM RESPONSE GUIDELINES:
+**Core Principles:**
+- Respond to the player's action with clear consequences and vivid descriptions
+- Use D&D 5e mechanics when appropriate (ask for ability checks, saving throws, attacks)
+- Always provide 2-3 meaningful choices for the player's next action
+- Include sensory details and environmental context
+- Track narrative threads and callback to previous events
+- Give NPCs distinct voices and personalities
+
+**When to Request Dice Rolls:**
+- Uncertain outcomes: "Roll a d20 + your Investigation modifier"
+- Skill challenges: "Make a Persuasion check (d20 + Charisma + proficiency if applicable)"
+- Combat actions: "Roll initiative (d20 + Dex modifier)" or "Make an attack roll"
+- Saving throws: "Make a Constitution saving throw"
+- Stealth/perception: "Roll for Stealth" or "Everyone make Perception checks"
+
+**Response Structure:**
+1. **Consequences**: Describe what happens as a result of their action
+2. **New Information**: Reveal new details, clues, or developments
+3. **NPC Interaction**: If applicable, include NPC dialogue in quotes with distinct voice
+4. **Environmental Details**: Paint the scene with sensory information
+5. **Choice Point**: End with 2-3 clear options or ask what they want to do next
+
+**NPC Dialogue Style:**
+- Put all spoken words in quotes: "Welcome, traveler"
+- Give each NPC a distinct voice, vocabulary, and speech pattern
+- Include body language and emotional cues: The merchant nervously fidgets with his coin purse, "Perhaps we can make a deal?"
+
+**Combat Guidelines:**
+- Request initiative rolls at combat start
+- Ask for attack rolls, damage rolls, and saving throws as needed
+- Describe hits/misses cinematically
+- Track position and tactical elements
+
+Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for player action or decision.`;
           
           // Build conversation history
           const messages = [
@@ -298,10 +365,21 @@ export class AIService {
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
         
-        // Build context for opening message
-        let contextPrompt = `You are an expert Dungeon Master starting a new D&D 5e adventure. Create an engaging opening scene that introduces the player to their adventure.`;
+        // Build enhanced context for opening message
+        let contextPrompt = `You are an expert D&D 5e Dungeon Master with years of experience creating memorable adventures. You have a vivid, immersive storytelling style that immediately draws players into the world.`;
         
+        // Determine campaign tone and genre for appropriate DM voice
+        let campaignTone = 'balanced';
         if (params.context.campaignDetails) {
+          const description = params.context.campaignDetails.description.toLowerCase();
+          if (description.includes('dark') || description.includes('horror') || description.includes('grim')) {
+            campaignTone = 'dark';
+          } else if (description.includes('light') || description.includes('comedy') || description.includes('fun')) {
+            campaignTone = 'lighthearted';
+          } else if (description.includes('epic') || description.includes('legendary') || description.includes('heroic')) {
+            campaignTone = 'epic';
+          }
+          
           contextPrompt += `\n\nCAMPAIGN CONTEXT:\nTitle: "${params.context.campaignDetails.name}"\nDescription: ${params.context.campaignDetails.description}`;
         }
         
@@ -316,16 +394,25 @@ export class AIService {
           }
         }
         
-        contextPrompt += `\n\nCreate an opening scene that:
-1. Sets the mood and atmosphere of the campaign
-2. Introduces the character's starting situation
-3. Provides clear context for where they are and why
-4. Includes sensory details (what they see, hear, feel)
-5. Ends with a clear prompt for the player to take action
-6. Is 2-3 paragraphs long
-7. Speaks directly to the player using "you" perspective
+        contextPrompt += `\n\nCampaign Tone: ${campaignTone}\n\nCreate an immersive opening scene that:
+1. **Immediate Engagement**: Start in the middle of an intriguing situation, not just "you enter a tavern"
+2. **Sensory Rich**: Include what you see, hear, smell, feel, and taste
+3. **Character Integration**: Reference their ${params.context.characterDetails?.class || 'character'} abilities, equipment, or background naturally
+4. **Decision Point**: End with a compelling choice between 2-3 distinct actions with clear stakes
+5. **NPC Interaction**: Include at least one interesting NPC the player can engage with
+6. **World Details**: Add unique elements that make this world feel alive and distinct
+7. **Foreshadowing**: Hint at larger mysteries or conflicts without revealing everything
+8. **Clear Stakes**: Make it obvious why this moment matters
 
-Make it immersive, engaging, and true to the campaign's tone. Don't wait for the player to ask - dive right into the adventure!`;
+TONE GUIDELINES:
+- ${campaignTone === 'dark' ? 'Use atmospheric, tension-filled language. Emphasize danger and moral ambiguity.' : ''}
+- ${campaignTone === 'lighthearted' ? 'Include moments of humor and whimsy. Keep things optimistic and fun.' : ''}
+- ${campaignTone === 'epic' ? 'Use grand, inspiring language. Make the player feel heroic and destined for greatness.' : ''}
+- ${campaignTone === 'balanced' ? 'Balance serious moments with lighter touches. Create realistic but hopeful atmosphere.' : ''}
+
+FORMAT: Write 2-3 paragraphs in second person ("you"). End with a specific question about what the player wants to do, offering multiple viable options.
+
+Remember: You're not just describing a scene - you're launching an epic story where the player is the hero. Make them excited to take their first action!`;
         
         const response = await model.generateContent(contextPrompt);
         const result = await response.response;

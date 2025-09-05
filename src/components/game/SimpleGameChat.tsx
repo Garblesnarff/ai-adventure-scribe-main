@@ -40,59 +40,6 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  // Load conversation history when session is available
-  useEffect(() => {
-    if (session?.id) {
-      loadConversationHistory();
-    }
-  }, [session?.id, loadConversationHistory]);
-
-  const loadConversationHistory = useCallback(async () => {
-    if (!session?.id) return;
-
-    setIsLoadingHistory(true);
-    try {
-      const history = await AIService.getConversationHistory(session.id);
-      setMessages(history);
-      
-      // If this is a new session with no messages, generate an opening message
-      if (history.length === 0) {
-        await generateOpeningMessage();
-      }
-    } catch (error) {
-      console.error('Failed to load conversation history:', error);
-      toast.error('Failed to load conversation history');
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [session?.id, generateOpeningMessage]);
-
-  /**
-   * Handle ending the current session
-   */
-  const handleEndSession = async () => {
-    if (!session?.id) return;
-
-    try {
-      // Generate a session summary based on the conversation
-      const conversationSummary = messages.length > 0 
-        ? `Session concluded with ${messages.length} messages exchanged.` 
-        : 'Session ended without gameplay.';
-
-      await endSession(session.id, conversationSummary);
-      
-      toast.success('Session ended successfully!', {
-        description: 'Your progress has been saved.',
-      });
-
-      // Navigate back to campaign page
-      navigate(`/campaign/${campaignId}`);
-    } catch (error) {
-      console.error('Error ending session:', error);
-      toast.error('Failed to end session properly');
-    }
-  };
-
   /**
    * Generate an opening message for a new session
    */
@@ -124,7 +71,6 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
         sessionId: session.id,
         role: 'assistant',
         content: openingContent,
-        speakerId: 'dm',
       });
 
       // Add to UI
@@ -136,6 +82,59 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       toast.error('Failed to generate opening message');
     }
   }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
+
+  const loadConversationHistory = useCallback(async () => {
+    if (!session?.id) return;
+
+    setIsLoadingHistory(true);
+    try {
+      const history = await AIService.getConversationHistory(session.id);
+      setMessages(history);
+      
+      // If this is a new session with no messages, generate an opening message
+      if (history.length === 0) {
+        await generateOpeningMessage();
+      }
+    } catch (error) {
+      console.error('Failed to load conversation history:', error);
+      toast.error('Failed to load conversation history');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [session?.id, generateOpeningMessage]);
+
+  // Load conversation history when session is available
+  useEffect(() => {
+    if (session?.id) {
+      loadConversationHistory();
+    }
+  }, [session?.id, loadConversationHistory]);
+
+  /**
+   * Handle ending the current session
+   */
+  const handleEndSession = async () => {
+    if (!session?.id) return;
+
+    try {
+      // Generate a session summary based on the conversation
+      const conversationSummary = messages.length > 0 
+        ? `Session concluded with ${messages.length} messages exchanged.` 
+        : 'Session ended without gameplay.';
+
+      await endSession(session.id, conversationSummary);
+      
+      toast.success('Session ended successfully!', {
+        description: 'Your progress has been saved.',
+      });
+
+      // Navigate back to campaign page
+      navigate(`/campaign/${campaignId}`);
+    } catch (error) {
+      console.error('Error ending session:', error);
+      toast.error('Failed to end session properly');
+    }
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
