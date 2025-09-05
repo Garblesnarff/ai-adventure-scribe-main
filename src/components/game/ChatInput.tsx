@@ -63,7 +63,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
 
   return (
     <div className="px-6 pb-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 transition-all duration-200 focus-within:shadow-md focus-within:border-blue-300">
+      <div className="chat-composer transition-all duration-200 focus-within:active-glow">
         <div className="flex items-end gap-3">
           {/* Quick action buttons */}
           <div className="flex items-center gap-2 pb-1">
@@ -93,7 +93,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Describe what your character would like to do..."
-              className="min-h-[20px] max-h-32 resize-none border-0 shadow-none focus:ring-0 focus:border-0 p-0 text-sm leading-relaxed placeholder:text-gray-400 bg-transparent"
+              className="min-h-[20px] max-h-32 resize-none border-0 shadow-none focus:ring-0 focus:border-0 p-0 text-sm leading-relaxed placeholder:text-gray-600 bg-transparent"
               disabled={isDisabled}
               rows={1}
             />
@@ -112,9 +112,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
             disabled={!canSend}
             className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${
               canSend
-                ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm hover:shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-sm hover:shadow-md'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
+            aria-label="Send message"
           >
             <Send className="h-4 w-4" />
           </Button>
