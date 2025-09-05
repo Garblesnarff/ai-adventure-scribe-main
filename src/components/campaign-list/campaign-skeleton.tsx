@@ -9,20 +9,26 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 const CampaignSkeleton = () => {
   return (
-    <Card className="h-[200px]">
-      <CardHeader className="space-y-2">
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-        <div className="flex justify-between items-center mt-4">
-          <Skeleton className="h-4 w-1/4" />
-          <Skeleton className="h-8 w-8 rounded-full" />
+    <div className="campaign-card h-[220px] animate-scale-in">
+      <div className="campaign-hero flex items-center p-4">
+        <div className="campaign-thumb mr-4">
+          <Skeleton className="h-14 w-14 rounded-lg" />
         </div>
-      </CardContent>
-    </Card>
+        <div className="flex-1">
+          <Skeleton className="h-6 w-3/4 mb-2" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+
+      <div className="px-6 pt-4">
+        <Skeleton className="h-4 w-full mb-2" />
+        <Skeleton className="h-4 w-3/4 mb-2" />
+        <div className="flex justify-between items-center mt-4">
+          <Skeleton className="h-8 w-32 rounded-md" />
+          <Skeleton className="h-8 w-8 rounded-lg" />
+        </div>
+      </div>
+    </div>
   );
 };
 

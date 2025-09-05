@@ -11,18 +11,18 @@ const EmptyState = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="text-center py-12">
-      <h3 className="text-xl font-semibold mb-4">No Campaigns Yet</h3>
-      <p className="text-muted-foreground mb-8">
-        Create your first campaign to begin your adventure!
-      </p>
-      <Button
-        onClick={() => navigate('/campaigns/create')}
-        className="flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Create Campaign
-      </Button>
+    <div className="text-center py-12 parchment-panel rounded-lg p-8">
+      <h3 className="text-2xl font-semibold mb-2 gradient-text">No Campaigns Found</h3>
+      <p className="text-muted-foreground mb-6">You haven't created any campaigns yet. Your tales await.</p>
+      <div className="flex items-center justify-center">
+        <Button
+          onClick={() => navigate('/campaigns/create')}
+          className="flex items-center gap-2 bg-infinite-gold text-infinite-dark"
+        >
+          <Plus className="w-4 h-4" />
+          Create Campaign
+        </Button>
+      </div>
     </div>
   );
 };
