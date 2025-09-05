@@ -247,8 +247,8 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
+    <Card className="h-full flex flex-col parchment">
+      <CardHeader className="parchment-panel">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span>Adventure Chat</span>
@@ -308,23 +308,18 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
               )}
               
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground ml-4'
-                        : 'bg-muted mr-4'
-                    }`}
-                  >
-                    <div className="text-sm font-medium mb-1">
-                      {message.role === 'user' ? 'You' : 'Dungeon Master'}
-                    </div>
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                    <div className="text-xs opacity-70 mt-2">
-                      {message.timestamp.toLocaleTimeString()}
+                <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`flex max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
+                    {message.role !== 'user' && (
+                      <div className="flex-shrink-0 mr-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium avatar-dm">DM</div>
+                      </div>
+                    )}
+
+                    <div className={`rounded-lg px-5 py-3 message-bubble ${message.role === 'user' ? 'player-bubble ml-4' : 'dm-bubble mr-4'}`}>
+                      <div className="text-sm font-medium mb-1">{message.role === 'user' ? 'You' : 'Dungeon Master'}</div>
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                      <div className="text-xs opacity-70 mt-2 message-meta">{message.timestamp.toLocaleTimeString?.()}</div>
                     </div>
                   </div>
                 </div>
@@ -332,7 +327,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
               
               {isSending && (
                 <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2 mr-4 max-w-[80%]">
+                  <div className="rounded-lg px-5 py-3 dm-bubble mr-4 max-w-[80%]">
                     <div className="text-sm font-medium mb-1">Dungeon Master</div>
                     {streamingMessage ? (
                       <div className="whitespace-pre-wrap">
@@ -354,20 +349,22 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
           )}
         </ScrollArea>
         
-        <div className="border-t p-4">
-          <form onSubmit={sendMessage} className="flex space-x-2">
+        <div className="border-t p-4 chat-composer">
+          <form onSubmit={sendMessage} className="flex space-x-2 items-center">
             <Input
+              aria-label="Chat input"
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="What do you do next?"
+              placeholder="Describe your action or intent..."
               disabled={isSending || !session}
-              className="flex-1"
+              className="flex-1 bg-transparent"
             />
             <Button 
               type="submit" 
               disabled={!currentMessage.trim() || isSending || !session}
               className="px-3"
+              aria-label="Send message"
             >
               <Send className="h-4 w-4" />
             </Button>

@@ -196,6 +196,84 @@
     animation: shimmer 2s infinite;
   }
 
+  /* Parchment / DM theme */
+  .parchment {
+    background-image: linear-gradient(180deg, rgba(255,248,236,0.95), rgba(250,244,230,0.95));
+    background-size: cover;
+    color: #2b2b20;
+    background-blend-mode: multiply;
+  }
+
+  .parchment-panel {
+    background: linear-gradient(180deg, rgba(255,255,250,0.82), rgba(250,244,230,0.7));
+    border: 1px solid rgba(40,32,24,0.08);
+    box-shadow: 0 6px 24px rgba(16,12,8,0.45);
+    border-radius: 14px;
+  }
+
+  /* Chat specific theme tweaks */
+  .dm-bubble {
+    background: linear-gradient(180deg,#fffaf0,#fff6e6);
+    color: #231f1a;
+    border: 1px solid rgba(40,32,24,0.06);
+    box-shadow: 0 6px 18px rgba(37, 28, 20, 0.12);
+  }
+
+  .player-bubble {
+    background: linear-gradient(180deg,#efe9ff,#e7ddff);
+    color: #1f1140;
+    border: 1px solid rgba(107,70,193,0.12);
+    box-shadow: 0 6px 18px rgba(98, 70, 170, 0.08);
+  }
+
+  .system-bubble {
+    background: linear-gradient(180deg,#f3f4f6,#eef2ff);
+    color: #374151;
+    border: 1px solid rgba(55,65,81,0.06);
+  }
+
+  .message-meta {
+    font-size: 0.75rem;
+    color: rgba(30, 27, 20, 0.45);
+  }
+
+  .avatar-dm {
+    background: radial-gradient(circle at 30% 20%, #f6e7d6, #e6d1b2);
+    border: 1px solid rgba(40,32,24,0.06);
+    color: #2b2b20;
+    font-weight: 700;
+  }
+
+  .avatar-player {
+    background: linear-gradient(180deg,#e9e1ff,#d6ccff);
+    color: #2b1140;
+    border: 1px solid rgba(107,70,193,0.08);
+    font-weight: 700;
+  }
+
+  /* Message tail handled via pseudo element fallback */
+  .message-bubble { position: relative; }
+  .message-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    transform: rotate(45deg);
+    box-shadow: 0 6px 12px rgba(16,12,8,0.06);
+  }
+  .message-bubble.dm-bubble::after { left: 18px; background: linear-gradient(180deg,#fffaf0,#fff6e6); border-left:1px solid rgba(40,32,24,0.04); }
+  .message-bubble.player-bubble::after { right: 18px; background: linear-gradient(180deg,#efe9ff,#e7ddff); border-right:1px solid rgba(107,70,193,0.06); }
+
+  /* Composer */
+  .chat-composer {
+    background: linear-gradient(180deg, rgba(255,252,244,0.9), rgba(255,249,236,0.8));
+    border: 1px solid rgba(40,32,24,0.06);
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+
   /* Smooth scroll for landing page */
   html {
     scroll-behavior: smooth;
