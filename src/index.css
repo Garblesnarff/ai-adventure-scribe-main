@@ -273,6 +273,59 @@
     border-radius: 12px;
   }
 
+  /* Subtle paper grain using inline SVG data URI */
+  .parchment-panel {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.02' fill='%23bfa98b'/></svg>");
+    background-blend-mode: overlay;
+    background-repeat: repeat;
+  }
+
+  /* Nice thin custom scrollbar matching parchment theme */
+  .chat-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+  .chat-scroll::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, rgba(255,250,240,0.6), rgba(245,240,230,0.4));
+    border-radius: 10px;
+  }
+  .chat-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(180,150,110,0.6), rgba(150,120,80,0.6));
+    border-radius: 10px;
+    border: 2px solid rgba(255,250,240,0.3);
+  }
+
+  /* DM choice buttons */
+  .choice-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .choice-btn {
+    background: linear-gradient(180deg,#fff8ea,#fff2d8);
+    border: 1px solid rgba(40,32,24,0.06);
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .choice-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(35,25,15,0.12); }
+  .choice-btn:active { transform: translateY(-1px); }
+  .choice-btn.primary { background: linear-gradient(180deg,#efe9ff,#e6ddff); border-color: rgba(107,70,193,0.12); }
+
+  /* Message grouping — soften gaps for grouped messages */
+  .group + .group { margin-top: 8px; }
+
+  /* Header styling for the adventure chat */
+  .adventure-header {
+    background: linear-gradient(90deg, rgba(107,70,193,0.06), rgba(245,158,11,0.03));
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(40,32,24,0.04);
+    border-radius: 12px 12px 0 0;
+  }
+
+  .api-button {
+    background: linear-gradient(180deg,#fff,#f7f3ea);
+    border: 1px solid rgba(40,32,24,0.06);
+    box-shadow: 0 6px 18px rgba(26,20,12,0.06);
+  }
+
 
   /* Smooth scroll for landing page */
   html {

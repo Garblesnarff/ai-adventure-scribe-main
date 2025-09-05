@@ -226,6 +226,17 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
     }
   };
 
+  // Helper: extract short choices from DM message text (lines starting with A. B. C. or 1.)
+  const extractChoices = (text: string) => {
+    const lines = text.split('\n');
+    const choices: string[] = [];
+    lines.forEach(line => {
+      const m = line.trim().match(/^([A-D]|\d+)\.\s*(.+)/);
+      if (m) choices.push(m[2].trim());
+    });
+    return choices;
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -307,7 +318,10 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
                 </div>
               )}
               
-              {messages.map((message) => (
+              {messages.map((message) => {
+                const choices = message.role !== 'user' ? extractChoices(message.content) : [];
+
+                return (
                 <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`flex max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
                     {message.role !== 'user' && (
@@ -320,10 +334,37 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
                       <div className="text-sm font-medium mb-1">{message.role === 'user' ? 'You' : 'Dungeon Master'}</div>
                       <div className="whitespace-pre-wrap">{message.content}</div>
                       <div className="text-xs opacity-70 mt-2 message-meta">{message.timestamp.toLocaleTimeString?.()}</div>
+
+                      {/* Render choices if present */}
+                      {choices.length > 0 && (
+                        <div className="choice-list" role="list">
+                          {choices.map((c, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className={`choice-btn ${i === 0 ? 'primary' : ''}`}
+                              onClick={() => setCurrentMessage(c)}
+                              onDoubleClick={async () => {
+                                setCurrentMessage(c);
+                                // small delay so the UI updates before sending
+                                setTimeout(() => {
+                                  const fakeEvent = { preventDefault() {} } as unknown as React.FormEvent;
+                                  sendMessage(fakeEvent);
+                                }, 80);
+                              }}
+                              aria-label={`Choose ${c}`}
+                            >
+                              {String.fromCharCode(65 + i)}. {c}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               
               {isSending && (
                 <div className="flex justify-start">
