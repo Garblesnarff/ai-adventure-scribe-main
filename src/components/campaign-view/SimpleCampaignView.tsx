@@ -115,6 +115,18 @@ export const SimpleCampaignView: React.FC = () => {
   // Memoize characters array to prevent unnecessary re-renders
   const memoizedCharacters = useMemo(() => characters, [characters]);
 
+  // Generate character avatar color
+  const getCharacterAvatarColor = useMemo(() => (name: string) => {
+    const colors = ['bg-infinite-purple', 'bg-infinite-gold', 'bg-infinite-teal', 'bg-destructive', 'bg-secondary'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }, []);
+
+  const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -135,18 +147,6 @@ export const SimpleCampaignView: React.FC = () => {
       </Card>
     );
   }
-
-  // Generate character avatar color
-  const getCharacterAvatarColor = useMemo(() => (name: string) => {
-    const colors = ['bg-infinite-purple', 'bg-infinite-gold', 'bg-infinite-teal', 'bg-destructive', 'bg-secondary'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  }, []);
-
-  const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100">
