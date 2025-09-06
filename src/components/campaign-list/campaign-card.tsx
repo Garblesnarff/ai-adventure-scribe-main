@@ -93,42 +93,49 @@ const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCard
 
   return (
     <Card
-      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl"
+      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50"
       style={{ minHeight: '320px', padding: 0 }}
     >
       {/* Hero / thumbnail area */}
       <div
-        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat"
+        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1]"
         onClick={() => navigate(`/campaign/${campaign.id}`)}
         style={resolvedImage ? { backgroundImage: `url(${resolvedImage})` } : undefined}
       >
         {/* Overlay and popup for all cards */}
-        <div className="featured-overlay" />
+        {isFeatured && (
+          <div className="absolute top-2 right-2 z-10">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-infinite-gold text-infinite-dark">
+              Featured
+            </span>
+          </div>
+        )}
+        <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
         <div className="hover-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
-          <div className="bg-white/95 p-3 rounded-md shadow-md border border-border">
-            <div className="text-sm font-semibold text-infinite-dark mb-1">{campaign.name}</div>
-            {campaign.description && <div className="text-xs text-muted-foreground line-clamp-3">{campaign.description}</div>}
+          <div className="bg-white/95 p-4 rounded-lg shadow-md border border-border">
+            <div className="text-lg font-bold text-infinite-dark mb-2 leading-tight">{campaign.name}</div>
+            {campaign.description && <div className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-3">{campaign.description}</div>}
             
             {/* Campaign badges in popup */}
-            <div className="campaign-badges flex gap-1 flex-wrap text-xs mt-2 mb-3">
-              {campaign.genre && <span className="badge genre">{campaign.genre}</span>}
-              {campaign.difficulty_level && <span className="badge difficulty">{campaign.difficulty_level}</span>}
-              {campaign.campaign_length && <span className="badge length">{campaign.campaign_length}</span>}
-              {campaign.tone && <span className="badge tone">{campaign.tone}</span>}
+            <div className="campaign-badges flex gap-1 flex-wrap text-xs mt-2 mb-4">
+              {campaign.genre && <span className="inline-flex items-center px-2 py-1 rounded-full bg-infinite-purple/10 text-infinite-purple border border-infinite-purple/20">{campaign.genre}</span>}
+              {campaign.difficulty_level && <span className="inline-flex items-center px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20">{campaign.difficulty_level}</span>}
+              {campaign.campaign_length && <span className="inline-flex items-center px-2 py-1 rounded-full bg-secondary/10 text-secondary-foreground border border-secondary/20">{campaign.campaign_length}</span>}
+              {campaign.tone && <span className="inline-flex items-center px-2 py-1 rounded-full bg-accent/10 text-accent-foreground border border-accent/20">{campaign.tone}</span>}
             </div>
 
             <div className="flex items-center gap-2">
-              <Button size="sm" className="bg-infinite-gold text-infinite-dark flex items-center gap-2" onClick={(e) => { e.stopPropagation(); setShowCharacterModal(true); }}>
+              <Button size="sm" className="bg-infinite-gold text-infinite-dark flex items-center gap-2 hover:bg-infinite-purple" onClick={(e) => { e.stopPropagation(); setShowCharacterModal(true); }}>
                 <Play className="w-4 h-4" />
                 Play
               </Button>
-              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/campaign/${campaign.id}`); }}>
+              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/campaign/${campaign.id}`); }}>
                 Enter
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-infinite-dark/20"
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}
               >
                 <Trash2 className="w-4 h-4" />
