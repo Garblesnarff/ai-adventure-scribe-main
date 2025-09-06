@@ -127,34 +127,33 @@ const CharacterList: React.FC = () => {
           </div>
         </div>
 
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCharacters.map((character) => {
-          // Type guard to ensure character has required id and name properties
-          if (!character.id || !character.name) return null;
-          
-          // Now TypeScript knows these properties exist
-          return (
-            <MemoizedCharacterCard
-              key={character.id}
-              character={character as Partial<Character> & { id: string; name: string }}
-              onDelete={fetchCharacters}
-            />
-          );
-        })}
-      </div>
-
-      {filteredCharacters.length === 0 && characters.length > 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg mb-4">No characters match your search.</p>
-          <Button variant="outline" onClick={() => setSearchTerm('')} className="mr-2">
-            Clear Search
-          </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCharacters.map((character) => {
+            // Type guard to ensure character has required id and name properties
+            if (!character.id || !character.name) return null;
+            
+            // Now TypeScript knows these properties exist
+            return (
+              <MemoizedCharacterCard
+                key={character.id}
+                character={character as Partial<Character> & { id: string; name: string }}
+                onDelete={fetchCharacters}
+              />
+            );
+          })}
         </div>
-      )}
 
-      {characters.length === 0 && <EmptyState onCreateNew={handleCreateNew} />}
+        {filteredCharacters.length === 0 && characters.length > 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg mb-4">No characters match your search.</p>
+            <Button variant="outline" onClick={() => setSearchTerm('')} className="mr-2">
+              Clear Search
+            </Button>
+          </div>
+        )}
+
+        {characters.length === 0 && <EmptyState onCreateNew={handleCreateNew} />}
+      </div>
     </div>
   );
 };
