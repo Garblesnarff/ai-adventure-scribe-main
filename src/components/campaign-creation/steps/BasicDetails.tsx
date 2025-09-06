@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Wand2 } from 'lucide-react';
+import { Loader2, Wand2, BookOpen, Sparkles, AlertCircle } from 'lucide-react';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { WizardStepProps } from '../wizard/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -103,9 +103,10 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name" className="flex items-center">
+    <div className="space-y-8 parchment animate-fade-in-up">
+      <div className="space-y-3">
+        <Label htmlFor="name" className="flex items-center text-lg font-medium">
+          <Wand2 className="h-4 w-4 mr-2 text-infinite-gold" />
           Campaign Name
           <span className="text-destructive ml-1">*</span>
         </Label>
@@ -114,22 +115,29 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
           value={state.campaign?.name || ''}
           onChange={(e) => handleChange('name', e.target.value)}
           onBlur={() => handleBlur('name')}
-          placeholder="Enter campaign name"
-          className={nameError ? 'border-destructive' : ''}
+          placeholder="Enter a legendary name for your campaign..."
+          className={`h-12 px-4 py-3 border-2 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-infinite-gold/30 focus:border-infinite-gold bg-white/80 backdrop-blur-sm ${nameError ? 'border-destructive focus:border-destructive ring-destructive/30' : 'border-amber-200 hover:border-amber-300'}`}
         />
         {nameError && (
-          <p className="text-sm text-destructive mt-1">{nameError}</p>
+          <p className="text-sm text-destructive mt-1 flex items-center">
+            <AlertCircle className="h-4 w-4 mr-1" />
+            {nameError}
+          </p>
         )}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <Label htmlFor="description">Campaign Description</Label>
+          <Label htmlFor="description" className="text-lg font-medium flex items-center">
+            <BookOpen className="h-4 w-4 mr-2 text-infinite-teal" />
+            Campaign Description
+          </Label>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={generateDescription}
             disabled={isGenerating}
+            className="choice-btn primary animate-shimmer hover:animate-pulse transition-all duration-200 border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
           >
             {isGenerating ? (
               <>
@@ -138,7 +146,7 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
               </>
             ) : (
               <>
-                <Wand2 className="mr-2 h-4 w-4" />
+                <Sparkles className="mr-2 h-4 w-4" />
                 Generate Description
               </>
             )}
@@ -149,8 +157,9 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
           value={state.campaign?.description || ''}
           onChange={(e) => handleChange('description', e.target.value)}
           onBlur={() => handleBlur('description')}
-          placeholder="Describe your campaign"
-          className="h-32"
+          placeholder="Describe the epic tale of your campaign, its mysteries, and adventures..."
+          className="h-40 px-4 py-3 border-2 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-infinite-purple/30 focus:border-infinite-purple bg-white/80 backdrop-blur-sm border-amber-200 hover:border-amber-300 resize-none font-serif text-base leading-relaxed"
+          rows={5}
         />
       </div>
     </div>

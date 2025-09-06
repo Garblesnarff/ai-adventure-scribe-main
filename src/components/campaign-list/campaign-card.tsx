@@ -113,15 +113,15 @@ const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCard
         <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
         <div className="hover-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
           <div className="bg-white/95 p-4 rounded-lg shadow-md border border-border">
-            <div className="text-lg font-bold text-infinite-dark mb-2 leading-tight">{campaign.name}</div>
-            {campaign.description && <div className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-3">{campaign.description}</div>}
+            <div className="text-xl font-bold text-infinite-dark mb-2 leading-tight break-words">{campaign.name}</div>
+            {campaign.description && <div className="text-base text-muted-foreground line-clamp-3 leading-relaxed mb-3 break-words hyphens-auto">{campaign.description}</div>}
             
             {/* Campaign badges in popup */}
             <div className="campaign-badges flex gap-1 flex-wrap text-xs mt-2 mb-4">
-              {campaign.genre && <span className="inline-flex items-center px-2 py-1 rounded-full bg-infinite-purple/10 text-infinite-purple border border-infinite-purple/20">{campaign.genre}</span>}
-              {campaign.difficulty_level && <span className="inline-flex items-center px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20">{campaign.difficulty_level}</span>}
-              {campaign.campaign_length && <span className="inline-flex items-center px-2 py-1 rounded-full bg-secondary/10 text-secondary-foreground border border-secondary/20">{campaign.campaign_length}</span>}
-              {campaign.tone && <span className="inline-flex items-center px-2 py-1 rounded-full bg-accent/10 text-accent-foreground border border-accent/20">{campaign.tone}</span>}
+              {campaign.genre && <span className="inline-flex items-center px-2 py-1 rounded-full bg-infinite-purple/10 text-infinite-purple border border-infinite-purple/20 font-medium">{campaign.genre}</span>}
+              {campaign.difficulty_level && <span className="inline-flex items-center px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20 font-medium">{campaign.difficulty_level}</span>}
+              {campaign.campaign_length && <span className="inline-flex items-center px-2 py-1 rounded-full bg-secondary/10 text-secondary-foreground border border-secondary/20 font-medium">{campaign.campaign_length}</span>}
+              {campaign.tone && <span className="inline-flex items-center px-2 py-1 rounded-full bg-accent/10 text-accent-foreground border border-accent/20 font-medium">{campaign.tone}</span>}
             </div>
 
             <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:wght@400;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -68,34 +68,101 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
   }
 
   h1 {
-    @apply text-3xl font-semibold tracking-tight;
+    @apply text-3xl font-semibold tracking-tight leading-tight;
   }
 
   h2 {
-    @apply text-2xl font-semibold tracking-tight;
+    @apply text-2xl font-semibold tracking-tight leading-snug;
   }
 
   h3 {
-    @apply text-xl font-semibold tracking-tight;
+    @apply text-xl font-semibold tracking-tight leading-normal;
+  }
+
+  h4 {
+    @apply text-lg font-semibold leading-relaxed;
   }
 
   p {
-    @apply text-sm leading-relaxed;
+    @apply text-base leading-relaxed;
   }
 
   a {
-    @apply text-primary hover:text-primary/80 transition-colors;
+    @apply text-primary hover:text-primary/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring rounded;
   }
 
   button {
-    @apply transition-all duration-200 ease-in-out;
+    @apply transition-all duration-200 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring rounded;
   }
 
   .container {
     @apply mx-auto px-4;
+  }
+
+  /* Prose class for rich text content (AI-generated narratives, descriptions) */
+  .prose {
+    @apply text-base leading-relaxed max-w-none;
+    color: var(--foreground);
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    @apply font-serif tracking-tight mb-4;
+  }
+
+  .prose p {
+    @apply mb-4;
+  }
+
+  .prose strong {
+    @apply font-semibold;
+  }
+
+  .prose em {
+    @apply italic;
+  }
+
+  .prose ul,
+  .prose ol {
+    @apply mb-4 pl-6;
+  }
+
+  .prose li {
+    @apply mb-1;
+  }
+
+  /* Text handling utilities */
+  .break-words {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .text-overflow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hyphens-auto {
+    hyphens: auto;
+  }
+
+  /* Accessibility: Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-snap-type: none !important;
+    }
   }
 
   /* Chat-specific animations */
@@ -126,8 +193,13 @@
     animation: typingBounce 1.4s infinite ease-in-out;
   }
 
-  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+  .typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
 
   @keyframes typingBounce {
     0%, 80%, 100% {
@@ -147,8 +219,12 @@
 
   /* Landing page specific animations */
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
   }
 
   @keyframes fadeInUp {
@@ -174,8 +250,12 @@
   }
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   .animate-float {
@@ -202,6 +282,7 @@
     background-size: cover;
     color: #2b2b20;
     background-blend-mode: multiply;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
   }
 
   /* Campaign card visuals */
@@ -220,20 +301,32 @@
 
   /* featured hero uses public card background image */
   .campaign-card.featured-card {
-    border: 0; background: transparent; box-shadow: none;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .campaign-hero.featured {
     background-image: url('/card-background.jpeg');
     background-size: cover;
     background-position: center center;
-    position: absolute; inset: 0; z-index: 1;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
   }
 
   /* make sure the hero is the full card background for featured cards */
-  .campaign-card.featured-card .campaign-hero { position: absolute; top:0; left:0; right:0; height:100%; }
+  .campaign-card.featured-card .campaign-hero {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+  }
 
-  .campaign-card.featured-card { background: transparent; }
+  .campaign-card.featured-card {
+    background: transparent;
+  }
 
   /* dark overlay to help text legibility, caption sits on white box overlapping the image */
   .campaign-hero.featured::after {
@@ -244,17 +337,28 @@
     mix-blend-mode: multiply;
   }
 
-  .featured-caption { z-index: 5; }
+  .featured-caption {
+    z-index: 5;
+  }
 
   /* featured overlay and popup */
   .campaign-hero.featured .featured-overlay {
-    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
     background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.18));
   }
 
-  .campaign-card { position: relative; }
+  .campaign-card {
+    position: relative;
+  }
+
   .campaign-card:hover .campaign-hero.featured .hover-popup {
-    opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; z-index: 12;
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    z-index: 12;
   }
 
   /* center the popup within the image area */
@@ -269,7 +373,9 @@
   }
 
   /* hide the lower action area for featured cards by collapsing padding/space */
-  .campaign-card.featured-card > .px-6 { display: none; }
+  .campaign-card.featured-card > .px-6 {
+    display: none;
+  }
 
   .campaign-thumb .avatar-dm {
     width: 56px;
@@ -286,10 +392,25 @@
     color: #2b2b20;
   }
 
-  .campaign-badges .badge.genre { background: rgba(107,70,193,0.08); color: var(--infinite-purple); }
-  .campaign-badges .badge.difficulty { background: rgba(8,145,178,0.06); color: var(--infinite-teal); }
-  .campaign-badges .badge.length { background: rgba(245,158,11,0.06); color: var(--infinite-gold); }
-  .campaign-badges .badge.tone { background: rgba(59,130,246,0.06); color: #3b82f6; }
+  .campaign-badges .badge.genre {
+    background: rgba(107,70,193,0.08);
+    color: var(--infinite-purple);
+  }
+
+  .campaign-badges .badge.difficulty {
+    background: rgba(8,145,178,0.06);
+    color: var(--infinite-teal);
+  }
+
+  .campaign-badges .badge.length {
+    background: rgba(245,158,11,0.06);
+    color: var(--infinite-gold);
+  }
+
+  .campaign-badges .badge.tone {
+    background: rgba(59,130,246,0.06);
+    color: #3b82f6;
+  }
 
   .parchment-panel {
     background: linear-gradient(180deg, rgba(255,255,250,0.82), rgba(250,244,230,0.7));
@@ -339,7 +460,10 @@
   }
 
   /* Message tail handled via pseudo element fallback */
-  .message-bubble { position: relative; }
+  .message-bubble {
+    position: relative;
+  }
+
   .message-bubble::after {
     content: '';
     position: absolute;
@@ -349,8 +473,18 @@
     transform: rotate(45deg);
     box-shadow: 0 6px 12px rgba(16,12,8,0.06);
   }
-  .message-bubble.dm-bubble::after { left: 18px; background: linear-gradient(180deg,#fffaf0,#fff6e6); border-left:1px solid rgba(40,32,24,0.04); }
-  .message-bubble.player-bubble::after { right: 18px; background: linear-gradient(180deg,#efe9ff,#e7ddff); border-right:1px solid rgba(107,70,193,0.06); }
+
+  .message-bubble.dm-bubble::after {
+    left: 18px;
+    background: linear-gradient(180deg,#fffaf0,#fff6e6);
+    border-left:1px solid rgba(40,32,24,0.04);
+  }
+
+  .message-bubble.player-bubble::after {
+    right: 18px;
+    background: linear-gradient(180deg,#efe9ff,#e7ddff);
+    border-right:1px solid rgba(107,70,193,0.06);
+  }
 
   /* Composer */
   .chat-composer {
@@ -371,10 +505,12 @@
   .chat-scroll::-webkit-scrollbar {
     width: 10px;
   }
+
   .chat-scroll::-webkit-scrollbar-track {
     background: linear-gradient(180deg, rgba(255,250,240,0.6), rgba(245,240,230,0.4));
     border-radius: 10px;
   }
+
   .chat-scroll::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, rgba(180,150,110,0.6), rgba(150,120,80,0.6));
     border-radius: 10px;
@@ -382,7 +518,13 @@
   }
 
   /* DM choice buttons */
-  .choice-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .choice-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
   .choice-btn {
     background: linear-gradient(180deg,#fff8ea,#fff2d8);
     border: 1px solid rgba(40,32,24,0.06);
@@ -392,13 +534,27 @@
     cursor: pointer;
     transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
   }
-  .choice-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(35,25,15,0.12); }
-  .choice-btn:active { transform: translateY(-1px); }
+
+  .choice-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(35,25,15,0.12);
+  }
+
+  .choice-btn:active {
+    transform: translateY(-1px);
+  }
+
   /* primary choice uses warm gold accent rather than purple */
-  .choice-btn.primary { background: linear-gradient(180deg,#fff4db,#ffedbf); border-color: rgba(245,158,11,0.16); color: #2b1f00; }
+  .choice-btn.primary {
+    background: linear-gradient(180deg,#fff4db,#ffedbf);
+    border-color: rgba(245,158,11,0.16);
+    color: #2b1f00;
+  }
 
   /* Message grouping — soften gaps for grouped messages */
-  .group + .group { margin-top: 8px; }
+  .group + .group {
+    margin-top: 8px;
+  }
 
   /* Header styling for the adventure chat */
   .adventure-header {
@@ -413,7 +569,6 @@
     border: 1px solid rgba(40,32,24,0.06);
     box-shadow: 0 6px 18px rgba(26,20,12,0.06);
   }
-
 
   /* Smooth scroll for landing page */
   html {
@@ -431,8 +586,12 @@
   }
 
   @keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
   }
 
   /* Parallax scroll effect */
