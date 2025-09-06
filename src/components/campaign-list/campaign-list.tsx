@@ -18,6 +18,7 @@
  // ============================
  // SDK/library imports
  // ============================
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
  // ============================
@@ -33,9 +34,19 @@ import { useToast } from '@/hooks/use-toast';
  // ============================
  // Feature components
  // ============================
-import CampaignCard from './campaign-card';
+import { MemoizedCampaignCard } from './campaign-card';
 import CampaignSkeleton from './campaign-skeleton';
 import EmptyState from './empty-state';
+
+/**
+ * Props for CampaignList component
+ * @param searchTerm - Search term to filter campaigns
+ * @param sortBy - Field to sort campaigns by
+ */
+interface CampaignListProps {
+  searchTerm?: string;
+  sortBy?: 'name' | 'created_at';
+}
 
 /**
  * Campaign List Component
@@ -45,18 +56,25 @@ import EmptyState from './empty-state';
  * 
  * @returns {JSX.Element} List of campaign cards or appropriate feedback state
  */
-const CampaignList = () => {
+const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListProps) => {
   const { toast } = useToast();
 
-  // Fetch campaigns from Supabase with proper error handling
+  // Fetch campaigns from Supabase with proper error handling and filtering/sorting
   const { data: campaigns, isLoading, error } = useQuery({
-    queryKey: ['campaigns'],
+    queryKey: ['campaigns', searchTerm, sortBy],
     queryFn: async () => {
       try {
-        const { data, error: supabaseError } = await supabase
+        let query = supabase
           .from('campaigns')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order(sortBy, { ascending: false });
+
+        // Apply search filter
+        if (searchTerm) {
+          query = query.or(`name.ilike.%${searchTerm}%,genre.ilike.%${searchTerm}%`);
+        }
+
+        const { data, error: supabaseError } = await query;
         
         if (supabaseError) {
           throw new Error(supabaseError.message);
@@ -108,14 +126,14 @@ const CampaignList = () => {
 
   // Render campaign grid
   // map known campaign names to public cover images
-  const getCoverFor = (name: string | null) => {
+  const getCoverFor = useMemo(() => (name: string | null) => {
     if (!name) return undefined;
     const n = name.toLowerCase();
-  if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
-  if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
-  if (n.includes('tenebrous')) return '/tenebrous.jpeg';
+    if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
+    if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
+    if (n.includes('tenebrous')) return '/tenebrous.jpeg';
     return undefined;
-  };
+  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -124,7 +142,7 @@ const CampaignList = () => {
         const mapped = getCoverFor(campaign.name);
         const cover = mapped ?? (i === 0 ? '/card-background.jpeg' : undefined);
         return (
-          <CampaignCard
+          <MemoizedCampaignCard
             key={campaign.id}
             campaign={campaign}
             isFeatured={Boolean(cover)}

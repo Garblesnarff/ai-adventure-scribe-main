@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ interface CampaignCardProps {
  * Displays individual campaign information in a card format
  * @param campaign - Campaign data to display
  */
-const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCardProps) => {
+const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: CampaignCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,7 +57,7 @@ const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCard
    * Handles actual campaign deletion
    * Removes campaign from database and updates UI
    */
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       const { error } = await supabase
         .from('campaigns')
@@ -84,12 +84,14 @@ const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCard
       });
       setShowDeleteDialog(false);
     }
-  };
+  }, [campaign.id, toast, queryClient]);
 
   // Use campaign's generated background image, fallback to coverImage, then default
-  const resolvedImage = campaign.background_image || 
-                       (coverImage ? new URL(coverImage, import.meta.url).href : null) ||
-                       new URL('/card-background.jpeg', import.meta.url).href;
+  const resolvedImage = useMemo(() => 
+    campaign.background_image || 
+    (coverImage ? new URL(coverImage, import.meta.url).href : null) ||
+    new URL('/card-background.jpeg', import.meta.url).href, 
+  [campaign.background_image, coverImage]);
 
   return (
     <Card
@@ -173,4 +175,7 @@ const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCard
   );
 };
 
-export default CampaignCard;
+const MemoizedCampaignCard = React.memo(CampaignCardComponent);
+
+export { MemoizedCampaignCard };
+export default CampaignCardComponent;

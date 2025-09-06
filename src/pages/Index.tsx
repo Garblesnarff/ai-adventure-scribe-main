@@ -1,6 +1,7 @@
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import CampaignList from '@/components/campaign-list/campaign-list';
 
 /**
@@ -10,24 +11,67 @@ import CampaignList from '@/components/campaign-list/campaign-list';
  */
 const Index = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [sortBy, setSortBy] = React.useState<'name' | 'created_at'>('created_at');
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-4xl font-semibold text-foreground mb-2">Your Worlds</h1>
-            <p className="text-muted-foreground">Choose a realm to continue your infinite story</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100">
+      {/* Hero Header */}
+      <div className="relative bg-cover bg-center py-24 px-4" style={{ backgroundImage: "url('/parchment-bg.png')" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/20 to-black/30"></div>
+        <div className="relative max-w-7xl mx-auto text-center">
+          <h1 className="text-6xl font-bold text-white mb-6 drop-shadow-2xl animate-fade-in">Infinite Realms Await</h1>
+          <p className="text-xl text-white/95 mb-12 max-w-3xl mx-auto drop-shadow-lg leading-relaxed">Step into boundless worlds of adventure, where every choice shapes destiny and legends are forged in the fires of imagination</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
+            <Button
+              onClick={() => navigate('/campaigns/create')}
+              variant="fantasy"
+              size="lg"
+              className="px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+            >
+              <Plus className="w-6 h-6 mr-2" />
+              Create Epic Saga
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="px-8 py-4 text-lg border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
+            >
+              Explore Gallery
+            </Button>
           </div>
-          <Button
-            onClick={() => navigate('/campaigns/create')}
-            className="bg-primary hover:bg-infinite-purple text-primary-foreground px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 border border-infinite-purple/20"
-          >
-            <Plus className="w-5 h-5" />
-            Create New World
-          </Button>
         </div>
-        <CampaignList />
+      </div>
+
+      <div className="container mx-auto px-4 py-12 -mt-12 relative z-10">
+        {/* Search and Sort Controls */}
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-8 bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border/30 shadow-lg">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search your campaigns by name or genre..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pl-12 pr-4 rounded-xl border-2 border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-infinite-purple focus:border-transparent transition-all duration-200"
+              />
+              <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'name' | 'created_at')}
+              className="px-4 py-3 rounded-xl border-2 border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-infinite-purple focus:border-transparent transition-all duration-200"
+            >
+              <option value="created_at">Sort by: Recent</option>
+              <option value="name">Sort by: Name</option>
+            </select>
+          </div>
+        </div>
+
+        <CampaignList searchTerm={searchTerm} sortBy={sortBy} />
       </div>
     </div>
   );

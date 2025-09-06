@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { User, Sword, Shield, Star } from 'lucide-react';
 import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
 
@@ -32,7 +33,7 @@ interface CharacterCardProps {
  * Includes options to view, play, or delete the character
  * @param character - Character data to display
  */
-const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
+const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCampaignModal, setShowCampaignModal] = useState(false);
@@ -50,7 +51,7 @@ const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
    * Handles actual character deletion
    * Removes character from database and updates UI
    */
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       const { error } = await supabase
         .from('characters')
@@ -79,35 +80,66 @@ const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
       });
       setShowDeleteDialog(false);
     }
-  };
+  }, [character.id, toast, onDelete]);
+
+  // Generate avatar background color based on name
+  const getAvatarColor = useMemo(() => (name: string) => {
+    const colors = ['bg-infinite-purple', 'bg-infinite-gold', 'bg-infinite-teal', 'bg-destructive', 'bg-secondary'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }, []);
+
+  // Get first initial
+  const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
 
   return (
     <>
-      <Card className="p-6 hover:shadow-lg transition-shadow">
+      <Card className="group relative overflow-hidden rounded-2xl border-2 border-border/30 p-6 hover:shadow-2xl hover:border-infinite-purple/50 transition-all duration-300 bg-gradient-to-br from-background to-muted/50 hover:from-background hover:to-accent/20">
+        {/* Avatar */}
+        <div className="absolute -top-6 left-6 w-16 h-16 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <div className={`w-full h-full flex items-center justify-center text-2xl font-bold text-white ${getAvatarColor(character.name)}`}>
+            {getInitial(character.name)}
+          </div>
+        </div>
+
         <div 
-          className="cursor-pointer"
+          className="cursor-pointer pt-8"
           onClick={() => navigate(`/character/${character.id}`)}
         >
-          <h3 className="text-xl font-semibold mb-2 break-words">{character.name}</h3>
+          <h3 className="text-2xl font-bold mb-3 text-foreground break-words group-hover:text-infinite-purple transition-colors duration-200">{character.name}</h3>
           {character.description && (
-            <p className="text-muted-foreground mb-4 line-clamp-2 leading-relaxed break-words hyphens-auto">
+            <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed opacity-90 group-hover:opacity-100 transition-opacity duration-200">
               {character.description}
             </p>
           )}
-          <div className="space-y-2">
+          <div className="space-y-3 mb-6">
             {character.race && (
-              <p className="text-sm"><span className="font-medium">Race:</span> <span className="break-words">{typeof character.race === 'string' ? character.race : character.race.name}</span></p>
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Shield className="w-4 h-4 text-infinite-gold" />
+                <span className="text-foreground/80">{typeof character.race === 'string' ? character.race : character.race.name}</span>
+              </div>
             )}
             {character.class && (
-              <p className="text-sm"><span className="font-medium">Class:</span> <span className="break-words">{typeof character.class === 'string' ? character.class : character.class.name}</span></p>
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Sword className="w-4 h-4 text-infinite-teal" />
+                <span className="text-foreground/80">{typeof character.class === 'string' ? character.class : character.class.name}</span>
+              </div>
             )}
             {character.level && (
-              <p className="text-sm"><span className="font-medium">Level:</span> {character.level}</p>
+              <div className="flex items-center gap-2 text-sm font-semibold text-infinite-gold">
+                <Star className="w-4 h-4" />
+                <span>Level {character.level}</span>
+              </div>
             )}
           </div>
         </div>
-        <div className="flex justify-between mt-6">
-          <div className="flex gap-2">
+
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center pt-4 border-t border-border/30">
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
             <Button
               variant="destructive"
               size="sm"
@@ -115,6 +147,7 @@ const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
                 e.stopPropagation();
                 handleDeleteClick();
               }}
+              className="h-8 px-3"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -122,19 +155,22 @@ const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
               variant="outline"
               size="sm"
               onClick={() => navigate(`/character/${character.id}`)}
+              className="h-8 px-3 border-infinite-purple text-infinite-purple hover:bg-infinite-purple/10"
             >
-              View <ArrowRight className="w-4 h-4 ml-2" />
+              View Details
             </Button>
           </div>
           <Button
-            variant="default"
+            variant="fantasy"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
               setShowCampaignModal(true);
             }}
+            className="h-8 px-4 shadow-md hover:shadow-lg transition-shadow duration-200"
           >
-            Play <Play className="w-4 h-4 ml-2" />
+            <Play className="w-4 h-4 mr-2" />
+            Embark
           </Button>
         </div>
       </Card>
@@ -165,4 +201,7 @@ const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
   );
 };
 
-export default CharacterCard;
+const MemoizedCharacterCard = React.memo(CharacterCardComponent);
+
+export { MemoizedCharacterCard };
+export default CharacterCardComponent;
