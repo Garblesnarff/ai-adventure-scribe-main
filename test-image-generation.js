@@ -38,16 +38,16 @@ import('./src/services/campaign-image-generator.js')
 `);
 
 async function testImageGeneration() {
-  console.log('🖼️ Testing campaign image generation...');
+  console.log('🖼️ Testing campaign image generation with prominent title display...');
   
   const testCampaign = {
-    name: 'Test Campaign',
+    name: 'The Lost Temple',
     genre: 'dark-fantasy',
-    tone: 'serious',
-    description: 'A dark fantasy campaign in a gothic setting',
-    location: 'forest',
-    era: 'medieval',
-    atmosphere: 'mysterious'
+    tone: 'mysterious',
+    description: 'A dark fantasy campaign exploring ancient ruins',
+    location: 'underground',
+    era: 'ancient',
+    atmosphere: 'foreboding'
   };
 
   try {

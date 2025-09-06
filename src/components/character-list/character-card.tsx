@@ -98,11 +98,27 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   return (
     <>
       <Card className="group relative overflow-hidden rounded-2xl border-2 border-border/30 p-6 hover:shadow-2xl hover:border-infinite-purple/50 transition-all duration-300 bg-gradient-to-br from-background to-muted/50 hover:from-background hover:to-accent/20">
-        {/* Avatar */}
+        {/* Avatar - AI-generated image or fallback */}
         <div className="absolute -top-6 left-6 w-16 h-16 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-110 transition-transform duration-300">
-          <div className={`w-full h-full flex items-center justify-center text-2xl font-bold text-white ${getAvatarColor(character.name)}`}>
-            {getInitial(character.name)}
-          </div>
+          {character.image_url ? (
+            <img
+              src={character.image_url}
+              alt={`Portrait of ${character.name}`}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback to initial if image fails to load
+                const target = e.target as HTMLImageElement;
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-2xl font-bold text-white ${getAvatarColor(character.name)}">${getInitial(character.name)}</div>`;
+                }
+              }}
+            />
+          ) : (
+            <div className={`w-full h-full flex items-center justify-center text-2xl font-bold text-white ${getAvatarColor(character.name)}`}>
+              {getInitial(character.name)}
+            </div>
+          )}
         </div>
 
         <div 

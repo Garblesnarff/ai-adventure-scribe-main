@@ -58,9 +58,31 @@ async function run() {
         level INT DEFAULT 1,
         alignment TEXT,
         experience_points INT,
+        image_url TEXT,
+        appearance TEXT,
+        personality_traits TEXT,
+        backstory_elements TEXT,
+        background TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
+
+    // Add new character fields if they don't exist (for existing databases)
+    await client.query(`
+      ALTER TABLE characters ADD COLUMN IF NOT EXISTS image_url TEXT;
+    `);
+    await client.query(`
+      ALTER TABLE characters ADD COLUMN IF NOT EXISTS appearance TEXT;
+    `);
+    await client.query(`
+      ALTER TABLE characters ADD COLUMN IF NOT EXISTS personality_traits TEXT;
+    `);
+    await client.query(`
+      ALTER TABLE characters ADD COLUMN IF NOT EXISTS backstory_elements TEXT;
+    `);
+    await client.query(`
+      ALTER TABLE characters ADD COLUMN IF NOT EXISTS background TEXT;
     `);
 
     await client.query(`

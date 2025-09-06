@@ -95,6 +95,7 @@ const transformCharacterData = (
   id: characterData.id,
   user_id: characterData.user_id,
   name: characterData.name,
+  description: characterData.description,
   race: {
     id: 'stored',
     name: characterData.race,
@@ -139,6 +140,12 @@ const transformCharacterData = (
   equipment: equipmentData?.map((item: any) => item.item_name) || [],
   experience: characterData.experience_points || 0,
   alignment: characterData.alignment || '',
+  // AI-generated fields
+  image_url: characterData.image_url,
+  appearance: characterData.appearance,
+  personality_traits: characterData.personality_traits,
+  backstory_elements: characterData.backstory_elements,
+  // Legacy fields
   personalityTraits: [],
   ideals: [],
   bonds: [],

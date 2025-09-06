@@ -77,8 +77,11 @@ export class CampaignImageGenerator {
   private createImagePrompt(campaignData: CampaignData): string {
     const promptParts: string[] = [];
 
-    // Start with base description
-    promptParts.push("Create a stunning D&D fantasy landscape background image suitable for a campaign card.");
+    // Start with base description including text overlay requirement
+    promptParts.push("Create a stunning D&D fantasy landscape background image suitable for a campaign card with the campaign title displayed prominently as text overlay.");
+    
+    // Add specific text styling requirements
+    promptParts.push(`The title "${campaignData.name}" should be displayed in bold, fantasy-style lettering at the top or center of the image, using a medieval or gothic font style with ornate decorative elements, glowing or metallic text effects, and high contrast against the background for excellent readability.`);
 
     // Add genre-specific elements
     if (campaignData.genre) {
@@ -109,8 +112,9 @@ export class CampaignImageGenerator {
     // Add technical requirements
     promptParts.push(
       "Style: Epic fantasy art, cinematic composition, rich colors, detailed environment.",
-      "Format: Wide landscape format suitable for card background, no text or UI elements.",
-      "Quality: High detail, professional digital art style, atmospheric lighting."
+      "Format: Wide landscape format suitable for card background with integrated title text overlay.",
+      "Quality: High detail, professional digital art style, atmospheric lighting.",
+      "Text Integration: The campaign title must be rendered as part of the image composition with proper typography, shadows, and effects that complement the fantasy theme."
     );
 
     return promptParts.join(' ');

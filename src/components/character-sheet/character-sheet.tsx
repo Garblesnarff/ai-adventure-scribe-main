@@ -47,7 +47,46 @@ const CharacterSheet: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <h1 className="text-3xl font-bold text-center mb-8">{character.name}</h1>
+        {/* Character Header with Portrait */}
+        <div className="flex flex-col lg:flex-row items-center gap-6 mb-8">
+          {/* Character Portrait */}
+          <div className="flex-shrink-0">
+            {character.image_url ? (
+              <div className="w-32 h-32 lg:w-48 lg:h-48 rounded-lg overflow-hidden border-4 border-border shadow-lg">
+                <img
+                  src={character.image_url}
+                  alt={`Portrait of ${character.name}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to character initial if image fails
+                    const target = e.target as HTMLImageElement;
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-6xl font-bold text-white bg-gradient-to-br from-purple-600 to-blue-600">${character.name.charAt(0).toUpperCase()}</div>`;
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="w-32 h-32 lg:w-48 lg:h-48 rounded-lg flex items-center justify-center text-6xl font-bold text-white bg-gradient-to-br from-purple-600 to-blue-600 border-4 border-border shadow-lg">
+                {character.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+          
+          {/* Character Title and Description */}
+          <div className="flex-1 text-center lg:text-left">
+            <h1 className="text-4xl font-bold mb-2">{character.name}</h1>
+            <p className="text-xl text-muted-foreground mb-4">
+              Level {character.level} {character.race?.name} {character.class?.name}
+            </p>
+            {character.description && (
+              <p className="text-base leading-relaxed max-w-2xl">
+                {character.description}
+              </p>
+            )}
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <BasicInfo character={character} />

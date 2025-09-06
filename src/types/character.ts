@@ -52,7 +52,7 @@ export interface Character {
   id?: string;
   user_id: string;
   name: string;
-  description?: string; // Added description field
+  description?: string;
   race: CharacterRace | null;
   class: CharacterClass | null;
   level: number;
@@ -66,6 +66,11 @@ export interface Character {
   flaws: string[];
   equipment: string[];
   remainingAbilityPoints?: number;
+  // New AI-generated fields
+  image_url?: string;
+  appearance?: string;
+  personality_traits?: string;
+  backstory_elements?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -83,6 +88,10 @@ export function transformCharacterForStorage(character: Character) {
     background: character.background?.name || null,
     alignment: character.alignment,
     experience_points: character.experience,
+    image_url: character.image_url,
+    appearance: character.appearance,
+    personality_traits: character.personality_traits,
+    backstory_elements: character.backstory_elements,
     updated_at: new Date().toISOString(),
   };
 }
