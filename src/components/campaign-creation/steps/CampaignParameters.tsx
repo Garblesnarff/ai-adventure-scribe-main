@@ -101,9 +101,10 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             return (
               <div
                 key={level.value}
+                onClick={() => handleParameterChange('difficulty_level', level.value)}
                 className={`choice-btn p-4 cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg border-2 relative overflow-hidden ${
                   isSelected
-                    ? 'border-infinite-gold bg-gradient-to-r from-green-50 to-emerald-50 ring-2 ring-infinite-gold/20 animate-pulse'
+                    ? 'border-infinite-gold bg-gradient-to-r from-green-50 to-emerald-50 ring-2 ring-infinite-gold/20'
                     : 'border-amber-200 hover:border-green-500/50 bg-white/60 backdrop-blur-sm'
                 }`}
               >
@@ -164,9 +165,10 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             return (
               <div
                 key={length.value}
+                onClick={() => handleParameterChange('campaign_length', length.value)}
                 className={`choice-btn p-4 cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg border-2 relative overflow-hidden ${
                   isSelected
-                    ? 'border-infinite-gold bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-infinite-gold/20 animate-pulse'
+                    ? 'border-infinite-gold bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-infinite-gold/20'
                     : 'border-amber-200 hover:border-blue-500/50 bg-white/60 backdrop-blur-sm'
                 }`}
               >
@@ -232,9 +234,10 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             return (
               <div
                 key={tone.value}
+                onClick={() => handleParameterChange('tone', tone.value)}
                 className={`choice-btn p-4 cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg border-2 relative overflow-hidden ${
                   isSelected
-                    ? 'border-infinite-gold bg-gradient-to-r from-gray-50 to-slate-50 ring-2 ring-infinite-gold/20 animate-pulse'
+                    ? 'border-infinite-gold bg-gradient-to-r from-gray-50 to-slate-50 ring-2 ring-infinite-gold/20'
                     : 'border-amber-200 hover:border-destructive/50 bg-white/60 backdrop-blur-sm'
                 }`}
               >

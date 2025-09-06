@@ -102,9 +102,10 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
           return (
             <div
               key={genre.value}
+              onClick={() => handleGenreChange(genre.value)}
               className={`choice-btn p-4 cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg border-2 relative overflow-hidden ${
                 isSelected
-                  ? 'border-infinite-gold bg-gradient-to-r from-amber-50 to-yellow-50 ring-2 ring-infinite-gold/20 animate-pulse'
+                  ? 'border-infinite-gold bg-gradient-to-r from-amber-50 to-yellow-50 ring-2 ring-infinite-gold/20'
                   : 'border-amber-200 hover:border-infinite-gold/50 bg-white/60 backdrop-blur-sm'
               }`}
             >
