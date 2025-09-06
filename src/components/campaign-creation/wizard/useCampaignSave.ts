@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { campaignImageGenerator } from '@/services/campaign-image-generator';
 
@@ -10,6 +11,7 @@ import { campaignImageGenerator } from '@/services/campaign-image-generator';
 export const useCampaignSave = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   /**
    * Saves campaign data to Supabase and generates background image
@@ -81,9 +83,26 @@ export const useCampaignSave = () => {
         // Don't throw error - campaign creation should still succeed
       } else {
         console.log(`Successfully generated and saved background image for campaign ${campaignId}`);
+        
+        // Invalidate campaigns query to refresh the list with the new image
+        queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+        
+        // Show success notification
+        toast({
+          title: "Campaign Image Generated",
+          description: "Your campaign background image has been created successfully.",
+        });
       }
     } catch (error) {
       console.error(`Failed to generate background image for campaign ${campaignId}:`, error);
+      
+      // Show user-friendly error notification
+      toast({
+        title: "Image Generation Failed",
+        description: "We couldn't generate a background image for your campaign, but your campaign was created successfully. You can add an image later.",
+        variant: "destructive",
+      });
+      
       // Don't throw error - campaign creation should still succeed even if image generation fails
     }
   };
