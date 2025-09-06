@@ -18,6 +18,7 @@ const buttonVariants = cva(
           "border-secondary bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "border-transparent hover:bg-accent hover:text-accent-foreground",
         link: "border-transparent text-primary underline-offset-4 hover:underline",
+        fantasy: "border-infinite-gold bg-gradient-to-r from-amber-50 to-yellow-50 text-infinite-gold hover:bg-amber-100/50 animate-shimmer transition-all duration-200 ease-in-out hover:shadow-lg hover:-translate-y-0.5",
       },
       size: {
         default: "h-10 px-4 py-2",

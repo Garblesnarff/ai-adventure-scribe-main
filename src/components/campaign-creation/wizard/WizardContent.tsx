@@ -93,19 +93,29 @@ const WizardContent: React.FC = () => {
   const CurrentStepComponent = wizardSteps[currentStep].component;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <WizardHeader />
-        <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
-        <CurrentStepComponent isLoading={isSaving} />
-        <StepNavigation
-          currentStep={currentStep}
-          totalSteps={wizardSteps.length}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          isLoading={isSaving}
-        />
-      </Card>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 py-8 relative overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-5 mix-blend-multiply"
+        style={{ backgroundImage: "url('/parchment-bg.png')" }}
+      />
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="parchment-panel max-w-2xl mx-auto animate-fade-in-up">
+          <Card className="p-0 bg-transparent border-0 shadow-none">
+            <div className="p-6">
+              <WizardHeader />
+              <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
+              <CurrentStepComponent isLoading={isSaving} />
+              <StepNavigation
+                currentStep={currentStep}
+                totalSteps={wizardSteps.length}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+                isLoading={isSaving}
+              />
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

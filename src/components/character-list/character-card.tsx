@@ -88,18 +88,18 @@ const CharacterCard = ({ character, onDelete }: CharacterCardProps) => {
           className="cursor-pointer"
           onClick={() => navigate(`/character/${character.id}`)}
         >
-          <h3 className="text-xl font-semibold mb-2">{character.name}</h3>
+          <h3 className="text-xl font-semibold mb-2 break-words">{character.name}</h3>
           {character.description && (
-            <p className="text-muted-foreground mb-4 line-clamp-2">
+            <p className="text-muted-foreground mb-4 line-clamp-2 leading-relaxed break-words hyphens-auto">
               {character.description}
             </p>
           )}
           <div className="space-y-2">
             {character.race && (
-              <p className="text-sm"><span className="font-medium">Race:</span> {typeof character.race === 'string' ? character.race : character.race.name}</p>
+              <p className="text-sm"><span className="font-medium">Race:</span> <span className="break-words">{typeof character.race === 'string' ? character.race : character.race.name}</span></p>
             )}
             {character.class && (
-              <p className="text-sm"><span className="font-medium">Class:</span> {typeof character.class === 'string' ? character.class : character.class.name}</p>
+              <p className="text-sm"><span className="font-medium">Class:</span> <span className="break-words">{typeof character.class === 'string' ? character.class : character.class.name}</span></p>
             )}
             {character.level && (
               <p className="text-sm"><span className="font-medium">Level:</span> {character.level}</p>
