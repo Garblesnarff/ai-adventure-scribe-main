@@ -32,12 +32,13 @@ export default function campaignRouter(db: Pool) {
       setting,
       thematic_elements,
       status,
+      background_image,
     } = req.body;
     const client = await db.connect();
     try {
       const result = await client.query(
-        `INSERT INTO campaigns (user_id, name, description, genre, difficulty_level, campaign_length, tone, era, location, atmosphere, setting_details, thematic_elements, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        `INSERT INTO campaigns (user_id, name, description, genre, difficulty_level, campaign_length, tone, era, location, atmosphere, setting_details, thematic_elements, status, background_image)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
          RETURNING *`,
         [
           userId,
@@ -53,6 +54,7 @@ export default function campaignRouter(db: Pool) {
           setting || null,
           thematic_elements || null,
           status || 'active',
+          background_image || null,
         ]
       );
       return res.status(201).json(result.rows[0]);
@@ -91,12 +93,13 @@ export default function campaignRouter(db: Pool) {
       setting,
       thematic_elements,
       status,
+      background_image,
     } = req.body;
     const client = await db.connect();
     try {
       const result = await client.query(
-        `UPDATE campaigns SET name=$1, description=$2, genre=$3, difficulty_level=$4, campaign_length=$5, tone=$6, era=$7, location=$8, atmosphere=$9, setting_details=$10, thematic_elements=$11, status=$12, updated_at=NOW()
-         WHERE id=$13 AND user_id=$14 RETURNING *`,
+        `UPDATE campaigns SET name=$1, description=$2, genre=$3, difficulty_level=$4, campaign_length=$5, tone=$6, era=$7, location=$8, atmosphere=$9, setting_details=$10, thematic_elements=$11, status=$12, background_image=$13, updated_at=NOW()
+         WHERE id=$14 AND user_id=$15 RETURNING *`,
         [
           name,
           description || null,
@@ -110,6 +113,7 @@ export default function campaignRouter(db: Pool) {
           setting || null,
           thematic_elements || null,
           status || 'active',
+          background_image || null,
           id,
           userId,
         ]

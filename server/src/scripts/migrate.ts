@@ -36,9 +36,15 @@ async function run() {
         setting_details JSONB,
         thematic_elements JSONB,
         status TEXT,
+        background_image TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
+
+    // Add background_image column to existing campaigns table if it doesn't exist
+    await client.query(`
+      ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS background_image TEXT;
     `);
 
     await client.query(`

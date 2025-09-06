@@ -13,6 +13,7 @@ export type Database = {
       campaigns: {
         Row: {
           atmosphere: string | null
+          background_image: string | null
           campaign_length: string | null
           created_at: string | null
           description: string | null
@@ -31,6 +32,7 @@ export type Database = {
         }
         Insert: {
           atmosphere?: string | null
+          background_image?: string | null
           campaign_length?: string | null
           created_at?: string | null
           description?: string | null
@@ -49,6 +51,7 @@ export type Database = {
         }
         Update: {
           atmosphere?: string | null
+          background_image?: string | null
           campaign_length?: string | null
           created_at?: string | null
           description?: string | null
