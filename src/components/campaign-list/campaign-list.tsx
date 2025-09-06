@@ -59,6 +59,16 @@ interface CampaignListProps {
 const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListProps) => {
   const { toast } = useToast();
 
+  // map known campaign names to public cover images
+  const getCoverFor = useMemo(() => (name: string | null) => {
+    if (!name) return undefined;
+    const n = name.toLowerCase();
+    if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
+    if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
+    if (n.includes('tenebrous')) return '/tenebrous.jpeg';
+    return undefined;
+  }, []);
+
   // Fetch campaigns from Supabase with proper error handling and filtering/sorting
   const { data: campaigns, isLoading, error } = useQuery({
     queryKey: ['campaigns', searchTerm, sortBy],
@@ -125,15 +135,6 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
   }
 
   // Render campaign grid
-  // map known campaign names to public cover images
-  const getCoverFor = useMemo(() => (name: string | null) => {
-    if (!name) return undefined;
-    const n = name.toLowerCase();
-    if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
-    if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
-    if (n.includes('tenebrous')) return '/tenebrous.jpeg';
-    return undefined;
-  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
