@@ -98,7 +98,7 @@ const CampaignCard = ({ campaign, isFeatured = false, coverImage }: CampaignCard
     >
       {/* Hero / thumbnail area */}
       <div
-        className="campaign-hero featured flex items-end p-4 cursor-pointer"
+        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat"
         onClick={() => navigate(`/campaign/${campaign.id}`)}
         style={resolvedImage ? { backgroundImage: `url(${resolvedImage})` } : undefined}
       >

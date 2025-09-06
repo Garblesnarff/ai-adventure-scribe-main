@@ -7,6 +7,8 @@
  * @author AI Dungeon Master Team
  */
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface OpenRouterImageResponse {
   id: string;
   object: string;
@@ -157,20 +159,54 @@ export class OpenRouterService {
   }
 
   /**
-   * Upload base64 image to a storage service and return URL
-   * For now, this converts to blob URL. In production, you might want to upload to Supabase storage.
+   * Upload base64 image to Supabase storage and return public URL
    * @param base64Data - Base64 encoded image data (without data URL prefix)
-   * @returns URL for the uploaded image
+   * @returns Public URL for the uploaded image
    */
   async uploadImage(base64Data: string): Promise<string> {
-    // For now, just convert to data URL for immediate use
-    // In production, you might want to upload to Supabase storage
-    
-    // Ensure we have clean base64 data
-    const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
-    
-    // Return as data URL for immediate use in image src attributes
-    return `data:image/png;base64,${cleanBase64}`;
+    try {
+      // Ensure we have clean base64 data
+      const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+      
+      // Convert base64 to blob
+      const binaryString = atob(cleanBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'image/png' });
+      
+      // Generate unique filename
+      const fileName = `campaign-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
+      
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('campaign-images')
+        .upload(fileName, blob, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('Error uploading to Supabase storage:', error);
+        console.log('Falling back to data URL due to storage upload failure');
+        // Fallback to data URL if upload fails
+        return `data:image/png;base64,${cleanBase64}`;
+      }
+      
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('campaign-images')
+        .getPublicUrl(data.path);
+      
+      console.log('Successfully uploaded image to Supabase storage:', publicUrlData.publicUrl);
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      // Fallback to data URL if anything fails
+      const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+      return `data:image/png;base64,${cleanBase64}`;
+    }
   }
 }
 
