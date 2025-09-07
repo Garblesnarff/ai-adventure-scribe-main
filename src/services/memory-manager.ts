@@ -80,7 +80,7 @@ Extract 1-4 key memories in this JSON format:
       "type": "npc|location|quest|item|event|story_beat|character_moment|world_detail|dialogue_gem|atmosphere|plot_point|foreshadowing",
       "category": "brief category",
       "content": "concise memory description",
-      "importance": 1-10,
+      "importance": 1-5,
       "emotional_tone": "peaceful|mysterious|foreboding|intense|triumphant|humorous|melancholy|neutral",
       "metadata": {}
     }
@@ -133,6 +133,7 @@ GUIDELINES:
         .from('memories')
         .insert(memories.map(memory => ({
           ...memory,
+          importance: Math.max(1, Math.min(5, memory.importance || 1)), // Ensure importance is between 1-5
           embedding: null, // TODO: Generate embeddings
         })));
 
@@ -243,7 +244,7 @@ GUIDELINES:
       }
 
       // Boost importance and narrative weight
-      const newImportance = Math.min((memory.importance || 0) + boost, 10);
+      const newImportance = Math.min((memory.importance || 1) + boost, 5);
       const newNarrativeWeight = Math.min((memory.narrative_weight || 0) + boost, 10);
 
       const { error: updateError } = await supabase
