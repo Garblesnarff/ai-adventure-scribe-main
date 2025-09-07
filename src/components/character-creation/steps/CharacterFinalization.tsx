@@ -167,6 +167,38 @@ const CharacterFinalization: React.FC = () => {
         </div>
       </div>
 
+      {/* Proficiencies Summary */}
+      {state.character && (
+        <div className="bg-muted/50 p-4 rounded-lg border">
+          <h3 className="font-semibold mb-3 flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
+            Proficiencies & Languages
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm space-y-2">
+            <div>
+              <strong>Skills:</strong> {(state.character.skillProficiencies?.length || 0) > 0 
+                ? state.character.skillProficiencies?.join(', ') || 'None'
+                : 'None'}
+            </div>
+            <div>
+              <strong>Tools:</strong> {(state.character.toolProficiencies?.length || 0) > 0 
+                ? state.character.toolProficiencies?.join(', ') || 'None'
+                : 'None'}
+            </div>
+            <div>
+              <strong>Saving Throws:</strong> {(state.character.savingThrowProficiencies?.length || 0) > 0 
+                ? (state.character.savingThrowProficiencies || []).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')
+                : 'None'}
+            </div>
+            <div>
+              <strong>Languages:</strong> {(state.character.languages?.length || 0) > 0 
+                ? state.character.languages?.join(', ') || 'None'
+                : 'None'}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Description */}
         <div className="space-y-4">

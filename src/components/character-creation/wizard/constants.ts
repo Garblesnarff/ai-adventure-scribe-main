@@ -6,6 +6,7 @@ import AbilityScoresSelection from '../steps/AbilityScoresSelection';
 import BackgroundSelection from '../steps/BackgroundSelection';
 import EquipmentSelection from '../steps/EquipmentSelection';
 import CharacterFinalization from '../steps/CharacterFinalization';
+import ProficienciesSelection from '../steps/ProficienciesSelection';
 
 /**
  * Array of steps for the character creation wizard
@@ -31,6 +32,10 @@ export const wizardSteps: WizardStep[] = [
   {
     component: BackgroundSelection,
     label: 'Background'
+  },
+  {
+    component: ProficienciesSelection,
+    label: 'Proficiencies & Languages'
   },
   {
     component: EquipmentSelection,

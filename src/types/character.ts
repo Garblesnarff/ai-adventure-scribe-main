@@ -54,21 +54,25 @@ export interface CharacterBackground {
 
 export interface Character {
   id?: string;
-  user_id: string;
-  name: string;
+  user_id?: string;
+  name?: string;
   description?: string;
-  race: CharacterRace | null;
-  class: CharacterClass | null;
-  level: number;
-  background: CharacterBackground | null;
-  abilityScores: AbilityScores;
-  experience: number;
-  alignment: string;
-  personalityTraits: string[];
-  ideals: string[];
-  bonds: string[];
-  flaws: string[];
-  equipment: string[];
+  race?: CharacterRace | null;
+  class?: CharacterClass | null;
+  level?: number;
+  background?: CharacterBackground | null;
+  abilityScores?: AbilityScores;
+  experience?: number;
+  alignment?: string;
+  personalityTraits?: string[];
+  ideals?: string[];
+  bonds?: string[];
+  flaws?: string[];
+  equipment?: string[];
+  skillProficiencies?: string[];
+  toolProficiencies?: string[];
+  savingThrowProficiencies?: (keyof AbilityScores)[];
+  languages?: string[];
   remainingAbilityPoints?: number;
   // New AI-generated fields
   image_url?: string;
@@ -84,20 +88,24 @@ export interface Character {
 export function transformCharacterForStorage(character: Character) {
   return {
     id: character.id,
-    user_id: character.user_id,
-    name: character.name,
-    description: character.description,
+    user_id: character.user_id || '',
+    name: character.name || '',
+    description: character.description || '',
     race: character.race?.name || '',
     class: character.class?.name || '',
-    level: character.level,
+    level: character.level || 1,
     background: character.background?.name || null,
-    alignment: character.alignment,
-    experience_points: character.experience,
-    image_url: character.image_url,
-    appearance: character.appearance,
-    personality_traits: character.personality_traits,
-    personality_notes: character.personality_notes,
-    backstory_elements: character.backstory_elements,
+    alignment: character.alignment || '',
+    experience_points: character.experience || 0,
+    image_url: character.image_url || '',
+    appearance: character.appearance || '',
+    personality_traits: character.personality_traits || '',
+    personality_notes: character.personality_notes || '',
+    backstory_elements: character.backstory_elements || '',
+    skill_proficiencies: (character.skillProficiencies || []).join(','),
+    tool_proficiencies: (character.toolProficiencies || []).join(','),
+    saving_throw_proficiencies: (character.savingThrowProficiencies || []).join(','),
+    languages: (character.languages || []).join(','),
     updated_at: new Date().toISOString(),
   };
 }
