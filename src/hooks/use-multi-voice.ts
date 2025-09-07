@@ -345,141 +345,138 @@ export const useMultiVoice = () => {
   }, [generateAudioForSegment, toast]);
 
   /**
-   * Play all segments sequentially with gapless transitions
+   * Simple queue-based sequential audio playback
    */
   const playAllSegments = React.useCallback(async (segments: AudioSegment[]): Promise<void> => {
     console.log(`🎪 Starting playback of ${segments.length} segments`);
     
     const playbackId = Date.now().toString();
     currentPlaybackId.current = playbackId;
+    
     setState(prev => ({ 
       ...prev, 
-      isPlaying: true
+      isPlaying: true,
+      currentSegmentIndex: 0
     }));
 
-    try {
-      // Pre-create all audio elements to maintain user interaction context
-      const audioElements = new Map<number, HTMLAudioElement>();
-      
-      // Create audio elements for all segments upfront
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
-        if (segment.audioUrl && !segment.error) {
-          const audio = new Audio(segment.audioUrl);
-          audio.volume = state.isMuted ? 0 : state.volume;
-          audio.preload = 'auto';
-          audioElements.set(i, audio);
-        }
-      }
-
-      // Now play each segment sequentially
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
-        
-        // Check if this playback session is still active
+    const playNextSegment = (index: number): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        // Check if playback was cancelled
         if (currentPlaybackId.current !== playbackId) {
-          console.log('Playback session cancelled');
-          break;
+          console.log('🛑 Playback session cancelled!', {
+            currentId: currentPlaybackId.current,
+            expectedId: playbackId,
+            segmentIndex: index,
+            totalSegments: segments.length
+          });
+          resolve();
+          return;
         }
+
+        // Check if we've played all segments
+        if (index >= segments.length) {
+          console.log('🎉 All segments completed');
+          resolve();
+          return;
+        }
+
+        const segment = segments[index];
         
         if (!segment.audioUrl || segment.error) {
-          console.warn(`Skipping segment ${i}: no audio URL or error`);
-          continue;
+          console.warn(`Skipping segment ${index}: no audio URL or error`);
+          // Skip to next segment
+          playNextSegment(index + 1).then(resolve).catch(reject);
+          return;
         }
 
-        const currentAudio = audioElements.get(i);
-        if (!currentAudio) {
-          console.warn(`No audio element for segment ${i}`);
-          continue;
-        }
+        console.log(`🎧 Playing segment ${index + 1}/${segments.length}: "${segment.text.substring(0, 30)}..."`);
 
-        console.log(`🎧 Playing segment ${i + 1}/${segments.length}: "${segment.text.substring(0, 30)}..." (${segment.character || 'Narrator'})`);
+        // Create and play audio for this segment
+        const audio = new Audio(segment.audioUrl);
+        audio.volume = state.isMuted ? 0 : state.volume;
+        
+        // Update state to show current segment
+        setState(prev => ({
+          ...prev,
+          currentAudio: audio,
+          currentSegmentIndex: index,
+          segments: prev.segments.map((s, idx) => ({
+            ...s,
+            isPlaying: idx === index
+          }))
+        }));
+        
+        // Store audio reference
+        audioRefs.current.set(index, audio);
 
-        try {
-          // Update state to show current segment
+        // Set up event handlers
+        audio.onended = () => {
+          console.log(`✅ Segment ${index + 1} completed`);
+          
+          // Clear playing state for current segment
           setState(prev => ({
             ...prev,
-            currentAudio,
-            currentSegmentIndex: i,
-            segments: prev.segments.map((s, idx) => ({
+            segments: prev.segments.map(s => ({
               ...s,
-              isPlaying: idx === i
+              isPlaying: false
             }))
           }));
+          
+          // Cleanup
+          URL.revokeObjectURL(segment.audioUrl!);
+          audioRefs.current.delete(index);
+          
+          // Play next segment
+          setTimeout(() => {
+            playNextSegment(index + 1).then(resolve).catch(reject);
+          }, 100); // Small gap between segments
+        };
 
-          // Store audio reference
-          audioRefs.current.set(i, currentAudio);
+        audio.onerror = (event) => {
+          console.error(`❌ Audio playback failed for segment ${index + 1}:`, event);
+          setState(prev => ({
+            ...prev,
+            segments: prev.segments.map(s => ({
+              ...s,
+              isPlaying: false
+            }))
+          }));
+          
+          // Try to continue with next segment instead of failing completely
+          playNextSegment(index + 1).then(resolve).catch(reject);
+        };
 
-          // Play current segment and wait for completion
-          await new Promise<void>((resolve, reject) => {
-            currentAudio.onended = () => {
-              // Clear playing state for current segment
-              setState(prev => ({
-                ...prev,
-                segments: prev.segments.map(s => ({
-                  ...s,
-                  isPlaying: false
-                }))
-              }));
-              
-              // Cleanup audio URL and reference
-              URL.revokeObjectURL(segment.audioUrl!);
-              audioRefs.current.delete(i);
-              
-              // Small delay to ensure smooth transition
-              setTimeout(resolve, 50);
-            };
-            
-            currentAudio.onerror = (event) => {
-              console.error(`Audio playback failed for segment ${i}:`, event);
-              setState(prev => ({
-                ...prev,
-                isPlaying: false,
-                segments: prev.segments.map(s => ({
-                  ...s,
-                  isPlaying: false
-                }))
-              }));
-              reject(new Error(`Audio playback failed for segment ${i}`));
-            };
-
-            // Attempt to play - this should work since we're in user interaction context
-            currentAudio.play()
-              .then(() => {
-                console.log(`✅ Successfully started playing segment ${i + 1}`);
-              })
-              .catch((playError) => {
-                console.error(`Failed to start playing segment ${i + 1}:`, playError);
-                reject(playError);
-              });
+        // Start playing
+        audio.play()
+          .then(() => {
+            console.log(`▶️ Successfully started segment ${index + 1}`);
+          })
+          .catch((error) => {
+            console.error(`❌ Failed to start segment ${index + 1}:`, error);
+            // Try to continue with next segment
+            playNextSegment(index + 1).then(resolve).catch(reject);
           });
+      });
+    };
 
-        } catch (segmentError) {
-          console.warn(`Failed to play segment ${i}:`, segmentError);
-          // Continue to next segment instead of stopping
-          continue;
-        }
-      }
-
-      console.log('🎉 Finished playing all segments');
-
+    try {
+      // Start the playback chain
+      await playNextSegment(0);
+      console.log('🏁 Playback sequence completed');
     } catch (error) {
-      // Only log non-abort errors
-      if (!(error instanceof Error) || error.name !== 'AbortError') {
-        console.error('Error playing segments:', error);
-        toast({
-          title: "Playback Error",
-          description: error instanceof Error ? error.message : 'Failed to play audio',
-          variant: "destructive",
-        });
-      }
+      console.error('❌ Error in playback sequence:', error);
+      toast({
+        title: "Playback Error",
+        description: error instanceof Error ? error.message : 'Failed to play audio sequence',
+        variant: "destructive",
+      });
     } finally {
+      // Reset state
       setState(prev => ({ 
         ...prev, 
         isPlaying: false, 
         currentSegmentIndex: -1,
-        currentAudio: null,
-        nextAudio: null
+        currentAudio: null
       }));
     }
   }, [state.isMuted, state.volume, toast]);
@@ -701,15 +698,18 @@ export const useMultiVoice = () => {
     });
   }, [state.isVoiceEnabled, stopPlayback, toast]);
 
-  // Cleanup on unmount - but only if we're actually unmounting, not just re-rendering
+  // Cleanup on unmount only - not on re-renders
   React.useEffect(() => {
     return () => {
-      // Only stop if we're not in the middle of generating audio
-      if (!state.isLoading) {
-        stopPlayback();
+      // Only cleanup on actual unmount, cancel current playback
+      if (currentPlaybackId.current) {
+        currentPlaybackId.current = null;
+      }
+      if (abortController.current) {
+        abortController.current.abort();
       }
     };
-  }, [stopPlayback, state.isLoading]);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   return {
     // State
