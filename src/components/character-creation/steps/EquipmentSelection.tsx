@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { getStartingEquipment } from '@/data/equipmentOptions';
 import { backgrounds } from '@/data/backgroundOptions';
+import { Check } from 'lucide-react';
 
 /**
  * Equipment Selection component for character creation
@@ -22,8 +23,9 @@ const EquipmentSelection: React.FC = () => {
    * Handles equipment selection and updates character state
    * Adds background equipment automatically and updates character state
    * @param selectedItems Array of selected class equipment or gold items
+   * @param optionIndex Index of the selected equipment option
    */
-  const handleEquipmentSelect = (selectedItems: string[]) => {
+  const handleEquipmentSelect = (selectedItems: string[], optionIndex: number) => {
     let totalEquipment: string[] = [...selectedItems];
 
     // Automatically add background equipment if background is selected
@@ -34,7 +36,10 @@ const EquipmentSelection: React.FC = () => {
 
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { equipment: totalEquipment }
+      payload: { 
+        equipment: totalEquipment,
+        selectedEquipmentOptionIndex: optionIndex
+      }
     });
     
     // Detect if gold was selected for appropriate toast message
@@ -62,24 +67,31 @@ const EquipmentSelection: React.FC = () => {
       <h2 className="text-2xl font-bold text-center mb-4">Choose Your Equipment</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {startingEquipment.map((option, index) => {
-          const isSelected = JSON.stringify(state.character?.equipment) === JSON.stringify(option.items);
+          const isSelected = state.character?.selectedEquipmentOptionIndex === index;
           const isGoldOption = option.items.length === 1 && option.items[0].includes('gp');
           
           return (
             <Card 
               key={index}
-              className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 ${
+              className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 relative ${
                 isSelected ? 'border-primary bg-accent/10' : 'border-transparent'
               }`}
-              onClick={() => handleEquipmentSelect(option.items)}
+              onClick={() => handleEquipmentSelect(option.items, index)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  handleEquipmentSelect(option.items);
+                  handleEquipmentSelect(option.items, index);
                 }
               }}
             >
+              {isSelected && (
+                <div className="absolute top-3 right-3">
+                  <div className="bg-primary text-primary-foreground rounded-full p-1">
+                    <Check className="w-4 h-4" />
+                  </div>
+                </div>
+              )}
               <h3 className="text-xl font-semibold mb-2">
                 {isGoldOption ? 'Starting Gold' : `Equipment Pack ${index + 1}`}
               </h3>
