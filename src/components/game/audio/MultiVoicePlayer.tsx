@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Square, Volume2, VolumeX, Users, Settings, AlertCircle, RefreshCw, TestTube } from 'lucide-react';
+import { Play, Pause, Square, Volume2, VolumeX, Users, Settings, AlertCircle, RefreshCw, TestTube, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMultiVoice, AudioSegment } from '@/hooks/use-multi-voice';
+import { VoiceMapper } from '@/services/voice-mapper';
 
 interface MultiVoicePlayerProps {
   text: string;
@@ -138,6 +139,31 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
       speakText(text);
     }
   }, [text, isVoiceEnabled, isProcessing, speakText]);
+
+  const handleDebugVoiceMapping = React.useCallback(() => {
+    console.log('🔧 Debug: Clearing voice mappings and testing Thorne assignment...');
+    
+    // Clear all saved mappings
+    VoiceMapper.clearSavedMappings();
+    
+    // Test specific character mappings
+    VoiceMapper.debugAndClearCharacter('Thorne');
+    VoiceMapper.debugAndClearCharacter('thorne');
+    
+    // Show current mappings
+    console.log('📋 All available voices:', VoiceMapper.getAllVoices());
+    
+    // Re-parse text to see new voice assignments
+    if (text) {
+      const reparsed = parseText(text);
+      console.log('🎭 Re-parsed segments with cleared mappings:', reparsed.map(s => ({
+        type: s.type,
+        character: s.character,
+        voiceName: s.voiceConfig.name,
+        voiceId: s.voiceConfig.id
+      })));
+    }
+  }, [text, parseText]);
 
   // Check if there are any errors in segments
   const hasErrors = React.useMemo(() => {
@@ -303,6 +329,23 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
               </TooltipTrigger>
               <TooltipContent>
                 Test audio playback
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Debug Voice Mapping Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDebugVoiceMapping}
+                  className="h-10 w-10 p-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Clear voice mappings & debug
               </TooltipContent>
             </Tooltip>
 
