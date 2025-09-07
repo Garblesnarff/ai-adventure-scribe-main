@@ -112,7 +112,7 @@ export class CampaignImageGenerator {
     // Add technical requirements
     promptParts.push(
       "Style: Epic fantasy art, cinematic composition, rich colors, detailed environment.",
-      "Format: Wide landscape format suitable for card background with integrated title text overlay.",
+      "Format: Square 1:1 aspect ratio format suitable for card background with integrated title text overlay.",
       "Quality: High detail, professional digital art style, atmospheric lighting.",
       "Text Integration: The campaign title must be rendered as part of the image composition with proper typography, shadows, and effects that complement the fantasy theme."
     );
