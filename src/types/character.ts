@@ -46,6 +46,10 @@ export interface CharacterBackground {
     name: string;
     description: string;
   };
+  suggestedPersonalityTraits?: string[];
+  suggestedIdeals?: string[];
+  suggestedBonds?: string[];
+  suggestedFlaws?: string[];
 }
 
 export interface Character {
