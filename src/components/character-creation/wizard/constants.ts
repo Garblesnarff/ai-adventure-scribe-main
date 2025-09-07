@@ -1,10 +1,11 @@
 import { WizardStep } from './types';
-import NameDescription from '../steps/NameDescription';
+import BasicInfo from '../steps/BasicInfo';
 import RaceSelection from '../steps/RaceSelection';
 import ClassSelection from '../steps/ClassSelection';
 import AbilityScoresSelection from '../steps/AbilityScoresSelection';
 import BackgroundSelection from '../steps/BackgroundSelection';
 import EquipmentSelection from '../steps/EquipmentSelection';
+import CharacterFinalization from '../steps/CharacterFinalization';
 
 /**
  * Array of steps for the character creation wizard
@@ -12,8 +13,8 @@ import EquipmentSelection from '../steps/EquipmentSelection';
  */
 export const wizardSteps: WizardStep[] = [
   {
-    component: NameDescription,
-    label: 'Name & Description'
+    component: BasicInfo,
+    label: 'Basic Info'
   },
   {
     component: RaceSelection,
@@ -34,5 +35,9 @@ export const wizardSteps: WizardStep[] = [
   {
     component: EquipmentSelection,
     label: 'Equipment'
+  },
+  {
+    component: CharacterFinalization,
+    label: 'Finalization'
   }
 ];

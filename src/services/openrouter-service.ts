@@ -52,15 +52,24 @@ export class OpenRouterService {
   private apiKey: string;
   private baseUrl = 'https://openrouter.ai/api/v1';
   
-  // Model configurations with free tier support
+  // Model configurations with free tier support and nano-banana hackathon
   private models: ModelConfig[] = [
     {
       id: 'google/gemini-2.5-flash-image-preview:free',
-      dailyLimit: 1000,
+      dailyLimit: 100, // Nano-banana hackathon: 100 requests per day
       isFree: true
     },
     {
       id: 'google/gemini-2.5-flash-image-preview',
+      isFree: false // Paid Gemini model as primary fallback
+    },
+    // Temporary fallback models for testing
+    {
+      id: 'stabilityai/stable-diffusion-xl-base-1.0',
+      isFree: false
+    },
+    {
+      id: 'black-forest-labs/flux-1-schnell',
       isFree: false
     }
   ];
@@ -77,10 +86,11 @@ export class OpenRouterService {
    * @returns Model configuration to use
    */
   private selectAvailableModel(): ModelConfig {
-    // Try free models first
+    // Try free models first (includes nano-banana hackathon tier)
     for (const model of this.models.filter(m => m.isFree)) {
       if (model.dailyLimit && modelUsageTracker.canUseModel(model.id, model.dailyLimit)) {
-        console.log(`Using free model: ${model.id} (${modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit)} remaining today)`);
+        const remaining = modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit);
+        console.log(`Using free model: ${model.id} (${remaining}/100 nano-banana hackathon requests remaining today)`);
         return model;
       }
     }
@@ -121,6 +131,21 @@ export class OpenRouterService {
     const selectedModel = this.selectAvailableModel();
 
     try {
+      const requestBody = {
+        model: selectedModel.id,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        modalities: ['image', 'text'],
+        max_tokens: 2048,
+        temperature: 0.7,
+      };
+
+      console.log('OpenRouter request:', JSON.stringify(requestBody, null, 2));
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -129,18 +154,7 @@ export class OpenRouterService {
           'HTTP-Referer': window.location.origin,
           'X-Title': 'AI Adventure Scribe',
         },
-        body: JSON.stringify({
-          model: selectedModel.id,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          modalities: ['image', 'text'],
-          max_tokens: 2048,
-          temperature: 0.7,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -148,12 +162,32 @@ export class OpenRouterService {
         
         // Check if it's a rate limit error for free tier
         if (response.status === 429 && selectedModel.isFree) {
-          console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid model`);
+          console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid Gemini model`);
           
-          // Try with paid model
-          const paidModel = this.models.find(m => !m.isFree);
-          if (paidModel) {
-            return this.generateImageWithModel(prompt, paidModel);
+          // Try with paid Gemini model specifically
+          const paidGeminiModel = this.models.find(m => 
+            m.id === 'google/gemini-2.5-flash-image-preview' && !m.isFree
+          );
+          if (paidGeminiModel) {
+            return this.generateImageWithModel(prompt, paidGeminiModel);
+          }
+        }
+        
+        // Check if it's a 404 error (model not found) - try fallback models
+        if (response.status === 404) {
+          console.warn(`Model ${selectedModel.id} not found (404), trying fallback models`);
+          
+          // Try fallback models in order of preference
+          const fallbackModels = this.models.filter(m => m.id !== selectedModel.id);
+          
+          for (const fallbackModel of fallbackModels) {
+            try {
+              console.log(`Trying fallback model: ${fallbackModel.id}`);
+              return await this.generateImageWithModel(prompt, fallbackModel);
+            } catch (fallbackError) {
+              console.warn(`Fallback model ${fallbackModel.id} also failed:`, fallbackError.message);
+              continue;
+            }
           }
         }
         
@@ -161,37 +195,86 @@ export class OpenRouterService {
       }
 
       const data: OpenRouterImageResponse = await response.json();
+      
+      // Debug: Log the full response structure
+      console.log('Full OpenRouter API response:', JSON.stringify(data, null, 2));
 
       if (!data.choices || data.choices.length === 0) {
+        console.error('No choices in response:', data);
         throw new Error('No image generated in API response');
       }
 
       const choice = data.choices[0];
-      if (!choice.message || !choice.message.content) {
-        throw new Error('Invalid response format from OpenRouter API');
+      console.log('Choice structure:', JSON.stringify(choice, null, 2));
+      
+      if (!choice.message) {
+        console.error('No message in choice:', choice);
+        throw new Error('Invalid response format from OpenRouter API - no message');
       }
 
       // Check for image in different possible locations
       let imageData = null;
 
-      // Check if message has an images array (actual format from Gemini)
+      console.log('Looking for image data in response...');
+      
+      // Method 1: Check if message has an images array (Gemini format)
       if (choice.message.images && choice.message.images.length > 0) {
+        console.log('Found images array:', choice.message.images);
         const imageObj = choice.message.images[0];
         if (imageObj.image_url?.url) {
           imageData = imageObj.image_url.url;
+          console.log('Found image in image_url.url:', imageData.substring(0, 50) + '...');
+        } else if (imageObj.url) {
+          imageData = imageObj.url;
+          console.log('Found image in url:', imageData.substring(0, 50) + '...');
         }
       }
-      // Check if message.content is array with image content
+      
+      // Method 2: Check if message.content is array with image content
       else if (Array.isArray(choice.message.content)) {
+        console.log('message.content is array:', choice.message.content);
         const imageContent = choice.message.content.find(
-          (content) => content.type === 'image' && content.image
+          (content) => content.type === 'image'
         );
-        imageData = imageContent?.image;
+        if (imageContent) {
+          console.log('Found image content:', imageContent);
+          if (imageContent.image) {
+            imageData = imageContent.image;
+          } else if (imageContent.image_url) {
+            imageData = imageContent.image_url;
+          } else if (imageContent.data) {
+            imageData = imageContent.data;
+          }
+        }
+      }
+      
+      // Method 3: Check if message.content is a string with image data
+      else if (typeof choice.message.content === 'string') {
+        console.log('message.content is string, checking if it contains image data...');
+        if (choice.message.content.startsWith('data:image/')) {
+          imageData = choice.message.content;
+          console.log('Found image data in content string');
+        }
+      }
+      
+      // Method 4: Check direct message properties
+      if (!imageData && choice.message.image) {
+        console.log('Found image in message.image');
+        imageData = choice.message.image;
+      }
+      
+      if (!imageData && choice.message.image_url) {
+        console.log('Found image in message.image_url');
+        imageData = choice.message.image_url;
       }
 
       if (!imageData) {
+        console.error('No image data found in any expected location');
+        console.error('Available message properties:', Object.keys(choice.message));
         throw new Error('No image data found in API response');
       }
+      
+      console.log('Successfully found image data, type:', typeof imageData);
 
       // Extract base64 data if it's a data URL
       if (imageData.startsWith('data:image/')) {
@@ -249,37 +332,86 @@ export class OpenRouterService {
       }
 
       const data: OpenRouterImageResponse = await response.json();
+      
+      // Debug: Log the full response structure
+      console.log('Full OpenRouter API response:', JSON.stringify(data, null, 2));
 
       if (!data.choices || data.choices.length === 0) {
+        console.error('No choices in response:', data);
         throw new Error('No image generated in API response');
       }
 
       const choice = data.choices[0];
-      if (!choice.message || !choice.message.content) {
-        throw new Error('Invalid response format from OpenRouter API');
+      console.log('Choice structure:', JSON.stringify(choice, null, 2));
+      
+      if (!choice.message) {
+        console.error('No message in choice:', choice);
+        throw new Error('Invalid response format from OpenRouter API - no message');
       }
 
       // Check for image in different possible locations
       let imageData = null;
 
-      // Check if message has an images array (actual format from Gemini)
+      console.log('Looking for image data in response...');
+      
+      // Method 1: Check if message has an images array (Gemini format)
       if (choice.message.images && choice.message.images.length > 0) {
+        console.log('Found images array:', choice.message.images);
         const imageObj = choice.message.images[0];
         if (imageObj.image_url?.url) {
           imageData = imageObj.image_url.url;
+          console.log('Found image in image_url.url:', imageData.substring(0, 50) + '...');
+        } else if (imageObj.url) {
+          imageData = imageObj.url;
+          console.log('Found image in url:', imageData.substring(0, 50) + '...');
         }
       }
-      // Check if message.content is array with image content
+      
+      // Method 2: Check if message.content is array with image content
       else if (Array.isArray(choice.message.content)) {
+        console.log('message.content is array:', choice.message.content);
         const imageContent = choice.message.content.find(
-          (content) => content.type === 'image' && content.image
+          (content) => content.type === 'image'
         );
-        imageData = imageContent?.image;
+        if (imageContent) {
+          console.log('Found image content:', imageContent);
+          if (imageContent.image) {
+            imageData = imageContent.image;
+          } else if (imageContent.image_url) {
+            imageData = imageContent.image_url;
+          } else if (imageContent.data) {
+            imageData = imageContent.data;
+          }
+        }
+      }
+      
+      // Method 3: Check if message.content is a string with image data
+      else if (typeof choice.message.content === 'string') {
+        console.log('message.content is string, checking if it contains image data...');
+        if (choice.message.content.startsWith('data:image/')) {
+          imageData = choice.message.content;
+          console.log('Found image data in content string');
+        }
+      }
+      
+      // Method 4: Check direct message properties
+      if (!imageData && choice.message.image) {
+        console.log('Found image in message.image');
+        imageData = choice.message.image;
+      }
+      
+      if (!imageData && choice.message.image_url) {
+        console.log('Found image in message.image_url');
+        imageData = choice.message.image_url;
       }
 
       if (!imageData) {
+        console.error('No image data found in any expected location');
+        console.error('Available message properties:', Object.keys(choice.message));
         throw new Error('No image data found in API response');
       }
+      
+      console.log('Successfully found image data, type:', typeof imageData);
 
       // Extract base64 data if it's a data URL
       if (imageData.startsWith('data:image/')) {

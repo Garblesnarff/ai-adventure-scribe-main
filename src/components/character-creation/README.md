@@ -11,13 +11,14 @@ This directory contains all React components, logic, and associated types for th
     - **`ProgressIndicator.tsx`**: Displays the user's current progress through the character creation steps.
     - **`StepNavigation.tsx`**: Provides "Next" and "Previous" buttons for navigating between steps.
 - **`steps/`**: Individual components, each representing a distinct step in the character creation process.
-    - **`NameDescription.tsx`**: For setting the character's name, description, alignment, etc.
+    - **`BasicInfo.tsx`**: For setting the character's name and optional personality notes.
     - **`RaceSelection.tsx`**: For choosing the character's race.
     - **`ClassSelection.tsx`**: For choosing the character's class.
     - **`AbilityScoresSelection.tsx`** (and its subfolder `ability-scores/`): For determining the character's ability scores (e.g., using point buy, standard array, or rolling).
         - `ability-scores/AbilityScoreCard.tsx`: Displays a single ability score.
     - **`BackgroundSelection.tsx`**: For selecting the character's background.
     - **`EquipmentSelection.tsx`**: For choosing starting equipment.
+    - **`CharacterFinalization.tsx`**: Final step for reviewing character choices, generating AI description and portrait.
     - *(Other steps, if any, would follow this pattern).*
 - **`wizard/`**: Core logic, types, and hooks specifically for the character wizard functionality.
     - **`WizardContent.tsx`**: Responsible for rendering the content of the currently active step.
