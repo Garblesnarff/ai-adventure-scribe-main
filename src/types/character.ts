@@ -70,6 +70,7 @@ export interface Character {
   image_url?: string;
   appearance?: string;
   personality_traits?: string;
+  personality_notes?: string;
   backstory_elements?: string;
   created_at?: string;
   updated_at?: string;
@@ -91,6 +92,7 @@ export function transformCharacterForStorage(character: Character) {
     image_url: character.image_url,
     appearance: character.appearance,
     personality_traits: character.personality_traits,
+    personality_notes: character.personality_notes,
     backstory_elements: character.backstory_elements,
     updated_at: new Date().toISOString(),
   };

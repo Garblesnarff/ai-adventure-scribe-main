@@ -18,6 +18,7 @@ interface CharacterData {
   level?: number | null;
   ability_scores?: any;
   alignment?: string | null;
+  personality_notes?: string | null;
 }
 
 interface EnhancedDescription {
@@ -63,10 +64,19 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-pro',
+        model: 'gemini-1.5-flash',
         maxTokens: 1000,
         temperature: 0.8,
       });
+
+      console.log('Raw Gemini response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response length:', response?.length || 0);
+
+      if (!response || response.trim() === '') {
+        console.warn('Empty or null response from Gemini API');
+        throw new Error('Received empty response from AI service');
+      }
 
       const enhancedDescription = this.parseDescriptionResponse(response, characterData);
       
@@ -78,10 +88,10 @@ export class CharacterDescriptionGenerator {
       
       // Return fallback description
       return {
-        description: characterData.description || `${characterData.name} is a ${characterData.race} ${characterData.class}.`,
-        appearance: `A typical ${characterData.race} with ${characterData.class} characteristics.`,
+        description: characterData.description || `${characterData.name || 'The character'} is a ${characterData.race || 'heroic'} ${characterData.class || 'adventurer'}.`,
+        appearance: `A typical ${characterData.race || 'adventurer'} with ${characterData.class || 'heroic'} characteristics.`,
         personality_traits: 'Determined and adventurous, with a strong sense of justice.',
-        backstory_elements: `${characterData.name} comes from a ${characterData.background || 'common'} background and has chosen the path of a ${characterData.class}.`
+        backstory_elements: `${characterData.name || 'This character'} comes from a ${characterData.background || 'common'} background and has chosen the path of a ${characterData.class || 'heroic adventurer'}.`
       };
     }
   }
@@ -112,6 +122,12 @@ export class CharacterDescriptionGenerator {
     if (characterData.background) promptParts.push(`Background: ${characterData.background}`);
     if (characterData.level) promptParts.push(`Level: ${characterData.level}`);
     if (characterData.alignment) promptParts.push(`Alignment: ${characterData.alignment}`);
+    
+    // Add personality notes if provided
+    if (characterData.personality_notes) {
+      promptParts.push(`Personality Notes: ${characterData.personality_notes}`);
+      promptParts.push('(Make sure to incorporate these personality notes and quirks into the generated personality traits and description)');
+    }
 
     // Add ability score context if available
     if (characterData.ability_scores) {
@@ -165,17 +181,20 @@ export class CharacterDescriptionGenerator {
   private parseDescriptionResponse(response: string, characterData: CharacterData): EnhancedDescription {
     try {
       const sections = this.extractSections(response);
+      console.log('Extracted sections:', sections);
       
-      return {
+      const result = {
         description: sections.DESCRIPTION || sections.description || 
-                    `${characterData.name} is a ${characterData.race} ${characterData.class}.`,
+                    `${characterData.name || 'The character'} is a ${characterData.race || 'heroic'} ${characterData.class || 'adventurer'}.`,
         appearance: sections.APPEARANCE || sections.appearance || 
-                   `A typical ${characterData.race} with ${characterData.class} characteristics.`,
+                   `A typical ${characterData.race || 'adventurer'} with ${characterData.class || 'heroic'} characteristics.`,
         personality_traits: sections.PERSONALITY || sections.personality || 
                            'Determined and adventurous, ready for any challenge.',
         backstory_elements: sections.BACKSTORY || sections.backstory || 
-                           `${characterData.name} has chosen the adventuring life to fulfill their destiny.`
+                           `${characterData.name || 'This character'} has chosen the adventuring life to fulfill their destiny.`
       };
+      console.log('Parsed description result:', result);
+      return result;
     } catch (error) {
       console.error('Error parsing description response:', error);
       
@@ -184,10 +203,10 @@ export class CharacterDescriptionGenerator {
       const sentences = cleanResponse.split('.').filter(s => s.trim());
       
       return {
-        description: sentences.slice(0, 2).join('.') + '.',
-        appearance: sentences.slice(2, 4).join('.') + '.',
-        personality_traits: sentences.slice(4, 6).join('.') + '.',
-        backstory_elements: sentences.slice(6, 8).join('.') + '.'
+        description: sentences.slice(0, 2).join('.') + '.' || `${characterData.name || 'The character'} is a ${characterData.race || 'heroic'} ${characterData.class || 'adventurer'}.`,
+        appearance: sentences.slice(2, 4).join('.') + '.' || `A typical ${characterData.race || 'adventurer'} with ${characterData.class || 'heroic'} characteristics.`,
+        personality_traits: sentences.slice(4, 6).join('.') + '.' || 'Determined and adventurous, ready for any challenge.',
+        backstory_elements: sentences.slice(6, 8).join('.') + '.' || `${characterData.name || 'This character'} has chosen the adventuring life to fulfill their destiny.`
       };
     }
   }
@@ -236,7 +255,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-pro',
+        model: 'gemini-1.5-flash',
         maxTokens: 100,
         temperature: 0.7,
       });
@@ -244,7 +263,7 @@ export class CharacterDescriptionGenerator {
       return response.trim();
     } catch (error) {
       console.error('Failed to generate quick description:', error);
-      return `${characterData.name} is a ${characterData.race} ${characterData.class} ready for adventure.`;
+      return `${characterData.name || 'This character'} is a ${characterData.race || 'heroic'} ${characterData.class || 'adventurer'} ready for adventure.`;
     }
   }
 }

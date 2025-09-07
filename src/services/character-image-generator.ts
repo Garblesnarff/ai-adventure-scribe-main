@@ -19,13 +19,15 @@ interface CharacterData {
   ability_scores?: any;
   appearance?: string | null;
   personality_traits?: string | null;
+  personality_notes?: string | null;
   alignment?: string | null;
 }
 
 interface CharacterImageOptions {
   retryAttempts?: number;
   fallbackToDefault?: boolean;
-  style?: 'portrait' | 'action' | 'full-body';
+  style?: 'portrait' | 'action' | 'full-body' | 'character-sheet' | 'expression-sheet';
+  artStyle?: 'fantasy-art' | 'anime' | 'realistic' | 'comic-book' | 'watercolor' | 'sketch' | 'oil-painting';
 }
 
 /**
@@ -45,10 +47,10 @@ export class CharacterImageGenerator {
     characterData: CharacterData, 
     options: CharacterImageOptions = {}
   ): Promise<string> {
-    const { retryAttempts = this.maxRetries, fallbackToDefault = true, style = 'portrait' } = options;
+    const { retryAttempts = this.maxRetries, fallbackToDefault = true, style = 'portrait', artStyle = 'fantasy-art' } = options;
 
     try {
-      const prompt = this.createImagePrompt(characterData, style);
+      const prompt = this.createImagePrompt(characterData, style, artStyle);
       console.log('Generating character image with prompt:', prompt);
 
       const base64Image = await this.generateWithRetry(prompt, retryAttempts);
@@ -72,76 +74,180 @@ export class CharacterImageGenerator {
   /**
    * Create a detailed character portrait prompt based on character data
    * @param characterData - Character attributes
-   * @param style - Image style preference
+   * @param style - Image composition style
+   * @param artStyle - Art style preference
    * @returns Formatted prompt string
    */
-  private createImagePrompt(characterData: CharacterData, style: string): string {
+  private createImagePrompt(characterData: CharacterData, style: string, artStyle: string): string {
     const promptParts: string[] = [];
 
-    // Base description with character name prominently displayed
-    promptParts.push('Create a detailed D&D character portrait with the character name displayed prominently as text overlay.');
-    
-    // Add specific text styling requirements for character name
-    promptParts.push(`The character name "${characterData.name}" should be displayed in bold, fantasy-style lettering at the bottom or top of the portrait, using a medieval or gothic font style with ornate decorative elements, glowing or metallic text effects, and high contrast against the background for excellent readability.`);
+    // Extract key physical details from descriptions
+    const extractedDetails = this.extractCharacterDetails(characterData);
 
-    // Add style-specific framing
+    // Add style-specific base prompt
     switch (style) {
       case 'portrait':
-        promptParts.push('Head and shoulders portrait view, facing forward or at slight angle.');
+        promptParts.push('D&D character portrait, head and shoulders view, facing forward or at slight angle');
         break;
       case 'action':
-        promptParts.push('Dynamic action pose showing the character in combat or using abilities.');
+        promptParts.push('Dynamic D&D character action pose, showing character in combat or using abilities');
         break;
       case 'full-body':
-        promptParts.push('Full body standing portrait showing complete outfit and equipment.');
+        promptParts.push('Full body D&D character portrait, standing pose, complete outfit and equipment visible');
         break;
+      case 'character-sheet':
+        promptParts.push('D&D character turnaround sheet, multiple views of the same character, front view, side profile, back view, and 3/4 angle, consistent character across all poses');
+        break;
+      case 'expression-sheet':
+        promptParts.push('D&D character expression sheet, same character with multiple facial expressions, happy, serious, angry, surprised, consistent character');
+        break;
+    }
+
+    // Build character description
+    const characterDesc = this.buildCharacterDescription(characterData, extractedDetails);
+    promptParts.push(characterDesc);
+
+    // Add art style
+    promptParts.push(this.getArtStylePrompt(artStyle));
+
+    // Add composition requirements
+    if (style === 'character-sheet' || style === 'expression-sheet') {
+      promptParts.push('Clean white background, organized layout, professional character reference');
+    } else {
+      promptParts.push('Clean background, character as main focus, professional composition');
+    }
+
+    // Add technical quality requirements
+    promptParts.push('High detail, sharp focus, excellent lighting, rich colors, digital illustration quality');
+
+    return promptParts.join(', ');
+  }
+
+  /**
+   * Extract key physical details from character descriptions
+   */
+  private extractCharacterDetails(characterData: CharacterData): {
+    physicalFeatures: string[];
+    equipment: string[];
+    distinguishingMarks: string[];
+  } {
+    const details = {
+      physicalFeatures: [],
+      equipment: [],
+      distinguishingMarks: []
+    };
+
+    // Extract from appearance description if available
+    if (characterData.appearance) {
+      const appearance = characterData.appearance.toLowerCase();
+      
+      // Look for height/build
+      if (appearance.includes('tall')) details.physicalFeatures.push('tall stature');
+      if (appearance.includes('short')) details.physicalFeatures.push('short stature');
+      if (appearance.includes('muscular')) details.physicalFeatures.push('muscular build');
+      if (appearance.includes('lean')) details.physicalFeatures.push('lean build');
+      if (appearance.includes('stocky')) details.physicalFeatures.push('stocky build');
+      
+      // Look for hair
+      if (appearance.includes('brown hair')) details.physicalFeatures.push('brown hair');
+      if (appearance.includes('black hair')) details.physicalFeatures.push('black hair');
+      if (appearance.includes('blonde hair')) details.physicalFeatures.push('blonde hair');
+      if (appearance.includes('red hair')) details.physicalFeatures.push('red hair');
+      if (appearance.includes('white hair')) details.physicalFeatures.push('white hair');
+      if (appearance.includes('braid')) details.physicalFeatures.push('braided hair');
+      
+      // Look for eyes
+      if (appearance.includes('blue eyes')) details.physicalFeatures.push('blue eyes');
+      if (appearance.includes('green eyes')) details.physicalFeatures.push('green eyes');
+      if (appearance.includes('brown eyes')) details.physicalFeatures.push('brown eyes');
+      if (appearance.includes('piercing eyes')) details.physicalFeatures.push('piercing gaze');
+      
+      // Look for scars and marks
+      if (appearance.includes('scar')) details.distinguishingMarks.push('battle scars');
+      if (appearance.includes('tattoo')) details.distinguishingMarks.push('tattoos');
+      
+      // Look for armor/equipment
+      if (appearance.includes('leather armor')) details.equipment.push('leather armor');
+      if (appearance.includes('plate armor')) details.equipment.push('plate armor');
+      if (appearance.includes('chainmail')) details.equipment.push('chainmail');
+      if (appearance.includes('surcoat')) details.equipment.push('surcoat');
+    }
+
+    return details;
+  }
+
+  /**
+   * Build comprehensive character description from all available data
+   */
+  private buildCharacterDescription(characterData: CharacterData, extractedDetails: any): string {
+    const descParts: string[] = [];
+
+    // Add race and class
+    if (characterData.race && characterData.class) {
+      descParts.push(`${characterData.race} ${characterData.class}`);
+    } else if (characterData.race) {
+      descParts.push(characterData.race);
+    } else if (characterData.class) {
+      descParts.push(characterData.class);
+    }
+
+    // Add extracted physical features
+    if (extractedDetails.physicalFeatures.length > 0) {
+      descParts.push(extractedDetails.physicalFeatures.join(', '));
     }
 
     // Add race-specific features
     if (characterData.race) {
-      promptParts.push(this.getRacePrompt(characterData.race));
+      descParts.push(this.getRacePrompt(characterData.race));
     }
 
-    // Add class-specific elements
+    // Add class-specific equipment
     if (characterData.class) {
-      promptParts.push(this.getClassPrompt(characterData.class));
+      descParts.push(this.getClassPrompt(characterData.class));
     }
 
-    // Add character description details
-    if (characterData.description) {
-      promptParts.push(`Character details: ${characterData.description}`);
+    // Add extracted equipment
+    if (extractedDetails.equipment.length > 0) {
+      descParts.push(extractedDetails.equipment.join(', '));
     }
 
-    // Add appearance details if available
-    if (characterData.appearance) {
-      promptParts.push(`Appearance: ${characterData.appearance}`);
+    // Add distinguishing marks
+    if (extractedDetails.distinguishingMarks.length > 0) {
+      descParts.push(extractedDetails.distinguishingMarks.join(', '));
     }
 
-    // Add personality visual cues
-    if (characterData.personality_traits) {
-      promptParts.push(`Personality reflected in expression: ${characterData.personality_traits}`);
-    }
-
-    // Add background-based environmental hints
-    if (characterData.background) {
-      promptParts.push(this.getBackgroundPrompt(characterData.background));
-    }
-
-    // Add alignment-based mood/expression
+    // Add alignment-based expression
     if (characterData.alignment) {
-      promptParts.push(this.getAlignmentPrompt(characterData.alignment));
+      descParts.push(this.getAlignmentPrompt(characterData.alignment));
     }
 
-    // Add technical requirements
-    promptParts.push(
-      'Style: Fantasy art, detailed digital painting, professional character illustration.',
-      'Quality: High detail, sharp focus, excellent lighting, rich colors.',
-      'Composition: Clean background, character as main focus, D&D fantasy aesthetic with integrated name text overlay.',
-      'Technical: Portrait orientation, suitable for character card display.',
-      'Text Integration: The character name must be rendered as part of the image composition with proper typography, shadows, and effects that complement the fantasy theme.'
-    );
+    // Add personality notes for visual character traits
+    if (characterData.personality_notes) {
+      // Extract visually relevant personality traits
+      const personalityVisuals = this.extractVisualPersonalityTraits(characterData.personality_notes);
+      if (personalityVisuals.length > 0) {
+        descParts.push(personalityVisuals.join(', '));
+      }
+    }
 
-    return promptParts.join(' ');
+    return descParts.join(', ');
+  }
+
+  /**
+   * Get art style specific prompting
+   */
+  private getArtStylePrompt(artStyle: string): string {
+    const styleMap: Record<string, string> = {
+      'fantasy-art': 'fantasy art style, detailed digital painting, epic fantasy aesthetic',
+      'anime': 'anime art style, cel-shaded, Japanese animation style, vibrant colors',
+      'realistic': 'photorealistic style, highly detailed, lifelike rendering',
+      'comic-book': 'comic book art style, bold lines, dynamic shading, superhero aesthetic',
+      'watercolor': 'watercolor painting style, soft washes, artistic brushstrokes',
+      'sketch': 'pencil sketch style, hand-drawn, artistic line work, monochromatic',
+      'oil-painting': 'oil painting style, classical art, rich textures, masterwork quality'
+    };
+
+    return styleMap[artStyle] || styleMap['fantasy-art'];
   }
 
   /**
@@ -257,6 +363,53 @@ export class CharacterImageGenerator {
     }
 
     throw lastError || new Error('All character image generation attempts failed');
+  }
+
+  /**
+   * Extract visually relevant personality traits from personality notes
+   * @param personalityNotes - User's personality notes
+   * @returns Array of visual descriptors
+   */
+  private extractVisualPersonalityTraits(personalityNotes: string): string[] {
+    const notes = personalityNotes.toLowerCase();
+    const visualTraits: string[] = [];
+
+    // Nervous traits
+    if (notes.includes('tourettes') || notes.includes('tics')) {
+      visualTraits.push('subtle facial tics or nervous expressions');
+    }
+    if (notes.includes('fidgety') || notes.includes('restless')) {
+      visualTraits.push('fidgety posture');
+    }
+    if (notes.includes('anxious') || notes.includes('nervous')) {
+      visualTraits.push('slightly anxious expression');
+    }
+
+    // Confident traits
+    if (notes.includes('confident') || notes.includes('bold')) {
+      visualTraits.push('confident stance and expression');
+    }
+    if (notes.includes('proud') || notes.includes('arrogant')) {
+      visualTraits.push('proud bearing');
+    }
+
+    // Social traits
+    if (notes.includes('shy') || notes.includes('timid')) {
+      visualTraits.push('shy demeanor');
+    }
+    if (notes.includes('friendly') || notes.includes('warm')) {
+      visualTraits.push('warm, friendly expression');
+    }
+
+    // Physical quirks
+    if (notes.includes('scar') || notes.includes('scarred')) {
+      visualTraits.push('visible scars');
+    }
+    if (notes.includes('tattoo') || notes.includes('tattooed')) {
+      visualTraits.push('tattoos');
+    }
+
+    return visualTraits;
   }
 }
 
