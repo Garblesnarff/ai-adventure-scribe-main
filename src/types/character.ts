@@ -21,6 +21,17 @@ export interface CharacterRace {
   speed: number;
   traits: string[];
   languages: string[];
+  subraces?: Subrace[];
+}
+
+export interface Subrace {
+  id: string;
+  name: string;
+  description: string;
+  abilityScoreIncrease: Partial<Record<keyof AbilityScores, number>>;
+  traits: string[];
+  speed?: number;
+  languages?: string[];
 }
 
 export interface CharacterClass {
@@ -58,6 +69,7 @@ export interface Character {
   name?: string;
   description?: string;
   race?: CharacterRace | null;
+  subrace?: Subrace | null;
   class?: CharacterClass | null;
   level?: number;
   background?: CharacterBackground | null;
@@ -92,6 +104,7 @@ export function transformCharacterForStorage(character: Character) {
     name: character.name || '',
     description: character.description || '',
     race: character.race?.name || '',
+    subrace: character.subrace?.name || null,
     class: character.class?.name || '',
     level: character.level || 1,
     background: character.background?.name || null,

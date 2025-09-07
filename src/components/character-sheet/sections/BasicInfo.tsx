@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
-import { ScrollText, Eye, Heart, BookOpen, Shield } from 'lucide-react';
-import { Character } from '@/types/character';
+import { ScrollText, Eye, Heart, BookOpen, Shield, Book, Languages } from 'lucide-react';
+import { Character, Subrace } from '@/types/character';
+import { useCharacterStats } from '@/hooks/use-character-stats';
 
 interface BasicInfoProps {
   character: Character;
@@ -12,6 +13,9 @@ interface BasicInfoProps {
  * @param character - The character data to display
  */
 const BasicInfo = ({ character }: BasicInfoProps) => {
+  const stats = useCharacterStats(character);
+  const raceDisplay = character.subrace ? `${(character.subrace as Subrace).name} (${character.race?.name})` : character.race?.name || 'Unknown';
+  
   return (
     <div className="space-y-6">
       {/* Core Stats */}
@@ -21,7 +25,7 @@ const BasicInfo = ({ character }: BasicInfoProps) => {
           <h2 className="text-xl font-semibold">Basic Information</h2>
         </div>
         <div className="space-y-2">
-          <p><span className="font-medium">Race:</span> {character.race?.name || 'Unknown'}</p>
+          <p><span className="font-medium">Race:</span> {raceDisplay}</p>
           <p><span className="font-medium">Class:</span> {character.class?.name || 'Unknown'}</p>
           <p><span className="font-medium">Level:</span> {character.level}</p>
           <p><span className="font-medium">Background:</span> {character.background?.name || (typeof character.background === 'string' ? character.background : 'Unknown')}</p>
@@ -30,6 +34,36 @@ const BasicInfo = ({ character }: BasicInfoProps) => {
           )}
         </div>
       </Card>
+
+      {/* Combined Racial Traits */}
+      {stats?.allTraits && stats.allTraits.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Book className="w-5 h-5 text-green-600" />
+            <h3 className="text-lg font-semibold">Racial Traits</h3>
+          </div>
+          <ul className="text-sm space-y-1 text-muted-foreground">
+            {stats.allTraits.map((trait, index) => (
+              <li key={index} className="list-disc list-inside">• {trait}</li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* Combined Languages */}
+      {stats?.allLanguages && stats.allLanguages.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Languages className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-semibold">Languages</h3>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {stats.allLanguages.map((language, index) => (
+              <Badge key={index} variant="outline" className="text-xs">{language}</Badge>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* AI-Generated Appearance */}
       {character.appearance && (
