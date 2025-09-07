@@ -67,6 +67,7 @@ const initialState: CharacterState = {
     user_id: '', // Will be set when user authenticates
     name: '',
     race: null,
+    subrace: null,
     class: null,
     level: 1,
     background: null,

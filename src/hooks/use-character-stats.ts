@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Character } from '@/types/character';
+import { Character, Ability, AbilityScores } from '@/types/character';
 import { 
   calculateAllCharacterStats, 
   CharacterStats 
@@ -73,8 +73,8 @@ export const useLevelProgression = (character: Character | null) => {
   return useMemo(() => {
     if (!character) return null;
     
-    const currentLevel = character.level;
-    const currentXP = character.experience;
+    const currentLevel = character.level || 1;
+    const currentXP = character.experience || 0;
     
     // D&D 5e XP thresholds
     const xpThresholds = [
@@ -107,16 +107,16 @@ export const useLevelProgression = (character: Character | null) => {
  */
 export const useEffectiveAbilityScores = (character: Character | null) => {
   return useMemo(() => {
-    if (!character) return null;
+    if (!character?.abilityScores) return null;
     
     const baseScores = character.abilityScores;
-    const racialBonuses = character.race?.abilityScoreIncrease || {};
+    const racialBonuses = { ...character.race?.abilityScoreIncrease, ...character.subrace?.abilityScoreIncrease } || {};
     
-    const effectiveScores = Object.entries(baseScores).reduce((acc, [ability, data]) => {
-      const racialBonus = racialBonuses[ability as keyof typeof racialBonuses] || 0;
+    const effectiveScores = (Object.entries(baseScores) as [keyof AbilityScores, Ability][]).reduce((acc, [ability, data]) => {
+      const racialBonus = racialBonuses[ability] || 0;
       const effectiveScore = data.score + racialBonus;
       
-      acc[ability as keyof typeof baseScores] = {
+      acc[ability] = {
         ...data,
         score: effectiveScore,
         baseScore: data.score,
@@ -125,11 +125,12 @@ export const useEffectiveAbilityScores = (character: Character | null) => {
       };
       
       return acc;
-    }, {} as typeof baseScores & { [K in keyof typeof baseScores]: { baseScore: number; racialBonus: number } });
+    }, {} as Record<keyof AbilityScores, Ability & { baseScore: number; racialBonus: number }>);
     
     return effectiveScores;
   }, [
     character?.abilityScores,
     character?.race?.abilityScoreIncrease,
+    character?.subrace?.abilityScoreIncrease,
   ]);
 };

@@ -95,8 +95,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
 
   return (
     <Card
-      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50"
-      style={{ minHeight: '320px', padding: 0 }}
+      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square"
+      style={{ padding: 0 }}
     >
       {/* Hero / thumbnail area */}
       <div

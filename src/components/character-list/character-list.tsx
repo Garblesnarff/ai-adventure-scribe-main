@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Character } from '@/types/character';
-import { races } from '@/data/raceOptions';
+import { baseRaces } from '@/data/raceOptions';
 import { classes } from '@/data/classOptions';
 import { MemoizedCharacterCard } from './character-card';
 import EmptyState from './empty-state';
@@ -28,11 +28,16 @@ const CharacterList: React.FC = () => {
    * @returns Transformed character data
    */
   const transformCharacterData = (rawData: any[]): Partial<Character>[] => {
-    return rawData.map(char => ({
-      ...char,
-      race: races.find(r => r.name === char.race) || { name: char.race },
-      class: classes.find(c => c.name === char.class) || { name: char.class }
-    }));
+    return rawData.map(char => {
+      const baseRace = baseRaces.find(r => r.name === char.race);
+      const subrace = baseRace?.subraces?.find(s => s.name === char.subrace);
+      return {
+        ...char,
+        race: baseRace || { name: char.race, subraces: [] },
+        subrace: subrace || null,
+        class: classes.find(c => c.name === char.class) || { name: char.class }
+      };
+    });
   };
 
   /**
@@ -70,7 +75,7 @@ const CharacterList: React.FC = () => {
     if (searchTerm === '') {
       setFilteredCharacters(characters);
     } else {
-      const filtered = characters.filter(character =>
+      const filtered = characters.filter((character: Partial<Character>) =>
         character.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (typeof character.race !== 'string' ? character.race?.name : character.race)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (typeof character.class !== 'string' ? character.class?.name : character.class)?.toLowerCase().includes(searchTerm.toLowerCase())
