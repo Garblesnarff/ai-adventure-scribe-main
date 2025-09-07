@@ -120,10 +120,28 @@ const classStartingEquipment: ClassEquipmentMap = {
 };
 
 /**
+ * Starting gold amounts for each character class following D&D 5E rules
+ * These are alternatives to selecting an equipment pack
+ */
+const startingGold: Record<string, string> = {
+  Fighter: '5d4 × 10 gp',
+  Wizard: '3d4 × 10 gp',
+  Rogue: '4d4 × 10 gp',
+  Cleric: '5d4 × 10 gp',
+  Bard: '5d4 × 10 gp',
+};
+
+/**
  * Gets the starting equipment options for a given character class
+ * Includes both equipment packs and a starting gold option
  * @param className The name of the character class
  * @returns Array of equipment options for the class
  */
 export const getStartingEquipment = (className: string): EquipmentOption[] => {
-  return classStartingEquipment[className] || [];
+  const packs = classStartingEquipment[className] || [];
+  const goldAmount = startingGold[className];
+  if (goldAmount) {
+    return [...packs, { items: [goldAmount] }];
+  }
+  return packs;
 };
