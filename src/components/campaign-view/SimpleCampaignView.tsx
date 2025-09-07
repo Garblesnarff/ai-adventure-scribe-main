@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Play, Users, Shield, Sword, Star, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { SimpleGameChat } from '@/components/game/SimpleGameChat';
+import { SimpleGameChatWithVoice } from '@/components/game/SimpleGameChatWithVoice';
 import { toast } from 'sonner';
 
 interface Campaign {
@@ -344,7 +344,7 @@ export const SimpleCampaignView: React.FC = () => {
                   </div>
                   
                   <div className="flex-1">
-                    <SimpleGameChat
+                    <SimpleGameChatWithVoice
                       campaignId={campaign.id}
                       characterId={selectedCharacter!.id}
                       campaignDetails={campaign}
