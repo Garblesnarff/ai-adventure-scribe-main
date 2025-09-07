@@ -79,8 +79,19 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
       // 2. Auto-play is enabled
       // 3. We're not already playing or processing
       if (hasUserInteracted && autoPlayEnabled && !isPlaying && !isProcessing && !isLoading) {
-        console.log('🎪 Auto-playing new AI response');
-        speakText(text);
+        console.log('🎪 Auto-playing new AI response:', text.substring(0, 50) + '...');
+        // Small delay to ensure state is settled
+        setTimeout(() => {
+          speakText(text);
+        }, 100);
+      } else {
+        console.log('🚫 Auto-play skipped:', {
+          hasUserInteracted,
+          autoPlayEnabled,
+          isPlaying,
+          isProcessing,
+          isLoading
+        });
       }
     }
   }, [text, lastText, isVoiceEnabled, hasUserInteracted, autoPlayEnabled, isPlaying, isProcessing, isLoading, speakText]);
