@@ -27,8 +27,8 @@ const WizardContent: React.FC = () => {
    */
   const validateCharacter = () => {
     if (!state.character) return false;
-    const { race, class: characterClass, abilityScores, background } = state.character;
-    return !!(race && characterClass && abilityScores && background);
+    const { race, class: characterClass, abilityScores, background, skillProficiencies, languages } = state.character;
+    return !!(race && characterClass && abilityScores && background && skillProficiencies?.length && languages?.length);
   };
 
   /**

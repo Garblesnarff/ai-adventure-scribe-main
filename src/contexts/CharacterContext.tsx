@@ -84,7 +84,11 @@ const initialState: CharacterState = {
     ideals: [],
     bonds: [],
     flaws: [],
-    equipment: []
+    equipment: [],
+    skillProficiencies: [],
+    toolProficiencies: [],
+    savingThrowProficiencies: [],
+    languages: []
   },
   isDirty: false,
   currentStep: 0,
