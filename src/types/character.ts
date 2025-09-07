@@ -81,6 +81,7 @@ export interface Character {
   bonds?: string[];
   flaws?: string[];
   equipment?: string[];
+  selectedEquipmentOptionIndex?: number; // Tracks which equipment option was selected (for UI feedback)
   skillProficiencies?: string[];
   toolProficiencies?: string[];
   savingThrowProficiencies?: (keyof AbilityScores)[];
