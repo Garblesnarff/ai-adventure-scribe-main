@@ -224,7 +224,7 @@ export class VoiceMapper {
     merchant: ['merchant', 'trader', 'shopkeeper', 'vendor', 'peddler', 'salesman', 'fence'],
     innkeeper: ['innkeeper', 'barkeep', 'bartender', 'tavern keeper', 'proprietor', 'host'],
     child: ['child', 'kid', 'boy', 'girl', 'young', 'orphan', 'student', 'apprentice'],
-    elder: ['elder', 'sage', 'wizard', 'priest', 'hermit', 'scholar', 'old man', 'old woman', 'grandmother', 'grandfather'],
+    elder: ['elder', 'sage', 'wizard', 'priest', 'hermit', 'scholar', 'old man', 'old woman', 'grandmother', 'grandfather', 'thorne'],
     hero_male: ['hero', 'champion', 'warrior', 'fighter', 'ranger', 'rogue', 'bard'],
     hero_female: ['heroine', 'warrior woman', 'ranger woman', 'female fighter', 'sorceress', 'priestess']
   };
@@ -233,15 +233,20 @@ export class VoiceMapper {
    * Get voice configuration for a character
    */
   static getVoiceForCharacter(character: string): VoiceConfig {
+    console.log(`🔍 VoiceMapper.getVoiceForCharacter called with: "${character}"`);
+    
     if (!character || character === 'unknown') {
+      console.log('↪️ Using default voice (no character name)');
       return this.VOICE_CONFIGS.default;
     }
 
     const cleanCharacter = character.toLowerCase().trim();
+    console.log(`🧹 Cleaned character name: "${cleanCharacter}"`);
 
     // First, try to find exact match in saved character mappings
     const savedVoice = this.getSavedCharacterVoice(cleanCharacter);
     if (savedVoice) {
+      console.log(`💾 Found saved voice mapping: ${savedVoice.name} (${savedVoice.id})`);
       return savedVoice;
     }
 
@@ -251,6 +256,7 @@ export class VoiceMapper {
         if (cleanCharacter.includes(keyword)) {
           const voiceConfig = this.VOICE_CONFIGS[voiceType];
           if (voiceConfig) {
+            console.log(`🎯 Keyword match found: "${keyword}" -> ${voiceType} -> ${voiceConfig.name} (${voiceConfig.id})`);
             // Save this mapping for future use
             this.saveCharacterVoice(cleanCharacter, voiceType);
             return voiceConfig;
@@ -262,6 +268,7 @@ export class VoiceMapper {
     // Finally, use smart classification for unknown characters
     const classifiedType = this.classifyCharacter(cleanCharacter);
     const voiceConfig = this.VOICE_CONFIGS[classifiedType] || this.VOICE_CONFIGS.default;
+    console.log(`🤖 Smart classification: "${cleanCharacter}" -> ${classifiedType} -> ${voiceConfig.name} (${voiceConfig.id})`);
     
     // Save this mapping
     this.saveCharacterVoice(cleanCharacter, classifiedType);
@@ -360,9 +367,37 @@ export class VoiceMapper {
    */
   static clearSavedMappings(): void {
     try {
+      console.log('🗑️ Clearing all saved character voice mappings');
       localStorage.removeItem('character-voice-mappings');
     } catch (error) {
       console.warn('Failed to clear character voice mappings:', error);
+    }
+  }
+
+  /**
+   * Debug and clear specific character mapping
+   */
+  static debugAndClearCharacter(character: string): void {
+    try {
+      const saved = JSON.parse(localStorage.getItem('character-voice-mappings') || '{}');
+      const cleanCharacter = character.toLowerCase().trim();
+      
+      console.log(`🔍 Debug character "${character}" (cleaned: "${cleanCharacter}"):`);
+      console.log('   Current saved mapping:', saved[cleanCharacter] || 'none');
+      console.log('   All saved mappings:', saved);
+      
+      if (saved[cleanCharacter]) {
+        delete saved[cleanCharacter];
+        localStorage.setItem('character-voice-mappings', JSON.stringify(saved));
+        console.log(`   ✅ Cleared mapping for "${cleanCharacter}"`);
+      }
+      
+      // Test what voice would be assigned now
+      const voiceConfig = this.getVoiceForCharacter(character);
+      console.log(`   🎭 Would now map to: ${voiceConfig.name} (${voiceConfig.id})`);
+      
+    } catch (error) {
+      console.warn('Failed to debug character mapping:', error);
     }
   }
 

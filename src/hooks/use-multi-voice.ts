@@ -128,10 +128,18 @@ export const useMultiVoice = () => {
     const dialogueSegments = DialogueParser.parseText(text);
     const optimizedSegments = DialogueParser.optimizeSegments(dialogueSegments);
     
+    console.log('🎭 Parsed dialogue segments:', optimizedSegments.map(s => ({
+      type: s.type,
+      character: s.character,
+      text: s.text.substring(0, 50) + '...'
+    })));
+    
     return optimizedSegments.map(segment => {
       const voiceConfig = segment.type === 'narration' 
         ? VoiceMapper.getNarratorVoice()
         : VoiceMapper.getVoiceForCharacter(segment.character || 'unknown');
+
+      console.log(`🎤 Voice assignment: "${segment.character || 'Narrator'}" -> ${voiceConfig.name} (${voiceConfig.id})`);
 
       return {
         ...segment,
