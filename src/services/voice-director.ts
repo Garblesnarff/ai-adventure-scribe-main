@@ -63,6 +63,9 @@ export interface AISegment {
 
 export class VoiceDirector {
   private static readonly ELEVENLABS_MODEL = 'eleven_turbo_v2_5'; // Revert to working model
+
+  // Persistent storage key for character-voice mappings
+  private static readonly CHARACTER_VOICE_CACHE_KEY = 'voice-director-character-mappings';
   
   // Simplified voice pools - fewer options, clearer choices
   private static readonly VOICE_POOLS: VoicePool = {

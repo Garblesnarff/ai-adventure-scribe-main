@@ -73,6 +73,19 @@ export const useMultiVoice = () => {
   const abortController = React.useRef<AbortController | null>(null);
   const currentPlaybackId = React.useRef<string | null>(null);
 
+  // Generation queue and cache
+  const generationQueue = React.useRef<Map<string, Promise<AudioSegment>>>(new Map());
+  const audioCache = React.useRef<Map<string, AudioSegment>>(new Map()); // Simple in-memory cache: key = `${voiceId}_${textHash}`
+  const maxConcurrentRequests = 3;
+  const activeRequests = React.useRef(0);
+
+  // Web Audio API refs for zero-gap playback
+  const audioContextRef = React.useRef<AudioContext | null>(null);
+  const playbackSourceRef = React.useRef<AudioBufferSourceNode | null>(null);
+  const currentGainNodeRef = React.useRef<GainNode | null>(null);
+  const nextGainNodeRef = React.useRef<GainNode | null>(null);
+  const segmentBuffersRef = React.useRef<Map<number, AudioBuffer>>(new Map());
+
   // Load settings from localStorage
   React.useEffect(() => {
     const savedVolume = localStorage.getItem('multi-voice-volume');
@@ -122,6 +135,17 @@ export const useMultiVoice = () => {
   const getApiKey = React.useCallback((): string | null => {
     return apiKey;
   }, [apiKey]);
+
+  // Simple text hash for caching
+  const hashText = React.useCallback((text: string): string => {
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString();
+  }, []);
 
   /**
    * Parse text into dialogue segments
