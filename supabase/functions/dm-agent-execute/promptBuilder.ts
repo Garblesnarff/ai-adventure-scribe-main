@@ -13,7 +13,7 @@ function formatMemories(memories: any[]) {
 }
 
 function formatGameState(state: GameState) {
-  return `
+  let stateText = `
 CURRENT SCENE STATE:
 Location: ${state.location?.name || 'Unknown'}
 Time of Day: ${state.location?.timeOfDay || 'Unknown'}
@@ -25,8 +25,35 @@ ${state.activeNPCs?.map(npc => `- ${npc.name}: ${npc.currentStatus}`).join('\n')
 Scene Status:
 - Current Action: ${state.sceneStatus?.currentAction || 'None'}
 - Threat Level: ${state.sceneStatus?.threatLevel || 'none'}
-${state.sceneStatus?.environmentalEffects?.length ? `- Environmental Effects: ${state.sceneStatus.environmentalEffects.join(', ')}` : ''}
-`;
+${state.sceneStatus?.environmentalEffects?.length ? `- Environmental Effects: ${state.sceneStatus.environmentalEffects.join(', ')}` : ''}`;
+
+  // Add combat-specific state if in combat
+  if (state.combat?.isInCombat && state.combat.activeEncounter) {
+    const encounter = state.combat.activeEncounter;
+    const currentParticipant = encounter.participants.find(p => p.id === encounter.currentTurnParticipantId);
+    
+    stateText += `
+
+COMBAT STATE - ACTIVE:
+Round: ${encounter.currentRound}
+Current Turn: ${currentParticipant?.name || 'Unknown'}
+Combat Phase: ${encounter.phase}
+Elapsed Rounds: ${encounter.roundsElapsed}
+
+Initiative Order:
+${encounter.participants
+  .map(p => `- ${p.name} (Init: ${p.initiative}, HP: ${p.currentHitPoints}/${p.maxHitPoints}${p.temporaryHitPoints > 0 ? `+${p.temporaryHitPoints}` : ''})${
+    p.conditions.length > 0 ? ` [${p.conditions.map(c => c.name).join(', ')}]` : ''
+  }${p.currentHitPoints === 0 ? ' [UNCONSCIOUS]' : ''}`).join('\n')}
+
+Environment:
+${encounter.location ? `- Combat Location: ${encounter.location}` : ''}
+${encounter.visibility ? `- Visibility: ${encounter.visibility}` : ''}
+${encounter.terrain ? `- Terrain: ${encounter.terrain}` : ''}
+${encounter.environmentalEffects?.length ? `- Effects: ${encounter.environmentalEffects.join(', ')}` : ''}`;
+  }
+
+  return stateText;
 }
 
 export function buildPrompt(context: AgentContext, voiceContext?: VoiceContext): string {
@@ -88,12 +115,34 @@ RESPONSE GUIDELINES:
    - Maintain continuity with established events
    - Use actual memories, never invent false ones
 
+6. **COMBAT SPECIFIC GUIDELINES** (when combat is active):
+   - Roll for attack results, damage, and saving throws as needed
+   - Apply D&D 5e rules accurately (AC, advantage/disadvantage, resistance)
+   - Describe combat actions cinematically but maintain tactical accuracy
+   - Track conditions, spell effects, and their durations
+   - Consider environmental factors (cover, difficult terrain, lighting)
+   - NPCs should use tactics appropriate to their intelligence and experience
+   - Resolve effects immediately: damage reduces HP, conditions affect abilities
+   - Death saves are critical moments - narrate them dramatically
+   - Consider opportunity attacks for movement in combat
+   - Spells require components, concentration, and spell slots
+
 **DIALOGUE EXAMPLES:**
 ✅ CORRECT: The merchant eyes your worn gear. "Looking for supplies? I've got quality goods, but they don't come cheap in these dangerous times."
 ❌ INCORRECT: The merchant notices your equipment and offers to sell you supplies.
 
 ✅ CORRECT: The guard captain slams his fist on the desk. "Enough excuses! Tell me where you were last night!"
 ❌ INCORRECT: The guard captain becomes angry and demands answers about your whereabouts.
+
+**COMBAT ACTION EXAMPLES:**
+✅ CORRECT: You swing your sword at the orc (roll 1d20+5 = 18, hits AC 13). The blade bites deep into its shoulder, dealing 7 slashing damage. The orc roars, "You'll pay for that, human!"
+❌ INCORRECT: You attack the orc and hit for some damage.
+
+✅ CORRECT: The goblin fires its shortbow (roll 1d20+4 = 12, misses AC 15). The arrow whistles past your ear, embedding in the wooden post behind you.
+❌ INCORRECT: The goblin shoots at you but misses.
+
+✅ CORRECT: Roll Constitution saving throw (1d20+2 = 8, fails DC 13). The poison courses through your veins - you take 2 poison damage and are poisoned for 1 minute.
+❌ INCORRECT: You fail your save against the poison.
 
 Remember to:
 - Keep the ${campaignContext.tone || 'balanced'} tone consistent
