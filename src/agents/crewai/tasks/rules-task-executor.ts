@@ -115,7 +115,7 @@ export class RulesTaskExecutor {
         memories: context.memories,
         agentContext: {
           role: 'Rules Interpreter',
-          goal: 'Ensure accurate interpretation of D&D 5E rules',
+          goal: 'Ensure accurate interpretation of fantasy RPG rules',
           taskContext: context.taskContext
         }
       }

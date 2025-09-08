@@ -67,9 +67,9 @@ export class DungeonMasterAgent implements Agent {
    */
   constructor() {
     this.id = 'dm_agent_1';
-    this.role = 'Dungeon Master';
-    this.goal = 'Guide players through an engaging D&D campaign';
-    this.backstory = 'An experienced DM with vast knowledge of D&D rules and creative storytelling abilities';
+    this.role = 'Game Master';
+    this.goal = 'Guide players through an engaging fantasy RPG campaign';
+    this.backstory = 'An experienced GM with vast knowledge of fantasy RPG rules and creative storytelling abilities';
     this.verbose = true;
     this.allowDelegation = true;
     

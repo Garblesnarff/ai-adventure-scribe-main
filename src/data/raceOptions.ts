@@ -38,7 +38,7 @@ export const baseRaces: CharacterRace[] = [
       {
         id: 'duergar',
         name: 'Duergar (Gray Dwarf)',
-        description: 'A subrace from the Underdark with innate magical abilities, including invisibility.',
+        description: 'A subrace from the Deep Caverns with innate magical abilities, including invisibility.',
         abilityScoreIncrease: {
           strength: 1,
           constitution: 1
@@ -79,7 +79,7 @@ export const baseRaces: CharacterRace[] = [
       {
         id: 'drow',
         name: 'Drow (Dark Elf)',
-        description: 'Native to the Underdark, with superior darkvision and innate magic, but sunlight sensitivity.',
+        description: 'Native to the Deep Caverns, with superior darkvision and innate magic, but sunlight sensitivity.',
         abilityScoreIncrease: {
           charisma: 1
         },
@@ -106,11 +106,11 @@ export const baseRaces: CharacterRace[] = [
       {
         id: 'shadar-kai',
         name: 'Shadar-kai',
-        description: 'Elves of the Shadowfell, who are supernaturally resilient and can teleport.',
+        description: 'Elves of the Shadow Realm, who are supernaturally resilient and can teleport.',
         abilityScoreIncrease: {
           constitution: 1
         },
-        traits: ['Blessing of the Raven Queen', 'Necrotic Resistance']
+        traits: ['Blessing of the Shadow Queen', 'Necrotic Resistance']
       }
     ]
   },
@@ -240,7 +240,7 @@ export const baseRaces: CharacterRace[] = [
       {
         id: 'deep-gnome',
         name: 'Deep Gnome (Svirfneblin)',
-        description: 'Dwellers of the Underdark, with superior darkvision and natural stealth.',
+        description: 'Dwellers of the Deep Caverns, with superior darkvision and natural stealth.',
         abilityScoreIncrease: {
           dexterity: 2
         },
@@ -249,8 +249,8 @@ export const baseRaces: CharacterRace[] = [
     ]
   },
   {
-    id: 'genasi',
-    name: 'Genasi',
+    id: 'elementalborn',
+    name: 'Elementalborn',
     description: 'Humanoids infused with elemental power.',
     traits: ['Elemental Traits'],
     abilityScoreIncrease: {},
@@ -258,8 +258,8 @@ export const baseRaces: CharacterRace[] = [
     languages: ['Common', 'Primordial'],
     subraces: [
       {
-        id: 'air-genasi',
-        name: 'Air Genasi',
+        id: 'air-elementalborn',
+        name: 'Air Elementalborn',
         description: 'Can hold their breath indefinitely and have innate levitation magic.',
         abilityScoreIncrease: {
           constitution: 1,
@@ -268,8 +268,8 @@ export const baseRaces: CharacterRace[] = [
         traits: ['Unending Breath', 'Mingle with the Wind']
       },
       {
-        id: 'earth-genasi',
-        name: 'Earth Genasi',
+        id: 'earth-elementalborn',
+        name: 'Earth Elementalborn',
         description: 'Possess extra strength and can traverse difficult terrain with ease.',
         abilityScoreIncrease: {
           constitution: 1,
@@ -278,8 +278,8 @@ export const baseRaces: CharacterRace[] = [
         traits: ['Earth Walk', 'Merge with Stone']
       },
       {
-        id: 'fire-genasi',
-        name: 'Fire Genasi',
+        id: 'fire-elementalborn',
+        name: 'Fire Elementalborn',
         description: 'Have a resistance to fire and can produce flames.',
         abilityScoreIncrease: {
           constitution: 1,
@@ -288,8 +288,8 @@ export const baseRaces: CharacterRace[] = [
         traits: ['Darkvision', 'Fire Resistance', 'Reach to the Blaze']
       },
       {
-        id: 'water-genasi',
-        name: 'Water Genasi',
+        id: 'water-elementalborn',
+        name: 'Water Elementalborn',
         description: 'Can breathe underwater, have a swim speed, and have a resistance to acid.',
         abilityScoreIncrease: {
           constitution: 1,
@@ -300,9 +300,9 @@ export const baseRaces: CharacterRace[] = [
     ]
   },
   {
-    id: 'aasimar',
-    name: 'Aasimar',
-    description: 'Humanoids with a celestial touch.',
+    id: 'celestialborn',
+    name: 'Celestialborn',
+    description: 'Humanoids touched by celestial power.',
     traits: ['Celestial Revelation', 'Healing Hands', 'Light Cantrip'],
     abilityScoreIncrease: {
       charisma: 2
@@ -311,8 +311,8 @@ export const baseRaces: CharacterRace[] = [
     languages: ['Common', 'Celestial'],
     subraces: [
       {
-        id: 'protector-aasimar',
-        name: 'Protector Aasimar',
+        id: 'guardian-celestialborn',
+        name: 'Guardian Celestialborn',
         description: 'Can manifest radiant, angelic wings for a short time.',
         abilityScoreIncrease: {
           wisdom: 1
@@ -320,8 +320,8 @@ export const baseRaces: CharacterRace[] = [
         traits: ['Radiant Soul']
       },
       {
-        id: 'scourge-aasimar',
-        name: 'Scourge Aasimar',
+        id: 'radiant-celestialborn',
+        name: 'Radiant Celestialborn',
         description: 'Can unleash a damaging aura of radiant light.',
         abilityScoreIncrease: {
           constitution: 1
@@ -329,8 +329,8 @@ export const baseRaces: CharacterRace[] = [
         traits: ['Radiant Consumption']
       },
       {
-        id: 'fallen-aasimar',
-        name: 'Fallen Aasimar',
+        id: 'shadow-celestialborn',
+        name: 'Shadow Celestialborn',
         description: 'Can cause enemies to become frightened.',
         abilityScoreIncrease: {
           strength: 1
@@ -340,33 +340,33 @@ export const baseRaces: CharacterRace[] = [
     ]
   },
   {
-    id: 'gith',
-    name: 'Gith',
-    description: 'Psionic humanoids from the Astral Plane.',
+    id: 'astralborn',
+    name: 'Astralborn',
+    description: 'Psionic humanoids from the astral realm.',
     traits: ['Psionic Resistance', 'Mental Discipline'],
     abilityScoreIncrease: {
       intelligence: 2
     },
     speed: 30,
-    languages: ['Common', 'Gith'],
+    languages: ['Common', 'Astral'],
     subraces: [
       {
-        id: 'githyanki',
-        name: 'Githyanki',
+        id: 'astral-warrior',
+        name: 'Astral Warrior',
         description: 'Fierce warriors with psionic abilities.',
         abilityScoreIncrease: {
           strength: 1
         },
-        traits: ['Astral Knowledge', 'Githyanki Psionics', 'Decapitating Swipe']
+        traits: ['Astral Knowledge', 'Warrior Psionics', 'Precise Strike']
       },
       {
-        id: 'githzerai',
-        name: 'Githzerai',
+        id: 'astral-monk',
+        name: 'Astral Monk',
         description: 'Disciplined monks with psionic abilities.',
         abilityScoreIncrease: {
           wisdom: 1
         },
-        traits: ['Mental Discipline', 'Githzerai Psionics', 'Psychic Blades']
+        traits: ['Mental Discipline', 'Monk Psionics', 'Psychic Blades']
       }
     ]
   },
@@ -418,10 +418,10 @@ export const baseRaces: CharacterRace[] = [
     subraces: []
   },
   {
-    id: 'firbolg',
-    name: 'Firbolg',
-    description: 'Reclusive forest guardians, firbolgs prefer to remain hidden among their woodlands.',
-    traits: ['Firbolg Magic', 'Hidden Step', 'Powerful Build', 'Speech of Beast and Leaf'],
+    id: 'forest-giant',
+    name: 'Forest Giant',
+    description: 'Reclusive forest guardians who prefer to remain hidden among their woodlands.',
+    traits: ['Forest Magic', 'Hidden Step', 'Powerful Build', 'Speech of Beast and Leaf'],
     abilityScoreIncrease: {
       wisdom: 2,
       strength: 1
@@ -431,9 +431,9 @@ export const baseRaces: CharacterRace[] = [
     subraces: []
   },
   {
-    id: 'goliath',
-    name: 'Goliath',
-    description: 'Strong and reclusive, goliaths wander the mountain heights in nomadic tribes.',
+    id: 'stone-giant',
+    name: 'Stone Giant',
+    description: 'Strong and reclusive, stone giants wander the mountain heights in nomadic tribes.',
     traits: ['Natural Athlete', 'Stone\'s Endurance', 'Powerful Build', 'Mountain Born'],
     abilityScoreIncrease: {
       strength: 2,
@@ -444,10 +444,10 @@ export const baseRaces: CharacterRace[] = [
     subraces: []
   },
   {
-    id: 'kenku',
-    name: 'Kenku',
+    id: 'ravenfolk',
+    name: 'Ravenfolk',
     description: 'Feathered folk who lost their wings long ago now live as cunning mimics.',
-    traits: ['Expert Forgery', 'Kenku Training', 'Mimicry'],
+    traits: ['Expert Forgery', 'Raven Training', 'Mimicry'],
     abilityScoreIncrease: {
       dexterity: 2,
       wisdom: 1
@@ -470,8 +470,8 @@ export const baseRaces: CharacterRace[] = [
     subraces: []
   },
   {
-    id: 'tabaxi',
-    name: 'Tabaxi',
+    id: 'catfolk',
+    name: 'Catfolk',
     description: 'Hailing from a strange and distant land, wandering tabaxi are catlike humanoids driven by curiosity.',
     traits: ['Feline Agility', 'Cat\'s Claws', 'Cat\'s Talents', 'Darkvision'],
     abilityScoreIncrease: {
@@ -483,9 +483,9 @@ export const baseRaces: CharacterRace[] = [
     subraces: []
   },
   {
-    id: 'triton',
-    name: 'Triton',
-    description: 'Guardians of the depths, tritons have spread throughout the oceans, establishing protectorates.',
+    id: 'seaborn',
+    name: 'Seaborn',
+    description: 'Guardians of the depths, seaborn have spread throughout the oceans, establishing protectorates.',
     traits: ['Amphibious', 'Control Air and Water', 'Emissary of the Sea', 'Guardians of the Depths'],
     abilityScoreIncrease: {
       strength: 1,
@@ -497,9 +497,9 @@ export const baseRaces: CharacterRace[] = [
     subraces: []
   },
   {
-    id: 'yuan-ti-pureblood',
-    name: 'Yuan-ti Pureblood',
-    description: 'The serpentine yuan-ti are utterly without emotion. They deal in absolutes and judge others by their strength and cunning.',
+    id: 'serpentfolk',
+    name: 'Serpentfolk',
+    description: 'The serpentine serpentfolk are utterly without emotion. They deal in absolutes and judge others by their strength and cunning.',
     traits: ['Darkvision', 'Innate Spellcasting', 'Magic Resistance', 'Poison Immunity'],
     abilityScoreIncrease: {
       charisma: 2,

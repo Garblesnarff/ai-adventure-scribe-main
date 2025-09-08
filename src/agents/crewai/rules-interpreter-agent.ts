@@ -54,7 +54,7 @@ export class CrewAIRulesInterpreterAgent implements CrewAIAgentBridge {
   private initializeBaseProperties(): void {
     this.id = 'crew_rules_interpreter_1';
     this.role = 'Rules Interpreter';
-    this.goal = 'Ensure accurate interpretation and application of D&D 5E rules with advanced AI capabilities';
+    this.goal = 'Ensure accurate interpretation and application of fantasy RPG rules with advanced AI capabilities';
     this.backstory = 'An expert rules interpreter enhanced with CrewAI capabilities for comprehensive game mechanics management';
     this.verbose = true;
     this.allowDelegation = true;

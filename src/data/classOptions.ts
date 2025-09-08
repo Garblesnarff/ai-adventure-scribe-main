@@ -130,7 +130,7 @@ export const classes: CharacterClass[] = [
             'Life Domain: Focuses on healing and protection',
             'Light Domain: Harnesses the power of flame and radiance',
             'War Domain: Guides warriors in battle',
-            'Tempest Domain: Commands storms and lightning',
+            'Storm Domain: Commands storms and lightning',
             'Nature Domain: Connects with the natural world'
           ],
           description: 'Each domain provides additional spells and abilities that reflect the nature of your deity.'
@@ -318,7 +318,7 @@ export const classes: CharacterClass[] = [
             'Coast: Beaches and coastal regions',
             'Desert: Arid wastelands and dunes',
             'Grassland: Plains and prairies',
-            'Underdark: Subterranean caverns and tunnels'
+            'Deep Caverns: Subterranean caverns and tunnels'
           ],
           description: 'Choose the terrain where you are most at home and have learned to navigate expertly.'
         }
@@ -353,7 +353,7 @@ export const classes: CharacterClass[] = [
             'Wild Magic: Your innate magic comes from the wild forces of chaos',
             'Divine Soul: Your magic derives from a divine source within you',
             'Storm Sorcery: Your innate magic comes from the power of elemental air',
-            'Shadow Magic: Your innate magic comes from the Shadowfell'
+            'Umbral Magic: Your innate magic comes from the Shadow Realm'
           ],
           description: 'Your choice grants you features at 1st level and again at 6th, 14th, and 18th level.'
         }
@@ -394,7 +394,7 @@ export const classes: CharacterClass[] = [
             'The Fiend: Your patron is a fiend from the lower planes',
             'The Great Old One: Your patron is a mysterious entity whose nature is alien to the fabric of reality',
             'The Celestial: Your patron is a powerful being of the Upper Planes',
-            'The Hexblade: Your patron is a mysterious entity from the Shadowfell'
+            'The Bladebound: Your patron is a mysterious entity from the Shadow Realm'
           ],
           description: 'Your choice of patron influences which spells you have access to.'
         }

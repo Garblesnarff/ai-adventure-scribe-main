@@ -51,8 +51,8 @@ export class RulesInterpreterAgent implements Agent {
   constructor() {
     this.id = 'rules_interpreter_1';
     this.role = 'Rules Interpreter';
-    this.goal = 'Ensure accurate interpretation and application of D&D 5E rules';
-    this.backstory = 'An expert in D&D 5E rules with comprehensive knowledge of game mechanics';
+    this.goal = 'Ensure accurate interpretation and application of fantasy RPG rules';
+    this.backstory = 'An expert in fantasy tabletop RPG rules with comprehensive knowledge of game mechanics';
     this.verbose = true;
     this.allowDelegation = true;
     this.messagingService = AgentMessagingService.getInstance();
