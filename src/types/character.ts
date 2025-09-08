@@ -245,6 +245,11 @@ export function transformCharacterForStorage(character: Character) {
     cantrips: (character.cantrips || []).join(','),
     known_spells: (character.knownSpells || []).join(','),
     class_features: JSON.stringify(character.classFeatures || {}),
+    copper_pieces: character.currency?.cp || 0,
+    silver_pieces: character.currency?.sp || 0,
+    electrum_pieces: character.currency?.ep || 0,
+    gold_pieces: character.currency?.gp || 0,
+    platinum_pieces: character.currency?.pp || 0,
     updated_at: new Date().toISOString(),
   };
 }
