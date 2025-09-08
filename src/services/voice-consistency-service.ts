@@ -180,45 +180,50 @@ export class VoiceConsistencyService {
    * Get all voice mappings for a session
    */
   private async getSessionMappings(sessionId: string): Promise<CharacterVoiceMapping[]> {
+    // TODO: Database table 'character_voice_mappings' doesn't exist yet
+    // Return empty array for now to prevent errors
+    console.log('⚠️ Voice consistency database not available, using in-memory mapping');
+    return [];
+    
     // Check cache first
-    const cached = this.sessionCache.get(sessionId);
-    if (cached) {
-      return Array.from(cached.values());
-    }
+    // const cached = this.sessionCache.get(sessionId);
+    // if (cached) {
+    //   return Array.from(cached.values());
+    // }
 
-    try {
-      const { data, error } = await supabase
-        .from('character_voice_mappings')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('first_appearance', { ascending: true });
+    // try {
+    //   const { data, error } = await supabase
+    //     .from('character_voice_mappings')
+    //     .select('*')
+    //     .eq('session_id', sessionId)
+    //     .order('first_appearance', { ascending: true });
 
-      if (error) throw error;
+    //   if (error) throw error;
 
-      const mappings: CharacterVoiceMapping[] = (data || []).map(row => ({
-        id: row.id,
-        sessionId: row.session_id,
-        characterName: row.character_name,
-        voiceCategory: row.voice_category,
-        voiceId: row.voice_id,
-        firstAppearance: new Date(row.first_appearance),
-        lastUsed: new Date(row.last_used),
-        appearanceCount: row.appearance_count,
-        metadata: row.metadata || {}
-      }));
+    //   const mappings: CharacterVoiceMapping[] = (data || []).map(row => ({
+    //     id: row.id,
+    //     sessionId: row.session_id,
+    //     characterName: row.character_name,
+    //     voiceCategory: row.voice_category,
+    //     voiceId: row.voice_id,
+    //     firstAppearance: new Date(row.first_appearance),
+    //     lastUsed: new Date(row.last_used),
+    //     appearanceCount: row.appearance_count,
+    //     metadata: row.metadata || {}
+    //   }));
 
-      // Update cache
-      const mappingMap = new Map();
-      mappings.forEach(mapping => {
-        mappingMap.set(mapping.characterName, mapping);
-      });
-      this.sessionCache.set(sessionId, mappingMap);
+    //   // Update cache
+    //   const mappingMap = new Map();
+    //   mappings.forEach(mapping => {
+    //     mappingMap.set(mapping.characterName, mapping);
+    //   });
+    //   this.sessionCache.set(sessionId, mappingMap);
 
-      return mappings;
-    } catch (error) {
-      console.error('Error fetching session mappings:', error);
-      return [];
-    }
+    //   return mappings;
+    // } catch (error) {
+    //   console.error('Error fetching session mappings:', error);
+    //   return [];
+    // }
   }
 
   /**
@@ -230,47 +235,67 @@ export class VoiceConsistencyService {
     voiceCategory: string,
     voiceId: string
   ): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('character_voice_mappings')
-        .insert({
-          session_id: sessionId,
-          character_name: characterName,
-          voice_category: voiceCategory,
-          voice_id: voiceId,
-          appearance_count: 1,
-          metadata: {}
-        });
+    // TODO: Database table doesn't exist yet, skip database save
+    console.log(`⚠️ Voice mapping not saved to database: ${characterName} -> ${voiceCategory}`);
+    return;
+    
+    // try {
+    //   const { error } = await supabase
+    //     .from('character_voice_mappings')
+    //     .insert({
+    //       session_id: sessionId,
+    //       character_name: characterName,
+    //       voice_category: voiceCategory,
+    //       voice_id: voiceId,
+    //       appearance_count: 1,
+    //       metadata: {}
+    //     });
 
-      if (error) throw error;
+    //   if (error) throw error;
 
-      // Invalidate cache
-      this.sessionCache.delete(sessionId);
+    //   // Invalidate cache
+    //   this.sessionCache.delete(sessionId);
 
-      console.log(`💾 Saved voice mapping: ${characterName} -> ${voiceCategory}`);
-    } catch (error) {
-      console.error('Error saving character voice mapping:', error);
-    }
+    //   console.log(`💾 Saved voice mapping: ${characterName} -> ${voiceCategory}`);
+    // } catch (error) {
+    //   console.error('Error saving character voice mapping:', error);
+    // }
   }
 
   /**
    * Update character usage statistics
    */
   private async updateCharacterUsage(mappingId: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('character_voice_mappings')
-        .update({
-          last_used: new Date().toISOString(),
-          appearance_count: supabase.sql`appearance_count + 1`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', mappingId);
+    // TODO: Database table doesn't exist yet, skip update
+    console.log(`⚠️ Character usage update skipped for mapping: ${mappingId}`);
+    return;
+    
+    // try {
+    //   // First get the current appearance count
+    //   const { data: currentData, error: fetchError } = await supabase
+    //     .from('character_voice_mappings')
+    //     .select('appearance_count')
+    //     .eq('id', mappingId)
+    //     .single();
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error updating character usage:', error);
-    }
+    //   if (fetchError) throw fetchError;
+
+    //   const newCount = (currentData?.appearance_count || 0) + 1;
+
+    //   // Update with incremented count
+    //   const { error } = await supabase
+    //     .from('character_voice_mappings')
+    //     .update({
+    //       last_used: new Date().toISOString(),
+    //       appearance_count: newCount,
+    //       updated_at: new Date().toISOString()
+    //     })
+    //     .eq('id', mappingId);
+
+    //   if (error) throw error;
+    // } catch (error) {
+    //   console.error('Error updating character usage:', error);
+    // }
   }
 
   /**

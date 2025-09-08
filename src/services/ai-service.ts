@@ -190,6 +190,8 @@ Create a campaign description that makes players say "I want to play in this wor
             contextPrompt += `\n\n**CRITICAL: VOICE-OPTIMIZED RESPONSE FORMAT**
 You MUST respond with JSON containing both display text AND pre-segmented narration for multi-voice synthesis.
 
+**IMPORTANT: Return ONLY pure JSON - no markdown, no code blocks, no extra text!**
+
 **SIMPLIFIED SEGMENTATION RULES:**
 1. **Fewer, Better Segments**: Create 2-5 segments maximum per response
 2. **One Speaker Per Segment**: Each segment = one speaker (DM or specific character)
@@ -342,7 +344,14 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
             // Try to parse structured response if voice context is available
             if (voiceContext) {
               try {
-                const structuredResponse = JSON.parse(rawResponse);
+                // Clean the response by removing markdown code blocks first
+                let cleanedResponse = rawResponse.trim();
+                
+                // Remove markdown code blocks (```json ... ```)
+                cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+                
+                // Parse the cleaned JSON
+                const structuredResponse = JSON.parse(cleanedResponse);
                 console.log('🎭 Successfully parsed structured voice response');
                 
                 // 🔍 DEBUG: Log the raw AI response structure

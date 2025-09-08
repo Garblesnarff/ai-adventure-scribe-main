@@ -62,20 +62,19 @@ export interface AISegment {
 }
 
 export class VoiceDirector {
-  private static readonly ELEVENLABS_MODEL = 'eleven_flash_v2_5';
+  private static readonly ELEVENLABS_MODEL = 'eleven_turbo_v2_5'; // Revert to working model
   
   // Simplified voice pools - fewer options, clearer choices
   private static readonly VOICE_POOLS: VoicePool = {
     dm: [
       {
-        id: 'bIHbv24MWmeRgasZH58o', // Will - Main DM voice
-        name: 'Will',
-        description: 'Main DM narrator voice',
+        id: 'T0GKiSwCb51L7pv1sshd', // Same voice ID as old AudioPlayer
+        name: 'DM Voice',
+        description: 'Main DM narrator voice (old compatible)',
         settings: {
           stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.1,
-          use_speaker_boost: true
+          similarity_boost: 0.75
+          // Remove style and use_speaker_boost to match old settings
         }
       }
     ],
@@ -288,7 +287,7 @@ export class VoiceDirector {
     
     try {
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${segment.voiceId}/stream`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${segment.voiceId}`,
         {
           method: 'POST',
           headers: {
