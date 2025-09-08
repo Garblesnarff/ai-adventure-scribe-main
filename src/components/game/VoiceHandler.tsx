@@ -14,8 +14,9 @@ export const VoiceHandler: React.FC = () => {
   });
 
   const lastMessage = messages[messages.length - 1];
-  const shouldRenderPlayer = lastMessage?.role === 'assistant' && lastMessage.content;
-  const cleanText = shouldRenderPlayer ? lastMessage.content.replace(/[*_`#]/g, '') : '';
+  const shouldRenderPlayer = lastMessage?.sender === 'dm' && lastMessage.text;
+  const cleanText = shouldRenderPlayer ? lastMessage.text.replace(/[*_`#]/g, '') : '';
+  const narrationSegments = lastMessage?.narrationSegments;
 
   const handleToggleMultiVoice = React.useCallback(() => {
     const newValue = !useMultiVoice;
@@ -69,13 +70,22 @@ export const VoiceHandler: React.FC = () => {
 
       {/* Voice Player */}
       {useMultiVoice ? (
-        <MultiVoicePlayer text={cleanText} isEnabled={true} />
+        <MultiVoicePlayer 
+          text={cleanText} 
+          narrationSegments={narrationSegments}
+          isEnabled={true} 
+        />
       ) : (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
             Single voice mode is temporarily unavailable. Using multi-voice mode instead.
           </p>
-          <MultiVoicePlayer text={cleanText} isEnabled={true} className="mt-3" />
+          <MultiVoicePlayer 
+            text={cleanText} 
+            narrationSegments={narrationSegments}
+            isEnabled={true} 
+            className="mt-3" 
+          />
         </div>
       )}
     </div>

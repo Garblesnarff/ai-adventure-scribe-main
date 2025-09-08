@@ -72,6 +72,23 @@ export interface GameState {
   };
 }
 
+export interface NarrationSegment {
+  type: 'narration' | 'dialogue' | 'action' | 'thought';
+  text: string;
+  character?: string;
+  voice_category?: string;
+}
+
+export interface StructuredDMResponse {
+  text: string; // Display text for chat
+  narration_segments: NarrationSegment[]; // Pre-segmented for voice
+}
+
+export interface VoiceContext {
+  available_categories: string[];
+  character_mappings: Record<string, string>;
+}
+
 export interface DMResponse {
   environment: {
     description: string;

@@ -24,6 +24,21 @@ export interface CharacterRace {
   subraces?: Subrace[];
 }
 
+export interface Spell {
+  id: string;
+  name: string;
+  level: number;
+  school: string;
+  castingTime: string;
+  range: string;
+  components: string;
+  duration: string;
+  description: string;
+  damage?: string;
+  ritual?: boolean;
+  concentration?: boolean;
+}
+
 export interface Subrace {
   id: string;
   name: string;
@@ -32,6 +47,20 @@ export interface Subrace {
   traits: string[];
   speed?: number;
   languages?: string[];
+  cantrips?: string[];
+  weaponProficiencies?: string[];
+  armorProficiencies?: string[];
+}
+
+export interface ClassFeature {
+  id: string;
+  name: string;
+  description: string;
+  choices?: {
+    name: string;
+    options: string[];
+    description?: string;
+  };
 }
 
 export interface CharacterClass {
@@ -43,6 +72,17 @@ export interface CharacterClass {
   savingThrowProficiencies: (keyof AbilityScores)[];
   skillChoices: string[];
   numSkillChoices: number;
+  spellcasting?: {
+    ability: keyof AbilityScores;
+    cantripsKnown: number;
+    spellsKnown?: number;
+    ritualCasting?: boolean;
+    spellbook?: boolean;
+  };
+  classFeatures: ClassFeature[];
+  armorProficiencies: string[];
+  weaponProficiencies: string[];
+  toolProficiencies?: string[];
 }
 
 export interface CharacterBackground {
@@ -87,6 +127,12 @@ export interface Character {
   savingThrowProficiencies?: (keyof AbilityScores)[];
   languages?: string[];
   remainingAbilityPoints?: number;
+  // Spellcasting
+  cantrips?: string[];
+  knownSpells?: string[];
+  preparedSpells?: string[];
+  // Class Features
+  classFeatures?: Record<string, any>;
   // New AI-generated fields
   image_url?: string;
   appearance?: string;
@@ -120,6 +166,9 @@ export function transformCharacterForStorage(character: Character) {
     tool_proficiencies: (character.toolProficiencies || []).join(','),
     saving_throw_proficiencies: (character.savingThrowProficiencies || []).join(','),
     languages: (character.languages || []).join(','),
+    cantrips: (character.cantrips || []).join(','),
+    known_spells: (character.knownSpells || []).join(','),
+    class_features: JSON.stringify(character.classFeatures || {}),
     updated_at: new Date().toISOString(),
   };
 }

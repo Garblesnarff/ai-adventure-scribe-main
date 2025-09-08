@@ -91,6 +91,9 @@ GUIDELINES:
 - Only extract truly important/memorable moments
 - Focus on: character names, key decisions, plot developments, emotional moments, world details
 - Skip mundane interactions unless they reveal character
+- PRESERVE important direct dialogue in quotes - examples: 'dialogue_gem' type for memorable NPC quotes
+- For dialogue memories, include the speaker and context: "Guard Captain: 'The king has been murdered!'"
+- Prioritize memorable quotes that reveal character personality or advance plot
 - Set prose_quality=true for exceptionally well-written passages
 - Set higher narrative_weight for story-critical moments
 - Use specific categories (NPC names, location names, quest names)

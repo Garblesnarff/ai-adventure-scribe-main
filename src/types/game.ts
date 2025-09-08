@@ -25,6 +25,12 @@ export interface ChatMessage {
   id?: string;
   timestamp?: string;
   context?: MessageContext;
+  narrationSegments?: Array<{
+    type: 'narration' | 'dialogue' | 'action' | 'thought';
+    text: string;
+    character?: string;
+    voice_category?: string;
+  }>;
 }
 
 /**

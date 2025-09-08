@@ -359,6 +359,34 @@ export const baseRaces: CharacterRace[] = [
       }
       // Variants (e.g., Asmodeus, Baalzebul) can be added later with different spells
     ]
+  },
+  {
+    id: 'half-elf',
+    name: 'Half-Elf',
+    description: 'Half-elves combine what some say are the best qualities of their elf and human parents.',
+    traits: ['Darkvision', 'Fey Ancestry', 'Skill Versatility'],
+    abilityScoreIncrease: {
+      charisma: 2
+    },
+    speed: 30,
+    languages: ['Common', 'Elvish', 'One extra language of your choice'],
+    subraces: []
+  },
+  {
+    id: 'half-orc',
+    name: 'Half-Orc',
+    description: 'Half-orcs most often live among orcs. Of the other races, humans are most likely to accept half-orcs.',
+    traits: ['Darkvision', 'Relentless Endurance', 'Savage Attacks'],
+    abilityScoreIncrease: {
+      strength: 2,
+      constitution: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Orc'],
+    subraces: []
   }
   // Races without subraces like Half-Elf, Half-Orc, etc. can be added as needed with subraces: []
 ];
+
+// Export as 'races' for backward compatibility
+export const races = baseRaces;

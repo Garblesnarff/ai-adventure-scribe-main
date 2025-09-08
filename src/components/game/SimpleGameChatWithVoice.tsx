@@ -72,10 +72,29 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       });
 
       if (response) {
+        // Validate response structure and ensure proper display text
+        let displayText = '';
+        let segments = undefined;
+        
+        if (typeof response === 'string') {
+          displayText = response;
+        } else if (response && typeof response === 'object') {
+          displayText = response.text || response.content || '';
+          segments = response.narrationSegments;
+        }
+        
+        // Fallback if no valid text found
+        if (!displayText.trim()) {
+          displayText = 'The DM begins your adventure...';
+          console.warn('⚠️ Empty response text, using fallback');
+        }
+        
         const dmMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: 'assistant',
-          content: response,
+          content: displayText,
           timestamp: new Date(),
+          narrationSegments: segments,
         };
         
         setMessages([dmMessage]);
@@ -129,6 +148,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
 
     // Add user message immediately
     const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
       role: 'user',
       content: messageContent,
       timestamp: new Date(),
@@ -155,10 +175,29 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       });
 
       if (response) {
+        // Validate response structure and ensure proper display text
+        let displayText = '';
+        let segments = undefined;
+        
+        if (typeof response === 'string') {
+          displayText = response;
+        } else if (response && typeof response === 'object') {
+          displayText = response.text || response.content || '';
+          segments = response.narrationSegments;
+        }
+        
+        // Fallback if no valid text found
+        if (!displayText.trim()) {
+          displayText = 'The DM responds to your action...';
+          console.warn('⚠️ Empty response text, using fallback');
+        }
+        
         const dmMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: 'assistant',
-          content: response,
+          content: displayText,
           timestamp: new Date(),
+          narrationSegments: segments,
         };
 
         setMessages(prev => [...prev, dmMessage]);
@@ -182,6 +221,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
     e.preventDefault();
     if (currentMessage.trim() && !isSending) {
       const message: ChatMessage = {
+        id: crypto.randomUUID(),
         role: 'user',
         content: currentMessage.trim(),
         timestamp: new Date(),
