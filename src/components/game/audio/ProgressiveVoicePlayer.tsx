@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Square, Volume2, VolumeX, Users, Settings, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Play, Pause, Square, Volume2, VolumeX, Users, Settings, AlertCircle, RefreshCw, Trash2, TestTube } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { NarrationSegment } from '@/hooks/use-ai-response';
+import { AISegment } from '@/services/voice-director';
 
 interface ProgressiveVoicePlayerProps {
   text: string;
@@ -19,6 +20,16 @@ interface ProgressiveVoicePlayerProps {
   isEnabled?: boolean;
   className?: string;
 }
+
+// Helper function to convert NarrationSegments to AISegments
+const convertNarrationToAISegments = (narrationSegments: NarrationSegment[]): AISegment[] => {
+  return narrationSegments.map(segment => ({
+    type: (['dm', 'narration'].includes(segment.type) ? 'dm' : 'character') as 'dm' | 'character',
+    text: segment.text,
+    character: segment.character,
+    voice_category: segment.voice_category
+  }));
+};
 
 /**
  * ProgressiveVoicePlayer Component
@@ -41,14 +52,17 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     isMuted,
     isVoiceEnabled,
     error,
+    apiKey,
     speakAISegments,
     speakPlainText,
     stopPlayback,
     setVolume,
     toggleMute,
     toggleVoiceEnabled,
+    retryApiKeyFetch,
     getCharacterVoiceMappings,
-    clearCharacterVoiceMappings
+    clearCharacterVoiceMappings,
+    initializeAudioContext
   } = useProgressiveVoice();
 
   const [showSegments, setShowSegments] = React.useState(false);
@@ -56,32 +70,33 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     return localStorage.getItem('progressive-voice-user-interacted') === 'true';
   });
   const [autoPlayEnabled, setAutoPlayEnabled] = React.useState(() => {
-    return localStorage.getItem('progressive-voice-auto-play') !== 'false';
+    // DISABLED: Auto-play causes browser policy violations and race conditions
+    return false;
   });
 
-  // Auto-play functionality with user interaction tracking
+  // Auto-play functionality DISABLED to prevent browser policy issues
   const [lastText, setLastText] = React.useState('');
   
+  // Simple text change tracking (auto-play disabled)
   React.useEffect(() => {
-    if (text && text !== lastText && text.trim() && isVoiceEnabled) {
+    if (text && text !== lastText && text.trim()) {
       setLastText(text);
-      
-      // Only auto-play if user has interacted before and auto-play is enabled
-      if (hasUserInteracted && autoPlayEnabled && !isPlaying && !isProcessing) {
-        console.log('🎪 Auto-playing new AI response with progressive voice');
-        setTimeout(() => {
-          if (narrationSegments && narrationSegments.length > 0) {
-            speakAISegments(narrationSegments);
-          } else {
-            speakPlainText(text);
-          }
-        }, 100);
-      }
+      console.log('📝 New text received for progressive voice (auto-play disabled):', {
+        textLength: text.length,
+        hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
+        narrationSegmentsLength: narrationSegments?.length || 0,
+        narrationSegmentsType: typeof narrationSegments,
+        narrationSegmentsFirst: narrationSegments?.[0],
+        rawNarrationSegments: narrationSegments
+      });
     }
-  }, [text, narrationSegments, lastText, isVoiceEnabled, hasUserInteracted, autoPlayEnabled, isPlaying, isProcessing, speakAISegments, speakPlainText]);
+  }, [text, narrationSegments, lastText]);
 
   const handlePlayPause = React.useCallback(() => {
-    // Mark that user has interacted for future auto-play
+    // Initialize audio context during user interaction for browser autoplay compliance
+    initializeAudioContext();
+    
+    // Mark that user has interacted
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
       localStorage.setItem('progressive-voice-user-interacted', 'true');
@@ -90,15 +105,25 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     if (isPlaying) {
       stopPlayback();
     } else if (!isProcessing) {
+      console.log('🎵 Manual play initiated');
+      console.log('🔍 Debugging narration segments for manual play:', {
+        hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
+        narrationSegmentsLength: narrationSegments?.length || 0,
+        narrationSegmentsType: typeof narrationSegments,
+        rawNarrationSegments: narrationSegments
+      });
+      
       if (narrationSegments && narrationSegments.length > 0) {
         console.log('🎭 Manual play with AI segments');
-        speakAISegments(narrationSegments);
+        const aiSegments = convertNarrationToAISegments(narrationSegments);
+        console.log('🔄 Converted AI segments:', aiSegments);
+        speakAISegments(aiSegments);
       } else {
         console.log('📝 Manual play with plain text fallback');
         speakPlainText(text);
       }
     }
-  }, [isPlaying, isProcessing, stopPlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted]);
+  }, [isPlaying, isProcessing, stopPlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted, initializeAudioContext]);
 
   const handleAutoPlayToggle = React.useCallback(() => {
     const newAutoPlayState = !autoPlayEnabled;
@@ -110,13 +135,34 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     if (text && isVoiceEnabled && !isProcessing) {
       if (narrationSegments && narrationSegments.length > 0) {
         console.log('🔄 Retrying with AI segments');
-        speakAISegments(narrationSegments);
+        const aiSegments = convertNarrationToAISegments(narrationSegments);
+        speakAISegments(aiSegments);
       } else {
         console.log('🔄 Retrying with plain text');
         speakPlainText(text);
       }
     }
   }, [text, narrationSegments, isVoiceEnabled, isProcessing, speakAISegments, speakPlainText]);
+
+  const handleTestAudio = React.useCallback(async () => {
+    console.log('🧪 Testing audio with simple text...');
+    
+    // Mark user interaction
+    if (!hasUserInteracted) {
+      setHasUserInteracted(true);
+      localStorage.setItem('progressive-voice-user-interacted', 'true');
+    }
+    
+    // Test with simple DM narration
+    const testSegments = [{
+      type: 'dm' as const,
+      text: 'This is a test of the audio system.',
+      character: undefined,
+      voice_category: undefined
+    }];
+    
+    await speakAISegments(testSegments);
+  }, [speakAISegments, hasUserInteracted]);
 
   const handleClearVoiceMappings = React.useCallback(() => {
     console.log('🔧 Clearing voice mappings...');
@@ -163,26 +209,19 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
               {isVoiceEnabled && !isPlaying && !isProcessing && !error && (
                 <Badge variant="secondary" className="text-xs">
                   {!hasUserInteracted 
-                    ? "Click ▶ to enable auto-play" 
-                    : autoPlayEnabled 
-                      ? "Auto-play enabled" 
-                      : "Click ▶ to play"
+                    ? "⚠️ Click ▶ to activate audio" 
+                    : "📝 Manual playback only"
                   }
+                </Badge>
+              )}
+              {!isVoiceEnabled && (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  🔇 Voice disabled
                 </Badge>
               )}
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="progressive-auto-play"
-                  checked={autoPlayEnabled && hasUserInteracted}
-                  onCheckedChange={handleAutoPlayToggle}
-                  disabled={!hasUserInteracted}
-                />
-                <Label htmlFor="progressive-auto-play" className="text-xs">
-                  Auto-play
-                </Label>
-              </div>
+              {/* Auto-play toggle HIDDEN - auto-play disabled */}
               <div className="flex items-center gap-2">
                 <Switch
                   id="progressive-voice-enabled"
@@ -235,6 +274,43 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
               </TooltipTrigger>
               <TooltipContent>
                 Stop
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Retry API Key Button */}
+            {!apiKey && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={retryApiKeyFetch}
+                    className="h-10 w-10 p-0 border-orange-300 text-orange-600 hover:bg-orange-50"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Retry API key fetch
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Test Audio Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestAudio}
+                  disabled={!isVoiceEnabled || isProcessing}
+                  className="h-10 w-10 p-0"
+                >
+                  <TestTube className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Test audio
               </TooltipContent>
             </Tooltip>
 
@@ -319,14 +395,49 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 {error}{" "}
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  onClick={handleRetry}
-                  className="h-auto p-0 text-destructive underline"
-                >
-                  Click to retry
-                </Button>
+                {error.includes('API Key') && (
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    onClick={retryApiKeyFetch}
+                    className="h-auto p-0 text-destructive underline"
+                  >
+                    Retry API key fetch
+                  </Button>
+                )}
+                {!error.includes('API Key') && (
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    onClick={handleRetry}
+                    className="h-auto p-0 text-destructive underline"
+                  >
+                    Click to retry
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* API Key Status Alert */}
+          {!apiKey && !error && (
+            <Alert variant="default">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                🔑 <strong>Retrieving API key...</strong><br />
+                ElevenLabs API key is being loaded. If this persists, click the 🔄 button to retry.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* First Time User Help */}
+          {!hasUserInteracted && !isPlaying && !isProcessing && !error && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                🎙️ <strong>Welcome to Voice Narration!</strong><br />
+                Click the ▶ Play button or the 🧪 Test button to start audio. 
+                Once you interact, future AI responses will auto-play (if enabled).
               </AlertDescription>
             </Alert>
           )}

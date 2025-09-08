@@ -18,6 +18,20 @@ export const VoiceHandler: React.FC = () => {
   const shouldRenderPlayer = lastMessage?.sender === 'dm' && lastMessage.text;
   const cleanText = shouldRenderPlayer ? lastMessage.text.replace(/[*_`#]/g, '') : '';
   const narrationSegments = lastMessage?.narrationSegments;
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (shouldRenderPlayer) {
+      console.log('🎭 VoiceHandler: Processing message:', {
+        hasLastMessage: !!lastMessage,
+        messageType: lastMessage?.sender,
+        textLength: lastMessage?.text?.length || 0,
+        hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
+        narrationSegmentsCount: narrationSegments?.length || 0,
+        narrationSegments: narrationSegments
+      });
+    }
+  }, [lastMessage, shouldRenderPlayer, narrationSegments]);
 
   const handleToggleVoiceMode = React.useCallback(() => {
     const newValue = !useProgressiveVoice;

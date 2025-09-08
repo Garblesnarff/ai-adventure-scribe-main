@@ -37,11 +37,8 @@ export const SimpleMessageProvider: React.FC<{
       emotion: 'neutral' as const,
       intent: (msg.role === 'user' ? 'query' : 'response') as 'query' | 'response'
     },
-    // Pass through narrationSegments for voice segmentation, normalizing types
-    narrationSegments: msg.narrationSegments?.map((segment: any) => ({
-      ...segment,
-      type: segment.type === 'dm' ? 'narration' : segment.type === 'character' ? 'dialogue' : segment.type
-    })),
+    // Pass through narrationSegments for voice segmentation, preserving original types for VoiceDirector
+    narrationSegments: msg.narrationSegments,
   }));
 
   const value: SimpleMessageContextType = {

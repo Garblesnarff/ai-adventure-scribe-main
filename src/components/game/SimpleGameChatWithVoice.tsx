@@ -79,8 +79,11 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         if (typeof response === 'string') {
           displayText = response;
         } else if (response && typeof response === 'object') {
-          displayText = response.text || response.content || '';
-          segments = response.narrationSegments;
+          // Cast to any to handle the dynamic AI service response structure
+          const aiResponse = response as any;
+          displayText = aiResponse.text || aiResponse.content || '';
+          // AI service returns 'narration_segments' (snake_case)
+          segments = aiResponse.narration_segments || aiResponse.narrationSegments;
         }
         
         // Fallback if no valid text found
@@ -164,7 +167,6 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         characterId,
         campaignDetails,
         characterDetails,
-        conversationHistory: updatedMessages,
       };
 
       console.log('🎭 Sending message to DM:', messageContent);
@@ -182,8 +184,11 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         if (typeof response === 'string') {
           displayText = response;
         } else if (response && typeof response === 'object') {
-          displayText = response.text || response.content || '';
-          segments = response.narrationSegments;
+          // Cast to any to handle the dynamic AI service response structure
+          const aiResponse = response as any;
+          displayText = aiResponse.text || aiResponse.content || '';
+          // AI service returns 'narration_segments' (snake_case)
+          segments = aiResponse.narration_segments || aiResponse.narrationSegments;
         }
         
         // Fallback if no valid text found
@@ -235,9 +240,15 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
    * End game session
    */
   const handleEndSession = useCallback(async () => {
+    if (!session) {
+      console.warn('No session to end');
+      navigate('/');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to end this adventure? Your progress will be saved.')) {
       try {
-        await endSession();
+        await endSession(session.id);
         toast.success('Adventure ended. Your progress has been saved.');
         navigate('/');
       } catch (error) {
@@ -246,7 +257,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         navigate('/');
       }
     }
-  }, [endSession, navigate]);
+  }, [session, endSession, navigate]);
 
   // Loading state
   if (sessionLoading || isLoadingHistory) {
