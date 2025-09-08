@@ -8,6 +8,7 @@ import AbilityScoresSelection from '../steps/AbilityScoresSelection';
 import BackgroundSelection from '../steps/BackgroundSelection';
 import ProficienciesSelection from '../steps/ProficienciesSelection';
 import SpellSelection from '../steps/SpellSelection';
+import AdvancedSpellcastingSelection from '../steps/AdvancedSpellcastingSelection';
 import EquipmentSelection from '../steps/EquipmentSelection';
 import CharacterFinalization from '../steps/CharacterFinalization';
 
@@ -51,6 +52,10 @@ export const wizardSteps: WizardStep[] = [
   {
     component: SpellSelection,
     label: 'Spells'
+  },
+  {
+    component: AdvancedSpellcastingSelection,
+    label: 'Advanced Spellcasting'
   },
   {
     component: EquipmentSelection,

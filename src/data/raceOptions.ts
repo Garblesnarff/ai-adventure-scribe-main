@@ -150,17 +150,49 @@ export const baseRaces: CharacterRace[] = [
     name: 'Human',
     description: 'Humans are the most adaptable and ambitious people among the common races.',
     traits: ['Versatile'],
-    abilityScoreIncrease: {
-      strength: 1,
-      dexterity: 1,
-      constitution: 1,
-      intelligence: 1,
-      wisdom: 1,
-      charisma: 1
-    },
+    abilityScoreIncrease: {},
     speed: 30,
-    languages: ['Common', 'Choice of One'],
-    subraces: []
+    languages: ['Common'],
+    subraces: [
+      {
+        id: 'standard-human',
+        name: 'Standard Human',
+        description: 'The most adaptable and ambitious people among the common races.',
+        abilityScoreIncrease: {
+          strength: 1,
+          dexterity: 1,
+          constitution: 1,
+          intelligence: 1,
+          wisdom: 1,
+          charisma: 1
+        },
+        traits: ['Versatile'],
+        languages: ['Choice of One']
+      },
+      {
+        id: 'variant-human',
+        name: 'Variant Human',
+        description: 'A more customizable version of human with a free feat at 1st level.',
+        abilityScoreIncrease: {
+          // Player chooses two different abilities to increase by 1
+        },
+        traits: ['Skills', 'Feat', 'Extra Language or Tool Proficiency'],
+        languages: ['Choice of One or Tool Proficiency'],
+        weaponProficiencies: [],
+        armorProficiencies: []
+      },
+      {
+        id: 'custom-lineage',
+        name: 'Custom Lineage',
+        description: 'A customizable lineage representing non-human ancestry or unique background.',
+        abilityScoreIncrease: {
+          // Player chooses one ability to increase by 2, or two abilities by 1 each
+        },
+        traits: ['Variable Size', 'Feat', 'Darkvision or Skill Proficiency'],
+        languages: ['Common', 'Choice of One'],
+        speed: 30
+      }
+    ]
   },
   {
     id: 'dragonborn',
@@ -383,6 +415,98 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Orc'],
+    subraces: []
+  },
+  {
+    id: 'firbolg',
+    name: 'Firbolg',
+    description: 'Reclusive forest guardians, firbolgs prefer to remain hidden among their woodlands.',
+    traits: ['Firbolg Magic', 'Hidden Step', 'Powerful Build', 'Speech of Beast and Leaf'],
+    abilityScoreIncrease: {
+      wisdom: 2,
+      strength: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Elvish', 'Giant'],
+    subraces: []
+  },
+  {
+    id: 'goliath',
+    name: 'Goliath',
+    description: 'Strong and reclusive, goliaths wander the mountain heights in nomadic tribes.',
+    traits: ['Natural Athlete', 'Stone\'s Endurance', 'Powerful Build', 'Mountain Born'],
+    abilityScoreIncrease: {
+      strength: 2,
+      constitution: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Giant'],
+    subraces: []
+  },
+  {
+    id: 'kenku',
+    name: 'Kenku',
+    description: 'Feathered folk who lost their wings long ago now live as cunning mimics.',
+    traits: ['Expert Forgery', 'Kenku Training', 'Mimicry'],
+    abilityScoreIncrease: {
+      dexterity: 2,
+      wisdom: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Auran'],
+    subraces: []
+  },
+  {
+    id: 'lizardfolk',
+    name: 'Lizardfolk',
+    description: 'The lizardfolk possess an alien and inscrutable mindset, their desires and thoughts driven by a different logic.',
+    traits: ['Bite', 'Cunning Artisan', 'Hold Breath', 'Hunter\'s Lore', 'Natural Armor', 'Hungry Jaws'],
+    abilityScoreIncrease: {
+      constitution: 2,
+      wisdom: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Draconic'],
+    subraces: []
+  },
+  {
+    id: 'tabaxi',
+    name: 'Tabaxi',
+    description: 'Hailing from a strange and distant land, wandering tabaxi are catlike humanoids driven by curiosity.',
+    traits: ['Feline Agility', 'Cat\'s Claws', 'Cat\'s Talents', 'Darkvision'],
+    abilityScoreIncrease: {
+      dexterity: 2,
+      charisma: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Choice of One'],
+    subraces: []
+  },
+  {
+    id: 'triton',
+    name: 'Triton',
+    description: 'Guardians of the depths, tritons have spread throughout the oceans, establishing protectorates.',
+    traits: ['Amphibious', 'Control Air and Water', 'Emissary of the Sea', 'Guardians of the Depths'],
+    abilityScoreIncrease: {
+      strength: 1,
+      constitution: 1,
+      charisma: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Primordial'],
+    subraces: []
+  },
+  {
+    id: 'yuan-ti-pureblood',
+    name: 'Yuan-ti Pureblood',
+    description: 'The serpentine yuan-ti are utterly without emotion. They deal in absolutes and judge others by their strength and cunning.',
+    traits: ['Darkvision', 'Innate Spellcasting', 'Magic Resistance', 'Poison Immunity'],
+    abilityScoreIncrease: {
+      charisma: 2,
+      intelligence: 1
+    },
+    speed: 30,
+    languages: ['Common', 'Abyssal', 'Draconic'],
     subraces: []
   }
   // Races without subraces like Half-Elf, Half-Orc, etc. can be added as needed with subraces: []

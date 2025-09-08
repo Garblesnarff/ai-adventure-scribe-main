@@ -78,6 +78,7 @@ export interface CharacterClass {
     spellsKnown?: number;
     ritualCasting?: boolean;
     spellbook?: boolean;
+    pactMagic?: boolean;
   };
   classFeatures: ClassFeature[];
   armorProficiencies: string[];
@@ -120,6 +121,21 @@ export interface Character {
   ideals?: string[];
   bonds?: string[];
   flaws?: string[];
+  // Inspiration System
+  inspiration?: boolean;
+  personalityNotes?: string;
+  // Enhanced personality integration
+  personalityIntegration?: {
+    activeTraits: string[];
+    inspirationTriggers: string[];
+    lastInspiration?: string;
+    inspirationHistory: Array<{
+      date: string;
+      trigger: string;
+      source: 'trait' | 'ideal' | 'bond' | 'flaw' | 'dm';
+      description: string;
+    }>;
+  };
   equipment?: string[];
   selectedEquipmentOptionIndex?: number; // Tracks which equipment option was selected (for UI feedback)
   skillProficiencies?: string[];
@@ -131,8 +147,68 @@ export interface Character {
   cantrips?: string[];
   knownSpells?: string[];
   preparedSpells?: string[];
+  // Advanced Spellcasting Features
+  metamagicOptions?: string[];
+  sorceryPoints?: {
+    maximum: number;
+    current: number;
+  };
+  pactMagicSpells?: string[];
+  pactSlots?: {
+    maximum: number;
+    current: number;
+    level: number;
+  };
+  ritualSpells?: string[];
   // Class Features
   classFeatures?: Record<string, any>;
+  // Feats
+  feats?: string[];
+  // Hit Points & Hit Dice
+  hitPoints?: {
+    maximum: number;
+    current: number;
+    temporary: number;
+  };
+  hitDice?: {
+    total: number;
+    remaining: number;
+    type: string; // e.g., "d8", "d10"
+  };
+  // Equipment & Inventory
+  inventory?: Array<{
+    itemId: string;
+    quantity: number;
+    equipped: boolean;
+  }>;
+  currency?: {
+    cp: number;
+    sp: number;
+    ep: number;
+    gp: number;
+    pp: number;
+  };
+  armorClass?: number;
+  equippedArmor?: string;
+  equippedShield?: string;
+  equippedWeapons?: string[];
+  // Character Advancement & Multiclassing
+  classLevels?: Array<{
+    classId: string;
+    className: string;
+    level: number;
+    hitDie: number;
+    features: string[];
+  }>;
+  levelHistory?: Array<{
+    level: number;
+    classId: string;
+    hitPointsGained: number;
+    featuresGained: string[];
+    date: string;
+  }>;
+  // Experience and Level
+  totalLevel?: number;
   // New AI-generated fields
   image_url?: string;
   appearance?: string;

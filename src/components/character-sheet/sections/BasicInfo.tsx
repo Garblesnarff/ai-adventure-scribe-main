@@ -1,10 +1,13 @@
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ScrollText, Eye, Heart, BookOpen, Shield, Book, Languages } from 'lucide-react';
 import { Character, Subrace } from '@/types/character';
 import { useCharacterStats } from '@/hooks/use-character-stats';
+import InspirationTracker from '../InspirationTracker';
 
 interface BasicInfoProps {
   character: Character;
+  onUpdate?: (updatedCharacter: Character) => void;
 }
 
 /**
@@ -12,12 +15,17 @@ interface BasicInfoProps {
  * Including race, class, level, background, and AI-generated details
  * @param character - The character data to display
  */
-const BasicInfo = ({ character }: BasicInfoProps) => {
+const BasicInfo = ({ character, onUpdate }: BasicInfoProps) => {
   const stats = useCharacterStats(character);
   const raceDisplay = character.subrace ? `${(character.subrace as Subrace).name} (${character.race?.name})` : character.race?.name || 'Unknown';
   
   return (
     <div className="space-y-6">
+      {/* Inspiration Tracker */}
+      {onUpdate && (
+        <InspirationTracker character={character} onUpdate={onUpdate} />
+      )}
+
       {/* Core Stats */}
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-4">

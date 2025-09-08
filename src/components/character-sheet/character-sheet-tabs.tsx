@@ -10,7 +10,9 @@ import {
   FileText,
   Heart,
   Shield,
-  Sword
+  Sword,
+  TrendingUp,
+  Users
 } from 'lucide-react';
 
 // Tab Components
@@ -20,6 +22,8 @@ import SpellsTab from './tabs/SpellsTab';
 import InventoryTab from './tabs/InventoryTab';
 import FeaturesTab from './tabs/FeaturesTab';
 import NotesTab from './tabs/NotesTab';
+import ExperienceManager from './ExperienceManager';
+import MulticlassManager from './MulticlassManager';
 
 interface CharacterSheetTabsProps {
   character: Character;
@@ -48,6 +52,12 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
       label: 'Abilities & Skills',
       icon: Zap,
       description: 'Ability scores, skills, saves, and proficiencies',
+    },
+    {
+      id: 'advancement',
+      label: 'Advancement',
+      icon: TrendingUp,
+      description: 'Experience, leveling, and character progression',
     },
     {
       id: 'spells',
@@ -141,7 +151,7 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
 
       {/* Tab Navigation and Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-7 h-auto p-1 bg-muted/50">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -164,6 +174,26 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
 
           <TabsContent value="abilities" className="space-y-4">
             <AbilitiesTab character={character} onUpdate={onCharacterUpdate} />
+          </TabsContent>
+
+          <TabsContent value="advancement" className="space-y-4">
+            {character.classLevels && character.classLevels.length > 1 ? (
+              <MulticlassManager 
+                character={character} 
+                onUpdate={(updatedCharacter) => {
+                  // Update character and trigger refresh
+                  onCharacterUpdate();
+                }} 
+              />
+            ) : (
+              <ExperienceManager 
+                character={character} 
+                onUpdate={(updatedCharacter) => {
+                  // Update character and trigger refresh
+                  onCharacterUpdate();
+                }} 
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="spells" className="space-y-4">
