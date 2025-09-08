@@ -6,9 +6,10 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { ChatMessage } from '@/services/ai-service';
+import { ChatMessage as GameChatMessage } from '@/types/game';
 
 interface SimpleMessageContextType {
-  messages: ChatMessage[];
+  messages: GameChatMessage[];
   isLoading: boolean;
   sendMessage: (message: ChatMessage) => Promise<void>;
   queueStatus: 'idle' | 'processing' | 'error' | 'retrying';
@@ -26,8 +27,25 @@ export const SimpleMessageProvider: React.FC<{
   queueStatus?: 'idle' | 'processing' | 'error' | 'retrying';
   children: ReactNode;
 }> = ({ messages, isLoading, sendMessage, queueStatus = 'idle', children }) => {
+  // Transform messages from ai-service format to VoiceHandler-compatible format
+  const transformedMessages: GameChatMessage[] = messages.map(msg => ({
+    text: msg.content, // Transform content -> text
+    sender: (msg.role === 'assistant' ? 'dm' : msg.role === 'user' ? 'player' : 'system') as 'dm' | 'player' | 'system', // Transform role -> sender
+    id: msg.id,
+    timestamp: msg.timestamp.toISOString(),
+    context: {
+      emotion: 'neutral' as const,
+      intent: (msg.role === 'user' ? 'query' : 'response') as 'query' | 'response'
+    },
+    // Pass through narrationSegments for voice segmentation, normalizing types
+    narrationSegments: msg.narrationSegments?.map((segment: any) => ({
+      ...segment,
+      type: segment.type === 'dm' ? 'narration' : segment.type === 'character' ? 'dialogue' : segment.type
+    })),
+  }));
+
   const value: SimpleMessageContextType = {
-    messages,
+    messages: transformedMessages,
     isLoading,
     sendMessage,
     queueStatus,

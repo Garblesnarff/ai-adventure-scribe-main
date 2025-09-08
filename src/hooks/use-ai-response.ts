@@ -7,9 +7,29 @@ import { useToast } from '@/hooks/use-toast';
 // Project Utilities
 import { selectRelevantMemories } from '@/utils/memorySelection';
 
+// Project Services
+import { voiceConsistencyService } from '@/services/voice-consistency-service';
+
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
 import { ChatMessage } from '@/types/game';
+
+// Voice narration types
+export interface NarrationSegment {
+  type: 'narration' | 'dialogue' | 'action' | 'thought' | 'dm' | 'character';
+  text: string;
+  character?: string;
+  voice_category?: string;
+}
+
+export interface StructuredAIResponse {
+  response: string;
+  narration_segments?: NarrationSegment[];
+}
+
+export interface EnhancedChatMessage extends ChatMessage {
+  narrationSegments?: NarrationSegment[];
+}
 
 
 /**
@@ -92,13 +112,14 @@ export const useAIResponse = () => {
 
   /**
    * Calls the DM Agent to generate a response based on chat history and game context.
+   * Now handles structured responses with narration segments for voice synthesis.
    * 
    * @param {ChatMessage[]} messages - The full message history
    * @param {string} sessionId - The session ID
-   * @returns {Promise<ChatMessage>} The generated AI response message
+   * @returns {Promise<EnhancedChatMessage>} The generated AI response with optional narration segments
    * @throws {Error} If the DM Agent call fails
    */
-  const getAIResponse = async (messages: ChatMessage[], sessionId: string): Promise<ChatMessage> => {
+  const getAIResponse = async (messages: ChatMessage[], sessionId: string): Promise<EnhancedChatMessage> => {
     try {
       console.log('Getting AI response for session:', sessionId);
 
@@ -111,6 +132,9 @@ export const useAIResponse = () => {
       if (!gameContext) {
         throw new Error('Failed to fetch game context');
       }
+
+      // Get voice context for consistent character voices
+      const voiceContext = await voiceConsistencyService.getSessionVoiceContext(sessionId);
 
       // Fetch and select relevant memories
       const { data: memoriesData } = await supabase
@@ -154,7 +178,8 @@ export const useAIResponse = () => {
 
       console.log('Calling DM Agent with context:', {
         gameContext,
-        selectedMemories: selectedMemories.length
+        selectedMemories: selectedMemories.length,
+        knownCharacters: Object.keys(voiceContext.knownCharacters).length
       });
 
       // Call DM Agent through edge function
@@ -168,6 +193,10 @@ export const useAIResponse = () => {
             campaignDetails: gameContext.campaign,
             characterDetails: gameContext.character,
             memories: selectedMemories
+          },
+          voiceContext: {
+            available_categories: voiceContext.availableVoiceCategories,
+            character_mappings: voiceContext.knownCharacters
           }
         }
       });
@@ -177,14 +206,43 @@ export const useAIResponse = () => {
         throw error;
       }
 
-      // Format the response as a ChatMessage
+      // Handle response format - Edge Function now returns text and narrationSegments directly
+      let responseText: string;
+      let narrationSegments: NarrationSegment[] | undefined;
+
+      // Check if Edge Function returned narration segments (new structured format)
+      if (data.narrationSegments && Array.isArray(data.narrationSegments) && data.narrationSegments.length > 0) {
+        responseText = data.response;
+        narrationSegments = data.narrationSegments;
+        console.log('🎭 Received structured response with', narrationSegments.length, 'narration segments');
+        
+        // Process voice assignments for the segments
+        try {
+          await voiceConsistencyService.processVoiceAssignments(sessionId, narrationSegments);
+          console.log('✅ Processed voice assignments successfully');
+        } catch (voiceError) {
+          console.warn('Warning: Failed to process voice assignments:', voiceError);
+          // Don't fail the entire response for voice processing errors
+        }
+      } else if (typeof data.response === 'string') {
+        // Legacy response format - just text
+        responseText = data.response;
+        console.log('📝 Received legacy text response');
+      } else {
+        // Fallback for unexpected response format
+        responseText = String(data.response || data || 'I apologize, but I encountered an issue generating a response.');
+        console.warn('⚠️ Unexpected response format, using fallback');
+      }
+
+      // Format the response as an EnhancedChatMessage
       return {
-        text: data.response,
+        text: responseText,
         sender: 'dm',
         context: {
           emotion: 'neutral',
           intent: 'response',
-        }
+        },
+        narrationSegments: narrationSegments
       };
     } catch (error) {
       console.error('Error in getAIResponse:', error);

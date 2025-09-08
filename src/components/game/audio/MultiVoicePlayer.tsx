@@ -12,9 +12,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMultiVoice, AudioSegment } from '@/hooks/use-multi-voice';
 import { VoiceMapper } from '@/services/voice-mapper';
+import { NarrationSegment } from '@/hooks/use-ai-response';
 
 interface MultiVoicePlayerProps {
   text: string;
+  narrationSegments?: NarrationSegment[]; // Pre-segmented narration from AI
   isEnabled?: boolean;
   className?: string;
 }
@@ -27,6 +29,7 @@ interface MultiVoicePlayerProps {
  */
 export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
   text,
+  narrationSegments,
   isEnabled = true,
   className = ""
 }) => {
@@ -40,6 +43,7 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
     isMuted,
     isVoiceEnabled,
     speakText,
+    speakSegments, // New function for pre-segmented data
     stopPlayback,
     setVolume,
     toggleMute,
@@ -57,15 +61,57 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
     return localStorage.getItem('auto-play-enabled') !== 'false';
   });
 
-  // Parse text for preview when text changes
+  // Parse text for preview when text changes, or use pre-segmented data
   React.useEffect(() => {
-    if (text && isVoiceEnabled) {
+    if (!isVoiceEnabled) {
+      setPreviewSegments([]);
+      return;
+    }
+
+    // Prefer narrationSegments if available (AI-provided segments)
+    if (narrationSegments && narrationSegments.length > 0) {
+      console.log('🎭 Using AI-provided narration segments:', narrationSegments.length);
+      // Convert NarrationSegments to AudioSegments for preview
+      const audioSegments: AudioSegment[] = narrationSegments.map((segment, index): AudioSegment => {
+        let voiceConfig = VoiceMapper.getNarratorVoice(); // Default
+        
+        // Handle both naming conventions: 'narration'/'dm' and 'dialogue'/'character'
+        const isNarration = segment.type === 'narration';
+        
+        if (isNarration) {
+          voiceConfig = VoiceMapper.getNarratorVoice();
+        } else if (segment.voice_category) {
+          // Use the voice category provided by AI
+          const allVoices = VoiceMapper.getAllVoices();
+          voiceConfig = allVoices[segment.voice_category] || VoiceMapper.getNarratorVoice();
+          console.log(`🎭 Preview: Using voice category "${segment.voice_category}" for character "${segment.character}"`);
+        } else if (segment.character) {
+          // Fallback to character-based mapping
+          voiceConfig = VoiceMapper.getVoiceForCharacter(segment.character);
+        }
+        
+        return {
+          type: isNarration ? 'narration' : 'dialogue',
+          text: segment.text,
+          character: segment.character || 'Narrator',
+          originalText: segment.text, // Use the segment text as originalText
+          startIndex: index * 100, // Generate approximate indices for preview
+          endIndex: (index * 100) + segment.text.length,
+          voiceConfig,
+          isPlaying: false,
+          isLoading: false
+        };
+      });
+      setPreviewSegments(audioSegments);
+    } else if (text) {
+      // Fallback to text parsing
+      console.log('📝 Falling back to text parsing for preview');
       const parsed = parseText(text);
       setPreviewSegments(parsed);
     } else {
       setPreviewSegments([]);
     }
-  }, [text, isVoiceEnabled, parseText]);
+  }, [text, narrationSegments, isVoiceEnabled, parseText]);
 
   // Auto-play functionality with user interaction tracking
   const [lastText, setLastText] = React.useState('');
@@ -83,7 +129,14 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
         console.log('🎪 Auto-playing new AI response:', text.substring(0, 50) + '...');
         // Small delay to ensure state is settled
         setTimeout(() => {
-          speakText(text);
+          // Use pre-segmented data if available, otherwise fall back to text parsing
+          if (narrationSegments && narrationSegments.length > 0) {
+            console.log('🎭 Auto-playing with AI-provided segments');
+            speakSegments(narrationSegments);
+          } else {
+            console.log('📝 Auto-playing with text parsing fallback');
+            speakText(text);
+          }
         }, 100);
       } else {
         console.log('🚫 Auto-play skipped:', {
@@ -95,7 +148,7 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
         });
       }
     }
-  }, [text, lastText, isVoiceEnabled, hasUserInteracted, autoPlayEnabled, isPlaying, isProcessing, isLoading, speakText]);
+  }, [text, narrationSegments, lastText, isVoiceEnabled, hasUserInteracted, autoPlayEnabled, isPlaying, isProcessing, isLoading, speakText, speakSegments]);
 
   const handlePlayPause = React.useCallback(() => {
     // Mark that user has interacted for future auto-play
@@ -107,10 +160,16 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
     if (isPlaying) {
       stopPlayback();
     } else if (!isProcessing) {
-      // Only start speaking if we're not already processing audio
-      speakText(text);
+      // Use pre-segmented data if available, otherwise fall back to text parsing
+      if (narrationSegments && narrationSegments.length > 0) {
+        console.log('🎭 Manual play with AI-provided segments');
+        speakSegments(narrationSegments);
+      } else {
+        console.log('📝 Manual play with text parsing fallback');
+        speakText(text);
+      }
     }
-  }, [isPlaying, isProcessing, stopPlayback, speakText, text, hasUserInteracted]);
+  }, [isPlaying, isProcessing, stopPlayback, speakText, speakSegments, text, narrationSegments, hasUserInteracted]);
 
   const handleTestAudio = React.useCallback(async () => {
     console.log('🧪 Testing audio playback capability...');
@@ -136,9 +195,16 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
 
   const handleRetry = React.useCallback(() => {
     if (text && isVoiceEnabled && !isProcessing) {
-      speakText(text);
+      // Use pre-segmented data if available, otherwise fall back to text parsing
+      if (narrationSegments && narrationSegments.length > 0) {
+        console.log('🔄 Retrying with AI-provided segments');
+        speakSegments(narrationSegments);
+      } else {
+        console.log('🔄 Retrying with text parsing fallback');
+        speakText(text);
+      }
     }
-  }, [text, isVoiceEnabled, isProcessing, speakText]);
+  }, [text, narrationSegments, isVoiceEnabled, isProcessing, speakText, speakSegments]);
 
   const handleDebugVoiceMapping = React.useCallback(() => {
     console.log('🔧 Debug: Clearing voice mappings and testing Thorne assignment...');
@@ -490,7 +556,9 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {previewSegments.map((segment, index) => (
-                      <div className={`p-2 rounded-lg border transition-colors ${
+                      <div
+                        key={`segment-${index}-${segment.text.substring(0, 20)}`}
+                        className={`p-2 rounded-lg border transition-colors ${
                         index === currentSegmentIndex
                           ? 'bg-primary/10 border-primary/30'
                           : segment.error

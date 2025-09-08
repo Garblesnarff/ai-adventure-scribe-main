@@ -28,7 +28,28 @@ const WizardContent: React.FC = () => {
   const validateCharacter = () => {
     if (!state.character) return false;
     const { race, class: characterClass, abilityScores, background, skillProficiencies, languages } = state.character;
-    return !!(race && characterClass && abilityScores && background && skillProficiencies?.length && languages?.length);
+    
+    // Basic required fields
+    const hasBasicFields = !!(race && characterClass && abilityScores && background && skillProficiencies?.length && languages?.length);
+    
+    // If race has subraces, subrace must be selected
+    const hasValidSubrace = !race?.subraces?.length || !!state.character.subrace;
+    
+    // If class is spellcaster, spells must be selected
+    const spellcasting = characterClass?.spellcasting;
+    const hasValidSpells = !spellcasting || (
+      (spellcasting.cantripsKnown === 0 || (state.character.cantrips?.length || 0) >= spellcasting.cantripsKnown) &&
+      (!spellcasting.spellsKnown || (state.character.knownSpells?.length || 0) >= spellcasting.spellsKnown)
+    );
+    
+    // If class has features with choices, they must be selected
+    const classFeatures = characterClass?.classFeatures?.filter(f => f.choices) || [];
+    const hasValidClassFeatures = classFeatures.length === 0 || (
+      state.character.classFeatures && 
+      classFeatures.every(feature => state.character?.classFeatures?.[feature.id])
+    );
+    
+    return hasBasicFields && hasValidSubrace && hasValidSpells && hasValidClassFeatures;
   };
 
   /**

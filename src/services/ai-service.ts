@@ -2,12 +2,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { GeminiApiManager } from './gemini-api-manager';
 import { MemoryManager, MemoryContext } from './memory-manager';
 import { WorldBuilderService } from './world-builders/world-builder-service';
+import { voiceConsistencyService } from './voice-consistency-service';
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  narrationSegments?: Array<{
+    type: 'dm' | 'character' | 'transition';
+    text: string;
+    character?: string;
+    voice_category?: string;
+  }>;
 }
 
 export interface GameContext {
@@ -101,13 +108,14 @@ Create a campaign description that makes players say "I want to play in this wor
   /**
    * Simplified chat with AI DM for MVP with fallback and streaming support
    * Uses a single AI call instead of complex agent system
+   * Now includes voice segmentation for multi-voice narration
    */
   static async chatWithDM(params: {
     message: string;
     context: GameContext;
     conversationHistory?: ChatMessage[];
     onStream?: (chunk: string) => void;
-  }): Promise<string> {
+  }): Promise<{ text: string; narrationSegments?: any[] }> {
     // Skip Edge Function - use local Gemini API directly
     console.log('Using local Gemini API for chat...');
     
@@ -126,6 +134,17 @@ Create a campaign description that makes players say "I want to play in this wor
           console.warn('Failed to retrieve memories:', memoryError);
         }
       }
+
+      // Get voice context for multi-voice narration
+      let voiceContext = null;
+      if (params.context.sessionId) {
+        try {
+          voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
+          console.log(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
+        } catch (voiceError) {
+          console.warn('Failed to retrieve voice context:', voiceError);
+        }
+      }
       
       // Use local Gemini API
       const geminiManager = this.getGeminiManager();
@@ -133,7 +152,7 @@ Create a campaign description that makes players say "I want to play in this wor
       const result = await geminiManager.executeWithRotation(async (genAI) => {
           const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
           
-          // Build enhanced context for DM interactions
+          // Build enhanced context for DM interactions with voice segmentation
           let contextPrompt = `You are a skilled D&D 5e Dungeon Master who creates immersive, mechanically-sound adventures. You balance compelling narrative with proper game mechanics, always giving players meaningful choices with clear consequences.`;
           
           if (params.context.campaignDetails) {
@@ -157,6 +176,95 @@ Create a campaign description that makes players say "I want to play in this wor
             });
             contextPrompt += `\nReference these memories naturally to maintain story continuity.`;
           }
+
+          // Add voice context for multi-voice narration
+          if (voiceContext) {
+            contextPrompt += `\n\nVOICE NARRATION CONTEXT:`;
+            
+            // Known characters and their assigned voices
+            if (Object.keys(voiceContext.knownCharacters).length > 0) {
+              contextPrompt += `\n\nKNOWN CHARACTERS (maintain voice consistency):`;
+              Object.entries(voiceContext.knownCharacters).forEach(([character, info]: [string, any]) => {
+                contextPrompt += `\n- "${character}": ${info.voiceCategory} voice (appeared ${info.appearances} times)`;
+              });
+            }
+            
+            // Available voice categories for new characters
+            contextPrompt += `\n\nAVAILABLE VOICE CATEGORIES FOR NEW CHARACTERS:\n`;
+            voiceContext.availableVoiceCategories.forEach(category => {
+              contextPrompt += `- ${category}\n`;
+            });
+
+            contextPrompt += `\n**CRITICAL: STRUCTURED RESPONSE FORMAT**
+When providing a response, you MUST structure it as JSON with both display text AND pre-segmented narration for voice synthesis.
+
+**RESPONSE FORMAT (JSON):**
+{
+  "text": "Your full narrative response as normal text for display",
+  "narration_segments": [
+    {
+      "type": "dm",
+      "text": "DM narration text here", 
+      "character": null,
+      "voice_category": null
+    },
+    {
+      "type": "character",
+      "text": "Character dialogue here",
+      "character": "Character Name",
+      "voice_category": "appropriate_voice_category"
+    }
+  ]
+}
+
+**SEGMENTATION RULES FOR PROPER AUDIO:**
+1. **Complete Sentences Only**: Each segment MUST contain complete sentences that end with proper punctuation (. ! ?)
+2. **No Mid-Word Splits**: Never break a segment in the middle of a word - always end at word boundaries
+3. **Sentence Boundaries**: Split at natural sentence endings, not in the middle of clauses or phrases
+4. **DM Narration**: type="dm", no character/voice_category needed - use for descriptive text and scene-setting
+5. **Character Speech**: type="character", include character name and voice_category - use ONLY for actual spoken dialogue in quotes
+6. **Voice Categories**: Use existing categories for known characters, select appropriate ones for new characters
+7. **Character Names**: Use consistent, clean names (e.g., "village elder" not "the old village elder")
+8. **Dialogue Purity**: Only actual spoken words go in character segments, not attribution like "he said"
+9. **Natural Flow**: Each segment should sound natural when read aloud as a complete thought
+10. **Abbreviation Handling**: Be careful with abbreviations like "Dr.", "Mr.", "etc." - don't split after these
+11. **CRITICAL**: The "text" field MUST contain properly quoted dialogue for display, while dialogue segments extract just the spoken words
+
+**EXAMPLE:**
+Player says: "I approach the tavern keeper and ask about rooms"
+
+Response:
+{
+  "text": "You approach the burly tavern keeper behind the bar. He looks up from cleaning a mug with tired but friendly eyes. \"Aye, we've got a room available,\" he says in a gruff voice. \"Two silver for the night, includes breakfast. What do you say?\"",
+  "narration_segments": [
+    {
+      "type": "dm",
+      "text": "You approach the burly tavern keeper behind the bar. He looks up from cleaning a mug with tired but friendly eyes.",
+      "character": null,
+      "voice_category": null
+    },
+    {
+      "type": "character", 
+      "text": "Aye, we've got a room available. Two silver for the night, includes breakfast. What do you say?",
+      "character": "tavern keeper",
+      "voice_category": "merchant"
+    }
+  ]
+}
+
+**BAD SEGMENTATION (DO NOT DO):**
+- Splitting mid-sentence: "The dragon ro-" / "ars loudly"  ❌
+- Incomplete thoughts: "The wizard" / "casts a spell"  ❌  
+- Mixed dialogue: "The guard says, 'Halt! Who goes there?'"  ❌
+- Breaking at abbreviations: "Dr. Smith" split as "Dr." / "Smith"  ❌
+
+**GOOD SEGMENTATION (DO THIS):**
+- Complete sentences: "The dragon roars loudly, shaking the cavern walls."  ✅
+- Full thoughts: "The wizard raises his staff and begins casting a powerful spell."  ✅
+- Pure dialogue: "Halt! Who goes there?"  ✅
+- Proper abbreviations: "Dr. Smith examines the ancient tome carefully."  ✅`;
+
+          }
           
           contextPrompt += `\n\nDM RESPONSE GUIDELINES:
 **Core Principles:**
@@ -166,6 +274,13 @@ Create a campaign description that makes players say "I want to play in this wor
 - Include sensory details and environmental context
 - Track narrative threads and callback to previous events
 - Give NPCs distinct voices and personalities
+
+**CRITICAL: NPC DIALOGUE REQUIREMENTS**
+- ALL significant NPC interactions MUST use direct quoted speech
+- Examples: "What brings you to these dark woods?" or "I've been expecting you, adventurer."
+- NEVER describe speech indirectly (e.g., "He greets you warmly" or "She asks about your quest")
+- Every meaningful NPC response should contain actual spoken words in quotes
+- This applies to shopkeepers, guards, villagers, enemies, allies - ALL speaking NPCs
 
 **When to Request Dice Rolls:**
 - Uncertain outcomes: "Roll a d20 + your Investigation modifier"
@@ -177,22 +292,34 @@ Create a campaign description that makes players say "I want to play in this wor
 **Response Structure:**
 1. **Consequences**: Describe what happens as a result of their action
 2. **New Information**: Reveal new details, clues, or developments
-3. **NPC Interaction**: If applicable, include NPC dialogue in quotes with distinct voice
+3. **NPC Interaction**: Include direct quoted dialogue for ALL speaking NPCs
 4. **Environmental Details**: Paint the scene with sensory information
 5. **Choice Point**: End with 2-3 clear options or ask what they want to do next
 
-**NPC Dialogue Style:**
-- Put all spoken words in quotes: "Welcome, traveler"
-- Give each NPC a distinct voice, vocabulary, and speech pattern
-- Include body language and emotional cues: The merchant nervously fidgets with his coin purse, "Perhaps we can make a deal?"
+**Enhanced NPC Dialogue Standards:**
+- Direct quotes for ALL spoken words: "Welcome, traveler. What news from the capital?"
+- Give each NPC a unique voice, vocabulary, and speech pattern
+- Include body language and emotional cues: The merchant nervously fidgets with his coin purse before saying, "Perhaps we can strike a bargain?"
+- Match dialogue to character: A gruff dwarf might say "Bah! What's a human doing in these tunnels?" while an elegant elf says "How... unexpected to encounter your kind here."
+- Use dialogue to reveal personality, motivations, and plot information
+
+**DIALOGUE EXAMPLES:**
+✅ CORRECT: The tavern keeper looks up from cleaning glasses. "Rough night out there, eh? What can I get you?"
+❌ INCORRECT: The tavern keeper greets you and asks what you want to drink.
+
+✅ CORRECT: The guard steps forward, hand on sword hilt. "State your business, stranger. The city's been on edge lately."
+❌ INCORRECT: The guard approaches and questions your presence suspiciously.
 
 **Combat Guidelines:**
 - Request initiative rolls at combat start
 - Ask for attack rolls, damage rolls, and saving throws as needed
 - Describe hits/misses cinematically
 - Track position and tactical elements
+- Include battle cries and taunts in direct quotes
 
-Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for player action or decision.`;
+Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for player action or decision.
+
+${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_segments for voice synthesis!**' : ''}`;
           
           // Build conversation history
           const messages = [
@@ -216,12 +343,12 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
               temperature: 0.9,
               topK: 40,
               topP: 0.95,
-              maxOutputTokens: 1024,
+              maxOutputTokens: 2048, // Increased from 1024 to prevent truncation
             },
           });
           
-          // Use streaming if callback provided
-          if (params.onStream) {
+          // Use streaming if callback provided (note: streaming won't work with JSON parsing)
+          if (params.onStream && !voiceContext) {
             const response = await chat.sendMessageStream(params.message);
             let fullResponse = '';
             
@@ -231,15 +358,88 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
               params.onStream(chunkText);
             }
             
-            return fullResponse;
+            return { text: fullResponse };
           } else {
             const response = await chat.sendMessage(params.message);
             const result = await response.response;
-            return result.text();
+            const rawResponse = result.text();
+
+            // Try to parse structured response if voice context is available
+            if (voiceContext) {
+              try {
+                const structuredResponse = JSON.parse(rawResponse);
+                console.log('🎭 Successfully parsed structured voice response');
+                return structuredResponse;
+              } catch (parseError) {
+                console.warn('Failed to parse structured response, attempting to extract text:', parseError);
+                
+                // Try to extract text from malformed JSON
+                try {
+                  // Look for text field in the response even if JSON is malformed
+                  const textMatch = rawResponse.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*[,}])/);
+                  if (textMatch) {
+                    const extractedText = textMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+                    console.log('🔧 Extracted text from malformed JSON');
+                    return { text: extractedText };
+                  }
+                } catch (extractError) {
+                  console.warn('Could not extract text from malformed JSON:', extractError);
+                }
+                
+                // Final fallback - return raw response with minimal cleaning
+                // Only remove obvious JSON structure markers if they exist
+                let cleanText = rawResponse;
+                if (cleanText.trim().startsWith('{') && cleanText.includes('"text"')) {
+                  // Try to find where the actual text content starts and ends
+                  const startMatch = cleanText.match(/"text"\s*:\s*"/);
+                  if (startMatch) {
+                    const startIndex = startMatch.index! + startMatch[0].length;
+                    let textContent = cleanText.substring(startIndex);
+                    
+                    // Find the end of the text content (look for quote followed by comma or closing brace)
+                    const endMatch = textContent.match(/"\s*[,}]/);
+                    if (endMatch) {
+                      textContent = textContent.substring(0, endMatch.index);
+                    } else {
+                      // If no clear end found, look for the last quote
+                      const lastQuoteIndex = textContent.lastIndexOf('"');
+                      if (lastQuoteIndex > 0) {
+                        textContent = textContent.substring(0, lastQuoteIndex);
+                      }
+                    }
+                    
+                    // Unescape the content
+                    cleanText = textContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+                  }
+                }
+                return { text: cleanText || rawResponse };
+              }
+            }
+            
+            return { text: rawResponse };
           }
         });
         
         console.log('Successfully generated DM response using local Gemini API');
+
+        // Process voice assignments if we have structured data
+        if (result.narration_segments && params.context.sessionId && voiceContext) {
+          try {
+            // Normalize segment types for compatibility
+            const normalizedSegments = result.narration_segments.map((segment: any) => ({
+              ...segment,
+              type: segment.type === 'dm' ? 'narration' : segment.type === 'character' ? 'dialogue' : segment.type
+            }));
+            
+            await voiceConsistencyService.processVoiceAssignments(
+              params.context.sessionId,
+              normalizedSegments
+            );
+            console.log('🎪 Processed voice assignments for character consistency');
+          } catch (voiceError) {
+            console.warn('Voice assignment processing failed (non-fatal):', voiceError);
+          }
+        }
         
         // Extract memories from this conversation exchange
         if (params.context.sessionId) {
@@ -255,7 +455,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
             const extractionResult = await MemoryManager.extractMemories(
               memoryContext,
               params.message,
-              result
+              result.text
             );
             
             if (extractionResult.memories.length > 0) {
@@ -273,7 +473,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
               params.context.sessionId!,
               params.context.characterId,
               params.message,
-              result
+              result.text
             );
             
             if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
@@ -341,7 +541,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
         id: msg.id,
         role: msg.speaker_type as 'user' | 'assistant',
         content: msg.message,
-        timestamp: new Date(msg.created_at),
+        timestamp: msg.created_at ? new Date(msg.created_at) : new Date(),
       }));
     } catch (error) {
       console.error('Error getting conversation history:', error);
@@ -399,10 +599,16 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
 2. **Sensory Rich**: Include what you see, hear, smell, feel, and taste
 3. **Character Integration**: Reference their ${params.context.characterDetails?.class || 'character'} abilities, equipment, or background naturally
 4. **Decision Point**: End with a compelling choice between 2-3 distinct actions with clear stakes
-5. **NPC Interaction**: Include at least one interesting NPC the player can engage with
+5. **NPC Interaction**: Include at least one interesting NPC with direct quoted dialogue
 6. **World Details**: Add unique elements that make this world feel alive and distinct
 7. **Foreshadowing**: Hint at larger mysteries or conflicts without revealing everything
 8. **Clear Stakes**: Make it obvious why this moment matters
+
+**CRITICAL: NPC Dialogue Requirements**
+- ALL NPC interactions MUST use direct quoted speech
+- Examples: "Stranger, you look like you've seen trouble," or "Help me! The bandits took everything!"
+- NEVER describe speech indirectly (e.g., "A merchant greets you" or "Someone calls for help")
+- Every speaking NPC should have actual quoted words that reveal personality and plot
 
 TONE GUIDELINES:
 - ${campaignTone === 'dark' ? 'Use atmospheric, tension-filled language. Emphasize danger and moral ambiguity.' : ''}

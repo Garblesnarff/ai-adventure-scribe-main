@@ -3,9 +3,12 @@
  * 
  * Parses DM text to identify different segments: narration, character dialogue, and actions.
  * Supports various dialogue patterns and extracts character names for voice mapping.
+ * Uses enhanced sentence segmentation for proper audio narration boundaries.
  * 
  * @author AI Dungeon Master Team
  */
+
+import { SentenceSegmenter } from '@/utils/sentence-segmenter';
 
 export interface VoiceSettings {
   stability: number;
@@ -437,31 +440,8 @@ export class DialogueParser {
   }
 
   private static splitIntoSentences(text: string): string[] {
-    // Enhanced sentence splitting that handles common edge cases
-    const sentences: string[] = [];
-    
-    // Split on sentence-ending punctuation followed by whitespace and capital letter
-    // Also handle common abbreviations and edge cases
-    const sentencePattern = /([^.!?]*[.!?])(?=\s+[A-Z]|\s*$)/g;
-    let match;
-    let lastIndex = 0;
-    
-    while ((match = sentencePattern.exec(text)) !== null) {
-      const sentence = match[1].trim();
-      if (sentence.length > 0) {
-        sentences.push(sentence);
-      }
-      lastIndex = match.index + match[0].length;
-    }
-    
-    // Handle any remaining text that didn't match the pattern
-    const remaining = text.slice(lastIndex).trim();
-    if (remaining.length > 0) {
-      sentences.push(remaining);
-    }
-    
-    // If no sentences were found, return the whole text
-    return sentences.length > 0 ? sentences : [text];
+    // Use the enhanced sentence segmentation utility
+    return SentenceSegmenter.splitIntoSentences(text);
   }
 
   private static optimizeSegmentLengths(segments: DialogueSegment[]): DialogueSegment[] {
@@ -488,6 +468,31 @@ export class DialogueParser {
       }
     }
     
-    return optimized;
+    // Final validation to ensure no mid-word splits using enhanced segmenter
+    return this.validateSegmentWordBoundaries(optimized);
+  }
+
+  private static validateSegmentWordBoundaries(segments: DialogueSegment[]): DialogueSegment[] {
+    // Extract just the text for validation
+    const texts = segments.map(segment => segment.text);
+    const validatedTexts = SentenceSegmenter.validateSegmentBoundaries(texts);
+    
+    // Map back to segments, handling potential length changes
+    const validatedSegments: DialogueSegment[] = [];
+    let segmentIndex = 0;
+    
+    for (const validatedText of validatedTexts) {
+      if (segmentIndex < segments.length) {
+        const originalSegment = segments[segmentIndex];
+        validatedSegments.push({
+          ...originalSegment,
+          text: validatedText.trim(),
+          originalText: validatedText.trim()
+        });
+        segmentIndex++;
+      }
+    }
+    
+    return validatedSegments.filter(segment => segment.text.length > 0);
   }
 }

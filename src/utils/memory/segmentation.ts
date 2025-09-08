@@ -13,8 +13,12 @@ const DEFAULT_OPTIONS: SegmentationOptions = {
   preserveQuotes: true,
 };
 
+// Import the enhanced sentence segmenter
+import { SentenceSegmenter } from '@/utils/sentence-segmenter';
+
 /**
  * Splits content into coherent segments based on natural language boundaries
+ * Now uses improved sentence boundary detection to prevent mid-word splits
  * @param content - The text content to split
  * @param options - Optional configuration for segmentation
  */
@@ -24,28 +28,20 @@ export const splitIntoSegments = (
 ): string[] => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   
-  // Split on major punctuation while preserving quotes
-  const rawSegments = content
-    .split(/(?<=[.!?;])\s+(?=[^"]*(?:"[^"]*"[^"]*)*$)/)
-    .filter(segment => segment.trim().length >= opts.minLength);
-
-  // Further process long segments
-  const refinedSegments: string[] = [];
+  // Use enhanced sentence splitting instead of basic regex
+  const sentences = SentenceSegmenter.splitIntoSentences(content);
   
-  for (const segment of rawSegments) {
-    if (segment.length > opts.maxLength) {
-      // Split on clauses for long segments
-      const subSegments = segment
-        .split(/,\s*(?=[A-Z])/)
-        .filter(s => s.trim().length >= opts.minLength);
-      
-      refinedSegments.push(...subSegments);
-    } else {
-      refinedSegments.push(segment);
-    }
-  }
+  // Filter by minimum length
+  const validSentences = sentences.filter(sentence => sentence.trim().length >= opts.minLength);
+  
+  // Use the SentenceSegmenter's optimization for proper segment lengths
+  const optimizedSegments = SentenceSegmenter.optimizeSegmentLengths(
+    validSentences, 
+    opts.minLength, 
+    opts.maxLength
+  );
 
-  return refinedSegments.map(s => s.trim());
+  return optimizedSegments.map(s => s.trim()).filter(s => s.length > 0);
 };
 
 /**

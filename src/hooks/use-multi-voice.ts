@@ -16,6 +16,8 @@
 import React from 'react';
 import { DialogueParser, DialogueSegment } from '@/services/dialogue-parser';
 import { VoiceMapper, VoiceConfig } from '@/services/voice-mapper';
+import { SentenceSegmenter } from '@/utils/sentence-segmenter';
+import { NarrationSegment } from '@/hooks/use-ai-response';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -530,7 +532,203 @@ export const useMultiVoice = () => {
   }, []);
 
   /**
-   * Main function to process and play text
+   * Validate and fix segments to ensure proper sentence boundaries
+   * Fixes mid-word splits that sometimes occur in AI-generated segments
+   */
+  const validateAndFixSegments = React.useCallback((segments: NarrationSegment[]): NarrationSegment[] => {
+    console.log('🔍 Validating', segments.length, 'narration segments for proper boundaries');
+    
+    // First, merge any obvious mid-word splits
+    const mergedSegments: NarrationSegment[] = [];
+    
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      let text = segment.text.trim();
+      
+      // Check if this segment starts mid-word
+      const startsCleanly = /^[A-Z"'\s\(\[]/.test(text) || text.length === 0;
+      
+      // Check if previous segment ended mid-word
+      const prevSegment = mergedSegments[mergedSegments.length - 1];
+      const prevEndsCleanly = !prevSegment || /[.!?"')\]\s\-]$/.test(prevSegment.text.trim());
+      
+      // If we have a mid-word split, merge with previous segment
+      if (!startsCleanly && prevSegment && !prevEndsCleanly) {
+        console.log(`🔧 Fixing mid-word split: "${prevSegment.text.slice(-20)}..." + "...${text.slice(0, 20)}"`);
+        prevSegment.text = (prevSegment.text + ' ' + text).trim();
+        continue;
+      }
+      
+      mergedSegments.push({
+        ...segment,
+        text
+      });
+    }
+    
+    // Now apply sentence segmenter validation to each merged segment
+    const finalSegments: NarrationSegment[] = [];
+    
+    for (const segment of mergedSegments) {
+      const text = segment.text.trim();
+      if (!text) continue;
+      
+      // Use SentenceSegmenter to ensure proper sentence boundaries
+      const sentences = SentenceSegmenter.splitIntoSentences(text);
+      
+      if (sentences.length === 1) {
+        // Single sentence, keep as is
+        finalSegments.push({
+          ...segment,
+          text: sentences[0]
+        });
+      } else if (sentences.length > 1) {
+        // Multiple sentences - check if they should be split or kept together
+        const totalLength = sentences.join(' ').length;
+        
+        if (totalLength <= 250) {
+          // Keep together if not too long
+          finalSegments.push({
+            ...segment,
+            text: sentences.join(' ')
+          });
+        } else {
+          // Split into separate segments for better audio pacing
+          sentences.forEach((sentence, idx) => {
+            if (sentence.trim()) {
+              finalSegments.push({
+                ...segment,
+                text: sentence.trim()
+              });
+            }
+          });
+        }
+      }
+    }
+    
+    const validSegments = finalSegments.filter(segment => segment.text.trim().length > 0);
+    
+    console.log(`✅ Segment validation complete: ${segments.length} → ${validSegments.length} segments`);
+    if (segments.length !== validSegments.length) {
+      console.log('📊 Validation changes:', {
+        original: segments.map(s => s.text.substring(0, 30) + '...'),
+        validated: validSegments.map(s => s.text.substring(0, 30) + '...')
+      });
+    }
+    
+    return validSegments;
+  }, []);
+
+  /**
+   * Process and play pre-segmented narration segments
+   */
+  const speakSegments = React.useCallback(async (segments: NarrationSegment[]): Promise<void> => {
+    if (!state.isVoiceEnabled || segments.length === 0 || state.isProcessing) {
+      return;
+    }
+
+    // Check if API key is available
+    if (!apiKey) {
+      toast({
+        title: "API Key Missing",
+        description: "ElevenLabs API key is not available. Please check your configuration.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Set processing flag to prevent concurrent calls
+    setState(prev => ({ ...prev, isProcessing: true }));
+
+    try {
+      console.log('🎭 Processing pre-segmented narration:', segments.length, 'segments');
+      
+      // Validate and fix segments before processing
+      const validatedSegments = validateAndFixSegments(segments);
+      console.log('✅ Validated segments:', validatedSegments.length, 'segments after validation');
+      
+      // Convert NarrationSegments to AudioSegments
+      const audioSegments: AudioSegment[] = validatedSegments.map((segment, index): AudioSegment => {
+        let voiceConfig: VoiceConfig;
+        
+        // Handle both naming conventions: 'narration'/'dm' and 'dialogue'/'character'
+        const isNarration = segment.type === 'narration' || segment.type === 'dm';
+        
+        if (isNarration) {
+          voiceConfig = VoiceMapper.getNarratorVoice();
+        } else if (segment.voice_category) {
+          // Use the voice category provided by AI
+          const allVoices = VoiceMapper.getAllVoices();
+          voiceConfig = allVoices[segment.voice_category] || VoiceMapper.getNarratorVoice();
+          console.log(`🎭 Using voice category "${segment.voice_category}" for character "${segment.character}"`);
+        } else if (segment.character) {
+          // Fallback to character-based mapping
+          voiceConfig = VoiceMapper.getVoiceForCharacter(segment.character);
+          console.log(`🎪 Fallback voice mapping for character "${segment.character}"`);
+        } else {
+          voiceConfig = VoiceMapper.getNarratorVoice();
+        }
+        
+        return {
+          type: isNarration ? 'narration' : 'dialogue',
+          text: segment.text,
+          character: segment.character || 'Narrator',
+          originalText: segment.text,
+          startIndex: 0,
+          endIndex: segment.text.length,
+          voiceConfig,
+          isPlaying: false,
+          isLoading: false
+        };
+      });
+      
+      console.log('🎵 Generated audio segments:', audioSegments.map(seg => 
+        `${seg.character}(${seg.voiceConfig.name}): "${seg.text.substring(0, 30)}..."`
+      ));
+      
+      setState(prev => ({ ...prev, segments: audioSegments }));
+
+      if (audioSegments.length === 0) {
+        return;
+      }
+
+      // Generate audio for all segments
+      const generatedSegments = await generateAudio(audioSegments);
+      
+      // Filter out segments with errors
+      const validSegments = generatedSegments.filter(s => s.audioUrl && !s.error);
+      
+      if (validSegments.length === 0) {
+        throw new Error('No valid audio segments generated');
+      }
+
+      console.log(`🎵 Generated ${validSegments.length} valid audio segments`);
+
+      // Update state with generated segments containing audioUrls
+      setState(prev => ({ 
+        ...prev, 
+        segments: validSegments 
+      }));
+
+      console.log('🎬 Starting segmented playback...');
+      // Play all segments
+      await playAllSegments(validSegments);
+      console.log('🏁 Segmented playback completed');
+
+    } catch (error) {
+      console.error('Error in speakSegments:', error);
+      toast({
+        title: "Voice Error",
+        description: error instanceof Error ? error.message : 'Failed to process segmented speech',
+        variant: "destructive",
+      });
+    } finally {
+      // Clear processing flag
+      setState(prev => ({ ...prev, isProcessing: false }));
+    }
+  }, [state.isVoiceEnabled, apiKey, generateAudio, playAllSegments, toast]);
+
+  /**
+   * Main function to process and play text (legacy support)
    */
   const speakText = React.useCallback(async (text: string): Promise<void> => {
     if (!state.isVoiceEnabled || !text.trim() || state.isProcessing) {
@@ -731,7 +929,8 @@ export const useMultiVoice = () => {
     isVoiceEnabled: state.isVoiceEnabled,
     
     // Actions
-    speakText,
+    speakText, // Legacy text parsing support
+    speakSegments, // New pre-segmented narration support
     stopPlayback,
     setVolume,
     toggleMute,

@@ -69,6 +69,13 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       
       await sendMessage(aiResponseMessage); // Adds AI message to UI and dialogue_history
       
+      // Check if we have narration segments for voice synthesis
+      if (aiResponseMessage.narrationSegments && aiResponseMessage.narrationSegments.length > 0) {
+        console.log('[Voice Flow] AI response contains', aiResponseMessage.narrationSegments.length, 'narration segments');
+        // Note: Voice playback will be handled by MultiVoicePlayer component
+        // when it detects the narrationSegments in the message
+      }
+      
       // Update current_scene_description with AI response
       if (aiResponseMessage.text) {
         await updateGameSessionState({ current_scene_description: aiResponseMessage.text });

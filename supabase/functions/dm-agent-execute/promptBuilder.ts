@@ -1,4 +1,4 @@
-import { AgentContext, GameState } from './types.ts';
+import { AgentContext, GameState, VoiceContext } from './types.ts';
 
 function formatMemories(memories: any[]) {
   // Sort memories by importance and recency
@@ -29,7 +29,7 @@ ${state.sceneStatus?.environmentalEffects?.length ? `- Environmental Effects: ${
 `;
 }
 
-export function buildPrompt(context: AgentContext): string {
+export function buildPrompt(context: AgentContext, voiceContext?: VoiceContext): string {
   const { campaignContext, characterContext, memories, gameState } = context;
   
   // Format recent memories for context
@@ -63,17 +63,37 @@ RESPONSE GUIDELINES:
    - Maintain NPC personalities and relationships
    - Progress the scene naturally based on player actions
 
-2. Response Structure:
-   - Scene Description: Current location and atmosphere
-   - NPC Interactions: Active characters and their reactions
-   - Available Actions: Clear choices based on the situation
-   - Environmental Details: Sensory information and effects
+2. **CRITICAL: Direct NPC Dialogue Requirements**
+   - ALL NPC interactions MUST use direct quoted speech
+   - Examples: "What brings you here, traveler?" or "I've been expecting you."
+   - NEVER describe speech indirectly (e.g., "He greets you" or "She asks questions")
+   - Every meaningful NPC response should contain actual spoken words in quotes
+   - This applies to ALL speaking characters: shopkeepers, guards, villagers, enemies, allies
 
-3. Memory Integration:
+3. Enhanced Response Structure:
+   - Scene Description: Current location and atmosphere with rich sensory details
+   - NPC Interactions: Active characters with direct quoted dialogue
+   - Available Actions: Clear choices based on the situation with meaningful consequences
+   - Environmental Details: Immersive sensory information and atmospheric effects
+
+4. NPC Dialogue Standards:
+   - Give each NPC a unique voice, vocabulary, and speech pattern
+   - Match dialogue to character background and personality
+   - Use dialogue to reveal plot information and character motivations
+   - Include body language with quoted speech: She fidgets nervously, "I shouldn't tell you this, but..."
+
+5. Memory Integration:
    - Reference relevant past interactions
    - Show consequences of previous choices
    - Maintain continuity with established events
    - Use actual memories, never invent false ones
+
+**DIALOGUE EXAMPLES:**
+✅ CORRECT: The merchant eyes your worn gear. "Looking for supplies? I've got quality goods, but they don't come cheap in these dangerous times."
+❌ INCORRECT: The merchant notices your equipment and offers to sell you supplies.
+
+✅ CORRECT: The guard captain slams his fist on the desk. "Enough excuses! Tell me where you were last night!"
+❌ INCORRECT: The guard captain becomes angry and demands answers about your whereabouts.
 
 Remember to:
 - Keep the ${campaignContext.tone || 'balanced'} tone consistent
@@ -81,5 +101,43 @@ Remember to:
 - Progress time naturally
 - Keep NPCs consistent in personality and behavior
 - Only reference events from actual memories
-- Provide clear, contextual choices`;
+- Provide clear, contextual choices
+
+${voiceContext ? `
+VOICE SYSTEM INTEGRATION:
+You MUST return your response as JSON in this EXACT format:
+{
+  "text": "Your complete narrative response as it would appear in chat",
+  "narration_segments": [
+    {
+      "type": "narration",
+      "text": "Scene description or narrative text",
+      "character": null,
+      "voice_category": "narrator"
+    },
+    {
+      "type": "dialogue", 
+      "text": "Character speech without quotes",
+      "character": "Character Name",
+      "voice_category": "appropriate_voice_category"
+    }
+  ]
+}
+
+AVAILABLE VOICE CATEGORIES: ${voiceContext.available_categories.join(', ')}
+
+EXISTING CHARACTER MAPPINGS:
+${Object.entries(voiceContext.character_mappings).map(([char, voice]) => `${char}: ${voice}`).join(', ')}
+
+IMPORTANT VOICE RULES:
+- Use "narrator" for scene descriptions, actions, and narrative text
+- For known characters, use their existing voice_category from mappings above
+- For new characters, select appropriate voice_category from available categories
+- Consider character personality when assigning voices (elder, villain, merchant, etc.)
+- Each dialogue segment should be separate from narration
+- Do not include quotation marks in dialogue text (they're added automatically)
+- Keep character names consistent with previous appearances
+- CRITICAL: The "text" field should contain the full response with proper quoted dialogue for display
+- CRITICAL: The "narration_segments" should separate quoted dialogue into dialogue segments for voice synthesis
+- Example: If text contains \"Hello there!\", the dialogue segment text should be \"Hello there!\" without quotes` : ''}`;
 }

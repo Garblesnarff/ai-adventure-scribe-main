@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 import { CharacterInteractionGenerator } from "./generators/CharacterInteractionGenerator.ts";
 import { EnvironmentGenerator } from "./generators/EnvironmentGenerator.ts";
 import { buildPrompt } from "./promptBuilder.ts";
-import { DMResponse } from "./types.ts";
+import { DMResponse, StructuredDMResponse, VoiceContext, NarrationSegment } from "./types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { task, agentContext } = await req.json();
+    const { task, agentContext, voiceContext } = await req.json();
     const { campaignDetails, characterDetails, memories = [] } = agentContext;
 
     console.log('Processing DM Agent task:', {
@@ -44,12 +44,12 @@ serve(async (req) => {
     const environmentGen = new EnvironmentGenerator();
     const interactionGen = new CharacterInteractionGenerator();
 
-    // Build prompt with memory context
+    // Build prompt with memory and voice context
     const prompt = buildPrompt({
       campaignContext: campaignDetails,
       characterContext: characterDetails,
       memories: relevantMemories
-    });
+    }, voiceContext);
 
     // Call Google Gemini with the enhanced prompt
     const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');
@@ -76,10 +76,26 @@ serve(async (req) => {
 
     const result = await chat.sendMessage(task.description);
     const aiResponse = await result.response;
-    const narrativeText = aiResponse.text();
+    const rawResponse = aiResponse.text();
 
-    if (!narrativeText) {
+    if (!rawResponse) {
       throw new Error(`Gemini API error: No text in response`);
+    }
+
+    // Parse structured response if voice context provided
+    let narrativeText = rawResponse;
+    let narrationSegments: NarrationSegment[] | undefined;
+    
+    if (voiceContext) {
+      try {
+        const structuredResponse: StructuredDMResponse = JSON.parse(rawResponse);
+        narrativeText = structuredResponse.text;
+        narrationSegments = structuredResponse.narration_segments;
+        console.log('Successfully parsed structured response with', narrationSegments?.length, 'segments');
+      } catch (parseError) {
+        console.warn('Failed to parse structured response, falling back to plain text:', parseError);
+        // Keep narrativeText as rawResponse for backward compatibility
+      }
     }
 
     // Generate environment and interactions using the AI response
@@ -113,12 +129,20 @@ serve(async (req) => {
       }
     };
 
+    // Prepare response with narration segments if available
+    const responseData: any = {
+      response: narrativeText,
+      context: agentContext,
+      raw: narrativeResponse
+    };
+
+    // Add narration segments if they were parsed successfully
+    if (narrationSegments) {
+      responseData.narrationSegments = narrationSegments;
+    }
+
     return new Response(
-      JSON.stringify({
-        response: narrativeText,
-        context: agentContext,
-        raw: narrativeResponse
-      }),
+      JSON.stringify(responseData),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
