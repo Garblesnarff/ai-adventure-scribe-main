@@ -522,3 +522,62 @@ export function formatCurrency(cost: Equipment['cost']): string {
   const { amount, currency } = cost;
   return `${amount} ${currency}`;
 }
+
+/**
+ * Get starting equipment for a character class
+ */
+export function getStartingEquipment(className: string): Equipment[] {
+  const classId = className.toLowerCase();
+  const packages: Record<string, string[]> = {
+    fighter: [
+      'chain-mail', 'shield', 'longsword', 'handaxe', 'handaxe', 
+      'light-crossbow'
+    ],
+    wizard: [
+      'dagger', 'quarterstaff'
+    ],
+    rogue: [
+      'leather-armor', 'dagger', 'dagger', 'thieves-tools', 
+      'shortbow'
+    ],
+    cleric: [
+      'chain-shirt', 'shield', 'mace', 'light-crossbow'
+    ],
+    barbarian: [
+      'leather-armor', 'shield', 'handaxe', 'handaxe'
+    ],
+    bard: [
+      'leather-armor', 'dagger', 'rapier'
+    ],
+    druid: [
+      'leather-armor', 'shield', 'scimitar'
+    ],
+    monk: [
+      'dagger'
+    ],
+    paladin: [
+      'chain-mail', 'shield', 'longsword'
+    ],
+    ranger: [
+      'leather-armor', 'dagger', 'dagger', 'longbow'
+    ],
+    sorcerer: [
+      'dagger', 'dagger', 'light-crossbow'
+    ],
+    warlock: [
+      'leather-armor', 'dagger', 'light-crossbow'
+    ]
+  };
+
+  const equipmentIds = packages[classId] || [];
+  return equipmentIds.map(id => {
+    const item = allEquipment.find(eq => eq.id === id);
+    return item || {
+      id,
+      name: id.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      category: 'gear' as const,
+      cost: { amount: 0, currency: 'gp' as const },
+      description: `Starting ${className} equipment`
+    };
+  });
+}

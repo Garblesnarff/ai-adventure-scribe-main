@@ -57,9 +57,9 @@ export class CrewAIDungeonMasterAgent implements CrewAIAgentBridge {
    */
   private initializeBaseProperties(): void {
     this.id = 'crew_dm_agent_1';
-    this.role = 'Dungeon Master';
-    this.goal = 'Guide players through an engaging D&D campaign with advanced AI capabilities';
-    this.backstory = 'An experienced DM enhanced with CrewAI capabilities for dynamic storytelling';
+    this.role = 'Game Master';
+    this.goal = 'Guide players through an engaging fantasy RPG campaign with advanced AI capabilities';
+    this.backstory = 'An experienced GM enhanced with CrewAI capabilities for dynamic storytelling';
     this.verbose = true;
     this.allowDelegation = true;
   }

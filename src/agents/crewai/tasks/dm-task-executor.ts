@@ -142,9 +142,9 @@ export class DMTaskExecutor {
         task,
         memories: context.memories,
         agentContext: {
-          role: 'Dungeon Master',
-          goal: 'Guide players through an engaging D&D campaign with advanced AI capabilities',
-          backstory: 'An experienced DM enhanced with CrewAI capabilities for dynamic storytelling',
+          role: 'Game Master',
+          goal: 'Guide players through an engaging fantasy RPG campaign with advanced AI capabilities',
+          backstory: 'An experienced GM enhanced with CrewAI capabilities for dynamic storytelling',
           taskContext: context.taskContext
         }
       }
