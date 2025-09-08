@@ -15,7 +15,8 @@ import { Send, Loader2, LogOut } from 'lucide-react';
 import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
 import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { SimpleMessageProvider } from '@/contexts/SimpleMessageContext';
-import { VoiceHandler } from './VoiceHandler';
+import { DMChatBubble } from './chat/DMChatBubble';
+import { NarrationSegment } from '@/hooks/use-ai-response';
 import { toast } from 'sonner';
 
 interface SimpleGameChatWithVoiceProps {
@@ -97,7 +98,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
           role: 'assistant',
           content: displayText,
           timestamp: new Date(),
-          narrationSegments: segments,
+          narrationSegments: segments as any[],
         };
         
         setMessages([dmMessage]);
@@ -202,7 +203,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
           role: 'assistant',
           content: displayText,
           timestamp: new Date(),
-          narrationSegments: segments,
+          narrationSegments: segments as any[],
         };
 
         setMessages(prev => [...prev, dmMessage]);
@@ -291,50 +292,46 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       queueStatus={isSending ? 'processing' : 'idle'}
     >
       <div className="space-y-4">
-        <Card className="h-[600px] flex flex-col">
-          <CardHeader className="flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold">Adventure Chronicle</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleEndSession}
-                className="text-destructive hover:text-destructive"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                End Adventure
-              </Button>
-            </div>
+        <Card className="h-[600px] flex flex-col relative">
+          <CardHeader className="flex-shrink-0 p-4 pb-0">
+            <h3 className="text-lg font-semibold text-foreground opacity-80">Adventure Chronicle</h3>
           </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEndSession}
+            className="absolute top-3 right-3 text-destructive hover:text-destructive hover:bg-destructive/5"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+
+          <CardContent className="flex-1 flex flex-col overflow-hidden p-0 pt-2">
             {/* Messages Area */}
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-4 pb-4">
                 {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
+                  message.role === 'assistant' ? (
+                    <DMChatBubble
+                      key={index}
+                      message={message}
+                      narrationSegments={message.narrationSegments}
+                    />
+                  ) : (
                     <div
-                      className={`max-w-[80%] p-4 rounded-lg shadow-sm ${
-                        message.role === 'user'
-                          ? 'bg-infinite-purple text-white ml-4'
-                          : 'bg-muted text-foreground mr-4'
-                      }`}
+                      key={index}
+                      className="flex justify-end"
                     >
-                      <div className="whitespace-pre-wrap leading-relaxed">
-                        {message.content}
-                      </div>
-                      <div
-                        className={`text-xs mt-2 ${
-                          message.role === 'user' ? 'text-infinite-purple-100' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {message.timestamp.toLocaleTimeString()}
+                      <div className="max-w-[80%] p-4 rounded-lg shadow-sm bg-infinite-purple text-white ml-4">
+                        <div className="whitespace-pre-wrap leading-relaxed">
+                          {message.content}
+                        </div>
+                        <div className="text-xs mt-2 text-infinite-purple-100">
+                          {message.timestamp.toLocaleTimeString()}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )
                 ))}
 
                 {/* Streaming message */}
@@ -367,11 +364,6 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
-
-            {/* Voice Handler */}
-            <div className="flex-shrink-0 border-t bg-card/50">
-              <VoiceHandler />
-            </div>
 
             {/* Input Area */}
             <div className="flex-shrink-0 p-6 border-t bg-card">
