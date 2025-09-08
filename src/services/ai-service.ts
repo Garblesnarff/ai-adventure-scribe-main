@@ -179,8 +179,6 @@ Create a campaign description that makes players say "I want to play in this wor
 
           // Add voice context for multi-voice narration
           if (voiceContext) {
-            contextPrompt += `\n\nVOICE NARRATION CONTEXT:`;
-            
             // Known characters and their assigned voices
             if (Object.keys(voiceContext.knownCharacters).length > 0) {
               contextPrompt += `\n\nKNOWN CHARACTERS (maintain voice consistency):`;
@@ -188,81 +186,58 @@ Create a campaign description that makes players say "I want to play in this wor
                 contextPrompt += `\n- "${character}": ${info.voiceCategory} voice (appeared ${info.appearances} times)`;
               });
             }
-            
-            // Available voice categories for new characters
-            contextPrompt += `\n\nAVAILABLE VOICE CATEGORIES FOR NEW CHARACTERS:\n`;
-            voiceContext.availableVoiceCategories.forEach(category => {
-              contextPrompt += `- ${category}\n`;
-            });
 
-            contextPrompt += `\n**CRITICAL: STRUCTURED RESPONSE FORMAT**
-When providing a response, you MUST structure it as JSON with both display text AND pre-segmented narration for voice synthesis.
+            contextPrompt += `\n\n**CRITICAL: VOICE-OPTIMIZED RESPONSE FORMAT**
+You MUST respond with JSON containing both display text AND pre-segmented narration for multi-voice synthesis.
 
-**RESPONSE FORMAT (JSON):**
+**SIMPLIFIED SEGMENTATION RULES:**
+1. **Fewer, Better Segments**: Create 2-5 segments maximum per response
+2. **One Speaker Per Segment**: Each segment = one speaker (DM or specific character)
+3. **Complete Thoughts**: Each segment should be a complete thought or dialogue turn
+4. **Speaker Turns**: Split only when the speaker changes (DM -> Character or Character A -> Character B)
+
+**JSON FORMAT:**
 {
-  "text": "Your full narrative response as normal text for display",
+  "text": "Your full response with proper quoted dialogue for display",
   "narration_segments": [
     {
       "type": "dm",
-      "text": "DM narration text here", 
+      "text": "Complete scene description and DM narration",
       "character": null,
       "voice_category": null
     },
     {
       "type": "character",
-      "text": "Character dialogue here",
-      "character": "Character Name",
-      "voice_category": "appropriate_voice_category"
+      "text": "Complete character dialogue without quotes",
+      "character": "simple character name",
+      "voice_category": "hero_male|villain_female|merchant|guard|elder|creature|etc"
     }
   ]
 }
 
-**SEGMENTATION RULES FOR PROPER AUDIO:**
-1. **Complete Sentences Only**: Each segment MUST contain complete sentences that end with proper punctuation (. ! ?)
-2. **No Mid-Word Splits**: Never break a segment in the middle of a word - always end at word boundaries
-3. **Sentence Boundaries**: Split at natural sentence endings, not in the middle of clauses or phrases
-4. **DM Narration**: type="dm", no character/voice_category needed - use for descriptive text and scene-setting
-5. **Character Speech**: type="character", include character name and voice_category - use ONLY for actual spoken dialogue in quotes
-6. **Voice Categories**: Use existing categories for known characters, select appropriate ones for new characters
-7. **Character Names**: Use consistent, clean names (e.g., "village elder" not "the old village elder")
-8. **Dialogue Purity**: Only actual spoken words go in character segments, not attribution like "he said"
-9. **Natural Flow**: Each segment should sound natural when read aloud as a complete thought
-10. **Abbreviation Handling**: Be careful with abbreviations like "Dr.", "Mr.", "etc." - don't split after these
-11. **CRITICAL**: The "text" field MUST contain properly quoted dialogue for display, while dialogue segments extract just the spoken words
+**VOICE CATEGORIES:** hero_male, hero_female, villain_male, villain_female, merchant, guard, innkeeper, elder, child, creature, goblin, monster
 
-**EXAMPLE:**
-Player says: "I approach the tavern keeper and ask about rooms"
+**SEGMENTATION EXAMPLE:**
+Player: "I enter the tavern"
 
 Response:
 {
-  "text": "You approach the burly tavern keeper behind the bar. He looks up from cleaning a mug with tired but friendly eyes. \"Aye, we've got a room available,\" he says in a gruff voice. \"Two silver for the night, includes breakfast. What do you say?\"",
+  "text": "You push open the heavy wooden door and step into the warm, smoky interior of the Prancing Pony. The tavern keeper, a burly man with graying hair, looks up from wiping down mugs. 'Welcome, traveler! What can I get you tonight? We\\'ve got hot stew, cold ale, and warm beds if you need rest.'",
   "narration_segments": [
     {
       "type": "dm",
-      "text": "You approach the burly tavern keeper behind the bar. He looks up from cleaning a mug with tired but friendly eyes.",
+      "text": "You push open the heavy wooden door and step into the warm, smoky interior of the Prancing Pony. The tavern keeper, a burly man with graying hair, looks up from wiping down mugs.",
       "character": null,
       "voice_category": null
     },
     {
-      "type": "character", 
-      "text": "Aye, we've got a room available. Two silver for the night, includes breakfast. What do you say?",
+      "type": "character",
+      "text": "Welcome, traveler! What can I get you tonight? We've got hot stew, cold ale, and warm beds if you need rest.",
       "character": "tavern keeper",
       "voice_category": "merchant"
     }
   ]
-}
-
-**BAD SEGMENTATION (DO NOT DO):**
-- Splitting mid-sentence: "The dragon ro-" / "ars loudly"  ❌
-- Incomplete thoughts: "The wizard" / "casts a spell"  ❌  
-- Mixed dialogue: "The guard says, 'Halt! Who goes there?'"  ❌
-- Breaking at abbreviations: "Dr. Smith" split as "Dr." / "Smith"  ❌
-
-**GOOD SEGMENTATION (DO THIS):**
-- Complete sentences: "The dragon roars loudly, shaking the cavern walls."  ✅
-- Full thoughts: "The wizard raises his staff and begins casting a powerful spell."  ✅
-- Pure dialogue: "Halt! Who goes there?"  ✅
-- Proper abbreviations: "Dr. Smith examines the ancient tome carefully."  ✅`;
+}`;
 
           }
           
@@ -369,6 +344,23 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
               try {
                 const structuredResponse = JSON.parse(rawResponse);
                 console.log('🎭 Successfully parsed structured voice response');
+                
+                // 🔍 DEBUG: Log the raw AI response structure
+                console.log('📥 RAW AI RESPONSE:', JSON.stringify(structuredResponse, null, 2));
+                
+                if (structuredResponse.narration_segments) {
+                  console.log('📊 AI SEGMENTS ANALYSIS:');
+                  structuredResponse.narration_segments.forEach((segment: any, idx: number) => {
+                    console.log(`  Segment ${idx + 1}:`, {
+                      type: segment.type,
+                      character: segment.character,
+                      voice_category: segment.voice_category,
+                      text_length: segment.text?.length || 0,
+                      text_preview: segment.text?.substring(0, 50) + '...'
+                    });
+                  });
+                }
+                
                 return structuredResponse;
               } catch (parseError) {
                 console.warn('Failed to parse structured response, attempting to extract text:', parseError);

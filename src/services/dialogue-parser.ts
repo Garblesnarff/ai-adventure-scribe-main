@@ -1,11 +1,14 @@
 /**
  * Dialogue Parser Service
  * 
- * Parses DM text to identify different segments: narration, character dialogue, and actions.
- * Supports various dialogue patterns and extracts character names for voice mapping.
- * Uses enhanced sentence segmentation for proper audio narration boundaries.
+ * ⚠️ DEPRECATED: This complex parsing system has been replaced by VoiceDirector.
+ * The AI now generates pre-segmented dialogue, eliminating the need for text parsing.
+ * This file remains for legacy compatibility only.
+ * 
+ * New approach: AI segments → VoiceDirector → Progressive Voice System
  * 
  * @author AI Dungeon Master Team
+ * @deprecated Use VoiceDirector.processAISegments() instead
  */
 
 import { SentenceSegmenter } from '@/utils/sentence-segmenter';
