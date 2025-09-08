@@ -7,6 +7,9 @@ import { Loader2, Play, Users, Shield, Sword, Star, ArrowLeft } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { SimpleGameChatWithVoice } from '@/components/game/SimpleGameChatWithVoice';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useCharacterStats } from '@/hooks/use-character-stats';
+import { Character } from '@/types/character';
 import { toast } from 'sonner';
 
 interface Campaign {
@@ -23,7 +26,7 @@ interface Campaign {
   background_image?: string | null;
 }
 
-interface Character {
+interface CharacterListItem {
   id: string;
   name: string;
   race: string;
@@ -37,8 +40,9 @@ export const SimpleCampaignView: React.FC = () => {
   const { user } = useAuth();
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [characters, setCharacters] = useState<CharacterListItem[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterListItem | null>(null);
+  const [fullSelectedCharacter, setFullSelectedCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [isGameStarted, setIsGameStarted] = useState(false);
 
@@ -57,6 +61,10 @@ export const SimpleCampaignView: React.FC = () => {
       if (character) {
         setSelectedCharacter(character);
         setIsGameStarted(true);
+        // Load full character data
+        if (character.id) {
+          loadFullCharacterData(character.id);
+        }
       }
     }
   }, [characterIdFromUrl, characters]);
@@ -91,7 +99,7 @@ export const SimpleCampaignView: React.FC = () => {
       setCharacters((data || []).map(char => ({
         ...char,
         level: char.level || 1
-      })) as Character[]);
+      })) as CharacterListItem[]);
     } catch (error) {
       console.error('Error loading characters:', error);
       toast.error('Failed to load characters');
@@ -100,20 +108,82 @@ export const SimpleCampaignView: React.FC = () => {
     }
   };
 
-  const startGameWithCharacter = useCallback((character: Character) => {
+  const loadFullCharacterData = async (characterId: string) => {
+    try {
+      const { data: characterData, error: characterError } = await supabase
+        .from('characters')
+        .select(`
+          *,
+          character_stats (*),
+          character_equipment (*)
+        `)
+        .eq('id', characterId)
+        .single();
+
+      if (characterError) throw characterError;
+      if (!characterData) return null;
+
+      const stats = Array.isArray(characterData.character_stats) ? characterData.character_stats[0] : characterData.character_stats;
+      const equipment = characterData.character_equipment || [];
+
+      const fullCharacter: Character = {
+        id: characterData.id,
+        user_id: characterData.user_id || undefined,
+        name: characterData.name,
+        race: characterData.race ? { name: characterData.race } as any : null,
+        class: characterData.class ? { name: characterData.class } as any : null,
+        level: characterData.level || 1,
+        background: characterData.background ? { name: characterData.background } as any : null,
+        abilityScores: stats ? {
+          strength: { score: stats.strength, modifier: Math.floor((stats.strength - 10) / 2), savingThrow: false },
+          dexterity: { score: stats.dexterity, modifier: Math.floor((stats.dexterity - 10) / 2), savingThrow: false },
+          constitution: { score: stats.constitution, modifier: Math.floor((stats.constitution - 10) / 2), savingThrow: false },
+          intelligence: { score: stats.intelligence, modifier: Math.floor((stats.intelligence - 10) / 2), savingThrow: false },
+          wisdom: { score: stats.wisdom, modifier: Math.floor((stats.wisdom - 10) / 2), savingThrow: false },
+          charisma: { score: stats.charisma, modifier: Math.floor((stats.charisma - 10) / 2), savingThrow: false }
+        } : undefined,
+        experience: characterData.experience_points || 0,
+        alignment: characterData.alignment || '',
+        equipment: equipment.map((item: any) => item.item_name) || [],
+        personalityTraits: [],
+        ideals: [],
+        bonds: [],
+        flaws: []
+      };
+
+      setFullSelectedCharacter(fullCharacter);
+      return fullCharacter;
+    } catch (error) {
+      console.error('Error loading full character data:', error);
+      toast.error('Failed to load character details');
+      return null;
+    }
+  };
+
+
+  const startGameWithCharacter = useCallback(async (character: CharacterListItem) => {
     setSelectedCharacter(character);
     setIsGameStarted(true);
-    setSearchParams({ character: character.id });
+    setSearchParams({ character: character.id || '' });
+    
+    // Load full character data for stats
+    if (character.id) {
+      await loadFullCharacterData(character.id);
+    }
   }, [setSearchParams]);
 
   const backToCharacterSelection = useCallback(() => {
     setIsGameStarted(false);
     setSelectedCharacter(null);
+    setFullSelectedCharacter(null);
     setSearchParams({});
   }, [setSearchParams]);
 
   // Memoize characters array to prevent unnecessary re-renders
   const memoizedCharacters = useMemo(() => characters, [characters]);
+
+  // Calculate character stats at the top level to follow Rules of Hooks
+  const characterStats = useCharacterStats(fullSelectedCharacter);
 
   // Generate character avatar color
   const getCharacterAvatarColor = useMemo(() => (name: string) => {
@@ -155,7 +225,7 @@ export const SimpleCampaignView: React.FC = () => {
         <div 
           className="h-64 bg-cover bg-center relative" 
           style={{ 
-            backgroundImage: `url(${campaign.background_image || '/parchment-bg.png'})` 
+            backgroundImage: `url('/card-background.jpeg')` 
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent"></div>
@@ -173,9 +243,6 @@ export const SimpleCampaignView: React.FC = () => {
                 <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground border-secondary/30">{campaign.campaign_length || 'Unknown'}</Badge>
                 <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground border-secondary/30">{campaign.tone || 'Unknown'}</Badge>
               </div>
-              {campaign.description && (
-                <p className="text-white/90 text-lg max-w-2xl drop-shadow-md leading-relaxed">{campaign.description}</p>
-              )}
             </div>
             {isGameStarted && selectedCharacter && (
               <Button onClick={backToCharacterSelection} variant="outline" className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm">
@@ -188,65 +255,67 @@ export const SimpleCampaignView: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10 -mt-16">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Campaign Details Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="bg-background/80 backdrop-blur-sm border-border/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-foreground">
-                  <Shield className="w-5 h-5 text-infinite-purple" />
-                  Campaign Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="font-medium min-w-[4rem]">Era:</span>
-                    <span>{campaign.era || 'Unknown'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="font-medium min-w-[4rem]">Location:</span>
-                    <span>{campaign.location || 'Unknown'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="font-medium min-w-[4rem]">Atmosphere:</span>
-                    <span>{campaign.atmosphere || 'Unknown'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {isGameStarted && selectedCharacter && (
+        {!isGameStarted ? (
+          /* Character Selection Layout */
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Campaign Details Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
               <Card className="bg-background/80 backdrop-blur-sm border-border/50">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Sword className="w-5 h-5 text-infinite-teal" />
-                    {selectedCharacter.name}
+                    <Shield className="w-5 h-5 text-infinite-purple" />
+                    Campaign Details
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center text-white text-xs font-bold">
-                      {getInitial(selectedCharacter.name)}
+                <CardContent className="space-y-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Era:</span>
+                      <span>{campaign.era || 'Unknown'}</span>
                     </div>
-                    <div>
-                      <div className="font-semibold text-foreground">Level {selectedCharacter.level || 1}</div>
-                      <div className="text-muted-foreground">{selectedCharacter.race} {selectedCharacter.class}</div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Location:</span>
+                      <span>{campaign.location || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Atmosphere:</span>
+                      <span>{campaign.atmosphere || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Genre:</span>
+                      <span>{campaign.genre || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Difficulty:</span>
+                      <span>{campaign.difficulty_level || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Length:</span>
+                      <span>{campaign.campaign_length || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Tone:</span>
+                      <span>{campaign.tone || 'Unknown'}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-infinite-gold">
-                    <Star className="w-4 h-4" />
-                    <span>Active Hero</span>
-                  </div>
+                  {campaign.description && (
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="description">
+                        <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                          Description
+                        </AccordionTrigger>
+                        <AccordionContent className="text-sm text-muted-foreground pt-2">
+                          <p>{campaign.description}</p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  )}
                 </CardContent>
               </Card>
-            )}
-          </div>
+            </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
-            {!isGameStarted ? (
-              /* Enhanced Character Selection */
+            {/* Character Selection */}
+            <div className="lg:col-span-2 space-y-8">
               <Card className="bg-background/80 backdrop-blur-sm border-border/50">
                 <CardHeader className="pb-6">
                   <CardTitle className="flex items-center gap-2 text-2xl font-bold">
@@ -314,48 +383,125 @@ export const SimpleCampaignView: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            ) : (
-              /* Enhanced Game Interface with Sidebar */
-              <div className="space-y-6">
-                <div className="flex gap-6">
-                  <div className="w-80 bg-background/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 sticky top-24 self-start h-fit">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Sword className="w-5 h-5 text-infinite-teal" />
-                      Current Quest: {campaign.name}
-                    </h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium min-w-[5rem]">Genre:</span>
-                        <Badge variant="secondary" className="bg-infinite-purple/20 text-infinite-purple">{campaign.genre}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium min-w-[5rem]">Difficulty:</span>
-                        <Badge variant="destructive" className="bg-destructive/20 text-destructive">{campaign.difficulty_level}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium min-w-[5rem]">Length:</span>
-                        <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground">{campaign.campaign_length}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium min-w-[5rem]">Tone:</span>
-                        <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">{campaign.tone}</Badge>
-                      </div>
+            </div>
+          </div>
+        ) : (
+          /* Game Interface Layout - Chat at top, details below */
+          <div className="space-y-8">
+            {/* AI DM Chat Window - Full Width */}
+            <div className="w-full">
+              <SimpleGameChatWithVoice
+                campaignId={campaign.id}
+                characterId={selectedCharacter!.id}
+                campaignDetails={campaign}
+                characterDetails={selectedCharacter}
+              />
+            </div>
+
+            {/* Character and Campaign Details Below Chat */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Campaign Details */}
+              <Card className="bg-background/80 backdrop-blur-sm border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <Shield className="w-5 h-5 text-infinite-purple" />
+                    Campaign Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Era:</span>
+                      <span>{campaign.era || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Location:</span>
+                      <span>{campaign.location || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Atmosphere:</span>
+                      <span>{campaign.atmosphere || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Genre:</span>
+                      <span>{campaign.genre || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Difficulty:</span>
+                      <span>{campaign.difficulty_level || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Length:</span>
+                      <span>{campaign.campaign_length || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="font-medium min-w-[4rem]">Tone:</span>
+                      <span>{campaign.tone || 'Unknown'}</span>
                     </div>
                   </div>
-                  
-                  <div className="flex-1">
-                    <SimpleGameChatWithVoice
-                      campaignId={campaign.id}
-                      characterId={selectedCharacter!.id}
-                      campaignDetails={campaign}
-                      characterDetails={selectedCharacter}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+                  {campaign.description && (
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="description">
+                        <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                          Description
+                        </AccordionTrigger>
+                        <AccordionContent className="text-sm text-muted-foreground pt-2">
+                          <p>{campaign.description}</p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Character Details */}
+              {selectedCharacter && (
+                <Card className="bg-background/80 backdrop-blur-sm border-border/50">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-foreground">
+                      <Sword className="w-5 h-5 text-infinite-teal" />
+                      {selectedCharacter.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center text-white text-xs font-bold">
+                        {getInitial(selectedCharacter.name)}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-foreground">Level {selectedCharacter.level || 1}</div>
+                        <div className="text-muted-foreground">{selectedCharacter.race} {selectedCharacter.class}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-infinite-gold">
+                      <Star className="w-4 h-4" />
+                      <span>Active Hero</span>
+                    </div>
+                    {fullSelectedCharacter ? (
+                      <div className="grid grid-cols-3 gap-2 mt-3">
+                        {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map(ability => {
+                          const abilityScore = fullSelectedCharacter.abilityScores?.[ability as keyof typeof fullSelectedCharacter.abilityScores];
+                          return (
+                            <div key={ability} className="text-center py-1">
+                              <div className="text-xs font-medium capitalize">{ability}</div>
+                              <div className="text-sm font-bold">
+                                {abilityScore ? `${abilityScore.score} (${abilityScore.modifier >= 0 ? '+' : ''}${abilityScore.modifier})` : '—'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-2 text-muted-foreground">
+                        Loading character stats...
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
