@@ -1,16 +1,17 @@
 import React from 'react';
 import { useMessageContext } from '@/contexts/SimpleMessageContext';
+import { ProgressiveVoicePlayer } from './audio/ProgressiveVoicePlayer';
 import { MultiVoicePlayer } from './audio/MultiVoicePlayer';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Mic, MicOff } from 'lucide-react';
+import { Settings, Zap, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 export const VoiceHandler: React.FC = () => {
   const { messages } = useMessageContext();
-  const [useMultiVoice, setUseMultiVoice] = React.useState(() => {
-    return localStorage.getItem('use-multi-voice') !== 'false';
+  const [useProgressiveVoice, setUseProgressiveVoice] = React.useState(() => {
+    return localStorage.getItem('use-progressive-voice') !== 'false';
   });
 
   const lastMessage = messages[messages.length - 1];
@@ -18,11 +19,11 @@ export const VoiceHandler: React.FC = () => {
   const cleanText = shouldRenderPlayer ? lastMessage.text.replace(/[*_`#]/g, '') : '';
   const narrationSegments = lastMessage?.narrationSegments;
 
-  const handleToggleMultiVoice = React.useCallback(() => {
-    const newValue = !useMultiVoice;
-    setUseMultiVoice(newValue);
-    localStorage.setItem('use-multi-voice', newValue.toString());
-  }, [useMultiVoice]);
+  const handleToggleVoiceMode = React.useCallback(() => {
+    const newValue = !useProgressiveVoice;
+    setUseProgressiveVoice(newValue);
+    localStorage.setItem('use-progressive-voice', newValue.toString());
+  }, [useProgressiveVoice]);
 
   if (!shouldRenderPlayer) {
     return null;
@@ -37,9 +38,9 @@ export const VoiceHandler: React.FC = () => {
             <div className="flex items-center gap-3">
               <Settings className="h-5 w-5 text-primary" />
               <div>
-                <Label className="text-sm font-medium">Voice Mode</Label>
+                <Label className="text-sm font-medium">Voice Engine</Label>
                 <p className="text-xs text-muted-foreground">
-                  {useMultiVoice ? 'Multiple character voices' : 'Single narrator voice'}
+                  {useProgressiveVoice ? 'Progressive generation (faster, more reliable)' : 'Legacy system (complex parsing)'}
                 </p>
               </div>
             </div>
@@ -48,18 +49,18 @@ export const VoiceHandler: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleToggleMultiVoice}
+                onClick={handleToggleVoiceMode}
                 className="h-10"
               >
-                {useMultiVoice ? (
+                {useProgressiveVoice ? (
                   <>
-                    <Mic className="h-4 w-4 mr-2" />
-                    Multi-Voice
+                    <Zap className="h-4 w-4 mr-2" />
+                    Progressive
                   </>
                 ) : (
                   <>
-                    <MicOff className="h-4 w-4 mr-2" />
-                    Single Voice
+                    <Clock className="h-4 w-4 mr-2" />
+                    Legacy
                   </>
                 )}
               </Button>
@@ -69,22 +70,23 @@ export const VoiceHandler: React.FC = () => {
       </Card>
 
       {/* Voice Player */}
-      {useMultiVoice ? (
-        <MultiVoicePlayer 
+      {useProgressiveVoice ? (
+        <ProgressiveVoicePlayer 
           text={cleanText} 
           narrationSegments={narrationSegments}
           isEnabled={true} 
         />
       ) : (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-800">
-            Single voice mode is temporarily unavailable. Using multi-voice mode instead.
-          </p>
+        <div className="space-y-2">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-sm text-yellow-800">
+              Legacy mode: Uses complex parsing layers and sequential generation. Switch to Progressive for better performance.
+            </p>
+          </div>
           <MultiVoicePlayer 
             text={cleanText} 
             narrationSegments={narrationSegments}
             isEnabled={true} 
-            className="mt-3" 
           />
         </div>
       )}

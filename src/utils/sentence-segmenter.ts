@@ -1,11 +1,14 @@
 /**
  * Enhanced Sentence Segmentation Utility
  * 
- * Provides robust sentence boundary detection for audio narration.
- * Ensures splits only occur at proper sentence boundaries, never mid-word.
- * Handles abbreviations, contractions, and complex punctuation correctly.
+ * ⚠️ DEPRECATED: Complex segmentation is no longer needed.
+ * The new Progressive Voice System uses AI-generated segments directly.
+ * This eliminates the need for sentence boundary detection and parsing.
+ * 
+ * New approach: Trust AI segments → VoiceDirector → Progressive playback
  * 
  * @author AI Dungeon Master Team
+ * @deprecated Use VoiceDirector with AI-generated segments instead
  */
 
 /**

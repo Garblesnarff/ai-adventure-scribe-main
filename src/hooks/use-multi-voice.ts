@@ -584,15 +584,16 @@ export const useMultiVoice = () => {
       } else if (sentences.length > 1) {
         // Multiple sentences - check if they should be split or kept together
         const totalLength = sentences.join(' ').length;
+        const isCharacterDialogue = segment.type === 'dialogue' || segment.type === 'character';
         
-        if (totalLength <= 250) {
-          // Keep together if not too long
+        if (totalLength <= 250 || isCharacterDialogue) {
+          // Keep together if not too long, OR if it's character dialogue (never split dialogue)
           finalSegments.push({
             ...segment,
             text: sentences.join(' ')
           });
         } else {
-          // Split into separate segments for better audio pacing
+          // Split into separate segments for better audio pacing (only for narration/DM segments)
           sentences.forEach((sentence, idx) => {
             if (sentence.trim()) {
               finalSegments.push({
@@ -640,38 +641,100 @@ export const useMultiVoice = () => {
     setState(prev => ({ ...prev, isProcessing: true }));
 
     try {
-      console.log('🎭 Processing pre-segmented narration:', segments.length, 'segments');
+      console.log('\n🎭 PROCESSING PRE-SEGMENTED NARRATION:', segments.length, 'segments');
+      
+      // 🔍 DEBUG: Log original segments before any processing
+      console.log('\n📥 ORIGINAL SEGMENTS RECEIVED:');
+      segments.forEach((segment, idx) => {
+        // ⚠️ VALIDATION: Check for malformed segments
+        const validationType = ['narration', 'dialogue', 'action', 'thought', 'dm', 'character'].includes(segment.type);
+        const hasText = segment.text && segment.text.trim().length > 0;
+        const characterSegmentHasName = segment.type !== 'dialogue' && segment.type !== 'character' || segment.character;
+        
+        console.log(`  Segment ${idx + 1}:`, {
+          type: segment.type,
+          character: segment.character,
+          voice_category: segment.voice_category,
+          text_preview: segment.text.substring(0, 40) + '...',
+          text_length: segment.text.length,
+          validation: {
+            validType: validationType,
+            hasText: hasText,
+            characterOk: characterSegmentHasName
+          }
+        });
+        
+        // Log warnings for malformed segments
+        if (!validationType) {
+          console.warn(`⚠️ INVALID TYPE: Segment ${idx + 1} has invalid type "${segment.type}"`);
+        }
+        if (!hasText) {
+          console.warn(`⚠️ EMPTY TEXT: Segment ${idx + 1} has empty or missing text`);
+        }
+        if (!characterSegmentHasName) {
+          console.warn(`⚠️ MISSING CHARACTER: Segment ${idx + 1} is character dialogue but missing character name`);
+        }
+      });
       
       // Validate and fix segments before processing
       const validatedSegments = validateAndFixSegments(segments);
-      console.log('✅ Validated segments:', validatedSegments.length, 'segments after validation');
+      console.log('\n✅ VALIDATED SEGMENTS:', validatedSegments.length, 'segments after validation');
+      
+      // 🔍 DEBUG: Log changes from validation
+      if (segments.length !== validatedSegments.length) {
+        console.log('\n🔧 VALIDATION CHANGES DETECTED:');
+        console.log(`  Original count: ${segments.length} → Validated count: ${validatedSegments.length}`);
+      }
       
       // Convert NarrationSegments to AudioSegments
       const audioSegments: AudioSegment[] = validatedSegments.map((segment, index): AudioSegment => {
         let voiceConfig: VoiceConfig;
         
-        // Handle both naming conventions: 'narration'/'dm' and 'dialogue'/'character'
-        const isNarration = segment.type === 'narration' || segment.type === 'dm';
+        // 🎯 SIMPLIFIED VOICE ASSIGNMENT: Direct logic, no complex type checking
+        console.log(`\n🎯 SEGMENT ${index + 1}:`, {
+          type: segment.type,
+          character: segment.character,
+          voice_category: segment.voice_category,
+          text: segment.text.substring(0, 60) + '...'
+        });
         
-        if (isNarration) {
+        // 🎯 SMART CHARACTER DETECTION WITH FALLBACK
+        let effectiveCharacter = segment.character;
+        
+        // If no character name but segment type suggests dialogue, try to extract from text
+        if (!effectiveCharacter && (segment.type === 'dialogue' || segment.type === 'character')) {
+          // Look for quoted dialogue patterns that might indicate a character
+          const text = segment.text.trim();
+          if (text.startsWith('"') && text.includes('"')) {
+            // This looks like dialogue - try to infer character from context or use a generic name
+            effectiveCharacter = 'speaker'; // Generic fallback for dialogue
+            console.log(`🔧 INFERRED CHARACTER: Detected dialogue without character name, using 'speaker' fallback`);
+          }
+        }
+        
+        // RULE 1: If segment has a character name (original or inferred), it gets character voice
+        if (effectiveCharacter) {
+          if (segment.voice_category) {
+            // Use specific voice category if provided
+            const allVoices = VoiceMapper.getAllVoices();
+            voiceConfig = allVoices[segment.voice_category] || VoiceMapper.getVoiceForCharacter(effectiveCharacter);
+            console.log(`✅ CHARACTER VOICE: ${voiceConfig.name} via voice_category "${segment.voice_category}" for "${effectiveCharacter}"`);
+          } else {
+            // Use character name mapping
+            voiceConfig = VoiceMapper.getVoiceForCharacter(effectiveCharacter);
+            console.log(`✅ CHARACTER VOICE: ${voiceConfig.name} via character name "${effectiveCharacter}"`);
+          }
+        }
+        // RULE 2: No character name = narrator voice
+        else {
           voiceConfig = VoiceMapper.getNarratorVoice();
-        } else if (segment.voice_category) {
-          // Use the voice category provided by AI
-          const allVoices = VoiceMapper.getAllVoices();
-          voiceConfig = allVoices[segment.voice_category] || VoiceMapper.getNarratorVoice();
-          console.log(`🎭 Using voice category "${segment.voice_category}" for character "${segment.character}"`);
-        } else if (segment.character) {
-          // Fallback to character-based mapping
-          voiceConfig = VoiceMapper.getVoiceForCharacter(segment.character);
-          console.log(`🎪 Fallback voice mapping for character "${segment.character}"`);
-        } else {
-          voiceConfig = VoiceMapper.getNarratorVoice();
+          console.log(`✅ NARRATOR VOICE: ${voiceConfig.name} (no character name)`);
         }
         
         return {
-          type: isNarration ? 'narration' : 'dialogue',
+          type: effectiveCharacter ? 'dialogue' : 'narration',
           text: segment.text,
-          character: segment.character || 'Narrator',
+          character: effectiveCharacter || 'Narrator',
           originalText: segment.text,
           startIndex: 0,
           endIndex: segment.text.length,
