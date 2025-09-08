@@ -85,6 +85,14 @@ const initialState: CharacterState = {
     ideals: [],
     bonds: [],
     flaws: [],
+    // Inspiration system
+    inspiration: false,
+    personalityNotes: '',
+    personalityIntegration: {
+      activeTraits: [],
+      inspirationTriggers: [],
+      inspirationHistory: []
+    },
     equipment: [],
     skillProficiencies: [],
     toolProficiencies: [],
