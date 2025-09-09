@@ -56,7 +56,7 @@ ${encounter.environmentalEffects?.length ? `- Effects: ${encounter.environmental
   return stateText;
 }
 
-export function buildPrompt(context: AgentContext, voiceContext?: VoiceContext): string {
+export function buildPrompt(context: AgentContext, voiceContext?: VoiceContext, isFirstMessage: boolean = false): string {
   const { campaignContext, characterContext, memories, gameState } = context;
   
   // Format recent memories for context
@@ -77,6 +77,86 @@ You are guiding ${characterContext.name}, a level ${characterContext.level} ${ch
 Background: ${characterContext.background}
 Alignment: ${characterContext.alignment}
 ${characterContext.description ? `Description: ${characterContext.description}` : ''}
+
+${isFirstMessage ? `
+**CAMPAIGN OPENING SCENARIO - CRITICAL FIRST MESSAGE**:
+This is the very first message of the campaign. You must create a comprehensive, engaging opening that establishes the adventure properly. Your response must be substantial (minimum 4-5 paragraphs) and follow professional DM opening techniques.
+
+**MANDATORY THREE-PARAGRAPH OPENING CRAWL STRUCTURE**:
+
+**Paragraph 1 - World Context & Campaign Stakes:**
+- Set the broader world situation and what's happening in ${campaignContext.setting_details?.location || 'the realm'}
+- Establish the central conflict or crisis affecting the world/region
+- Explain the campaign's main theme and what's at stake
+- Create urgency and importance: why does this adventure matter?
+- Reference the campaign genre (${campaignContext.genre}) to set proper tone
+
+**Paragraph 2 - Recent Events & Character Connection:**
+- Detail the specific events that have led to this moment
+- Explain how ${characterContext.name}'s background (${characterContext.background}) connects them to these events
+- Show why this character is uniquely positioned to be involved
+- Reference their race (${characterContext.race}) and class (${characterContext.class}) as relevant to the situation
+- Create personal stakes: why should they care?
+
+**Paragraph 3 - Immediate Scene & Action:**
+- Zoom in to the exact moment and location where the adventure begins
+- Use "in media res" - something important is happening right now
+- Include at least one NPC with direct quoted dialogue that advances the plot
+- Present the immediate conflict or opportunity requiring response
+- Reference their alignment (${characterContext.alignment}) in how others perceive/react to them
+
+**Additional Requirements for Opening Success:**
+
+**Campaign Goals & Adventure Hook:**
+- Clearly state what the overall adventure/quest is about
+- Provide both immediate objectives (next few scenes) and long-term goals
+- Create a sense that this is the beginning of something epic and important
+- Establish why the character is the right person for this adventure
+
+**Character Integration:**
+- Make the opening personal and relevant to ${characterContext.name}
+- Show how their background naturally leads them into this adventure  
+- Reference specific skills, abilities, or knowledge they possess that will be useful
+- Create emotional investment through personal connections or stakes
+
+**Atmosphere & World-Building:**
+- Create rich, immersive sensory details that match the ${campaignContext.genre} tone
+- Make the world feel alive with sounds, smells, sights, and activity
+- Establish the setting as a place of adventure and possibility
+- Include environmental storytelling that hints at larger mysteries
+
+**Narrative Structure Requirements:**
+- Minimum 4-5 substantial paragraphs (not brief descriptions)
+- Each paragraph should serve a specific narrative purpose
+- Use cinematic "zoom-in" technique: world → region → immediate scene
+- End with multiple clear action choices that have meaningful consequences
+- Create a compelling hook that makes the player eager to continue
+
+**Critical Success Factors:**
+- This opening must make the player feel like the protagonist of an epic story
+- Establish immediate stakes (what could go wrong right now)
+- Establish campaign stakes (what's at risk in the bigger picture)
+- Create multiple interesting paths forward to encourage player agency
+- Include mystery, danger, or opportunity that compels action
+- Make it feel like a professional, published adventure opening
+
+**GENRE-SPECIFIC OPENING GUIDANCE:**
+${campaignContext.genre === 'dark-fantasy' ? `
+For Dark Fantasy: Establish an atmosphere of creeping dread, ancient evils stirring, corruption spreading, or light failing. Create tension between hope and despair. Include gothic elements, supernatural threats, and moral ambiguity.` : ''}
+${campaignContext.genre === 'high-fantasy' ? `
+For High Fantasy: Establish a world of wonder, magic, and heroism. Include grand quests, ancient prophecies, noble causes, and the clash between good and evil. Make magic feel wondrous and important.` : ''}
+${campaignContext.genre === 'sci-fi' ? `
+For Sci-Fi: Establish technological wonders, space exploration, alien encounters, or dystopian futures. Include advanced technology, scientific discovery, and the implications of progress.` : ''}
+
+**OPENING STRUCTURE EXAMPLE:**
+"The realm of [Location] has long stood as a bastion of [positive quality], but recent events have shaken the very foundations of [world element]. [Describe the crisis/threat that affects everyone]. Ancient [enemies/powers/mysteries] stir once more, and whispers speak of [central campaign threat] that could [dire consequence if not stopped].
+
+In the [time period - days/weeks] since [recent triggering event], [character background connection] has drawn you, ${characterContext.name}, into these unfolding events. Your experience as a ${characterContext.background} means you [specific knowledge/connection], while your [race/class abilities] may prove crucial in the challenges ahead. [Personal stakes - what you stand to lose or gain].
+
+As [current time/weather], you find yourself [specific location and immediate situation]. [NPC name], [their role/description], approaches with urgency. '[Direct dialogue that provides immediate hook and choice].' The [immediate threat/opportunity] demands swift action, and you must choose: [2-3 meaningful choices with different approaches and consequences]."
+
+Remember: This is the most important response you'll give. It sets expectations for the entire campaign. Make it feel like the opening of a fantasy novel or blockbuster movie - something that immediately grabs attention and makes the player invested in the world and story.
+` : ''}
 
 ${gameState ? formatGameState(gameState) : ''}
 

@@ -177,6 +177,59 @@ Create a campaign description that makes players say "I want to play in this wor
             contextPrompt += `\nReference these memories naturally to maintain story continuity.`;
           }
 
+          // Detect if this is a campaign opening (first message)
+          const isFirstMessage = (!params.conversationHistory || params.conversationHistory.length === 0) && (!params.message || params.message.trim() === '');
+          
+          if (isFirstMessage) {
+            contextPrompt += `\n\n**CAMPAIGN OPENING SCENARIO - CRITICAL FIRST MESSAGE**:
+This is the very first message of the campaign. You must create a comprehensive, engaging opening that establishes the adventure properly. Your response must be substantial (4-5 paragraphs) and follow professional DM opening techniques EXACTLY as specified.
+
+**ABSOLUTELY MANDATORY STRUCTURE - FOLLOW EXACTLY:**
+You MUST follow this structure but DO NOT include the paragraph labels in your response. Use natural paragraph breaks only.
+
+**PARAGRAPH 1 (World Context) - Do not label:**
+Set the broader world situation and establish what's at stake. Show don't tell the campaign tone through atmosphere and events.
+
+**PARAGRAPH 2 (Character Connection) - Do not label:**  
+Detail recent events and connect them to the character's background. Show why they're involved and what they personally stand to gain or lose.
+
+**PARAGRAPH 3 (Immediate Scene) - Do not label:**
+Put the player IN a specific location doing something right now. Include an NPC speaking directly to them with quoted dialogue.
+
+**PARAGRAPH 4 (Action Choices) - Do not label:**
+Present 2-3 specific, meaningful action choices for what to do next.
+
+**CRITICAL DO NOT INSTRUCTIONS:**
+- DO NOT break the fourth wall by mentioning "genre" or "your role"
+- DO NOT write pure exposition without putting the player in scene
+- DO NOT skip the NPC with direct quoted dialogue
+- DO NOT end without specific action choices
+- DO NOT make it one long paragraph - use clear breaks
+- DO NOT just describe the world - put the player IN it actively participating
+
+**EXAMPLE OF PROPER FORMAT (no paragraph labels shown):**
+
+The kingdom of Astoria has enjoyed decades of peace, but recently dark omens have plagued the land. Crops wither in the fields, strange lights dance in the northern forests, and travelers speak of shadowy figures lurking along the roads. The king's advisors whisper of an ancient curse awakening, one that could plunge the realm into eternal darkness.
+
+Three days ago, a desperate messenger arrived in your hometown seeking anyone brave enough to investigate the mysterious happenings near Blackwood Vale. Your experience as a former soldier caught the attention of the local magistrate, who believes your military training and knowledge of the northern territories make you uniquely qualified for this dangerous mission. The promise of gold and glory appeals to your adventurous spirit, but more importantly, your sister lives in a village near the affected area.
+
+You now stand at the edge of Blackwood Vale as mist rolls across the abandoned fields. The local guide, an elderly woman named Martha, points toward a crumbling watchtower with her gnarled walking stick. "That's where the screams started three nights ago," she says, her voice trembling. "No one who's gone to investigate has come back. The magistrate says you're our last hope, but I fear whatever lurks in that tower hungers for more victims."
+
+What do you do? You could approach the watchtower directly to investigate the source of the screams, question Martha further about what she's seen to gather more information, or scout the perimeter of the vale to look for clues before confronting whatever awaits.
+
+**MANDATORY REQUIREMENTS FOR SUCCESS:**
+- Player must be actively IN a scene, not just hearing about it
+- Include at least one NPC with direct quoted dialogue
+- Establish both immediate and long-term stakes
+- End with 2-3 clear, meaningful action choices
+- Use atmospheric details to show the campaign tone
+- Connect to character background meaningfully
+- Make it feel like the start of an epic adventure
+
+**CRITICAL: DO NOT INCLUDE ANY PARAGRAPH LABELS OR HEADERS IN YOUR RESPONSE.**
+Write exactly in the paragraph structure shown above, with natural paragraph breaks only. Follow the structure internally but show only the narrative content to the player.`;
+          }
+
           // Add voice context for multi-voice narration
           if (voiceContext) {
             // Known characters and their assigned voices
