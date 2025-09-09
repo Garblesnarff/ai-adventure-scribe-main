@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CharacterRace, Subrace } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Check, Users, Zap, ArrowRight } from 'lucide-react';
 
 /**
@@ -13,6 +14,7 @@ import { Check, Users, Zap, ArrowRight } from 'lucide-react';
 const SubraceSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
   const character = state.character;
   const currentRace = character?.race as CharacterRace | undefined;
 
@@ -47,6 +49,9 @@ const SubraceSelection: React.FC = () => {
       description: `You have chosen the ${subrace.name} subrace.`,
       duration: 1000,
     });
+    
+    // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
   };
 
   const getAbilityScoreText = (abilityScoreIncrease: Partial<Record<string, number>>) => {

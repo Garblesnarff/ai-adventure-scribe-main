@@ -22,7 +22,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   isLoading = false,
 }) => {
   return (
-    <div className="flex justify-between mt-6">
+    <div className="flex justify-between mt-6" data-testid="step-navigation">
       <Button
         variant="outline"
         onClick={onPrevious}

@@ -4,10 +4,12 @@ import { Card } from '@/components/ui/card';
 import { classes } from '@/data/classOptions';
 import { CharacterClass } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 
 const ClassSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
 
   const handleClassSelect = (characterClass: CharacterClass) => {
     console.log('Selecting class:', characterClass); // Debug log
@@ -21,6 +23,9 @@ const ClassSelection: React.FC = () => {
       description: `You have chosen the ${characterClass.name} class.`,
       duration: 1000,
     });
+    
+    // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
   };
 
   return (

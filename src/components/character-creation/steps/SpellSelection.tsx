@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { CharacterClass, Spell } from '@/types/character';
 import { getClassSpells } from '@/data/spellOptions';
 import { Wand2, Sparkles, BookOpen, Info } from 'lucide-react';
@@ -16,6 +17,7 @@ import { Wand2, Sparkles, BookOpen, Info } from 'lucide-react';
 const SpellSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
   const character = state.character;
   const currentClass = character?.class as CharacterClass | undefined;
 
@@ -87,6 +89,9 @@ const SpellSelection: React.FC = () => {
       title: 'Spells Selected',
       description: 'Your starting spells have been chosen.',
     });
+    
+    // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
   };
 
   // Auto-update on valid selections

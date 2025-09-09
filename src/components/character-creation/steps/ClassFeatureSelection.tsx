@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { CharacterClass, ClassFeature } from '@/types/character';
 import { Sword, Shield, Sparkles, Crown } from 'lucide-react';
 
@@ -16,6 +17,7 @@ import { Sword, Shield, Sparkles, Crown } from 'lucide-react';
 const ClassFeatureSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
   const character = state.character;
   const currentClass = character?.class as CharacterClass | undefined;
   
@@ -106,6 +108,9 @@ const ClassFeatureSelection: React.FC = () => {
       title: 'Class Features Selected',
       description: 'Your level 1 class features have been applied.',
     });
+    
+    // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
   };
 
   // Auto-update when all selections are made
