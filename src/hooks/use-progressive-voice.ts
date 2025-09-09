@@ -632,5 +632,9 @@ export const useProgressiveVoice = () => {
     clearCharacterVoiceMappings: VoiceDirector.clearCharacterVoiceMappings,
     getAvailableVoiceCategories: VoiceDirector.getAvailableVoiceCategories,
     initializeAudioContext, // Initialize audio context during user interaction
+    
+    // Audio cache management
+    clearAudioCache: VoiceDirector.clearAudioCache,
+    getAudioCacheStats: VoiceDirector.getAudioCacheStats,
   };
 };

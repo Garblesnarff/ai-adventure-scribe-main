@@ -18,6 +18,7 @@ import { SimpleMessageProvider } from '@/contexts/SimpleMessageContext';
 import { DMChatBubble } from './chat/DMChatBubble';
 import { NarrationSegment } from '@/hooks/use-ai-response';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SimpleGameChatWithVoiceProps {
   campaignId: string;
@@ -38,6 +39,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -102,6 +104,9 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         };
         
         setMessages([dmMessage]);
+        
+        // Save opening message to database
+        await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
       console.error('Failed to generate opening message:', error);
@@ -113,30 +118,85 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
    * Load conversation history
    */
   const loadHistory = useCallback(async () => {
-    if (!session?.id) return;
+    if (!session?.id || hasLoadedHistory) return;
 
     setIsLoadingHistory(true);
     try {
-      // TODO: Implement history loading from session
       console.log('📚 Loading conversation history for session:', session.id);
       
-      // If no messages exist, generate an opening message
-      if (messages.length === 0) {
+      // Load message history from dialogue_history table
+      const { data: historyData, error: historyError } = await supabase
+        .from('dialogue_history')
+        .select('*')
+        .eq('session_id', session.id)
+        .order('timestamp', { ascending: true });
+
+      if (historyError) {
+        console.error('Error loading history:', historyError);
+        throw historyError;
+      }
+
+      if (historyData && historyData.length > 0) {
+        console.log(`📚 Loaded ${historyData.length} messages from history`);
+        
+        // Convert database messages to ChatMessage format
+        const loadedMessages: ChatMessage[] = historyData.map((msg: any) => ({
+          id: msg.id,
+          role: msg.speaker_type === 'dm' ? 'assistant' : msg.speaker_type === 'player' ? 'user' : 'assistant',
+          content: msg.message,
+          timestamp: new Date(msg.timestamp),
+          // Note: Historical messages may not have narrationSegments
+          narrationSegments: undefined,
+        }));
+        
+        setMessages(loadedMessages);
+        setHasLoadedHistory(true);
+      } else {
+        console.log('📚 No message history found, generating opening message');
+        // If no messages exist, generate an opening message
         await generateOpeningMessage();
+        setHasLoadedHistory(true);
       }
     } catch (error) {
       console.error('Failed to load history:', error);
+      // Fallback to generating opening message if history loading fails
+      await generateOpeningMessage();
+      setHasLoadedHistory(true);
     } finally {
       setIsLoadingHistory(false);
     }
-  }, [session?.id, messages.length, generateOpeningMessage]);
+  }, [session?.id, hasLoadedHistory, generateOpeningMessage]);
 
-  // Load history when session is available
+  // Load history when session is available and we haven't loaded it yet
   useEffect(() => {
-    if (session?.id && !isLoadingHistory && messages.length === 0) {
+    if (session?.id && !sessionLoading && !hasLoadedHistory && !isLoadingHistory) {
       loadHistory();
     }
-  }, [session?.id, loadHistory, isLoadingHistory, messages.length]);
+  }, [session?.id, sessionLoading, hasLoadedHistory, isLoadingHistory, loadHistory]);
+
+  /**
+   * Save a message to the database
+   */
+  const saveMessageToDatabase = useCallback(async (message: ChatMessage, sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('dialogue_history')
+        .insert({
+          session_id: sessionId,
+          speaker_type: message.role === 'assistant' ? 'dm' : message.role === 'user' ? 'player' : 'system',
+          message: message.content,
+          timestamp: message.timestamp.toISOString(),
+        });
+
+      if (error) {
+        console.error('Error saving message to database:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Failed to save message:', error);
+      // Don't throw here to avoid breaking the UI flow
+    }
+  }, []);
 
   /**
    * Send message to DM
@@ -160,6 +220,9 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
 
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
+    
+    // Save user message to database
+    await saveMessageToDatabase(userMessage, session.id);
 
     try {
       const context: GameContext = {
@@ -207,6 +270,9 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         };
 
         setMessages(prev => [...prev, dmMessage]);
+        
+        // Save DM message to database
+        await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -260,13 +326,15 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
     }
   }, [session, endSession, navigate]);
 
-  // Loading state
-  if (sessionLoading || isLoadingHistory) {
+  // Loading state - only show loading if we're actually loading something
+  if (sessionLoading || (isLoadingHistory && !hasLoadedHistory)) {
     return (
       <Card className="h-[600px] flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-infinite-purple" />
-          <p className="text-muted-foreground">Starting your adventure...</p>
+          <p className="text-muted-foreground">
+            {sessionLoading ? 'Starting your adventure...' : 'Loading your story...'}
+          </p>
         </div>
       </Card>
     );
@@ -315,7 +383,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                     <DMChatBubble
                       key={index}
                       message={message}
-                      narrationSegments={message.narrationSegments}
+                      narrationSegments={message.narrationSegments as any}
                     />
                   ) : (
                     <div

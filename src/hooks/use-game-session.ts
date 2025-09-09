@@ -33,8 +33,8 @@ import { useToast } from '@/hooks/use-toast';
  // ============================
 import { GameSession } from '@/types/game';
 
-const SESSION_EXPIRY_TIME = 1000 * 60 * 60; // 1 hour
-const CLEANUP_INTERVAL = 1000 * 60 * 5; // Check every 5 minutes
+const SESSION_EXPIRY_TIME = 1000 * 60 * 60 * 24; // 24 hours (was 1 hour)
+const CLEANUP_INTERVAL = 1000 * 60 * 15; // Check every 15 minutes (was 5 minutes)
 
 /**
  * React hook for managing game sessions, including creation, expiration, cleanup, and summary generation.
@@ -138,7 +138,27 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
    */
   const isSessionExpired = (session: ExtendedGameSession): boolean => {
     const startTime = session.start_time ? new Date(session.start_time).getTime() : Date.now();
-    return Date.now() - startTime > SESSION_EXPIRY_TIME;
+    const currentTime = Date.now();
+    const elapsed = currentTime - startTime;
+    const isExpired = elapsed > SESSION_EXPIRY_TIME;
+    
+    if (isExpired) {
+      console.log(`⏰ Session ${session.id} expired:`, {
+        sessionId: session.id,
+        startTime: new Date(startTime).toISOString(),
+        currentTime: new Date(currentTime).toISOString(),
+        elapsedHours: Math.round(elapsed / (1000 * 60 * 60) * 100) / 100,
+        expiryHours: SESSION_EXPIRY_TIME / (1000 * 60 * 60)
+      });
+    } else {
+      console.log(`✅ Session ${session.id} still active:`, {
+        sessionId: session.id,
+        elapsedHours: Math.round(elapsed / (1000 * 60 * 60) * 100) / 100,
+        remainingHours: Math.round((SESSION_EXPIRY_TIME - elapsed) / (1000 * 60 * 60) * 100) / 100
+      });
+    }
+    
+    return isExpired;
   };
 
   /**
@@ -202,46 +222,97 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
   useEffect(() => {
     const initSession = async () => {
       setSessionState('loading');
-      // Try to find an active session for this campaign & character
-      // For MVP, we might just create a new one or load the latest.
-      // This logic could be more complex (e.g. allow selecting from multiple sessions)
-      if (campaignId && characterId) {
-        const { data: existingSession, error: existingSessionError } = await supabase
+      
+      if (!campaignId || !characterId) {
+        setSessionState('idle');
+        return;
+      }
+
+      try {
+        // First, try to find the most recent session for this campaign & character
+        // Look for both active and completed sessions to get the latest one
+        const { data: existingSessions, error: existingSessionError } = await supabase
           .from('game_sessions')
           .select('*')
           .eq('campaign_id', campaignId)
           .eq('character_id', characterId)
-          .eq('status', 'active') // Only load active sessions
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(); // Use maybeSingle to not error if no session found
+          .limit(5); // Get last 5 sessions to find the best one to resume
 
         if (existingSessionError) {
-          console.error("Error fetching existing session:", existingSessionError);
-          // Proceed to create a new session if error or no session found
+          console.error("Error fetching existing sessions:", existingSessionError);
+          // If we can't fetch sessions, create a new one
+          await createGameSession();
+          return;
         }
         
-        if (existingSession) {
-          if (isSessionExpired(existingSession as ExtendedGameSession)) {
-            await cleanupSession(existingSession.id);
-            // Fall through to create a new session
+        // Look for an active session first
+        let sessionToResume = existingSessions?.find(s => s.status === 'active') as ExtendedGameSession | undefined;
+        
+        // If we have an active session, check if it's expired
+        if (sessionToResume) {
+          if (isSessionExpired(sessionToResume)) {
+            console.log('Found active session but it has expired, cleaning up...');
+            await cleanupSession(sessionToResume.id);
+            sessionToResume = undefined;
           } else {
-            setSessionData(existingSession as ExtendedGameSession);
+            console.log('Resuming active session:', sessionToResume.id);
+            setSessionData(sessionToResume);
             setSessionState('active');
-            return; // Found and loaded active session
+            return;
           }
         }
-      }
-      // If no existing active session, or if campaignId/characterId not provided yet for loading
-      if (campaignId && characterId) { // Only create if IDs are present
-         await createGameSession();
-      } else {
-        setSessionState('idle'); // Or some other state indicating waiting for IDs
+        
+        // If no active session, look for the most recent completed session
+        // and create a new session based on its state
+        const lastCompletedSession = existingSessions?.find(s => s.status === 'completed');
+        
+        if (lastCompletedSession) {
+          console.log('Creating new session continuing from previous session:', lastCompletedSession.id);
+          // Create a new session but maintain continuity from the last one
+          const sessionNumber = Math.max(
+            ...(existingSessions?.map(s => s.session_number || 1) || [1])
+          ) + 1;
+          
+          const { data, error } = await supabase
+            .from('game_sessions')
+            .insert([{ 
+              session_number: sessionNumber,
+              status: 'active',
+              campaign_id: campaignId,
+              character_id: characterId,
+              turn_count: 0,
+              current_scene_description: lastCompletedSession.current_scene_description || "Continuing your adventure...",
+              session_notes: `Continuing from Session ${lastCompletedSession.session_number || 1}`
+            }])
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error creating continuation session:', error);
+            setSessionState('error');
+            toast({ title: "Error", description: "Failed to create game session", variant: "destructive" });
+            return;
+          }
+          
+          setSessionData(data as ExtendedGameSession);
+          setSessionState('active');
+          return;
+        }
+        
+        // No existing sessions found, create the first one
+        console.log('No existing sessions found, creating first session');
+        await createGameSession();
+        
+      } catch (error) {
+        console.error('Error in session initialization:', error);
+        setSessionState('error');
+        toast({ title: "Error", description: "Failed to initialize game session", variant: "destructive" });
       }
     };
 
     initSession();
-  }, [campaignId, characterId, createGameSession, cleanupSession]);
+  }, [campaignId, characterId, createGameSession, cleanupSession, toast]);
 
 
   // Periodic cleanup check (remains similar)
