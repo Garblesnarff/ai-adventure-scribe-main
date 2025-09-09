@@ -94,6 +94,10 @@ export interface CombatParticipant {
   reactionTaken: boolean;
   movementUsed: number;
   
+  // New: Spellcasting for combat tracking
+  spellSlots?: Record<number, { max: number; current: number }>; // Copied from character for spell casters
+  activeConcentration?: string | null; // Currently concentrated spell
+  
   // For monsters/NPCs
   monsterData?: {
     challengeRating: string;

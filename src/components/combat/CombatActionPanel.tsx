@@ -172,13 +172,25 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
     
     setIsSubmitting(true);
     try {
-      await onActionSubmit(selectedAction.type, actionDetails);
+      // For spell casting, include spell details
+      if (selectedAction.type === 'cast_spell') {
+        if (!selectedSpell) {
+          console.error('No spell selected');
+          return;
+        }
+        await onActionSubmit(selectedAction.type, actionDetails, selectedSpell, selectedSpellLevel);
+      } else {
+        await onActionSubmit(selectedAction.type, actionDetails);
+      }
       setSelectedAction(null);
       setActionDetails('');
+      setSelectedSpell(null);
+      setSelectedSpellLevel(1);
     } finally {
       setIsSubmitting(false);
     }
   };
+// Added check for selectedSpell in handleDetailedAction
 
   const handleCancelAction = () => {
     setSelectedAction(null);
@@ -275,13 +287,24 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
               {selectedAction.description}
             </p>
             
-            <Textarea
-              placeholder={`Describe your ${selectedAction.name.toLowerCase()}...`}
-              value={actionDetails}
-              onChange={(e) => setActionDetails(e.target.value)}
-              className="min-h-[100px]"
-              disabled={isSubmitting}
-            />
+            {selectedAction.type === 'cast_spell' ? (
+              <SpellSlotPanel
+                onSpellSelect={(spellName, level) => {
+                  setSelectedSpell(spellName);
+                  setSelectedSpellLevel(level);
+                  setActionDetails(`Cast ${spellName} at level ${level}`);
+                }}
+                availableSpells={['Fire Bolt', 'Magic Missile', 'Cure Wounds', 'Healing Word']} // From character data
+              />
+            ) : (
+              <Textarea
+                placeholder={`Describe your ${selectedAction.name.toLowerCase()}...`}
+                value={actionDetails}
+                onChange={(e) => setActionDetails(e.target.value)}
+                className="min-h-[100px]"
+                disabled={isSubmitting}
+              />
+            )}
             
             <div className="flex space-x-2">
               <Button
@@ -303,6 +326,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
             </div>
           </div>
         ) : (
+// Integrated SpellSlotPanel for cast_spell actions
           /* Action Selection Grid */
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

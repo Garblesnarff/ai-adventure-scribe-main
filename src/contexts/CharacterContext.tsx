@@ -56,7 +56,10 @@ type CharacterAction =
   | { type: 'SET_STEP'; payload: number }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'RESET' }; // No payload for RESET action
+  | { type: 'RESET' }
+  | { type: 'UPDATE_SPELL_SLOTS'; payload: Record<number, { max: number; current: number }> }
+  | { type: 'UPDATE_CONCENTRATION'; payload: string | null };
+// Added missing actions to CharacterAction type
 
 /**
  * Initial state with default values to avoid null checks
@@ -155,12 +158,31 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         ...state,
         error: action.payload,
       };
+    case 'UPDATE_SPELL_SLOTS':
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          spellSlots: action.payload,
+        },
+        isDirty: true,
+      };
+    case 'UPDATE_CONCENTRATION':
+      return {
+        ...state,
+        character: {
+          ...state.character,
+          activeConcentration: action.payload,
+        },
+        isDirty: true,
+      };
     case 'RESET':
       return initialState;
     default:
       return state;
   }
 }
+// Added reducer cases for spell slot and concentration updates
 
 /**
  * Provider component that wraps the application to provide character state
