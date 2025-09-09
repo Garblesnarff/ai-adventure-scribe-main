@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { backgrounds } from '@/data/backgroundOptions';
 import { CharacterBackground } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 
 /**
  * Component for selecting character background during character creation
@@ -12,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 const BackgroundSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
 
   /**
    * Handles the selection of a background
@@ -29,6 +31,9 @@ const BackgroundSelection: React.FC = () => {
       description: `You have chosen the ${background.name} background.`,
       duration: 1000,
     });
+    
+    // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
   };
 
   return (

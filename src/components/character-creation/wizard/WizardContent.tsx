@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCharacterSave } from '@/hooks/use-character-save';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import StepNavigation from '../shared/StepNavigation';
 import ProgressIndicator from '../shared/ProgressIndicator';
 import { WizardStep } from './types';
@@ -19,6 +20,12 @@ const WizardContent: React.FC = () => {
   const { saveCharacter, isSaving } = useCharacterSave();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { scrollToTop } = useAutoScroll();
+
+  // Scroll to top whenever the step changes
+  React.useEffect(() => {
+    scrollToTop();
+  }, [currentStep, scrollToTop]);
 
   /**
    * Validates the current character state

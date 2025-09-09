@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { baseRaces } from '@/data/raceOptions';
 import { CharacterRace, Subrace } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Check, Users, Zap, Globe } from 'lucide-react';
 
 const RaceSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
   const [selectedBaseRace, setSelectedBaseRace] = useState<CharacterRace | null>(null);
   const [showSubraces, setShowSubraces] = useState(false);
 
@@ -28,12 +30,16 @@ const RaceSelection: React.FC = () => {
         description: `You have chosen ${baseRace.name}. Now select a subrace.`,
         duration: 1000,
       });
+      // Auto-scroll to continue with subrace selection
+      scrollToNavigation();
     } else {
       toast({
         title: "Race Selected",
         description: `You have chosen the ${baseRace.name} race.`,
         duration: 1000,
       });
+      // Auto-scroll to navigation to proceed to next step
+      scrollToNavigation();
     }
   };
 
@@ -49,6 +55,8 @@ const RaceSelection: React.FC = () => {
       description: `You have chosen ${subrace.name}.`,
       duration: 1000,
     });
+    // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
   };
 
   return (
