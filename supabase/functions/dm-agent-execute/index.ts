@@ -16,14 +16,15 @@ serve(async (req) => {
   }
 
   try {
-    const { task, agentContext, voiceContext } = await req.json();
+    const { task, agentContext, voiceContext, isFirstMessage = false } = await req.json();
     const { campaignDetails, characterDetails, memories = [] } = agentContext;
 
     console.log('Processing DM Agent task:', {
       taskType: task.description,
       campaign: campaignDetails?.name,
       character: characterDetails?.name,
-      memoryCount: memories?.length
+      memoryCount: memories?.length,
+      isFirstMessage: isFirstMessage
     });
 
     // Sort memories by importance and recency
@@ -49,7 +50,7 @@ serve(async (req) => {
       campaignContext: campaignDetails,
       characterContext: characterDetails,
       memories: relevantMemories
-    }, voiceContext);
+    }, voiceContext, isFirstMessage);
 
     // Call Google Gemini with the enhanced prompt
     const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');

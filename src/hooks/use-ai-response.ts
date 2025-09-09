@@ -126,6 +126,9 @@ export const useAIResponse = () => {
       // Get latest message context
       const latestMessage = messages[messages.length - 1];
       
+      // Detect if this is the first player message in the session
+      const isFirstMessage = messages.filter(m => m.sender === 'player').length <= 1;
+      
       // Fetch campaign and character context
       const gameContext = await fetchGameContext(sessionId);
       
@@ -179,7 +182,8 @@ export const useAIResponse = () => {
       console.log('Calling DM Agent with context:', {
         gameContext,
         selectedMemories: selectedMemories.length,
-        knownCharacters: Object.keys(voiceContext.knownCharacters).length
+        knownCharacters: Object.keys(voiceContext.knownCharacters).length,
+        isFirstMessage: isFirstMessage
       });
 
       // Call DM Agent through edge function
@@ -197,7 +201,8 @@ export const useAIResponse = () => {
           voiceContext: {
             available_categories: voiceContext.availableVoiceCategories,
             character_mappings: voiceContext.knownCharacters
-          }
+          },
+          isFirstMessage: isFirstMessage
         }
       });
 

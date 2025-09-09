@@ -15,6 +15,8 @@ import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
 import { MessageProvider } from '@/contexts/MessageContext';
 import { useGameSession } from '@/hooks/use-game-session';
+import { CombatProvider } from '@/contexts/CombatContext';
+import CombatInterface from '@/components/combat/CombatInterface';
 
 /**
  * GameContent Component
@@ -41,6 +43,7 @@ const GameContent: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [combatMode, setCombatMode] = useState(false);
 
   useEffect(() => {
     const loadGameData = async () => {
@@ -158,84 +161,114 @@ const GameContent: React.FC = () => {
   const characterIdForHandler = characterIdFromParams;
 
   return (
-    // Now GameContent sets up the providers with its own session
-    <MessageProvider sessionId={sessionId}>
-      <MemoryProvider sessionId={sessionId}>
-        <div className="min-h-screen bg-background">
-          <div className="max-w-7xl mx-auto p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main Chat Area */}
-              <div className="lg:col-span-2">
-                <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden">
-                  {/* Enhanced Header */}
-                  <div className="p-6 border-b border-border/60 bg-gradient-to-r from-infinite-dark/80 to-card/60">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h1 className="text-2xl font-semibold text-card-foreground mb-2">
-                          {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
-                        </h1>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
-                            <span>Chapter {sessionData.turn_count ?? 0}</span>
+    <CombatProvider sessionId={sessionId}>
+      <MessageProvider sessionId={sessionId}>
+        <MemoryProvider sessionId={sessionId}>
+          <div className="min-h-screen bg-background">
+            <div className="max-w-7xl mx-auto p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Content Area */}
+                <div className="lg:col-span-2">
+                  <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden">
+                    {/* Enhanced Header with Combat Toggle */}
+                    <div className="p-6 border-b border-border/60 bg-gradient-to-r from-infinite-dark/80 to-card/60">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h1 className="text-2xl font-semibold text-card-foreground mb-2">
+                            {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
+                          </h1>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
+                              <span>Chapter {sessionData.turn_count ?? 0}</span>
+                            </div>
+                            <span>•</span>
+                            <span className="max-w-md truncate text-muted-foreground/80">
+                              {sessionData.current_scene_description ?? "Your infinite story unfolds..."}
+                            </span>
                           </div>
-                          <span>•</span>
-                          <span className="max-w-md truncate text-muted-foreground/80">
-                            {sessionData.current_scene_description ?? "Your infinite story unfolds..."}
-                          </span>
                         </div>
-                      </div>
 
-                      {/* Status indicators */}
-                      <div className="flex items-center gap-3 ml-4">
-                        <div className="flex items-center gap-2 px-3 py-1 bg-infinite-purple/20 rounded-full border border-infinite-purple/30">
-                          <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse"></div>
-                          <span className="text-xs font-medium text-infinite-teal">Active Realm</span>
+                        {/* Combat Mode Toggle */}
+                        <div className="flex items-center gap-3 ml-4">
+                          <Button
+                            variant={combatMode ? "destructive" : "outline"}
+                            size="sm"
+                            onClick={() => setCombatMode(!combatMode)}
+                          >
+                            {combatMode ? (
+                              <>
+                                <X className="w-4 h-4 mr-2" />
+                                Exit Combat
+                              </>
+                            ) : (
+                              <>
+                                <Sword className="w-4 h-4 mr-2" />
+                                Combat Mode
+                              </>
+                            )}
+                          </Button>
+
+                          {/* Status indicators */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 px-3 py-1 bg-infinite-purple/20 rounded-full border border-infinite-purple/30">
+                              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse"></div>
+                              <span className="text-xs font-medium text-infinite-teal">Active Realm</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Messages Area */}
-                  <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50">
-                    <MessageList />
+                    {/* Content Area - Toggle between Chat and Combat */}
+                    <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50">
+                      {combatMode ? (
+                        <CombatInterface />
+                      ) : (
+                        <>
+                          <MessageList />
 
-                    {/* Typing Indicator */}
-                    <div className="absolute bottom-24 left-6 z-10">
-                      {/* This could be connected to a typing state in the future */}
-                    </div>
-                  </div>
-
-                  {/* Input Area */}
-                  <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
-                    <VoiceHandler />
-                    <MessageHandler
-                      sessionId={sessionId} // Use sessionId from useGameSession
-                      campaignId={campaignIdForHandler || null}
-                      characterId={characterIdForHandler}
-                      turnCount={sessionData.turn_count ?? 0}
-                      updateGameSessionState={updateGameSessionState}
-                    >
-                      {({ handleSendMessage, isProcessing }) => (
-                        <ChatInput
-                          onSendMessage={handleSendMessage}
-                          isDisabled={isProcessing}
-                        />
+                          {/* Typing Indicator */}
+                          <div className="absolute bottom-24 left-6 z-10">
+                            {/* This could be connected to a typing state in the future */}
+                          </div>
+                        </>
                       )}
-                    </MessageHandler>
-                  </div>
-                </Card>
-              </div>
+                    </div>
 
-              {/* Memory Panel */}
-              <div className="lg:col-span-1">
-                <MemoryPanel sessionData={sessionData} updateGameSessionState={updateGameSessionState} />
+                    {/* Input Area - Only show in chat mode */}
+                    {!combatMode && (
+                      <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
+                        <VoiceHandler />
+                        <MessageHandler
+                          sessionId={sessionId} // Use sessionId from useGameSession
+                          campaignId={campaignIdForHandler || null}
+                          characterId={characterIdForHandler}
+                          turnCount={sessionData.turn_count ?? 0}
+                          updateGameSessionState={updateGameSessionState}
+                        >
+                          {({ handleSendMessage, isProcessing }) => (
+                            <ChatInput
+                              onSendMessage={handleSendMessage}
+                              isDisabled={isProcessing}
+                            />
+                          )}
+                        </MessageHandler>
+                      </div>
+                    )}
+                  </Card>
+                </div>
+
+                {/* Memory Panel */}
+                <div className="lg:col-span-1">
+                  <MemoryPanel sessionData={sessionData} updateGameSessionState={updateGameSessionState} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </MemoryProvider>
-    </MessageProvider>
+        </MemoryProvider>
+      </MessageProvider>
+    </CombatProvider>
   );
 };
 
