@@ -11,7 +11,7 @@ import {
   CombatState, 
   CombatEncounter, 
   CombatParticipant, 
-  CombatAction, 
+  CombatAction as CombatActionType, 
   CombatEvent,
   Condition,
   ConditionName,
@@ -21,6 +21,12 @@ import {
 } from '@/types/combat';
 import { createClient } from '@supabase/supabase-js';
 import { rollDie } from '@/utils/diceRolls';
+import { 
+  castSpell, 
+  checkConcentration,
+  SpellSlotLevel 
+} from '@/utils/spell-management';
+import { useCharacter } from './CharacterContext';
 
 // ===========================
 // Supabase Client
@@ -49,7 +55,7 @@ const initialCombatState: CombatState = {
 // Combat Reducer
 // ===========================
 
-type CombatAction = 
+type ReducerAction = 
   | { type: 'SET_ENCOUNTER'; encounter: CombatEncounter }
   | { type: 'START_COMBAT' }
   | { type: 'END_COMBAT' }
@@ -58,13 +64,13 @@ type CombatAction =
   | { type: 'REMOVE_PARTICIPANT'; participantId: string }
   | { type: 'NEXT_TURN' }
   | { type: 'NEW_ROUND' }
-  | { type: 'ADD_ACTION'; action: CombatAction }
+  | { type: 'ADD_ACTION'; action: CombatActionType }
   | { type: 'SET_SELECTED_PARTICIPANT'; participantId?: string }
   | { type: 'SET_SELECTED_TARGET'; targetId?: string }
   | { type: 'TOGGLE_INITIATIVE_TRACKER' }
   | { type: 'TOGGLE_COMBAT_LOG' };
 
-function combatReducer(state: CombatState, action: CombatAction): CombatState {
+function combatReducer(state: CombatState, action: ReducerAction): CombatState {
   switch (action.type) {
     case 'SET_ENCOUNTER':
       return {
@@ -248,6 +254,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
   sessionId 
 }) => {
   const [state, dispatch] = useReducer(combatReducer, initialCombatState);
+  const { state: characterState } = useCharacter();
 
   // ===========================
   // Database Operations
@@ -310,25 +317,37 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     const encounterId = crypto.randomUUID();
     
     // Roll initiative for all participants
-    const participantsWithInitiative = initialParticipants.map(p => ({
-      id: p.id || crypto.randomUUID(),
-      participantType: p.participantType || 'monster',
-      name: p.name || 'Unknown',
-      characterId: p.characterId,
-      initiative: rollDie(20) + (p.initiative || 0),
-      armorClass: p.armorClass || 10,
-      maxHitPoints: p.maxHitPoints || 1,
-      currentHitPoints: p.currentHitPoints || p.maxHitPoints || 1,
-      temporaryHitPoints: 0,
-      position: p.position,
-      conditions: [],
-      deathSaves: { successes: 0, failures: 0 },
-      actionTaken: false,
-      bonusActionTaken: false,
-      reactionTaken: false,
-      movementUsed: 0,
-      monsterData: p.monsterData,
-    })) as CombatParticipant[];
+    const participantsWithInitiative = initialParticipants.map(p => {
+      let participant: CombatParticipant = {
+        id: p.id || crypto.randomUUID(),
+        participantType: p.participantType || 'monster',
+        name: p.name || 'Unknown',
+        characterId: p.characterId,
+        initiative: rollDie(20) + (p.initiative || 0),
+        armorClass: p.armorClass || 10,
+        maxHitPoints: p.maxHitPoints || 1,
+        currentHitPoints: p.currentHitPoints || p.maxHitPoints || 1,
+        temporaryHitPoints: 0,
+        position: p.position,
+        conditions: [],
+        deathSaves: { successes: 0, failures: 0 },
+        actionTaken: false,
+        bonusActionTaken: false,
+        reactionTaken: false,
+        movementUsed: 0,
+        monsterData: p.monsterData,
+        spellSlots: undefined,
+        activeConcentration: null,
+      };
+
+      // For player characters, copy spell slots from CharacterContext
+      if (p.participantType === 'player' && p.characterId && characterState.character?.id === p.characterId) {
+        participant.spellSlots = characterState.character.spellSlots;
+        participant.activeConcentration = characterState.character.activeConcentration;
+      }
+
+      return participant;
+    }) as CombatParticipant[];
 
     // Sort by initiative (highest first)
     participantsWithInitiative.sort((a, b) => b.initiative - a.initiative);
@@ -352,7 +371,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     dispatch({ type: 'START_COMBAT' });
 
     await saveEncounterToDatabase(encounter);
-  }, [saveEncounterToDatabase]);
+  }, [saveEncounterToDatabase, characterState.character]);
 
   const endCombat = useCallback(async () => {
     if (state.activeEncounter) {
@@ -399,10 +418,10 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
   // Actions & Damage
   // ===========================
 
-  const takeAction = useCallback(async (action: Partial<CombatAction>) => {
+  const takeAction = useCallback(async (action: Partial<CombatActionType>) => {
     if (!state.activeEncounter) return;
-    
-    const fullAction: CombatAction = {
+
+    let fullAction: CombatActionType = {
       id: crypto.randomUUID(),
       encounterId: state.activeEncounter.id,
       participantId: action.participantId || '',
@@ -423,17 +442,46 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
       dmNarration: action.dmNarration,
       timestamp: new Date(),
     };
+
+    const participant = state.activeEncounter.participants.find(p => p.id === action.participantId);
+    if (!participant) return;
+
+    // Handle spell casting
+    if (action.actionType === 'cast_spell' && participant.participantType === 'player') {
+      try {
+        const spellLevel = (action as any).spellLevel as SpellSlotLevel || 1;
+        const spellName = (action as any).spellName || 'Unknown Spell';
+        const { updatedParticipant, updatedAction } = castSpell(action, participant, spellName, spellLevel);
+        
+        // Update participant in combat
+        dispatch({
+          type: 'UPDATE_PARTICIPANT',
+          participantId: action.participantId!,
+          updates: {
+            spellSlots: updatedParticipant.spellSlots,
+            activeConcentration: updatedParticipant.activeConcentration,
+            actionTaken: true, // Casting a spell uses the action
+          },
+        });
+
+        fullAction = { ...fullAction, ...updatedAction };
+      } catch (error) {
+        console.error('Spell casting failed:', error);
+        // Still add the action but mark as failed
+        fullAction.description += ` (Failed: ${(error as Error).message})`;
+      }
+    } else {
+      // Mark participant as having taken action for non-spell actions
+      if (action.participantId && (action.actionType === 'attack' || action.actionType === 'cast_spell')) {
+        dispatch({
+          type: 'UPDATE_PARTICIPANT',
+          participantId: action.participantId,
+          updates: { actionTaken: true },
+        });
+      }
+    }
     
     dispatch({ type: 'ADD_ACTION', action: fullAction });
-    
-    // Mark participant as having taken action
-    if (action.participantId && action.actionType === 'attack') {
-      dispatch({
-        type: 'UPDATE_PARTICIPANT',
-        participantId: action.participantId,
-        updates: { actionTaken: true },
-      });
-    }
     
     // Apply damage if any
     if (action.damageDealt && action.targetParticipantId) {
@@ -458,12 +506,20 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     const newTempHP = participant.temporaryHitPoints - tempHPDamage;
     const newCurrentHP = Math.max(0, participant.currentHitPoints - actualDamage);
     
+    // Check concentration if participant is concentrating
+    const concentrationMaintained = checkConcentration(participant, damage);
+    let concentrationUpdate = {};
+    if (!concentrationMaintained) {
+      concentrationUpdate = { activeConcentration: null };
+    }
+    
     dispatch({
       type: 'UPDATE_PARTICIPANT',
       participantId,
       updates: {
         currentHitPoints: newCurrentHP,
         temporaryHitPoints: newTempHP,
+        ...concentrationUpdate,
       },
     });
   }, [state.activeEncounter]);
@@ -597,6 +653,8 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
       reactionTaken: false,
       movementUsed: 0,
       monsterData: participant.monsterData,
+      spellSlots: undefined,
+      activeConcentration: null,
     };
     
     dispatch({ type: 'ADD_PARTICIPANT', participant: fullParticipant });

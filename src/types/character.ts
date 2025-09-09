@@ -160,6 +160,9 @@ export interface Character {
     level: number;
   };
   ritualSpells?: string[];
+  // New: Spell slot management
+  spellSlots?: Record<number, { max: number; current: number }>; // Levels 1-9
+  activeConcentration?: string | null; // Currently concentrated spell name
   // Class Features
   classFeatures?: Record<string, any>;
   // Feats
@@ -244,6 +247,9 @@ export function transformCharacterForStorage(character: Character) {
     languages: (character.languages || []).join(','),
     cantrips: (character.cantrips || []).join(','),
     known_spells: (character.knownSpells || []).join(','),
+    // New: Persist spell slots and concentration
+    spell_slots: JSON.stringify(character.spellSlots || {}),
+    active_concentration: character.activeConcentration || null,
     class_features: JSON.stringify(character.classFeatures || {}),
     copper_pieces: character.currency?.cp || 0,
     silver_pieces: character.currency?.sp || 0,
