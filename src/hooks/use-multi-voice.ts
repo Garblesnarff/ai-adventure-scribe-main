@@ -177,7 +177,7 @@ export const useMultiVoice = () => {
   }, []);
 
   /**
-   * Generate audio for a single segment with retry logic
+   * Generate audio for a single segment with retry logic and caching
    */
   const generateAudioForSegment = React.useCallback(async (
     segment: AudioSegment, 
@@ -193,10 +193,30 @@ export const useMultiVoice = () => {
       throw new Error('Empty text segment');
     }
 
+    // Generate cache key based on voice ID and text content
+    const textHash = hashText(segment.text);
+    const cacheKey = `${segment.voiceConfig.id}_${textHash}`;
+    
+    // Check if we already have cached audio for this segment
+    const cachedSegment = audioCache.current.get(cacheKey);
+    if (cachedSegment && cachedSegment.audioUrl) {
+      console.log(`🔄 Using cached audio for segment: "${segment.text.substring(0, 50)}..." (${segment.character || 'Narrator'})`);
+      // Create a new blob URL from the cached blob to ensure it's still valid
+      const newAudioUrl = URL.createObjectURL(cachedSegment.audioBlob!);
+      return {
+        ...segment,
+        audioBlob: cachedSegment.audioBlob,
+        audioUrl: newAudioUrl,
+        isLoading: false
+      };
+    }
+
     const maxRetries = 2;
     const baseDelay = 1000; // 1 second
 
     try {
+      console.log(`🎵 Generating NEW audio for segment: "${segment.text.substring(0, 50)}..." (${segment.character || 'Narrator'})`);
+      
       const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${segment.voiceConfig.id}/stream`,
         {
@@ -236,12 +256,33 @@ export const useMultiVoice = () => {
       const audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      return {
+      const generatedSegment = {
         ...segment,
         audioBlob,
         audioUrl,
         isLoading: false
       };
+      
+      // Cache the generated audio
+      audioCache.current.set(cacheKey, {
+        ...generatedSegment,
+        audioUrl: undefined // Don't cache the URL, only the blob
+      });
+      
+      // Limit cache size to prevent memory issues
+      if (audioCache.current.size > 50) {
+        // Remove oldest cache entries
+        const entries = Array.from(audioCache.current.entries());
+        const toRemove = entries.slice(0, 10); // Remove 10 oldest
+        toRemove.forEach(([key]) => {
+          audioCache.current.delete(key);
+        });
+        console.log(`🧹 Cleaned up ${toRemove.length} old audio cache entries`);
+      }
+      
+      console.log(`💾 Cached audio segment for key: ${cacheKey}`);
+      return generatedSegment;
+      
     } catch (error) {
       // Don't retry on abort signals
       if (signal?.aborted || error instanceof Error && error.name === 'AbortError') {
@@ -264,7 +305,7 @@ export const useMultiVoice = () => {
 
       throw error;
     }
-  }, [getApiKey]);
+  }, [getApiKey, hashText]);
 
   /**
    * Generate audio for all segments with improved error handling
@@ -991,18 +1032,32 @@ export const useMultiVoice = () => {
     });
   }, [state.isVoiceEnabled, stopPlayback, toast]);
 
-  // Cleanup on unmount only - not on re-renders
-  React.useEffect(() => {
-    return () => {
-      // Only cleanup on actual unmount, cancel current playback
-      if (currentPlaybackId.current) {
-        currentPlaybackId.current = null;
-      }
-      if (abortController.current) {
-        abortController.current.abort();
-      }
+  /**
+   * Clear audio cache manually
+   */
+  const clearAudioCache = React.useCallback(() => {
+    const cacheSize = audioCache.current.size;
+    audioCache.current.clear();
+    console.log(`🧹 Cleared ${cacheSize} cached audio segments`);
+    toast({
+      title: "Audio Cache Cleared",
+      description: `Removed ${cacheSize} cached audio segments`,
+      duration: 2000,
+    });
+  }, [toast]);
+  
+  /**
+   * Get cache statistics for debugging
+   */
+  const getCacheStats = React.useCallback(() => {
+    const stats = {
+      size: audioCache.current.size,
+      keys: Array.from(audioCache.current.keys()),
+      totalBlobs: Array.from(audioCache.current.values()).filter(s => s.audioBlob).length
     };
-  }, []); // Empty dependency array - only run on mount/unmount
+    console.log('📊 Audio Cache Stats:', stats);
+    return stats;
+  }, []);
 
   return {
     // State
@@ -1023,6 +1078,10 @@ export const useMultiVoice = () => {
     toggleMute,
     toggleVoiceEnabled,
     testAudioPlayback, // Debug function
+    
+    // Cache management
+    clearAudioCache, // Clear all cached audio
+    getCacheStats, // Get cache statistics for debugging
     
     // Utilities
     parseText,

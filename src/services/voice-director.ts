@@ -197,6 +197,55 @@ export class VoiceDirector {
   // Character voice assignments (persistent)
   private static characterVoiceMap: Map<string, VoiceConfig> | null = null;
   
+  // Audio cache for generated segments
+  private static audioCache: Map<string, { audioBlob: Blob; timestamp: number }> = new Map();
+  private static readonly CACHE_MAX_SIZE = 50;
+  private static readonly CACHE_MAX_AGE = 1000 * 60 * 60; // 1 hour
+  
+  /**
+   * Generate cache key for audio segments
+   */
+  private static generateCacheKey(voiceId: string, text: string): string {
+    // Simple hash function for text
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return `${voiceId}_${Math.abs(hash)}`;
+  }
+  
+  /**
+   * Clean expired cache entries
+   */
+  private static cleanExpiredCache(): void {
+    const now = Date.now();
+    for (const [key, value] of VoiceDirector.audioCache.entries()) {
+      if (now - value.timestamp > VoiceDirector.CACHE_MAX_AGE) {
+        VoiceDirector.audioCache.delete(key);
+      }
+    }
+  }
+  
+  /**
+   * Manage cache size
+   */
+  private static manageCacheSize(): void {
+    if (VoiceDirector.audioCache.size > VoiceDirector.CACHE_MAX_SIZE) {
+      // Remove oldest entries
+      const entries = Array.from(VoiceDirector.audioCache.entries())
+        .sort((a, b) => a[1].timestamp - b[1].timestamp);
+      
+      const toRemove = entries.slice(0, 10); // Remove 10 oldest
+      toRemove.forEach(([key]) => {
+        VoiceDirector.audioCache.delete(key);
+      });
+      
+      console.log(`🧹 Cleaned up ${toRemove.length} old audio cache entries`);
+    }
+  }
+  
   /**
    * Ensure the characterVoiceMap is initialized
    */
@@ -283,10 +332,27 @@ export class VoiceDirector {
   }
   
   /**
-   * Generate audio for a single segment
+   * Generate audio for a single segment with caching
    */
   static async generateAudio(segment: VoiceSegment, apiKey: string): Promise<VoiceSegment> {
-    console.log(`🎵 Generating audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
+    const cacheKey = VoiceDirector.generateCacheKey(segment.voiceId, segment.text);
+    
+    // Check cache first
+    VoiceDirector.cleanExpiredCache();
+    const cachedAudio = VoiceDirector.audioCache.get(cacheKey);
+    
+    if (cachedAudio) {
+      console.log(`🔄 Using cached audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
+      const audioUrl = URL.createObjectURL(cachedAudio.audioBlob);
+      return {
+        ...segment,
+        audioBlob: cachedAudio.audioBlob,
+        audioUrl,
+        isGenerating: false
+      };
+    }
+    
+    console.log(`🎵 Generating NEW audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
     
     try {
       const response = await fetch(
@@ -313,6 +379,17 @@ export class VoiceDirector {
       const arrayBuffer = await response.arrayBuffer();
       const audioBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Cache the generated audio
+      VoiceDirector.audioCache.set(cacheKey, {
+        audioBlob,
+        timestamp: Date.now()
+      });
+      
+      // Manage cache size
+      VoiceDirector.manageCacheSize();
+      
+      console.log(`💾 Cached audio for key: ${cacheKey}`);
 
       return {
         ...segment,
@@ -475,6 +552,27 @@ export class VoiceDirector {
       'narrator', 'hero_male', 'hero_female', 'villain_male', 'villain_female',
       'monster', 'creature', 'goblin', 'merchant', 'guard', 'innkeeper', 'elder', 'child'
     ];
+  }
+  
+  /**
+   * Clear audio cache manually
+   */
+  static clearAudioCache(): void {
+    const cacheSize = VoiceDirector.audioCache.size;
+    VoiceDirector.audioCache.clear();
+    console.log(`🧹 Cleared ${cacheSize} cached audio segments`);
+  }
+  
+  /**
+   * Get audio cache statistics
+   */
+  static getAudioCacheStats(): { size: number; keys: string[] } {
+    const stats = {
+      size: VoiceDirector.audioCache.size,
+      keys: Array.from(VoiceDirector.audioCache.keys())
+    };
+    console.log('📊 Audio Cache Stats:', stats);
+    return stats;
   }
   
   /**
