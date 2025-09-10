@@ -195,28 +195,152 @@ function validateCombatRules(
   result: ValidationResult
 ): ValidationResult {
   const data = task.context?.data;
+  const action = data?.action;
+  const participant = data?.participant;
+  const encounter = data?.encounter;
   
-  if (data?.actionType) {
-    const actionRules = ruleValidations.find(r => 
-      r.rule_category === 'combat_actions' && 
-      r.validation_data.actions[data.actionType]
+  // Enhanced combat validation with real D&D 5e rules
+  if (action && participant) {
+    // Validate action economy
+    if (action.actionType === 'attack' || action.actionType === 'cast_spell' || action.actionType === 'grapple' || action.actionType === 'shove') {
+      if (participant.actionTaken) {
+        result.isValid = false;
+        result.errors?.push(`${participant.name} has already used their action this turn`);
+      }
+    }
+    
+    if (action.actionType === 'bonus_action' && participant.bonusActionTaken) {
+      result.isValid = false;
+      result.errors?.push(`${participant.name} has already used their bonus action this turn`);
+    }
+    
+    if (['reaction', 'opportunity_attack', 'counterspell', 'deflect_missiles'].includes(action.actionType) && participant.reactionTaken) {
+      result.isValid = false;
+      result.errors?.push(`${participant.name} has already used their reaction this turn`);
+    }
+    
+    // Validate conditions affecting actions
+    const incapacitatingConditions = ['stunned', 'paralyzed', 'unconscious', 'petrified'];
+    const hasIncapacitatingCondition = participant.conditions?.some(c => 
+      incapacitatingConditions.includes(c.name)
     );
     
-    if (actionRules) {
-      const actionValidation = actionRules.validation_data.actions[data.actionType];
-      
-      // Validate action economy
-      if (data.actionsUsed > actionValidation.actionCost) {
+    if (hasIncapacitatingCondition) {
+      result.isValid = false;
+      result.errors?.push(`${participant.name} is incapacitated and cannot take actions`);
+    }
+    
+    // Validate racial trait usage
+    if (participant.racialTraits) {
+      for (const trait of participant.racialTraits) {
+        if (trait.type === 'active' && !canUseRacialTrait(trait)) {
+          result.suggestions.push(`${trait.name} is not available (${trait.currentUses}/${trait.maxUses} uses remaining)`);
+        }
+      }
+    }
+    
+    // Validate class feature usage
+    if (participant.classFeatures && participant.resources) {
+      for (const feature of participant.classFeatures) {
+        if (feature.type !== 'passive' && !canUseClassFeature(feature, participant.resources)) {
+          result.suggestions.push(`${feature.name} is not available`);
+        }
+      }
+    }
+    
+    // Validate Barbarian Rage requirements
+    if (action.actionType === 'rage' && participant.characterClass === 'barbarian') {
+      if (participant.isRaging) {
         result.isValid = false;
-        result.errors?.push(`Insufficient actions remaining for ${data.actionType}`);
+        result.errors?.push(`${participant.name} is already raging`);
       }
       
-      // Validate requirements
-      actionValidation.requirements?.forEach((req: string) => {
-        if (!data.conditions?.includes(req)) {
-          result.suggestions.push(`${data.actionType} requires ${req}`);
+      const rageFeature = participant.classFeatures?.find(f => f.name === 'rage');
+      if (!rageFeature || (rageFeature.currentUses || 0) <= 0) {
+        result.isValid = false;
+        result.errors?.push(`${participant.name} has no rage uses remaining`);
+      }
+    }
+    
+    // Validate Sneak Attack conditions
+    if (action.actionType === 'attack' && participant.characterClass === 'rogue') {
+      const target = encounter?.participants?.find(p => p.id === action.targetParticipantId);
+      if (target) {
+        const hasAdvantage = checkSneakAttackAdvantage(participant, target, encounter);
+        if (hasAdvantage) {
+          result.suggestions.push(`Sneak Attack available - add ${getSneakAttackDice(participant.level || 1)}d6 damage`);
         }
-      });
+      }
+    }
+    
+    // Validate Divine Smite usage
+    if (action.actionType === 'divine_smite' && participant.characterClass === 'paladin') {
+      if (!participant.spellSlots || !hasAvailableSpellSlots(participant.spellSlots)) {
+        result.isValid = false;
+        result.errors?.push(`${participant.name} has no spell slots for Divine Smite`);
+      }
+    }
+    
+    // Validate spell casting
+    if (action.actionType === 'cast_spell') {
+      const spellLevel = action.spellLevel || 1;
+      const spellSlots = participant.spellSlots;
+      
+      if (spellSlots && spellSlots[spellLevel]?.current <= 0) {
+        result.isValid = false;
+        result.errors?.push(`No spell slots remaining for level ${spellLevel} spells`);
+      }
+      
+      // Check concentration
+      if (participant.activeConcentration && action.requiresConcentration) {
+        result.suggestions.push(`Casting this spell will end concentration on ${participant.activeConcentration}`);
+      }
+    }
+    
+    // Validate attack actions
+    if (action.actionType === 'attack') {
+      if (action.targetParticipantId) {
+        const target = encounter?.participants?.find(p => p.id === action.targetParticipantId);
+        if (target?.currentHitPoints <= 0) {
+          result.suggestions.push(`Target ${target.name} is unconscious - consider stabilizing instead`);
+        }
+      }
+    }
+    
+    // Validate movement-based actions
+    if (['dash', 'dodge'].includes(action.actionType)) {
+      const restrainingConditions = ['grappled', 'restrained', 'paralyzed'];
+      const isRestrained = participant.conditions?.some(c => 
+        restrainingConditions.includes(c.name)
+      );
+      
+      if (isRestrained && action.actionType === 'dash') {
+        result.isValid = false;
+        result.errors?.push(`${participant.name} is restrained and cannot dash`);
+      }
+    }
+    
+    // Provide tactical suggestions
+    if (participant.currentHitPoints <= participant.maxHitPoints * 0.25) {
+      result.suggestions.push(`${participant.name} is badly wounded - consider defensive actions or healing`);
+    }
+    
+    if (participant.conditions?.some(c => c.name === 'poisoned')) {
+      result.suggestions.push(`${participant.name} is poisoned - attacks have disadvantage`);
+    }
+  }
+  
+  // Validate encounter state
+  if (encounter) {
+    if (encounter.phase !== 'active') {
+      result.isValid = false;
+      result.errors?.push('Combat is not currently active');
+    }
+    
+    // Check if it's the participant's turn
+    if (encounter.currentTurnParticipantId !== participant?.id) {
+      result.isValid = false;
+      result.errors?.push(`It is not ${participant?.name}'s turn`);
     }
   }
 
@@ -263,4 +387,57 @@ function calculatePointBuyCost(scores: Record<string, number>): number {
   };
   
   return Object.values(scores).reduce((total, score) => total + (costTable[score] || 0), 0);
+}
+
+// Helper functions for enhanced combat validation
+function canUseRacialTrait(trait: any): boolean {
+  if (trait.type === 'passive') return true;
+  if (!trait.maxUses) return true;
+  return (trait.currentUses || 0) > 0;
+}
+
+function canUseClassFeature(feature: any, resources: any): boolean {
+  if (feature.type === 'passive') return true;
+  if (!feature.maxUses) return true;
+  
+  switch (feature.name) {
+    case 'ki':
+      return (resources.kiPoints?.current || 0) > (feature.resourceCost || 1);
+    default:
+      return (feature.currentUses || 0) > 0;
+  }
+}
+
+function getSneakAttackDice(level: number): number {
+  return Math.ceil(level / 2);
+}
+
+function checkSneakAttackAdvantage(attacker: any, target: any, encounter: any): boolean {
+  // Check if attacker has advantage on the attack
+  // This is simplified - in a real implementation you'd check all advantage sources
+  
+  // Check if there's an ally within 5 feet of the target
+  const alliesNearTarget = encounter?.participants?.filter((p: any) => 
+    p.id !== attacker.id && 
+    p.id !== target.id &&
+    p.participantType === attacker.participantType &&
+    p.currentHitPoints > 0 &&
+    isWithinRange(p, target, 5) // Simplified range check
+  );
+  
+  return alliesNearTarget?.length > 0;
+}
+
+function isWithinRange(participant1: any, participant2: any, range: number): boolean {
+  // Simplified range check - in a real implementation you'd have proper positioning
+  return true; // Assume most combat happens within range
+}
+
+function hasAvailableSpellSlots(spellSlots: Record<number, { max: number; current: number }>): boolean {
+  for (let level = 1; level <= 9; level++) {
+    if (spellSlots[level]?.current > 0) {
+      return true;
+    }
+  }
+  return false;
 }

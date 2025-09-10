@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCampaign } from '@/contexts/CampaignContext';
@@ -17,6 +18,7 @@ import { MessageProvider } from '@/contexts/MessageContext';
 import { useGameSession } from '@/hooks/use-game-session';
 import { CombatProvider } from '@/contexts/CombatContext';
 import CombatInterface from '@/components/combat/CombatInterface';
+import { Sword, X } from 'lucide-react';
 
 /**
  * GameContent Component
@@ -44,6 +46,7 @@ const GameContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [combatMode, setCombatMode] = useState(false);
+  const [showCombatInterface, setShowCombatInterface] = useState(false);
 
   useEffect(() => {
     const loadGameData = async () => {
