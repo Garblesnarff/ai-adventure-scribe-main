@@ -13,25 +13,18 @@ import {
   Weight,
   Plus,
   Minus,
-  Star
+  Star,
+  Zap,
+  Heart,
+  ZapIcon,
+  Info
 } from 'lucide-react';
+import { useMagicItemAttunement } from '@/hooks/use-magic-item-attunement';
+import { validateAttunementRequirements } from '@/utils/magicItemEffects';
 
 interface InventoryTabProps {
   character: Character;
-  onUpdate: () => void;
-}
-
-interface Item {
-  name: string;
-  quantity: number;
-  weight: number;
-  value: number; // in copper pieces
-  type: 'weapon' | 'armor' | 'gear' | 'magic' | 'consumable';
-  equipped?: boolean;
-  attuned?: boolean;
-  description?: string;
-  damage?: string;
-  properties?: string[];
+  onUpdate: (updatedCharacter: Character) => void;
 }
 
 interface Currency {
@@ -46,74 +39,31 @@ interface Currency {
  * Inventory & Equipment tab with weight tracking and currency management
  */
 const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
-  const [currency, setCurrency] = useState<Currency>({
-    cp: 23,
-    sp: 15,
-    ep: 2,
-    gp: 47,
-    pp: 3,
-  });
+  // Extract currency from character or use defaults
+  const currency: Currency = {
+    cp: character.currency?.cp || 0,
+    sp: character.currency?.sp || 0,
+    ep: character.currency?.ep || 0,
+    gp: character.currency?.gp || 0,
+    pp: character.currency?.pp || 0,
+  };
 
-  const [inventory, setInventory] = useState<Item[]>([
-    {
-      name: 'Longsword',
-      quantity: 1,
-      weight: 3,
-      value: 1500, // 15 gp in cp
-      type: 'weapon',
-      equipped: true,
-      damage: '1d8',
-      properties: ['Versatile (1d10)'],
-      description: 'A well-balanced sword with a sharp edge.',
-    },
-    {
-      name: 'Chain Mail',
-      quantity: 1,
-      weight: 55,
-      value: 7500, // 75 gp in cp
-      type: 'armor',
-      equipped: true,
-      description: 'Made of interlocking metal rings.',
-    },
-    {
-      name: 'Shield',
-      quantity: 1,
-      weight: 6,
-      value: 1000, // 10 gp in cp
-      type: 'armor',
-      equipped: true,
-      description: 'A sturdy wooden shield reinforced with metal.',
-    },
-    {
-      name: 'Health Potion',
-      quantity: 3,
-      weight: 0.5,
-      value: 5000, // 50 gp in cp
-      type: 'consumable',
-      description: 'Restores 2d4+2 hit points when consumed.',
-    },
-    {
-      name: 'Ring of Protection',
-      quantity: 1,
-      weight: 0,
-      value: 10000, // 100 gp in cp (magic item)
-      type: 'magic',
-      equipped: true,
-      attuned: true,
-      description: 'Grants +1 bonus to AC and saving throws.',
-    },
-  ]);
+  const { 
+    attuneToItem, 
+    removeAttunement, 
+    getItemAttunementStatus, 
+    getAttunementSummary 
+  } = useMagicItemAttunement(character, onUpdate);
 
   // Calculate carrying capacity
-  const strengthScore = character.abilityScores.strength.score;
+  const strengthScore = character.abilityScores?.strength?.score || 10;
   const carryingCapacity = strengthScore * 15; // Standard 5e rule
   const encumbered = strengthScore * 5;
   const heavilyEncumbered = strengthScore * 10;
 
-  // Calculate current weight
-  const currentWeight = inventory.reduce((total, item) => 
-    total + (item.weight * item.quantity), 0
-  );
+  // Calculate current weight (simplified - would need actual item weights)
+  const currentWeight = character.inventory?.reduce((total, item) => 
+    total + (item.quantity || 1), 0) || 0;
 
   // Calculate total currency weight (50 coins = 1 lb)
   const totalCoins = currency.cp + currency.sp + currency.ep + currency.gp + currency.pp;
@@ -139,18 +89,6 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
     currency.cp * 0.01
   ).toFixed(2);
 
-  const toggleEquipped = (index: number) => {
-    const newInventory = [...inventory];
-    newInventory[index].equipped = !newInventory[index].equipped;
-    setInventory(newInventory);
-  };
-
-  const toggleAttuned = (index: number) => {
-    const newInventory = [...inventory];
-    newInventory[index].attuned = !newInventory[index].attuned;
-    setInventory(newInventory);
-  };
-
   const getItemIcon = (type: string) => {
     switch (type) {
       case 'weapon': return <Sword className="w-4 h-4" />;
@@ -168,6 +106,33 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
       default: return 'text-green-600';
     }
   };
+
+  const toggleEquipped = (itemId: string) => {
+    const updatedCharacter = {
+      ...character,
+      inventory: character.inventory?.map(item => 
+        item.itemId === itemId 
+          ? { ...item, equipped: !item.equipped } 
+          : item
+      ) || []
+    };
+    
+    onUpdate(updatedCharacter);
+  };
+
+  const handleAttuneToggle = async (itemId: string) => {
+    const item = character.inventory?.find(invItem => invItem.itemId === itemId);
+    if (!item) return;
+    
+    if (item.isAttuned) {
+      await removeAttunement(itemId);
+    } else {
+      await attuneToItem(itemId);
+    }
+  };
+
+  // Get attunement summary
+  const attunementSummary = getAttunementSummary();
 
   return (
     <div className="space-y-6">
@@ -264,74 +229,99 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {inventory.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3 flex-1">
-                  {getItemIcon(item.type)}
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{item.name}</span>
-                      {item.equipped && (
-                        <Badge variant="secondary" className="text-xs">Equipped</Badge>
-                      )}
-                      {item.attuned && (
-                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
-                          Attuned
-                        </Badge>
-                      )}
-                      {item.properties && item.properties.length > 0 && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.properties[0]}
-                        </Badge>
-                      )}
-                    </div>
+            {character.inventory && character.inventory.length > 0 ? (
+              character.inventory.map((item, index) => {
+                const attunementStatus = getItemAttunementStatus(item.itemId);
+                return (
+                <div key={item.itemId} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3 flex-1">
+                    {getItemIcon('magic')} {/* Simplified for now */}
                     
-                    <div className="text-sm text-muted-foreground">
-                      Qty: {item.quantity} • Weight: {item.weight * item.quantity} lbs • 
-                      Value: {(item.value / 100).toFixed(2)} gp
-                    </div>
-                    
-                    {item.description && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {item.description}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{item.itemId}</span>
+                        {item.equipped && (
+                          <Badge variant="secondary" className="text-xs">Equipped</Badge>
+                        )}
+                        {item.isAttuned && (
+                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                            Attuned
+                          </Badge>
+                        )}
+                        {item.isMagic && (
+                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+                            Magic
+                          </Badge>
+                        )}
+                        {item.magicItemRarity && item.magicItemRarity !== 'common' && (
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {item.magicItemRarity.replace('_', ' ')}
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                      
+                      <div className="text-sm text-muted-foreground">
+                        Qty: {item.quantity || 1}
+                      </div>
+                      
+                      {/* Magic item details */}
+                      {item.isMagic && (
+                        <div className="mt-2 text-xs">
+                          {item.magicBonus !== 0 && (
+                            <div className="text-purple-600 font-medium">
+                              Bonus: +{item.magicBonus}
+                            </div>
+                          )}
+                          {item.magicProperties && item.magicProperties.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.magicProperties.map((prop, i) => (
+                                <Badge key={i} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                  {prop}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {item.attunementRequirements && (
+                            <div className="flex items-center gap-1 mt-1 text-muted-foreground">
+                              <Info className="w-3 h-3" />
+                              <span>Requires attunement: {item.attunementRequirements}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {item.damage && (
-                    <DiceRoller
-                      dice={item.damage}
-                      modifier={character.abilityScores.strength.modifier}
-                      label="Attack"
-                    />
-                  )}
                   
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      size="sm"
-                      variant={item.equipped ? "default" : "outline"}
-                      onClick={() => toggleEquipped(index)}
-                    >
-                      {item.equipped ? 'Equipped' : 'Equip'}
-                    </Button>
-                    
-                    {item.type === 'magic' && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1">
                       <Button
                         size="sm"
-                        variant={item.attuned ? "secondary" : "outline"}
-                        onClick={() => toggleAttuned(index)}
-                        className="text-xs"
+                        variant={item.equipped ? "default" : "outline"}
+                        onClick={() => toggleEquipped(item.itemId)}
                       >
-                        {item.attuned ? 'Attuned' : 'Attune'}
+                        {item.equipped ? 'Equipped' : 'Equip'}
                       </Button>
-                    )}
+                      
+                      {item.isMagic && item.requiresAttunement && (
+                        <Button
+                          size="sm"
+                          variant={item.isAttuned ? "secondary" : "outline"}
+                          onClick={() => handleAttuneToggle(item.itemId)}
+                          className="text-xs"
+                          disabled={!item.equipped || !attunementStatus.canAttune}
+                        >
+                          {item.isAttuned ? 'Attuned' : 'Attune'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
+              )})}
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No equipment found
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
@@ -339,14 +329,17 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
       {/* Attunement Slots */}
       <Card>
         <CardHeader>
-          <CardTitle>Attunement</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-purple-500" />
+            Attunement
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
             <span className="text-sm">Attuned Items:</span>
             <div className="flex gap-2">
               {[1, 2, 3].map((slot) => {
-                const attunedItems = inventory.filter(item => item.attuned);
+                const attunedItems = character.inventory?.filter(item => item.isAttuned) || [];
                 const isOccupied = slot <= attunedItems.length;
                 
                 return (
@@ -364,9 +357,15 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
               })}
             </div>
             <span className="text-xs text-muted-foreground">
-              {inventory.filter(item => item.attuned).length} / 3 slots used
+              {attunementSummary.attunedCount} / {attunementSummary.maxAttunementSlots} slots used
             </span>
           </div>
+          
+          {attunementSummary.isAtCapacity && (
+            <div className="mt-3 text-sm text-orange-600">
+              Attunement capacity reached. Remove attunement from an item to attune to a new one.
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -16,10 +16,13 @@
 // Imports
 // ===========================
 
-import { Character } from '@/types/character';
+import { Character, Spell } from '@/types/character';
 import { CombatParticipant, CombatAction } from '@/types/combat';
 import { classOptions } from '@/data/classOptions';
 import { spellOptions } from '@/data/spellOptions';
+import { allSpells } from '@/data/spellOptions';
+import { validateSpellCast } from '@/utils/spellComponents';
+import { consumeMaterialComponents, trackComponentUsage } from '@/utils/spellComponents';
 
 // ===========================
 // Type Helpers
@@ -163,6 +166,41 @@ export function castSpell(
   spellName: string,
   spellLevel: SpellSlotLevel
 ): { updatedParticipant: CombatParticipant; updatedAction: CombatAction } {
+  // Find the spell being cast
+  const spell = allSpells.find((s: Spell) => s.name === spellName);
+  if (!spell) {
+    throw new Error(`Spell ${spellName} not found`);
+  }
+
+  // Validate spell casting requirements (components, preparation, etc.)
+  // Note: For combat participants, we need to check if they have the spell prepared
+  // This is a simplified check - in a real implementation, you'd have the full character data
+  const character = {
+    // Create a minimal character object for validation
+    // In a real implementation, this would come from CharacterContext
+    preparedSpells: participant.preparedSpells || [],
+    spellSlots: participant.spellSlots,
+    activeConcentration: participant.activeConcentration,
+    conditions: participant.conditions || [],
+    abilityScores: {
+      // Placeholder values - in real implementation, these would come from character data
+      intelligence: { score: 10, modifier: 0 },
+      wisdom: { score: 10, modifier: 0 },
+      charisma: { score: 10, modifier: 0 },
+    },
+    class: {
+      spellcasting: {
+        ability: 'intelligence', // Placeholder
+        ritualCasting: false, // Placeholder
+      }
+    }
+  } as Character;
+
+  const validation = validateSpellCast(character, spell, spellLevel);
+  if (!validation.canCast) {
+    throw new Error(`Cannot cast ${spellName}: ${validation.reasons.join(', ')}`);
+  }
+
   if (!participant.spellSlots || participant.spellSlots[spellLevel]?.current <= 0) {
     throw new Error(`No available spell slots at level ${spellLevel} for ${participant.name}`);
   }
@@ -171,15 +209,13 @@ export function castSpell(
   const updatedSlots = { ...participant.spellSlots };
   updatedSlots[spellLevel] = { ...updatedSlots[spellLevel], current: updatedSlots[spellLevel].current - 1 };
 
-  // Set concentration if spell requires it (placeholder; integrate with spell data later)
+  // Set concentration if spell requires it
   let concentrationSpell = null;
-  const requiresConcentration = false; // Placeholder; set true for concentration spells
-  if (requiresConcentration && !participant.activeConcentration) {
+  if (spell.concentration && !participant.activeConcentration) {
     concentrationSpell = spellName;
-  } else if (requiresConcentration && participant.activeConcentration) {
+  } else if (spell.concentration && participant.activeConcentration) {
     throw new Error(`${participant.name} is already concentrating on ${participant.activeConcentration}`);
   }
-// Placeholder for concentration; will integrate spellOptions later
 
   const updatedParticipant: CombatParticipant = {
     ...participant,
@@ -187,11 +223,67 @@ export function castSpell(
     activeConcentration: concentrationSpell,
   };
 
+  // Create detailed action description with component information
+  let description = `${action.description} (Cast ${spellName} using level ${spellLevel} slot)`;
+  
+  // Add component information to the action description
+  const components = [];
+  if (spell.verbal) components.push('V');
+  if (spell.somatic) components.push('S');
+  if (spell.material) components.push('M');
+  
+  if (components.length > 0) {
+    description += ` [Components: ${components.join(', ')}]`;
+  }
+  
+  if (spell.material && spell.materialDescription) {
+    description += ` [Material: ${spell.materialDescription}]`;
+  }
+
   const fullAction: CombatAction = {
     ...action as CombatAction,
-    description: `${action.description} (Cast ${spellName} using level ${spellLevel} slot)`,
-    // Add spell-specific fields if needed
+    description,
+    // Add spell-specific fields
+    spellName: spell.name,
+    spellLevel: spell.level,
+    components: {
+      verbal: spell.verbal || false,
+      somatic: spell.somatic || false,
+      material: spell.material || false,
+      materialDescription: spell.materialDescription,
+      materialCost: spell.materialCost,
+      materialConsumed: spell.materialConsumed
+    }
   };
+
+  // Handle material component consumption and tracking
+  const componentTracking = trackComponentUsage(
+    {
+      // Create a minimal character object for tracking
+      // In a real implementation, this would come from CharacterContext
+      preparedSpells: participant.preparedSpells || [],
+      spellSlots: participant.spellSlots,
+      activeConcentration: participant.activeConcentration,
+      conditions: participant.conditions || [],
+      abilityScores: {
+        // Placeholder values - in real implementation, these would come from character data
+        intelligence: { score: 10, modifier: 0 },
+        wisdom: { score: 10, modifier: 0 },
+        charisma: { score: 10, modifier: 0 },
+      },
+      class: {
+        spellcasting: {
+          ability: 'intelligence', // Placeholder
+          ritualCasting: false, // Placeholder
+        }
+      }
+    } as Character,
+    spell
+  );
+  
+  if (componentTracking.trackingMessage) {
+    fullAction.description += ` [${componentTracking.trackingMessage}]`;
+  }
 
   return { updatedParticipant, updatedAction: fullAction };
 }

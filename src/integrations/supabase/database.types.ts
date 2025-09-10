@@ -108,6 +108,18 @@ export type Database = {
           item_type: string
           quantity: number | null
           updated_at: string | null
+          // Magic item properties
+          is_magic: boolean | null
+          magic_bonus: number | null
+          magic_properties: Json | null
+          requires_attunement: boolean | null
+          is_attuned: boolean | null
+          attunement_requirements: string | null
+          magic_item_type: string | null
+          magic_item_rarity: string | null
+          magic_effects: Json | null
+          // Multiclassing
+          multiclass_requirement: string | null
         }
         Insert: {
           character_id?: string | null
@@ -119,6 +131,18 @@ export type Database = {
           item_type: string
           quantity?: number | null
           updated_at?: string | null
+          // Magic item properties
+          is_magic?: boolean | null
+          magic_bonus?: number | null
+          magic_properties?: Json | null
+          requires_attunement?: boolean | null
+          is_attuned?: boolean | null
+          attunement_requirements?: string | null
+          magic_item_type?: string | null
+          magic_item_rarity?: string | null
+          magic_effects?: Json | null
+          // Multiclassing
+          multiclass_requirement?: string | null
         }
         Update: {
           character_id?: string | null
@@ -130,6 +154,18 @@ export type Database = {
           item_type?: string
           quantity?: number | null
           updated_at?: string | null
+          // Magic item properties
+          is_magic?: boolean | null
+          magic_bonus?: number | null
+          magic_properties?: Json | null
+          requires_attunement?: boolean | null
+          is_attuned?: boolean | null
+          attunement_requirements?: string | null
+          magic_item_type?: string | null
+          magic_item_rarity?: string | null
+          magic_effects?: Json | null
+          // Multiclassing
+          multiclass_requirement?: string | null
         }
         Relationships: [
           {
@@ -159,6 +195,8 @@ export type Database = {
           temporary_hit_points: number | null
           updated_at: string | null
           wisdom: number
+          // Multiclassing
+          multiclass_hit_dice: Json | null
         }
         Insert: {
           armor_class: number
@@ -177,6 +215,8 @@ export type Database = {
           temporary_hit_points?: number | null
           updated_at?: string | null
           wisdom: number
+          // Multiclassing
+          multiclass_hit_dice?: Json | null
         }
         Update: {
           armor_class?: number
@@ -195,6 +235,8 @@ export type Database = {
           temporary_hit_points?: number | null
           updated_at?: string | null
           wisdom?: number
+          // Multiclassing
+          multiclass_hit_dice?: Json | null
         }
         Relationships: [
           {
@@ -220,6 +262,24 @@ export type Database = {
           race: string
           updated_at: string | null
           user_id: string | null
+          // New AI-generated fields
+          image_url: string | null
+          appearance: string | null
+          personality_traits: string | null
+          personality_notes: string | null
+          backstory_elements: string | null
+          // Damage Resistances, Immunities, and Vulnerabilities
+          damage_resistances: Json | null
+          damage_immunities: Json | null
+          damage_vulnerabilities: Json | null
+          // Vision and Stealth
+          vision_types: Json | null
+          obscurement: string | null
+          is_hidden: boolean | null
+          stealth_check_bonus: number | null
+          // Multiclassing
+          class_levels: Json | null
+          total_level: number | null
         }
         Insert: {
           alignment?: string | null
@@ -234,6 +294,24 @@ export type Database = {
           race: string
           updated_at?: string | null
           user_id?: string | null
+          // New AI-generated fields
+          image_url?: string | null
+          appearance?: string | null
+          personality_traits?: string | null
+          personality_notes?: string | null
+          backstory_elements?: string | null
+          // Damage Resistances, Immunities, and Vulnerabilities
+          damage_resistances?: Json | null
+          damage_immunities?: Json | null
+          damage_vulnerabilities?: Json | null
+          // Vision and Stealth
+          vision_types?: Json | null
+          obscurement?: string | null
+          is_hidden?: boolean | null
+          stealth_check_bonus?: number | null
+          // Multiclassing
+          class_levels?: Json | null
+          total_level?: number | null
         }
         Update: {
           alignment?: string | null
@@ -248,6 +326,24 @@ export type Database = {
           race?: string
           updated_at?: string | null
           user_id?: string | null
+          // New AI-generated fields
+          image_url?: string | null
+          appearance?: string | null
+          personality_traits?: string | null
+          personality_notes?: string | null
+          backstory_elements?: string | null
+          // Damage Resistances, Immunities, and Vulnerabilities
+          damage_resistances?: Json | null
+          damage_immunities?: Json | null
+          damage_vulnerabilities?: Json | null
+          // Vision and Stealth
+          vision_types?: Json | null
+          obscurement?: string | null
+          is_hidden?: boolean | null
+          stealth_check_bonus?: number | null
+          // Multiclassing
+          class_levels?: Json | null
+          total_level?: number | null
         }
         Relationships: []
       }
@@ -395,6 +491,158 @@ export type Database = {
             columns: ["timeline_id"]
             isOneToOne: false
             referencedRelation: "timelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      environmental_hazards: {
+        Row: {
+          id: string
+          campaign_id: string | null
+          name: string
+          type: string
+          description: string | null
+          is_instant: boolean | null
+          is_area_effect: boolean | null
+          area_of_effect: Json | null
+          detect_dc: number | null
+          detect_skill: string | null
+          save_dc: number | null
+          save_ability: string | null
+          damage: Json | null
+          conditions: Json | null
+          special_effects: Json | null
+          exhaustion_level: number | null
+          movement_modifier: number | null
+          duration: number | null
+          recharge_rate: string | null
+          trigger_type: string | null
+          is_hidden: boolean | null
+          position_x: number | null
+          position_y: number | null
+          position_z: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          campaign_id?: string | null
+          name: string
+          type: string
+          description?: string | null
+          is_instant?: boolean | null
+          is_area_effect?: boolean | null
+          area_of_effect?: Json | null
+          detect_dc?: number | null
+          detect_skill?: string | null
+          save_dc?: number | null
+          save_ability?: string | null
+          damage?: Json | null
+          conditions?: Json | null
+          special_effects?: Json | null
+          exhaustion_level?: number | null
+          movement_modifier?: number | null
+          duration?: number | null
+          recharge_rate?: string | null
+          trigger_type?: string | null
+          is_hidden?: boolean | null
+          position_x?: number | null
+          position_y?: number | null
+          position_z?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          campaign_id?: string | null
+          name?: string
+          type?: string
+          description?: string | null
+          is_instant?: boolean | null
+          is_area_effect?: boolean | null
+          area_of_effect?: Json | null
+          detect_dc?: number | null
+          detect_skill?: string | null
+          save_dc?: number | null
+          save_ability?: string | null
+          damage?: Json | null
+          conditions?: Json | null
+          special_effects?: Json | null
+          exhaustion_level?: number | null
+          movement_modifier?: number | null
+          duration?: number | null
+          recharge_rate?: string | null
+          trigger_type?: string | null
+          is_hidden?: boolean | null
+          position_x?: number | null
+          position_y?: number | null
+          position_z?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "environmental_hazards_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hazard_interactions: {
+        Row: {
+          id: string
+          hazard_id: string | null
+          character_id: string | null
+          interaction_type: string
+          roll_result: number | null
+          success: boolean | null
+          damage_dealt: number | null
+          conditions_applied: Json | null
+          exhaustion_applied: number | null
+          notes: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          hazard_id?: string | null
+          character_id?: string | null
+          interaction_type: string
+          roll_result?: number | null
+          success?: boolean | null
+          damage_dealt?: number | null
+          conditions_applied?: Json | null
+          exhaustion_applied?: number | null
+          notes?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          hazard_id?: string | null
+          character_id?: string | null
+          interaction_type?: string
+          roll_result?: number | null
+          success?: boolean | null
+          damage_dealt?: number | null
+          conditions_applied?: Json | null
+          exhaustion_applied?: number | null
+          notes?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hazard_interactions_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hazard_interactions_hazard_id_fkey"
+            columns: ["hazard_id"]
+            isOneToOne: false
+            referencedRelation: "environmental_hazards"
             referencedColumns: ["id"]
           },
         ]

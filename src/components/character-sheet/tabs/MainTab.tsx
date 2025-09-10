@@ -15,7 +15,11 @@ import {
   Plus,
   Minus,
   RotateCcw,
-  Skull
+  Skull,
+  ShieldCheck,
+  ShieldX,
+  ShieldAlert,
+  Eye
 } from 'lucide-react';
 
 interface MainTabProps {
@@ -59,8 +63,27 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
   // Proficiency bonus calculation
   const proficiencyBonus = Math.floor((character.level - 1) / 4) + 2;
 
-  // Armor Class calculation (base 10 + Dex modifier)
-  const armorClass = 10 + character.abilityScores.dexterity.modifier;
+  // Armor Class calculation with unarmored defense support
+  let armorClass = 10 + character.abilityScores.dexterity.modifier;
+  
+  // Check for unarmored defense (Barbarian/monk without armor)
+  const hasUnarmoredDefense = character.class && 
+    (character.class.name.toLowerCase() === 'barbarian' || 
+     character.class.name.toLowerCase() === 'monk');
+  
+  const isWearingArmor = character.equippedArmor !== undefined && character.equippedArmor !== '';
+  
+  // If character has unarmored defense and is not wearing armor, use unarmored AC
+  if (hasUnarmoredDefense && !isWearingArmor) {
+    switch (character.class!.name.toLowerCase()) {
+      case 'barbarian':
+        armorClass = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.constitution.modifier;
+        break;
+      case 'monk':
+        armorClass = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.wisdom.modifier;
+        break;
+    }
+  }
 
   // Initiative modifier
   const initiativeModifier = character.abilityScores.dexterity.modifier;
@@ -157,7 +180,7 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
             {/* HP Bar */}
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-red-500 h-3 rounded-full transition-all"
+                className="bg-red-500 h-33 rounded-full transition-all"
                 style={{ 
                   width: `${Math.max(0, (combatState.currentHp / maxHp) * 100)}%` 
                 }}
@@ -174,6 +197,120 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
               </div>
             )}
           </div>
+
+          {/* Damage Resistances, Immunities, and Vulnerabilities */}
+          {(character.damageResistances?.length > 0 || 
+            character.damageImmunities?.length > 0 || 
+            character.damageVulnerabilities?.length > 0) && (
+            <div className="border-t pt-3">
+              <h4 className="text-sm font-medium mb-2">Damage Characteristics</h4>
+              
+              {/* Resistances */}
+              {character.damageResistances?.length > 0 && (
+                <div className="flex items-start gap-2 mb-2">
+                  <ShieldCheck className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Resistances:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {character.damageResistances.map((resistance, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs py-0.5">
+                          {resistance.charAt(0).toUpperCase() + resistance.slice(1)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Immunities */}
+              {character.damageImmunities?.length > 0 && (
+                <div className="flex items-start gap-2 mb-2">
+                  <Shield className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Immunities:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {character.damageImmunities.map((immunity, index) => (
+                        <Badge key={index} variant="default" className="text-xs py-0.5">
+                          {immunity.charAt(0).toUpperCase() + immunity.slice(1)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Vulnerabilities */}
+              {character.damageVulnerabilities?.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <ShieldX className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Vulnerabilities:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {character.damageVulnerabilities.map((vulnerability, index) => (
+                        <Badge key={index} variant="destructive" className="text-xs py-0.5">
+                          {vulnerability.charAt(0).toUpperCase() + vulnerability.slice(1)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Vision and Stealth */}
+          {(character.visionTypes?.length > 0 || character.obscurement !== 'clear' || character.isHidden) && (
+            <div className="border-t pt-3">
+              <h4 className="text-sm font-medium mb-2">Vision & Stealth</h4>
+              
+              {/* Vision Types */}
+              {character.visionTypes?.length > 0 && (
+                <div className="flex items-start gap-2 mb-2">
+                  <Target className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Vision:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {character.visionTypes.map((vision, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs py-0.5 bg-purple-100 text-purple-800">
+                          {vision.type.charAt(0).toUpperCase() + vision.type.slice(1)} ({vision.range} ft)
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Obscurement */}
+              {character.obscurement && character.obscurement !== 'clear' && (
+                <div className="flex items-start gap-2 mb-2">
+                  <ShieldAlert className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Environment:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <Badge variant="outline" className="text-xs py-0.5 border-orange-300 text-orange-700">
+                        {character.obscurement.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Hidden Status */}
+              {character.isHidden && (
+                <div className="flex items-start gap-2">
+                  <Eye className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Stealth:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <Badge variant="default" className="text-xs py-0.5 bg-gray-700">
+                        Hidden
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Damage/Healing Controls */}
           <div className="flex gap-2">
