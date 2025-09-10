@@ -26,7 +26,9 @@ import {
   Trash2,
   Edit3,
   Save,
-  X
+  X,
+  ShieldCheck,
+  ShieldX
 } from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
 import { CombatParticipant, ConditionName, Condition } from '@/types/combat';
@@ -376,6 +378,69 @@ const ParticipantHPRow: React.FC<ParticipantHPRowProps> = ({ participant }) => {
             </div>
           )}
         </div>
+
+        {/* Damage Resistances, Immunities, and Vulnerabilities */}
+        {(participant.damageResistances?.length > 0 || 
+          participant.damageImmunities?.length > 0 || 
+          participant.damageVulnerabilities?.length > 0) && (
+          <div className="space-y-2 p-3 bg-white border rounded">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Damage Characteristics
+            </h4>
+            
+            {/* Resistances */}
+            {participant.damageResistances?.length > 0 && (
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-xs text-muted-foreground">Resistances:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {participant.damageResistances.map((resistance, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs py-0.5">
+                        {resistance.charAt(0).toUpperCase() + resistance.slice(1)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Immunities */}
+            {participant.damageImmunities?.length > 0 && (
+              <div className="flex items-start gap-2">
+                <Shield className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-xs text-muted-foreground">Immunities:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {participant.damageImmunities.map((immunity, index) => (
+                      <Badge key={index} variant="default" className="text-xs py-0.5">
+                        {immunity.charAt(0).toUpperCase() + immunity.slice(1)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Vulnerabilities */}
+            {participant.damageVulnerabilities?.length > 0 && (
+              <div className="flex items-start gap-2">
+                <ShieldX className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-xs text-muted-foreground">Vulnerabilities:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {participant.damageVulnerabilities.map((vulnerability, index) => (
+                      <Badge key={index} variant="destructive" className="text-xs py-0.5">
+                        {vulnerability.charAt(0).toUpperCase() + vulnerability.slice(1)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <Separator />
 

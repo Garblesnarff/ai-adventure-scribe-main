@@ -205,6 +205,13 @@ export function getCoverDescription(coverType: CoverType): string {
 }
 
 /**
+ * Check if participant has cover
+ */
+export function hasCover(participant: CombatParticipant): boolean {
+  return participant.cover?.type !== 'none' && participant.cover?.type !== undefined;
+}
+
+/**
  * Update participant position and recalculate cover
  */
 export function updatePositionAndCover(

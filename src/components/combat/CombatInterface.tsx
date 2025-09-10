@@ -19,7 +19,9 @@ import {
   Play, 
   Pause, 
   RefreshCw,
-  AlertTriangle 
+  AlertTriangle,
+  Flame,
+  Zap
 } from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
 import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
@@ -28,6 +30,7 @@ import { useCharacter } from '@/contexts/CharacterContext';
 import InitiativeTracker from './InitiativeTracker';
 import EnemyCard from './EnemyCard';
 import DiceRoller from '@/components/ui/dice-roller';
+import ReactionOpportunityPanel from './ReactionOpportunityPanel';
 import { ActionType, ReactionOpportunity } from '@/types/combat';
 import { rollDice, rollAttack, rollDamage, calculateDamage } from '@/utils/diceUtils';
 import { getRacialTraits, canUseRacialTrait, useRacialTrait } from '@/utils/racialTraits';
@@ -42,49 +45,10 @@ import {
   canUseTwoWeaponFighting,
   makeMainHandAttack,
   makeOffHandAttack,
-  canMakeOffHandAttack,
-  createDefaultLightWeapons,
-  equipMainHandWeapon,
-  equipOffHandWeapon
+  canMakeOffHandAttack
 } from '@/utils/twoWeaponFighting';
-import {
-  rollDeathSave,
-  applyDeathSaveResult,
-  needsDeathSaves,
-  dealDamageWithDeathRules,
-  healParticipant,
-  isDying,
-  isDead
-} from '@/utils/deathSaves';
-import {
-  isConcentrating,
-  rollConcentrationSave,
-  handleDamageAndConcentration,
-  getConcentrationStatusDescription
-} from '@/utils/concentrationUtils';
-import {
-  getExhaustionLevel,
-  hasDisadvantageOnAttacksAndSaves,
-  hasSpeedHalved,
-  getExhaustionDescription
-} from '@/utils/exhaustionUtils';
-import {
-  canBeTargeted,
-  getEffectiveAC,
-  getCoverDescription
-} from '@/utils/coverUtils';
-import {
-  canSeeForAttack,
-  getVisionDescription
-} from '@/utils/visionUtils';
-import {
-  hasFightingStyle,
-  getFightingStyleACBonus,
-  getFightingStyleAttackBonus,
-  getFightingStyleDamageBonus,
-  applyGreatWeaponFighting,
-  getTotalAC
-} from '@/utils/fightingStyles';
+import { calculateDamageForAttack } from '@/utils/attackUtils';
+import { createDefaultLightWeapons, equipMainHandWeapon, equipOffHandWeapon } from '@/utils/equipmentUtils';
 
 const CombatInterface: React.FC = () => {
   const { 
@@ -94,7 +58,8 @@ const CombatInterface: React.FC = () => {
     nextTurn, 
     rollInitiative, 
     takeAction,
-    addParticipant 
+    addParticipant,
+    updateParticipant
   } = useCombat();
 
   const { sessionId } = useGameSession();
@@ -296,13 +261,14 @@ const CombatInterface: React.FC = () => {
     addParticipant(newEnemy);
   };
 
-  // Handle enhanced attack with advantage/disadvantage
+  // Handle enhanced attack with optional Divine Smite
   const handleEnhancedAttack = async (
-    participantId: string,
+    participantId: string, 
     targetId?: string,
     actionType: ActionType = 'attack',
     hasAdvantage: boolean = false,
-    hasDisadvantage: boolean = false
+    hasDisadvantage: boolean = false,
+    divineSmiteSlotLevel?: number // For Paladin's Divine Smite
   ) => {
     if (!activeEncounter) return;
 
@@ -320,32 +286,36 @@ const CombatInterface: React.FC = () => {
     // Check for critical hit
     const isCritical = attackRoll.critical || false;
     
-    // Calculate base damage
-    let damageRolls = rollDamage('1d8+3', isCritical);
-    let totalDamage = damageRolls.reduce((sum, roll) => sum + roll.total, 0);
-
-    // Add Sneak Attack damage if applicable
-    if (participant.characterClass === 'rogue' && actionType === 'attack') {
-      const sneakAttackDice = getSneakAttackDice(participant.level || 1);
-      const sneakAttackDamage = rollDamage(`${sneakAttackDice}d6`, isCritical);
-      damageRolls = [...damageRolls, ...sneakAttackDamage];
-      totalDamage += sneakAttackDamage.reduce((sum, roll) => sum + roll.total, 0);
+    // Calculate base damage with sneak attack and divine smite
+    const damageResult = calculateDamageForAttack(
+      { name: 'Longsword', damage: '1d8+3', damageType: 'slashing', properties: {} },
+      participant,
+      false,
+      isCritical,
+      undefined,
+      activeEncounter,
+      divineSmiteSlotLevel
+    );
+    
+    let damageRolls = [damageResult.damageRoll];
+    let totalDamage = damageResult.damageRoll.total;
+    
+    // Add sneak attack damage if applicable
+    if (damageResult.sneakAttackRoll) {
+      damageRolls = [...damageRolls, damageResult.sneakAttackRoll];
+      totalDamage += damageResult.sneakAttackRoll.total;
+    }
+    
+    // Add divine smite damage if applicable
+    if (damageResult.divineSmiteRoll) {
+      damageRolls = [...damageRolls, damageResult.divineSmiteRoll];
+      totalDamage += damageResult.divineSmiteRoll.total;
     }
 
     // Add Rage damage for Barbarian
     if (participant.isRaging && participant.characterClass === 'barbarian') {
       const rageDamage = getRageDamageBonus(participant.level || 1);
       totalDamage += rageDamage;
-    }
-
-    // Apply Divine Smite if this is a Paladin's attack
-    if (participant.characterClass === 'paladin' && actionType === 'divine_smite' && participant.spellSlots) {
-      const smiteLevel = 1; // Would be chosen by player
-      if (participant.spellSlots[smiteLevel]?.current > 0) {
-        const smiteDamage = rollDamage(`${1 + smiteLevel}d8`, isCritical);
-        damageRolls = [...damageRolls, ...smiteDamage];
-        totalDamage += smiteDamage.reduce((sum, roll) => sum + roll.total, 0);
-      }
     }
 
     const action = {
@@ -412,8 +382,8 @@ const CombatInterface: React.FC = () => {
     await handleCombatAction('bonus_action', participantId, undefined, action);
   };
 
-  // Handle class feature usage
-  const handleClassFeatureUse = async (participantId: string, featureName: string) => {
+  // Handle class features
+  const handleClassFeature = async (participantId: string, featureName: string) => {
     if (!activeEncounter) return;
 
     const participant = activeEncounter.participants.find(p => p.id === participantId);
@@ -423,17 +393,27 @@ const CombatInterface: React.FC = () => {
     if (!feature || !canUseClassFeature(feature, participant.resources)) return;
 
     let description = '';
+    let actionType: ActionType = 'use_class_feature' as ActionType;
+    
     switch (feature.name) {
       case 'rage':
-        description = `${participant.name} enters a rage`;
-        // Would set isRaging flag and apply resistances
+        // If already raging, deactivate rage
+        if (participant.isRaging) {
+          description = `${participant.name} stops raging`;
+          actionType = 'end_rage' as ActionType;
+        } else {
+          description = `${participant.name} enters a rage`;
+          actionType = 'use_class_feature' as ActionType;
+        }
         break;
       case 'action_surge':
         description = `${participant.name} uses Action Surge for an additional action`;
+        actionType = 'action_surge' as ActionType;
         break;
       case 'second_wind':
         const healing = rollDice(10, 1, participant.level || 1);
         description = `${participant.name} uses Second Wind to heal ${healing.total} hit points`;
+        actionType = 'second_wind' as ActionType;
         break;
       default:
         description = `${participant.name} uses ${feature.name}`;
@@ -441,12 +421,12 @@ const CombatInterface: React.FC = () => {
 
     const action = {
       participantId,
-      actionType: feature.type === 'bonus_action' ? 'bonus_action' : 'use_class_feature' as ActionType,
+      actionType,
       description,
       featureUsed: feature.name
     };
 
-    await handleCombatAction(feature.type as ActionType, participantId, undefined, action);
+    await handleCombatAction(actionType, participantId, undefined, action);
   };
 
   // Handle reaction opportunities
@@ -456,6 +436,12 @@ const CombatInterface: React.FC = () => {
     try {
       const reactionAction = processReactionResponse(opportunity, selectedReaction, activeEncounter);
       await takeAction(reactionAction);
+      
+      // Mark participant as having used their reaction
+      const participant = activeEncounter.participants.find(p => p.id === opportunity.participantId);
+      if (participant) {
+        updateParticipant(opportunity.participantId, { reactionTaken: true });
+      }
       
       // Remove the opportunity after use
       setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunity.id));
@@ -805,6 +791,17 @@ const CombatInterface: React.FC = () => {
                       >
                         Two-Weapon Attack
                       </Button>
+                      {/* Divine Smite button for Paladins */}
+                      {activeEncounter.currentTurnParticipantId && 
+                       activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId)?.characterClass === 'paladin' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEnhancedAttack(activeEncounter.currentTurnParticipantId!, selectedEnemy || undefined, 'divine_smite', false, false, 1)}
+                        >
+                          Divine Smite (1st)
+                        </Button>
+                      )}
                     </div>
 
                     {/* Movement & Utility */}
@@ -844,6 +841,20 @@ const CombatInterface: React.FC = () => {
                       >
                         Ready Action
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleCombatAction('short_rest', activeEncounter.currentTurnParticipantId!)}
+                      >
+                        Short Rest
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleCombatAction('long_rest', activeEncounter.currentTurnParticipantId!)}
+                      >
+                        Long Rest
+                      </Button>
                     </div>
 
                     {/* Spellcasting */}
@@ -863,26 +874,39 @@ const CombatInterface: React.FC = () => {
                       if (!currentParticipant?.classFeatures) return null;
 
                       return (
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium text-muted-foreground">Class Features:</div>
-                          <div className="flex gap-2 flex-wrap">
-                            {currentParticipant.classFeatures
-                              .filter(feature => feature.type !== 'passive' && canUseClassFeature(feature, currentParticipant.resources || {}))
-                              .map(feature => (
+                        <div className="flex gap-2 flex-wrap">
+                          {currentParticipant.classFeatures
+                            .filter(feature => feature.type !== 'passive')
+                            .map(feature => {
+                              const canUse = canUseClassFeature(feature, currentParticipant.resources || {});
+                              return (
                                 <Button
                                   key={feature.name}
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleClassFeatureUse(currentParticipant.id, feature.name)}
-                                  className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                  onClick={() => handleClassFeature(activeEncounter.currentTurnParticipantId!, feature.name)}
+                                  disabled={!canUse}
+                                  className={currentParticipant.isRaging && feature.name === 'rage' ? 'bg-red-500 text-white' : ''}
                                 >
-                                  {feature.name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                  {feature.currentUses !== undefined && (
-                                    <span className="ml-1 text-xs">({feature.currentUses}/{feature.maxUses})</span>
+                                  {feature.name === 'rage' && currentParticipant.isRaging ? (
+                                    <>
+                                      <Flame className="w-4 h-4 mr-1" />
+                                      Stop Raging
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Zap className="w-4 h-4 mr-1" />
+                                      {feature.name.replace('_', ' ')}
+                                    </>
+                                  )}
+                                  {feature.maxUses && (
+                                    <span className="ml-1 text-xs">
+                                      ({feature.currentUses || 0}/{feature.maxUses})
+                                    </span>
                                   )}
                                 </Button>
-                              ))}
-                          </div>
+                              );
+                            })}
                         </div>
                       );
                     })()}
@@ -1036,54 +1060,13 @@ const CombatInterface: React.FC = () => {
               </Card>
             )}
 
-            {/* Reaction Opportunities */}
-            {reactionOpportunities.length > 0 && (
-              <Card className="border-amber-200 bg-amber-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-amber-800 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    Reaction Opportunities
-                  </CardTitle>
-                  <p className="text-sm text-amber-700">
-                    Choose a reaction or dismiss to continue
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {reactionOpportunities.map(opportunity => {
-                    const participant = activeEncounter?.participants.find(p => p.id === opportunity.participantId);
-                    if (!participant) return null;
-
-                    return (
-                      <div key={opportunity.id} className="p-3 bg-white rounded-lg border border-amber-200">
-                        <div className="text-sm font-medium text-amber-900 mb-2">
-                          {participant.name}: {opportunity.triggerDescription}
-                        </div>
-                        <div className="flex gap-2 flex-wrap">
-                          {opportunity.availableReactions.map(reaction => (
-                            <Button
-                              key={reaction}
-                              size="sm"
-                              onClick={() => handleReactionOpportunity(opportunity, reaction)}
-                              className="bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
-                            >
-                              {reaction.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </Button>
-                          ))}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunity.id))}
-                            className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-                          >
-                            Dismiss
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            )}
+            <ReactionOpportunityPanel 
+              opportunities={reactionOpportunities}
+              onReactionSelected={handleReactionOpportunity}
+              onOpportunityDismissed={(opportunityId) => 
+                setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunityId))
+              }
+            />
 
             {/* Enemy Cards */}
             <Card>

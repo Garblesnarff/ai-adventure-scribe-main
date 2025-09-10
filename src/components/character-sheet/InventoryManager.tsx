@@ -85,9 +85,21 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
   const equippedShield = inventory.find(item => item.equipped && item.category === 'shield');
   const equippedWeapons = inventory.filter(item => item.equipped && item.category === 'weapon');
 
-  // Calculate AC
+  // Calculate AC with unarmored defense support
   const dexModifier = character?.abilityScores?.dexterity?.modifier || 0;
-  const calculatedAC = calculateArmorClass(equippedArmor || null, equippedShield || null, dexModifier);
+  const conModifier = character?.abilityScores?.constitution?.modifier || 0;
+  const wisModifier = character?.abilityScores?.wisdom?.modifier || 0;
+  const characterClass = character?.class?.name || '';
+  
+  const calculatedAC = calculateArmorClass(
+    equippedArmor || null, 
+    equippedShield || null, 
+    dexModifier,
+    0, // otherBonuses
+    characterClass,
+    conModifier,
+    wisModifier
+  );
 
   // Calculate total weight
   const totalWeight = inventory.reduce((total, item) => total + (item.weight || 0) * item.quantity, 0);

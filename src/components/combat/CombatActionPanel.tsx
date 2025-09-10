@@ -24,10 +24,14 @@ import {
   Clock,
   MessageSquare,
   Dice6,
-  RotateCcw
+  RotateCcw,
+  Moon,
+  Coffee
 } from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
 import { ActionType } from '@/types/combat';
+import SpellSlotPanel from '@/components/spellcasting/SpellSlotPanel';
+import RestActionPanel from '@/components/combat/RestActionPanel';
 
 // ===========================
 // Action Definitions
@@ -124,6 +128,24 @@ const COMBAT_ACTIONS: ActionDefinition[] = [
     actionRequired: true,
     bonusAction: false,
     quickAction: false
+  },
+  {
+    type: 'short_rest',
+    name: 'Short Rest',
+    icon: Coffee,
+    description: 'Take a short rest to recover some resources',
+    actionRequired: true,
+    bonusAction: false,
+    quickAction: false
+  },
+  {
+    type: 'long_rest',
+    name: 'Long Rest',
+    icon: Moon,
+    description: 'Take a long rest to fully recover',
+    actionRequired: true,
+    bonusAction: false,
+    quickAction: false
   }
 ];
 
@@ -132,7 +154,7 @@ const COMBAT_ACTIONS: ActionDefinition[] = [
 // ===========================
 
 interface CombatActionPanelProps {
-  onActionSubmit: (actionType: ActionType, description: string) => void;
+  onActionSubmit: (actionType: ActionType, description: string, additionalData?: any) => void;
   className?: string;
 }
 
@@ -150,6 +172,9 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
   const [selectedAction, setSelectedAction] = useState<ActionDefinition | null>(null);
   const [actionDetails, setActionDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSpell, setSelectedSpell] = useState<string | null>(null);
+  const [selectedSpellLevel, setSelectedSpellLevel] = useState<number>(1);
+  const [hitDiceToRoll, setHitDiceToRoll] = useState<number>(1);
 
   // Get current participant to check action availability
   const currentParticipant = activeEncounter?.participants.find(
@@ -168,7 +193,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
   };
 
   const handleDetailedAction = async () => {
-    if (!selectedAction || !actionDetails.trim()) return;
+    if (!selectedAction) return;
     
     setIsSubmitting(true);
     try {
@@ -178,19 +203,24 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
           console.error('No spell selected');
           return;
         }
-        await onActionSubmit(selectedAction.type, actionDetails, selectedSpell, selectedSpellLevel);
-      } else {
+        await onActionSubmit(selectedAction.type, actionDetails, { spellName: selectedSpell, spellLevel: selectedSpellLevel });
+      } 
+      // For rest actions, include hit dice selection
+      else if (selectedAction.type === 'short_rest' || selectedAction.type === 'long_rest') {
+        await onActionSubmit(selectedAction.type, actionDetails, { hitDiceToRoll });
+      } 
+      else {
         await onActionSubmit(selectedAction.type, actionDetails);
       }
       setSelectedAction(null);
       setActionDetails('');
       setSelectedSpell(null);
       setSelectedSpellLevel(1);
+      setHitDiceToRoll(1);
     } finally {
       setIsSubmitting(false);
     }
   };
-// Added check for selectedSpell in handleDetailedAction
 
   const handleCancelAction = () => {
     setSelectedAction(null);
@@ -296,6 +326,16 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
                 }}
                 availableSpells={['Fire Bolt', 'Magic Missile', 'Cure Wounds', 'Healing Word']} // From character data
               />
+            ) : selectedAction.type === 'short_rest' || selectedAction.type === 'long_rest' ? (
+              <RestActionPanel
+                restType={selectedAction.type === 'short_rest' ? 'short' : 'long'}
+                onRestSubmit={(hitDice) => {
+                  setHitDiceToRoll(hitDice);
+                  setActionDetails(`${selectedAction.name}: Rolling ${hitDice} hit dice`);
+                  handleDetailedAction();
+                }}
+                onCancel={handleCancelAction}
+              />
             ) : (
               <Textarea
                 placeholder={`Describe your ${selectedAction.name.toLowerCase()}...`}
@@ -306,24 +346,26 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
               />
             )}
             
-            <div className="flex space-x-2">
-              <Button
-                onClick={handleDetailedAction}
-                disabled={!actionDetails.trim() || isSubmitting}
-                className="flex-1"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                {isSubmitting ? 'Submitting...' : `Take ${selectedAction.name}`}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleCancelAction}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </div>
+            {selectedAction.type !== 'cast_spell' && selectedAction.type !== 'short_rest' && selectedAction.type !== 'long_rest' && (
+              <div className="flex space-x-2">
+                <Button
+                  onClick={handleDetailedAction}
+                  disabled={!actionDetails.trim() || isSubmitting}
+                  className="flex-1"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  {isSubmitting ? 'Submitting...' : `Take ${selectedAction.name}`}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleCancelAction}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
 // Integrated SpellSlotPanel for cast_spell actions

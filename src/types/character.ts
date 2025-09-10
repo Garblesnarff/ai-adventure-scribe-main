@@ -32,11 +32,22 @@ export interface Spell {
   castingTime: string;
   range: string;
   components: string;
+  // Detailed component breakdown
+  verbal?: boolean;
+  somatic?: boolean;
+  material?: boolean;
+  materialDescription?: string;
+  materialCost?: number;
+  materialConsumed?: boolean;
   duration: string;
   description: string;
   damage?: string;
   ritual?: boolean;
   concentration?: boolean;
+  // Preparation requirements
+  prepared?: boolean;
+  alwaysPrepared?: boolean; // For certain class features
+  preparationRequirement?: string; // Special preparation requirements
 }
 
 export interface Subrace {
@@ -165,6 +176,8 @@ export interface Character {
   activeConcentration?: string | null; // Currently concentrated spell name
   // Class Features
   classFeatures?: Record<string, any>;
+  // Fighting Styles
+  fightingStyles?: string[];
   // Feats
   feats?: string[];
   // Hit Points & Hit Dice
@@ -183,6 +196,37 @@ export interface Character {
     itemId: string;
     quantity: number;
     equipped: boolean;
+    // Magic item properties
+    isMagic?: boolean;
+    magicBonus?: number;
+    magicProperties?: string[];
+    requiresAttunement?: boolean;
+    isAttuned?: boolean;
+    attunementRequirements?: string;
+    magicItemType?: 'weapon' | 'armor' | 'ring' | 'rod' | 'staff' | 'wand' | 'wondrous';
+    magicItemRarity?: 'common' | 'uncommon' | 'rare' | 'very_rare' | 'legendary' | 'artifact';
+    magicEffects?: {
+      // Combat bonuses
+      attackBonus?: number;
+      damageBonus?: number;
+      acBonus?: number;
+      saveBonus?: number;
+      // Ability score bonuses
+      abilityScoreBonus?: {
+        ability: 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
+        bonus: number;
+      };
+      // Special effects
+      specialProperties?: string[];
+      // Spellcasting properties
+      spellEffects?: {
+        spellName: string;
+        spellLevel?: number;
+        charges?: number;
+        maxCharges?: number;
+        rechargeRate?: 'daily' | 'dawn' | 'dusk' | 'weekly' | 'monthly';
+      }[];
+    };
   }>;
   currency?: {
     cp: number;
@@ -212,6 +256,15 @@ export interface Character {
   }>;
   // Experience and Level
   totalLevel?: number;
+  // Damage Resistances, Immunities, and Vulnerabilities
+  damageResistances?: DamageType[];
+  damageImmunities?: DamageType[];
+  damageVulnerabilities?: DamageType[];
+  // Vision and Stealth
+  visionTypes?: VisionInfo[];
+  obscurement?: ObscurementLevel;
+  isHidden?: boolean;
+  stealthCheckBonus?: number;
   // New AI-generated fields
   image_url?: string;
   appearance?: string;
@@ -251,11 +304,22 @@ export function transformCharacterForStorage(character: Character) {
     spell_slots: JSON.stringify(character.spellSlots || {}),
     active_concentration: character.activeConcentration || null,
     class_features: JSON.stringify(character.classFeatures || {}),
+    // Fighting Styles
+    fighting_styles: JSON.stringify(character.fightingStyles || []),
     copper_pieces: character.currency?.cp || 0,
     silver_pieces: character.currency?.sp || 0,
     electrum_pieces: character.currency?.ep || 0,
     gold_pieces: character.currency?.gp || 0,
     platinum_pieces: character.currency?.pp || 0,
+    // Damage Resistances, Immunities, and Vulnerabilities
+    damage_resistances: JSON.stringify(character.damageResistances || []),
+    damage_immunities: JSON.stringify(character.damageImmunities || []),
+    damage_vulnerabilities: JSON.stringify(character.damageVulnerabilities || []),
+    // Vision and Stealth
+    vision_types: JSON.stringify(character.visionTypes || []),
+    obscurement: character.obscurement || 'clear',
+    is_hidden: character.isHidden || false,
+    stealth_check_bonus: character.stealthCheckBonus || 0,
     updated_at: new Date().toISOString(),
   };
 }

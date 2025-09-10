@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Character } from '@/types/character';
 import { Star, Users, Zap, BookOpen } from 'lucide-react';
+import FightingStylesDisplay from '@/components/character-sheet/sections/FightingStylesDisplay';
+import ClassFeatureTracker from '@/components/character-sheet/sections/ClassFeatureTracker';
 
 interface FeaturesTabProps {
   character: Character;
@@ -103,6 +105,12 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
 
   return (
     <div className="space-y-6">
+      {/* Class Feature Tracker */}
+      <ClassFeatureTracker character={character} onUpdate={onUpdate} />
+
+      {/* Fighting Styles */}
+      <FightingStylesDisplay character={character} />
+
       {/* Racial Traits */}
       {featuresBySource.race.length > 0 && (
         <Card>

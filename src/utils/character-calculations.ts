@@ -64,8 +64,30 @@ export const calculateHitPoints = (character: Character): number => {
 export const calculateArmorClass = (character: Character): number => {
   const dexMod = character.abilityScores?.dexterity?.modifier || 0;
   
+  // Check if character has unarmored defense feature
+  const hasUnarmoredDefense = character.class && 
+    (character.class.name.toLowerCase() === 'barbarian' || 
+     character.class.name.toLowerCase() === 'monk');
+  
+  // If character has unarmored defense, calculate accordingly
+  if (hasUnarmoredDefense && character.class && character.abilityScores) {
+    // Import the function dynamically to avoid circular dependencies
+    // For now, we'll implement the logic directly
+    
+    const baseAC = 10;
+    
+    switch (character.class.name.toLowerCase()) {
+      case 'barbarian':
+        const conMod = character.abilityScores.constitution?.modifier || 0;
+        return baseAC + dexMod + conMod;
+        
+      case 'monk':
+        const wisMod = character.abilityScores.wisdom?.modifier || 0;
+        return baseAC + dexMod + wisMod;
+    }
+  }
+  
   // Base AC (no armor) = 10 + Dex mod
-  // This could be enhanced to account for actual armor
   return 10 + dexMod;
 };
 

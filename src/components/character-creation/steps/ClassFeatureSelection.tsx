@@ -74,7 +74,7 @@ const ClassFeatureSelection: React.FC = () => {
 
     // Build class features object
     const classFeatures: Record<string, any> = {};
-    
+  
     // Add automatic features
     currentClass?.classFeatures.forEach(feature => {
       if (!feature.choices) {
@@ -86,6 +86,7 @@ const ClassFeatureSelection: React.FC = () => {
     });
 
     // Add selected features
+    const fightingStyles: string[] = [];
     Object.entries(selectedFeatures).forEach(([featureId, choice]) => {
       const feature = featuresWithChoices.find(f => f.id === featureId);
       if (feature) {
@@ -94,13 +95,20 @@ const ClassFeatureSelection: React.FC = () => {
           description: feature.description,
           choice: choice
         };
+      
+        // If this is a fighting style, add it to the fighting styles array
+        if (featureId === 'fighting-style') {
+          const [styleName] = choice.split(': ');
+          fightingStyles.push(styleName.toLowerCase().replace(/\s+/g, '_'));
+        }
       }
     });
 
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: {
-        classFeatures
+        classFeatures,
+        fightingStyles
       },
     });
 
@@ -108,7 +116,7 @@ const ClassFeatureSelection: React.FC = () => {
       title: 'Class Features Selected',
       description: 'Your level 1 class features have been applied.',
     });
-    
+  
     // Auto-scroll to navigation to proceed to next step
     scrollToNavigation();
   };

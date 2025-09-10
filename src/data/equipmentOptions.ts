@@ -21,9 +21,26 @@ export interface Equipment {
     type: 'bludgeoning' | 'piercing' | 'slashing' | 'acid' | 'cold' | 'fire' | 'force' | 'lightning' | 'necrotic' | 'poison' | 'psychic' | 'radiant' | 'thunder';
   };
   weaponType?: 'simple' | 'martial';
+  attackBonus?: number; // Base attack bonus for the weapon
   range?: {
     normal: number;
     long?: number;
+  };
+  // Additional weapon properties
+  weaponProperties?: {
+    light?: boolean;
+    finesse?: boolean;
+    thrown?: boolean;
+    twoHanded?: boolean;
+    versatile?: boolean;
+    reach?: boolean;
+    heavy?: boolean;
+    loading?: boolean;
+    ammunition?: boolean;
+    special?: string;
+    magical?: boolean;
+    silvered?: boolean;
+    adamantine?: boolean;
   };
   // Armor specific
   armorClass?: {
@@ -34,6 +51,36 @@ export interface Equipment {
   armorType?: 'light' | 'medium' | 'heavy';
   strengthRequirement?: number;
   stealthDisadvantage?: boolean;
+  // Magic Item Properties
+  isMagic?: boolean;
+  magicBonus?: number;
+  magicProperties?: string[];
+  requiresAttunement?: boolean;
+  attunementRequirements?: string;
+  magicItemType?: 'weapon' | 'armor' | 'ring' | 'rod' | 'staff' | 'wand' | 'wondrous';
+  magicItemRarity?: 'common' | 'uncommon' | 'rare' | 'very_rare' | 'legendary' | 'artifact';
+  magicEffects?: {
+    // Combat bonuses
+    attackBonus?: number;
+    damageBonus?: number;
+    acBonus?: number;
+    saveBonus?: number;
+    // Ability score bonuses
+    abilityScoreBonus?: {
+      ability: 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
+      bonus: number;
+    };
+    // Special effects
+    specialProperties?: string[];
+    // Spellcasting properties
+    spellEffects?: {
+      spellName: string;
+      spellLevel?: number;
+      charges?: number;
+      maxCharges?: number;
+      rechargeRate?: 'daily' | 'dawn' | 'dusk' | 'weekly' | 'monthly';
+    }[];
+  };
 }
 
 /**
@@ -68,6 +115,10 @@ export const weapons: Equipment[] = [
     cost: { amount: 1, currency: 'sp' },
     weight: 2,
     damage: { dice: '1d4', type: 'bludgeoning' },
+    attackBonus: 0,
+    weaponProperties: {
+      light: true
+    },
     properties: ['Light'],
     description: 'A simple wooden club.'
   },
@@ -80,8 +131,14 @@ export const weapons: Equipment[] = [
     cost: { amount: 2, currency: 'gp' },
     weight: 1,
     damage: { dice: '1d4', type: 'piercing' },
-    properties: ['Finesse', 'Light', 'Thrown (20/60)'],
+    attackBonus: 0,
+    weaponProperties: {
+      finesse: true,
+      light: true,
+      thrown: true
+    },
     range: { normal: 20, long: 60 },
+    properties: ['Finesse', 'Light', 'Thrown (20/60)'],
     description: 'A sharp, lightweight blade.'
   },
   {
@@ -93,8 +150,13 @@ export const weapons: Equipment[] = [
     cost: { amount: 5, currency: 'gp' },
     weight: 2,
     damage: { dice: '1d6', type: 'slashing' },
-    properties: ['Light', 'Thrown (20/60)'],
+    attackBonus: 0,
+    weaponProperties: {
+      light: true,
+      thrown: true
+    },
     range: { normal: 20, long: 60 },
+    properties: ['Light', 'Thrown (20/60)'],
     description: 'A small axe for one-handed use.'
   },
   {
@@ -106,20 +168,10 @@ export const weapons: Equipment[] = [
     cost: { amount: 5, currency: 'gp' },
     weight: 4,
     damage: { dice: '1d6', type: 'bludgeoning' },
+    attackBonus: 0,
+    weaponProperties: {},
     properties: [],
-    description: 'A heavy-headed weapon on a wooden handle.'
-  },
-  {
-    id: 'quarterstaff',
-    name: 'Quarterstaff',
-    category: 'weapon',
-    subcategory: 'simple melee',
-    weaponType: 'simple',
-    cost: { amount: 2, currency: 'sp' },
-    weight: 4,
-    damage: { dice: '1d6', type: 'bludgeoning' },
-    properties: ['Versatile (1d8)'],
-    description: 'A simple wooden staff.'
+    description: 'A simple wooden club.'
   },
 
   // Simple Ranged Weapons
@@ -132,8 +184,14 @@ export const weapons: Equipment[] = [
     cost: { amount: 25, currency: 'gp' },
     weight: 5,
     damage: { dice: '1d8', type: 'piercing' },
-    properties: ['Ammunition (80/320)', 'Loading', 'Two-handed'],
+    attackBonus: 0,
+    weaponProperties: {
+      ammunition: true,
+      loading: true,
+      twoHanded: true
+    },
     range: { normal: 80, long: 320 },
+    properties: ['Ammunition (80/320)', 'Loading', 'Two-handed'],
     description: 'A mechanical bow that fires bolts.'
   },
   {
@@ -145,8 +203,13 @@ export const weapons: Equipment[] = [
     cost: { amount: 25, currency: 'gp' },
     weight: 2,
     damage: { dice: '1d6', type: 'piercing' },
-    properties: ['Ammunition (80/320)', 'Two-handed'],
+    attackBonus: 0,
+    weaponProperties: {
+      ammunition: true,
+      twoHanded: true
+    },
     range: { normal: 80, long: 320 },
+    properties: ['Ammunition (80/320)', 'Two-handed'],
     description: 'A smaller bow for easier handling.'
   },
 
@@ -160,6 +223,10 @@ export const weapons: Equipment[] = [
     cost: { amount: 15, currency: 'gp' },
     weight: 3,
     damage: { dice: '1d8', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: {
+      versatile: true
+    },
     properties: ['Versatile (1d10)'],
     description: 'A classic knightly sword.'
   },
@@ -172,6 +239,10 @@ export const weapons: Equipment[] = [
     cost: { amount: 25, currency: 'gp' },
     weight: 2,
     damage: { dice: '1d8', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: {
+      finesse: true
+    },
     properties: ['Finesse'],
     description: 'A slender, sharply pointed sword.'
   },
@@ -184,6 +255,11 @@ export const weapons: Equipment[] = [
     cost: { amount: 25, currency: 'gp' },
     weight: 3,
     damage: { dice: '1d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: {
+      finesse: true,
+      light: true
+    },
     properties: ['Finesse', 'Light'],
     description: 'A curved, single-edged blade.'
   },
@@ -196,6 +272,11 @@ export const weapons: Equipment[] = [
     cost: { amount: 50, currency: 'gp' },
     weight: 6,
     damage: { dice: '2d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: {
+      heavy: true,
+      twoHanded: true
+    },
     properties: ['Heavy', 'Two-handed'],
     description: 'A massive two-handed sword.'
   },
@@ -210,8 +291,14 @@ export const weapons: Equipment[] = [
     cost: { amount: 50, currency: 'gp' },
     weight: 2,
     damage: { dice: '1d8', type: 'piercing' },
-    properties: ['Ammunition (150/600)', 'Heavy', 'Two-handed'],
+    attackBonus: 0,
+    weaponProperties: {
+      ammunition: true,
+      heavy: true,
+      twoHanded: true
+    },
     range: { normal: 150, long: 600 },
+    properties: ['Ammunition (150/600)', 'Heavy', 'Two-handed'],
     description: 'A tall bow with great range and power.'
   },
   {
@@ -223,8 +310,15 @@ export const weapons: Equipment[] = [
     cost: { amount: 50, currency: 'gp' },
     weight: 18,
     damage: { dice: '1d10', type: 'piercing' },
-    properties: ['Ammunition (100/400)', 'Heavy', 'Loading', 'Two-handed'],
+    attackBonus: 0,
+    weaponProperties: {
+      ammunition: true,
+      heavy: true,
+      loading: true,
+      twoHanded: true
+    },
     range: { normal: 100, long: 400 },
+    properties: ['Ammunition (100/400)', 'Heavy', 'Loading', 'Two-handed'],
     description: 'A powerful crossbow requiring significant strength.'
   }
 ];
@@ -472,8 +566,39 @@ export function calculateArmorClass(
   equippedArmor: Equipment | null,
   equippedShield: Equipment | null,
   dexModifier: number,
-  otherBonuses: number = 0
+  otherBonuses: number = 0,
+  characterClass?: string,
+  conModifier: number = 0,
+  wisModifier: number = 0
 ): number {
+  // Check for unarmored defense (Barbarian/monk without armor)
+  const hasUnarmoredDefense = characterClass && 
+    (characterClass.toLowerCase() === 'barbarian' || 
+     characterClass.toLowerCase() === 'monk');
+  
+  const isWearingArmor = equippedArmor !== null;
+  
+  // If character has unarmored defense and is not wearing armor, use unarmored AC
+  if (hasUnarmoredDefense && !isWearingArmor) {
+    let ac = 10 + dexModifier;
+    
+    switch (characterClass!.toLowerCase()) {
+      case 'barbarian':
+        ac += conModifier;
+        break;
+      case 'monk':
+        ac += wisModifier;
+        break;
+    }
+    
+    // Add shield bonus if equipped
+    if (equippedShield && equippedShield.armorClass) {
+      ac += equippedShield.armorClass.base;
+    }
+    
+    return ac + otherBonuses;
+  }
+
   let ac = 10 + dexModifier; // Base AC
 
   if (equippedArmor && equippedArmor.armorClass) {
