@@ -22,6 +22,7 @@ export type ParticipantType =
 
 export type ActionType = 
   | 'attack'          // Weapon or spell attack
+  | 'off_hand_attack' // Two-weapon fighting bonus action attack
   | 'cast_spell'      // Casting a spell
   | 'dash'            // Move extra distance
   | 'dodge'           // Gain AC bonus
@@ -30,8 +31,36 @@ export type ActionType =
   | 'ready'           // Ready an action
   | 'search'          // Look for something
   | 'use_object'      // Interact with item
+  | 'grapple'         // Special melee attack to grapple
+  | 'shove'           // Special melee attack to push/prone
+  | 'death_save'      // Roll death saving throw
+  | 'concentration_save' // Roll to maintain concentration
   | 'bonus_action'    // Secondary action
-  | 'reaction';       // Response to trigger
+  | 'reaction'        // Response to trigger
+  | 'opportunity_attack' // Specific reaction type
+  | 'counterspell'    // Specific reaction type
+  | 'deflect_missiles' // Specific reaction type
+  | 'shield_spell'    // Shield reaction
+  | 'absorb_elements' // Absorb elements reaction
+  | 'hellish_rebuke'; // Hellish rebuke reaction
+
+export type ReactionTrigger = 
+  | 'creature_leaves_reach'     // Opportunity attack
+  | 'spell_cast_in_range'       // Counterspell
+  | 'ranged_attack_hits'        // Deflect missiles
+  | 'creature_enters_reach'     // Polearm master
+  | 'damage_taken'              // Uncanny dodge, shield
+  | 'ally_attacked_nearby';     // Protection fighting style
+
+export interface ReactionOpportunity {
+  id: string;
+  participantId: string; // Who can react
+  trigger: ReactionTrigger;
+  triggerDescription: string;
+  availableReactions: ActionType[];
+  triggeredBy?: string; // Participant ID who triggered it
+  expiresAtEndOfTurn?: boolean;
+}
 
 export type DamageType = 
   | 'acid' | 'bludgeoning' | 'cold' | 'fire' | 'force'
@@ -46,7 +75,7 @@ export type ConditionName =
   | 'blinded' | 'charmed' | 'deafened' | 'frightened'
   | 'grappled' | 'incapacitated' | 'invisible' | 'paralyzed'
   | 'petrified' | 'poisoned' | 'prone' | 'restrained'
-  | 'stunned' | 'unconscious' | 'exhaustion';
+  | 'stunned' | 'unconscious' | 'exhaustion' | 'surprised';
 
 export interface Condition {
   name: ConditionName;
@@ -57,6 +86,123 @@ export interface Condition {
   saveAbility?: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
   sourceSpell?: string;
   concentrationRequired?: boolean;
+  level?: number; // For exhaustion levels (1-6)
+}
+
+export interface ExhaustionEffect {
+  level: number;
+  description: string;
+  effect: {
+    disadvantageOnAbilityChecks?: boolean;
+    speedHalved?: boolean;
+    disadvantageOnAttacksAndSaves?: boolean;
+    hitPointMaxHalved?: boolean;
+    speedReducedToZero?: boolean;
+    death?: boolean;
+  };
+}
+
+export interface DeathSaves {
+  successes: number;
+  failures: number;
+  isStable?: boolean;
+}
+
+export type CoverType = 'none' | 'half' | 'three_quarters' | 'total';
+
+export interface CoverInfo {
+  type: CoverType;
+  acBonus: number;
+  dexSaveBonus: number;
+  canBeTargeted: boolean;
+}
+
+export type VisionType = 'normal' | 'darkvision' | 'blindsight' | 'truesight';
+
+export interface VisionInfo {
+  type: VisionType;
+  range: number; // feet
+}
+
+export type ObscurementLevel = 'clear' | 'lightly_obscured' | 'heavily_obscured';
+
+export type FightingStyleName = 
+  | 'defense' | 'dueling' | 'great_weapon_fighting' 
+  | 'protection' | 'archery' | 'two_weapon_fighting'
+  | 'blessed_warrior' | 'blind_fighting';
+
+export interface FightingStyle {
+  name: FightingStyleName;
+  description: string;
+  effect: {
+    acBonus?: number;
+    attackBonus?: number;
+    damageBonus?: number;
+    rerollDamage?: boolean;
+    protectionReaction?: boolean;
+  };
+}
+
+export interface WeaponProperties {
+  light?: boolean;
+  finesse?: boolean;
+  thrown?: boolean;
+  twoHanded?: boolean;
+  versatile?: boolean;
+  reach?: boolean;
+  heavy?: boolean;
+  loading?: boolean;
+}
+
+// ===========================
+// Racial Traits & Class Features
+// ===========================
+
+export type RacialTraitName = 
+  | 'lucky' | 'breath_weapon' | 'draconic_resistance' | 'relentless_endurance' 
+  | 'fey_ancestry' | 'trance' | 'stonecunning' | 'poison_resistance'
+  | 'hellish_resistance' | 'infernal_legacy' | 'natural_armor'
+  | 'brave' | 'halfling_nimbleness';
+
+export interface RacialTrait {
+  name: RacialTraitName;
+  description: string;
+  type: 'passive' | 'active' | 'reaction';
+  usesPerRest?: 'short' | 'long' | 'none';
+  maxUses?: number;
+  currentUses?: number;
+  damageType?: DamageType; // For resistances
+  spellLevel?: number; // For innate spells
+  saveDC?: number; // For breath weapons, etc.
+}
+
+export type ClassFeatureName = 
+  | 'rage' | 'sneak_attack' | 'action_surge' | 'divine_smite' 
+  | 'deflect_missiles' | 'bardic_inspiration' | 'channel_divinity'
+  | 'eldritch_invocations' | 'metamagic' | 'hunters_mark'
+  | 'uncanny_dodge' | 'second_wind' | 'lay_on_hands' | 'ki';
+
+export interface ClassFeature {
+  name: ClassFeatureName;
+  description: string;
+  className: string;
+  level: number;
+  type: 'passive' | 'active' | 'reaction' | 'bonus_action';
+  usesPerRest?: 'short' | 'long' | 'none';
+  maxUses?: number;
+  currentUses?: number;
+  resourceCost?: number; // Ki points, sorcery points, etc.
+}
+
+export interface CharacterResources {
+  hitDice: { [dieType: string]: { max: number; current: number } };
+  kiPoints?: { max: number; current: number };
+  sorceryPoints?: { max: number; current: number };
+  bardic_inspiration?: { max: number; current: number };
+  channelDivinity?: { max: number; current: number };
+  rages?: { max: number; current: number };
+  actionSurge?: { max: number; current: number };
+  layOnHands?: { max: number; current: number };
 }
 
 // ===========================
@@ -83,10 +229,6 @@ export interface CombatParticipant {
   
   // Status
   conditions: Condition[];
-  deathSaves: {
-    successes: number;
-    failures: number;
-  };
   
   // Actions taken this turn (resets each turn)
   actionTaken: boolean;
@@ -94,9 +236,52 @@ export interface CombatParticipant {
   reactionTaken: boolean;
   movementUsed: number;
   
-  // New: Spellcasting for combat tracking
-  spellSlots?: Record<number, { max: number; current: number }>; // Copied from character for spell casters
-  activeConcentration?: string | null; // Currently concentrated spell
+  // Character data for combat features
+  race?: string;
+  characterClass?: string;
+  level?: number;
+  racialTraits?: RacialTrait[];
+  classFeatures?: ClassFeature[];
+  resources?: CharacterResources;
+  fightingStyles?: FightingStyle[];
+  
+  // Spellcasting for combat tracking
+  spellSlots?: Record<number, { max: number; current: number }>;
+  activeConcentration?: {
+    spell: string;
+    level: number;
+    dc: number; // Save DC for concentration
+  } | null;
+  
+  // Combat state tracking
+  damageResistances?: DamageType[];
+  damageImmunities?: DamageType[];
+  damageVulnerabilities?: DamageType[];
+  isRaging?: boolean; // Barbarian rage state
+  
+  // Enhanced death saves
+  deathSaves: DeathSaves;
+  
+  // Vision and positioning
+  visionTypes?: VisionInfo[];
+  cover?: CoverInfo;
+  obscurement?: ObscurementLevel;
+  
+  // Weapons for two-weapon fighting
+  mainHandWeapon?: {
+    name: string;
+    damage: string;
+    damageType: DamageType;
+    properties: WeaponProperties;
+    attackBonus: number;
+  };
+  offHandWeapon?: {
+    name: string;
+    damage: string;
+    damageType: DamageType;
+    properties: WeaponProperties;
+    attackBonus: number;
+  };
   
   // For monsters/NPCs
   monsterData?: {
@@ -125,11 +310,13 @@ export interface DiceRoll {
   dieType: number; // d4, d6, d8, d10, d12, d20
   count: number;
   modifier: number;
-  results: number[];
+  results: number[]; // All dice rolled (for advantage/disadvantage, includes all dice)
+  keptResults: number[]; // Which dice were actually used
   total: number;
   advantage?: boolean;
   disadvantage?: boolean;
   critical?: boolean;
+  naturalRoll?: number; // The natural die result before modifiers (for critical detection)
 }
 
 export interface CombatAction {
@@ -214,6 +401,13 @@ export interface CombatState {
   
   // Pending actions (before confirmation)
   pendingAction?: Partial<CombatAction>;
+  
+  // Reaction system
+  activeReactionOpportunities: ReactionOpportunity[];
+  pendingReactionResponse?: {
+    opportunityId: string;
+    selectedReaction?: ActionType;
+  };
 }
 
 // ===========================
