@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { task, agentContext, voiceContext, isFirstMessage = false } = await req.json();
+    const { task, agentContext, voiceContext, isFirstMessage = false, combatContext } = await req.json();
     const { campaignDetails, characterDetails, memories = [] } = agentContext;
 
     console.log('Processing DM Agent task:', {
@@ -24,7 +24,8 @@ serve(async (req) => {
       campaign: campaignDetails?.name,
       character: characterDetails?.name,
       memoryCount: memories?.length,
-      isFirstMessage: isFirstMessage
+      isFirstMessage: isFirstMessage,
+      hasCombatContext: !!combatContext
     });
 
     // Sort memories by importance and recency
@@ -45,11 +46,12 @@ serve(async (req) => {
     const environmentGen = new EnvironmentGenerator();
     const interactionGen = new CharacterInteractionGenerator();
 
-    // Build prompt with memory and voice context
+    // Build prompt with memory, voice context, and combat context
     const prompt = buildPrompt({
       campaignContext: campaignDetails,
       characterContext: characterDetails,
-      memories: relevantMemories
+      memories: relevantMemories,
+      combatContext: combatContext
     }, voiceContext, isFirstMessage);
 
     // Call Google Gemini with the enhanced prompt

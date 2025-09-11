@@ -8,6 +8,7 @@ import CharacterList from './components/character-list/character-list';
 import CharacterWizard from './components/character-creation/character-wizard';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
 import { SimpleCampaignView } from './components/campaign-view/SimpleCampaignView';
+import GameContent from './components/game/GameContent';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
 import { CharacterProvider } from './contexts/CharacterContext';
@@ -57,6 +58,7 @@ function App() {
                           <Route path="/character/:id" element={<CharacterSheet />} />
                           <Route path="/campaigns/create" element={<CampaignWizard />} />
                           <Route path="/campaign/:id" element={<SimpleCampaignView />} />
+                          <Route path="/game/:id" element={<GameContent />} />
                         </Routes>
                       </main>
                     </ProtectedRoute>

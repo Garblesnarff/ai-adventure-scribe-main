@@ -2,19 +2,37 @@
  * Combat AI Integration Hook
  * 
  * Bridges combat system with AI agents for seamless D&D experience.
- * Handles combat event notifications, AI responses, and rule validations.
+ * Handles combat event notifications, AI responses, dice rolls, and rule validations.
+ * Now includes combat detection from DM text and automatic dice roll generation.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
-import { useCombat } from '@/contexts/CombatContext';
+import { useEffect, useRef, useCallback, useContext } from 'react';
+import { CombatContext } from '@/contexts/CombatContext';
+import { MessageContext } from '@/contexts/MessageContext';
 import { useMessages } from '@/hooks/use-messages';
 import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
+import { detectCombatFromText, createCombatParticipantsFromDetection, DetectedCombatAction } from '@/utils/combatDetection';
+import { rollDice, DiceRoll } from '@/utils/diceUtils';
 import { 
   CombatEvent, 
   CombatAction, 
   CombatParticipant,
   ActionType 
 } from '@/types/combat';
+import { ChatMessage } from '@/types/game';
+
+// Combat message data interface for dice rolls
+export interface CombatMessageData {
+  type: 'attack_roll' | 'damage_roll' | 'saving_throw' | 'skill_check' | 'initiative' | 'death_save' | 'concentration_save';
+  actor: string;
+  target?: string;
+  roll: DiceRoll;
+  dc?: number;
+  success?: boolean;
+  critical?: boolean;
+  action?: DetectedCombatAction;
+  description: string;
+}
 
 interface CombatAIIntegrationProps {
   sessionId?: string;
@@ -27,12 +45,217 @@ export const useCombatAIIntegration = ({
   characterId,
   campaignId
 }: CombatAIIntegrationProps) => {
-  const { state: combatState } = useCombat();
+  const combatContext = useContext(CombatContext);
+  const messageContext = useContext(MessageContext);
   const { addMessage } = useMessages();
   const lastProcessedAction = useRef<string | null>(null);
   const lastProcessedRound = useRef<number>(0);
 
-  // Process combat events and trigger AI responses
+  if (!combatContext) {
+    throw new Error('useCombatAIIntegration must be used within CombatProvider');
+  }
+
+  const { 
+    state, 
+    startCombat, 
+    endCombat, 
+    addParticipant
+  } = combatContext;
+
+  const combatState = { 
+    isInCombat: state.isInCombat,
+    activeEncounter: state.activeEncounter 
+  };
+
+  // Process DM response for combat content
+  const processDMResponse = useCallback(async (
+    dmMessage: ChatMessage,
+    playerCharacter?: any
+  ): Promise<{
+    combatDetected: boolean;
+    shouldStartCombat: boolean;
+    shouldEndCombat: boolean;
+    combatMessages: ChatMessage[];
+  }> => {
+    const detection = detectCombatFromText(dmMessage.text);
+    const combatMessages: ChatMessage[] = [];
+
+    // Handle combat ending
+    if (detection.shouldEndCombat && state.activeEncounter) {
+      await endCombat();
+      return {
+        combatDetected: true,
+        shouldStartCombat: false,
+        shouldEndCombat: true,
+        combatMessages: []
+      };
+    }
+
+    // Handle combat starting
+    if (detection.shouldStartCombat && detection.enemies && detection.enemies.length > 0) {
+      // Create combat participants
+      const participants = createCombatParticipantsFromDetection(detection.enemies, playerCharacter);
+      
+      // Start combat and add participants
+      const newEncounter = await startCombat();
+      if (newEncounter) {
+        for (const participant of participants) {
+          await addParticipant(participant as CombatParticipant);
+        }
+        
+        // Create combat start message
+        const combatStartMessage: ChatMessage = {
+          text: `Combat has begun! Initiative has been rolled.`,
+          sender: 'system',
+          context: {
+            combatData: {
+              type: 'combat_start',
+              participants: participants.map(p => ({
+                name: p.name,
+                initiative: p.initiative || 0
+              }))
+            }
+          },
+          timestamp: new Date().toISOString()
+        };
+        
+        combatMessages.push(combatStartMessage);
+      }
+    }
+
+    // Process detected combat actions for dice rolls
+    if (detection.combatActions && detection.combatActions.length > 0) {
+      for (const action of detection.combatActions) {
+        const rollResult = await createCombatActionRoll(action);
+        if (rollResult) {
+          const combatMessage: ChatMessage = {
+            text: rollResult.description,
+            sender: 'system',
+            context: {
+              combatData: rollResult
+            },
+            timestamp: new Date().toISOString()
+          };
+          
+          combatMessages.push(combatMessage);
+        }
+      }
+    }
+
+    return {
+      combatDetected: detection.isCombat,
+      shouldStartCombat: detection.shouldStartCombat,
+      shouldEndCombat: detection.shouldEndCombat,
+      combatMessages
+    };
+  }, [state.activeEncounter, startCombat, endCombat, addParticipant]);
+
+  // Create dice roll for a detected combat action
+  const createCombatActionRoll = useCallback(async (action: DetectedCombatAction): Promise<CombatMessageData | null> => {
+    let roll: DiceRoll;
+    let dc: number | undefined;
+    let success: boolean | undefined;
+    let critical: boolean = false;
+
+    switch (action.rollType) {
+      case 'attack':
+        // Attack roll (d20 + modifiers)
+        roll = rollDice(20, 1, 5); // Base +5 attack bonus
+        critical = roll.results[0] === 20;
+        success = roll.total >= 15; // Assume AC 15 target
+        dc = 15;
+        break;
+
+      case 'damage': {
+        // Damage roll (weapon dependent)
+        const damageRoll = action.weapon ? getDamageRollForWeapon(action.weapon) : { dice: 8, count: 1, modifier: 3 };
+        roll = rollDice(damageRoll.dice, damageRoll.count, damageRoll.modifier);
+        break;
+      }
+
+      case 'save':
+        // Saving throw
+        roll = rollDice(20, 1, 2); // Base +2 save bonus
+        dc = 13; // Common save DC
+        success = roll.total >= dc;
+        break;
+
+      case 'skill':
+        // Skill check
+        roll = rollDice(20, 1, 1); // Base +1 skill bonus
+        dc = 12; // Common skill DC
+        success = roll.total >= dc;
+        break;
+
+      default:
+        return null;
+    }
+
+    const messageType = action.rollType === 'attack' ? 'attack_roll' :
+                       action.rollType === 'damage' ? 'damage_roll' :
+                       action.rollType === 'save' ? 'saving_throw' : 'skill_check';
+
+    return {
+      type: messageType,
+      actor: action.actor,
+      target: action.target,
+      roll,
+      dc,
+      success,
+      critical,
+      action,
+      description: createActionDescription(action, roll, success, critical)
+    };
+  }, []);
+
+  // Get damage roll parameters for a weapon
+  const getDamageRollForWeapon = (weapon: string): { dice: number; count: number; modifier: number } => {
+    const weaponMap: Record<string, { dice: number; count: number; modifier: number }> = {
+      'sword': { dice: 8, count: 1, modifier: 3 },
+      'crossbow': { dice: 8, count: 1, modifier: 3 },
+      'bow': { dice: 6, count: 1, modifier: 3 },
+      'dagger': { dice: 4, count: 1, modifier: 3 },
+      'mace': { dice: 6, count: 1, modifier: 3 },
+      'claw': { dice: 4, count: 1, modifier: 2 },
+      'bite': { dice: 6, count: 1, modifier: 2 }
+    };
+
+    return weaponMap[weapon.toLowerCase()] || { dice: 6, count: 1, modifier: 2 };
+  };
+
+  // Create descriptive text for combat actions
+  const createActionDescription = (
+    action: DetectedCombatAction,
+    roll: DiceRoll,
+    success?: boolean,
+    critical?: boolean
+  ): string => {
+    const actor = action.actor;
+    const target = action.target ? ` against ${action.target}` : '';
+    const weapon = action.weapon ? ` with ${action.weapon}` : '';
+
+    switch (action.rollType) {
+      case 'attack':
+        if (critical) {
+          return `${actor} scores a critical hit${target}${weapon}!`;
+        }
+        return `${actor} ${success ? 'hits' : 'misses'}${target}${weapon}`;
+
+      case 'damage':
+        return `${actor} deals damage${target}${weapon}`;
+
+      case 'save':
+        return `${actor} makes a saving throw`;
+
+      case 'skill':
+        return `${actor} attempts a skill check`;
+
+      default:
+        return `${actor} performs ${action.action}${target}`;
+    }
+  };
+
+  // Process combat events and trigger AI responses (legacy functionality)
   const processCombatEvent = useCallback(async (event: CombatEvent) => {
     if (!sessionId) return;
 
@@ -90,7 +313,7 @@ export const useCombatAIIntegration = ({
             data: {
               action,
               participant,
-              encounter: combatState.activeEncounter
+              encounter: state.activeEncounter
             }
           }
         },
@@ -110,13 +333,13 @@ export const useCombatAIIntegration = ({
       console.error('Error validating combat action:', error);
       return { isValid: true, suggestions: [], errors: [] };
     }
-  }, [combatState.activeEncounter]);
+  }, [state.activeEncounter]);
 
   // Monitor combat state changes
   useEffect(() => {
-    if (!combatState.activeEncounter) return;
+    if (!state.activeEncounter) return;
 
-    const encounter = combatState.activeEncounter;
+    const encounter = state.activeEncounter;
 
     // Check for new rounds
     if (encounter.currentRound > lastProcessedRound.current) {
@@ -167,11 +390,15 @@ export const useCombatAIIntegration = ({
       }
     });
 
-  }, [combatState.activeEncounter, processCombatEvent]);
+  }, [state.activeEncounter, processCombatEvent]);
 
   return {
     validateCombatAction,
-    processCombatEvent
+    processCombatEvent,
+    processDMResponse,
+    createCombatActionRoll,
+    isInCombat: state.isInCombat,
+    encounter: state.activeEncounter
   };
 };
 

@@ -10,10 +10,37 @@ export type SessionStatus = 'active' | 'expired' | 'ending';
  * Must be compatible with Supabase's Json type
  */
 export interface MessageContext {
-  [key: string]: string | null | undefined;
+  [key: string]: any;
   location?: string | null;
   emotion?: string | null;
   intent?: string | null;
+  combatData?: {
+    type: string;
+    actor?: string;
+    target?: string;
+    roll?: any;
+    dc?: number;
+    success?: boolean;
+    critical?: boolean;
+    action?: any;
+    description?: string;
+    participants?: Array<{
+      name: string;
+      initiative: number;
+      roll: any;
+    }>;
+    summary?: {
+      rounds: number;
+      totalDamage: number;
+      participants: Array<{
+        name: string;
+        damageDealt: number;
+        damageTaken: number;
+        status: string;
+      }>;
+      outcome: string;
+    };
+  };
 }
 
 /**

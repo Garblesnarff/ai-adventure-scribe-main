@@ -3,6 +3,7 @@ import { GeminiApiManager } from './gemini-api-manager';
 import { MemoryManager, MemoryContext } from './memory-manager';
 import { WorldBuilderService } from './world-builders/world-builder-service';
 import { voiceConsistencyService } from './voice-consistency-service';
+import { detectCombatFromText } from '@/utils/combatDetection';
 
 export interface ChatMessage {
   id: string;
@@ -106,6 +107,50 @@ Create a campaign description that makes players say "I want to play in this wor
   }
 
   /**
+   * Format combat detection context for the prompt
+   */
+  private static formatCombatContext(combatDetection: any): string {
+    if (!combatDetection.isCombat) return '';
+
+    let combatText = `\n\nCOMBAT CONTEXT DETECTED:
+Combat Type: ${combatDetection.combatType}
+Confidence: ${Math.round(combatDetection.confidence * 100)}%
+Should Start Combat: ${combatDetection.shouldStartCombat ? 'YES' : 'NO'}
+Should End Combat: ${combatDetection.shouldEndCombat ? 'YES' : 'NO'}`;
+
+    // Add detected enemies
+    if (combatDetection.enemies && combatDetection.enemies.length > 0) {
+      combatText += `\n\nDETECTED ENEMIES:`;
+      combatDetection.enemies.forEach((enemy: any) => {
+        combatText += `\n- ${enemy.name} (${enemy.type}, CR ${enemy.estimatedCR})
+  HP: ${enemy.suggestedHP}, AC: ${enemy.suggestedAC}
+  Description: ${enemy.description}`;
+      });
+    }
+
+    // Add detected combat actions
+    if (combatDetection.combatActions && combatDetection.combatActions.length > 0) {
+      combatText += `\n\nDETECTED COMBAT ACTIONS:`;
+      combatDetection.combatActions.forEach((action: any) => {
+        combatText += `\n- ${action.actor} performs ${action.action}${action.target ? ` against ${action.target}` : ''}${action.weapon ? ` with ${action.weapon}` : ''}
+  Roll Type: ${action.rollType}, Needs Roll: ${action.rollNeeded ? 'YES' : 'NO'}`;
+      });
+    }
+
+    combatText += `\n\n**COMBAT RESPONSE REQUIREMENTS:**
+When combat is detected, you MUST:
+1. Generate appropriate dice rolls for actions (attack rolls, damage rolls, saving throws)
+2. Apply combat results immediately (reduce HP, apply conditions, etc.)
+3. Describe combat actions cinematically but maintain mechanical accuracy
+4. Show dice results: "The orc swings (rolls 16, hits AC 13) for 8 slashing damage"
+5. Make tactical decisions for NPCs based on their intelligence and experience
+6. Consider environmental factors and positioning
+7. Narrate the consequences of each action dramatically`;
+
+    return combatText;
+  }
+
+  /**
    * Simplified chat with AI DM for MVP with fallback and streaming support
    * Uses a single AI call instead of complex agent system
    * Now includes voice segmentation for multi-voice narration
@@ -145,6 +190,20 @@ Create a campaign description that makes players say "I want to play in this wor
           console.warn('Failed to retrieve voice context:', voiceError);
         }
       }
+
+      // Detect combat from player message
+      const combatDetection = detectCombatFromText(params.message);
+      console.log(`⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`);
+      
+      if (combatDetection.isCombat) {
+        console.log(`🎯 Combat details:`, {
+          type: combatDetection.combatType,
+          shouldStart: combatDetection.shouldStartCombat,
+          shouldEnd: combatDetection.shouldEndCombat,
+          enemies: combatDetection.enemies?.length || 0,
+          actions: combatDetection.combatActions?.length || 0
+        });
+      }
       
       // Use local Gemini API
       const geminiManager = this.getGeminiManager();
@@ -181,54 +240,41 @@ Create a campaign description that makes players say "I want to play in this wor
           const isFirstMessage = (!params.conversationHistory || params.conversationHistory.length === 0) && (!params.message || params.message.trim() === '');
           
           if (isFirstMessage) {
-            contextPrompt += `\n\n**CAMPAIGN OPENING SCENARIO - CRITICAL FIRST MESSAGE**:
-This is the very first message of the campaign. You must create a comprehensive, engaging opening that establishes the adventure properly. Your response must be substantial (4-5 paragraphs) and follow professional DM opening techniques EXACTLY as specified.
+            contextPrompt += `\n\n**CAMPAIGN OPENING - FIRST MESSAGE REQUIREMENTS**:
+This is the campaign's opening scene. Create an engaging D&D adventure start that hooks the player immediately.
 
-**ABSOLUTELY MANDATORY STRUCTURE - FOLLOW EXACTLY:**
-You MUST follow this structure but DO NOT include the paragraph labels in your response. Use natural paragraph breaks only.
+**OPENING STRUCTURE:**
+1. **Scene Setting**: Establish location, atmosphere, and immediate situation using rich sensory details
+2. **Character Integration**: Connect the character's background and skills to the opening scenario  
+3. **Active NPC**: Include at least one speaking NPC with quoted dialogue and clear personality
+4. **Immediate Hook**: Present a compelling problem, opportunity, or mystery requiring action
+5. **Clear Choices**: End with 2-3 specific action options with different approaches and consequences
 
-**PARAGRAPH 1 (World Context) - Do not label:**
-Set the broader world situation and establish what's at stake. Show don't tell the campaign tone through atmosphere and events.
+**D&D MECHANICS REQUIREMENTS:**
+- If uncertain outcomes occur, specify needed dice rolls: "Make a Perception check (d20 + Wisdom modifier)"
+- Reference character abilities that might be relevant: "Your training might help here"
+- Include environmental details that suggest skill applications or tactical options
+- Set up potential ability checks, combat, or social interactions
 
-**PARAGRAPH 2 (Character Connection) - Do not label:**  
-Detail recent events and connect them to the character's background. Show why they're involved and what they personally stand to gain or lose.
+**ESSENTIAL ELEMENTS:**
+- Use appropriate atmosphere and tone throughout
+- Make the character feel central to unfolding events  
+- Create both immediate and long-term stakes
+- Include sensory details (sights, sounds, smells, textures)
+- Show why this character is the right person for this adventure
+- End with a clear "What do you do?" moment
 
-**PARAGRAPH 3 (Immediate Scene) - Do not label:**
-Put the player IN a specific location doing something right now. Include an NPC speaking directly to them with quoted dialogue.
+**NPC DIALOGUE REQUIREMENTS:**
+- ALL speech must be in quotes: "Welcome, traveler. I've been expecting you."
+- Give NPCs distinct voices and personalities based on their role and background
+- Include body language and emotional context with dialogue
+- Use dialogue to advance plot and provide hooks
 
-**PARAGRAPH 4 (Action Choices) - Do not label:**
-Present 2-3 specific, meaningful action choices for what to do next.
-
-**CRITICAL DO NOT INSTRUCTIONS:**
-- DO NOT break the fourth wall by mentioning "genre" or "your role"
-- DO NOT write pure exposition without putting the player in scene
-- DO NOT skip the NPC with direct quoted dialogue
-- DO NOT end without specific action choices
-- DO NOT make it one long paragraph - use clear breaks
-- DO NOT just describe the world - put the player IN it actively participating
-
-**EXAMPLE OF PROPER FORMAT (no paragraph labels shown):**
-
-The kingdom of Astoria has enjoyed decades of peace, but recently dark omens have plagued the land. Crops wither in the fields, strange lights dance in the northern forests, and travelers speak of shadowy figures lurking along the roads. The king's advisors whisper of an ancient curse awakening, one that could plunge the realm into eternal darkness.
-
-Three days ago, a desperate messenger arrived in your hometown seeking anyone brave enough to investigate the mysterious happenings near Blackwood Vale. Your experience as a former soldier caught the attention of the local magistrate, who believes your military training and knowledge of the northern territories make you uniquely qualified for this dangerous mission. The promise of gold and glory appeals to your adventurous spirit, but more importantly, your sister lives in a village near the affected area.
-
-You now stand at the edge of Blackwood Vale as mist rolls across the abandoned fields. The local guide, an elderly woman named Martha, points toward a crumbling watchtower with her gnarled walking stick. "That's where the screams started three nights ago," she says, her voice trembling. "No one who's gone to investigate has come back. The magistrate says you're our last hope, but I fear whatever lurks in that tower hungers for more victims."
-
-What do you do? You could approach the watchtower directly to investigate the source of the screams, question Martha further about what she's seen to gather more information, or scout the perimeter of the vale to look for clues before confronting whatever awaits.
-
-**MANDATORY REQUIREMENTS FOR SUCCESS:**
-- Player must be actively IN a scene, not just hearing about it
-- Include at least one NPC with direct quoted dialogue
-- Establish both immediate and long-term stakes
-- End with 2-3 clear, meaningful action choices
-- Use atmospheric details to show the campaign tone
-- Connect to character background meaningfully
-- Make it feel like the start of an epic adventure
-
-**CRITICAL: DO NOT INCLUDE ANY PARAGRAPH LABELS OR HEADERS IN YOUR RESPONSE.**
-Write exactly in the paragraph structure shown above, with natural paragraph breaks only. Follow the structure internally but show only the narrative content to the player.`;
+Keep opening substantial (3-4 paragraphs) but focused on immediate engagement and player choice.`;
           }
+
+          // Add combat context if detected
+          contextPrompt += this.formatCombatContext(combatDetection);
 
           // Add voice context for multi-voice narration
           if (voiceContext) {
@@ -340,12 +386,31 @@ Response:
 ✅ CORRECT: The guard steps forward, hand on sword hilt. "State your business, stranger. The city's been on edge lately."
 ❌ INCORRECT: The guard approaches and questions your presence suspiciously.
 
-**Combat Guidelines:**
-- Request initiative rolls at combat start
+**CORE DM RESPONSE PRINCIPLES:**
+Respond to player actions with clear consequences and vivid descriptions using D&D 5e mechanics when appropriate.
+
+**COMBAT GUIDELINES:**
+- Request initiative rolls at combat start: "Roll initiative (d20 + Dex modifier)"
 - Ask for attack rolls, damage rolls, and saving throws as needed
-- Describe hits/misses cinematically
-- Track position and tactical elements
-- Include battle cries and taunts in direct quotes
+- Show dice results: "The orc swings (rolls 16, hits AC 13) for 8 slashing damage"
+- Apply D&D 5e rules: advantage/disadvantage, resistance, spell components, concentration
+- Describe hits/misses cinematically with mechanical accuracy
+- Track position, conditions, and tactical elements
+- Include battle cries and combat dialogue in direct quotes
+- Consider environmental factors (cover, difficult terrain, lighting)
+- NPCs should use tactics appropriate to their intelligence and experience
+
+**MECHANICS VISIBILITY:**
+- Always show dice rolls and their results when they occur
+- Display HP changes, condition effects, and resource costs
+- Track narrative threads and callback to previous events
+- Maintain scene consistency with actual memories only
+
+**CHOICE STRUCTURE:**
+- Always provide 2-3 meaningful choices for the player's next action
+- Include potential skill checks or rolls required for each option
+- Show risk/reward for different approaches
+- End with clear "What do you do?" prompts
 
 Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for player action or decision.
 
@@ -538,7 +603,21 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
           }
         }
         
-        return result;
+        // Add combat detection data to the result
+        const enhancedResult = {
+          ...result,
+          combatDetection: {
+            isCombat: combatDetection.isCombat,
+            confidence: combatDetection.confidence,
+            combatType: combatDetection.combatType,
+            shouldStartCombat: combatDetection.shouldStartCombat,
+            shouldEndCombat: combatDetection.shouldEndCombat,
+            enemies: combatDetection.enemies || [],
+            combatActions: combatDetection.combatActions || []
+          }
+        };
+        
+        return enhancedResult;
         
     } catch (geminiError) {
       console.error('Local Gemini API failed:', geminiError);

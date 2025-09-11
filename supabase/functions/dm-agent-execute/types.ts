@@ -3,6 +3,55 @@ export interface AgentContext {
   characterContext: CharacterContext;
   memories: Memory[];
   gameState?: GameState;
+  combatContext?: CombatContext;
+}
+
+export interface CombatContext {
+  detection?: {
+    isCombat: boolean;
+    combatType: string;
+    confidence: number;
+    shouldStartCombat: boolean;
+    shouldEndCombat: boolean;
+    enemies?: Array<{
+      name: string;
+      type: string;
+      estimatedCR: string;
+      description: string;
+      suggestedHP: number;
+      suggestedAC: number;
+    }>;
+    combatActions?: Array<{
+      actor: string;
+      action: string;
+      target?: string;
+      weapon?: string;
+      rollNeeded: boolean;
+      rollType: string;
+    }>;
+  };
+  encounter?: {
+    status: string;
+    currentRound: number;
+    phase: string;
+    location?: string;
+    terrain?: string;
+    visibility?: string;
+    participants?: Array<{
+      name: string;
+      participantType: string;
+      initiative: number;
+      currentHitPoints: number;
+      maxHitPoints: number;
+      temporaryHitPoints: number;
+      armorClass: number;
+      conditions?: Array<{ name: string }>;
+      deathSaves?: {
+        successes: number;
+        failures: number;
+      };
+    }>;
+  };
 }
 
 export interface CampaignContext {
@@ -69,6 +118,32 @@ export interface GameState {
     availableActions: string[];
     environmentalEffects: string[];
     threatLevel: 'none' | 'low' | 'medium' | 'high';
+  };
+  combat?: {
+    isInCombat: boolean;
+    activeEncounter?: {
+      currentRound: number;
+      phase: string;
+      roundsElapsed: number;
+      currentTurnParticipantId?: string;
+      location?: string;
+      visibility?: string;
+      terrain?: string;
+      environmentalEffects?: string[];
+      participants: Array<{
+        id: string;
+        name: string;
+        initiative: number;
+        currentHitPoints: number;
+        maxHitPoints: number;
+        temporaryHitPoints: number;
+        conditions: Array<{ name: string }>;
+        deathSaves?: {
+          successes: number;
+          failures: number;
+        };
+      }>;
+    };
   };
 }
 
