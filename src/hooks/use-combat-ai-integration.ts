@@ -7,8 +7,7 @@
  */
 
 import { useEffect, useRef, useCallback, useContext } from 'react';
-import { CombatContext } from '@/contexts/CombatContext';
-import { MessageContext } from '@/contexts/MessageContext';
+import { useCombat } from '@/contexts/CombatContext';
 import { useMessages } from '@/hooks/use-messages';
 import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
 import { detectCombatFromText, createCombatParticipantsFromDetection, DetectedCombatAction } from '@/utils/combatDetection';
@@ -45,9 +44,8 @@ export const useCombatAIIntegration = ({
   characterId,
   campaignId
 }: CombatAIIntegrationProps) => {
-  const combatContext = useContext(CombatContext);
-  const messageContext = useContext(MessageContext);
-  const { addMessage } = useMessages();
+  const combatContext = useCombat();
+  const { addMessage } = useMessages(sessionId);
   const lastProcessedAction = useRef<string | null>(null);
   const lastProcessedRound = useRef<number>(0);
 
@@ -111,8 +109,9 @@ export const useCombatAIIntegration = ({
             combatData: {
               type: 'combat_start',
               participants: participants.map(p => ({
-                name: p.name,
-                initiative: p.initiative || 0
+                name: p.name || 'Unknown',
+                initiative: p.initiative || 0,
+                roll: rollDice(20, 1, 0) // Add roll for initiative
               }))
             }
           },
@@ -264,30 +263,55 @@ export const useCombatAIIntegration = ({
       const shouldNarrate = shouldTriggerDMNarration(event, combatState.activeEncounter);
 
       if (shouldNarrate) {
-        // Send combat context to DM agent
+        // Format the message for DM agent
+        const eventMessage = formatCombatEventForDM(event);
+        
+        // Send combat context to DM agent via updated edge function handler
+        // This will automatically use local AIService if available
         const dmResponse = await callEdgeFunction('dm-agent-execute', {
-          message: formatCombatEventForDM(event),
-          sessionId,
-          characterId,
-          campaignId,
-          gameState: {
-            combat: {
-              isInCombat: combatState.isInCombat,
-              activeEncounter: combatState.activeEncounter
+          task: {
+            id: `combat_event_${Date.now()}`,
+            description: eventMessage,
+            expectedOutput: 'Combat narrative response',
+            context: {
+              messageHistory: [], // Previous messages would go here
+              playerIntent: 'combat',
+              playerEmotion: 'focused'
             }
-          }
+          },
+          agentContext: {
+            role: 'Dungeon Master',
+            goal: 'Narrate combat events dramatically',
+            backstory: 'An experienced DM with vast knowledge of combat storytelling',
+            campaignDetails: null, // Would be populated from session context
+            characterDetails: null, // Would be populated from session context  
+            memories: []
+          },
+          combatContext: {
+            detection: {
+              isCombat: combatState.isInCombat,
+              combatType: 'active',
+              confidence: 1.0,
+              shouldStartCombat: false,
+              shouldEndCombat: event.type === 'COMBAT_END',
+              enemies: [],
+              combatActions: []
+            },
+            encounter: combatState.activeEncounter
+          },
+          isFirstMessage: false
         });
 
         // Add DM response to messages
-        if (dmResponse?.text) {
+        if (dmResponse?.response) {
           await addMessage({
-            content: dmResponse.text,
+            content: dmResponse.response,
             sender: 'dm',
             type: 'narration',
             sessionId: sessionId,
             metadata: {
               combatEvent: event.type,
-              voiceSegments: dmResponse.narration_segments
+              voiceSegments: dmResponse.narrationSegments
             }
           });
         }
@@ -444,17 +468,27 @@ function formatCombatEventForDM(event: CombatEvent): string {
   }
 }
 
-// Enhanced combat action types for better AI integration
-export const combatActionPrompts: Record<ActionType, string> = {
-  attack: "Execute an attack with your weapon or natural ability",
-  cast_spell: "Cast a spell, considering components and spell slots",
-  dash: "Move additional distance, potentially changing battlefield position",
-  dodge: "Focus on avoiding attacks and staying defensive",
-  help: "Assist an ally with their next action or ability check",
-  hide: "Attempt to conceal yourself from enemies",
-  ready: "Prepare an action to trigger on a specific condition",
-  search: "Look for hidden enemies, objects, or environmental clues",
-  use_object: "Interact with an object or piece of equipment",
-  bonus_action: "Use a class feature, spell, or ability that requires a bonus action",
-  reaction: "Respond to a trigger with an immediate action"
-};
+  // Enhanced combat action types for better AI integration
+  export const combatActionPrompts: Record<ActionType, string> = {
+    attack: "Execute an attack with your weapon or natural ability",
+    cast_spell: "Cast a spell, considering components and spell slots",
+    dash: "Move additional distance, potentially changing battlefield position",
+    dodge: "Focus on avoiding attacks and staying defensive",
+    help: "Assist an ally with their next action or ability check",
+    hide: "Attempt to conceal yourself from enemies",
+    ready: "Prepare an action to trigger on a specific condition",
+    search: "Look for hidden enemies, objects, or environmental clues",
+    use_object: "Interact with an object or piece of equipment",
+    bonus_action: "Use a class feature, spell, or ability that requires a bonus action",
+    reaction: "Respond to a trigger with an immediate action",
+    death_save: "Make a death saving throw",
+    concentration_save: "Make a concentration saving throw",
+    off_hand_attack: "Make an off-hand attack",
+    grapple: "Attempt to grapple a target",
+    shove: "Attempt to shove a target",
+    short_rest: "Take a short rest to recover resources",
+    long_rest: "Take a long rest to recover all resources",
+    use_racial_trait: "Use a racial trait ability",
+    use_class_feature: "Use a class feature ability",
+    divine_smite: "Use Divine Smite with a spell slot"
+  } as any;

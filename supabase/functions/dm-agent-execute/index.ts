@@ -48,14 +48,19 @@ serve(async (req) => {
 
     // Build prompt with memory, voice context, and combat context
     const prompt = buildPrompt({
-      campaignContext: campaignDetails,
-      characterContext: characterDetails,
+      agentContext,
       memories: relevantMemories,
       combatContext: combatContext
     }, voiceContext, isFirstMessage);
 
     // Call Google Gemini with the enhanced prompt
-    const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('VITE_GOOGLE_GEMINI_API_KEY') || '';
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not found in environment variables. Please set GEMINI_API_KEY in Supabase secrets.');
+    }
+    
+    console.log('Using Gemini API key:', geminiApiKey.substring(0, 10) + '...');
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const chat = model.startChat({

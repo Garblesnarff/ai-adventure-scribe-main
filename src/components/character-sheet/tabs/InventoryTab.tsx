@@ -230,93 +230,99 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
         <CardContent>
           <div className="space-y-3">
             {character.inventory && character.inventory.length > 0 ? (
-              character.inventory.map((item, index) => {
-                const attunementStatus = getItemAttunementStatus(item.itemId);
+              character.inventory.map((item) => {
+                // Simplified attunement status - check if already attuned
+                const attunementStatus = {
+                  canAttune: !item.isAttuned && item.requiresAttunement,
+                  isAttuned: item.isAttuned || false
+                };
+                
                 return (
-                <div key={item.itemId} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3 flex-1">
-                    {getItemIcon('magic')} {/* Simplified for now */}
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{item.itemId}</span>
-                        {item.equipped && (
-                          <Badge variant="secondary" className="text-xs">Equipped</Badge>
-                        )}
-                        {item.isAttuned && (
-                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
-                            Attuned
-                          </Badge>
-                        )}
-                        {item.isMagic && (
-                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
-                            Magic
-                          </Badge>
-                        )}
-                        {item.magicItemRarity && item.magicItemRarity !== 'common' && (
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {item.magicItemRarity.replace('_', ' ')}
-                          </Badge>
-                        )}
-                      </div>
+                  <div key={item.itemId} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3 flex-1">
+                      {getItemIcon(item.isMagic ? 'magic' : 'default')}
                       
-                      <div className="text-sm text-muted-foreground">
-                        Qty: {item.quantity || 1}
-                      </div>
-                      
-                      {/* Magic item details */}
-                      {item.isMagic && (
-                        <div className="mt-2 text-xs">
-                          {item.magicBonus !== 0 && (
-                            <div className="text-purple-600 font-medium">
-                              Bonus: +{item.magicBonus}
-                            </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{item.itemId}</span>
+                          {item.equipped && (
+                            <Badge variant="secondary" className="text-xs">Equipped</Badge>
                           )}
-                          {item.magicProperties && item.magicProperties.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {item.magicProperties.map((prop, i) => (
-                                <Badge key={i} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                                  {prop}
-                                </Badge>
-                              ))}
-                            </div>
+                          {item.isAttuned && (
+                            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                              Attuned
+                            </Badge>
                           )}
-                          {item.attunementRequirements && (
-                            <div className="flex items-center gap-1 mt-1 text-muted-foreground">
-                              <Info className="w-3 h-3" />
-                              <span>Requires attunement: {item.attunementRequirements}</span>
-                            </div>
+                          {item.isMagic && (
+                            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
+                              Magic
+                            </Badge>
+                          )}
+                          {item.magicItemRarity && item.magicItemRarity !== 'common' && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {item.magicItemRarity.replace('_', ' ')}
+                            </Badge>
                           )}
                         </div>
-                      )}
+                        
+                        <div className="text-sm text-muted-foreground">
+                          Qty: {item.quantity || 1}
+                        </div>
+                        
+                        {/* Magic item details */}
+                        {item.isMagic && (
+                          <div className="mt-2 text-xs">
+                            {item.magicBonus !== 0 && (
+                              <div className="text-purple-600 font-medium">
+                                Bonus: +{item.magicBonus}
+                              </div>
+                            )}
+                            {item.magicProperties && item.magicProperties.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {item.magicProperties.map((prop, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                    {prop}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            {item.attunementRequirements && (
+                              <div className="flex items-center gap-1 mt-1 text-muted-foreground">
+                                <Info className="w-3 h-3" />
+                                <span>Requires attunement: {item.attunementRequirements}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="flex flex-col gap-1">
-                      <Button
-                        size="sm"
-                        variant={item.equipped ? "default" : "outline"}
-                        onClick={() => toggleEquipped(item.itemId)}
-                      >
-                        {item.equipped ? 'Equipped' : 'Equip'}
-                      </Button>
-                      
-                      {item.isMagic && item.requiresAttunement && (
+                    
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-1">
                         <Button
                           size="sm"
-                          variant={item.isAttuned ? "secondary" : "outline"}
-                          onClick={() => handleAttuneToggle(item.itemId)}
-                          className="text-xs"
-                          disabled={!item.equipped || !attunementStatus.canAttune}
+                          variant={item.equipped ? "default" : "outline"}
+                          onClick={() => toggleEquipped(item.itemId)}
                         >
-                          {item.isAttuned ? 'Attuned' : 'Attune'}
+                          {item.equipped ? 'Unequip' : 'Equip'}
                         </Button>
-                      )}
+                        
+                        {item.isMagic && item.requiresAttunement && (
+                          <Button
+                            size="sm"
+                            variant={item.isAttuned ? "secondary" : "outline"}
+                            onClick={() => handleAttuneToggle(item.itemId)}
+                            className="text-xs"
+                            disabled={!item.equipped || !attunementStatus.canAttune}
+                          >
+                            {item.isAttuned ? 'Unattune' : 'Attune'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )})}
+                );
+              })
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 No equipment found

@@ -9,6 +9,7 @@ import { selectRelevantMemories } from '@/utils/memorySelection';
 
 // Project Services
 import { voiceConsistencyService } from '@/services/voice-consistency-service';
+import { AIService } from '@/services/ai-service';
 
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
@@ -200,47 +201,39 @@ export const useAIResponse = () => {
         combatDetected: combatDetection.isCombat
       });
 
-      // Call DM Agent through edge function with combat context
-      const { data, error } = await supabase.functions.invoke('dm-agent-execute', {
-        body: {
-          task: formatDMTask(messages, latestMessage),
-          agentContext: {
-            role: 'Dungeon Master',
-            goal: 'Guide players through an engaging D&D campaign',
-            backstory: 'An experienced DM with vast knowledge of D&D rules',
-            campaignDetails: gameContext.campaign,
-            characterDetails: gameContext.character,
-            memories: selectedMemories
-          },
-          voiceContext: {
-            available_categories: voiceContext.availableVoiceCategories,
-            character_mappings: voiceContext.knownCharacters
-          },
-          combatContext: {
-            detection: combatDetection,
-            // Add any existing combat state here if available
-            encounter: null // This would come from combat context if active
-          },
-          isFirstMessage: isFirstMessage
-        }
+      // Get conversation history in the format expected by AIService
+      const conversationHistory = messages.slice(0, -1).map(msg => ({
+        id: `msg_${Date.now()}_${Math.random()}`,
+        role: msg.sender === 'player' ? 'user' as const : 'assistant' as const,
+        content: msg.text,
+        timestamp: new Date(),
+        narrationSegments: msg.narrationSegments
+      }));
+
+      // Create proper GameContext for AIService
+      const aiContext = {
+        campaignId: gameContext.campaign?.id || '',
+        characterId: gameContext.character?.id || '',
+        sessionId: sessionId,
+        campaignDetails: gameContext.campaign,
+        characterDetails: gameContext.character
+      };
+
+      // Use AIService directly which has local Gemini integration and combat detection
+      const result = await AIService.chatWithDM({
+        message: latestMessage.text,
+        context: aiContext,
+        conversationHistory: conversationHistory
       });
 
-      if (error) {
-        console.error('DM Agent error:', error);
-        throw error;
-      }
+      // Extract response data
+      let responseText = result.text;
+      let narrationSegments = result.narrationSegments;
 
-      // Handle response format - Edge Function now returns text and narrationSegments directly
-      let responseText: string;
-      let narrationSegments: NarrationSegment[] | undefined;
-
-      // Check if Edge Function returned narration segments (new structured format)
-      if (data.narrationSegments && Array.isArray(data.narrationSegments) && data.narrationSegments.length > 0) {
-        responseText = data.response;
-        narrationSegments = data.narrationSegments;
+      // Process voice assignments if we have narration segments
+      if (narrationSegments && narrationSegments.length > 0) {
         console.log('🎭 Received structured response with', narrationSegments.length, 'narration segments');
         
-        // Process voice assignments for the segments
         try {
           await voiceConsistencyService.processVoiceAssignments(sessionId, narrationSegments);
           console.log('✅ Processed voice assignments successfully');
@@ -248,14 +241,8 @@ export const useAIResponse = () => {
           console.warn('Warning: Failed to process voice assignments:', voiceError);
           // Don't fail the entire response for voice processing errors
         }
-      } else if (typeof data.response === 'string') {
-        // Legacy response format - just text
-        responseText = data.response;
-        console.log('📝 Received legacy text response');
       } else {
-        // Fallback for unexpected response format
-        responseText = String(data.response || data || 'I apologize, but I encountered an issue generating a response.');
-        console.warn('⚠️ Unexpected response format, using fallback');
+        console.log('📝 Received text-only response');
       }
 
       // Format the response as an EnhancedChatMessage
