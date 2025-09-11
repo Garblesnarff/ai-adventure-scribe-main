@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, Users, Shield, Sword, Star, ArrowLeft } from 'lucide-react';
+import { Loader2, Play, Users, Shield, Sword, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { SimpleGameChatWithVoice } from '@/components/game/SimpleGameChatWithVoice';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useCharacterStats } from '@/hooks/use-character-stats';
 import { Character } from '@/types/character';
@@ -37,6 +36,7 @@ interface CharacterListItem {
 export const SimpleCampaignView: React.FC = () => {
   const { id: campaignId } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -44,9 +44,6 @@ export const SimpleCampaignView: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<CharacterListItem | null>(null);
   const [fullSelectedCharacter, setFullSelectedCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isGameStarted, setIsGameStarted] = useState(false);
-
-  const characterIdFromUrl = searchParams.get('character');
 
   useEffect(() => {
     if (campaignId) {
@@ -162,22 +159,10 @@ export const SimpleCampaignView: React.FC = () => {
 
 
   const startGameWithCharacter = useCallback(async (character: CharacterListItem) => {
-    setSelectedCharacter(character);
-    setIsGameStarted(true);
-    setSearchParams({ character: character.id || '' });
-    
-    // Load full character data for stats
-    if (character.id) {
-      await loadFullCharacterData(character.id);
-    }
-  }, [setSearchParams]);
+    // Navigate to the game route with campaign ID and character ID as query param
+    navigate(`/game/${campaignId}?character=${character.id}`);
+  }, [navigate, campaignId]);
 
-  const backToCharacterSelection = useCallback(() => {
-    setIsGameStarted(false);
-    setSelectedCharacter(null);
-    setFullSelectedCharacter(null);
-    setSearchParams({});
-  }, [setSearchParams]);
 
   // Memoize characters array to prevent unnecessary re-renders
   const memoizedCharacters = useMemo(() => characters, [characters]);
@@ -244,20 +229,13 @@ export const SimpleCampaignView: React.FC = () => {
                 <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground border-secondary/30">{campaign.tone || 'Unknown'}</Badge>
               </div>
             </div>
-            {isGameStarted && selectedCharacter && (
-              <Button onClick={backToCharacterSelection} variant="outline" className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Change Hero
-              </Button>
-            )}
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10 -mt-16">
-        {!isGameStarted ? (
-          /* Character Selection Layout */
-          <div className="grid lg:grid-cols-3 gap-8">
+        {/* Character Selection Layout */}
+        <div className="grid lg:grid-cols-3 gap-8">
             {/* Campaign Details Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               <Card className="bg-background/80 backdrop-blur-sm border-border/50">
@@ -501,7 +479,6 @@ export const SimpleCampaignView: React.FC = () => {
               )}
             </div>
           </div>
-        )}
       </div>
     </div>
   );

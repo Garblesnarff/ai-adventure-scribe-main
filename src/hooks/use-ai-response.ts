@@ -29,6 +29,15 @@ export interface StructuredAIResponse {
 
 export interface EnhancedChatMessage extends ChatMessage {
   narrationSegments?: NarrationSegment[];
+  combatDetection?: {
+    isCombat: boolean;
+    confidence: number;
+    combatType?: string;
+    shouldStartCombat: boolean;
+    shouldEndCombat: boolean;
+    enemies: any[];
+    combatActions: any[];
+  };
 }
 
 
@@ -179,14 +188,19 @@ export const useAIResponse = () => {
 
       const selectedMemories = selectRelevantMemories(memories, latestMessage.context);
 
+      // Import combat detection to analyze player message
+      const { detectCombatFromText } = await import('@/utils/combatDetection');
+      const combatDetection = detectCombatFromText(latestMessage.text);
+
       console.log('Calling DM Agent with context:', {
         gameContext,
         selectedMemories: selectedMemories.length,
         knownCharacters: Object.keys(voiceContext.knownCharacters).length,
-        isFirstMessage: isFirstMessage
+        isFirstMessage: isFirstMessage,
+        combatDetected: combatDetection.isCombat
       });
 
-      // Call DM Agent through edge function
+      // Call DM Agent through edge function with combat context
       const { data, error } = await supabase.functions.invoke('dm-agent-execute', {
         body: {
           task: formatDMTask(messages, latestMessage),
@@ -201,6 +215,11 @@ export const useAIResponse = () => {
           voiceContext: {
             available_categories: voiceContext.availableVoiceCategories,
             character_mappings: voiceContext.knownCharacters
+          },
+          combatContext: {
+            detection: combatDetection,
+            // Add any existing combat state here if available
+            encounter: null // This would come from combat context if active
           },
           isFirstMessage: isFirstMessage
         }
@@ -247,7 +266,16 @@ export const useAIResponse = () => {
           emotion: 'neutral',
           intent: 'response',
         },
-        narrationSegments: narrationSegments
+        narrationSegments: narrationSegments,
+        combatDetection: {
+          isCombat: combatDetection.isCombat,
+          confidence: combatDetection.confidence,
+          combatType: combatDetection.combatType,
+          shouldStartCombat: combatDetection.shouldStartCombat,
+          shouldEndCombat: combatDetection.shouldEndCombat,
+          enemies: combatDetection.enemies || [],
+          combatActions: combatDetection.combatActions || []
+        }
       };
     } catch (error) {
       console.error('Error in getAIResponse:', error);

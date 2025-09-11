@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
+import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
 
 /**
  * MessageList Component
@@ -32,28 +33,52 @@ export const MessageList: React.FC = () => {
               )}
 
               <div className={`flex flex-col ${isPlayer ? 'items-end' : 'items-start'} space-y-1`}> 
-                <div className={`relative px-5 py-4 rounded-xl transition-all duration-200 message-bubble ${
-                    isDM ? 'dm-bubble' : isSystem ? 'system-bubble' : 'player-bubble'
-                  }`}>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                {/* Check if this is a combat message */}
+                {message.context?.combatData ? (
+                  <div className="w-full">
+                    {/* Handle different combat message types */}
+                    {message.context.combatData.type === 'initiative' ? (
+                      <InitiativeMessage 
+                        participants={message.context.combatData.participants || []}
+                        timestamp={message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined}
+                      />
+                    ) : message.context.combatData.summary ? (
+                      <CombatSummaryMessage 
+                        summary={message.context.combatData.summary}
+                        timestamp={message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined}
+                      />
+                    ) : (
+                      <CombatMessage 
+                        data={message.context.combatData}
+                        timestamp={message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  /* Regular message bubble */
+                  <div className={`relative px-5 py-4 rounded-xl transition-all duration-200 message-bubble ${
+                      isDM ? 'dm-bubble' : isSystem ? 'system-bubble' : 'player-bubble'
+                    }`}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
 
-                  {message.context && (
-                    <div className="mt-3 pt-3 border-t border-opacity-10 space-y-2 message-meta">
-                      {message.context.emotion && (
-                        <div className="flex items-center text-xs opacity-80">
-                          <span className="font-medium mr-2">🎭</span>
-                          <span>{message.context.emotion}</span>
-                        </div>
-                      )}
-                      {message.context.location && (
-                        <div className="flex items-center text-xs opacity-80">
-                          <span className="font-medium mr-2">📍</span>
-                          <span>{message.context.location}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    {message.context && (
+                      <div className="mt-3 pt-3 border-t border-opacity-10 space-y-2 message-meta">
+                        {message.context.emotion && (
+                          <div className="flex items-center text-xs opacity-80">
+                            <span className="font-medium mr-2">🎭</span>
+                            <span>{message.context.emotion}</span>
+                          </div>
+                        )}
+                        {message.context.location && (
+                          <div className="flex items-center text-xs opacity-80">
+                            <span className="font-medium mr-2">📍</span>
+                            <span>{message.context.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className={`text-xs message-meta px-2 ${isPlayer ? 'text-right' : 'text-left'}`}>
                   {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}

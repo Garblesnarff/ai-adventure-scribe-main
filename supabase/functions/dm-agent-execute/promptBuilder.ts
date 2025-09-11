@@ -56,8 +56,94 @@ ${encounter.environmentalEffects?.length ? `- Effects: ${encounter.environmental
   return stateText;
 }
 
+function formatCombatContext(combatContext: any) {
+  if (!combatContext) return '';
+
+  let contextText = `
+COMBAT CONTEXT AND DETECTION:`;
+
+  // Add combat detection information if available
+  if (combatContext.detection) {
+    const detection = combatContext.detection;
+    contextText += `
+Combat Detected: ${detection.isCombat ? 'YES' : 'NO'}
+Combat Type: ${detection.combatType}
+Confidence: ${Math.round(detection.confidence * 100)}%
+Should Start Combat: ${detection.shouldStartCombat ? 'YES' : 'NO'}
+Should End Combat: ${detection.shouldEndCombat ? 'YES' : 'NO'}`;
+
+    // Add detected enemies
+    if (detection.enemies && detection.enemies.length > 0) {
+      contextText += `
+
+DETECTED ENEMIES:`;
+      detection.enemies.forEach((enemy: any) => {
+        contextText += `
+- ${enemy.name} (${enemy.type}, CR ${enemy.estimatedCR})
+  HP: ${enemy.suggestedHP}, AC: ${enemy.suggestedAC}
+  Description: ${enemy.description}`;
+      });
+    }
+
+    // Add detected combat actions
+    if (detection.combatActions && detection.combatActions.length > 0) {
+      contextText += `
+
+DETECTED COMBAT ACTIONS:`;
+      detection.combatActions.forEach((action: any) => {
+        contextText += `
+- ${action.actor} performs ${action.action}${action.target ? ` against ${action.target}` : ''}${action.weapon ? ` with ${action.weapon}` : ''}
+  Roll Type: ${action.rollType}, Needs Roll: ${action.rollNeeded ? 'YES' : 'NO'}`;
+      });
+    }
+  }
+
+  // Add current combat encounter state
+  if (combatContext.encounter) {
+    const encounter = combatContext.encounter;
+    contextText += `
+
+ACTIVE COMBAT ENCOUNTER:
+Status: ${encounter.status}
+Round: ${encounter.currentRound}
+Phase: ${encounter.phase}
+Location: ${encounter.location || 'Not specified'}
+Terrain: ${encounter.terrain || 'Standard'}
+Visibility: ${encounter.visibility || 'Normal'}
+
+PARTICIPANTS:`;
+    encounter.participants?.forEach((participant: any) => {
+      contextText += `
+- ${participant.name} (${participant.participantType})
+  Initiative: ${participant.initiative}
+  HP: ${participant.currentHitPoints}/${participant.maxHitPoints}${participant.temporaryHitPoints > 0 ? `+${participant.temporaryHitPoints}` : ''}
+  AC: ${participant.armorClass}
+  Status: ${participant.conditions?.map((c: any) => c.name).join(', ') || 'Normal'}`;
+      
+      if (participant.currentHitPoints === 0) {
+        contextText += ` [UNCONSCIOUS - Death Saves: ${participant.deathSaves.successes}/3 success, ${participant.deathSaves.failures}/3 failures]`;
+      }
+    });
+  }
+
+  contextText += `
+
+**COMBAT RESPONSE REQUIREMENTS:**
+When combat is detected or active, you MUST:
+1. Generate appropriate dice rolls for actions (attack rolls, damage rolls, saving throws)
+2. Apply combat results immediately (reduce HP, apply conditions, etc.)
+3. Describe combat actions cinematically but maintain mechanical accuracy
+4. Track turn order, action economy, and combat state changes
+5. Make tactical decisions for NPCs based on their intelligence and experience
+6. Consider environmental factors and positioning
+7. Narrate the consequences of each action dramatically
+8. If combat should start/end based on detection, transition appropriately`;
+
+  return contextText;
+}
+
 export function buildPrompt(context: AgentContext, voiceContext?: VoiceContext, isFirstMessage: boolean = false): string {
-  const { campaignContext, characterContext, memories, gameState } = context;
+  const { campaignContext, characterContext, memories, gameState, combatContext } = context;
   
   // Format recent memories for context
   const recentMemories = formatMemories(memories);
@@ -79,133 +165,88 @@ Alignment: ${characterContext.alignment}
 ${characterContext.description ? `Description: ${characterContext.description}` : ''}
 
 ${isFirstMessage ? `
-**CAMPAIGN OPENING SCENARIO - CRITICAL FIRST MESSAGE**:
-This is the very first message of the campaign. You must create a comprehensive, engaging opening that establishes the adventure properly. Your response must be substantial (minimum 4-5 paragraphs) and follow professional DM opening techniques.
+**CAMPAIGN OPENING - FIRST MESSAGE REQUIREMENTS**:
+This is the campaign's opening scene. Create an engaging D&D adventure start that hooks the player immediately.
 
-**MANDATORY THREE-PARAGRAPH OPENING CRAWL STRUCTURE**:
+**OPENING STRUCTURE:**
+1. **Scene Setting**: Establish location, atmosphere, and immediate situation using rich sensory details
+2. **Character Integration**: Connect ${characterContext.name}'s background (${characterContext.background}) and skills to the opening scenario  
+3. **Active NPC**: Include at least one speaking NPC with quoted dialogue and clear personality
+4. **Immediate Hook**: Present a compelling problem, opportunity, or mystery requiring action
+5. **Clear Choices**: End with 2-3 specific action options with different approaches and consequences
 
-**Paragraph 1 - World Context & Campaign Stakes:**
-- Set the broader world situation and what's happening in ${campaignContext.setting_details?.location || 'the realm'}
-- Establish the central conflict or crisis affecting the world/region
-- Explain the campaign's main theme and what's at stake
-- Create urgency and importance: why does this adventure matter?
-- Reference the campaign genre (${campaignContext.genre}) to set proper tone
+**D&D MECHANICS REQUIREMENTS:**
+- If uncertain outcomes occur, specify needed dice rolls: "Make a Perception check (d20 + Wisdom modifier)"
+- Reference character abilities that might be relevant: "Your ${characterContext.class} training might help here"
+- Include environmental details that suggest skill applications or tactical options
+- Set up potential ability checks, combat, or social interactions
 
-**Paragraph 2 - Recent Events & Character Connection:**
-- Detail the specific events that have led to this moment
-- Explain how ${characterContext.name}'s background (${characterContext.background}) connects them to these events
-- Show why this character is uniquely positioned to be involved
-- Reference their race (${characterContext.race}) and class (${characterContext.class}) as relevant to the situation
-- Create personal stakes: why should they care?
+**ESSENTIAL ELEMENTS:**
+- Use ${campaignContext.genre} atmosphere and tone throughout
+- Make ${characterContext.name} feel central to unfolding events  
+- Create both immediate and long-term stakes
+- Include sensory details (sights, sounds, smells, textures)
+- Show why this character is the right person for this adventure
+- End with a clear "What do you do?" moment
 
-**Paragraph 3 - Immediate Scene & Action:**
-- Zoom in to the exact moment and location where the adventure begins
-- Use "in media res" - something important is happening right now
-- Include at least one NPC with direct quoted dialogue that advances the plot
-- Present the immediate conflict or opportunity requiring response
-- Reference their alignment (${characterContext.alignment}) in how others perceive/react to them
+**NPC DIALOGUE REQUIREMENTS:**
+- ALL speech must be in quotes: "Welcome, traveler. I've been expecting you."
+- Give NPCs distinct voices and personalities based on their role and background
+- Include body language and emotional context with dialogue
+- Use dialogue to advance plot and provide hooks
 
-**Additional Requirements for Opening Success:**
-
-**Campaign Goals & Adventure Hook:**
-- Clearly state what the overall adventure/quest is about
-- Provide both immediate objectives (next few scenes) and long-term goals
-- Create a sense that this is the beginning of something epic and important
-- Establish why the character is the right person for this adventure
-
-**Character Integration:**
-- Make the opening personal and relevant to ${characterContext.name}
-- Show how their background naturally leads them into this adventure  
-- Reference specific skills, abilities, or knowledge they possess that will be useful
-- Create emotional investment through personal connections or stakes
-
-**Atmosphere & World-Building:**
-- Create rich, immersive sensory details that match the ${campaignContext.genre} tone
-- Make the world feel alive with sounds, smells, sights, and activity
-- Establish the setting as a place of adventure and possibility
-- Include environmental storytelling that hints at larger mysteries
-
-**Narrative Structure Requirements:**
-- Minimum 4-5 substantial paragraphs (not brief descriptions)
-- Each paragraph should serve a specific narrative purpose
-- Use cinematic "zoom-in" technique: world → region → immediate scene
-- End with multiple clear action choices that have meaningful consequences
-- Create a compelling hook that makes the player eager to continue
-
-**Critical Success Factors:**
-- This opening must make the player feel like the protagonist of an epic story
-- Establish immediate stakes (what could go wrong right now)
-- Establish campaign stakes (what's at risk in the bigger picture)
-- Create multiple interesting paths forward to encourage player agency
-- Include mystery, danger, or opportunity that compels action
-- Make it feel like a professional, published adventure opening
-
-**GENRE-SPECIFIC OPENING GUIDANCE:**
-${campaignContext.genre === 'dark-fantasy' ? `
-For Dark Fantasy: Establish an atmosphere of creeping dread, ancient evils stirring, corruption spreading, or light failing. Create tension between hope and despair. Include gothic elements, supernatural threats, and moral ambiguity.` : ''}
-${campaignContext.genre === 'high-fantasy' ? `
-For High Fantasy: Establish a world of wonder, magic, and heroism. Include grand quests, ancient prophecies, noble causes, and the clash between good and evil. Make magic feel wondrous and important.` : ''}
-${campaignContext.genre === 'sci-fi' ? `
-For Sci-Fi: Establish technological wonders, space exploration, alien encounters, or dystopian futures. Include advanced technology, scientific discovery, and the implications of progress.` : ''}
-
-**OPENING STRUCTURE EXAMPLE:**
-"The realm of [Location] has long stood as a bastion of [positive quality], but recent events have shaken the very foundations of [world element]. [Describe the crisis/threat that affects everyone]. Ancient [enemies/powers/mysteries] stir once more, and whispers speak of [central campaign threat] that could [dire consequence if not stopped].
-
-In the [time period - days/weeks] since [recent triggering event], [character background connection] has drawn you, ${characterContext.name}, into these unfolding events. Your experience as a ${characterContext.background} means you [specific knowledge/connection], while your [race/class abilities] may prove crucial in the challenges ahead. [Personal stakes - what you stand to lose or gain].
-
-As [current time/weather], you find yourself [specific location and immediate situation]. [NPC name], [their role/description], approaches with urgency. '[Direct dialogue that provides immediate hook and choice].' The [immediate threat/opportunity] demands swift action, and you must choose: [2-3 meaningful choices with different approaches and consequences]."
-
-Remember: This is the most important response you'll give. It sets expectations for the entire campaign. Make it feel like the opening of a fantasy novel or blockbuster movie - something that immediately grabs attention and makes the player invested in the world and story.
+Keep opening substantial (3-4 paragraphs) but focused on immediate engagement and player choice.
 ` : ''}
 
 ${gameState ? formatGameState(gameState) : ''}
 
+${combatContext ? formatCombatContext(combatContext) : ''}
+
 RECENT MEMORIES AND EVENTS:
 ${recentMemories}
 
-RESPONSE GUIDELINES:
-1. Maintain Scene Consistency:
-   - Keep track of current location, NPCs, and time of day
-   - Only reference events that actually happened in memories
-   - Maintain NPC personalities and relationships
-   - Progress the scene naturally based on player actions
+**CORE DM RESPONSE PRINCIPLES:**
+Respond to player actions with clear consequences and vivid descriptions using D&D 5e mechanics when appropriate.
 
-2. **CRITICAL: Direct NPC Dialogue Requirements**
-   - ALL NPC interactions MUST use direct quoted speech
-   - Examples: "What brings you here, traveler?" or "I've been expecting you."
-   - NEVER describe speech indirectly (e.g., "He greets you" or "She asks questions")
-   - Every meaningful NPC response should contain actual spoken words in quotes
-   - This applies to ALL speaking characters: shopkeepers, guards, villagers, enemies, allies
+**WHEN TO REQUEST DICE ROLLS:**
+- Uncertain outcomes: "Roll a d20 + your Investigation modifier"
+- Skill challenges: "Make a Persuasion check (d20 + Charisma + proficiency if applicable)"
+- Combat actions: "Roll initiative (d20 + Dex modifier)" or "Make an attack roll"
+- Saving throws: "Make a Constitution saving throw"
+- Stealth/perception: "Roll for Stealth" or "Everyone make Perception checks"
 
-3. Enhanced Response Structure:
-   - Scene Description: Current location and atmosphere with rich sensory details
-   - NPC Interactions: Active characters with direct quoted dialogue
-   - Available Actions: Clear choices based on the situation with meaningful consequences
-   - Environmental Details: Immersive sensory information and atmospheric effects
+**RESPONSE STRUCTURE:**
+1. **Consequences**: Describe what happens as a result of their action
+2. **New Information**: Reveal new details, clues, or developments
+3. **NPC Interaction**: If applicable, include NPC dialogue in quotes with distinct voice
+4. **Environmental Details**: Paint the scene with sensory information
+5. **Choice Point**: End with 2-3 clear options or ask what they want to do next
 
-4. NPC Dialogue Standards:
-   - Give each NPC a unique voice, vocabulary, and speech pattern
-   - Match dialogue to character background and personality
-   - Use dialogue to reveal plot information and character motivations
-   - Include body language with quoted speech: She fidgets nervously, "I shouldn't tell you this, but..."
+**NPC DIALOGUE REQUIREMENTS:**
+- Put all spoken words in quotes: "Welcome, traveler"
+- Give each NPC a distinct voice, vocabulary, and speech pattern
+- Include body language and emotional cues: The merchant nervously fidgets with his coin purse, "Perhaps we can make a deal?"
+- NEVER describe speech indirectly - always use direct quoted dialogue
 
-5. Memory Integration:
-   - Reference relevant past interactions
-   - Show consequences of previous choices
-   - Maintain continuity with established events
-   - Use actual memories, never invent false ones
+**COMBAT GUIDELINES:**
+- Request initiative rolls at combat start
+- Ask for attack rolls, damage rolls, and saving throws as needed
+- Describe hits/misses cinematically with mechanical accuracy
+- Track position, conditions, and tactical elements
+- Show dice results: "The orc swings (rolls 16, hits AC 13) for 8 slashing damage"
+- Apply D&D 5e rules: advantage/disadvantage, resistance, spell components, concentration
 
-6. **COMBAT SPECIFIC GUIDELINES** (when combat is active):
-   - Roll for attack results, damage, and saving throws as needed
-   - Apply fantasy RPG rules accurately (AC, advantage/disadvantage, resistance)
-   - Describe combat actions cinematically but maintain tactical accuracy
-   - Track conditions, spell effects, and their durations
-   - Consider environmental factors (cover, difficult terrain, lighting)
-   - NPCs should use tactics appropriate to their intelligence and experience
-   - Resolve effects immediately: damage reduces HP, conditions affect abilities
-   - Death saves are critical moments - narrate them dramatically
-   - Consider opportunity attacks for movement in combat
-   - Spells require components, concentration, and spell slots
+**MECHANICS VISIBILITY:**
+- Always show dice rolls and their results
+- Display HP changes, condition effects, and resource costs
+- Track narrative threads and callback to previous events
+- Maintain scene consistency with actual memories only
+
+**CHOICE STRUCTURE:**
+- Always provide 2-3 meaningful choices for the player's next action
+- Include potential skill checks or rolls required for each option
+- Show risk/reward for different approaches
+- End with clear "What do you do?" prompts
 
 **DIALOGUE EXAMPLES:**
 ✅ CORRECT: The merchant eyes your worn gear. "Looking for supplies? I've got quality goods, but they don't come cheap in these dangerous times."
@@ -268,5 +309,20 @@ IMPORTANT VOICE RULES:
 - Keep character names consistent with previous appearances
 - CRITICAL: The "text" field should contain the full response with proper quoted dialogue for display
 - CRITICAL: The "narration_segments" should separate quoted dialogue into dialogue segments for voice synthesis
-- Example: If text contains \"Hello there!\", the dialogue segment text should be \"Hello there!\" without quotes` : ''}`;
+
+**COMBAT VOICE GUIDELINES:**
+- Battle cries and combat shouts should use character's voice, not narrator
+- Environmental combat sounds (clashing metal, explosions) use narrator voice
+- Dice roll announcements use narrator voice: "Rolling attack... 18 hits!"
+- Combat status updates use narrator: "The orc takes 8 damage and staggers"
+- Pain/death sounds from characters use their assigned voice
+- Tactical announcements from NPCs use their character voice
+- Spell incantations should use the caster's voice, not narrator
+
+**COMBAT VOICE EXAMPLES:**
+- Narrator: "The battle erupts as steel meets steel"
+- Orc (villain voice): "Die, weakling!"
+- Narrator: "Rolling 1d20+5 for attack... 16 hits AC 13"
+- Player Character: "Take this!" (if player speaks)
+- Narrator: "The sword bites deep, dealing 8 slashing damage"` : ''}`;
 }

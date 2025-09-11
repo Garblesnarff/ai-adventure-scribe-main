@@ -16,8 +16,9 @@ import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
 import { MessageProvider } from '@/contexts/MessageContext';
 import { useGameSession } from '@/hooks/use-game-session';
-import { CombatProvider } from '@/contexts/CombatContext';
+import { CombatProvider, useCombat } from '@/contexts/CombatContext';
 import CombatInterface from '@/components/combat/CombatInterface';
+import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
 import { Sword, X } from 'lucide-react';
 
 /**
@@ -47,6 +48,13 @@ const GameContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [combatMode, setCombatMode] = useState(false);
   const [showCombatInterface, setShowCombatInterface] = useState(false);
+
+  // Combat AI integration for automatic combat detection
+  const combatAI = useCombatAIIntegration({
+    sessionId,
+    characterId: characterIdFromParams || undefined,
+    campaignId: campaignIdFromParams || undefined
+  });
 
   useEffect(() => {
     const loadGameData = async () => {
@@ -142,6 +150,68 @@ const GameContent: React.FC = () => {
     loadGameData();
   }, [characterIdFromParams, campaignIdFromParams, characterDispatch, campaignDispatch]);
 
+  // Auto-toggle combat mode based on combat detection
+  React.useEffect(() => {
+    if (combatAI.isInCombat && !combatMode) {
+      setCombatMode(true);
+      console.log('🗡️ Combat detected! Automatically switching to combat mode.');
+    } else if (!combatAI.isInCombat && combatMode) {
+      // Allow manual override - only auto-switch off if user hasn't manually toggled
+      const shouldAutoExit = sessionStorage.getItem('manualCombatToggle') !== 'true';
+      if (shouldAutoExit) {
+        setCombatMode(false);
+        console.log('✅ Combat ended! Automatically returning to conversation mode.');
+      }
+    }
+  }, [combatAI.isInCombat, combatMode]);
+
+  // Handle manual combat mode toggle
+  const handleCombatToggle = () => {
+    setCombatMode(!combatMode);
+    // Mark that user manually toggled combat mode
+    sessionStorage.setItem('manualCombatToggle', 'true');
+    // Clear the flag after 30 seconds to allow auto-toggle again
+    setTimeout(() => {
+      sessionStorage.removeItem('manualCombatToggle');
+    }, 30000);
+  };
+
+  // Handle AI response for combat detection
+  const handleAIResponse = React.useCallback(async (message: any) => {
+    try {
+      console.log('🎯 Processing AI response for combat detection:', message.text?.substring(0, 100) + '...');
+      
+      // Check if the message has combat detection data
+      if (message.combatDetection) {
+        console.log('⚔️ Combat detection data found in AI response:', {
+          isCombat: message.combatDetection.isCombat,
+          confidence: message.combatDetection.confidence,
+          shouldStartCombat: message.combatDetection.shouldStartCombat,
+          shouldEndCombat: message.combatDetection.shouldEndCombat,
+          enemies: message.combatDetection.enemies?.length || 0,
+          actions: message.combatDetection.combatActions?.length || 0
+        });
+        
+        // Use the combat AI integration to process the DM response
+        const result = await combatAI.processDMResponse(message, characterState.character);
+        
+        console.log('⚔️ Combat processing result:', {
+          combatDetected: result.combatDetected,
+          shouldStartCombat: result.shouldStartCombat,
+          shouldEndCombat: result.shouldEndCombat,
+          combatMessages: result.combatMessages.length
+        });
+      } else {
+        console.log('📝 No combat detection data in AI response');
+      }
+      
+      // The combat mode toggle will be handled by the auto-toggle effect based on combatAI.isInCombat
+      
+    } catch (error) {
+      console.error('Error processing AI response for combat:', error);
+    }
+  }, [combatAI, characterState.character]);
+
   // Combine loading states: initial data load and session loading
   const combinedIsLoading = isLoading || sessionState === 'loading';
   const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
@@ -197,7 +267,7 @@ const GameContent: React.FC = () => {
                           <Button
                             variant={combatMode ? "destructive" : "outline"}
                             size="sm"
-                            onClick={() => setCombatMode(!combatMode)}
+                            onClick={handleCombatToggle}
                           >
                             {combatMode ? (
                               <>
@@ -249,6 +319,7 @@ const GameContent: React.FC = () => {
                           characterId={characterIdForHandler}
                           turnCount={sessionData.turn_count ?? 0}
                           updateGameSessionState={updateGameSessionState}
+                          onAIResponse={handleAIResponse}
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <ChatInput

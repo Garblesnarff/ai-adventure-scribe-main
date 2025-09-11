@@ -12,6 +12,7 @@ interface MessageHandlerProps {
   characterId: string | null;
   turnCount: number;
   updateGameSessionState: (newState: Partial<any>) => Promise<void>; // Replace 'any' with ExtendedGameSession if possible
+  onAIResponse?: (message: ChatMessage) => Promise<void>; // Callback for processing AI responses (e.g., combat detection)
   children: (props: {
     handleSendMessage: (message: string) => Promise<void>;
     isProcessing: boolean;
@@ -24,6 +25,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   characterId,
   turnCount,
   updateGameSessionState,
+  onAIResponse,
   children,
 }) => {
   const { messages, sendMessage, queueStatus } = useMessageContext();
@@ -68,6 +70,17 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       const aiResponseMessage = await getAIResponse([...messages, playerMessage], sessionId); 
       
       await sendMessage(aiResponseMessage); // Adds AI message to UI and dialogue_history
+      
+      // Process AI response for combat detection and other features
+      if (onAIResponse) {
+        try {
+          console.log('[Combat Flow] Processing AI response for combat detection');
+          await onAIResponse(aiResponseMessage);
+        } catch (combatError) {
+          console.error('Error processing AI response for combat:', combatError);
+          // Don't throw here - combat processing should not break the message flow
+        }
+      }
       
       // Check if we have narration segments for voice synthesis
       if (aiResponseMessage.narrationSegments && aiResponseMessage.narrationSegments.length > 0) {
