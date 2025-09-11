@@ -17,7 +17,8 @@ import {
   ConditionName,
   CombatContextValue,
   DamageType,
-  DiceRoll
+  DiceRoll,
+  FightingStyleName
 } from '@/types/combat';
 import { createClient } from '@supabase/supabase-js';
 import { rollDie } from '@/utils/diceRolls';
@@ -26,7 +27,14 @@ import {
   checkConcentration,
   SpellSlotLevel 
 } from '@/utils/spell-management';
+import { checkReactionTriggers } from '@/utils/reactionSystem';
+import { processMovementAction } from '@/utils/movementUtils';
+import { calculateDamage } from '@/utils/diceUtils';
+import { processShortRestCombat, processLongRestCombat } from '@/utils/restMechanics';
+import { activateRage, deactivateRage } from '@/utils/classFeatures';
+import { attemptHide, applyHiddenCondition, removeHiddenCondition } from '@/utils/stealthUtils';
 import { useCharacter } from './CharacterContext';
+import { FIGHTING_STYLES } from '@/utils/fightingStyles';
 
 // ===========================
 // Supabase Client
@@ -49,6 +57,8 @@ const initialCombatState: CombatState = {
   showInitiativeTracker: true,
   showCombatLog: true,
   pendingAction: undefined,
+  activeReactionOpportunities: [],
+  pendingReactionResponse: undefined,
 };
 
 // ===========================
@@ -68,7 +78,11 @@ type ReducerAction =
   | { type: 'SET_SELECTED_PARTICIPANT'; participantId?: string }
   | { type: 'SET_SELECTED_TARGET'; targetId?: string }
   | { type: 'TOGGLE_INITIATIVE_TRACKER' }
-  | { type: 'TOGGLE_COMBAT_LOG' };
+  | { type: 'TOGGLE_COMBAT_LOG' }
+  | { type: 'ADD_REACTION_OPPORTUNITY'; opportunity: ReactionOpportunity }
+  | { type: 'REMOVE_REACTION_OPPORTUNITY'; opportunityId: string }
+  | { type: 'CLEAR_REACTION_OPPORTUNITIES' }
+  | { type: 'SET_PENDING_REACTION'; opportunityId: string; selectedReaction: ActionType };
 
 function combatReducer(state: CombatState, action: ReducerAction): CombatState {
   switch (action.type) {
@@ -180,10 +194,13 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
                   bonusActionTaken: false,
                   reactionTaken: false,
                   movementUsed: 0,
+                  reactionOpportunities: [],
                 }
               : p
           ),
         },
+        // Clear global reaction opportunities at end of turn
+        activeReactionOpportunities: [],
       };
 
     case 'ADD_ACTION':
@@ -219,6 +236,35 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
       return {
         ...state,
         showCombatLog: !state.showCombatLog,
+      };
+
+    case 'ADD_REACTION_OPPORTUNITY':
+      return {
+        ...state,
+        activeReactionOpportunities: [...state.activeReactionOpportunities, action.opportunity],
+      };
+
+    case 'REMOVE_REACTION_OPPORTUNITY':
+      return {
+        ...state,
+        activeReactionOpportunities: state.activeReactionOpportunities.filter(
+          opportunity => opportunity.id !== action.opportunityId
+        ),
+      };
+
+    case 'CLEAR_REACTION_OPPORTUNITIES':
+      return {
+        ...state,
+        activeReactionOpportunities: [],
+      };
+
+    case 'SET_PENDING_REACTION':
+      return {
+        ...state,
+        pendingReactionResponse: {
+          opportunityId: action.opportunityId,
+          selectedReaction: action.selectedReaction,
+        },
       };
 
     default:
@@ -335,15 +381,44 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
         bonusActionTaken: false,
         reactionTaken: false,
         movementUsed: 0,
+        reactionOpportunities: [],
         monsterData: p.monsterData,
         spellSlots: undefined,
         activeConcentration: null,
+        // Damage resistances, immunities, and vulnerabilities
+        damageResistances: p.damageResistances || [],
+        damageImmunities: p.damageImmunities || [],
+        damageVulnerabilities: p.damageVulnerabilities || [],
+        // Fighting styles
+        fightingStyles: p.fightingStyles || [],
+        // Weapons
+        mainHandWeapon: p.mainHandWeapon,
+        offHandWeapon: p.offHandWeapon,
+        // Vision and stealth
+        visionTypes: p.visionTypes || [],
+        obscurement: p.obscurement || 'clear',
+        isHidden: p.isHidden || false,
+        stealthCheckBonus: p.stealthCheckBonus || 0,
       };
 
-      // For player characters, copy spell slots from CharacterContext
+      // For player characters, copy spell slots, prepared spells, and damage resistances from CharacterContext
       if (p.participantType === 'player' && p.characterId && characterState.character?.id === p.characterId) {
         participant.spellSlots = characterState.character.spellSlots;
+        participant.preparedSpells = characterState.character.preparedSpells;
         participant.activeConcentration = characterState.character.activeConcentration;
+        participant.damageResistances = characterState.character.damageResistances || [];
+        participant.damageImmunities = characterState.character.damageImmunities || [];
+        participant.damageVulnerabilities = characterState.character.damageVulnerabilities || [];
+        participant.fightingStyles = characterState.character.fightingStyles?.map(style => {
+          // Convert string to FightingStyle object
+          const styleName = style as FightingStyleName;
+          return FIGHTING_STYLES[styleName] || { name: styleName, description: '', effect: {} };
+        }) || [];
+        // Copy vision and stealth properties from character
+        participant.visionTypes = characterState.character.visionTypes || [];
+        participant.obscurement = characterState.character.obscurement || 'clear';
+        participant.isHidden = characterState.character.isHidden || false;
+        participant.stealthCheckBonus = characterState.character.stealthCheckBonus || 0;
       }
 
       return participant;
@@ -470,9 +545,161 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
         // Still add the action but mark as failed
         fullAction.description += ` (Failed: ${(error as Error).message})`;
       }
+    }
+    // Handle divine smite
+    else if (action.actionType === 'divine_smite') {
+      try {
+        // Check if participant is a paladin with spell slots
+        if (participant.characterClass !== 'paladin' || !participant.spellSlots) {
+          throw new Error('Only paladins can use Divine Smite');
+        }
+        
+        // Find the lowest available spell slot (at least 1st level)
+        let spellSlotLevel: SpellSlotLevel | null = null;
+        for (let i = 1; i <= 5; i++) { // Check up to 5th level slots
+          if (participant.spellSlots[i as SpellSlotLevel]?.current > 0) {
+            spellSlotLevel = i as SpellSlotLevel;
+            break;
+          }
+        }
+        
+        if (!spellSlotLevel) {
+          throw new Error('No available spell slots for Divine Smite');
+        }
+        
+        // Deduct the spell slot
+        const updatedSlots = { ...participant.spellSlots };
+        updatedSlots[spellSlotLevel] = { 
+          ...updatedSlots[spellSlotLevel], 
+          current: updatedSlots[spellSlotLevel].current - 1 
+        };
+        
+        // Update participant in combat
+        dispatch({
+          type: 'UPDATE_PARTICIPANT',
+          participantId: action.participantId!,
+          updates: {
+            spellSlots: updatedSlots,
+            actionTaken: true, // Using Divine Smite uses the action
+          },
+        });
+        
+        fullAction.description = `${participant.name} uses Divine Smite with a level ${spellSlotLevel} spell slot`;
+      } catch (error) {
+        console.error('Divine Smite failed:', error);
+        fullAction.description += ` (Failed: ${(error as Error).message})`;
+      }
+    }
+    // Handle rage activation
+    else if (action.actionType === 'use_class_feature' && action.featureUsed === 'rage') {
+      try {
+        if (!participant.resources) {
+          throw new Error('Participant has no resources');
+        }
+        
+        const { updatedParticipant, updatedResources, rageDamageBonus } = activateRage(participant, participant.resources);
+        
+        // Update participant in combat
+        dispatch({
+          type: 'UPDATE_PARTICIPANT',
+          participantId: action.participantId!,
+          updates: {
+            ...updatedParticipant,
+            resources: updatedResources,
+            actionTaken: true, // Using rage uses the action
+          },
+        });
+        
+        fullAction.description = `${participant.name} enters a rage, gaining resistance to bludgeoning, piercing, and slashing damage and +${rageDamageBonus} damage to melee attacks`;
+      } catch (error) {
+        console.error('Rage activation failed:', error);
+        fullAction.description += ` (Failed: ${(error as Error).message})`;
+      }
+    }
+    // Handle rage deactivation
+    else if (action.actionType === 'end_rage') {
+      try {
+        const updatedParticipant = deactivateRage(participant);
+        
+        // Update participant in combat
+        dispatch({
+          type: 'UPDATE_PARTICIPANT',
+          participantId: action.participantId!,
+          updates: {
+            ...updatedParticipant,
+            actionTaken: true, // Ending rage uses the action
+          },
+        });
+        
+        fullAction.description = `${participant.name} stops raging`;
+      } catch (error) {
+        console.error('Rage deactivation failed:', error);
+        fullAction.description += ` (Failed: ${(error as Error).message})`;
+      }
+    }
+    // Handle short rest
+    else if (action.actionType === 'short_rest') {
+      // Process short rest for the participant
+      const updatedParticipant = processShortRestCombat(participant, 1); // Default to rolling 1 hit die
+      
+      // Update participant in combat
+      dispatch({
+        type: 'UPDATE_PARTICIPANT',
+        participantId: action.participantId!,
+        updates: {
+          ...updatedParticipant,
+          actionTaken: true, // Taking a short rest uses the action
+        },
+      });
+      
+      fullAction.description = `${participant.name} takes a short rest`;
+    }
+    // Handle long rest
+    else if (action.actionType === 'long_rest') {
+      // Process long rest for the participant
+      const updatedParticipant = processLongRestCombat(participant);
+      
+      // Update participant in combat
+      dispatch({
+        type: 'UPDATE_PARTICIPANT',
+        participantId: action.participantId!,
+        updates: {
+          ...updatedParticipant,
+          actionTaken: true, // Taking a long rest uses the action
+        },
+      });
+      
+      fullAction.description = `${participant.name} takes a long rest`;
+    }
+    // Handle hide action
+    else if (action.actionType === 'hide') {
+      try {
+        // Attempt to hide
+        const hideResult = attemptHide(participant);
+        
+        // Update participant in combat
+        const updatedParticipant = hideResult.success 
+          ? applyHiddenCondition(participant)
+          : removeHiddenCondition(participant);
+        
+        dispatch({
+          type: 'UPDATE_PARTICIPANT',
+          participantId: action.participantId!,
+          updates: {
+            ...updatedParticipant,
+            actionTaken: true, // Hiding uses the action
+          },
+        });
+        
+        fullAction.description = hideResult.description;
+        fullAction.attackRoll = hideResult.roll;
+      } catch (error) {
+        console.error('Hide action failed:', error);
+        fullAction.description += ` (Failed: ${(error as Error).message})`;
+      }
     } else {
-      // Mark participant as having taken action for non-spell actions
-      if (action.participantId && (action.actionType === 'attack' || action.actionType === 'cast_spell')) {
+      // Mark participant as having taken action for other actions
+      if (action.participantId) {
         dispatch({
           type: 'UPDATE_PARTICIPANT',
           participantId: action.participantId,
@@ -482,6 +709,15 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     }
     
     dispatch({ type: 'ADD_ACTION', action: fullAction });
+    
+    // Check for reaction triggers
+    if (state.activeEncounter) {
+      const reactionOpportunities = checkReactionTriggers(fullAction, state.activeEncounter);
+      reactionOpportunities.forEach(opportunity => {
+        addReactionOpportunity(opportunity);
+        addParticipantReactionOpportunity(opportunity.participantId, opportunity);
+      });
+    }
     
     // Apply damage if any
     if (action.damageDealt && action.targetParticipantId) {
@@ -497,7 +733,17 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     const participant = state.activeEncounter?.participants.find(p => p.id === participantId);
     if (!participant) return;
     
+    // Calculate damage with resistances, immunities, and vulnerabilities
     let actualDamage = damage;
+    if (damageType) {
+      actualDamage = calculateDamage(
+        damage,
+        damageType,
+        participant.damageResistances || [],
+        participant.damageImmunities || [],
+        participant.damageVulnerabilities || []
+      );
+    }
     
     // Apply temporary HP first
     let tempHPDamage = Math.min(participant.temporaryHitPoints, actualDamage);
@@ -550,10 +796,18 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     
     const newConditions = [...participant.conditions, condition];
     
+    // Apply special effects for certain conditions
+    let updates: Partial<CombatParticipant> = { conditions: newConditions };
+    
+    if (condition.name === 'grappled') {
+      // Apply grappled effects (speed becomes 0)
+      updates.speed = 0;
+    }
+    
     dispatch({
       type: 'UPDATE_PARTICIPANT',
       participantId,
-      updates: { conditions: newConditions },
+      updates,
     });
   }, [state.activeEncounter]);
 
@@ -566,10 +820,19 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     
     const newConditions = participant.conditions.filter(c => c.name !== conditionName);
     
+    // Apply special effects for certain conditions
+    let updates: Partial<CombatParticipant> = { conditions: newConditions };
+    
+    if (conditionName === 'grappled') {
+      // Remove grappled effects (restore normal speed)
+      // Simplified - would normally restore the participant's actual speed
+      updates.speed = participant.speed || 30;
+    }
+    
     dispatch({
       type: 'UPDATE_PARTICIPANT',
       participantId,
-      updates: { conditions: newConditions },
+      updates,
     });
   }, [state.activeEncounter]);
 
@@ -652,13 +915,48 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
       bonusActionTaken: false,
       reactionTaken: false,
       movementUsed: 0,
+      reactionOpportunities: [],
       monsterData: participant.monsterData,
       spellSlots: undefined,
       activeConcentration: null,
+      // Damage resistances, immunities, and vulnerabilities
+      damageResistances: participant.damageResistances || [],
+      damageImmunities: participant.damageImmunities || [],
+      damageVulnerabilities: participant.damageVulnerabilities || [],
+      // Fighting styles
+      fightingStyles: participant.fightingStyles || [],
+      // Weapons
+      mainHandWeapon: participant.mainHandWeapon,
+      offHandWeapon: participant.offHandWeapon,
+      // Vision and stealth
+      visionTypes: participant.visionTypes || [],
+      obscurement: participant.obscurement || 'clear',
+      isHidden: participant.isHidden || false,
+      stealthCheckBonus: participant.stealthCheckBonus || 0,
     };
     
+    // For player characters, copy data from CharacterContext if available
+    if (participant.participantType === 'player' && participant.characterId && characterState.character?.id === participant.characterId) {
+      fullParticipant.spellSlots = characterState.character.spellSlots;
+      fullParticipant.preparedSpells = characterState.character.preparedSpells;
+      fullParticipant.activeConcentration = characterState.character.activeConcentration;
+      fullParticipant.damageResistances = characterState.character.damageResistances || [];
+      fullParticipant.damageImmunities = characterState.character.damageImmunities || [];
+      fullParticipant.damageVulnerabilities = characterState.character.damageVulnerabilities || [];
+      fullParticipant.fightingStyles = characterState.character.fightingStyles?.map(style => {
+        // Convert string to FightingStyle object
+        const styleName = style as FightingStyleName;
+        return FIGHTING_STYLES[styleName] || { name: styleName, description: '', effect: {} };
+      }) || [];
+      // Copy vision and stealth properties from character
+      fullParticipant.visionTypes = characterState.character.visionTypes || [];
+      fullParticipant.obscurement = characterState.character.obscurement || 'clear';
+      fullParticipant.isHidden = characterState.character.isHidden || false;
+      fullParticipant.stealthCheckBonus = characterState.character.stealthCheckBonus || 0;
+    }
+    
     dispatch({ type: 'ADD_PARTICIPANT', participant: fullParticipant });
-  }, []);
+  }, [characterState.character]);
 
   const removeParticipant = useCallback(async (participantId: string) => {
     dispatch({ type: 'REMOVE_PARTICIPANT', participantId });
@@ -669,6 +967,132 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     updates: Partial<CombatParticipant>
   ) => {
     dispatch({ type: 'UPDATE_PARTICIPANT', participantId, updates });
+  }, []);
+
+  // ===========================
+  // Reaction Opportunities
+  // ===========================
+
+  const addReactionOpportunity = useCallback((opportunity: ReactionOpportunity) => {
+    dispatch({ type: 'ADD_REACTION_OPPORTUNITY', opportunity });
+  }, []);
+
+  const removeReactionOpportunity = useCallback((opportunityId: string) => {
+    dispatch({ type: 'REMOVE_REACTION_OPPORTUNITY', opportunityId });
+  }, []);
+
+  const clearReactionOpportunities = useCallback(() => {
+    dispatch({ type: 'CLEAR_REACTION_OPPORTUNITIES' });
+  }, []);
+
+  const setPendingReaction = useCallback((opportunityId: string, selectedReaction: ActionType) => {
+    dispatch({ type: 'SET_PENDING_REACTION', opportunityId, selectedReaction });
+  }, []);
+
+  // ===========================
+  // Weapon Management
+  // ===========================
+
+  const equipMainHandWeapon = useCallback((participantId: string, weapon: Equipment) => {
+    dispatch({
+      type: 'UPDATE_PARTICIPANT',
+      participantId,
+      updates: { mainHandWeapon: weapon }
+    });
+  }, []);
+
+  const equipOffHandWeapon = useCallback((participantId: string, weapon: Equipment) => {
+    dispatch({
+      type: 'UPDATE_PARTICIPANT',
+      participantId,
+      updates: { offHandWeapon: weapon }
+    });
+  }, []);
+
+  const unequipMainHandWeapon = useCallback((participantId: string) => {
+    dispatch({
+      type: 'UPDATE_PARTICIPANT',
+      participantId,
+      updates: { mainHandWeapon: undefined }
+    });
+  }, []);
+
+  const unequipOffHandWeapon = useCallback((participantId: string) => {
+    dispatch({
+      type: 'UPDATE_PARTICIPANT',
+      participantId,
+      updates: { offHandWeapon: undefined }
+    });
+  }, []);
+
+  // ===========================
+  // Movement Actions
+  // ===========================
+
+  const moveParticipant = useCallback(async (
+    participantId: string,
+    fromPosition: string,
+    toPosition: string
+  ) => {
+    if (!state.activeEncounter) return;
+
+    // Process movement action
+    const opportunities = processMovementAction(
+      participantId,
+      fromPosition,
+      toPosition,
+      state.activeEncounter
+    );
+
+    // Add reaction opportunities
+    opportunities.forEach(opportunity => {
+      addReactionOpportunity(opportunity);
+      addParticipantReactionOpportunity(opportunity.participantId, opportunity);
+    });
+
+    // Update participant position
+    dispatch({
+      type: 'UPDATE_PARTICIPANT',
+      participantId,
+      updates: { position: toPosition }
+    });
+  }, [state.activeEncounter, addReactionOpportunity, addParticipantReactionOpportunity]);
+
+  // ===========================
+  // Participant Reaction Opportunities
+  // ===========================
+
+  const addParticipantReactionOpportunity = useCallback((participantId: string, opportunity: ReactionOpportunity) => {
+    dispatch({ 
+      type: 'UPDATE_PARTICIPANT', 
+      participantId, 
+      updates: { 
+        reactionOpportunities: [
+          ...(state.activeEncounter?.participants.find(p => p.id === participantId)?.reactionOpportunities || []),
+          opportunity
+        ]
+      } 
+    });
+  }, [state.activeEncounter]);
+
+  const removeParticipantReactionOpportunity = useCallback((participantId: string, opportunityId: string) => {
+    dispatch({ 
+      type: 'UPDATE_PARTICIPANT', 
+      participantId, 
+      updates: { 
+        reactionOpportunities: (
+          state.activeEncounter?.participants.find(p => p.id === participantId)?.reactionOpportunities || []
+        ).filter(opp => opp.id !== opportunityId)
+      } 
+    });
+  }, [state.activeEncounter]);
+
+  const clearParticipantReactionOpportunities = useCallback((participantId: string) => {
+    dispatch({ 
+      type: 'UPDATE_PARTICIPANT', 
+      participantId, 
+      updates: { reactionOpportunities: [] } 
+    });
   }, []);
 
   // ===========================
@@ -690,6 +1114,24 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     addParticipant,
     removeParticipant,
     updateParticipant,
+    // Reaction management
+    addReactionOpportunity,
+    removeReactionOpportunity,
+    clearReactionOpportunities,
+    setPendingReaction,
+    // Participant reaction opportunities
+    addParticipantReactionOpportunity,
+    removeParticipantReactionOpportunity,
+    clearParticipantReactionOpportunities,
+      
+    // Movement actions
+    moveParticipant,
+      
+    // Weapon management
+    equipMainHandWeapon,
+    equipOffHandWeapon,
+    unequipMainHandWeapon,
+    unequipOffHandWeapon,
   };
 
   return (

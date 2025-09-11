@@ -140,6 +140,27 @@ const transformCharacterData = (
   equipment: equipmentData?.map((item: any) => item.item_name) || [],
   experience: characterData.experience_points || 0,
   alignment: characterData.alignment || '',
+  // Vision and Stealth
+  visionTypes: characterData.vision_types ? JSON.parse(characterData.vision_types) : [],
+  obscurement: characterData.obscurement || 'clear',
+  isHidden: characterData.is_hidden || false,
+  stealthCheckBonus: characterData.stealth_check_bonus || 0,
+  // Magic Items
+  inventory: equipmentData?.map((item: any) => ({
+    itemId: item.id,
+    quantity: item.quantity || 1,
+    equipped: item.equipped || false,
+    // Magic item properties
+    isMagic: item.is_magic || false,
+    magicBonus: item.magic_bonus || 0,
+    magicProperties: item.magic_properties ? JSON.parse(item.magic_properties) : [],
+    requiresAttunement: item.requires_attunement || false,
+    isAttuned: item.is_attuned || false,
+    attunementRequirements: item.attunement_requirements || '',
+    magicItemType: item.magic_item_type || '',
+    magicItemRarity: item.magic_item_rarity || 'common',
+    magicEffects: item.magic_effects ? JSON.parse(item.magic_effects) : {}
+  })) || [],
   // AI-generated fields
   image_url: characterData.image_url,
   appearance: characterData.appearance,
