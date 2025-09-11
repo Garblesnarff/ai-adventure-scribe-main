@@ -32,7 +32,7 @@ const GameContent: React.FC = () => {
   const characterIdFromParams = searchParams.get('character');
   // const sessionIdFromParams = searchParams.get('session'); // This was for MessageHandler, will now come from useGameSession
 
-  const { dispatch: characterDispatch } = useCharacter();
+  const { state: characterState, dispatch: characterDispatch } = useCharacter();
   const { dispatch: campaignDispatch } = useCampaign();
   
   // Initialize useGameSession here
@@ -48,13 +48,6 @@ const GameContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [combatMode, setCombatMode] = useState(false);
   const [showCombatInterface, setShowCombatInterface] = useState(false);
-
-  // Combat AI integration for automatic combat detection
-  const combatAI = useCombatAIIntegration({
-    sessionId,
-    characterId: characterIdFromParams || undefined,
-    campaignId: campaignIdFromParams || undefined
-  });
 
   useEffect(() => {
     const loadGameData = async () => {
@@ -150,6 +143,95 @@ const GameContent: React.FC = () => {
     loadGameData();
   }, [characterIdFromParams, campaignIdFromParams, characterDispatch, campaignDispatch]);
 
+  // Handle manual combat mode toggle
+  const handleCombatToggle = () => {
+    setCombatMode(!combatMode);
+    // Mark that user manually toggled combat mode
+    sessionStorage.setItem('manualCombatToggle', 'true');
+    // Clear the flag after 30 seconds to allow auto-toggle again
+    setTimeout(() => {
+      sessionStorage.removeItem('manualCombatToggle');
+    }, 30000);
+  };
+
+  // Handle AI response for combat detection - moved to inner component
+  const handleAIResponse = React.useCallback(async (message: any) => {
+    // Basic logging for now, actual combat detection handled in inner component
+    console.log('🎯 AI response received in outer component:', message.text?.substring(0, 100) + '...');
+  }, []);
+
+  // Combine loading states: initial data load and session loading
+  const combinedIsLoading = isLoading || sessionState === 'loading';
+  const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
+
+  if (combinedIsLoading) {
+    return <div className="text-center p-10 text-muted-foreground">Loading your realm...</div>;
+  }
+
+  if (combinedError) {
+    return <div className="text-center p-10 text-destructive">Error: {combinedError}</div>;
+  }
+
+  if (!sessionId || !sessionData) {
+    return <div className="text-center p-10 text-muted-foreground">Initializing your infinite story... If this persists, check campaign/character selection.</div>;
+  }
+
+  // These are validated ones from params, used for data loading.
+  // MessageHandler will use the sessionId from useGameSession.
+  const campaignIdForHandler = campaignIdFromParams;
+  const characterIdForHandler = characterIdFromParams;
+
+  return (
+    <CombatProvider sessionId={sessionId}>
+      <GameContentInner 
+        sessionId={sessionId}
+        campaignIdForHandler={campaignIdFromParams}
+        characterIdForHandler={characterIdFromParams}
+        sessionData={sessionData}
+        updateGameSessionState={updateGameSessionState}
+        characterState={characterState}
+        combatMode={combatMode}
+        setCombatMode={setCombatMode}
+        handleCombatToggle={handleCombatToggle}
+        handleAIResponse={handleAIResponse}
+      />
+    </CombatProvider>
+  );
+};
+
+// Inner component that has access to CombatProvider
+interface GameContentInnerProps {
+  sessionId: string;
+  campaignIdForHandler: string | null;
+  characterIdForHandler: string | null;
+  sessionData: any;
+  updateGameSessionState: any;
+  characterState: any;
+  combatMode: boolean;
+  setCombatMode: (mode: boolean) => void;
+  handleCombatToggle: () => void;
+  handleAIResponse: (message: any) => Promise<void>;
+}
+
+const GameContentInner: React.FC<GameContentInnerProps> = ({
+  sessionId,
+  campaignIdForHandler,
+  characterIdForHandler,
+  sessionData,
+  updateGameSessionState,
+  characterState,
+  combatMode,
+  setCombatMode,
+  handleCombatToggle,
+  handleAIResponse,
+}) => {
+  // Combat AI integration for automatic combat detection
+  const combatAI = useCombatAIIntegration({
+    sessionId,
+    characterId: characterIdForHandler || undefined,
+    campaignId: campaignIdForHandler || undefined
+  });
+
   // Auto-toggle combat mode based on combat detection
   React.useEffect(() => {
     if (combatAI.isInCombat && !combatMode) {
@@ -163,21 +245,10 @@ const GameContent: React.FC = () => {
         console.log('✅ Combat ended! Automatically returning to conversation mode.');
       }
     }
-  }, [combatAI.isInCombat, combatMode]);
+  }, [combatAI.isInCombat, combatMode, setCombatMode]);
 
-  // Handle manual combat mode toggle
-  const handleCombatToggle = () => {
-    setCombatMode(!combatMode);
-    // Mark that user manually toggled combat mode
-    sessionStorage.setItem('manualCombatToggle', 'true');
-    // Clear the flag after 30 seconds to allow auto-toggle again
-    setTimeout(() => {
-      sessionStorage.removeItem('manualCombatToggle');
-    }, 30000);
-  };
-
-  // Handle AI response for combat detection
-  const handleAIResponse = React.useCallback(async (message: any) => {
+  // Handle AI response for combat detection in inner component
+  const innerHandleAIResponse = React.useCallback(async (message: any) => {
     try {
       console.log('🎯 Processing AI response for combat detection:', message.text?.substring(0, 100) + '...');
       
@@ -205,36 +276,15 @@ const GameContent: React.FC = () => {
         console.log('📝 No combat detection data in AI response');
       }
       
-      // The combat mode toggle will be handled by the auto-toggle effect based on combatAI.isInCombat
+      // Also call the outer handleAIResponse if needed
+      await handleAIResponse(message);
       
     } catch (error) {
       console.error('Error processing AI response for combat:', error);
     }
-  }, [combatAI, characterState.character]);
-
-  // Combine loading states: initial data load and session loading
-  const combinedIsLoading = isLoading || sessionState === 'loading';
-  const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
-
-  if (combinedIsLoading) {
-    return <div className="text-center p-10 text-muted-foreground">Loading your realm...</div>;
-  }
-
-  if (combinedError) {
-    return <div className="text-center p-10 text-destructive">Error: {combinedError}</div>;
-  }
-
-  if (!sessionId || !sessionData) {
-    return <div className="text-center p-10 text-muted-foreground">Initializing your infinite story... If this persists, check campaign/character selection.</div>;
-  }
-
-  // These are validated ones from params, used for data loading.
-  // MessageHandler will use the sessionId from useGameSession.
-  const campaignIdForHandler = campaignIdFromParams;
-  const characterIdForHandler = characterIdFromParams;
+  }, [combatAI, characterState, handleAIResponse]);
 
   return (
-    <CombatProvider sessionId={sessionId}>
       <MessageProvider sessionId={sessionId}>
         <MemoryProvider sessionId={sessionId}>
           <div className="min-h-screen bg-background">
@@ -319,7 +369,7 @@ const GameContent: React.FC = () => {
                           characterId={characterIdForHandler}
                           turnCount={sessionData.turn_count ?? 0}
                           updateGameSessionState={updateGameSessionState}
-                          onAIResponse={handleAIResponse}
+                          onAIResponse={innerHandleAIResponse}
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <ChatInput
@@ -342,7 +392,6 @@ const GameContent: React.FC = () => {
           </div>
         </MemoryProvider>
       </MessageProvider>
-    </CombatProvider>
   );
 };
 

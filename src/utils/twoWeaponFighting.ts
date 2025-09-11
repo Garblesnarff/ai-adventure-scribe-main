@@ -1,268 +1,226 @@
 /**
- * Two-Weapon Fighting System for D&D 5e
- * 
- * Handles dual wielding mechanics, light weapon requirements, and fighting styles
+ * Two-weapon fighting utility functions for D&D 5e combat
  */
 
-import { CombatParticipant, WeaponProperties, FightingStyle, DamageType } from '@/types/combat';
-import { DiceRollOptions, rollDice, rollAttack, rollDamage } from './diceUtils';
-
-/**
- * Check if a weapon is light (required for basic two-weapon fighting)
- */
-export function isLightWeapon(properties: WeaponProperties): boolean {
-  return properties.light || false;
-}
+import { Participant } from '@/types/combat';
+import { rollDice, rollAttack, rollDamage } from '@/utils/diceUtils';
+import { getEquippedWeapons } from './equipmentUtils';
 
 /**
- * Check if a weapon has finesse (can use Dex for attack/damage)
+ * Checks if a participant can use two-weapon fighting
+ * Requirements: Must have light weapons in both hands, not using a shield
  */
-export function hasFinesseProperty(properties: WeaponProperties): boolean {
-  return properties.finesse || false;
-}
-
-/**
- * Check if participant can use two-weapon fighting
- */
-export function canUseTwoWeaponFighting(participant: CombatParticipant): boolean {
-  const { mainHandWeapon, offHandWeapon } = participant;
+export function canUseTwoWeaponFighting(participant: Participant): boolean {
+  const weapons = getEquippedWeapons(participant);
+  const mainWeapon = weapons.mainHand;
+  const offHandWeapon = weapons.offHand;
   
-  if (!mainHandWeapon || !offHandWeapon) return false;
-  
-  // Check if participant has Dual Wielder feat
-  const hasDualWielderFeat = participant.classFeatures?.some(f => f.name === 'dual_wielder') || false;
-  
-  if (hasDualWielderFeat) {
-    // With Dual Wielder feat, weapons don't need to be light
-    // but they must be one-handed (not two-handed)
-    return !mainHandWeapon.properties.twoHanded && !offHandWeapon.properties.twoHanded;
+  // Must have weapons in both hands
+  if (!mainWeapon || !offHandWeapon) {
+    return false;
   }
   
-  // Without feat, both weapons must be light
-  return isLightWeapon(mainHandWeapon.properties) && isLightWeapon(offHandWeapon.properties);
-}
-
-/**
- * Check if participant has Two-Weapon Fighting style
- */
-export function hasTwoWeaponFightingStyle(participant: CombatParticipant): boolean {
-  return participant.fightingStyles?.some(style => style.name === 'two_weapon_fighting') || false;
-}
-
-/**
- * Get attack bonus for weapon considering ability scores and proficiency
- */
-export function getWeaponAttackBonus(
-  weapon: { properties: WeaponProperties; attackBonus: number },
-  participant: CombatParticipant,
-  isOffHand: boolean = false
-): number {
-  // This would normally calculate from ability scores + proficiency bonus
-  // For now, using the stored attackBonus from weapon
-  return weapon.attackBonus;
-}
-
-/**
- * Get damage bonus for weapon (ability modifier)
- */
-export function getWeaponDamageBonus(
-  weapon: { properties: WeaponProperties; attackBonus: number },
-  participant: CombatParticipant,
-  isOffHand: boolean = false
-): number {
-  // For off-hand attacks, don't add ability modifier unless Two-Weapon Fighting style
-  if (isOffHand && !hasTwoWeaponFightingStyle(participant)) {
-    return 0;
+  // Both must be light weapons
+  const mainIsLight = mainWeapon.properties?.includes('light') || false;
+  const offIsLight = offHandWeapon.properties?.includes('light') || false;
+  
+  if (!mainIsLight || !offIsLight) {
+    return false;
   }
   
-  // Simplified - would normally calculate from ability scores
-  // Assume +3 ability modifier for now
-  return 3;
+  // Cannot use if holding a shield or spellcasting focus in off hand
+  const offHandIsShield = offHandWeapon.name?.toLowerCase().includes('shield');
+  const offHandIsFocus = offHandWeapon.properties?.includes('focus');
+  
+  if (offHandIsShield || offHandIsFocus) {
+    return false;
+  }
+  
+  // Check if bonus action is available
+  const bonusActionAvailable = !participant.bonusActionTaken;
+  
+  return bonusActionAvailable;
 }
 
 /**
- * Make a main hand attack
+ * Creates a main hand attack action for two-weapon fighting
  */
 export function makeMainHandAttack(
-  participant: CombatParticipant,
-  targetId: string,
-  options: DiceRollOptions = {}
+  participant: Participant, 
+  targetId?: string
 ): any {
-  const { mainHandWeapon } = participant;
-  if (!mainHandWeapon) {
+  const weapons = getEquippedWeapons(participant);
+  const mainWeapon = weapons.mainHand;
+  
+  if (!mainWeapon) {
     throw new Error('No main hand weapon equipped');
   }
   
-  const attackBonus = getWeaponAttackBonus(mainHandWeapon, participant);
-  const attackRoll = rollAttack(attackBonus, options);
+  // Calculate attack bonus
+  const abilityModifier = participant.abilityScores?.strength?.modifier || 
+                         participant.abilityScores?.dexterity?.modifier || 0;
+  const proficiencyBonus = Math.floor((participant.level || 1) / 4) + 2;
+  const attackBonus = abilityModifier + proficiencyBonus;
   
-  const damageBonus = getWeaponDamageBonus(mainHandWeapon, participant);
-  const damageRolls = rollDamage(mainHandWeapon.damage, attackRoll.critical || false);
+  // Roll attack
+  const attackRoll = rollAttack(attackBonus, {
+    advantage: participant.conditions?.some(c => c.name === 'advantage') || false,
+    disadvantage: participant.conditions?.some(c => c.name === 'disadvantage') || false
+  });
   
-  // Add damage bonus to first damage roll
-  if (damageRolls.length > 0) {
-    damageRolls[0].total += damageBonus;
+  // Calculate damage
+  const damageRoll = rollDamage(mainWeapon.damage, abilityModifier, 
+    participant.characterClass === 'fighter' || // Fighting Style: Two-Weapon Fighting
+    participant.fightingStyles?.some(fs => fs.name === 'two_weapon_fighting')
+  );
+  
+  const isCritical = attackRoll.critical;
+  
+  if (isCritical) {
+    damageRoll.results = damageRoll.results.flatMap(result => [result, result]);
+    damageRoll.total *= 2;
   }
-  
-  const totalDamage = damageRolls.reduce((sum, roll) => sum + roll.total, 0);
   
   return {
     participantId: participant.id,
     targetParticipantId: targetId,
-    actionType: 'attack',
-    description: `${participant.name} attacks with ${mainHandWeapon.name}`,
+    actionType: 'attack' as const,
+    description: `${participant.name} attacks with ${mainWeapon.name} (main hand)`,
+    weaponUsed: mainWeapon,
     attackRoll,
-    damageRolls,
-    damageDealt: totalDamage,
-    damageType: mainHandWeapon.damageType,
-    hit: attackRoll.total >= 15 // Would check against target AC
+    damageRoll,
+    hit: attackRoll.total >= 15, // Would check against target AC
+    damageDealt: damageRoll.total,
+    damageType: mainWeapon.damageType || 'slashing',
+    actionUsed: true,
+    bonusActionUsed: false,
+    timestamp: new Date().toISOString()
   };
 }
 
 /**
- * Make an off-hand attack (bonus action)
+ * Creates an off-hand attack action for two-weapon fighting
+ * Note: Off-hand attacks do not add ability modifier to damage
  */
 export function makeOffHandAttack(
-  participant: CombatParticipant,
-  targetId: string,
-  options: DiceRollOptions = {}
+  participant: Participant, 
+  targetId?: string
 ): any {
-  const { offHandWeapon } = participant;
+  const weapons = getEquippedWeapons(participant);
+  const offHandWeapon = weapons.offHand;
+  
   if (!offHandWeapon) {
     throw new Error('No off-hand weapon equipped');
   }
   
-  if (!canUseTwoWeaponFighting(participant)) {
-    throw new Error('Cannot use two-weapon fighting with current weapons');
+  // Calculate attack bonus (same as main hand)
+  const abilityModifier = participant.abilityScores?.strength?.modifier || 
+                         participant.abilityScores?.dexterity?.modifier || 0;
+  const proficiencyBonus = Math.floor((participant.level || 1) / 4) + 2;
+  const attackBonus = abilityModifier + proficiencyBonus;
+  
+  // Roll attack
+  const attackRoll = rollAttack(attackBonus, {
+    advantage: participant.conditions?.some(c => c.name === 'advantage') || false,
+    disadvantage: participant.conditions?.some(c => c.name === 'disadvantage') || false
+  });
+  
+  // Calculate damage (no ability modifier for off-hand attacks)
+  const damageRoll = rollDamage(offHandWeapon.damage, 0, // No modifier
+    participant.characterClass === 'fighter' || // Fighting Style: Two-Weapon Fighting
+    participant.fightingStyles?.some(fs => fs.name === 'two_weapon_fighting')
+  );
+  
+  const isCritical = attackRoll.critical;
+  
+  if (isCritical) {
+    damageRoll.results = damageRoll.results.flatMap(result => [result, result]);
+    damageRoll.total *= 2;
   }
-  
-  const attackBonus = getWeaponAttackBonus(offHandWeapon, participant, true);
-  const attackRoll = rollAttack(attackBonus, options);
-  
-  const damageBonus = getWeaponDamageBonus(offHandWeapon, participant, true);
-  const damageRolls = rollDamage(offHandWeapon.damage, attackRoll.critical || false);
-  
-  // Add damage bonus (0 unless Two-Weapon Fighting style)
-  if (damageRolls.length > 0) {
-    damageRolls[0].total += damageBonus;
-  }
-  
-  const totalDamage = damageRolls.reduce((sum, roll) => sum + roll.total, 0);
   
   return {
     participantId: participant.id,
     targetParticipantId: targetId,
-    actionType: 'off_hand_attack',
-    description: `${participant.name} attacks with off-hand ${offHandWeapon.name}${damageBonus === 0 ? ' (no ability modifier to damage)' : ''}`,
+    actionType: 'bonus_attack' as const,
+    description: `${participant.name} attacks with ${offHandWeapon.name} (off-hand)`,
+    weaponUsed: offHandWeapon,
     attackRoll,
-    damageRolls,
-    damageDealt: totalDamage,
-    damageType: offHandWeapon.damageType,
-    hit: attackRoll.total >= 15 // Would check against target AC
+    damageRoll,
+    hit: attackRoll.total >= 15, // Would check against target AC
+    damageDealt: damageRoll.total,
+    damageType: offHandWeapon.damageType || 'slashing',
+    actionUsed: false,
+    bonusActionUsed: true,
+    timestamp: new Date().toISOString()
   };
 }
 
 /**
- * Check if participant can make an off-hand attack
+ * Checks if off-hand attack can be made (bonus action available)
  */
-export function canMakeOffHandAttack(participant: CombatParticipant): boolean {
-  // Must have attacked with main hand this turn
-  if (!participant.actionTaken) return false;
+export function canMakeOffHandAttack(participant: Participant): boolean {
+  // Check if two-weapon fighting is possible and bonus action is available
+  const canTwoWeaponFight = canUseTwoWeaponFighting(participant);
+  const bonusActionAvailable = !participant.bonusActionTaken;
   
-  // Must have bonus action available
-  if (participant.bonusActionTaken) return false;
-  
-  // Must be able to use two-weapon fighting
-  return canUseTwoWeaponFighting(participant);
+  return canTwoWeaponFight && bonusActionAvailable;
 }
 
 /**
- * Get AC bonus from Dual Wielder feat
+ * Calculates total attacks possible with two-weapon fighting
  */
-export function getDualWielderACBonus(participant: CombatParticipant): number {
-  const hasDualWielderFeat = participant.classFeatures?.some(f => f.name === 'dual_wielder') || false;
+export function calculateTwoWeaponAttacks(participant: Participant): {
+  mainHandAttacks: number;
+  offHandAttacks: number;
+  totalAttacks: number;
+} {
+  const weapons = getEquippedWeapons(participant);
+  const mainWeapon = weapons.mainHand;
+  const offHandWeapon = weapons.offHand;
   
-  if (hasDualWielderFeat && participant.mainHandWeapon && participant.offHandWeapon) {
-    return 1; // +1 AC while wielding two weapons
+  let mainHandAttacks = 1; // Base action
+  let offHandAttacks = 0;
+  
+  // Extra Attack feature (level 5+ for most martial classes)
+  if (participant.level && participant.level >= 5 && 
+      ['fighter', 'paladin', 'ranger', 'barbarian'].includes(participant.characterClass || '')) {
+    mainHandAttacks += 1;
   }
   
-  return 0;
-}
-
-/**
- * Create default light weapons for testing
- */
-export function createDefaultLightWeapons() {
-  const scimitar = {
-    name: 'Scimitar',
-    damage: '1d6',
-    damageType: 'slashing' as DamageType,
-    properties: {
-      light: true,
-      finesse: true
-    },
-    attackBonus: 5
-  };
-  
-  const shortsword = {
-    name: 'Shortsword',
-    damage: '1d6',
-    damageType: 'piercing' as DamageType,
-    properties: {
-      light: true,
-      finesse: true
-    },
-    attackBonus: 5
-  };
-  
-  const handaxe = {
-    name: 'Handaxe',
-    damage: '1d6',
-    damageType: 'slashing' as DamageType,
-    properties: {
-      light: true,
-      thrown: true
-    },
-    attackBonus: 5
-  };
-  
-  return { scimitar, shortsword, handaxe };
-}
-
-/**
- * Apply weapon to participant's main hand
- */
-export function equipMainHandWeapon(
-  participant: CombatParticipant,
-  weapon: {
-    name: string;
-    damage: string;
-    damageType: DamageType;
-    properties: WeaponProperties;
-    attackBonus: number;
+  // Action Surge for fighters (if available)
+  if (participant.characterClass === 'fighter' && participant.level && participant.level >= 2 &&
+      participant.resources?.action_surge?.currentUses && participant.resources.action_surge.currentUses > 0) {
+    mainHandAttacks += 1; // Additional action
   }
-): CombatParticipant {
+  
+  // Off-hand attack if conditions met
+  if (canMakeOffHandAttack(participant)) {
+    offHandAttacks = 1;
+  }
+  
   return {
-    ...participant,
-    mainHandWeapon: weapon
+    mainHandAttacks,
+    offHandAttacks,
+    totalAttacks: mainHandAttacks + offHandAttacks
   };
 }
 
 /**
- * Apply weapon to participant's off hand
+ * Gets the attack sequence for two-weapon fighting
  */
-export function equipOffHandWeapon(
-  participant: CombatParticipant,
-  weapon: {
-    name: string;
-    damage: string;
-    damageType: DamageType;
-    properties: WeaponProperties;
-    attackBonus: number;
+export function getTwoWeaponAttackSequence(participant: Participant): string[] {
+  const attacks = calculateTwoWeaponAttacks(participant);
+  const sequence: string[] = [];
+  
+  // Main hand attacks first (action)
+  for (let i = 0; i < attacks.mainHandAttacks; i++) {
+    sequence.push('main_hand');
   }
-): CombatParticipant {
-  return {
-    ...participant,
-    offHandWeapon: weapon
-  };
+  
+  // Off-hand attack (bonus action)
+  if (attacks.offHandAttacks > 0) {
+    sequence.push('off_hand');
+  }
+  
+  return sequence;
 }

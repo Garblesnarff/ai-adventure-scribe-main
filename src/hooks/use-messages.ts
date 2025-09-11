@@ -1,14 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage, MessageContext } from '@/types/game';
 
 /**
  * Custom hook for fetching and managing game messages
  * @param sessionId - Current game session ID
- * @returns Query result containing messages array and loading state
+ * @returns Query result containing messages array, loading state, and addMessage function
  */
 export const useMessages = (sessionId: string | null) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['messages', sessionId],
     queryFn: async () => {
       if (!sessionId) return [];
@@ -34,4 +36,42 @@ export const useMessages = (sessionId: string | null) => {
     },
     enabled: !!sessionId,
   });
+
+  const addMessage = async (message: ChatMessage) => {
+    if (!sessionId) return;
+
+    try {
+      const contextData = message.context ? {
+        location: message.context.location || null,
+        emotion: message.context.emotion || null,
+        intent: message.context.intent || null
+      } : {};
+
+      const { error } = await supabase
+        .from('dialogue_history')
+        .insert({
+          session_id: sessionId,
+          message: message.text,
+          speaker_type: message.sender,
+          context: contextData,
+          timestamp: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error('Error adding message:', error);
+        throw error;
+      }
+
+      // Invalidate and refetch messages
+      await queryClient.invalidateQueries({ queryKey: ['messages', sessionId] });
+    } catch (error) {
+      console.error('Failed to add message:', error);
+      throw error;
+    }
+  };
+
+  return {
+    ...query,
+    addMessage,
+  };
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMessageContext } from '@/contexts/SimpleMessageContext';
+import { useMessageContext } from '@/contexts/MessageContext';
 import { ProgressiveVoicePlayer } from './audio/ProgressiveVoicePlayer';
 import { MultiVoicePlayer } from './audio/MultiVoicePlayer';
 import { Switch } from "@/components/ui/switch";

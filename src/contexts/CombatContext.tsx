@@ -20,7 +20,6 @@ import {
   DiceRoll,
   FightingStyleName
 } from '@/types/combat';
-import { createClient } from '@supabase/supabase-js';
 import { rollDie } from '@/utils/diceRolls';
 import { 
   castSpell, 
@@ -40,10 +39,7 @@ import { FIGHTING_STYLES } from '@/utils/fightingStyles';
 // Supabase Client
 // ===========================
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
+import { supabase } from '@/integrations/supabase/client';
 
 // ===========================
 // Initial State
@@ -1026,39 +1022,6 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
   }, []);
 
   // ===========================
-  // Movement Actions
-  // ===========================
-
-  const moveParticipant = useCallback(async (
-    participantId: string,
-    fromPosition: string,
-    toPosition: string
-  ) => {
-    if (!state.activeEncounter) return;
-
-    // Process movement action
-    const opportunities = processMovementAction(
-      participantId,
-      fromPosition,
-      toPosition,
-      state.activeEncounter
-    );
-
-    // Add reaction opportunities
-    opportunities.forEach(opportunity => {
-      addReactionOpportunity(opportunity);
-      addParticipantReactionOpportunity(opportunity.participantId, opportunity);
-    });
-
-    // Update participant position
-    dispatch({
-      type: 'UPDATE_PARTICIPANT',
-      participantId,
-      updates: { position: toPosition }
-    });
-  }, [state.activeEncounter, addReactionOpportunity, addParticipantReactionOpportunity]);
-
-  // ===========================
   // Participant Reaction Opportunities
   // ===========================
 
@@ -1094,6 +1057,39 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
       updates: { reactionOpportunities: [] } 
     });
   }, []);
+
+  // ===========================
+  // Movement Actions
+  // ===========================
+
+  const moveParticipant = useCallback(async (
+    participantId: string,
+    fromPosition: string,
+    toPosition: string
+  ) => {
+    if (!state.activeEncounter) return;
+
+    // Process movement action
+    const opportunities = processMovementAction(
+      participantId,
+      fromPosition,
+      toPosition,
+      state.activeEncounter
+    );
+
+    // Add reaction opportunities
+    opportunities.forEach(opportunity => {
+      addReactionOpportunity(opportunity);
+      addParticipantReactionOpportunity(opportunity.participantId, opportunity);
+    });
+
+    // Update participant position
+    dispatch({
+      type: 'UPDATE_PARTICIPANT',
+      participantId,
+      updates: { position: toPosition }
+    });
+  }, [state.activeEncounter, addReactionOpportunity, addParticipantReactionOpportunity]);
 
   // ===========================
   // Context Value

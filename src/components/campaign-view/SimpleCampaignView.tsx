@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useCharacterStats } from '@/hooks/use-character-stats';
 import { Character } from '@/types/character';
+import { SimpleGameChatWithVoice } from '@/components/game/SimpleGameChatWithVoice';
 import { toast } from 'sonner';
 
 interface Campaign {
@@ -39,6 +40,8 @@ export const SimpleCampaignView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  const characterIdFromUrl = searchParams.get('character');
+  
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [characters, setCharacters] = useState<CharacterListItem[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<CharacterListItem | null>(null);
@@ -56,15 +59,11 @@ export const SimpleCampaignView: React.FC = () => {
     if (characterIdFromUrl && characters.length > 0) {
       const character = characters.find(c => c.id === characterIdFromUrl);
       if (character) {
-        setSelectedCharacter(character);
-        setIsGameStarted(true);
-        // Load full character data
-        if (character.id) {
-          loadFullCharacterData(character.id);
-        }
+        // Navigate directly to the game route with this character
+        navigate(`/game/${campaignId}?character=${character.id}`);
       }
     }
-  }, [characterIdFromUrl, characters]);
+  }, [characterIdFromUrl, characters, navigate, campaignId]);
 
   const loadCampaignData = async () => {
     try {
@@ -234,7 +233,8 @@ export const SimpleCampaignView: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10 -mt-16">
-        {/* Character Selection Layout */}
+        {!selectedCharacter ? (
+        /* Character Selection Layout */
         <div className="grid lg:grid-cols-3 gap-8">
             {/* Campaign Details Sidebar */}
             <div className="lg:col-span-1 space-y-6">
@@ -479,6 +479,7 @@ export const SimpleCampaignView: React.FC = () => {
               )}
             </div>
           </div>
+        )}
       </div>
     </div>
   );
