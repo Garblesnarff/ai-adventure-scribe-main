@@ -201,12 +201,23 @@ const StartingEquipmentSelection: React.FC = () => {
 
   const startingEquipment = getStartingEquipmentPackage(characterClass.id);
   
-  // Calculate estimated AC from starting equipment
+  // Calculate estimated AC from starting equipment with unarmored defense support
   const estimatedAC = () => {
     const armor = startingEquipment.find(eq => eq.category === 'armor');
     const shield = startingEquipment.find(eq => eq.category === 'shield');
     const dexMod = character?.abilityScores?.dexterity?.modifier || 0;
-    return calculateArmorClass(armor || null, shield || null, dexMod);
+    const conMod = character?.abilityScores?.constitution?.modifier || 0;
+    const wisMod = character?.abilityScores?.wisdom?.modifier || 0;
+    
+    return calculateArmorClass(
+      armor || null, 
+      shield || null, 
+      dexMod,
+      0, // otherBonuses
+      characterClass.name,
+      conMod,
+      wisMod
+    );
   };
 
   return (

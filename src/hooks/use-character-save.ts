@@ -4,7 +4,11 @@ import { useState } from 'react';
 // Project Imports
 import { useToast } from '@/components/ui/use-toast'; // Assuming kebab-case
 import { supabase } from '@/integrations/supabase/client';
-import { transformAbilityScoresForStorage, transformEquipmentForStorage } from '@/utils/characterTransformations';
+import { 
+  transformAbilityScoresForStorage, 
+  transformEquipmentForStorage,
+  transformMulticlassingForStorage
+} from '@/utils/characterTransformations';
 
 // Project Types
 import { Character, transformCharacterForStorage } from '@/types/character';
@@ -40,11 +44,14 @@ export const useCharacterSave = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       // Transform and save character data
-      const characterData = transformCharacterForStorage({
-        ...character,
-        // Use authenticated user ID if available, otherwise use local UUID
-        user_id: user?.id || LOCAL_USER_ID,
-      });
+      const characterData = {
+        ...transformCharacterForStorage({
+          ...character,
+          // Use authenticated user ID if available, otherwise use local UUID
+          user_id: user?.id || LOCAL_USER_ID,
+        }),
+        ...transformMulticlassingForStorage(character)
+      };
 
       // For new characters, we need to insert first to get an ID
       if (!characterData.id) {
@@ -67,23 +74,25 @@ export const useCharacterSave = () => {
       }
 
       // Transform and save character stats
-      const statsData = transformAbilityScoresForStorage(
-        character.abilityScores,
-        characterData.id
-      );
+      const statsData = {
+        ...transformAbilityScoresForStorage(
+          character.abilityScores,
+          characterData.id
+        )
+      };
 
       const { error: statsError } = await supabase
         .from('character_stats')
-        .upsert(statsData, { 
+        .upsert(statsData, {
           onConflict: 'character_id'
         });
 
       if (statsError) throw statsError;
 
       // Save equipment if present
-      if (character.equipment.length > 0) {
+      if (character.inventory && character.inventory.length > 0) {
         const equipmentData = transformEquipmentForStorage(
-          character.equipment,
+          character,
           characterData.id
         );
 

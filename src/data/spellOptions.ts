@@ -13,6 +13,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '120 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage.',
     damage: '1d10'
@@ -25,6 +27,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
     concentration: true
@@ -37,6 +41,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '10 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Up to 1 hour',
     description: 'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.'
   },
@@ -48,9 +54,11 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'S, M (a bit of fleece)',
-    duration: 'Concentration, up to 1 minute',
-    description: 'You create a sound or an image of an object within range that lasts for the duration.',
-    concentration: true
+    somatic: true,
+    material: true,
+    materialDescription: 'a bit of fleece',
+    duration: '1 minute',
+    description: 'You create a sound or an image of an object within range that lasts for the duration.'
   },
   {
     id: 'light',
@@ -60,6 +68,10 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: 'Touch',
     components: 'V, M (a firefly or phosphorescent moss)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a firefly or phosphorescent moss',
     duration: '1 hour',
     description: 'You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet.'
   },
@@ -71,6 +83,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, it takes 1d8 cold damage, and its speed is reduced by 10 feet until the start of your next turn.',
     damage: '1d8'
@@ -84,6 +98,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'Flame-like radiance descends on a creature that you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 radiant damage.',
     damage: '1d8'
@@ -96,6 +112,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: 'Touch',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice.',
     concentration: true
@@ -108,6 +126,7 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'V',
+    verbal: true,
     duration: 'Up to 1 minute',
     description: 'You manifest a minor wonder, a sign of supernatural power, within range. You create one of several magical effects within range.'
   },
@@ -120,6 +139,7 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V',
+    verbal: true,
     duration: 'Instantaneous',
     description: 'You unleash a string of insults laced with subtle enchantments at a creature you can see within range. If the target can hear you (though it need not understand you), it must succeed on a Wisdom saving throw or take 1d4 psychic damage and have disadvantage on the next attack roll it makes before the end of its next turn.',
     damage: '1d4'
@@ -132,9 +152,11 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'S, M (a bit of fleece)',
-    duration: 'Concentration, up to 1 minute',
-    description: 'You create a sound or an image of an object within range that lasts for the duration.',
-    concentration: true
+    somatic: true,
+    material: true,
+    materialDescription: 'a bit of fleece',
+    duration: '1 minute',
+    description: 'You create a sound or an image of an object within range that lasts for the duration.'
   },
   // Druid Cantrips
   {
@@ -145,6 +167,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'Whispering to the spirits of nature, you create one of several minor effects: predict weather, make a flower bloom, create a sensory effect, or light/snuff a small flame.'
   },
@@ -156,6 +180,10 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'V, S, M (the stem of a thorny plant)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'the stem of a thorny plant',
     duration: 'Instantaneous',
     description: 'You create a long, vine-like whip covered in thorns that lashes out at your command toward a creature in range.',
     damage: '1d6'
@@ -168,6 +196,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: 'Self',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: '10 minutes',
     description: 'A flickering flame appears in your hand. The flame remains there for the duration and harms neither you nor your equipment.',
     damage: '1d8'
@@ -181,6 +211,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '120 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 force damage.',
     damage: '1d10'
@@ -193,6 +225,8 @@ export const cantrips: Spell[] = [
     castingTime: '1 action',
     range: '120 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'You create a ghostly, skeletal hand in the space of a creature within range.',
     damage: '1d8'
@@ -205,6 +239,10 @@ export const cantrips: Spell[] = [
     castingTime: '1 minute',
     range: 'Touch',
     components: 'V, S, M (two lodestones)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'two lodestones',
     duration: 'Instantaneous',
     description: 'This spell repairs a single break or tear in an object you touch.'
   }
@@ -223,6 +261,8 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '120 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'You create three glowing darts of magical force. Each dart hits a creature of your choice that you can see within range. A dart deals 1d4 + 1 force damage to its target.',
     damage: '1d4+1'
@@ -235,8 +275,44 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 reaction',
     range: 'Self',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: '1 round',
-    description: 'An invisible barrier of magical force appears and protects you. Until the start of your next turn, you have a +5 bonus to AC, including against the triggering attack, and you take no damage from magic missile.'
+    description: 'An invisible barrier of magical force appears and protects you. Until the start of your next turn, you have a +5 bonus to AC, including against the triggering attack.',
+    reaction: true
+  },
+  {
+    id: 'detect-magic',
+    name: 'Detect Magic',
+    level: 1,
+    school: 'Divination',
+    castingTime: '1 action',
+    range: 'Self',
+    components: 'V, S',
+    verbal: true,
+    somatic: true,
+    duration: 'Concentration, up to 10 minutes',
+    description: 'For the duration, you sense the presence of magic within 30 feet of you.',
+    concentration: true,
+    ritual: true
+  },
+  {
+    id: 'identify',
+    name: 'Identify',
+    level: 1,
+    school: 'Divination',
+    castingTime: '1 minute',
+    range: 'Touch',
+    components: 'V, S, M (a pearl worth at least 100 gp and an owl feather)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a pearl worth at least 100 gp and an owl feather',
+    materialCost: 100,
+    materialConsumed: true,
+    duration: 'Instantaneous',
+    description: 'You choose one object that you must touch throughout the casting of the spell.',
+    ritual: true
   },
   {
     id: 'burning-hands',
@@ -246,9 +322,29 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Self (15-foot cone)',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
-    description: 'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips. Each creature in a 15-foot cone must make a Dexterity saving throw. A creature takes 3d6 fire damage on a failed save, or half as much damage on a successful one.',
+    description: 'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips.',
     damage: '3d6'
+  },
+  {
+    id: 'chromatic-orb',
+    name: 'Chromatic Orb',
+    level: 1,
+    school: 'Evocation',
+    castingTime: '1 action',
+    range: '90 feet',
+    components: 'V, S, M (a diamond worth at least 50 gp)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a diamond worth at least 50 gp',
+    materialCost: 50,
+    materialConsumed: true,
+    duration: 'Instantaneous',
+    description: 'You hurl a 4-inch-diameter sphere of energy at a creature that you can see within range.',
+    damage: '3d8'
   },
   {
     id: 'sleep',
@@ -258,6 +354,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '90 feet',
     components: 'V, S, M (a pinch of fine sand, rose petals, or a cricket)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a pinch of fine sand, rose petals, or a cricket',
     duration: '1 minute',
     description: 'This spell sends creatures into a magical slumber. Roll 5d8; the result is how many hit points of creatures this spell can affect.'
   },
@@ -270,6 +370,8 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Touch',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
     damage: '1d8'
@@ -282,6 +384,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'V, S, M (a sprinkling of holy water)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a sprinkling of holy water',
     duration: 'Concentration, up to 1 minute',
     description: 'You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw.',
     concentration: true
@@ -294,6 +400,7 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V',
+    verbal: true,
     duration: '1 round',
     description: 'You speak a one-word command to a creature you can see within range. The target must succeed on a Wisdom saving throw or follow the command on its next turn.'
   },
@@ -306,6 +413,7 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 bonus action',
     range: '60 feet',
     components: 'V',
+    verbal: true,
     duration: 'Instantaneous',
     description: 'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
     damage: '1d4'
@@ -318,8 +426,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Self (15-foot cube)',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
-    description: 'A wave of thunderous force sweeps out from you. Each creature in a 15-foot cube originating from you must make a Constitution saving throw. On a failed save, a creature takes 2d8 thunder damage and is pushed 10 feet away from you.',
+    description: 'A wave of thunderous force sweeps out from you.',
     damage: '2d8'
   },
   {
@@ -330,8 +440,9 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V',
+    verbal: true,
     duration: 'Instantaneous',
-    description: 'You whisper a discordant melody that only one creature of your choice within range can hear, wracking it with terrible pain. The target must make a Wisdom saving throw. On a failed save, it takes 3d6 psychic damage and must immediately use its reaction, if available, to move as far as its speed allows away from you.',
+    description: 'You whisper a discordant melody that only one creature of your choice within range can hear, wracking it with terrible pain.',
     damage: '3d6'
   },
   // Druid 1st Level Spells
@@ -343,6 +454,8 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '90 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'Grasping weeds and vines sprout from the ground in a 20-foot square starting from a point within range.',
     concentration: true
@@ -355,6 +468,7 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V',
+    verbal: true,
     duration: 'Concentration, up to 1 minute',
     description: 'Each object in a 20-foot cube within range is outlined in blue, green, or violet light.',
     concentration: true
@@ -367,6 +481,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Touch',
     components: 'V, S, M (a sprig of mistletoe)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a sprig of mistletoe',
     duration: '24 hours',
     description: 'Up to ten berries appear in your hand and are infused with magic for the duration.'
   },
@@ -379,6 +497,8 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 bonus action',
     range: 'Self',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 radiant damage.',
     concentration: true
@@ -391,6 +511,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Touch',
     components: 'V, S, M (holy water or powdered silver and iron)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'holy water or powdered silver and iron',
     duration: 'Concentration, up to 10 minutes',
     description: 'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
     concentration: true
@@ -404,6 +528,7 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 bonus action',
     range: '90 feet',
     components: 'V',
+    verbal: true,
     duration: 'Concentration, up to 1 hour',
     description: 'You choose a creature you can see within range and mystically mark it as your quarry.',
     concentration: true
@@ -416,6 +541,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '30 feet',
     components: 'V, S, M (a morsel of food)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a morsel of food',
     duration: '24 hours',
     description: 'This spell lets you convince a beast that you mean it no harm.'
   },
@@ -428,6 +557,8 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '120 feet',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'You hurl an undulating, warbling mass of chaotic energy at one creature in range.',
     damage: '2d8'
@@ -440,6 +571,12 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '90 feet',
     components: 'V, S, M (a diamond worth at least 50 gp)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a diamond worth at least 50 gp',
+    materialCost: 50,
+    materialConsumed: true,
     duration: 'Instantaneous',
     description: 'You hurl a 4-inch-diameter sphere of energy at a creature that you can see within range.',
     damage: '3d8'
@@ -453,6 +590,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 bonus action',
     range: '90 feet',
     components: 'V, S, M (the petrified eye of a newt)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'the petrified eye of a newt',
     duration: 'Concentration, up to 1 hour',
     description: 'You place a curse on a creature that you can see within range.',
     concentration: true
@@ -465,35 +606,12 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Self (10-foot radius)',
     components: 'V, S',
+    verbal: true,
+    somatic: true,
     duration: 'Instantaneous',
     description: 'You invoke the power of Hadar, the Dark Hunger. Tendrils of dark energy erupt from you and batter all creatures within 10 feet of you.'
   },
   // Ritual Spells
-  {
-    id: 'detect-magic',
-    name: 'Detect Magic',
-    level: 1,
-    school: 'Divination',
-    castingTime: '1 action',
-    range: 'Self',
-    components: 'V, S',
-    duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you sense the presence of magic within 30 feet of you.',
-    concentration: true,
-    ritual: true
-  },
-  {
-    id: 'identify',
-    name: 'Identify',
-    level: 1,
-    school: 'Divination',
-    castingTime: '1 minute',
-    range: 'Touch',
-    components: 'V, S, M (a pearl worth at least 100 gp)',
-    duration: 'Instantaneous',
-    description: 'You choose one object that you must touch throughout the casting of the spell.',
-    ritual: true
-  },
   {
     id: 'comprehend-languages',
     name: 'Comprehend Languages',
@@ -502,6 +620,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: 'Self',
     components: 'V, S, M (a pinch of soot and salt)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a pinch of soot and salt',
     duration: '1 hour',
     description: 'For the duration, you understand the literal meaning of any spoken language that you hear.',
     ritual: true
@@ -514,6 +636,11 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 hour',
     range: '10 feet',
     components: 'V, S, M (10 gp worth of charcoal, incense, and herbs)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: '10 gp worth of charcoal, incense, and herbs',
+    materialCost: 10,
     duration: 'Instantaneous',
     description: 'You gain the service of a familiar, a spirit that takes an animal form you choose.',
     ritual: true
@@ -526,6 +653,10 @@ export const firstLevelSpells: Spell[] = [
     castingTime: '1 action',
     range: '60 feet',
     components: 'V, S, M (a piece of string and a bit of wood)',
+    verbal: true,
+    somatic: true,
+    material: true,
+    materialDescription: 'a piece of string and a bit of wood',
     duration: '1 hour',
     description: 'This spell creates an invisible, mindless, shapeless force that performs simple tasks.',
     ritual: true

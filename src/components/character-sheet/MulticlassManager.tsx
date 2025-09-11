@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { Character } from '@/types/character';
+import { Character, CharacterClass } from '@/types/character';
 import { 
   getProficiencyBonus,
   getAllClassFeaturesUpToLevel,
   getMulticlassProficiencies 
 } from '@/data/levelProgression';
+import { useMulticlassing } from '@/hooks/use-multiclassing';
 import { 
   Users, 
   Star, 
@@ -17,12 +18,15 @@ import {
   Sword, 
   BookOpen,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  ArrowUp
 } from 'lucide-react';
 
 interface MulticlassManagerProps {
   character: Character;
   onUpdate: (updatedCharacter: Character) => void;
+  availableClasses?: CharacterClass[]; // List of available classes to multiclass into
 }
 
 interface ClassLevel {
@@ -36,27 +40,44 @@ interface ClassLevel {
  * MulticlassManager component for managing multiclass characters
  * Shows class levels, combined features, and progression tracking
  */
-const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpdate }) => {
+const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpdate, availableClasses = [] }) => {
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
+  const {
+    isProcessing,
+    validationResult,
+    validateNewClass,
+    addNewClass,
+    levelUpSpecificClass,
+    getProficiencies,
+    getHitPoints,
+    getSpellcasting,
+    isMulticlassed,
+    getTotalLevel
+  } = useMulticlassing(character, onUpdate);
 
-  // Mock multiclass data - in full implementation, this would come from character data
-  const classLevels: ClassLevel[] = [
-    {
-      classId: 'fighter',
-      className: 'Fighter',
-      level: 6,
-      hitDie: 10
-    },
-    {
-      classId: 'wizard',
-      className: 'Wizard',
-      level: 4,
-      hitDie: 6
-    }
-  ];
+  // Prepare class levels data
+  const classLevels: ClassLevel[] = character.classLevels 
+    ? character.classLevels.map(cls => ({
+        classId: cls.classId,
+        className: cls.className,
+        level: cls.level,
+        hitDie: cls.hitDie
+      }))
+    : character.class 
+      ? [{
+          classId: character.class.id,
+          className: character.class.name,
+          level: character.level || 1,
+          hitDie: character.class.hitDie
+        }]
+      : [];
 
-  const totalLevel = classLevels.reduce((sum, cls) => sum + cls.level, 0);
+  const totalLevel = getTotalLevel();
   const proficiencyBonus = getProficiencyBonus(totalLevel);
+  const proficiencies = getProficiencies();
+  const hitPoints = getHitPoints();
+  const spellcasting = getSpellcasting();
+  const isSpellcaster = spellcasting.spellSlots.length > 0;
 
   /**
    * Toggle expanded state for a class
@@ -72,55 +93,26 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
   };
 
   /**
-   * Calculate spell slot progression for multiclass spellcasters
+   * Handle adding a new class
    */
-  const calculateSpellSlots = (classes: ClassLevel[]): number[] => {
-    // Simplified spell slot calculation for multiclass spellcasters
-    // Full casters contribute their level
-    // Half casters contribute half their level (rounded down)
-    // Third casters contribute one-third their level (rounded down)
-    
-    let spellcasterLevel = 0;
-    
-    classes.forEach(cls => {
-      switch (cls.classId) {
-        case 'wizard':
-        case 'cleric':
-        case 'druid':
-        case 'bard':
-        case 'sorcerer':
-          spellcasterLevel += cls.level; // Full caster
-          break;
-        case 'paladin':
-        case 'ranger':
-          spellcasterLevel += Math.floor(cls.level / 2); // Half caster
-          break;
-        case 'warlock':
-          // Pact Magic doesn't combine with other spellcasting
-          break;
-        case 'fighter': // Eldritch Knight
-        case 'rogue': // Arcane Trickster
-          if (cls.level >= 3) {
-            spellcasterLevel += Math.floor(cls.level / 3); // Third caster
-          }
-          break;
-      }
-    });
-
-    // Return spell slots based on combined caster level
-    // This is a simplified version - full implementation would use the official table
-    if (spellcasterLevel === 0) return [];
-    if (spellcasterLevel === 1) return [2];
-    if (spellcasterLevel === 2) return [3];
-    if (spellcasterLevel === 3) return [4, 2];
-    if (spellcasterLevel === 4) return [4, 3];
-    // ... continue for all levels
-    
-    return [4, 3, 3, 3, 2]; // Example for higher levels
+  const handleAddClass = async (newClass: CharacterClass) => {
+    const result = await addNewClass(newClass, 1);
+    if (!result.success) {
+      // In a real implementation, you would show an error message to the user
+      console.error(result.message);
+    }
   };
 
-  const spellSlots = calculateSpellSlots(classLevels);
-  const isSpellcaster = spellSlots.length > 0;
+  /**
+   * Handle leveling up a class
+   */
+  const handleLevelUpClass = async (classId: string) => {
+    const result = await levelUpSpecificClass(classId);
+    if (!result.success) {
+      // In a real implementation, you would show an error message to the user
+      console.error(result.message);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -153,14 +145,62 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
             <h4 className="font-medium mb-3">Class Levels</h4>
             <div className="flex flex-wrap gap-2">
               {classLevels.map((cls) => (
-                <Badge key={cls.classId} variant="outline" className="px-3 py-1">
+                <Badge key={cls.classId} variant="outline" className="px-3 py-1 flex items-center gap-1">
                   {cls.className} {cls.level}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 w-4 p-0 ml-1"
+                    onClick={() => handleLevelUpClass(cls.classId)}
+                    disabled={isProcessing}
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </Button>
                 </Badge>
               ))}
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Add New Class (if not already multiclassed or if there are available classes) */}
+      {!isMulticlassed() && availableClasses.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-green-500" />
+              Add New Class
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Multiclass by adding levels in a different class
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {availableClasses
+                .filter(cls => !classLevels.some(existing => existing.className === cls.name))
+                .map((cls) => (
+                  <div
+                    key={cls.id}
+                    className="p-3 border rounded-lg cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => handleAddClass(cls)}
+                  >
+                    <div className="font-medium capitalize">{cls.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {cls.hitDie}-sided hit die
+                    </div>
+                  </div>
+                ))}
+            </div>
+            
+            {validationResult && !validationResult.canMulticlass && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                <strong>Cannot Multiclass:</strong> {validationResult.missingRequirements.join(', ')}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Spell Slot Progression (if applicable) */}
       {isSpellcaster && (
@@ -175,8 +215,14 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
             <p className="text-sm text-muted-foreground mb-4">
               Combined spell slot progression from multiple spellcasting classes
             </p>
+            <div className="mb-4">
+              <div className="text-sm font-medium">Combined Caster Level: {spellcasting.combinedCasterLevel}</div>
+              <div className="text-xs text-muted-foreground">
+                {spellcasting.spellcastingClasses.map(cls => `${cls.className} (${cls.level})`).join(', ')}
+              </div>
+            </div>
             <div className="grid grid-cols-5 gap-2">
-              {spellSlots.map((slots, level) => (
+              {spellcasting.spellSlots.map((slots, level) => (
                 <div key={level} className="text-center p-2 border rounded">
                   <div className="text-sm font-medium">{level + 1}</div>
                   <div className="text-lg font-bold">{slots}</div>
@@ -187,12 +233,78 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
         </Card>
       )}
 
+      {/* Proficiencies Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-green-500" />
+            Combined Proficiencies
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {proficiencies.armor.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Armor</h4>
+                <div className="text-sm">{proficiencies.armor.join(', ')}</div>
+              </div>
+            )}
+            {proficiencies.weapons.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Weapons</h4>
+                <div className="text-sm">{proficiencies.weapons.join(', ')}</div>
+              </div>
+            )}
+            {proficiencies.tools.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Tools</h4>
+                <div className="text-sm">{proficiencies.tools.join(', ')}</div>
+              </div>
+            )}
+            {proficiencies.savingThrows.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Saving Throws</h4>
+                <div className="text-sm">
+                  {proficiencies.savingThrows
+                    .map(st => st.charAt(0).toUpperCase() + st.slice(1))
+                    .join(', ')}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hit Points Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-green-500" />
+            Hit Points Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center mb-4">
+            <div className="text-3xl font-bold">{hitPoints}</div>
+            <div className="text-sm text-muted-foreground">Maximum Hit Points</div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {classLevels.map((cls) => (
+              <div key={cls.classId} className="text-center p-3 border rounded">
+                <div className="text-lg font-bold">{cls.level}d{cls.hitDie}</div>
+                <div className="text-xs text-muted-foreground">{cls.className}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Individual Class Details */}
       <div className="space-y-4">
         {classLevels.map((cls) => {
           const isExpanded = expandedClasses.has(cls.classId);
-          const classFeatures = getAllClassFeaturesUpToLevel(cls.classId, cls.level);
-          const multiclassProfs = getMulticlassProficiencies(cls.classId);
+          const classFeatures = getAllClassFeaturesUpToLevel(cls.className, cls.level);
+          const multiclassProfs = getMulticlassProficiencies(cls.className);
 
           return (
             <Card key={cls.classId}>
@@ -200,46 +312,17 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
                 className="cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => toggleClassExpansion(cls.classId)}
               >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      {cls.classId === 'fighter' && <Sword className="w-5 h-5 text-red-500" />}
-                      {cls.classId === 'wizard' && <BookOpen className="w-5 h-5 text-blue-500" />}
-                      {cls.classId === 'cleric' && <Star className="w-5 h-5 text-yellow-500" />}
-                      {cls.classId === 'rogue' && <Shield className="w-5 h-5 text-gray-500" />}
-                      <span>{cls.className}</span>
-                      <Badge variant="outline">Level {cls.level}</Badge>
-                    </div>
-                  </CardTitle>
-                  {isExpanded ? (
-                    <ChevronDown className="w-5 h-5" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5" />
-                  )}
-                </div>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                    {cls.className} (Level {cls.level})
+                  </div>
+                  <Badge variant="secondary">d{cls.hitDie}</Badge>
+                </CardTitle>
               </CardHeader>
-              
               {isExpanded && (
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Class Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center p-2 border rounded">
-                        <div className="text-lg font-bold">d{cls.hitDie}</div>
-                        <div className="text-xs text-muted-foreground">Hit Die</div>
-                      </div>
-                      <div className="text-center p-2 border rounded">
-                        <div className="text-lg font-bold">{cls.level}</div>
-                        <div className="text-xs text-muted-foreground">Class Level</div>
-                      </div>
-                      <div className="text-center p-2 border rounded">
-                        <div className="text-lg font-bold">{classFeatures.length}</div>
-                        <div className="text-xs text-muted-foreground">Features</div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
                     {/* Multiclass Proficiencies Gained */}
                     {Object.keys(multiclassProfs).length > 0 && (
                       <div>
@@ -297,33 +380,6 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
           );
         })}
       </div>
-
-      {/* Hit Dice Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-green-500" />
-            Hit Dice Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {classLevels.map((cls) => (
-              <div key={cls.classId} className="text-center p-3 border rounded">
-                <div className="text-lg font-bold">{cls.level}d{cls.hitDie}</div>
-                <div className="text-xs text-muted-foreground">{cls.className}</div>
-              </div>
-            ))}
-          </div>
-          <Separator className="my-4" />
-          <div className="text-center">
-            <div className="text-sm text-muted-foreground">Total Hit Dice Available</div>
-            <div className="font-medium">
-              {classLevels.map(cls => `${cls.level}d${cls.hitDie}`).join(' + ')}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

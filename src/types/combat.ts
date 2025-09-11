@@ -6,6 +6,8 @@
  * Focus on turn-based mechanics, dice rolls, and DM oversight.
  */
 
+import { Equipment } from '@/data/equipmentOptions';
+
 // ===========================
 // Core Combat Types
 // ===========================
@@ -42,7 +44,8 @@ export type ActionType =
   | 'deflect_missiles' // Specific reaction type
   | 'shield_spell'    // Shield reaction
   | 'absorb_elements' // Absorb elements reaction
-  | 'hellish_rebuke'; // Hellish rebuke reaction
+  | 'hellish_rebuke'  // Hellish rebuke reaction
+  | 'divine_smite';   // Paladin's Divine Smite
 
 export type ReactionTrigger = 
   | 'creature_leaves_reach'     // Opportunity attack
@@ -152,6 +155,16 @@ export interface WeaponProperties {
   reach?: boolean;
   heavy?: boolean;
   loading?: boolean;
+  // Additional weapon properties that affect attacks
+  ammunition?: boolean;
+  range?: {
+    normal: number;
+    long?: number;
+  };
+  special?: string; // Special properties description
+  magical?: boolean; // Magical weapon
+  silvered?: boolean; // Silvered weapon
+  adamantine?: boolean; // Adamantine weapon
 }
 
 // ===========================
@@ -211,86 +224,66 @@ export interface CharacterResources {
 
 export interface CombatParticipant {
   id: string;
-  participantType: ParticipantType;
-  
-  // Basic Info
   name: string;
-  characterId?: string; // For PCs, links to characters table
+  participantType: 'player' | 'enemy' | 'npc';
+  characterId?: string;
+  characterClass?: string;
+  level?: number;
   
-  // Combat Stats (as they appear on character sheet)
-  initiative: number;
-  armorClass: number;
+  // Combat stats
   maxHitPoints: number;
   currentHitPoints: number;
   temporaryHitPoints: number;
+  armorClass: number;
+  initiative: number;
+  speed: number;
   
-  // Position (theater of mind style)
-  position?: string; // "front rank", "behind pillar", etc.
-  
-  // Status
-  conditions: Condition[];
-  
-  // Actions taken this turn (resets each turn)
+  // Turn tracking
   actionTaken: boolean;
   bonusActionTaken: boolean;
   reactionTaken: boolean;
   movementUsed: number;
   
-  // Character data for combat features
-  race?: string;
-  characterClass?: string;
-  level?: number;
-  racialTraits?: RacialTrait[];
+  // Reaction tracking
+  reactionOpportunities: ReactionOpportunity[];
+  
+  // Combat state
+  conditions: Condition[];
+  deathSaves: {
+    successes: number;
+    failures: number;
+  };
+  
+  // Weapon tracking
+  mainHandWeapon?: Equipment;
+  offHandWeapon?: Equipment;
+  
+  // Class features
   classFeatures?: ClassFeature[];
   resources?: CharacterResources;
+  isRaging?: boolean; // Track if Barbarian is currently raging
+  activeConcentration?: string | null;
+  
+  // Spellcasting
+  spellSlots?: Record<SpellSlotLevel, SpellSlotConfig>;
+  preparedSpells?: string[];
+  
+  // Damage resistances, immunities, and vulnerabilities
+  damageResistances: DamageType[];
+  damageImmunities: DamageType[];
+  damageVulnerabilities: DamageType[];
+  
+  // Fighting styles
   fightingStyles?: FightingStyle[];
   
-  // Spellcasting for combat tracking
-  spellSlots?: Record<number, { max: number; current: number }>;
-  activeConcentration?: {
-    spell: string;
-    level: number;
-    dc: number; // Save DC for concentration
-  } | null;
+  // Racial traits
+  racialTraits?: RacialTrait[];
   
-  // Combat state tracking
-  damageResistances?: DamageType[];
-  damageImmunities?: DamageType[];
-  damageVulnerabilities?: DamageType[];
-  isRaging?: boolean; // Barbarian rage state
-  
-  // Enhanced death saves
-  deathSaves: DeathSaves;
-  
-  // Vision and positioning
+  // Vision and stealth
   visionTypes?: VisionInfo[];
-  cover?: CoverInfo;
   obscurement?: ObscurementLevel;
-  
-  // Weapons for two-weapon fighting
-  mainHandWeapon?: {
-    name: string;
-    damage: string;
-    damageType: DamageType;
-    properties: WeaponProperties;
-    attackBonus: number;
-  };
-  offHandWeapon?: {
-    name: string;
-    damage: string;
-    damageType: DamageType;
-    properties: WeaponProperties;
-    attackBonus: number;
-  };
-  
-  // For monsters/NPCs
-  monsterData?: {
-    challengeRating: string;
-    attacks: MonsterAttack[];
-    specialAbilities: string[];
-    legendaryActions?: number;
-    lairActions?: boolean;
-  };
+  isHidden?: boolean;
+  stealthCheckBonus?: number;
 }
 
 export interface MonsterAttack {
@@ -332,6 +325,18 @@ export interface CombatAction {
   // Action details
   actionType: ActionType;
   description: string;
+  
+  // Spell-specific information
+  spellName?: string;
+  spellLevel?: number;
+  components?: {
+    verbal?: boolean;
+    somatic?: boolean;
+    material?: boolean;
+    materialDescription?: string;
+    materialCost?: number;
+    materialConsumed?: boolean;
+  };
   
   // Dice rolls made
   attackRoll?: DiceRoll;
@@ -460,4 +465,24 @@ export interface CombatContextValue {
   addParticipant: (participant: Partial<CombatParticipant>) => Promise<void>;
   removeParticipant: (participantId: string) => Promise<void>;
   updateParticipant: (participantId: string, updates: Partial<CombatParticipant>) => Promise<void>;
+  
+  // Reaction management
+  addReactionOpportunity: (opportunity: ReactionOpportunity) => void;
+  removeReactionOpportunity: (opportunityId: string) => void;
+  clearReactionOpportunities: () => void;
+  setPendingReaction: (opportunityId: string, selectedReaction: ActionType) => void;
+  
+  // Participant reaction opportunities
+  addParticipantReactionOpportunity: (participantId: string, opportunity: ReactionOpportunity) => void;
+  removeParticipantReactionOpportunity: (participantId: string, opportunityId: string) => void;
+  clearParticipantReactionOpportunities: (participantId: string) => void;
+  
+  // Movement actions
+  moveParticipant: (participantId: string, fromPosition: string, toPosition: string) => Promise<void>;
+  
+  // Weapon management
+  equipMainHandWeapon: (participantId: string, weapon: Equipment) => void;
+  equipOffHandWeapon: (participantId: string, weapon: Equipment) => void;
+  unequipMainHandWeapon: (participantId: string) => void;
+  unequipOffHandWeapon: (participantId: string) => void;
 }

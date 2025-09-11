@@ -131,7 +131,33 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
               <div className="flex items-center gap-1 text-blue-600">
                 <Shield className="w-4 h-4" />
                 <span className="font-bold">
-                  {10 + character.abilityScores.dexterity.modifier}
+                  {
+                    // Armor Class calculation with unarmored defense support
+                    (() => {
+                      let armorClass = 10 + character.abilityScores.dexterity.modifier;
+                      
+                      // Check for unarmored defense (Barbarian/monk without armor)
+                      const hasUnarmoredDefense = character.class && 
+                        (character.class.name.toLowerCase() === 'barbarian' || 
+                         character.class.name.toLowerCase() === 'monk');
+                      
+                      const isWearingArmor = character.equippedArmor !== undefined && character.equippedArmor !== '';
+                      
+                      // If character has unarmored defense and is not wearing armor, use unarmored AC
+                      if (hasUnarmoredDefense && !isWearingArmor) {
+                        switch (character.class!.name.toLowerCase()) {
+                          case 'barbarian':
+                            armorClass = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.constitution.modifier;
+                            break;
+                          case 'monk':
+                            armorClass = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.wisdom.modifier;
+                            break;
+                        }
+                      }
+                      
+                      return armorClass;
+                    })()
+                  }
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">AC</div>
