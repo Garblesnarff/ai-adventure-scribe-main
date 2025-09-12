@@ -29,23 +29,26 @@ export const useMemoryCreation = (sessionId: string | null) => {
     }
   };
 
-  const validateMemory = (memory: Partial<Memory>): boolean => {
+  const validateMemory = (memory: Partial<Memory>): { isValid: boolean; processedMemory: Partial<Memory> } => {
+    const processedMemory = { ...memory };
+
     if (!memory.content || typeof memory.content !== 'string') {
       console.error('[Memory Creation] Invalid content:', memory.content);
-      return false;
+      return { isValid: false, processedMemory };
     }
 
     if (!isValidMemoryType(memory.type)) {
       console.error('[Memory Creation] Invalid memory type:', memory.type);
-      return false;
+      return { isValid: false, processedMemory };
     }
 
+    // Clamp importance score to valid range (1-5) instead of rejecting
     if (memory.importance && (memory.importance < 1 || memory.importance > 5)) {
-      console.error('[Memory Creation] Invalid importance score:', memory.importance);
-      return false;
+      console.warn('[Memory Creation] Invalid importance score:', memory.importance, 'clamping to valid range');
+      processedMemory.importance = Math.max(1, Math.min(5, memory.importance));
     }
 
-    return true;
+    return { isValid: true, processedMemory };
   };
 
   const createMemory = useMutation({
@@ -54,14 +57,16 @@ export const useMemoryCreation = (sessionId: string | null) => {
 
       console.log('[Memory Creation] Starting memory creation process:', memory);
       
-      if (!validateMemory(memory)) {
+      const validation = validateMemory(memory);
+      if (!validation.isValid) {
         throw new Error('Invalid memory data');
       }
 
-      const embedding = await generateEmbedding(memory.content);
+      const validatedMemory = validation.processedMemory;
+      const embedding = await generateEmbedding(validatedMemory.content!);
       
       console.log('[Memory Creation] Inserting memory into database:', {
-        ...memory,
+        ...validatedMemory,
         session_id: sessionId,
         embedding
       });
@@ -69,10 +74,10 @@ export const useMemoryCreation = (sessionId: string | null) => {
       const { data, error } = await supabase
         .from('memories')
         .insert([{ 
-          ...memory,
+          ...validatedMemory,
           session_id: sessionId,
           embedding,
-          metadata: memory.metadata || {},
+          metadata: validatedMemory.metadata || {},
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }])
