@@ -3,7 +3,7 @@ import { Json } from '@/integrations/supabase/types';
 /**
  * Base memory types
  */
-export type MemoryType = 'location' | 'character' | 'event' | 'item' | 'general' | 'plot';
+export type MemoryType = 'location' | 'character' | 'event' | 'item' | 'general' | 'plot' | 'world_detail' | 'atmosphere';
 
 /**
  * Memory subcategories for better organization
@@ -25,7 +25,7 @@ export type MemorySubcategory =
  * Type guard to check if a string is a valid MemoryType
  */
 export function isValidMemoryType(type: string): type is MemoryType {
-  return ['location', 'character', 'event', 'item', 'general', 'plot'].includes(type);
+  return ['location', 'character', 'event', 'item', 'general', 'plot', 'world_detail', 'atmosphere'].includes(type);
 }
 
 /**

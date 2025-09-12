@@ -468,6 +468,21 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
                 // Remove markdown code blocks (```json ... ```)
                 cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
                 
+                // Try to find JSON content if the response has extra text
+                const jsonStart = cleanedResponse.indexOf('{');
+                const jsonEnd = cleanedResponse.lastIndexOf('}');
+                
+                if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                  cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1);
+                }
+                
+                // Additional cleanup for common JSON formatting issues
+                cleanedResponse = cleanedResponse
+                  .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+                  .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+                  .replace(/}\s*{/g, '},{') // Fix missing commas between objects
+                  .replace(/"\s*:\s*"([^"]*?)"\s*([,}])/g, '":"$1"$2'); // Fix spacing issues
+                
                 // Parse the cleaned JSON
                 const structuredResponse = JSON.parse(cleanedResponse);
                 console.log('🎭 Successfully parsed structured voice response');
