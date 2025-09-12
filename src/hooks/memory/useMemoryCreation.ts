@@ -12,9 +12,22 @@ export const useMemoryCreation = (sessionId: string | null) => {
     try {
       console.log('[Memory Creation] Starting embedding generation for text:', text);
       
-      const { data, error } = await supabase.functions.invoke('generate-embedding', {
-        body: { text },
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/v1/ai/generate-embedding`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ text })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const error = null;
 
       if (error) throw error;
       

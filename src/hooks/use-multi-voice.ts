@@ -217,19 +217,18 @@ export const useMultiVoice = () => {
     try {
       console.log(`🎵 Generating NEW audio for segment: "${segment.text.substring(0, 50)}..." (${segment.character || 'Narrator'})`);
       
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${segment.voiceConfig.id}/stream`,
+        `${apiUrl}/v1/ai/text-to-speech`,
         {
           method: 'POST',
           headers: {
             'Accept': 'audio/mpeg',
             'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           },
           body: JSON.stringify({
             text: segment.text,
-            model_id: segment.voiceConfig.model,
-            voice_settings: segment.voiceConfig.settings,
           }),
           signal
         }

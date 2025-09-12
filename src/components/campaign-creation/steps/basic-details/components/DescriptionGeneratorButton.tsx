@@ -42,14 +42,27 @@ const DescriptionGeneratorButton: React.FC<DescriptionGeneratorButtonProps> = ({
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-campaign-description', {
-        body: {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/v1/ai/generate-campaign-description`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({
           genre: campaignParams.genre,
           difficulty: campaignParams.difficulty_level,
           length: campaignParams.campaign_length,
           tone: campaignParams.tone
-        }
+        })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const error = null;
 
       if (error) throw error;
 

@@ -355,19 +355,18 @@ export class VoiceDirector {
     console.log(`🎵 Generating NEW audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
     
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${segment.voiceId}`,
+        `${apiUrl}/v1/ai/text-to-speech`,
         {
           method: 'POST',
           headers: {
             'Accept': 'audio/mpeg',
             'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           },
           body: JSON.stringify({
             text: segment.text,
-            model_id: VoiceDirector.ELEVENLABS_MODEL,
-            voice_settings: segment.voiceSettings,
           }),
         }
       );

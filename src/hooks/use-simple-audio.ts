@@ -47,30 +47,11 @@ export const useSimpleAudio = () => {
     }));
   }, []);
 
-  // Fetch API key
+  // Skip fetching API key since server handles it directly
   React.useEffect(() => {
-    const fetchApiKey = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-secret', {
-          body: { secretName: 'ELEVEN_LABS_API_KEY' }
-        });
-
-        if (error) throw error;
-        if (data?.secret) {
-          setApiKey(data.secret);
-        }
-      } catch (error) {
-        console.error('Error fetching API key:', error);
-        toast({
-          title: "API Key Error",
-          description: "Failed to retrieve ElevenLabs API key.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchApiKey();
-  }, [toast]);
+    // API key is now handled server-side, no need to fetch it
+    setApiKey('server-managed');
+  }, []);
 
   /**
    * Generate and play audio for text
@@ -97,27 +78,20 @@ export const useSimpleAudio = () => {
     try {
       console.log('🎵 Generating simple audio for:', text.substring(0, 50) + '...');
 
-      // Use the narrator voice directly
-      const VOICE_ID = 'bIHbv24MWmeRgasZH58o'; // Will - narrator voice
+      // Use local API for text-to-speech
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
       
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`,
+        `${apiUrl}/v1/ai/text-to-speech`,
         {
           method: 'POST',
           headers: {
             'Accept': 'audio/mpeg',
             'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           },
           body: JSON.stringify({
             text: text.replace(/[*_`#]/g, ''), // Clean markdown
-            model_id: 'eleven_flash_v2_5', // Cheapest model
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75,
-              style: 0.1,
-              use_speaker_boost: true
-            },
           }),
           signal: abortController.current.signal
         }

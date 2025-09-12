@@ -54,9 +54,9 @@ export const useAudioState = () => {
   React.useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-secret', {
-          body: { secretName: 'ELEVEN_LABS_API_KEY' }
-        });
+        // API key is now handled server-side
+        const data = { secret: 'server-managed' };
+        const error = null;
 
         if (error) {
           throw error;

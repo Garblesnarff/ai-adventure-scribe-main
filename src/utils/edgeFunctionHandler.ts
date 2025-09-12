@@ -3,104 +3,67 @@ import { toast } from '@/hooks/use-toast';
 import { AIService } from '@/services/ai-service';
 
 /**
- * Check if we should use local AI services instead of edge functions
+ * Check if we should use local API services instead of edge functions
  */
-function shouldUseLocalServices(): boolean {
-  // Check environment variable for local mode
-  const useLocal = import.meta.env.VITE_USE_LOCAL_AI;
-  
-  // Enable local mode if:
-  // 1. Explicitly set to true
-  // 2. In development mode
-  return useLocal === 'true' || import.meta.env.DEV;
+function shouldUseLocalAPI(): boolean {
+  // Always use local API in this unified migration approach
+  // Check if local API server is available
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  return true; // Always prefer local API over edge functions
 }
 
 /**
- * Local fallback implementation for dm-agent-execute
+ * Get the base API URL for local server calls
  */
-async function callDMAgentLocal(payload: any): Promise<any> {
-  console.log(`[LocalAI] Using local AIService for DM agent`);
-  
-  const { task, agentContext, voiceContext, isFirstMessage, combatContext } = payload;
-  
-  // Extract context from the payload
-  const context = {
-    campaignId: agentContext?.campaignDetails?.id || '',
-    characterId: agentContext?.characterDetails?.id || '',
-    sessionId: '', // Will be populated by calling code
-    campaignDetails: agentContext?.campaignDetails,
-    characterDetails: agentContext?.characterDetails
-  };
+function getLocalAPIUrl(): string {
+  return import.meta.env.VITE_API_URL || 'http://localhost:4000';
+}
 
-  try {
-    // Use AIService.chatWithDM which already has local Gemini integration
-    const result = await AIService.chatWithDM({
-      message: task?.description || '',
-      context: context,
-      conversationHistory: [], // This would need to be passed from calling code
-      // Note: onStream callback not supported in this fallback
-    });
+/**
+ * Call the local Express API instead of Supabase edge functions
+ */
+async function callLocalAPI(functionName: string, payload: any): Promise<any> {
+  const baseUrl = getLocalAPIUrl();
+  const endpoint = `/v1/ai/${functionName}`;
+  
+  console.log(`[LocalAPI] Calling ${baseUrl}${endpoint}`);
+  
+  const response = await fetch(`${baseUrl}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+    },
+    body: JSON.stringify(payload)
+  });
 
-    // Return in edge function format
-    return {
-      response: result.text,
-      narrationSegments: result.narrationSegments,
-      context: agentContext,
-      raw: {} // Edge function includes additional data we don't need for local calls
-    };
-  } catch (error) {
-    console.error('[LocalAI] DM Agent local fallback failed:', error);
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+    throw new Error(errorData.error || `HTTP ${response.status}`);
   }
-}
 
-/**
- * Local fallback implementation for rules-interpreter-execute
- */
-async function callRulesInterpreterLocal(payload: any): Promise<any> {
-  console.log(`[LocalAI] Using simplified rules validation for local mode`);
-  
-  const { task } = payload;
-  
-  // For now, return a simple validation response
-  // In a full implementation, this could use local rule validation logic
-  return {
-    isValid: true,
-    suggestions: [],
-    errors: [],
-    explanation: "Local rules validation - action appears valid"
-  };
+  return await response.json();
 }
 
 export async function callEdgeFunction<T = any>(
   functionName: string,
   payload?: any
 ): Promise<T | null> {
-  // Check if we should use local services
-  if (shouldUseLocalServices()) {
-    console.log(`[EdgeFunction] Using local fallback for ${functionName}`);
+  // Check if we should use local API services
+  if (shouldUseLocalAPI()) {
+    console.log(`[EdgeFunction] Using local API for ${functionName}`);
     
     try {
-      switch (functionName) {
-        case 'dm-agent-execute':
-          return await callDMAgentLocal(payload) as T;
-          
-        case 'rules-interpreter-execute':
-          return await callRulesInterpreterLocal(payload) as T;
-          
-        default:
-          console.warn(`[EdgeFunction] No local fallback available for ${functionName}, trying edge function`);
-          break;
-      }
+      return await callLocalAPI(functionName, payload) as T;
     } catch (localError) {
-      console.error(`[EdgeFunction] Local fallback failed for ${functionName}:`, localError);
-      // Fall through to try edge function
+      console.error(`[EdgeFunction] Local API failed for ${functionName}:`, localError);
+      // Fall through to try edge function as fallback
     }
   }
 
-  // Original edge function logic
+  // Fallback to original edge function logic
   try {
-    console.log(`[EdgeFunction] Calling ${functionName}:`, payload);
+    console.log(`[EdgeFunction] Calling Supabase edge function ${functionName}:`, payload);
     
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
@@ -111,25 +74,6 @@ export async function callEdgeFunction<T = any>(
 
     if (error) {
       console.error(`[EdgeFunction] ${functionName} error:`, error);
-      
-      // If edge function fails and we haven't tried local fallback, try it now
-      if (!shouldUseLocalServices()) {
-        console.log(`[EdgeFunction] Attempting local fallback after edge function failure`);
-        try {
-          switch (functionName) {
-            case 'dm-agent-execute':
-              return await callDMAgentLocal(payload) as T;
-              
-            case 'rules-interpreter-execute':
-              return await callRulesInterpreterLocal(payload) as T;
-              
-            default:
-              break;
-          }
-        } catch (fallbackError) {
-          console.error(`[EdgeFunction] Local fallback also failed:`, fallbackError);
-        }
-      }
       
       toast({
         title: "Error",

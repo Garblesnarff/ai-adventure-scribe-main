@@ -29,27 +29,19 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     try {
       setIsSpeaking(true);
 
-      const VOICE_ID = 'T0GKiSwCb51L7pv1sshd';
-      const API_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
-      
-      const voiceSettings: VoiceSettings = {
-        stability: 0.5,
-        similarity_boost: 0.75
-      };
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
       const response = await fetch(
-        `${API_URL}/${VOICE_ID}/stream`,
+        `${apiUrl}/v1/ai/text-to-speech`,
         {
           method: 'POST',
           headers: {
             'Accept': 'audio/mpeg',
             'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           },
           body: JSON.stringify({
             text,
-            voice_settings: voiceSettings,
-            model_id: 'eleven_turbo_v2_5'
           }),
         }
       );
