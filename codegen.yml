@@ -1,0 +1,40 @@
+schema: "http://localhost:4000/graphql"
+documents: "src/**/*.{ts,tsx,graphql}"
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      withHooks: true
+      withComponent: false
+      withHOC: false
+      scalars:
+        DateTime: string
+        JSON: any
+        Upload: File
+      namingConvention:
+        typeNames: "pascal-case#pascalCase"
+        transformUnderscore: true
+      apolloReactHooksImportFrom: "@apollo/client"
+      dedupeOperationSuffix: true
+      omitOperationSuffix: false
+      exportFragmentSpreadSubTypes: true
+      preResolveTypes: true
+      skipTypename: false
+      nonOptionalTypename: true
+      
+  src/generated/introspection.json:
+    plugins:
+      - "introspection"
+
+hooks:
+  afterOneFileWrite:
+    - prettier --write
+
+config:
+  # Disable SSL verification for local development
+  skipSSLValidation: true
+  
+overwrite: true
