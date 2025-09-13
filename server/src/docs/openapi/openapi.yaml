@@ -1,0 +1,1448 @@
+openapi: 3.0.3
+info:
+  title: AI Adventure Scribe API
+  version: 3.0.0
+  description: |
+    Comprehensive RESTful API for AI-powered D&D campaign management with HATEOAS support.
+    
+    This API follows Richardson Maturity Model Level 3 with full hypermedia controls,
+    proper HTTP semantics, and enterprise-grade error handling.
+    
+    ## Features
+    - **HATEOAS**: Full hypermedia support with HAL+JSON
+    - **Advanced Filtering**: Comprehensive query parameters for all resources
+    - **Pagination**: Cursor-based and offset-based pagination
+    - **Caching**: ETags, conditional requests, and cache headers
+    - **Validation**: JSON Schema validation for all requests/responses
+    - **Error Handling**: RFC 7807 Problem Details for HTTP APIs
+    - **Content Negotiation**: Multiple response formats
+    - **Field Selection**: Sparse fieldsets for performance optimization
+    - **Batch Operations**: Efficient bulk operations
+    - **Rate Limiting**: Per-resource rate limits with retry guidance
+    
+    ## Resource Architecture
+    The API is organized around the following core resources:
+    - **Conversations**: Chat and DM interactions with nested messages
+    - **Campaigns**: Campaign management and session generation
+    - **Characters**: Character sheets and progression
+    - **Memories**: Semantic memory storage and retrieval
+    - **Audio Synthesis**: Text-to-speech generation and management
+    - **Rules**: D&D 5e rules validation and lookup
+    
+    ## Hypermedia Navigation
+    All responses include `_links` sections with available actions and related resources.
+    Use these links to navigate the API rather than constructing URLs manually.
+    
+    ## Authentication
+    API uses Bearer token authentication. Include your token in the Authorization header:
+    ```
+    Authorization: Bearer <your-token>
+    ```
+  contact:
+    name: AI Adventure Scribe Team
+    url: https://github.com/your-repo/ai-adventure-scribe
+    email: support@aiadventurescribe.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://aiadventurescribe.com/terms
+
+servers:
+  - url: https://api.aiadventurescribe.com/v3
+    description: Production server
+  - url: https://staging-api.aiadventurescribe.com/v3
+    description: Staging server
+  - url: http://localhost:3000/api/v3
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /conversations:
+    get:
+      summary: List conversations
+      description: |
+        Retrieve a paginated list of conversations with comprehensive filtering options.
+        
+        Supports advanced filtering, sorting, pagination, and field selection.
+        Results include hypermedia links for navigation and actions.
+      operationId: listConversations
+      tags:
+        - Conversations
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Fields'
+        - name: campaign_id
+          in: query
+          description: Filter by campaign ID
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          description: Filter by conversation type
+          schema:
+            type: string
+            enum: [dm_chat, player_chat, narrative, combat]
+        - name: status
+          in: query
+          description: Filter by conversation status
+          schema:
+            type: string
+            enum: [active, paused, completed, archived]
+        - name: participant_id
+          in: query
+          description: Filter by participant ID
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search in conversation titles and context
+          schema:
+            type: string
+        - name: created_after
+          in: query
+          description: Filter conversations created after this date
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          description: Filter conversations created before this date
+          schema:
+            type: string
+            format: date-time
+        - name: has_messages
+          in: query
+          description: Filter conversations with or without messages
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of conversations
+          headers:
+            Cache-Control:
+              description: Cache control directives
+              schema:
+                type: string
+            ETag:
+              description: Entity tag for caching
+              schema:
+                type: string
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ConversationCollection'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationCollection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      summary: Create conversation
+      description: |
+        Create a new conversation with the specified properties.
+        
+        The conversation will be created with default status 'active' unless specified otherwise.
+        Participants can be added immediately or added later via the participants sub-resource.
+      operationId: createConversation
+      tags:
+        - Conversations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreateRequest'
+      responses:
+        '201':
+          description: Conversation created successfully
+          headers:
+            Location:
+              description: URL of the created conversation
+              schema:
+                type: string
+                format: uri
+            ETag:
+              description: Entity tag for the created resource
+              schema:
+                type: string
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    options:
+      summary: Get conversation collection options
+      description: |
+        Retrieve allowed methods and CORS configuration for the conversations collection.
+      operationId: conversationsOptions
+      tags:
+        - Conversations
+      responses:
+        '200':
+          description: Available methods and options
+          headers:
+            Allow:
+              description: Allowed HTTP methods
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              description: CORS allowed methods
+              schema:
+                type: string
+
+  /conversations/{conversationId}:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: Unique identifier for the conversation
+        schema:
+          type: string
+    
+    get:
+      summary: Get conversation
+      description: |
+        Retrieve a specific conversation by ID with full metadata and hypermedia links.
+        
+        Includes message count, last message timestamp, and links to related resources.
+      operationId: getConversation
+      tags:
+        - Conversations
+      parameters:
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: Conversation details
+          headers:
+            ETag:
+              description: Entity tag for caching
+              schema:
+                type: string
+            Cache-Control:
+              description: Cache control directives
+              schema:
+                type: string
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '304':
+          description: Not modified (when using If-None-Match)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      summary: Update conversation
+      description: |
+        Replace the entire conversation resource with the provided data.
+        
+        All required fields must be provided. Use PATCH for partial updates.
+      operationId: updateConversation
+      tags:
+        - Conversations
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationUpdateRequest'
+      responses:
+        '200':
+          description: Conversation updated successfully
+          headers:
+            ETag:
+              description: New entity tag
+              schema:
+                type: string
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      summary: Partially update conversation
+      description: |
+        Update specific fields of a conversation without affecting other properties.
+        
+        Only provided fields will be updated. Supports conditional requests with If-Match.
+      operationId: patchConversation
+      tags:
+        - Conversations
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationPatchRequest'
+      responses:
+        '200':
+          description: Conversation updated successfully
+          headers:
+            ETag:
+              description: New entity tag
+              schema:
+                type: string
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete conversation
+      description: |
+        Permanently delete a conversation and all its messages.
+        
+        This action cannot be undone. Consider archiving instead by updating status to 'archived'.
+      operationId: deleteConversation
+      tags:
+        - Conversations
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: Conversation deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /conversations/{conversationId}/messages:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: Unique identifier for the conversation
+        schema:
+          type: string
+    
+    get:
+      summary: List messages in conversation
+      description: |
+        Retrieve all messages in a conversation with filtering and pagination.
+        
+        Messages are returned in chronological order by default.
+      operationId: listConversationMessages
+      tags:
+        - Messages
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Fields'
+        - name: sender_id
+          in: query
+          description: Filter by sender ID
+          schema:
+            type: string
+        - name: sender_type
+          in: query
+          description: Filter by sender type
+          schema:
+            type: string
+            enum: [user, character, dm, system]
+        - name: message_type
+          in: query
+          description: Filter by message type
+          schema:
+            type: string
+            enum: [text, action, roll, system, narration]
+        - name: search
+          in: query
+          description: Search in message content
+          schema:
+            type: string
+        - name: has_audio
+          in: query
+          description: Filter messages with audio
+          schema:
+            type: boolean
+        - name: has_dice_rolls
+          in: query
+          description: Filter messages with dice rolls
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/MessageCollection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      summary: Add message to conversation
+      description: |
+        Create a new message in the specified conversation.
+        
+        Messages can include dice rolls, audio URLs, and contextual references.
+      operationId: createMessage
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreateRequest'
+      responses:
+        '201':
+          description: Message created successfully
+          headers:
+            Location:
+              description: URL of the created message
+              schema:
+                type: string
+                format: uri
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return (1-100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    
+    Offset:
+      name: offset
+      in: query
+      description: Number of items to skip for pagination
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    
+    Page:
+      name: page
+      in: query
+      description: Page number for pagination (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    Sort:
+      name: sort
+      in: query
+      description: |
+        Sort order for results. Prefix with '-' for descending order.
+        Multiple sort fields can be specified.
+        
+        Examples:
+        - `sort=created` - Sort by creation date ascending
+        - `sort=-updated` - Sort by update date descending
+        - `sort=title,-created` - Sort by title ascending, then creation date descending
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+    
+    Fields:
+      name: fields
+      in: query
+      description: |
+        Comma-separated list of fields to include in the response.
+        Use to optimize response size and network usage.
+        
+        Example: `fields=id,title,status`
+      schema:
+        type: string
+    
+    IfMatch:
+      name: If-Match
+      in: header
+      description: |
+        ETag value for conditional requests. Request will only succeed if the
+        current resource ETag matches this value.
+      schema:
+        type: string
+    
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      description: |
+        ETag value for conditional requests. Request will return 304 Not Modified
+        if the current resource ETag matches this value.
+      schema:
+        type: string
+
+  schemas:
+    Conversation:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - status
+        - participants
+        - metadata
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the conversation
+          example: "conv_abc123"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable title for the conversation
+          example: "Dragon's Lair Exploration"
+        campaign_id:
+          type: string
+          format: uuid
+          description: ID of the associated campaign
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        type:
+          type: string
+          enum: [dm_chat, player_chat, narrative, combat]
+          description: Type of conversation
+          example: "dm_chat"
+        status:
+          type: string
+          enum: [active, paused, completed, archived]
+          description: Current status of the conversation
+          example: "active"
+        participants:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: List of participant IDs (users, characters, etc.)
+          example: ["user_123", "char_456"]
+        metadata:
+          type: object
+          description: Additional conversation metadata
+          properties:
+            total_messages:
+              type: integer
+              minimum: 0
+              description: Total number of messages in the conversation
+            last_message_at:
+              type: string
+              format: date-time
+              description: Timestamp of the last message
+            created_by:
+              type: string
+              description: ID of the user who created the conversation
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags for categorizing the conversation
+            context:
+              type: object
+              description: Additional context data
+          example:
+            total_messages: 15
+            last_message_at: "2024-01-15T10:30:00Z"
+            created_by: "user_123"
+            tags: ["exploration", "combat"]
+            context:
+              location: "Ancient Dragon's Lair"
+              difficulty: "high"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the conversation was created
+          example: "2024-01-15T09:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the conversation was last updated
+          example: "2024-01-15T10:30:00Z"
+
+    ConversationCreateRequest:
+      type: object
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable title for the conversation
+          example: "Dragon's Lair Exploration"
+        campaign_id:
+          type: string
+          format: uuid
+          description: ID of the associated campaign
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        type:
+          type: string
+          enum: [dm_chat, player_chat, narrative, combat]
+          description: Type of conversation
+          example: "dm_chat"
+        status:
+          type: string
+          enum: [active, paused, completed, archived]
+          description: Initial status of the conversation
+          default: "active"
+          example: "active"
+        participants:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: Initial list of participant IDs
+          example: ["user_123", "char_456"]
+        metadata:
+          type: object
+          description: Additional conversation metadata
+          properties:
+            created_by:
+              type: string
+              description: ID of the user creating the conversation
+            tags:
+              type: array
+              items:
+                type: string
+              description: Initial tags for the conversation
+            context:
+              type: object
+              description: Additional context data
+          example:
+            created_by: "user_123"
+            tags: ["exploration"]
+            context:
+              location: "Ancient Dragon's Lair"
+      additionalProperties: false
+
+    ConversationUpdateRequest:
+      type: object
+      required:
+        - title
+        - type
+        - status
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable title for the conversation
+          example: "Dragon's Lair Exploration - Updated"
+        campaign_id:
+          type: string
+          format: uuid
+          description: ID of the associated campaign
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        type:
+          type: string
+          enum: [dm_chat, player_chat, narrative, combat]
+          description: Type of conversation
+          example: "dm_chat"
+        status:
+          type: string
+          enum: [active, paused, completed, archived]
+          description: Status of the conversation
+          example: "active"
+        participants:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: List of participant IDs
+          example: ["user_123", "char_456", "char_789"]
+        metadata:
+          type: object
+          description: Complete conversation metadata
+          properties:
+            created_by:
+              type: string
+              description: ID of the user who created the conversation
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags for categorizing the conversation
+            context:
+              type: object
+              description: Additional context data
+      additionalProperties: false
+
+    ConversationPatchRequest:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable title for the conversation
+          example: "Updated Dragon's Lair Exploration"
+        campaign_id:
+          type: string
+          format: uuid
+          description: ID of the associated campaign
+          nullable: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        type:
+          type: string
+          enum: [dm_chat, player_chat, narrative, combat]
+          description: Type of conversation
+          example: "narrative"
+        status:
+          type: string
+          enum: [active, paused, completed, archived]
+          description: Status of the conversation
+          example: "completed"
+        participants:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: List of participant IDs
+          example: ["user_123", "char_456"]
+        metadata:
+          type: object
+          description: Partial metadata updates (will be merged with existing)
+          properties:
+            tags:
+              type: array
+              items:
+                type: string
+              description: Tags for categorizing the conversation
+            context:
+              type: object
+              description: Additional context data
+          example:
+            tags: ["exploration", "completed"]
+            context:
+              result: "successful"
+      additionalProperties: false
+
+    ConversationResponse:
+      allOf:
+        - $ref: '#/components/schemas/Conversation'
+        - type: object
+          properties:
+            _links:
+              $ref: '#/components/schemas/ConversationLinks'
+
+    ConversationCollection:
+      type: object
+      required:
+        - data
+        - meta
+        - _links
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+        meta:
+          $ref: '#/components/schemas/CollectionMeta'
+        _links:
+          $ref: '#/components/schemas/CollectionLinks'
+
+    ConversationLinks:
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+        collection:
+          $ref: '#/components/schemas/Link'
+        edit:
+          $ref: '#/components/schemas/Link'
+        edit-form:
+          $ref: '#/components/schemas/Link'
+        delete:
+          $ref: '#/components/schemas/Link'
+        messages:
+          $ref: '#/components/schemas/Link'
+        add-message:
+          $ref: '#/components/schemas/Link'
+        campaign:
+          $ref: '#/components/schemas/Link'
+        participants:
+          $ref: '#/components/schemas/Link'
+        synthesize-audio:
+          $ref: '#/components/schemas/Link'
+      required:
+        - self
+        - collection
+        - edit
+        - delete
+        - messages
+
+    Message:
+      type: object
+      required:
+        - id
+        - conversation_id
+        - sender_id
+        - sender_type
+        - content
+        - message_type
+        - metadata
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the message
+          example: "msg_xyz789"
+        conversation_id:
+          type: string
+          description: ID of the parent conversation
+          example: "conv_abc123"
+        sender_id:
+          type: string
+          description: ID of the message sender
+          example: "user_123"
+        sender_type:
+          type: string
+          enum: [user, character, dm, system]
+          description: Type of sender
+          example: "user"
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Message content
+          example: "I cast fireball at the dragon!"
+        message_type:
+          type: string
+          enum: [text, action, roll, system, narration]
+          description: Type of message
+          example: "action"
+        metadata:
+          type: object
+          description: Additional message metadata
+          properties:
+            dice_rolls:
+              type: array
+              items:
+                type: object
+                required:
+                  - type
+                  - result
+                properties:
+                  type:
+                    type: string
+                    description: Type of dice roll
+                    example: "d20"
+                  result:
+                    type: number
+                    description: Dice roll result
+                    example: 18
+                  modifier:
+                    type: number
+                    description: Modifier applied to roll
+                    example: 5
+            audio_url:
+              type: string
+              format: uri
+              description: URL to synthesized audio for this message
+            context:
+              type: object
+              description: Additional context data
+            references:
+              type: array
+              items:
+                type: object
+                required:
+                  - type
+                  - id
+                  - name
+                properties:
+                  type:
+                    type: string
+                    enum: [character, spell, item, location]
+                    description: Type of referenced entity
+                  id:
+                    type: string
+                    description: ID of referenced entity
+                  name:
+                    type: string
+                    description: Name of referenced entity
+          example:
+            dice_rolls:
+              - type: "d20"
+                result: 18
+                modifier: 5
+            context:
+              spell_level: 3
+              damage_type: "fire"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the message was created
+          example: "2024-01-15T10:15:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the message was last updated
+          example: "2024-01-15T10:15:00Z"
+
+    MessageCreateRequest:
+      type: object
+      required:
+        - sender_id
+        - content
+      properties:
+        sender_id:
+          type: string
+          minLength: 1
+          description: ID of the message sender
+          example: "user_123"
+        sender_type:
+          type: string
+          enum: [user, character, dm, system]
+          description: Type of sender
+          default: "user"
+          example: "user"
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Message content
+          example: "I cast fireball at the dragon!"
+        message_type:
+          type: string
+          enum: [text, action, roll, system, narration]
+          description: Type of message
+          default: "text"
+          example: "action"
+        dice_rolls:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - result
+            properties:
+              type:
+                type: string
+                description: Type of dice roll
+                example: "d20"
+              result:
+                type: number
+                description: Dice roll result
+                example: 18
+              modifier:
+                type: number
+                description: Modifier applied to roll
+                example: 5
+        audio_url:
+          type: string
+          format: uri
+          description: URL to synthesized audio for this message
+        context:
+          type: object
+          description: Additional context data
+        references:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - id
+              - name
+            properties:
+              type:
+                type: string
+                enum: [character, spell, item, location]
+                description: Type of referenced entity
+              id:
+                type: string
+                description: ID of referenced entity
+              name:
+                type: string
+                description: Name of referenced entity
+      additionalProperties: false
+
+    MessageResponse:
+      allOf:
+        - $ref: '#/components/schemas/Message'
+        - type: object
+          properties:
+            _links:
+              $ref: '#/components/schemas/MessageLinks'
+
+    MessageCollection:
+      type: object
+      required:
+        - data
+        - meta
+        - _links
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        meta:
+          $ref: '#/components/schemas/CollectionMeta'
+        _links:
+          $ref: '#/components/schemas/CollectionLinks'
+
+    MessageLinks:
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+        collection:
+          $ref: '#/components/schemas/Link'
+        conversation:
+          $ref: '#/components/schemas/Link'
+        edit:
+          $ref: '#/components/schemas/Link'
+        delete:
+          $ref: '#/components/schemas/Link'
+      required:
+        - self
+        - collection
+        - conversation
+
+    Link:
+      type: object
+      required:
+        - href
+      properties:
+        href:
+          type: string
+          format: uri
+          description: URL of the linked resource
+        title:
+          type: string
+          description: Human-readable title for the link
+        type:
+          type: string
+          description: Media type of the linked resource
+        method:
+          type: string
+          enum: [GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS]
+          description: HTTP method for the link
+        templated:
+          type: boolean
+          description: Whether the href is a URI template
+        deprecation:
+          type: string
+          format: uri
+          description: URL to deprecation notice
+        profile:
+          type: string
+          format: uri
+          description: URI identifying the semantics of the link
+        hreflang:
+          type: string
+          description: Language of the linked resource
+
+    CollectionMeta:
+      type: object
+      required:
+        - totalCount
+        - count
+        - pagination
+      properties:
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Total number of items available
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items in current response
+        pagination:
+          type: object
+          required:
+            - current
+            - limit
+            - offset
+            - totalPages
+            - hasNext
+            - hasPrevious
+          properties:
+            current:
+              type: integer
+              minimum: 1
+              description: Current page number
+            limit:
+              type: integer
+              minimum: 1
+              description: Number of items per page
+            offset:
+              type: integer
+              minimum: 0
+              description: Number of items skipped
+            totalPages:
+              type: integer
+              minimum: 0
+              description: Total number of pages
+            hasNext:
+              type: boolean
+              description: Whether there is a next page
+            hasPrevious:
+              type: boolean
+              description: Whether there is a previous page
+
+    CollectionLinks:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          $ref: '#/components/schemas/Link'
+        first:
+          $ref: '#/components/schemas/Link'
+        prev:
+          $ref: '#/components/schemas/Link'
+        next:
+          $ref: '#/components/schemas/Link'
+        last:
+          $ref: '#/components/schemas/Link'
+        create:
+          $ref: '#/components/schemas/Link'
+        search:
+          $ref: '#/components/schemas/Link'
+
+    Error:
+      type: object
+      required:
+        - type
+        - title
+        - detail
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI identifying the problem type
+          example: "https://httpstatuses.com/400"
+        title:
+          type: string
+          description: Short, human-readable summary of the problem
+          example: "Bad Request"
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence
+          example: "The 'title' field is required and cannot be empty"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        instance:
+          type: string
+          format: uri
+          description: URI identifying the specific occurrence of the problem
+          example: "/api/v3/conversations/conv_123"
+        validationErrors:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - message
+            properties:
+              field:
+                type: string
+                description: Field that failed validation
+                example: "title"
+              message:
+                type: string
+                description: Validation error message
+                example: "must not be empty"
+              value:
+                description: The value that failed validation
+              allowedValues:
+                type: array
+                description: List of allowed values (for enum validation)
+      additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid syntax or parameters
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/400"
+            title: "Bad Request"
+            detail: "Invalid query parameter: limit must be between 1 and 100"
+            status: 400
+
+    Unauthorized:
+      description: Authentication required
+      headers:
+        WWW-Authenticate:
+          description: Authentication scheme required
+          schema:
+            type: string
+            example: "Bearer"
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/401"
+            title: "Unauthorized"
+            detail: "Authentication required"
+            status: 401
+
+    Forbidden:
+      description: Access denied - insufficient permissions
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/403"
+            title: "Forbidden"
+            detail: "You do not have permission to access this conversation"
+            status: 403
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/404"
+            title: "Not Found"
+            detail: "Conversation not found"
+            status: 404
+
+    Conflict:
+      description: Request conflicts with current resource state
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/409"
+            title: "Conflict"
+            detail: "Resource has been modified by another request"
+            status: 409
+
+    PreconditionFailed:
+      description: Precondition failed - conditional request requirements not met
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/412"
+            title: "Precondition Failed"
+            detail: "If-Match header value does not match current resource ETag"
+            status: 412
+
+    ValidationError:
+      description: Validation error - request data is invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/422"
+            title: "Unprocessable Entity"
+            detail: "Validation failed"
+            status: 422
+            validationErrors:
+              - field: "title"
+                message: "must not be empty"
+                value: ""
+              - field: "type"
+                message: "must be one of: dm_chat, player_chat, narrative, combat"
+                value: "invalid_type"
+                allowedValues: ["dm_chat", "player_chat", "narrative", "combat"]
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+        X-RateLimit-Limit:
+          description: Request limit per time window
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          description: Requests remaining in current window
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          description: Time when the rate limit window resets
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/429"
+            title: "Too Many Requests"
+            detail: "Rate limit exceeded. Try again in 60 seconds."
+            status: 429
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: "https://httpstatuses.com/500"
+            title: "Internal Server Error"
+            detail: "An unexpected error occurred"
+            status: 500
+
+tags:
+  - name: Conversations
+    description: |
+      Conversation management endpoints for handling chat and DM interactions.
+      
+      Conversations represent threaded discussions between users, characters, and the DM.
+      They can be associated with campaigns and include rich metadata for context.
+  
+  - name: Messages
+    description: |
+      Message management within conversations.
+      
+      Messages are the individual communication units within conversations.
+      They support various types including text, actions, dice rolls, and system messages.
+  
+  - name: Campaigns
+    description: Campaign management and session generation
+  
+  - name: Characters
+    description: Character sheet management and progression
+  
+  - name: Memories
+    description: Semantic memory storage and retrieval
+  
+  - name: Audio Synthesis
+    description: Text-to-speech generation and management
+  
+  - name: Rules
+    description: D&D 5e rules validation and lookup
+
+externalDocs:
+  description: Find more info about the AI Adventure Scribe API
+  url: https://docs.aiadventurescribe.com
