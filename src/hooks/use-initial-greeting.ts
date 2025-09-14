@@ -13,6 +13,7 @@ interface InitialGreetingProps {
   characterId: string | null;
   campaignId: string | null;
   messages: ChatMessage[];
+  messagesLoading?: boolean;
   onGreetingGenerated: (message: ChatMessage) => Promise<void>;
   onMemoryCreated?: (memory: Omit<Memory, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
 }
@@ -39,6 +40,7 @@ export const useInitialGreeting = ({
   characterId,
   campaignId,
   messages,
+  messagesLoading = false,
   onGreetingGenerated,
   onMemoryCreated,
 }: InitialGreetingProps) => {
@@ -61,13 +63,14 @@ export const useInitialGreeting = ({
       campaignId &&
       !state.hasGenerated &&
       !state.isGenerating &&
-      !hasTriggeredRef.current;
+      !hasTriggeredRef.current &&
+      messagesLoading === false;
 
     if (shouldGenerateGreeting) {
       hasTriggeredRef.current = true;
       generateInitialGreeting();
     }
-  }, [sessionId, sessionData, characterId, campaignId, messages.length, state.hasGenerated, state.isGenerating]);
+  }, [sessionId, sessionData, characterId, campaignId, messages.length, state.hasGenerated, state.isGenerating, messagesLoading]);
 
   const generateInitialGreeting = async () => {
     setState(prev => ({ ...prev, isGenerating: true, error: null }));
