@@ -373,67 +373,6 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                       {combatMode ? (
                         <CombatInterface />
                       ) : (
-                        <>
-                          <MessageList />
-
-                          {/* Enhanced loading indicator for initial greeting */}
-                          {isGeneratingGreeting && (
-                            <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-20 animate-in fade-in duration-300">
-                              <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 transform animate-in slide-in-from-bottom-4 duration-500">
-                                <div className="flex flex-col items-center text-center space-y-6">
-                                  {/* Animated DM icon */}
-                                  <div className="relative">
-                                    <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple via-infinite-teal to-infinite-purple rounded-full flex items-center justify-center animate-pulse shadow-lg">
-                                      <span className="text-3xl">🎭</span>
-                                    </div>
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
-                                  </div>
-
-                                  {/* Progress content */}
-                                  <div className="space-y-3">
-                                    <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                      The Dungeon Master is crafting your opening scene, initializing the world state, and preparing your character's introduction to the realm.
-                                    </p>
-                                  </div>
-
-                                  {/* Animated progress dots */}
-                                  <div className="flex items-center justify-center gap-1">
-                                    <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                    <div className="w-2 h-2 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                    <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
-                                  </div>
-
-                                  {/* Subtle loading spinner */}
-                                  <div className="w-8 h-8 border-2 border-infinite-purple/20 border-t-infinite-purple rounded-full animate-spin"></div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Typing Indicator - shows when AI is responding */}
-                          {queueStatus === 'processing' && (
-                            <div className="absolute bottom-24 left-6 z-10 animate-in slide-in-from-left-2 duration-300">
-                              <div className="flex items-center gap-3 px-4 py-2 bg-card/90 backdrop-blur-sm border border-border/60 rounded-full shadow-lg">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center">
-                                  <span className="text-xs font-medium text-white">DM</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                  <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                  <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce"></div>
-                                </div>
-                                <span className="text-xs text-muted-foreground font-medium">Dungeon Master is thinking...</span>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Input Area - Only show in chat mode */}
-                    {!combatMode && (
-                      <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
                         <MessageHandler
                           sessionId={sessionId} // Use sessionId from useGameSession
                           campaignId={campaignIdForHandler || null}
@@ -443,14 +382,73 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                           onAIResponse={innerHandleAIResponse}
                         >
                           {({ handleSendMessage, isProcessing }) => (
-                            <ChatInput
-                              onSendMessage={handleSendMessage}
-                              isDisabled={isProcessing}
-                            />
+                            <>
+                              <MessageList onSendFullMessage={handleSendMessage} />
+
+                              {/* Enhanced loading indicator for initial greeting */}
+                              {isGeneratingGreeting && (
+                                <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-20 animate-in fade-in duration-300">
+                                  <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 transform animate-in slide-in-from-bottom-4 duration-500">
+                                    <div className="flex flex-col items-center text-center space-y-6">
+                                      {/* Animated DM icon */}
+                                      <div className="relative">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple via-infinite-teal to-infinite-purple rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                                          <span className="text-3xl">🎭</span>
+                                        </div>
+                                        <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
+                                      </div>
+
+                                      {/* Progress content */}
+                                      <div className="space-y-3">
+                                        <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                          The Dungeon Master is crafting your opening scene, initializing the world state, and preparing your character's introduction to the realm.
+                                        </p>
+                                      </div>
+
+                                      {/* Animated progress dots */}
+                                      <div className="flex items-center justify-center gap-1">
+                                        <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                        <div className="w-2 h-2 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                        <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
+                                      </div>
+
+                                      {/* Subtle loading spinner */}
+                                      <div className="w-8 h-8 border-2 border-infinite-purple/20 border-t-infinite-purple rounded-full animate-spin"></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Typing Indicator - shows when AI is responding */}
+                              {queueStatus === 'processing' && (
+                                <div className="absolute bottom-24 left-6 z-10 animate-in slide-in-from-left-2 duration-300">
+                                  <div className="flex items-center gap-3 px-4 py-2 bg-card/90 backdrop-blur-sm border border-border/60 rounded-full shadow-lg">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center">
+                                      <span className="text-xs font-medium text-white">DM</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                      <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                      <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce"></div>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground font-medium">Dungeon Master is thinking...</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Input Area at bottom */}
+                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
+                                <ChatInput
+                                  onSendMessage={handleSendMessage}
+                                  isDisabled={isProcessing}
+                                />
+                              </div>
+                            </>
                           )}
                         </MessageHandler>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </Card>
                 </div>
 
