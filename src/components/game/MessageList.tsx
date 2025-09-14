@@ -2,6 +2,7 @@ import React from 'react';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
+import { DMMessageVoiceControls } from '@/components/game/voice/DMMessageVoiceControls';
 
 /**
  * MessageList Component
@@ -77,6 +78,17 @@ export const MessageList: React.FC = () => {
                         )}
                       </div>
                     )}
+
+                    {/* Voice Controls for DM messages */}
+                    {isDM && (
+                      <div className="absolute bottom-2 right-3">
+                        <DMMessageVoiceControls
+                          messageId={message.id || `${message.timestamp}-${index}`}
+                          messageText={message.text}
+                          narrationSegments={message.narrationSegments}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -89,16 +101,23 @@ export const MessageList: React.FC = () => {
         );
       })}
 
-      {/* Empty state */}
+      {/* Loading state - shows while initial greeting is being generated */}
       {messages?.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <span className="text-2xl">💬</span>
+          <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple to-infinite-teal rounded-full flex items-center justify-center mb-6 animate-pulse">
+            <span className="text-2xl">🎭</span>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Start your adventure</h3>
-          <p className="text-gray-500 max-w-sm">
-            Begin by describing what your character would like to do, and the Dungeon Master will guide you through the story.
-          </p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
+            </div>
+            <h3 className="text-lg font-medium text-card-foreground">Your adventure awaits...</h3>
+            <p className="text-muted-foreground max-w-sm text-sm">
+              The Dungeon Master is crafting your opening scene and preparing your world.
+            </p>
+          </div>
         </div>
       )}
     </div>

@@ -9,16 +9,19 @@ import { Character } from '@/types/character'; // Assuming this type aligns with
 import { Campaign as CampaignType } from '@/types/campaign'; // Assuming this type aligns
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
-import { VoiceHandler } from './VoiceHandler';
 import { MemoryPanel } from './MemoryPanel'; // Will modify this later for notes
 import { MessageHandler } from './message/MessageHandler';
 import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
 import { MessageProvider } from '@/contexts/MessageContext';
+import { VoiceProvider } from '@/contexts/VoiceContext';
 import { useGameSession } from '@/hooks/use-game-session';
 import { CombatProvider, useCombat } from '@/contexts/CombatContext';
 import CombatInterface from '@/components/combat/CombatInterface';
 import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
+import { useInitialGreeting } from '@/hooks/use-initial-greeting';
+import { useMessageContext } from '@/contexts/MessageContext';
+import { useMemoryContext } from '@/contexts/MemoryContext';
 import { Sword, X } from 'lucide-react';
 
 /**
@@ -183,18 +186,24 @@ const GameContent: React.FC = () => {
 
   return (
     <CombatProvider sessionId={sessionId}>
-      <GameContentInner 
-        sessionId={sessionId}
-        campaignIdForHandler={campaignIdFromParams}
-        characterIdForHandler={characterIdFromParams}
-        sessionData={sessionData}
-        updateGameSessionState={updateGameSessionState}
-        characterState={characterState}
-        combatMode={combatMode}
-        setCombatMode={setCombatMode}
-        handleCombatToggle={handleCombatToggle}
-        handleAIResponse={handleAIResponse}
-      />
+      <MessageProvider sessionId={sessionId}>
+        <MemoryProvider sessionId={sessionId}>
+          <VoiceProvider>
+            <GameContentInner
+              sessionId={sessionId}
+              campaignIdForHandler={campaignIdFromParams}
+              characterIdForHandler={characterIdFromParams}
+              sessionData={sessionData}
+              updateGameSessionState={updateGameSessionState}
+              characterState={characterState}
+              combatMode={combatMode}
+              setCombatMode={setCombatMode}
+              handleCombatToggle={handleCombatToggle}
+              handleAIResponse={handleAIResponse}
+            />
+          </VoiceProvider>
+        </MemoryProvider>
+      </MessageProvider>
     </CombatProvider>
   );
 };
@@ -225,11 +234,28 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   handleCombatToggle,
   handleAIResponse,
 }) => {
+  // Get message context for sending initial greeting
+  const { messages, sendMessage, queueStatus } = useMessageContext();
+
+  // Get memory context for creating initial memories
+  const { createMemory } = useMemoryContext();
+
   // Combat AI integration for automatic combat detection
   const combatAI = useCombatAIIntegration({
     sessionId,
     characterId: characterIdForHandler || undefined,
     campaignId: campaignIdForHandler || undefined
+  });
+
+  // Auto-generate initial greeting for new sessions
+  const { isGenerating: isGeneratingGreeting, hasGenerated, error: greetingError } = useInitialGreeting({
+    sessionId,
+    sessionData,
+    characterId: characterIdForHandler,
+    campaignId: campaignIdForHandler,
+    messages,
+    onGreetingGenerated: sendMessage,
+    onMemoryCreated: createMemory,
   });
 
   // Auto-toggle combat mode based on combat detection
@@ -285,8 +311,6 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   }, [combatAI, characterState, handleAIResponse]);
 
   return (
-      <MessageProvider sessionId={sessionId}>
-        <MemoryProvider sessionId={sessionId}>
           <div className="min-h-screen bg-background">
             <div className="max-w-7xl mx-auto p-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -351,10 +375,57 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         <>
                           <MessageList />
 
-                          {/* Typing Indicator */}
-                          <div className="absolute bottom-24 left-6 z-10">
-                            {/* This could be connected to a typing state in the future */}
-                          </div>
+                          {/* Enhanced loading indicator for initial greeting */}
+                          {isGeneratingGreeting && (
+                            <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-20 animate-in fade-in duration-300">
+                              <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 transform animate-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex flex-col items-center text-center space-y-6">
+                                  {/* Animated DM icon */}
+                                  <div className="relative">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple via-infinite-teal to-infinite-purple rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                                      <span className="text-3xl">🎭</span>
+                                    </div>
+                                    <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
+                                  </div>
+
+                                  {/* Progress content */}
+                                  <div className="space-y-3">
+                                    <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                      The Dungeon Master is crafting your opening scene, initializing the world state, and preparing your character's introduction to the realm.
+                                    </p>
+                                  </div>
+
+                                  {/* Animated progress dots */}
+                                  <div className="flex items-center justify-center gap-1">
+                                    <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-2 h-2 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
+                                  </div>
+
+                                  {/* Subtle loading spinner */}
+                                  <div className="w-8 h-8 border-2 border-infinite-purple/20 border-t-infinite-purple rounded-full animate-spin"></div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Typing Indicator - shows when AI is responding */}
+                          {queueStatus === 'processing' && (
+                            <div className="absolute bottom-24 left-6 z-10 animate-in slide-in-from-left-2 duration-300">
+                              <div className="flex items-center gap-3 px-4 py-2 bg-card/90 backdrop-blur-sm border border-border/60 rounded-full shadow-lg">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center">
+                                  <span className="text-xs font-medium text-white">DM</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                  <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                  <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce"></div>
+                                </div>
+                                <span className="text-xs text-muted-foreground font-medium">Dungeon Master is thinking...</span>
+                              </div>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
@@ -362,7 +433,6 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                     {/* Input Area - Only show in chat mode */}
                     {!combatMode && (
                       <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
-                        <VoiceHandler />
                         <MessageHandler
                           sessionId={sessionId} // Use sessionId from useGameSession
                           campaignId={campaignIdForHandler || null}
@@ -390,8 +460,6 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
               </div>
             </div>
           </div>
-        </MemoryProvider>
-      </MessageProvider>
   );
 };
 

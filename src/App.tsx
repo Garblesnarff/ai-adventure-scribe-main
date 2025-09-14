@@ -39,7 +39,12 @@ function App() {
       <AuthProvider>
         <CharacterProvider>
           <CampaignProvider>
-            <Router>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+              }}
+            >
               <div className="min-h-screen">
                 <Routes>
                   {/* Public landing page */}
