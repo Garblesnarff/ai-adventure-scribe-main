@@ -181,15 +181,16 @@ When combat is detected, you MUST:
       }
 
       // Get voice context for multi-voice narration
+      // TEMPORARILY DISABLED for option button testing
       let voiceContext = null;
-      if (params.context.sessionId) {
-        try {
-          voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
-          console.log(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
-        } catch (voiceError) {
-          console.warn('Failed to retrieve voice context:', voiceError);
-        }
-      }
+      // if (params.context.sessionId) {
+      //   try {
+      //     voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
+      //     console.log(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
+      //   } catch (voiceError) {
+      //     console.warn('Failed to retrieve voice context:', voiceError);
+      //   }
+      // }
 
       // Detect combat from player message
       const combatDetection = detectCombatFromText(params.message);
@@ -411,6 +412,18 @@ Respond to player actions with clear consequences and vivid descriptions using D
 - Include potential skill checks or rolls required for each option
 - Show risk/reward for different approaches
 - End with clear "What do you do?" prompts
+
+**CRITICAL: ACTION OPTIONS FORMATTING**
+When providing choices to the player, you MUST format them as lettered options with bold action names:
+
+Format: A. **Action Name**, brief description of what this choice involves
+
+Examples:
+- A. **Approach cautiously**, moving carefully to avoid detection while gathering information
+- B. **Charge forward boldly**, relying on speed and surprise to overcome obstacles
+- C. **Attempt to negotiate**, using your diplomatic skills to find a peaceful solution
+
+This formatting is REQUIRED for the options to appear as clickable buttons in the game interface. Always include 2-3 options formatted this way at the end of your responses unless the situation clearly calls for a single specific action (like combat resolution).
 
 Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for player action or decision.
 

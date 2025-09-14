@@ -1,5 +1,6 @@
 import { Memory } from './memory';
 import { Campaign } from './campaign';
+import { ActionOption } from '@/utils/parseMessageOptions';
 
 export type SpeakerType = 'player' | 'dm' | 'system';
 
@@ -58,6 +59,7 @@ export interface ChatMessage {
     character?: string;
     voice_category?: string;
   }>;
+  options?: ActionOption[];
 }
 
 /**
