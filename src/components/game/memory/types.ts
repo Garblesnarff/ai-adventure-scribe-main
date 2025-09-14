@@ -1,9 +1,12 @@
 import { Json } from '@/integrations/supabase/types';
 
 /**
- * Base memory types
+ * Base memory types - matches database constraint in memories table
  */
-export type MemoryType = 'location' | 'character' | 'event' | 'item' | 'general' | 'plot' | 'world_detail' | 'atmosphere';
+export type MemoryType =
+  | 'general' | 'npc' | 'location' | 'quest' | 'item' | 'event'
+  | 'story_beat' | 'character_moment' | 'world_detail' | 'dialogue_gem'
+  | 'atmosphere' | 'plot_point' | 'foreshadowing';
 
 /**
  * Memory subcategories for better organization
@@ -25,7 +28,11 @@ export type MemorySubcategory =
  * Type guard to check if a string is a valid MemoryType
  */
 export function isValidMemoryType(type: string): type is MemoryType {
-  return ['location', 'character', 'event', 'item', 'general', 'plot', 'world_detail', 'atmosphere'].includes(type);
+  return [
+    'general', 'npc', 'location', 'quest', 'item', 'event',
+    'story_beat', 'character_moment', 'world_detail', 'dialogue_gem',
+    'atmosphere', 'plot_point', 'foreshadowing'
+  ].includes(type);
 }
 
 /**
