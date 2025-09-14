@@ -6,33 +6,43 @@ import { DMMessageVoiceControls } from '@/components/game/voice/DMMessageVoiceCo
 import { ActionOptions } from '@/components/game/ActionOptions';
 import { parseMessageOptions, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
 
+interface MessageListProps {
+  onSendFullMessage?: (message: string) => Promise<void>;
+}
+
 /**
  * MessageList Component
  * Displays a list of chat messages with styling based on sender type
  */
-export const MessageList: React.FC = () => {
+export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) => {
   const { messages = [], sendMessage } = useMessageContext();
 
   // Handle option selection
   const handleOptionSelect = React.useCallback(async (optionText: string) => {
     console.log('[MessageList] Handling option selection:', optionText);
 
-    // Create a new player message from the selected option
-    const playerMessage: ChatMessage = {
-      text: optionText,
-      sender: 'player',
-      timestamp: new Date().toISOString()
-    };
-
-    console.log('[MessageList] Created player message:', playerMessage);
-
     try {
-      await sendMessage(playerMessage);
+      if (onSendFullMessage) {
+        // Use the full message flow (includes AI response)
+        console.log('[MessageList] Using full message flow for option selection');
+        await onSendFullMessage(optionText);
+      } else {
+        // Fallback to basic message sending (no AI response)
+        console.log('[MessageList] Using fallback message flow for option selection');
+        const playerMessage: ChatMessage = {
+          text: optionText,
+          sender: 'player',
+          timestamp: new Date().toISOString()
+        };
+
+        console.log('[MessageList] Created player message:', playerMessage);
+        await sendMessage(playerMessage);
+      }
       console.log('[MessageList] Successfully sent option message');
     } catch (error) {
       console.error('[MessageList] Failed to send option selection:', error);
     }
-  }, [sendMessage]);
+  }, [onSendFullMessage, sendMessage]);
 
   return (
   <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 chat-scroll parchment-panel">
