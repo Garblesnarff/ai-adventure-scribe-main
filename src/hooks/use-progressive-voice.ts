@@ -22,6 +22,7 @@ export interface ProgressiveVoiceState {
   segments: VoiceSegment[];
   currentSegmentIndex: number;
   isPlaying: boolean;
+  isPaused: boolean;
   isProcessing: boolean;
   volume: number;
   isMuted: boolean;
@@ -37,6 +38,7 @@ export const useProgressiveVoice = () => {
     segments: [],
     currentSegmentIndex: -1,
     isPlaying: false,
+    isPaused: false,
     isProcessing: false,
     volume: 1,
     isMuted: false,
@@ -285,65 +287,70 @@ export const useProgressiveVoice = () => {
   /**
    * Progressive generation and playback
    */
-  const processSegmentsProgressively = async (segments: VoiceSegment[]): Promise<void> => {
-    console.log('🎪 Starting progressive processing of', segments.length, 'segments');
+  const processSegmentsProgressively = async (segments: VoiceSegment[], startIndex: number = 0): Promise<void> => {
+    console.log('🎪 Starting progressive processing of', segments.length, 'segments', startIndex > 0 ? `from index ${startIndex}` : '');
 
     setState(prev => ({ ...prev, isPlaying: true }));
 
     for (let i = 0; i < segments.length; i++) {
+      const actualIndex = startIndex + i;
       // Check if we should abort
       if (abortController.current?.signal.aborted) {
-        console.log('🛑 Processing aborted at segment', i + 1, 'due to abort signal');
+        console.log('🛑 Processing aborted at segment', actualIndex + 1, 'due to abort signal');
         break;
       }
 
       const segment = segments[i];
-      
+
       try {
-        console.log(`🎵 Processing segment ${i + 1}/${segments.length}: ${segment.character}`);
+        console.log(`🎵 Processing segment ${actualIndex + 1}: ${segment.character}`);
 
         // Update current segment index
         setState(prev => ({
           ...prev,
-          currentSegmentIndex: i,
-          segments: prev.segments.map((s, idx) => 
-            idx === i ? { ...s, isGenerating: true } : s
+          currentSegmentIndex: actualIndex,
+          segments: prev.segments.map((s, idx) =>
+            idx === actualIndex ? { ...s, isGenerating: true } : s
           )
         }));
 
-        // Generate audio for this segment
-        const segmentWithAudio = await VoiceDirector.generateAudio(segment, apiKeyRef.current!);
-        
-        // Update segment with audio
-        setState(prev => ({
-          ...prev,
-          segments: prev.segments.map((s, idx) => 
-            idx === i ? segmentWithAudio : s
-          )
-        }));
+        // Generate audio for this segment (if not already generated)
+        let segmentWithAudio = segment;
+        if (!segment.audioUrl) {
+          segmentWithAudio = await VoiceDirector.generateAudio(segment, apiKeyRef.current!);
+
+          // Update segment with audio
+          setState(prev => ({
+            ...prev,
+            segments: prev.segments.map((s, idx) =>
+              idx === actualIndex ? segmentWithAudio : s
+            )
+          }));
+        }
 
         // If generation failed, log and continue
         if (segmentWithAudio.error) {
-          console.warn(`⚠️ Audio generation failed for segment ${i + 1}:`, segmentWithAudio.error);
+          console.warn(`⚠️ Audio generation failed for segment ${actualIndex + 1}:`, segmentWithAudio.error);
           continue;
         }
 
         // Play the audio
         if (segmentWithAudio.audioUrl) {
-          await playAudioSegment(segmentWithAudio, i);
+          await playAudioSegment(segmentWithAudio, actualIndex);
         }
 
       } catch (error) {
-        console.error(`❌ Error processing segment ${i + 1}:`, error);
+        console.error(`❌ Error processing segment ${actualIndex + 1}:`, error);
         // Continue with next segment
         continue;
       }
     }
 
     // Playback complete
-    setState(prev => ({ 
-      ...prev, 
-      isPlaying: false, 
+    setState(prev => ({
+      ...prev,
+      isPlaying: false,
+      isPaused: false,
       isProcessing: false,
       currentSegmentIndex: -1
     }));
@@ -456,7 +463,65 @@ export const useProgressiveVoice = () => {
   };
 
   /**
-   * Stop current playback
+   * Pause current playback without losing state
+   */
+  const pausePlayback = React.useCallback(() => {
+    console.log('⏸️ Pausing progressive voice playback');
+
+    // Pause current audio but keep the element and position
+    if (currentAudio.current) {
+      currentAudio.current.pause();
+    }
+
+    // Update state to paused
+    setState(prev => ({
+      ...prev,
+      isPlaying: false,
+      isPaused: true
+    }));
+  }, []);
+
+  /**
+   * Resume paused playback from current position
+   */
+  const resumePlayback = React.useCallback(async () => {
+    console.log('▶️ Resuming progressive voice playback');
+
+    // If we have a current audio element, resume it
+    if (currentAudio.current && state.isPaused) {
+      try {
+        await currentAudio.current.play();
+        setState(prev => ({
+          ...prev,
+          isPlaying: true,
+          isPaused: false
+        }));
+        console.log('✅ Resumed audio from paused position');
+        return;
+      } catch (error) {
+        console.error('❌ Failed to resume audio:', error);
+      }
+    }
+
+    // If no current audio or not paused, continue with remaining segments
+    if (state.segments.length > 0 && state.currentSegmentIndex >= 0) {
+      console.log(`🎪 Continuing from segment ${state.currentSegmentIndex + 1}`);
+
+      setState(prev => ({
+        ...prev,
+        isPlaying: true,
+        isPaused: false,
+        isProcessing: true
+      }));
+
+      // Continue processing from current segment index
+      const remainingSegments = state.segments.slice(state.currentSegmentIndex);
+      await processSegmentsProgressively(remainingSegments, state.currentSegmentIndex);
+    }
+  }, [state.isPaused, state.segments, state.currentSegmentIndex]);
+
+  /**
+   * Stop current playback completely
    */
   const stopPlayback = React.useCallback(() => {
     console.log('🛑 Stopping progressive voice playback');
@@ -481,10 +546,11 @@ export const useProgressiveVoice = () => {
       }
     });
 
-    // Reset state
+    // Reset state completely
     setState(prev => ({
       ...prev,
       isPlaying: false,
+      isPaused: false,
       isProcessing: false,
       currentSegmentIndex: -1,
       segments: []
@@ -611,28 +677,31 @@ export const useProgressiveVoice = () => {
     segments: state.segments,
     currentSegmentIndex: state.currentSegmentIndex,
     isPlaying: state.isPlaying,
+    isPaused: state.isPaused,
     isProcessing: state.isProcessing,
     volume: state.volume,
     isMuted: state.isMuted,
     isVoiceEnabled: state.isVoiceEnabled,
     error: state.error,
     apiKey, // Expose API key state for debugging
-    
+
     // Actions
     speakAISegments, // Main function for AI-generated segments
     speakPlainText,  // Fallback for plain text
-    stopPlayback,
+    pausePlayback,   // Pause without losing state
+    resumePlayback,  // Resume from pause
+    stopPlayback,    // Stop completely
     setVolume,
     toggleMute,
     toggleVoiceEnabled,
     retryApiKeyFetch, // Manual API key retry
-    
+
     // Voice management utilities
     getCharacterVoiceMappings: VoiceDirector.getCharacterVoiceMappings,
     clearCharacterVoiceMappings: VoiceDirector.clearCharacterVoiceMappings,
     getAvailableVoiceCategories: VoiceDirector.getAvailableVoiceCategories,
     initializeAudioContext, // Initialize audio context during user interaction
-    
+
     // Audio cache management
     clearAudioCache: VoiceDirector.clearAudioCache,
     getAudioCacheStats: VoiceDirector.getAudioCacheStats,

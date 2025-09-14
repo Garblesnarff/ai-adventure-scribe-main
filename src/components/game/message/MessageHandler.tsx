@@ -40,24 +40,28 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
 
     try {
       console.log('[Memory Flow] Starting message handling for:', playerInput);
-      
+
       // Validate session before proceeding (if still needed)
       const isValid = await validateSession();
       if (!isValid) return;
 
       const newTurnCount = turnCount + 1;
+      const isFirstMessage = messages.length === 0;
 
       // Add player message
       const playerMessage: ChatMessage = {
         text: playerInput,
         sender: 'player',
-        context: { intent: 'query' }, // Simplified context for MVP
+        context: {
+          intent: isFirstMessage ? 'first_action' : 'query',
+          isFirstMessage
+        },
       };
       await sendMessage(playerMessage); // This adds to UI and saves to dialogue_history
 
       // Update turn count immediately after player message is sent
       await updateGameSessionState({ turn_count: newTurnCount });
-      
+
       console.log('[Memory Flow] Extracting memories from player input');
       await extractMemories(playerInput); // Assuming this is non-critical path for state update
       
@@ -98,11 +102,35 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
 
     } catch (error) {
       console.error('Error in message flow:', error);
-      // Revert turn count if AI response failed? For MVP, maybe not critical.
-      // await updateGameSessionState({ turn_count: turnCount }); 
+
+      // Provide user feedback and recovery options
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      // Add a system error message to the conversation
+      try {
+        const systemErrorMessage: ChatMessage = {
+          text: "I encountered an issue processing your message. Let me try again, or you can rephrase your action if needed.",
+          sender: 'system',
+          context: {
+            intent: 'error_recovery',
+            originalError: errorMessage
+          }
+        };
+        await sendMessage(systemErrorMessage);
+      } catch (systemMessageError) {
+        console.error('Failed to send system error message:', systemMessageError);
+      }
+
+      // Revert turn count if AI response failed
+      try {
+        await updateGameSessionState({ turn_count: turnCount });
+      } catch (revertError) {
+        console.error('Failed to revert turn count:', revertError);
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to process message. Please try again.",
+        title: "Processing Error",
+        description: "I had trouble responding to your message. The conversation has been restored and you can try again.",
         variant: "destructive",
       });
     }
