@@ -1,4 +1,3 @@
-// Move all the generated database types here
 export type Json =
   | string
   | number
@@ -8,8 +7,91 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.4"
+  }
   public: {
     Tables: {
+      agent_communications: {
+        Row: {
+          content: Json
+          created_at: string | null
+          id: string
+          message_type: string
+          read_at: string | null
+          receiver_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          id?: string
+          message_type: string
+          read_at?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          id?: string
+          message_type?: string
+          read_at?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_communications_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "agent_states"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_communications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "agent_states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_states: {
+        Row: {
+          agent_role: string
+          agent_type: string
+          configuration: Json | null
+          created_at: string | null
+          id: string
+          last_active: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_role: string
+          agent_type: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          last_active?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_role?: string
+          agent_type?: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          last_active?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           atmosphere: string | null
@@ -70,33 +152,6 @@ export type Database = {
         }
         Relationships: []
       }
-      categories: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          id: string
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       character_equipment: {
         Row: {
           character_id: string | null
@@ -108,18 +163,6 @@ export type Database = {
           item_type: string
           quantity: number | null
           updated_at: string | null
-          // Magic item properties
-          is_magic: boolean | null
-          magic_bonus: number | null
-          magic_properties: Json | null
-          requires_attunement: boolean | null
-          is_attuned: boolean | null
-          attunement_requirements: string | null
-          magic_item_type: string | null
-          magic_item_rarity: string | null
-          magic_effects: Json | null
-          // Multiclassing
-          multiclass_requirement: string | null
         }
         Insert: {
           character_id?: string | null
@@ -131,18 +174,6 @@ export type Database = {
           item_type: string
           quantity?: number | null
           updated_at?: string | null
-          // Magic item properties
-          is_magic?: boolean | null
-          magic_bonus?: number | null
-          magic_properties?: Json | null
-          requires_attunement?: boolean | null
-          is_attuned?: boolean | null
-          attunement_requirements?: string | null
-          magic_item_type?: string | null
-          magic_item_rarity?: string | null
-          magic_effects?: Json | null
-          // Multiclassing
-          multiclass_requirement?: string | null
         }
         Update: {
           character_id?: string | null
@@ -154,18 +185,6 @@ export type Database = {
           item_type?: string
           quantity?: number | null
           updated_at?: string | null
-          // Magic item properties
-          is_magic?: boolean | null
-          magic_bonus?: number | null
-          magic_properties?: Json | null
-          requires_attunement?: boolean | null
-          is_attuned?: boolean | null
-          attunement_requirements?: string | null
-          magic_item_type?: string | null
-          magic_item_rarity?: string | null
-          magic_effects?: Json | null
-          // Multiclassing
-          multiclass_requirement?: string | null
         }
         Relationships: [
           {
@@ -195,8 +214,6 @@ export type Database = {
           temporary_hit_points: number | null
           updated_at: string | null
           wisdom: number
-          // Multiclassing
-          multiclass_hit_dice: Json | null
         }
         Insert: {
           armor_class: number
@@ -215,8 +232,6 @@ export type Database = {
           temporary_hit_points?: number | null
           updated_at?: string | null
           wisdom: number
-          // Multiclassing
-          multiclass_hit_dice?: Json | null
         }
         Update: {
           armor_class?: number
@@ -235,8 +250,6 @@ export type Database = {
           temporary_hit_points?: number | null
           updated_at?: string | null
           wisdom?: number
-          // Multiclassing
-          multiclass_hit_dice?: Json | null
         }
         Relationships: [
           {
@@ -248,111 +261,273 @@ export type Database = {
           },
         ]
       }
+      character_voice_mappings: {
+        Row: {
+          appearance_count: number | null
+          character_name: string
+          created_at: string | null
+          first_appearance: string | null
+          id: string
+          last_used: string | null
+          metadata: Json | null
+          session_id: string | null
+          updated_at: string | null
+          voice_category: string
+          voice_id: string | null
+        }
+        Insert: {
+          appearance_count?: number | null
+          character_name: string
+          created_at?: string | null
+          first_appearance?: string | null
+          id?: string
+          last_used?: string | null
+          metadata?: Json | null
+          session_id?: string | null
+          updated_at?: string | null
+          voice_category: string
+          voice_id?: string | null
+        }
+        Update: {
+          appearance_count?: number | null
+          character_name?: string
+          created_at?: string | null
+          first_appearance?: string | null
+          id?: string
+          last_used?: string | null
+          metadata?: Json | null
+          session_id?: string | null
+          updated_at?: string | null
+          voice_category?: string
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_voice_mappings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           alignment: string | null
+          appearance: string | null
           background: string | null
+          backstory_elements: string | null
+          cantrips: Json | null
           class: string
+          class_features: Json | null
+          copper_pieces: number | null
           created_at: string | null
           description: string | null
+          electrum_pieces: number | null
           experience_points: number | null
+          gold_pieces: number | null
           id: string
+          image_url: string | null
+          known_spells: string | null
+          languages: Json | null
           level: number | null
           name: string
+          personality_notes: string | null
+          personality_traits: string | null
+          platinum_pieces: number | null
           race: string
+          saving_throw_proficiencies: string | null
+          silver_pieces: number | null
+          skill_proficiencies: string | null
+          subrace: string | null
+          tool_proficiencies: string | null
           updated_at: string | null
           user_id: string | null
-          // New AI-generated fields
-          image_url: string | null
-          appearance: string | null
-          personality_traits: string | null
-          personality_notes: string | null
-          backstory_elements: string | null
-          // Damage Resistances, Immunities, and Vulnerabilities
-          damage_resistances: Json | null
-          damage_immunities: Json | null
-          damage_vulnerabilities: Json | null
-          // Vision and Stealth
-          vision_types: Json | null
-          obscurement: string | null
-          is_hidden: boolean | null
-          stealth_check_bonus: number | null
-          // Multiclassing
-          class_levels: Json | null
-          total_level: number | null
         }
         Insert: {
           alignment?: string | null
+          appearance?: string | null
           background?: string | null
+          backstory_elements?: string | null
+          cantrips?: Json | null
           class: string
+          class_features?: Json | null
+          copper_pieces?: number | null
           created_at?: string | null
           description?: string | null
+          electrum_pieces?: number | null
           experience_points?: number | null
+          gold_pieces?: number | null
           id?: string
+          image_url?: string | null
+          known_spells?: string | null
+          languages?: Json | null
           level?: number | null
           name: string
+          personality_notes?: string | null
+          personality_traits?: string | null
+          platinum_pieces?: number | null
           race: string
+          saving_throw_proficiencies?: string | null
+          silver_pieces?: number | null
+          skill_proficiencies?: string | null
+          subrace?: string | null
+          tool_proficiencies?: string | null
           updated_at?: string | null
           user_id?: string | null
-          // New AI-generated fields
-          image_url?: string | null
-          appearance?: string | null
-          personality_traits?: string | null
-          personality_notes?: string | null
-          backstory_elements?: string | null
-          // Damage Resistances, Immunities, and Vulnerabilities
-          damage_resistances?: Json | null
-          damage_immunities?: Json | null
-          damage_vulnerabilities?: Json | null
-          // Vision and Stealth
-          vision_types?: Json | null
-          obscurement?: string | null
-          is_hidden?: boolean | null
-          stealth_check_bonus?: number | null
-          // Multiclassing
-          class_levels?: Json | null
-          total_level?: number | null
         }
         Update: {
           alignment?: string | null
+          appearance?: string | null
           background?: string | null
+          backstory_elements?: string | null
+          cantrips?: Json | null
           class?: string
+          class_features?: Json | null
+          copper_pieces?: number | null
           created_at?: string | null
           description?: string | null
+          electrum_pieces?: number | null
           experience_points?: number | null
+          gold_pieces?: number | null
           id?: string
+          image_url?: string | null
+          known_spells?: string | null
+          languages?: Json | null
           level?: number | null
           name?: string
+          personality_notes?: string | null
+          personality_traits?: string | null
+          platinum_pieces?: number | null
           race?: string
+          saving_throw_proficiencies?: string | null
+          silver_pieces?: number | null
+          skill_proficiencies?: string | null
+          subrace?: string | null
+          tool_proficiencies?: string | null
           updated_at?: string | null
           user_id?: string | null
-          // New AI-generated fields
-          image_url?: string | null
-          appearance?: string | null
-          personality_traits?: string | null
-          personality_notes?: string | null
-          backstory_elements?: string | null
-          // Damage Resistances, Immunities, and Vulnerabilities
-          damage_resistances?: Json | null
-          damage_immunities?: Json | null
-          damage_vulnerabilities?: Json | null
-          // Vision and Stealth
-          vision_types?: Json | null
-          obscurement?: string | null
-          is_hidden?: boolean | null
-          stealth_check_bonus?: number | null
-          // Multiclassing
-          class_levels?: Json | null
-          total_level?: number | null
         }
         Relationships: []
+      }
+      combat_actions: {
+        Row: {
+          action_data: Json
+          action_type: string
+          created_at: string | null
+          dice_rolls: Json | null
+          encounter_id: string | null
+          id: string
+          participant_id: string | null
+          result: Json | null
+          round_number: number
+          target_participant_id: string | null
+          turn_order: number
+        }
+        Insert: {
+          action_data?: Json
+          action_type: string
+          created_at?: string | null
+          dice_rolls?: Json | null
+          encounter_id?: string | null
+          id?: string
+          participant_id?: string | null
+          result?: Json | null
+          round_number?: number
+          target_participant_id?: string | null
+          turn_order?: number
+        }
+        Update: {
+          action_data?: Json
+          action_type?: string
+          created_at?: string | null
+          dice_rolls?: Json | null
+          encounter_id?: string | null
+          id?: string
+          participant_id?: string | null
+          result?: Json | null
+          round_number?: number
+          target_participant_id?: string | null
+          turn_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_actions_encounter_id_fkey"
+            columns: ["encounter_id"]
+            isOneToOne: false
+            referencedRelation: "combat_encounters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_actions_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "combat_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combat_actions_target_participant_id_fkey"
+            columns: ["target_participant_id"]
+            isOneToOne: false
+            referencedRelation: "combat_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combat_conditions: {
+        Row: {
+          condition_data: Json | null
+          condition_name: string
+          created_at: string | null
+          duration_rounds: number | null
+          expires_at_round: number | null
+          id: string
+          participant_id: string | null
+          save_ability: string | null
+          save_dc: number | null
+        }
+        Insert: {
+          condition_data?: Json | null
+          condition_name: string
+          created_at?: string | null
+          duration_rounds?: number | null
+          expires_at_round?: number | null
+          id?: string
+          participant_id?: string | null
+          save_ability?: string | null
+          save_dc?: number | null
+        }
+        Update: {
+          condition_data?: Json | null
+          condition_name?: string
+          created_at?: string | null
+          duration_rounds?: number | null
+          expires_at_round?: number | null
+          id?: string
+          participant_id?: string | null
+          save_ability?: string | null
+          save_dc?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_conditions_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "combat_participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       combat_encounters: {
         Row: {
           combat_log: Json | null
           created_at: string | null
+          current_participant_id: string | null
+          current_round: number | null
+          current_turn: number | null
           description: string | null
           difficulty: string | null
+          encounter_type: string | null
           id: string
           initiative_order: Json | null
           location_id: string | null
@@ -363,8 +538,12 @@ export type Database = {
         Insert: {
           combat_log?: Json | null
           created_at?: string | null
+          current_participant_id?: string | null
+          current_round?: number | null
+          current_turn?: number | null
           description?: string | null
           difficulty?: string | null
+          encounter_type?: string | null
           id?: string
           initiative_order?: Json | null
           location_id?: string | null
@@ -375,8 +554,12 @@ export type Database = {
         Update: {
           combat_log?: Json | null
           created_at?: string | null
+          current_participant_id?: string | null
+          current_round?: number | null
+          current_turn?: number | null
           description?: string | null
           difficulty?: string | null
+          encounter_type?: string | null
           id?: string
           initiative_order?: Json | null
           location_id?: string | null
@@ -385,6 +568,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "combat_encounters_current_participant_id_fkey"
+            columns: ["current_participant_id"]
+            isOneToOne: false
+            referencedRelation: "combat_participants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "combat_encounters_location_id_fkey"
             columns: ["location_id"]
@@ -397,6 +587,71 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      combat_participants: {
+        Row: {
+          armor_class: number
+          conditions: Json | null
+          created_at: string | null
+          current_hp: number
+          encounter_id: string | null
+          id: string
+          initiative: number
+          initiative_modifier: number
+          is_active: boolean | null
+          max_hp: number
+          participant_id: string
+          participant_type: string
+          position_x: number | null
+          position_y: number | null
+          temporary_hp: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          armor_class?: number
+          conditions?: Json | null
+          created_at?: string | null
+          current_hp: number
+          encounter_id?: string | null
+          id?: string
+          initiative?: number
+          initiative_modifier?: number
+          is_active?: boolean | null
+          max_hp: number
+          participant_id: string
+          participant_type: string
+          position_x?: number | null
+          position_y?: number | null
+          temporary_hp?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          armor_class?: number
+          conditions?: Json | null
+          created_at?: string | null
+          current_hp?: number
+          encounter_id?: string | null
+          id?: string
+          initiative?: number
+          initiative_modifier?: number
+          is_active?: boolean | null
+          max_hp?: number
+          participant_id?: string
+          participant_type?: string
+          position_x?: number | null
+          position_y?: number | null
+          temporary_hp?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combat_participants_encounter_id_fkey"
+            columns: ["encounter_id"]
+            isOneToOne: false
+            referencedRelation: "combat_encounters"
             referencedColumns: ["id"]
           },
         ]
@@ -441,208 +696,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "game_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      events: {
-        Row: {
-          category: Database["public"]["Enums"]["timeline_category"]
-          confidence_score: number
-          created_at: string | null
-          date: string
-          description: string | null
-          id: string
-          impact_analysis: string | null
-          timeline_id: string
-          title: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          category: Database["public"]["Enums"]["timeline_category"]
-          confidence_score: number
-          created_at?: string | null
-          date: string
-          description?: string | null
-          id?: string
-          impact_analysis?: string | null
-          timeline_id: string
-          title: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          category?: Database["public"]["Enums"]["timeline_category"]
-          confidence_score?: number
-          created_at?: string | null
-          date?: string
-          description?: string | null
-          id?: string
-          impact_analysis?: string | null
-          timeline_id?: string
-          title?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "events_timeline_id_fkey"
-            columns: ["timeline_id"]
-            isOneToOne: false
-            referencedRelation: "timelines"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      environmental_hazards: {
-        Row: {
-          id: string
-          campaign_id: string | null
-          name: string
-          type: string
-          description: string | null
-          is_instant: boolean | null
-          is_area_effect: boolean | null
-          area_of_effect: Json | null
-          detect_dc: number | null
-          detect_skill: string | null
-          save_dc: number | null
-          save_ability: string | null
-          damage: Json | null
-          conditions: Json | null
-          special_effects: Json | null
-          exhaustion_level: number | null
-          movement_modifier: number | null
-          duration: number | null
-          recharge_rate: string | null
-          trigger_type: string | null
-          is_hidden: boolean | null
-          position_x: number | null
-          position_y: number | null
-          position_z: number | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          campaign_id?: string | null
-          name: string
-          type: string
-          description?: string | null
-          is_instant?: boolean | null
-          is_area_effect?: boolean | null
-          area_of_effect?: Json | null
-          detect_dc?: number | null
-          detect_skill?: string | null
-          save_dc?: number | null
-          save_ability?: string | null
-          damage?: Json | null
-          conditions?: Json | null
-          special_effects?: Json | null
-          exhaustion_level?: number | null
-          movement_modifier?: number | null
-          duration?: number | null
-          recharge_rate?: string | null
-          trigger_type?: string | null
-          is_hidden?: boolean | null
-          position_x?: number | null
-          position_y?: number | null
-          position_z?: number | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          campaign_id?: string | null
-          name?: string
-          type?: string
-          description?: string | null
-          is_instant?: boolean | null
-          is_area_effect?: boolean | null
-          area_of_effect?: Json | null
-          detect_dc?: number | null
-          detect_skill?: string | null
-          save_dc?: number | null
-          save_ability?: string | null
-          damage?: Json | null
-          conditions?: Json | null
-          special_effects?: Json | null
-          exhaustion_level?: number | null
-          movement_modifier?: number | null
-          duration?: number | null
-          recharge_rate?: string | null
-          trigger_type?: string | null
-          is_hidden?: boolean | null
-          position_x?: number | null
-          position_y?: number | null
-          position_z?: number | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "environmental_hazards_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      hazard_interactions: {
-        Row: {
-          id: string
-          hazard_id: string | null
-          character_id: string | null
-          interaction_type: string
-          roll_result: number | null
-          success: boolean | null
-          damage_dealt: number | null
-          conditions_applied: Json | null
-          exhaustion_applied: number | null
-          notes: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          hazard_id?: string | null
-          character_id?: string | null
-          interaction_type: string
-          roll_result?: number | null
-          success?: boolean | null
-          damage_dealt?: number | null
-          conditions_applied?: Json | null
-          exhaustion_applied?: number | null
-          notes?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          hazard_id?: string | null
-          character_id?: string | null
-          interaction_type?: string
-          roll_result?: number | null
-          success?: boolean | null
-          damage_dealt?: number | null
-          conditions_applied?: Json | null
-          exhaustion_applied?: number | null
-          notes?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hazard_interactions_character_id_fkey"
-            columns: ["character_id"]
-            isOneToOne: false
-            referencedRelation: "characters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "hazard_interactions_hazard_id_fkey"
-            columns: ["hazard_id"]
-            isOneToOne: false
-            referencedRelation: "environmental_hazards"
             referencedColumns: ["id"]
           },
         ]
@@ -710,44 +763,6 @@ export type Database = {
           },
         ]
       }
-      historical_media: {
-        Row: {
-          content: string
-          event_id: string
-          generated_at: string | null
-          id: string
-          type: Database["public"]["Enums"]["media_type"]
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          content: string
-          event_id: string
-          generated_at?: string | null
-          id?: string
-          type: Database["public"]["Enums"]["media_type"]
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          content?: string
-          event_id?: string
-          generated_at?: string | null
-          id?: string
-          type?: Database["public"]["Enums"]["media_type"]
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "historical_media_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       locations: {
         Row: {
           coordinates: Json | null
@@ -802,37 +817,64 @@ export type Database = {
       memories: {
         Row: {
           category: string | null
+          chapter_marker: boolean | null
           content: string
+          context_id: string | null
           created_at: string | null
           embedding: string | null
+          emotional_tone: string | null
           id: string
           importance: number | null
           metadata: Json | null
+          narrative_weight: number | null
+          prose_quality: boolean | null
+          related_memories: string[] | null
           session_id: string | null
+          story_arc: string | null
+          subcategory: string | null
+          tags: string[] | null
           type: string
           updated_at: string | null
         }
         Insert: {
           category?: string | null
+          chapter_marker?: boolean | null
           content: string
+          context_id?: string | null
           created_at?: string | null
           embedding?: string | null
+          emotional_tone?: string | null
           id?: string
           importance?: number | null
           metadata?: Json | null
+          narrative_weight?: number | null
+          prose_quality?: boolean | null
+          related_memories?: string[] | null
           session_id?: string | null
+          story_arc?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
           type: string
           updated_at?: string | null
         }
         Update: {
           category?: string | null
+          chapter_marker?: boolean | null
           content?: string
+          context_id?: string | null
           created_at?: string | null
           embedding?: string | null
+          emotional_tone?: string | null
           id?: string
           importance?: number | null
           metadata?: Json | null
+          narrative_weight?: number | null
+          prose_quality?: boolean | null
+          related_memories?: string[] | null
           session_id?: string | null
+          story_arc?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
           type?: string
           updated_at?: string | null
         }
@@ -842,6 +884,91 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_acknowledgments: {
+        Row: {
+          acknowledged_at: string | null
+          attempts: number | null
+          created_at: string | null
+          error: string | null
+          id: string
+          last_attempt: string | null
+          message_id: string | null
+          metadata: Json | null
+          status: string
+          timeout_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          last_attempt?: string | null
+          message_id?: string | null
+          metadata?: Json | null
+          status?: string
+          timeout_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          attempts?: number | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          last_attempt?: string | null
+          message_id?: string | null
+          metadata?: Json | null
+          status?: string
+          timeout_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_acknowledgments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "agent_communications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_sequences: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_id: string
+          sequence_number: number
+          updated_at: string | null
+          vector_clock: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_id: string
+          sequence_number: number
+          updated_at?: string | null
+          vector_clock?: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          sequence_number?: number
+          updated_at?: string | null
+          vector_clock?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_sequences_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "agent_communications"
             referencedColumns: ["id"]
           },
         ]
@@ -918,6 +1045,36 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+        }
+        Relationships: []
+      }
+      prompts: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          prompt: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          prompt: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          prompt?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1019,87 +1176,138 @@ export type Database = {
           },
         ]
       }
-      timelines: {
+      rule_validations: {
         Row: {
-          base_timeline_id: string | null
           created_at: string | null
-          description: string | null
           id: string
-          name: string
+          is_active: boolean | null
+          rule_category: string
+          rule_conditions: Json | null
+          rule_description: string | null
+          rule_exceptions: Json | null
+          rule_references: Json | null
+          rule_requirements: Json | null
+          rule_source: string | null
+          rule_type: string
           updated_at: string | null
-          user_id: string
+          validation_data: Json
         }
         Insert: {
-          base_timeline_id?: string | null
           created_at?: string | null
-          description?: string | null
           id?: string
-          name: string
+          is_active?: boolean | null
+          rule_category: string
+          rule_conditions?: Json | null
+          rule_description?: string | null
+          rule_exceptions?: Json | null
+          rule_references?: Json | null
+          rule_requirements?: Json | null
+          rule_source?: string | null
+          rule_type: string
           updated_at?: string | null
-          user_id: string
+          validation_data: Json
         }
         Update: {
-          base_timeline_id?: string | null
           created_at?: string | null
-          description?: string | null
           id?: string
-          name?: string
+          is_active?: boolean | null
+          rule_category?: string
+          rule_conditions?: Json | null
+          rule_description?: string | null
+          rule_exceptions?: Json | null
+          rule_references?: Json | null
+          rule_requirements?: Json | null
+          rule_source?: string | null
+          rule_type?: string
           updated_at?: string | null
-          user_id?: string
+          validation_data?: Json
+        }
+        Relationships: []
+      }
+      sync_status: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          last_sync_timestamp: string
+          sync_state: Json
+          updated_at: string | null
+          vector_clock: Json
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          last_sync_timestamp?: string
+          sync_state?: Json
+          updated_at?: string | null
+          vector_clock?: Json
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          last_sync_timestamp?: string
+          sync_state?: Json
+          updated_at?: string | null
+          vector_clock?: Json
         }
         Relationships: [
           {
-            foreignKeyName: "timelines_base_timeline_id_fkey"
-            columns: ["base_timeline_id"]
-            isOneToOne: false
-            referencedRelation: "timelines"
+            foreignKeyName: "sync_status_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agent_states"
             referencedColumns: ["id"]
           },
         ]
       }
-      translations: {
+      task_queue: {
         Row: {
-          category_id: string | null
+          assigned_agent_id: string | null
+          completed_at: string | null
           created_at: string | null
-          created_by: string | null
+          data: Json
+          error: string | null
           id: string
-          metadata: Json | null
-          source_file_path: string | null
-          tibetan_title: string | null
-          title: string
-          translation_file_path: string | null
+          priority: number | null
+          result: Json | null
+          status: string
+          task_type: string
           updated_at: string | null
         }
         Insert: {
-          category_id?: string | null
+          assigned_agent_id?: string | null
+          completed_at?: string | null
           created_at?: string | null
-          created_by?: string | null
+          data?: Json
+          error?: string | null
           id?: string
-          metadata?: Json | null
-          source_file_path?: string | null
-          tibetan_title?: string | null
-          title: string
-          translation_file_path?: string | null
+          priority?: number | null
+          result?: Json | null
+          status?: string
+          task_type: string
           updated_at?: string | null
         }
         Update: {
-          category_id?: string | null
+          assigned_agent_id?: string | null
+          completed_at?: string | null
           created_at?: string | null
-          created_by?: string | null
+          data?: Json
+          error?: string | null
           id?: string
-          metadata?: Json | null
-          source_file_path?: string | null
-          tibetan_title?: string | null
-          title?: string
-          translation_file_path?: string | null
+          priority?: number | null
+          result?: Json | null
+          status?: string
+          task_type?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "translations_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: "task_queue_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
             isOneToOne: false
-            referencedRelation: "categories"
+            referencedRelation: "agent_states"
             referencedColumns: ["id"]
           },
         ]
@@ -1241,185 +1449,139 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      binary_quantize:
-        | {
-            Args: {
-              "": string
-            }
-            Returns: unknown
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: unknown
-          }
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      calculate_relevance_score: {
+        Args: {
+          category_match_score: number
+          days_old: number
+          is_featured: boolean
+          tag_match_score: number
+          title_match_score: number
+          view_count: number
+        }
+        Returns: number
+      }
+      calculate_suggestion_score: {
+        Args: {
+          category_match: boolean
+          historical_usage: number
+          original_term: string
+          suggested_term: string
+          tag_similarity: number
+          view_count_proximity: number
+        }
+        Returns: number
+      }
       create_tools_table: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       halfvec_avg: {
-        Args: {
-          "": number[]
-        }
+        Args: { "": number[] }
         Returns: unknown
       }
       halfvec_out: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       halfvec_send: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: string
       }
       halfvec_typmod_in: {
-        Args: {
-          "": unknown[]
-        }
+        Args: { "": unknown[] }
         Returns: number
       }
       hnsw_bit_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       hnsw_halfvec_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       hnsw_sparsevec_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       hnswhandler: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       ivfflat_bit_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       ivfflat_halfvec_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       ivfflathandler: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
-      l2_norm:
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: number
-          }
-      l2_normalize:
-        | {
-            Args: {
-              "": string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: unknown
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: unknown
-          }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: unknown
+      }
       sparsevec_out: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       sparsevec_send: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: string
       }
       sparsevec_typmod_in: {
-        Args: {
-          "": unknown[]
-        }
+        Args: { "": unknown[] }
         Returns: number
       }
       vector_avg: {
-        Args: {
-          "": number[]
-        }
+        Args: { "": number[] }
         Returns: string
       }
-      vector_dims:
-        | {
-            Args: {
-              "": string
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: number
-          }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
       vector_norm: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: number
       }
       vector_out: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: unknown
       }
       vector_send: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: string
       }
       vector_typmod_in: {
-        Args: {
-          "": unknown[]
-        }
+        Args: { "": unknown[] }
         Returns: number
       }
     }
     Enums: {
       media_type: "Newspaper" | "Document" | "Photo" | "Video" | "Audio"
+      memory_subcategory:
+        | "current_location"
+        | "previous_location"
+        | "npc"
+        | "player"
+        | "player_action"
+        | "npc_action"
+        | "dialogue"
+        | "description"
+        | "environment"
+        | "item"
+        | "general"
       timeline_category:
         | "Technology"
         | "Political"
@@ -1434,27 +1596,33 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1462,20 +1630,24 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1483,20 +1655,24 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1504,30 +1680,64 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
+export const Constants = {
+  public: {
+    Enums: {
+      media_type: ["Newspaper", "Document", "Photo", "Video", "Audio"],
+      memory_subcategory: [
+        "current_location",
+        "previous_location",
+        "npc",
+        "player",
+        "player_action",
+        "npc_action",
+        "dialogue",
+        "description",
+        "environment",
+        "item",
+        "general",
+      ],
+      timeline_category: [
+        "Technology",
+        "Political",
+        "Cultural",
+        "Economic",
+        "Military",
+        "Scientific",
+      ],
+    },
+  },
+} as const
