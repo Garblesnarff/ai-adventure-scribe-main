@@ -235,7 +235,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   handleAIResponse,
 }) => {
   // Get message context for sending initial greeting
-  const { messages, sendMessage, queueStatus } = useMessageContext();
+  const { messages, sendMessage, queueStatus, isLoading: messagesLoading } = useMessageContext();
 
   // Get memory context for creating initial memories
   const { createMemory } = useMemoryContext();
@@ -254,6 +254,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
     characterId: characterIdForHandler,
     campaignId: campaignIdForHandler,
     messages,
+    messagesLoading,
     onGreetingGenerated: sendMessage,
     onMemoryCreated: createMemory,
   });
