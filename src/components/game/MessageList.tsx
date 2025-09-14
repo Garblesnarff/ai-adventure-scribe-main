@@ -1,15 +1,38 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
 import { DMMessageVoiceControls } from '@/components/game/voice/DMMessageVoiceControls';
+import { ActionOptions } from '@/components/game/ActionOptions';
+import { parseMessageOptions, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
 
 /**
  * MessageList Component
  * Displays a list of chat messages with styling based on sender type
  */
 export const MessageList: React.FC = () => {
-  const { messages = [] } = useMessageContext();
+  const { messages = [], sendMessage } = useMessageContext();
+
+  // Handle option selection
+  const handleOptionSelect = React.useCallback(async (optionText: string) => {
+    console.log('[MessageList] Handling option selection:', optionText);
+
+    // Create a new player message from the selected option
+    const playerMessage: ChatMessage = {
+      text: optionText,
+      sender: 'player',
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('[MessageList] Created player message:', playerMessage);
+
+    try {
+      await sendMessage(playerMessage);
+      console.log('[MessageList] Successfully sent option message');
+    } catch (error) {
+      console.error('[MessageList] Failed to send option selection:', error);
+    }
+  }, [sendMessage]);
 
   return (
   <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 chat-scroll parchment-panel">
@@ -22,9 +45,12 @@ export const MessageList: React.FC = () => {
         const nextMessage = messages[index + 1];
         const isGrouped = nextMessage && nextMessage.sender === message.sender;
 
+        // Parse DM message options
+        const parsedMessage = isDM ? parseMessageOptions(message.text) : null;
+
         return (
           <div key={message.id || message.timestamp} className={`flex ${isPlayer ? 'justify-end' : 'justify-start'} group`}>
-            <div className={`flex max-w-[85%] ${isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}> 
+            <div className={`flex max-w-[85%] ${isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>
               {!isPlayer && (
                 <div className="flex-shrink-0 mr-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium avatar-dm`} aria-hidden>
@@ -60,7 +86,9 @@ export const MessageList: React.FC = () => {
                   <div className={`relative px-5 py-4 rounded-xl transition-all duration-200 message-bubble ${
                       isDM ? 'dm-bubble' : isSystem ? 'system-bubble' : 'player-bubble'
                     }`}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {parsedMessage ? parsedMessage.content || message.text : message.text}
+                    </p>
 
                     {message.context && (
                       <div className="mt-3 pt-3 border-t border-opacity-10 space-y-2 message-meta">
@@ -89,6 +117,20 @@ export const MessageList: React.FC = () => {
                         />
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Action Options for DM messages */}
+                {isDM && parsedMessage && parsedMessage.hasOptions && (
+                  <div className="w-full max-w-md mt-3">
+                    <ActionOptions
+                      options={parsedMessage.options}
+                      onOptionSelect={(option) => {
+                        const playerMessage = createPlayerMessageFromOption(option);
+                        handleOptionSelect(playerMessage);
+                      }}
+                      delay={10000} // 10 second delay
+                    />
                   </div>
                 )}
 

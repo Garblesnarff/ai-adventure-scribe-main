@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Play, Pause, Volume2, VolumeX, AlertCircle, RefreshCw } from 'lucide-react';
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { ChatMessage } from '@/services/ai-service';
 import { NarrationSegment } from '@/hooks/use-ai-response';
+import { ActionOptions } from '@/components/game/ActionOptions';
+import { parseMessageOptions, extractNarrativeContent, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
 
 interface DMChatBubbleProps {
   message: ChatMessage;
   narrationSegments?: NarrationSegment[];
+  onOptionSelect?: (optionText: string) => void;
 }
 
 // Helper function to convert NarrationSegments to AISegments
@@ -23,8 +26,13 @@ const convertNarrationToAISegments = (narrationSegments: NarrationSegment[]) => 
 
 export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
   message,
-  narrationSegments
+  narrationSegments,
+  onOptionSelect
 }) => {
+  // Parse message content to separate narrative from options
+  const parsedMessage = useMemo(() => {
+    return parseMessageOptions(message.content);
+  }, [message.content]);
   const {
     segments,
     currentSegmentIndex,
@@ -44,6 +52,14 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
   const [hasUserInteracted, setHasUserInteracted] = React.useState(() => {
     return localStorage.getItem('progressive-voice-user-interacted') === 'true';
   });
+
+  // Handle option selection
+  const handleOptionSelect = React.useCallback((option: any) => {
+    if (onOptionSelect) {
+      const playerMessage = createPlayerMessageFromOption(option);
+      onOptionSelect(playerMessage);
+    }
+  }, [onOptionSelect]);
 
   // Check if this message is currently playing
   const isThisMessagePlaying = React.useMemo(() => {
@@ -74,7 +90,9 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
         speakAISegments(aiSegments);
       } else {
         console.log('📝 Using plain text fallback for message playback');
-        speakPlainText(message.content);
+        // Use only narrative content for TTS (exclude options)
+        const narrativeContent = extractNarrativeContent(message.content);
+        speakPlainText(narrativeContent);
       }
     }
   }, [
@@ -124,9 +142,9 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
           <div className={`relative px-5 py-4 rounded-xl transition-all duration-200 bg-muted text-foreground ${
             isThisMessagePlaying ? 'ring-2 ring-infinite-purple ring-opacity-50 shadow-lg' : ''
           }`}>
-            {/* Message Content */}
+            {/* Message Content (narrative only) */}
             <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3">
-              {message.content}
+              {parsedMessage.content || message.content}
             </p>
 
             {/* Voice Controls */}
@@ -231,6 +249,17 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
               </div>
             )}
           </div>
+
+          {/* Action Options */}
+          {parsedMessage.hasOptions && (
+            <div className="w-full max-w-md">
+              <ActionOptions
+                options={parsedMessage.options}
+                onOptionSelect={handleOptionSelect}
+                delay={10000} // 10 second delay
+              />
+            </div>
+          )}
 
           {/* Timestamp */}
           <div className="text-xs text-muted-foreground px-2">
