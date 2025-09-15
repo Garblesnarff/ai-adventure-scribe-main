@@ -771,13 +771,25 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
 - NEVER describe speech indirectly (e.g., "A merchant greets you" or "Someone calls for help")
 - Every speaking NPC should have actual quoted words that reveal personality and plot
 
+**CRITICAL: ACTION OPTIONS FORMATTING**
+When providing choices to the player, you MUST format them as lettered options with bold action names:
+
+Format: A. **Action Name**, brief description of what this choice involves
+
+Examples:
+- A. **Approach cautiously**, moving carefully to avoid detection while gathering information
+- B. **Charge forward boldly**, relying on speed and surprise to overcome obstacles
+- C. **Attempt to negotiate**, using your diplomatic skills to find a peaceful solution
+
+This formatting is REQUIRED for the options to appear as clickable buttons in the game interface. Always include 2-3 options formatted this way at the end of your response.
+
 TONE GUIDELINES:
 - ${campaignTone === 'dark' ? 'Use atmospheric, tension-filled language. Emphasize danger and moral ambiguity.' : ''}
 - ${campaignTone === 'lighthearted' ? 'Include moments of humor and whimsy. Keep things optimistic and fun.' : ''}
 - ${campaignTone === 'epic' ? 'Use grand, inspiring language. Make the player feel heroic and destined for greatness.' : ''}
 - ${campaignTone === 'balanced' ? 'Balance serious moments with lighter touches. Create realistic but hopeful atmosphere.' : ''}
 
-FORMAT: Write 2-3 paragraphs in second person ("you"). End with a specific question about what the player wants to do, offering multiple viable options.
+FORMAT: Write 2-3 paragraphs in second person ("you"). End with a specific question about what the player wants to do, offering multiple viable options formatted as described above.
 
 Remember: You're not just describing a scene - you're launching an epic story where the player is the hero. Make them excited to take their first action!`;
         

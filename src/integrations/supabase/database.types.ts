@@ -313,9 +313,11 @@ export type Database = {
       }
       characters: {
         Row: {
+          active_concentration: string | null
           alignment: string | null
           appearance: string | null
           background: string | null
+          background_image: string | null
           backstory_elements: string | null
           cantrips: Json | null
           class: string

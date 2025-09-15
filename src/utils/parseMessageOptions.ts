@@ -40,6 +40,10 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
   const numberedRegex = /^(\d+)\.\s+\*\*([^*]+)\*\*([^]*?)(?=^\d+\.\s+\*\*|\n\s*$|$)/gm;
   const letteredRegex = /^([A-Z])\.\s+\*\*([^*]+)\*\*([^]*?)(?=^[A-Z]\.\s+\*\*|\n\s*$|$)/gm;
 
+  // Fallback patterns for non-bold options (backward compatibility)
+  const numberedFallbackRegex = /^(\d+)\.\s+([^]*?)(?=^\d+\.|\n\s*$|$)/gm;
+  const letteredFallbackRegex = /^([A-Z])\.\s+([^]*?)(?=^[A-Z]\.|\n\s*$|$)/gm;
+
   const options: ActionOption[] = [];
   let lastIndex = 0;
 
@@ -87,6 +91,51 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
       });
 
       // Track where options start in the content
+      if (options.length === 1) {
+        lastIndex = match.index;
+      }
+    }
+  }
+
+  // Fallback: Try numbered options without bold formatting
+  if (options.length === 0) {
+    numberedFallbackRegex.lastIndex = 0;
+    while ((match = numberedFallbackRegex.exec(messageContent)) !== null) {
+      const [fullMatch, numberStr, fullText] = match;
+      const number = parseInt(numberStr, 10);
+
+      // Extract first sentence or clause as the main action
+      const sentences = fullText.trim().split(/[,.!?]/);
+      const mainAction = sentences[0]?.trim() || fullText.trim();
+
+      options.push({
+        id: `option-${number}`,
+        number,
+        text: fullText.trim(),
+        fullText: fullText.trim()
+      });
+
+      if (options.length === 1) {
+        lastIndex = match.index;
+      }
+    }
+  }
+
+  // Fallback: Try lettered options without bold formatting
+  if (options.length === 0) {
+    letteredFallbackRegex.lastIndex = 0;
+    while ((match = letteredFallbackRegex.exec(messageContent)) !== null) {
+      const [fullMatch, letterStr, fullText] = match;
+      const letterCode = letterStr.charCodeAt(0) - 64;
+
+      options.push({
+        id: `option-${letterStr}`,
+        number: letterCode,
+        letter: letterStr,
+        text: fullText.trim(),
+        fullText: fullText.trim()
+      });
+
       if (options.length === 1) {
         lastIndex = match.index;
       }

@@ -95,101 +95,113 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   // Get first initial
   const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
 
+  // Use generated background image, fallback to default
+  const resolvedBackgroundImage = useMemo(() =>
+    character.background_image || new URL('/card-background.jpeg', import.meta.url).href,
+  [character.background_image]);
+
   return (
-    <>
-      <Card className="group relative overflow-hidden rounded-2xl border-2 border-border/30 p-6 hover:shadow-2xl hover:border-infinite-purple/50 transition-all duration-300 bg-gradient-to-br from-background to-muted/50 hover:from-background hover:to-accent/20">
-        {/* Avatar - AI-generated image or fallback */}
-        <div className="absolute -top-6 left-6 w-16 h-16 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-110 transition-transform duration-300">
-          {character.image_url ? (
-            <img
-              src={character.image_url}
-              alt={`Portrait of ${character.name}`}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                // Fallback to initial if image fails to load
-                const target = e.target as HTMLImageElement;
-                const parent = target.parentElement;
-                if (parent) {
-                  parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-2xl font-bold text-white ${getAvatarColor(character.name)}">${getInitial(character.name)}</div>`;
-                }
-              }}
-            />
-          ) : (
-            <div className={`w-full h-full flex items-center justify-center text-2xl font-bold text-white ${getAvatarColor(character.name)}`}>
-              {getInitial(character.name)}
+    <Card
+      className="character-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square"
+      style={{ padding: 0 }}
+    >
+      {/* Hero / background area */}
+      <div
+        className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1]"
+        onClick={() => navigate(`/character/${character.id}`)}
+        style={resolvedBackgroundImage ? { backgroundImage: `url(${resolvedBackgroundImage})` } : undefined}
+      >
+        {/* Overlay and popup for character details */}
+        <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
+        <div className="hero-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
+          <div className="bg-white/95 p-4 rounded-lg shadow-md border border-border">
+            <div className="flex items-center gap-4 mb-3">
+              {/* Avatar in popup */}
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-background">
+                {character.image_url ? (
+                  <img
+                    src={character.image_url}
+                    alt={`Portrait of ${character.name}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xl font-bold text-white ${getAvatarColor(character.name)}">${getInitial(character.name)}</div>`;
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center text-xl font-bold text-white ${getAvatarColor(character.name)}`}>
+                    {getInitial(character.name)}
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="text-xl font-bold text-infinite-dark mb-1 leading-tight break-words">{character.name}</div>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  {character.race && (
+                    <span className="flex items-center gap-1">
+                      <Shield className="w-3 h-3" />
+                      {typeof character.race === 'string' ? character.race : character.race.name}
+                    </span>
+                  )}
+                  {character.class && (
+                    <span className="flex items-center gap-1">
+                      <Sword className="w-3 h-3" />
+                      {typeof character.class === 'string' ? character.class : character.class.name}
+                    </span>
+                  )}
+                  {character.level && (
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3" />
+                      {character.level}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
 
-        <div 
-          className="cursor-pointer pt-8"
-          onClick={() => navigate(`/character/${character.id}`)}
-        >
-          <h3 className="text-2xl font-bold mb-3 text-foreground break-words group-hover:text-infinite-purple transition-colors duration-200">{character.name}</h3>
-          {character.description && (
-            <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed opacity-90 group-hover:opacity-100 transition-opacity duration-200">
-              {character.description}
-            </p>
-          )}
-          <div className="space-y-3 mb-6">
-            {character.race && (
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Shield className="w-4 h-4 text-infinite-gold" />
-                <span className="text-foreground/80">{typeof character.race === 'string' ? character.race : character.race.name}</span>
+            {character.description && (
+              <div className="text-base text-muted-foreground line-clamp-3 leading-relaxed mb-3 break-words hyphens-auto">
+                {character.description}
               </div>
             )}
-            {character.class && (
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Sword className="w-4 h-4 text-infinite-teal" />
-                <span className="text-foreground/80">{typeof character.class === 'string' ? character.class : character.class.name}</span>
-              </div>
-            )}
-            {character.level && (
-              <div className="flex items-center gap-2 text-sm font-semibold text-infinite-gold">
-                <Star className="w-4 h-4" />
-                <span>Level {character.level}</span>
-              </div>
-            )}
+
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="bg-infinite-gold text-infinite-dark flex items-center gap-2 hover:bg-infinite-purple" onClick={(e) => { e.stopPropagation(); setShowCampaignModal(true); }}>
+                <Play className="w-4 h-4" />
+                Play
+              </Button>
+              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/character/${character.id}`); }}>
+                View Details
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-infinite-dark/20"
+                onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4 border-t border-border/30">
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteClick();
-              }}
-              className="h-8 px-3"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/character/${character.id}`)}
-              className="h-8 px-3 border-infinite-purple text-infinite-purple hover:bg-infinite-purple/10"
-            >
-              View Details
-            </Button>
+        {/* Action popup for hovering */}
+        <div className="action-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
+          <div className="bg-white/95 p-3 rounded-lg shadow-md border border-border">
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="h-7 px-2" onClick={(e) => { e.stopPropagation(); navigate(`/character/${character.id}`); }}>
+                View
+              </Button>
+              <Button size="sm" variant="default" className="h-7 px-2 bg-infinite-gold text-infinite-dark" onClick={(e) => { e.stopPropagation(); setShowCampaignModal(true); }}>
+                <Play className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="fantasy"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCampaignModal(true);
-            }}
-            className="h-8 px-4 shadow-md hover:shadow-lg transition-shadow duration-200"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Embark
-          </Button>
         </div>
-      </Card>
+      </div>
 
       <CampaignSelectionModal
         isOpen={showCampaignModal}
@@ -213,7 +225,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </Card>
   );
 };
 

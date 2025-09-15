@@ -4,14 +4,18 @@ import { useState } from 'react';
 // Project Imports
 import { useToast } from '@/components/ui/use-toast'; // Assuming kebab-case
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  transformAbilityScoresForStorage, 
+import {
+  transformAbilityScoresForStorage,
   transformEquipmentForStorage,
   transformMulticlassingForStorage
 } from '@/utils/characterTransformations';
 
 // Project Types
 import { Character, transformCharacterForStorage } from '@/types/character';
+
+// Services
+import { characterBackgroundGenerator } from '@/services/character-background-generator';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 /**
@@ -27,6 +31,7 @@ const LOCAL_USER_ID = '00000000-0000-0000-0000-000000000000';
 export const useCharacterSave = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   /**
    * Saves character data to Supabase
@@ -76,7 +81,7 @@ export const useCharacterSave = () => {
       // Transform and save character stats
       const statsData = {
         ...transformAbilityScoresForStorage(
-          character.abilityScores,
+          character.abilityScores!,
           characterData.id
         )
       };
@@ -105,12 +110,21 @@ export const useCharacterSave = () => {
         if (equipmentError) throw equipmentError;
       }
 
-      // Return the complete character data
-      return {
+      // Create saved character object with ID
+      const savedCharacter: Character = {
         ...character,
         id: characterData.id,
         user_id: characterData.user_id
       };
+
+      // Generate background image asynchronously for new characters
+      // Don't block character creation on image generation
+      if (!character.id && characterData.id) {
+        generateBackgroundImage(characterData.id, savedCharacter);
+      }
+
+      // Return the complete character data
+      return savedCharacter;
     } catch (error) {
       console.error('Error saving character:', error);
       toast({
@@ -121,6 +135,52 @@ export const useCharacterSave = () => {
       return null;
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /**
+   * Generate background image for the character
+   * This runs asynchronously after character creation
+   */
+  const generateBackgroundImage = async (characterId: string, character: Character) => {
+    try {
+      console.log(`Generating background image for character ${characterId}`);
+
+      // Generate the image
+      const imageUrl = await characterBackgroundGenerator.generateCharacterBackground(character);
+
+      // Update the character with the generated image URL
+      const { error } = await supabase
+        .from('characters')
+        .update({ background_image: imageUrl })
+        .eq('id', characterId);
+
+      if (error) {
+        console.error('Error updating character with background image:', error);
+        // Don't throw error - character creation should still succeed
+      } else {
+        console.log(`Successfully generated and saved background image for character ${characterId}`);
+
+        // Invalidate characters query to refresh the list with the new image
+        queryClient.invalidateQueries({ queryKey: ['characters'] });
+
+        // Show success notification
+        toast({
+          title: "Character Background Generated",
+          description: "Your character background image has been created successfully.",
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to generate background image for character ${characterId}:`, error);
+
+      // Show user-friendly error notification
+      toast({
+        title: "Background Image Generation Failed",
+        description: "We couldn't generate a background image for your character, but your character was created successfully. You can add an image later.",
+        variant: "destructive",
+      });
+
+      // Don't throw error - character creation should still succeed even if image generation fails
     }
   };
 
