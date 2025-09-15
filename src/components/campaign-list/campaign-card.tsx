@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import CharacterSelectionModal from './character-selection-modal';
 import { useCampaignImageHotLoading } from '@/hooks/use-image-hot-loading';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CampaignCardProps {
   campaign: {
@@ -143,8 +144,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
         <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
         <div className="hover-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
           <div className="bg-white/95 p-4 rounded-lg shadow-md border border-border">
-            <div className="text-xl font-bold text-infinite-dark mb-2 leading-tight break-words">{campaign.name}</div>
-            {campaign.description && <div className="text-base text-muted-foreground line-clamp-3 leading-relaxed mb-3 break-words hyphens-auto">{campaign.description}</div>}
+            <div className="text-xl font-bold text-infinite-dark mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : campaign.name}</div>
+            {imageLoading ? <Skeleton className="h-4 w-full" /> : (campaign.description && <div className="text-base text-muted-foreground line-clamp-3 leading-relaxed mb-3 break-words hyphens-auto">{campaign.description}</div>)}
             
             {/* Campaign badges in popup */}
             <div className="campaign-badges flex gap-1 flex-wrap text-xs mt-2 mb-4">

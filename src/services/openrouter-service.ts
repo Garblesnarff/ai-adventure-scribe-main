@@ -46,6 +46,15 @@ interface ModelConfig {
   isFree: boolean;
 }
 
+interface ApiKeyStatus {
+  label: string;
+  limit: number | null;
+  usage: number;
+  is_provisioning_key: boolean;
+  limit_remaining: number;
+  is_free_tier: boolean;
+}
+
 /**
  * Service class for OpenRouter API integration
  */
@@ -53,16 +62,11 @@ export class OpenRouterService {
   private apiKey: string;
   private baseUrl = 'https://openrouter.ai/api/v1';
   
-  // Model configurations with free tier support (1000 requests/day with $10+ credits)
+  // Model configurations - note: OpenRouter does not offer free image generation models
   private models: ModelConfig[] = [
     {
-      id: 'google/gemini-2.5-flash-image-preview:free',
-      dailyLimit: 1000, // Free tier: 1000 requests per day with $10+ credits
-      isFree: true
-    },
-    {
       id: 'google/gemini-2.5-flash-image-preview',
-      isFree: false // Paid Gemini model as fallback when free tier exhausted
+      isFree: false // All image models on OpenRouter are paid (~$0.04 per generation)
     }
   ];
 
@@ -74,23 +78,76 @@ export class OpenRouterService {
   }
 
   /**
-   * Select the best available model based on free tier limits
+   * Check API key status and balance
+   * @returns API key status information
+   */
+  async checkApiKeyStatus(): Promise<ApiKeyStatus> {
+    try {
+      const response = await fetch(`${this.baseUrl}/auth/key`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to check API key status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error('Error checking API key status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if the API key has sufficient balance for requests
+   * @returns true if balance is positive, false otherwise
+   */
+  async hasPositiveBalance(): Promise<boolean> {
+    try {
+      const status = await this.checkApiKeyStatus();
+      const hasBalance = status.limit_remaining > 0;
+
+      if (!hasBalance) {
+        console.warn(`OpenRouter API key has insufficient balance. Remaining: ${status.limit_remaining}`);
+      }
+
+      return hasBalance;
+    } catch (error) {
+      console.error('Error checking balance:', error);
+      // Assume we can try if we can't check
+      return true;
+    }
+  }
+
+  /**
+   * Select the best available model based on free tier limits and balance
+   * @param hasBalance - Whether the API key has positive balance
    * @returns Model configuration to use
    */
-  private selectAvailableModel(): ModelConfig {
-    // Try free models first (1000 requests/day with $10+ credits)
-    for (const model of this.models.filter(m => m.isFree)) {
-      if (model.dailyLimit && modelUsageTracker.canUseModel(model.id, model.dailyLimit)) {
-        const remaining = modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit);
-        console.log(`Using free model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
-        return model;
+  private selectAvailableModel(hasBalance: boolean = true): ModelConfig {
+    // Only try free models if we have positive balance
+    if (hasBalance) {
+      // Try free models first (1000 requests/day with $10+ credits)
+      for (const model of this.models.filter(m => m.isFree)) {
+        if (model.dailyLimit && modelUsageTracker.canUseModel(model.id, model.dailyLimit)) {
+          const remaining = modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit);
+          console.log(`Using free model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
+          return model;
+        }
       }
+    } else {
+      console.warn('Skipping free models due to insufficient balance');
     }
 
     // Fall back to paid models
     const paidModel = this.models.find(m => !m.isFree);
     if (paidModel) {
-      console.log(`Free tier exhausted, using paid model: ${paidModel.id}`);
+      console.log(`${hasBalance ? 'Free tier exhausted' : 'Insufficient balance'}, using paid model: ${paidModel.id}`);
       return paidModel;
     }
 
@@ -120,7 +177,10 @@ export class OpenRouterService {
    */
   async generateImage(request: ImageGenerationRequest): Promise<string> {
     const { prompt, referenceImage } = request;
-    const selectedModel = this.selectAvailableModel();
+
+    // Check API key balance before proceeding
+    const hasBalance = await this.hasPositiveBalance();
+    const selectedModel = this.selectAvailableModel(hasBalance);
 
     try {
       // Build message content based on whether we have a reference image
@@ -173,11 +233,39 @@ export class OpenRouterService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        
+
+        // Check if it's a 403 error (insufficient balance or key limit exceeded)
+        if (response.status === 403) {
+          console.error(`OpenRouter API 403 error: ${errorText}`);
+
+          // If we were trying a free model, suggest increasing key limit
+          if (selectedModel.isFree) {
+            const keyStatus = await this.checkApiKeyStatus().catch(() => null);
+            if (keyStatus && keyStatus.limit_remaining <= 0) {
+              throw new Error(
+                `OpenRouter API key has insufficient balance (${keyStatus.limit_remaining}). ` +
+                `Please increase your API key limit or add more credits to your account. ` +
+                `Current usage: $${keyStatus.usage.toFixed(3)} / $${keyStatus.limit}`
+              );
+            }
+          }
+
+          // Try with paid Gemini model if we were using free
+          if (selectedModel.isFree) {
+            console.warn(`Free model blocked (403), trying paid Gemini model`);
+            const paidGeminiModel = this.models.find(m =>
+              m.id === 'google/gemini-2.5-flash-image-preview' && !m.isFree
+            );
+            if (paidGeminiModel) {
+              return this.generateImageWithModel(prompt, paidGeminiModel, referenceImage);
+            }
+          }
+        }
+
         // Check if it's a rate limit error for free tier
         if (response.status === 429 && selectedModel.isFree) {
           console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid Gemini model`);
-          
+
           // Try with paid Gemini model specifically
           const paidGeminiModel = this.models.find(m =>
             m.id === 'google/gemini-2.5-flash-image-preview' && !m.isFree
@@ -186,7 +274,7 @@ export class OpenRouterService {
             return this.generateImageWithModel(prompt, paidGeminiModel, referenceImage);
           }
         }
-        
+
         // Check if it's a 404 error (model not found) - try paid Gemini model
         if (response.status === 404) {
           console.warn(`Model ${selectedModel.id} not found (404), trying paid Gemini model`);
@@ -201,7 +289,7 @@ export class OpenRouterService {
             return await this.generateImageWithModel(prompt, paidGeminiModel, referenceImage);
           }
         }
-        
+
         throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
       }
 

@@ -158,7 +158,10 @@ export const useCharacterSave = () => {
       // Update the character with the generated image URL
       const { error } = await supabase
         .from('characters')
-        .update({ background_image: imageUrl })
+        .update({
+          background_image: imageUrl,
+          updated_at: new Date().toISOString() // Ensure updated_at triggers realtime
+        })
         .eq('id', characterId);
 
       if (error) {
@@ -167,8 +170,9 @@ export const useCharacterSave = () => {
       } else {
         console.log(`Successfully generated and saved background image for character ${characterId}`);
 
-        // Invalidate characters query to refresh the list with the new image
+        // Invalidate specific queries to refresh the UI with the new image
         queryClient.invalidateQueries({ queryKey: ['characters'] });
+        queryClient.invalidateQueries({ queryKey: ['character', characterId] });
 
         // Show success notification
         toast({
