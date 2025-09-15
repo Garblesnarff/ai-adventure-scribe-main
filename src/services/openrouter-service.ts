@@ -37,6 +37,7 @@ interface OpenRouterImageResponse {
 interface ImageGenerationRequest {
   prompt: string;
   model?: string;
+  referenceImage?: string; // base64 encoded image to use as reference
 }
 
 interface ModelConfig {
@@ -52,25 +53,16 @@ export class OpenRouterService {
   private apiKey: string;
   private baseUrl = 'https://openrouter.ai/api/v1';
   
-  // Model configurations with free tier support and nano-banana hackathon
+  // Model configurations with free tier support (1000 requests/day with $10+ credits)
   private models: ModelConfig[] = [
     {
       id: 'google/gemini-2.5-flash-image-preview:free',
-      dailyLimit: 100, // Nano-banana hackathon: 100 requests per day
+      dailyLimit: 1000, // Free tier: 1000 requests per day with $10+ credits
       isFree: true
     },
     {
       id: 'google/gemini-2.5-flash-image-preview',
-      isFree: false // Paid Gemini model as primary fallback
-    },
-    // Temporary fallback models for testing
-    {
-      id: 'stabilityai/stable-diffusion-xl-base-1.0',
-      isFree: false
-    },
-    {
-      id: 'black-forest-labs/flux-1-schnell',
-      isFree: false
+      isFree: false // Paid Gemini model as fallback when free tier exhausted
     }
   ];
 
@@ -86,11 +78,11 @@ export class OpenRouterService {
    * @returns Model configuration to use
    */
   private selectAvailableModel(): ModelConfig {
-    // Try free models first (includes nano-banana hackathon tier)
+    // Try free models first (1000 requests/day with $10+ credits)
     for (const model of this.models.filter(m => m.isFree)) {
       if (model.dailyLimit && modelUsageTracker.canUseModel(model.id, model.dailyLimit)) {
         const remaining = modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit);
-        console.log(`Using free model: ${model.id} (${remaining}/100 nano-banana hackathon requests remaining today)`);
+        console.log(`Using free model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
         return model;
       }
     }
@@ -127,16 +119,38 @@ export class OpenRouterService {
    * @returns Promise resolving to base64 encoded image data
    */
   async generateImage(request: ImageGenerationRequest): Promise<string> {
-    const { prompt } = request;
+    const { prompt, referenceImage } = request;
     const selectedModel = this.selectAvailableModel();
 
     try {
+      // Build message content based on whether we have a reference image
+      let messageContent;
+
+      if (referenceImage) {
+        // Multimodal request with reference image and text prompt
+        messageContent = [
+          {
+            type: 'text',
+            text: prompt
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/png;base64,${referenceImage}`
+            }
+          }
+        ];
+      } else {
+        // Text-only request
+        messageContent = prompt;
+      }
+
       const requestBody = {
         model: selectedModel.id,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: messageContent
           }
         ],
         modalities: ['image', 'text'],
@@ -165,29 +179,26 @@ export class OpenRouterService {
           console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid Gemini model`);
           
           // Try with paid Gemini model specifically
-          const paidGeminiModel = this.models.find(m => 
+          const paidGeminiModel = this.models.find(m =>
             m.id === 'google/gemini-2.5-flash-image-preview' && !m.isFree
           );
           if (paidGeminiModel) {
-            return this.generateImageWithModel(prompt, paidGeminiModel);
+            return this.generateImageWithModel(prompt, paidGeminiModel, referenceImage);
           }
         }
         
-        // Check if it's a 404 error (model not found) - try fallback models
+        // Check if it's a 404 error (model not found) - try paid Gemini model
         if (response.status === 404) {
-          console.warn(`Model ${selectedModel.id} not found (404), trying fallback models`);
-          
-          // Try fallback models in order of preference
-          const fallbackModels = this.models.filter(m => m.id !== selectedModel.id);
-          
-          for (const fallbackModel of fallbackModels) {
-            try {
-              console.log(`Trying fallback model: ${fallbackModel.id}`);
-              return await this.generateImageWithModel(prompt, fallbackModel);
-            } catch (fallbackError) {
-              console.warn(`Fallback model ${fallbackModel.id} also failed:`, fallbackError.message);
-              continue;
-            }
+          console.warn(`Model ${selectedModel.id} not found (404), trying paid Gemini model`);
+
+          // Try the paid version of the same model
+          const paidGeminiModel = this.models.find(m =>
+            m.id === 'google/gemini-2.5-flash-image-preview' && !m.isFree
+          );
+
+          if (paidGeminiModel && paidGeminiModel.id !== selectedModel.id) {
+            console.log(`Trying paid Gemini model: ${paidGeminiModel.id}`);
+            return await this.generateImageWithModel(prompt, paidGeminiModel, referenceImage);
           }
         }
         
@@ -300,10 +311,33 @@ export class OpenRouterService {
    * Generate image with a specific model (used for fallback)
    * @param prompt - Image generation prompt
    * @param model - Specific model to use
+   * @param referenceImage - Optional reference image as base64
    * @returns Promise resolving to base64 encoded image data
    */
-  private async generateImageWithModel(prompt: string, model: ModelConfig): Promise<string> {
+  private async generateImageWithModel(prompt: string, model: ModelConfig, referenceImage?: string): Promise<string> {
     try {
+      // Build message content based on whether we have a reference image
+      let messageContent;
+
+      if (referenceImage) {
+        // Multimodal request with reference image and text prompt
+        messageContent = [
+          {
+            type: 'text',
+            text: prompt
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/png;base64,${referenceImage}`
+            }
+          }
+        ];
+      } else {
+        // Text-only request
+        messageContent = prompt;
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -317,7 +351,7 @@ export class OpenRouterService {
           messages: [
             {
               role: 'user',
-              content: prompt
+              content: messageContent
             }
           ],
           modalities: ['image', 'text'],

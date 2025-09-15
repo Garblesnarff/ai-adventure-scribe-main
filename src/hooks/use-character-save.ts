@@ -146,8 +146,14 @@ export const useCharacterSave = () => {
     try {
       console.log(`Generating background image for character ${characterId}`);
 
-      // Generate the image
-      const imageUrl = await characterBackgroundGenerator.generateCharacterBackground(character);
+      // Generate the image with character portrait as reference if available
+      const options: any = {};
+      if (character.image_url) {
+        options.referenceImageUrl = character.image_url;
+        console.log(`Using character image as reference: ${character.image_url}`);
+      }
+
+      const imageUrl = await characterBackgroundGenerator.generateCharacterBackground(character, options);
 
       // Update the character with the generated image URL
       const { error } = await supabase

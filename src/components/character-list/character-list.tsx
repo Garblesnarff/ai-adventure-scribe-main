@@ -48,7 +48,7 @@ const CharacterList: React.FC = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('characters')
-        .select('id, name, description, race, class, level, image_url, appearance, personality_traits, backstory_elements, background')
+        .select('id, name, description, race, class, level, image_url, background_image, appearance, personality_traits, backstory_elements, background')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
