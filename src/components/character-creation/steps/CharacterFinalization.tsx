@@ -52,7 +52,9 @@ const CharacterFinalization: React.FC = () => {
         background: state.character.background?.name || null,
         alignment: state.character.alignment || null,
         personality_notes: state.character.personality_notes || null,
-        abilityScores: state.character.abilityScores || null,
+        ability_scores: state.character.abilityScores || null,
+        enhancementSelections: state.character.enhancementSelections || [],
+        enhancementEffects: state.character.enhancementEffects || {},
       };
 
       const enhancedDescription = await characterDescriptionGenerator.generateDescription(
@@ -118,6 +120,8 @@ const CharacterFinalization: React.FC = () => {
         appearance: state.character.appearance,
         personality_traits: state.character.personality_traits,
         personality_notes: state.character.personality_notes,
+        enhancementSelections: state.character.enhancementSelections || [],
+        enhancementEffects: state.character.enhancementEffects || {},
       };
 
       const imageUrl = await characterImageGenerator.generateCharacterImage(

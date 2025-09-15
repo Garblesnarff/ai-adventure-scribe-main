@@ -7,18 +7,21 @@
  */
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import { 
-  CombatState, 
-  CombatEncounter, 
-  CombatParticipant, 
-  CombatAction as CombatActionType, 
+import {
+  CombatState,
+  CombatEncounter,
+  CombatParticipant,
+  CombatAction as CombatActionType,
   CombatEvent,
   Condition,
   ConditionName,
   CombatContextValue,
   DamageType,
   DiceRoll,
-  FightingStyleName
+  FightingStyleName,
+  ReactionOpportunity,
+  ActionType,
+  Equipment
 } from '@/types/combat';
 import { rollDie } from '@/utils/diceRolls';
 import { 
@@ -32,6 +35,13 @@ import { calculateDamage } from '@/utils/diceUtils';
 import { processShortRestCombat, processLongRestCombat } from '@/utils/restMechanics';
 import { activateRage, deactivateRage } from '@/utils/classFeatures';
 import { attemptHide, applyHiddenCondition, removeHiddenCondition } from '@/utils/stealthUtils';
+import {
+  getConditionModifiers,
+  applyConditionEffects,
+  removeConditionEffects,
+  handleConditionSave,
+  hasCondition
+} from '@/utils/conditionEffects';
 import { useCharacter } from './CharacterContext';
 import { FIGHTING_STYLES } from '@/utils/fightingStyles';
 
@@ -61,7 +71,7 @@ const initialCombatState: CombatState = {
 // Combat Reducer
 // ===========================
 
-type ReducerAction = 
+type ReducerAction =
   | { type: 'SET_ENCOUNTER'; encounter: CombatEncounter }
   | { type: 'START_COMBAT' }
   | { type: 'END_COMBAT' }
@@ -78,7 +88,10 @@ type ReducerAction =
   | { type: 'ADD_REACTION_OPPORTUNITY'; opportunity: ReactionOpportunity }
   | { type: 'REMOVE_REACTION_OPPORTUNITY'; opportunityId: string }
   | { type: 'CLEAR_REACTION_OPPORTUNITIES' }
-  | { type: 'SET_PENDING_REACTION'; opportunityId: string; selectedReaction: ActionType };
+  | { type: 'SET_PENDING_REACTION'; opportunityId: string; selectedReaction: ActionType }
+  | { type: 'REROLL_INITIATIVE'; participantId: string; newInitiative: number; roll: DiceRoll }
+  | { type: 'UPDATE_INITIATIVE_ORDER'; newOrder: string[] }
+  | { type: 'SET_GROUP_ID'; participantId: string; groupId: string };
 
 function combatReducer(state: CombatState, action: ReducerAction): CombatState {
   switch (action.type) {
@@ -260,6 +273,55 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         pendingReactionResponse: {
           opportunityId: action.opportunityId,
           selectedReaction: action.selectedReaction,
+        },
+      };
+
+    case 'REROLL_INITIATIVE':
+      if (!state.activeEncounter) return state;
+
+      return {
+        ...state,
+        activeEncounter: {
+          ...state.activeEncounter,
+          participants: state.activeEncounter.participants.map(p =>
+            p.id === action.participantId
+              ? { ...p, initiative: action.newInitiative }
+              : p
+          ),
+        },
+      };
+
+    case 'UPDATE_INITIATIVE_ORDER':
+      if (!state.activeEncounter) return state;
+
+      const reorderedParticipants = [...state.activeEncounter.participants].sort((a, b) => {
+        const aIndex = action.newOrder.indexOf(a.id);
+        const bIndex = action.newOrder.indexOf(b.id);
+        if (aIndex === -1) return 1; // Move unknown participants to end
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+
+      return {
+        ...state,
+        activeEncounter: {
+          ...state.activeEncounter,
+          participants: reorderedParticipants,
+        },
+      };
+
+    case 'SET_GROUP_ID':
+      if (!state.activeEncounter) return state;
+
+      return {
+        ...state,
+        activeEncounter: {
+          ...state.activeEncounter,
+          participants: state.activeEncounter.participants.map(p =>
+            p.id === action.participantId
+              ? { ...p, groupId: action.groupId }
+              : p
+          ),
         },
       };
 
@@ -784,51 +846,50 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
   // ===========================
 
   const applyCondition = useCallback(async (
-    participantId: string, 
+    participantId: string,
     condition: Condition
   ) => {
     const participant = state.activeEncounter?.participants.find(p => p.id === participantId);
     if (!participant) return;
-    
-    const newConditions = [...participant.conditions, condition];
-    
-    // Apply special effects for certain conditions
-    let updates: Partial<CombatParticipant> = { conditions: newConditions };
-    
-    if (condition.name === 'grappled') {
-      // Apply grappled effects (speed becomes 0)
-      updates.speed = 0;
-    }
-    
+
+    // Apply condition effects using the centralized conditionEffects utility
+    const updatedParticipant = applyConditionEffects(participant, condition);
+
     dispatch({
       type: 'UPDATE_PARTICIPANT',
       participantId,
-      updates,
+      updates: {
+        conditions: updatedParticipant.conditions,
+        // Include any additional effects (like speed changes)
+        speed: updatedParticipant.speed !== participant.speed ? updatedParticipant.speed : undefined,
+        movementUsed: updatedParticipant.movementUsed !== participant.movementUsed ? updatedParticipant.movementUsed : undefined,
+      },
     });
   }, [state.activeEncounter]);
 
   const removeCondition = useCallback(async (
-    participantId: string, 
+    participantId: string,
     conditionName: ConditionName
   ) => {
     const participant = state.activeEncounter?.participants.find(p => p.id === participantId);
     if (!participant) return;
-    
-    const newConditions = participant.conditions.filter(c => c.name !== conditionName);
-    
-    // Apply special effects for certain conditions
-    let updates: Partial<CombatParticipant> = { conditions: newConditions };
-    
-    if (conditionName === 'grappled') {
-      // Remove grappled effects (restore normal speed)
-      // Simplified - would normally restore the participant's actual speed
-      updates.speed = participant.speed || 30;
-    }
-    
+
+    // Find the condition to remove for proper effect removal
+    const conditionToRemove = participant.conditions.find(c => c.name === conditionName);
+    if (!conditionToRemove) return;
+
+    // Remove condition effects using the centralized conditionEffects utility
+    const updatedParticipant = removeConditionEffects(participant, conditionToRemove);
+
     dispatch({
       type: 'UPDATE_PARTICIPANT',
       participantId,
-      updates,
+      updates: {
+        conditions: updatedParticipant.conditions,
+        // Restore any modified stats (like speed)
+        speed: updatedParticipant.speed !== participant.speed ? updatedParticipant.speed : undefined,
+        movementUsed: updatedParticipant.movementUsed !== participant.movementUsed ? updatedParticipant.movementUsed : undefined,
+      },
     });
   }, [state.activeEncounter]);
 

@@ -22,17 +22,13 @@ import {
 } from '@/types/enhancement-options';
 
 interface CampaignEnhancementsProps {
-  onNext?: () => void;
-  onPrevious?: () => void;
   isOptional?: boolean;
 }
 
 export default function CampaignEnhancements({
-  onNext,
-  onPrevious,
   isOptional = true
 }: CampaignEnhancementsProps) {
-  const { state, updateCampaignField } = useCampaign();
+  const { state, dispatch } = useCampaign();
   const [selections, setSelections] = React.useState<OptionSelection[]>([]);
   const [isGenerating, setIsGenerating] = React.useState(false);
 
@@ -45,8 +41,11 @@ export default function CampaignEnhancements({
 
   // Update campaign data when selections change
   React.useEffect(() => {
-    updateCampaignField('enhancementSelections', selections);
-  }, [selections, updateCampaignField]);
+    dispatch({
+      type: 'UPDATE_CAMPAIGN',
+      payload: { enhancementSelections: selections }
+    });
+  }, [selections, dispatch]);
 
   // Calculate enhancement effects and apply them to campaign
   React.useEffect(() => {
@@ -76,8 +75,11 @@ export default function CampaignEnhancements({
     });
 
     // Apply effects to campaign
-    updateCampaignField('enhancementEffects', effects);
-  }, [selections, updateCampaignField]);
+    dispatch({
+      type: 'UPDATE_CAMPAIGN',
+      payload: { enhancementEffects: effects }
+    });
+  }, [selections, dispatch]);
 
   // Mock AI generation function for campaign mysteries
   const handleAIGenerate = async (optionId: string): Promise<string> => {
@@ -264,38 +266,6 @@ export default function CampaignEnhancements({
           </AlertDescription>
         </Alert>
       )}
-
-      <Separator />
-
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={onPrevious}
-          disabled={isGenerating}
-        >
-          Previous
-        </Button>
-
-        <div className="space-x-2">
-          {isOptional && (
-            <Button
-              variant="outline"
-              onClick={onNext}
-              disabled={isGenerating}
-            >
-              Skip Enhancements
-            </Button>
-          )}
-          <Button
-            onClick={onNext}
-            disabled={isGenerating}
-            className={selections.length > 0 ? 'bg-primary' : ''}
-          >
-            {selections.length > 0 ? 'Continue with Enhancements' : 'Continue'}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,12 +1,15 @@
 /**
  * Initiative Tracker Component
- * 
+ *
  * Displays initiative order in a tabletop D&D style.
  * Shows whose turn it is, HP status, and conditions.
+ * Enhanced with drag-and-drop reordering, reroll capabilities, and group handling.
  * Designed to feel like a physical initiative tracker at the table.
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,6 +49,7 @@ const CONDITION_ICONS: Record<ConditionName, { icon: React.ComponentType<any>; c
   stunned: { icon: UserX, color: 'bg-yellow-600' },
   unconscious: { icon: UserX, color: 'bg-black' },
   exhaustion: { icon: Clock, color: 'bg-gray-600' },
+  surprised: { icon: Skull, color: 'bg-yellow-400' },
 };
 
 // ===========================
@@ -84,6 +88,8 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
         return <Shield className="w-4 h-4 text-blue-500" />;
       case 'npc':
         return <Heart className="w-4 h-4 text-green-500" />;
+      case 'enemy':
+        return <Sword className="w-4 h-4 text-red-500" />;
       case 'monster':
         return <Sword className="w-4 h-4 text-red-500" />;
       default:

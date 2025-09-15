@@ -1,24 +1,27 @@
 /**
  * Attack Roll Visualization Component
- * 
+ *
  * Displays detailed information about attack rolls including modifiers,
- * advantage/disadvantage conditions, and roll results.
+ * advantage/disadvantage conditions, and roll results. Now integrated
+ * with the enhanced attack system from attackUtils.ts.
  */
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Swords, 
-  Target, 
+import { Separator } from '@/components/ui/separator';
+import {
+  Swords,
+  Target,
   Zap,
   ShieldAlert,
   ShieldCheck,
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
-import { DiceRoll } from '@/types/combat';
+import { DiceRoll, DamageType } from '@/types/combat';
+import { Equipment } from '@/data/equipmentOptions';
 
 // ===========================
 // Component Props
@@ -27,56 +30,145 @@ import { DiceRoll } from '@/types/combat';
 interface AttackRollVisualizationProps {
   attackerName: string;
   targetName: string;
-  weaponName: string;
-  attackBonus: number;
-  modifiers: Array<{ name: string; value: number }>;
-  conditions: string[];
-  advantage: boolean;
-  disadvantage: boolean;
-  targetAC: number;
-  roll?: DiceRoll;
-  hit?: boolean;
-  critical?: boolean;
-  fumble?: boolean;
+  weapon: Equipment | null; // Enhanced to use full Equipment object
+  attackResult: {
+    resolution: {
+      hit: boolean;
+      roll: DiceRoll;
+      acHit: number;
+      criticalHit?: boolean;
+      criticalFail?: boolean;
+      advantage: boolean;
+      disadvantage: boolean;
+    };
+    damage: {
+      rolls: DiceRoll[];
+      totalBeforeResistance: number;
+      totalAfterResistance: number;
+      damageType: DamageType;
+      resistances: DamageType[];
+      vulnerabilities: DamageType[];
+      immunities: DamageType[];
+    } | null;
+    targetReducedHp?: number;
+    totalDamageDealt?: number;
+  };
 }
 
 // ===========================
-// Attack Roll Visualization Component
+// Damage Display Component
 // ===========================
+
+interface DamageDisplayProps {
+  damageRolls: DiceRoll[];
+  totalDamage: number;
+  damageType: DamageType;
+  resistances?: DamageType[];
+  vulnerabilities?: DamageType[];
+  immunities?: DamageType[];
+}
+
+const DamageDisplay: React.FC<DamageDisplayProps> = ({
+  damageRolls,
+  totalDamage,
+  damageType,
+  resistances = [],
+  vulnerabilities = [],
+  immunities = []
+}) => {
+  const getDamageColor = (type: DamageType) => {
+    const colorMap: Partial<Record<DamageType, string>> = {
+      force: 'text-blue-600',
+      fire: 'text-red-600',
+      cold: 'text-blue-500',
+      lightning: 'text-yellow-500',
+      poison: 'text-green-600',
+      necrotic: 'text-purple-600',
+      radiant: 'text-yellow-600',
+      slashing: 'text-red-700',
+      piercing: 'text-gray-700',
+      bludgeoning: 'text-orange-600'
+    };
+    return colorMap[type] || 'text-gray-600';
+  };
+
+  const hasModifiers = resistances.length > 0 || vulnerabilities.length > 0 || immunities.length > 0;
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">Damage Rolls</h4>
+
+      {/* Damage Breakdown */}
+      <div className="grid gap-2">
+        {damageRolls.map((roll, index) => (
+          <div key={index} className="text-sm flex items-center justify-between">
+            <span>
+              {roll.count}d{roll.dieType}
+              {roll.modifier > 0 && (
+                <span className="text-green-600"> +{roll.modifier}</span>
+              )}
+            </span>
+            <div className="text-right">
+              {roll.results?.join(', ')} = {roll.total}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Separator />
+
+      {/* Final Damage Result */}
+      <div className="flex items-center justify-between font-medium">
+        <span>Total {damageType} Damage:</span>
+        <span className={`font-bold ${getDamageColor(damageType)}`}>
+          {totalDamage}
+        </span>
+      </div>
+
+      {/* Damage Modifiers */}
+      {hasModifiers && (
+        <div className="space-y-1 text-sm">
+          {resistances.length > 0 && (
+            <div className="text-red-600">
+              <ShieldAlert className="w-3 h-3 inline mr-1" />
+              Resistance to {resistances.join(', ')}
+            </div>
+          )}
+          {vulnerabilities.length > 0 && (
+            <div className="text-orange-600">
+              <Zap className="w-3 h-3 inline mr-1" />
+              Vulnerable to {vulnerabilities.join(', ')}
+            </div>
+          )}
+          {immunities.length > 0 && (
+            <div className="text-gray-400">
+              <ShieldCheck className="w-3 h-3 inline mr-1" />
+              Immune to {immunities.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
   attackerName,
   targetName,
-  weaponName,
-  attackBonus,
-  modifiers,
-  conditions,
-  advantage,
-  disadvantage,
-  targetAC,
-  roll,
-  hit,
-  critical,
-  fumble
+  weapon,
+  attackResult
 }) => {
-  // Calculate total modifier
-  const totalModifier = modifiers.reduce((sum, mod) => sum + mod.value, 0);
-  
-  // Get roll result
-  const rollResult = roll?.total || 0;
-  const naturalRoll = roll?.naturalRoll || 0;
-  
-  // Determine roll status
-  const isCritical = critical || naturalRoll === 20;
-  const isFumble = fumble || naturalRoll === 1;
-  const isHit = hit !== undefined ? hit : rollResult >= targetAC;
-  
+  const { resolution, damage, targetReducedHp, totalDamageDealt } = attackResult;
+  const { hit, roll, acHit, criticalHit, criticalFail, advantage, disadvantage } = resolution;
+
+  const weaponName = weapon?.name || 'unarmed strike';
+
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Swords className="w-5 h-5" />
-          Attack Roll Visualization
+          Attack Resolution
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -86,10 +178,10 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
             {attackerName} attacks {targetName} with {weaponName}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Target AC: {targetAC}
+            Target AC: {acHit}
           </p>
         </div>
-        
+
         {/* Advantage/Disadvantage Indicators */}
         {(advantage || disadvantage) && (
           <div className="flex justify-center gap-2">
@@ -107,127 +199,99 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
             )}
           </div>
         )}
-        
-        {/* Conditions */}
-        {conditions.length > 0 && (
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Conditions: {conditions.join(', ')}
-            </p>
-          </div>
-        )}
-        
-        {/* Modifier Breakdown */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">Modifiers</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {modifiers.map((modifier, index) => (
-              <div 
-                key={index} 
-                className="flex items-center justify-between p-2 bg-muted rounded"
-              >
-                <span className="text-sm">{modifier.name}:</span>
-                <span className="font-medium">
-                  {modifier.value > 0 ? '+' : ''}{modifier.value}
-                </span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between p-2 bg-primary/10 rounded font-bold">
-              <span>Total:</span>
-              <span>{totalModifier > 0 ? '+' : ''}{totalModifier}</span>
-            </div>
-          </div>
-        </div>
-        
+
         {/* Roll Visualization */}
-        {roll && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Roll Result</h4>
-            
-            {/* Dice Visualization */}
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <div className={`text-2xl font-bold ${
-                  isCritical ? 'text-green-600' : 
-                  isFumble ? 'text-red-600' : 
-                  isHit ? 'text-blue-600' : 'text-gray-600'
-                }`}>
-                  {naturalRoll}
-                </div>
-                <div className="text-xs text-muted-foreground">Natural Roll</div>
-              </div>
-              
-              <div className="text-2xl">+</div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {totalModifier > 0 ? '+' : ''}{totalModifier}
-                </div>
-                <div className="text-xs text-muted-foreground">Modifier</div>
-              </div>
-              
-              <div className="text-2xl">=</div>
-              
-              <div className="text-center">
-                <div className={`text-2xl font-bold ${
-                  isCritical ? 'text-green-600' : 
-                  isFumble ? 'text-red-600' : 
-                  isHit ? 'text-blue-600' : 'text-gray-600'
-                }`}>
-                  {rollResult}
-                </div>
-                <div className="text-xs text-muted-foreground">Total</div>
-              </div>
-            </div>
-            
-            {/* Result Indicator */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium">Roll Result</h4>
+
+          {/* Dice Visualization */}
+          <div className="flex items-center justify-center gap-4">
             <div className="text-center">
-              {isCritical ? (
-                <Badge variant="default" className="text-lg py-2 px-4">
-                  <ShieldAlert className="w-5 h-5 mr-2" />
-                  CRITICAL HIT!
-                </Badge>
-              ) : isFumble ? (
-                <Badge variant="destructive" className="text-lg py-2 px-4">
-                  <ShieldCheck className="w-5 h-5 mr-2" />
-                  CRITICAL MISS!
-                </Badge>
-              ) : isHit ? (
-                <Badge variant="default" className="text-lg py-2 px-4">
-                  <ShieldCheck className="w-5 h-5 mr-2" />
-                  HIT!
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="text-lg py-2 px-4">
-                  <ShieldAlert className="w-5 h-5 mr-2" />
-                  MISS
-                </Badge>
-              )}
-            </div>
-            
-            {/* Target AC Comparison */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Roll Result: {rollResult}</span>
-                <span>Target AC: {targetAC}</span>
+              <div className={`text-2xl font-bold ${
+                criticalHit ? 'text-green-600' :
+                criticalFail ? 'text-red-600' :
+                hit ? 'text-blue-600' : 'text-gray-600'
+              }`}>
+                {roll.naturalRoll}
               </div>
-              <Progress 
-                value={Math.min(100, Math.max(0, (rollResult / (targetAC + 10)) * 100))} 
-                className="h-2"
-              />
-              <div className="text-center text-sm">
-                {isCritical ? (
-                  <span className="text-green-600 font-medium">Automatic Hit (Critical!) </span>
-                ) : isFumble ? (
-                  <span className="text-red-600 font-medium">Automatic Miss (Critical!) </span>
-                ) : isHit ? (
-                  <span className="text-blue-600 font-medium">Attack Hits! </span>
-                ) : (
-                  <span className="text-gray-600 font-medium">Attack Misses </span>
-                )}
-                by {Math.abs(rollResult - targetAC)} points
+              <div className="text-xs text-muted-foreground">Natural Roll</div>
+            </div>
+
+            <div className="text-2xl">+</div>
+
+            <div className="text-center">
+              <div className="text-2xl font-bold">
+                {(roll.modifier > 0 ? '+' : '') + roll.modifier}
+              </div>
+              <div className="text-xs text-muted-foreground">Modifier</div>
+            </div>
+
+            <div className="text-2xl">=</div>
+
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${
+                criticalHit ? 'text-green-600' :
+                criticalFail ? 'text-red-600' :
+                hit ? 'text-blue-600' : 'text-gray-600'
+              }`}>
+                {roll.total}
+              </div>
+              <div className="text-xs text-muted-foreground">Total</div>
+            </div>
+          </div>
+
+          {/* Result Indicator */}
+          <div className="text-center">
+            {criticalHit ? (
+              <Badge variant="default" className="text-lg py-2 px-4">
+                <ShieldAlert className="w-5 h-5 mr-2" />
+                CRITICAL HIT! Automatic Hit
+              </Badge>
+            ) : criticalFail ? (
+              <Badge variant="destructive" className="text-lg py-2 px-4">
+                <ShieldCheck className="w-5 h-5 mr-2" />
+                CRITICAL MISS! Automatic Miss
+              </Badge>
+            ) : hit ? (
+              <Badge variant="default" className="text-lg py-2 px-4">
+                <ShieldCheck className="w-5 h-5 mr-2" />
+                HIT! ({roll.total} ≥ {acHit})
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-lg py-2 px-4">
+                <ShieldAlert className="w-5 h-5 mr-2" />
+                MISS! ({roll.total} < {acHit})
+              </Badge>
+            )}
+          </div>
+
+          {/* HP Result */}
+          {targetReducedHp !== undefined && totalDamageDealt !== undefined && totalDamageDealt > 0 && (
+            <div className="text-center p-2 bg-blue-50 rounded">
+              <div className="text-sm font-medium text-blue-900">
+                Target HP reduced to {targetReducedHp}
+                {totalDamageDealt > 0 && ` (${totalDamageDealt} damage dealt)`}
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Damage Display */}
+        {damage && (
+          <DamageDisplay
+            damageRolls={damage.rolls}
+            totalDamage={damage.totalAfterResistance}
+            damageType={damage.damageType}
+            resistances={damage.resistances}
+            vulnerabilities={damage.vulnerabilities}
+            immunities={damage.immunities}
+          />
+        )}
+
+        {/* Miss Message */}
+        {!damage && hit && (
+          <div className="text-center text-gray-500 text-sm">
+            Attack hit but no damage was dealt
           </div>
         )}
       </CardContent>

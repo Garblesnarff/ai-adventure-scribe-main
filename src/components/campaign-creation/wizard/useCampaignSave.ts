@@ -24,15 +24,17 @@ export const useCampaignSave = () => {
       console.log('Creating campaign and generating background image...');
       
       // First, save the campaign without the background image
-      // Extract background_image from campaignData to avoid schema errors
-      const { background_image, ...campaignDataWithoutImage } = campaignData;
-      
+      // Extract background_image and map camelCase to snake_case fields
+      const { background_image, enhancementSelections, enhancementEffects, ...campaignDataWithoutImage } = campaignData;
+
       const { data, error } = await supabase
         .from('campaigns')
         .insert([{
           ...campaignDataWithoutImage,
           status: 'active',
           setting_details: campaignData.setting_details || {},
+          enhancement_selections: enhancementSelections || [],
+          enhancement_effects: enhancementEffects || {},
         }])
         .select()
         .single();

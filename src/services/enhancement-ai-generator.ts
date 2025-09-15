@@ -279,7 +279,7 @@ Provide 3-5 specific enhancement suggestions, each on a new line. Focus on:
 
     // Remove any leading numbers or bullets
     cleaned = cleaned.replace(/^\d+\.\s*/, '');
-    cleaned = cleaned.replace(/^[\-\*]\s*/, '');
+    cleaned = cleaned.replace(/^[-*]\s*/, '');
 
     // Ensure proper capitalization
     cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);

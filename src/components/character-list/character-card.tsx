@@ -18,6 +18,7 @@ import {
 import { User, Sword, Shield, Star } from 'lucide-react';
 import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
+import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
 
 /**
  * Props interface for CharacterCard component
@@ -38,6 +39,9 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   const { toast } = useToast();
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Use hot loading hook for background image
+  const { imageUrl: hotLoadedImage, isLoading: imageLoading, hasImage } = useCharacterImageHotLoading(character.id);
 
   /**
    * Handles character deletion confirmation
@@ -95,10 +99,24 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   // Get first initial
   const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
 
-  // Use generated background image, fallback to default
-  const resolvedBackgroundImage = useMemo(() =>
-    character.background_image || new URL('/card-background.jpeg', import.meta.url).href,
-  [character.background_image]);
+  // Use hot loaded background image, fallback to default
+  const resolvedBackgroundImage = useMemo(() => {
+    // Priority: hot loaded image > character background image > default background
+    if (hasImage && hotLoadedImage !== '/character-background-placeholder.png') {
+      return hotLoadedImage;
+    }
+
+    if (character.background_image) {
+      return character.background_image;
+    }
+
+    // If we don't have an image and it's loading, show placeholder
+    if (imageLoading || !hasImage) {
+      return hotLoadedImage; // This will be the placeholder
+    }
+
+    return new URL('/card-background.jpeg', import.meta.url).href;
+  }, [hotLoadedImage, hasImage, imageLoading, character.background_image]);
 
   return (
     <Card
@@ -107,10 +125,19 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
     >
       {/* Hero / background area */}
       <div
-        className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1]"
+        className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative"
         onClick={() => navigate(`/character/${character.id}`)}
         style={resolvedBackgroundImage ? { backgroundImage: `url(${resolvedBackgroundImage})` } : undefined}
       >
+        {/* Loading overlay for image generation */}
+        {imageLoading && !hasImage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-infinite-purple/20 via-infinite-dark/40 to-infinite-purple/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-infinite-gold mb-2"></div>
+              <div className="text-xs text-infinite-gold font-medium">Generating image...</div>
+            </div>
+          </div>
+        )}
         {/* Overlay and popup for character details */}
         <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
         <div className="hero-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">

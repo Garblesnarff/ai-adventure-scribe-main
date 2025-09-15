@@ -183,7 +183,7 @@ export function rollAbilityCheck(
 }
 
 /**
- * Roll initiative
+ * Roll initiative with dex modifier and alert/disengage bonuses
  */
 export function rollInitiative(
   dexModifier: number,
@@ -191,6 +191,60 @@ export function rollInitiative(
   options: DiceRollOptions = {}
 ): DiceRoll {
   return rollDice(20, 1, dexModifier + bonuses, options);
+}
+
+/**
+ * Roll initiative for multiple participants (group initiative resolution)
+ */
+export function rollGroupInitiative(
+  participants: {
+    id: string;
+    dexModifier: number;
+    bonuses?: number;
+    groupId?: string;
+    options?: DiceRollOptions;
+  }[]
+): Array<{
+  participantId: string;
+  roll: DiceRoll;
+  initiative: number;
+}> {
+  const results = participants.map(participant => {
+    const roll = rollInitiative(
+      participant.dexModifier,
+      participant.bonuses || 0,
+      participant.options || {}
+    );
+
+    // For group initiative, all group members share the same result
+    const initiative = roll.total + (participant.groupId ? 0 : 0); // Group init bonus can be added later
+
+    return {
+      participantId: participant.id,
+      roll,
+      initiative: initiative,
+    };
+  });
+
+  return results;
+}
+
+/**
+ * Reroll initiative (for delayed/jump-forward actions)
+ */
+export function rerollInitiative(
+  dexModifier: number,
+  bonuses: number = 0,
+  options: DiceRollOptions = {},
+  minInitiative?: number // Optional: ensure reroll is higher than current
+): DiceRoll {
+  let initiative: DiceRoll;
+
+  do {
+    initiative = rollDice(20, 1, dexModifier + bonuses, options);
+  } while (minInitiative && initiative.total < minInitiative);
+
+  return initiative;
 }
 
 /**

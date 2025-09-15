@@ -22,17 +22,13 @@ import {
 } from '@/types/enhancement-options';
 
 interface CharacterEnhancementsProps {
-  onNext?: () => void;
-  onPrevious?: () => void;
   isOptional?: boolean;
 }
 
 export default function CharacterEnhancements({
-  onNext,
-  onPrevious,
   isOptional = true
 }: CharacterEnhancementsProps) {
-  const { state, updateCharacterField } = useCharacter();
+  const { state, dispatch } = useCharacter();
   const [selections, setSelections] = React.useState<OptionSelection[]>([]);
   const [isGenerating, setIsGenerating] = React.useState(false);
 
@@ -45,8 +41,11 @@ export default function CharacterEnhancements({
 
   // Update character data when selections change
   React.useEffect(() => {
-    updateCharacterField('enhancementSelections', selections);
-  }, [selections, updateCharacterField]);
+    dispatch({
+      type: 'UPDATE_CHARACTER',
+      payload: { enhancementSelections: selections }
+    });
+  }, [selections, dispatch]);
 
   // Calculate enhancement effects and apply them to character
   React.useEffect(() => {
@@ -79,8 +78,11 @@ export default function CharacterEnhancements({
     });
 
     // Apply effects to character (this would integrate with your existing character system)
-    updateCharacterField('enhancementEffects', effects);
-  }, [selections, updateCharacterField]);
+    dispatch({
+      type: 'UPDATE_CHARACTER',
+      payload: { enhancementEffects: effects }
+    });
+  }, [selections, dispatch]);
 
   // Mock AI generation function (replace with actual AI integration)
   const handleAIGenerate = async (optionId: string): Promise<string> => {
@@ -257,38 +259,6 @@ export default function CharacterEnhancements({
           </AlertDescription>
         </Alert>
       )}
-
-      <Separator />
-
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={onPrevious}
-          disabled={isGenerating}
-        >
-          Previous
-        </Button>
-
-        <div className="space-x-2">
-          {isOptional && (
-            <Button
-              variant="outline"
-              onClick={onNext}
-              disabled={isGenerating}
-            >
-              Skip Enhancements
-            </Button>
-          )}
-          <Button
-            onClick={onNext}
-            disabled={isGenerating}
-            className={selections.length > 0 ? 'bg-primary' : ''}
-          >
-            {selections.length > 0 ? 'Continue with Enhancements' : 'Continue'}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

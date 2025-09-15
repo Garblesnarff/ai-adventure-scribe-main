@@ -21,6 +21,19 @@ interface CharacterData {
   personality_traits?: string | null;
   personality_notes?: string | null;
   alignment?: string | null;
+  enhancementSelections?: Array<{
+    optionId: string;
+    value: string | string[] | number;
+    customValue?: string;
+    aiGenerated?: boolean;
+  }>;
+  enhancementEffects?: {
+    traits?: string[];
+    skillBonus?: string[];
+    abilityBonus?: Record<string, number>;
+    languages?: string[];
+    equipment?: string[];
+  };
 }
 
 interface CharacterImageOptions {
@@ -216,6 +229,19 @@ export class CharacterImageGenerator {
       descParts.push(extractedDetails.distinguishingMarks.join(', '));
     }
 
+    // Add enhancement-specific visual elements
+    if (characterData.enhancementSelections && characterData.enhancementSelections.length > 0) {
+      const enhancementVisuals = this.extractEnhancementVisuals(characterData.enhancementSelections);
+      if (enhancementVisuals.length > 0) {
+        descParts.push(enhancementVisuals.join(', '));
+      }
+    }
+
+    // Add enhancement effects equipment
+    if (characterData.enhancementEffects?.equipment && characterData.enhancementEffects.equipment.length > 0) {
+      descParts.push(characterData.enhancementEffects.equipment.join(', '));
+    }
+
     // Add alignment-based expression
     if (characterData.alignment) {
       descParts.push(this.getAlignmentPrompt(characterData.alignment));
@@ -363,6 +389,69 @@ export class CharacterImageGenerator {
     }
 
     throw lastError || new Error('All character image generation attempts failed');
+  }
+
+  /**
+   * Extract visually relevant elements from character enhancement selections
+   * @param enhancementSelections - Array of selected enhancement options
+   * @returns Array of visual descriptors based on enhancement content
+   */
+  private extractEnhancementVisuals(enhancementSelections: Array<{
+    optionId: string;
+    value: string | string[] | number;
+    customValue?: string;
+    aiGenerated?: boolean;
+  }>): string[] {
+    const visualElements: string[] = [];
+
+    enhancementSelections.forEach(selection => {
+      const value = Array.isArray(selection.value) ? selection.value.join(' ') : String(selection.value);
+      const combined = `${value} ${selection.customValue || ''}`.toLowerCase();
+
+      // Extract visual elements from enhancement text
+      if (combined.includes('scar') || combined.includes('scarred')) {
+        visualElements.push('distinctive scars');
+      }
+      if (combined.includes('tattoo') || combined.includes('tattooed')) {
+        visualElements.push('meaningful tattoos');
+      }
+      if (combined.includes('piercing') || combined.includes('pierced')) {
+        visualElements.push('piercings');
+      }
+      if (combined.includes('jewelry') || combined.includes('ring') || combined.includes('necklace')) {
+        visualElements.push('distinctive jewelry');
+      }
+      if (combined.includes('weapon') || combined.includes('sword') || combined.includes('axe') || combined.includes('bow')) {
+        visualElements.push('special weapon');
+      }
+      if (combined.includes('armor') || combined.includes('shield')) {
+        visualElements.push('unique armor');
+      }
+      if (combined.includes('cloak') || combined.includes('cape') || combined.includes('robe')) {
+        visualElements.push('distinctive clothing');
+      }
+      if (combined.includes('mark') || combined.includes('brand') || combined.includes('symbol')) {
+        visualElements.push('mystical markings');
+      }
+      if (combined.includes('aura') || combined.includes('glow') || combined.includes('magic')) {
+        visualElements.push('magical aura');
+      }
+      if (combined.includes('eye') || combined.includes('gaze')) {
+        visualElements.push('striking eyes');
+      }
+      if (combined.includes('hair') || combined.includes('beard')) {
+        visualElements.push('distinctive hair');
+      }
+      if (combined.includes('posture') || combined.includes('stance')) {
+        visualElements.push('unique posture');
+      }
+      if (combined.includes('familiar') || combined.includes('companion') || combined.includes('pet')) {
+        visualElements.push('animal companion nearby');
+      }
+    });
+
+    // Remove duplicates and return
+    return [...new Set(visualElements)];
   }
 
   /**

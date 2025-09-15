@@ -32,7 +32,7 @@ import {
   getWeaponDamageBonus,
   rollAttack,
   checkHit,
-  calculateDamageForAttack
+  calculateAttackDamage
 } from '@/utils/attackUtils';
 import { rollDice } from '@/utils/diceUtils';
 
@@ -169,24 +169,18 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
     let sneakAttackDescription = '';
     
     if (hitResult.hit) {
-      const damageResult = calculateDamageForAttack(
+      const damageResult = calculateAttackDamage(
         weapon,
         attacker,
-        isOffHand,
         attackRollResult.roll.critical || false,
-        selectedTarget,
-        encounter
+        {
+          // Pass any additional options as needed
+        }
       );
       
-      damage = damageResult.damageRoll.total;
-      damageType = weapon.damageType;
-      damageDescription = damageResult.description;
-      
-      if (damageResult.sneakAttackRoll) {
-        sneakAttackDamage = damageResult.sneakAttackRoll.total;
-        sneakAttackDescription = damageResult.sneakAttackDescription || '';
-        damage += sneakAttackDamage;
-      }
+      damage = damageResult.totalAfterResistance;
+      damageType = damageResult.damageType;
+      damageDescription = `${damage} ${damageType} damage`;
     }
     
     // Create action description
@@ -202,14 +196,14 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
       description: actionDescription,
       attackRoll: attackRollResult.roll,
       damageRolls: hitResult.hit ? [
-        (calculateDamageForAttack(
+        (calculateAttackDamage(
           weapon,
           attacker,
-          isOffHand,
           attackRollResult.roll.critical || false,
-          selectedTarget,
-          encounter
-        ).damageRoll)
+          {
+            // Pass any additional options as needed
+          }
+        ).rolls)
       ] : [],
       hit: hitResult.hit,
       damageDealt: hitResult.hit ? damage : 0,

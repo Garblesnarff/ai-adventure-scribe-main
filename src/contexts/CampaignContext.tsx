@@ -32,6 +32,15 @@ interface Campaign {
   campaign_length?: 'one-shot' | 'short' | 'full';
   tone?: 'serious' | 'humorous' | 'gritty';
   setting_details?: Record<string, any>;
+  enhancementSelections?: import('../types/enhancement-options').OptionSelection[];
+  enhancementEffects?: {
+    atmosphere?: string[];
+    themes?: string[];
+    hooks?: string[];
+    worldLaws?: string[];
+    npcs?: string[];
+    locations?: string[];
+  };
 }
 
 interface CampaignState {
