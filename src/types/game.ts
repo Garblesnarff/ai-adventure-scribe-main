@@ -15,6 +15,21 @@ export interface MessageContext {
   location?: string | null;
   emotion?: string | null;
   intent?: string | null;
+  diceRoll?: {
+    formula: string;
+    count: number;
+    dieType: number;
+    modifier: number;
+    advantage: boolean;
+    disadvantage: boolean;
+    results: number[];
+    keptResults?: number[];
+    total: number;
+    naturalRoll?: number;
+    critical?: boolean;
+    label?: string;
+    timestamp: string;
+  };
   combatData?: {
     type: string;
     actor?: string;

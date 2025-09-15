@@ -5,6 +5,8 @@ import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { useAIResponse } from '@/hooks/use-ai-response';
 import { useSessionValidator } from '../session/SessionValidator';
+import { parseDiceCommand } from '@/utils/diceCommandParser';
+import { rollDice } from '@/utils/diceUtils';
 
 interface MessageHandlerProps {
   sessionId: string; // Should be non-null if we reach here
@@ -44,6 +46,87 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Validate session before proceeding (if still needed)
       const isValid = await validateSession();
       if (!isValid) return;
+
+      // Check if this is a dice roll command
+      const diceCommand = parseDiceCommand(playerInput);
+      if (diceCommand) {
+        if (!diceCommand.isValid) {
+          // Show error for invalid dice command
+          const errorMessage: ChatMessage = {
+            text: diceCommand.error || 'Invalid dice command',
+            sender: 'system',
+            context: { intent: 'dice_command_error' }
+          };
+          await sendMessage(errorMessage);
+          return;
+        }
+
+        // Execute the dice roll
+        try {
+          const rollResult = rollDice(
+            diceCommand.dieType,
+            diceCommand.count,
+            diceCommand.modifier,
+            {
+              advantage: diceCommand.advantage,
+              disadvantage: diceCommand.disadvantage
+            }
+          );
+
+          // Create dice roll message
+          const diceRollMessage: ChatMessage = {
+            text: `Rolled ${diceCommand.formula}${diceCommand.label ? ` for ${diceCommand.label}` : ''}`,
+            sender: 'player',
+            context: {
+              intent: 'dice_roll',
+              diceRoll: {
+                formula: diceCommand.formula,
+                count: diceCommand.count,
+                dieType: diceCommand.dieType,
+                modifier: diceCommand.modifier,
+                advantage: diceCommand.advantage,
+                disadvantage: diceCommand.disadvantage,
+                results: rollResult.results,
+                keptResults: rollResult.keptResults,
+                total: rollResult.total,
+                naturalRoll: rollResult.naturalRoll,
+                critical: rollResult.critical,
+                label: diceCommand.label,
+                timestamp: new Date().toISOString()
+              }
+            }
+          };
+
+          await sendMessage(diceRollMessage);
+
+          // Also send to AI for context (so DM knows what was rolled)
+          const aiContextMessage = `Player rolled ${diceCommand.formula} and got ${rollResult.total}${diceCommand.label ? ` for ${diceCommand.label}` : ''}. ${rollResult.critical ? (rollResult.naturalRoll === 20 ? 'Critical success!' : 'Critical failure!') : ''}`;
+          
+          const aiResponseMessage = await getAIResponse([...messages, diceRollMessage], sessionId); 
+          
+          await sendMessage(aiResponseMessage);
+          
+          // Process AI response for combat detection
+          if (onAIResponse) {
+            try {
+              await onAIResponse(aiResponseMessage);
+            } catch (combatError) {
+              console.error('Error processing AI response for combat after dice roll:', combatError);
+            }
+          }
+
+          return; // Exit early for dice commands
+        } catch (rollError) {
+          console.error('Error executing dice roll:', rollError);
+          const errorMessage: ChatMessage = {
+            text: 'Failed to execute dice roll. Please try again.',
+            sender: 'system',
+            context: { intent: 'dice_roll_error' }
+          };
+          await sendMessage(errorMessage);
+          return;
+        }
+      }
 
       const newTurnCount = turnCount + 1;
       const isFirstMessage = messages.length === 0;
