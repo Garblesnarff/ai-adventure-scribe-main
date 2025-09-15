@@ -13,6 +13,7 @@ import { Character } from '@/types/character';
 interface ImageGenerationOptions {
   retryAttempts?: number;
   fallbackToDefault?: boolean;
+  referenceImageUrl?: string; // URL of character portrait image to use as reference
 }
 
 /**
@@ -32,13 +33,25 @@ export class CharacterBackgroundGenerator {
     character: Character,
     options: ImageGenerationOptions = {}
   ): Promise<string> {
-    const { retryAttempts = this.maxRetries, fallbackToDefault = true } = options;
+    const { retryAttempts = this.maxRetries, fallbackToDefault = true, referenceImageUrl } = options;
 
     try {
-      const prompt = this.createImagePrompt(character);
+      const prompt = this.createImagePrompt(character, !!referenceImageUrl);
       console.log('Generating character background with prompt:', prompt);
 
-      const base64Image = await this.generateWithRetry(prompt, retryAttempts);
+      let referenceImageBase64: string | undefined;
+
+      // Convert reference image URL to base64 if provided
+      if (referenceImageUrl) {
+        try {
+          referenceImageBase64 = await this.convertImageUrlToBase64(referenceImageUrl);
+          console.log('Successfully converted reference image to base64');
+        } catch (error) {
+          console.warn('Failed to convert reference image to base64, proceeding without reference:', error);
+        }
+      }
+
+      const base64Image = await this.generateWithRetry(prompt, retryAttempts, referenceImageBase64);
       const imageUrl = await openRouterService.uploadImage(base64Image);
 
       console.log('Successfully generated character background');
@@ -59,28 +72,49 @@ export class CharacterBackgroundGenerator {
   /**
    * Create a detailed image generation prompt based on character data
    * @param character - Character attributes
+   * @param hasReferenceImage - Whether a reference image is being used
    * @returns Formatted prompt string
    */
-  private createImagePrompt(character: Character): string {
+  private createImagePrompt(character: Character, hasReferenceImage: boolean = false): string {
     const promptParts: string[] = [];
 
-    // Base request for character-focused 1:1 image
-    promptParts.push("Can i get a 1:1 image of my D&D character:");
+    if (hasReferenceImage) {
+      // When using reference image, focus on creating a background that complements the character
+      promptParts.push("Using the provided character image as reference, generate a fantasy-style character card background that maintains the character's visual style and identity.");
 
-    // Add character description (core element)
-    const characterDescription = character.description?.trim() ||
-      this.createFallbackDescription(character);
-    promptParts.push(characterDescription);
+      // Add character context to ensure background is appropriate
+      const name = character.name || 'Unknown Adventurer';
+      const race = character.race?.name || 'mysterious';
+      const characterClass = character.class?.name || 'adventurer';
 
-    // Add fitting background request
-    promptParts.push("Can i get a fitting background for this character");
+      promptParts.push(`This is ${name}, a ${race} ${characterClass}.`);
 
-    // Add prominent text overlay requirements
-    const name = character.name || 'Unknown Adventurer';
-    const race = character.race?.name || 'mysterious';
-    const characterClass = character.class?.name || 'adventurer';
+      if (character.description?.trim()) {
+        promptParts.push(`Character details: ${character.description.trim()}`);
+      }
 
-    promptParts.push(`Can i get its name "${name}", race "${race}", and class "${characterClass}" displayed prominently on the image.`);
+      promptParts.push("Create an epic fantasy card background that complements this character while maintaining their visual consistency. The background should enhance the character without overwhelming them, creating a perfect card game aesthetic.");
+    } else {
+      // Original logic when no reference image is available
+      promptParts.push("Can i get a 1:1 image of my D&D character:");
+
+      // Add character description (core element)
+      const characterDescription = character.description?.trim() ||
+        this.createFallbackDescription(character);
+      promptParts.push(characterDescription);
+
+      // Add fitting background request
+      promptParts.push("Can i get a fitting background for this character");
+    }
+
+    // Add prominent text overlay requirements (only for non-reference image generation)
+    if (!hasReferenceImage) {
+      const name = character.name || 'Unknown Adventurer';
+      const race = character.race?.name || 'mysterious';
+      const characterClass = character.class?.name || 'adventurer';
+
+      promptParts.push(`Can i get its name "${name}", race "${race}", and class "${characterClass}" displayed prominently on the image.`);
+    }
 
     // Style and technical requirements
     promptParts.push(
@@ -171,13 +205,13 @@ export class CharacterBackgroundGenerator {
   /**
    * Generate image with retry logic
    */
-  private async generateWithRetry(prompt: string, maxAttempts: number): Promise<string> {
+  private async generateWithRetry(prompt: string, maxAttempts: number, referenceImage?: string): Promise<string> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         console.log(`Background generation attempt ${attempt}/${maxAttempts}`);
-        return await openRouterService.generateImage({ prompt });
+        return await openRouterService.generateImage({ prompt, referenceImage });
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
         console.warn(`Attempt ${attempt} failed:`, lastError.message);
@@ -191,6 +225,41 @@ export class CharacterBackgroundGenerator {
     }
 
     throw lastError || new Error('All generation attempts failed');
+  }
+
+  /**
+   * Convert image URL to base64 encoded string
+   * @param imageUrl - URL of the image to convert
+   * @returns Promise resolving to base64 encoded string (without data URL prefix)
+   */
+  private async convertImageUrlToBase64(imageUrl: string): Promise<string> {
+    try {
+      // Fetch the image
+      const response = await fetch(imageUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+
+      // Convert to blob
+      const blob = await response.blob();
+
+      // Convert blob to base64
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          // Extract base64 data without the data URL prefix
+          const base64Data = dataUrl.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = () => reject(new Error('Failed to convert image to base64'));
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting image URL to base64:', error);
+      throw error;
+    }
   }
 }
 

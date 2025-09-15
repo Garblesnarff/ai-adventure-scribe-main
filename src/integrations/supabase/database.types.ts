@@ -322,11 +322,16 @@ export type Database = {
           cantrips: Json | null
           class: string
           class_features: Json | null
+          class_levels: Json | null
           copper_pieces: number | null
           created_at: string | null
+          damage_immunities: Json | null
+          damage_resistances: Json | null
+          damage_vulnerabilities: Json | null
           description: string | null
           electrum_pieces: number | null
           experience_points: number | null
+          fighting_styles: Json | null
           gold_pieces: number | null
           id: string
           image_url: string | null
@@ -341,24 +346,33 @@ export type Database = {
           saving_throw_proficiencies: string | null
           silver_pieces: number | null
           skill_proficiencies: string | null
+          spell_slots: Json | null
           subrace: string | null
           tool_proficiencies: string | null
+          total_level: number | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          active_concentration?: string | null
           alignment?: string | null
           appearance?: string | null
           background?: string | null
+          background_image?: string | null
           backstory_elements?: string | null
           cantrips?: Json | null
           class: string
           class_features?: Json | null
+          class_levels?: Json | null
           copper_pieces?: number | null
           created_at?: string | null
+          damage_immunities?: Json | null
+          damage_resistances?: Json | null
+          damage_vulnerabilities?: Json | null
           description?: string | null
           electrum_pieces?: number | null
           experience_points?: number | null
+          fighting_styles?: Json | null
           gold_pieces?: number | null
           id?: string
           image_url?: string | null
@@ -373,24 +387,33 @@ export type Database = {
           saving_throw_proficiencies?: string | null
           silver_pieces?: number | null
           skill_proficiencies?: string | null
+          spell_slots?: Json | null
           subrace?: string | null
           tool_proficiencies?: string | null
+          total_level?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          active_concentration?: string | null
           alignment?: string | null
           appearance?: string | null
           background?: string | null
+          background_image?: string | null
           backstory_elements?: string | null
           cantrips?: Json | null
           class?: string
           class_features?: Json | null
+          class_levels?: Json | null
           copper_pieces?: number | null
           created_at?: string | null
+          damage_immunities?: Json | null
+          damage_resistances?: Json | null
+          damage_vulnerabilities?: Json | null
           description?: string | null
           electrum_pieces?: number | null
           experience_points?: number | null
+          fighting_styles?: Json | null
           gold_pieces?: number | null
           id?: string
           image_url?: string | null
@@ -405,8 +428,10 @@ export type Database = {
           saving_throw_proficiencies?: string | null
           silver_pieces?: number | null
           skill_proficiencies?: string | null
+          spell_slots?: Json | null
           subrace?: string | null
           tool_proficiencies?: string | null
+          total_level?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
