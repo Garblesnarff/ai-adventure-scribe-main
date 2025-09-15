@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import StepNavigation from '../shared/StepNavigation';
 import ProgressIndicator from '../shared/ProgressIndicator';
 import WizardHeader from './WizardHeader';
+import { useAutosave } from '@/hooks/useAutosave';
 import { wizardSteps } from './constants';
 import { useCampaignSave } from './useCampaignSave';
 import {
@@ -21,7 +22,7 @@ import {
  * Handles step navigation, validation, and campaign saving
  */
 const WizardContent: React.FC = () => {
-  const { state } = useCampaign();
+  const { state, dispatch } = useCampaign();
   const [currentStep, setCurrentStep] = React.useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -96,6 +97,11 @@ const WizardContent: React.FC = () => {
   // Get the component for the current step
   const CurrentStepComponent = wizardSteps[currentStep].component;
 
+  const storageKey = 'campaign-wizard-draft-v1';
+  const { status, restore, clear } = useAutosave(storageKey, state.campaign || {}, { delay: 900 });
+
+  const hasDraft = !!restore();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 py-8 relative overflow-hidden">
       <div 
@@ -106,8 +112,22 @@ const WizardContent: React.FC = () => {
         <div className="parchment-panel max-w-2xl mx-auto animate-fade-in-up">
           <Card className="p-0 bg-transparent border-0 shadow-none">
             <div className="p-6">
-              <WizardHeader />
+              <WizardHeader step={currentStep + 1} totalSteps={wizardSteps.length} autosaveKey={storageKey} formSnapshot={state.campaign} />
               <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
+              {hasDraft && (
+                <div className="flex justify-end mb-3">
+                  <button className="btn btn-sm mr-2" onClick={() => {
+                    const draft = restore();
+                    if (draft) {
+                      // dispatch restored draft using provided dispatch from context
+                      dispatch({ type: 'UPDATE_CAMPAIGN', payload: draft });
+                    }
+                  }}>
+                    Restore draft
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => clear()}>Clear draft</button>
+                </div>
+              )}
               <CurrentStepComponent isLoading={isSaving} />
               <StepNavigation
                 currentStep={currentStep}

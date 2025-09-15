@@ -8,6 +8,12 @@
  */
 
 import { openRouterService } from './openrouter-service';
+import { geminiImageService } from './gemini-image-service';
+
+enum ImageGenerationProvider {
+  GEMINI_DIRECT = 'gemini-direct',
+  OPENROUTER_PAID = 'openrouter-paid'
+}
 
 interface CharacterData {
   name: string;
@@ -41,6 +47,7 @@ interface CharacterImageOptions {
   fallbackToDefault?: boolean;
   style?: 'portrait' | 'action' | 'full-body' | 'character-sheet' | 'expression-sheet';
   artStyle?: 'fantasy-art' | 'anime' | 'realistic' | 'comic-book' | 'watercolor' | 'sketch' | 'oil-painting';
+  preferredProvider?: ImageGenerationProvider;
 }
 
 /**
@@ -51,37 +58,168 @@ export class CharacterImageGenerator {
   private defaultFallbackImage = '/default-character-avatar.png';
 
   /**
-   * Generate a portrait image for a D&D character
+   * Generate a portrait image for a D&D character with intelligent provider fallbacks
    * @param characterData - Character data to base the image on
    * @param options - Generation options
    * @returns Promise resolving to image URL
    */
   async generateCharacterImage(
-    characterData: CharacterData, 
+    characterData: CharacterData,
     options: CharacterImageOptions = {}
   ): Promise<string> {
-    const { retryAttempts = this.maxRetries, fallbackToDefault = true, style = 'portrait', artStyle = 'fantasy-art' } = options;
+    const {
+      retryAttempts = this.maxRetries,
+      fallbackToDefault = true,
+      style = 'portrait',
+      artStyle = 'fantasy-art',
+      preferredProvider
+    } = options;
 
-    try {
-      const prompt = this.createImagePrompt(characterData, style, artStyle);
-      console.log('Generating character image with prompt:', prompt);
+    const prompt = this.createImagePrompt(characterData, style, artStyle);
+    console.log('Generating character image with prompt:', prompt);
 
-      const base64Image = await this.generateWithRetry(prompt, retryAttempts);
-      const imageUrl = await openRouterService.uploadImage(base64Image);
+    // Determine the provider order based on preference and availability
+    const providerOrder = this.getProviderOrder(preferredProvider);
 
-      console.log('Successfully generated character image');
-      return imageUrl;
+    let lastError: Error | null = null;
 
-    } catch (error) {
-      console.error('Failed to generate character image:', error);
-      
-      if (fallbackToDefault) {
-        console.log('Using fallback image due to generation failure');
-        return this.defaultFallbackImage;
+    // Try each provider in order
+    for (const provider of providerOrder) {
+      try {
+        console.log(`Attempting image generation with provider: ${provider}`);
+        const base64Image = await this.generateWithProvider(prompt, provider, retryAttempts);
+        const imageUrl = await openRouterService.uploadImage(base64Image);
+
+        console.log(`Successfully generated character image with provider: ${provider}`);
+        return imageUrl;
+
+      } catch (error) {
+        console.warn(`Provider ${provider} failed:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Continue to next provider
+        continue;
       }
-      
-      throw error;
     }
+
+    // All providers failed
+    console.error('All image generation providers failed. Last error:', lastError);
+
+    if (fallbackToDefault) {
+      console.log('Using fallback image due to all providers failing');
+      return this.defaultFallbackImage;
+    }
+
+    throw lastError || new Error('All image generation providers failed');
+  }
+
+  /**
+   * Determine the order of providers to try based on preference and availability
+   * @param preferredProvider - Optional preferred provider
+   * @returns Array of providers in order of preference
+   */
+  private getProviderOrder(preferredProvider?: ImageGenerationProvider): ImageGenerationProvider[] {
+    const allProviders = [
+      ImageGenerationProvider.GEMINI_DIRECT,
+      ImageGenerationProvider.OPENROUTER_PAID
+    ];
+
+    if (preferredProvider) {
+      // Put preferred provider first, then others
+      const others = allProviders.filter(p => p !== preferredProvider);
+      return [preferredProvider, ...others];
+    }
+
+    // Default order: try free Gemini direct first, then paid OpenRouter as fallback
+    return [
+      ImageGenerationProvider.GEMINI_DIRECT,      // Free with Gemini API (15/day)
+      ImageGenerationProvider.OPENROUTER_PAID     // Paid OpenRouter as fallback
+    ];
+  }
+
+  /**
+   * Generate image using a specific provider
+   * @param prompt - Image generation prompt
+   * @param provider - Provider to use
+   * @param retryAttempts - Number of retry attempts
+   * @returns Promise resolving to base64 encoded image data
+   */
+  private async generateWithProvider(
+    prompt: string,
+    provider: ImageGenerationProvider,
+    retryAttempts: number
+  ): Promise<string> {
+    switch (provider) {
+      case ImageGenerationProvider.GEMINI_DIRECT:
+        return this.generateWithGeminiDirect(prompt, retryAttempts);
+
+      case ImageGenerationProvider.OPENROUTER_PAID:
+        return this.generateWithOpenRouterPaid(prompt, retryAttempts);
+
+      default:
+        throw new Error(`Unknown provider: ${provider}`);
+    }
+  }
+
+  /**
+   * Generate image using Gemini direct API
+   * @param prompt - Image generation prompt
+   * @param retryAttempts - Number of retry attempts
+   * @returns Promise resolving to base64 encoded image data
+   */
+  private async generateWithGeminiDirect(prompt: string, retryAttempts: number): Promise<string> {
+    if (!geminiImageService.canUseFreeToday()) {
+      throw new Error(`Gemini free tier exhausted for today. Remaining: ${geminiImageService.getRemainingFreeRequests()}`);
+    }
+
+    for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+      try {
+        const base64Image = await geminiImageService.generateImage({ prompt });
+        return base64Image;
+      } catch (error) {
+        console.warn(`Gemini direct attempt ${attempt}/${retryAttempts} failed:`, error);
+
+        if (attempt === retryAttempts) {
+          throw error;
+        }
+
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+      }
+    }
+
+    throw new Error('Max retries exceeded for Gemini direct');
+  }
+
+
+  /**
+   * Generate image using OpenRouter paid tier
+   * @param prompt - Image generation prompt
+   * @param retryAttempts - Number of retry attempts
+   * @returns Promise resolving to base64 encoded image data
+   */
+  private async generateWithOpenRouterPaid(prompt: string, retryAttempts: number): Promise<string> {
+    for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+      try {
+        // Use paid model directly
+        const base64Image = await openRouterService.generateImage({
+          prompt,
+          model: 'google/gemini-2.5-flash-image-preview'
+        });
+        return base64Image;
+      } catch (error) {
+        console.warn(`OpenRouter paid attempt ${attempt}/${retryAttempts} failed:`, error);
+
+        if (attempt === retryAttempts) {
+          throw error;
+        }
+
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+      }
+    }
+
+    throw new Error('Max retries exceeded for OpenRouter paid');
   }
 
   /**
@@ -366,30 +504,6 @@ export class CharacterImageGenerator {
     return alignmentMap[alignment.toLowerCase()] || 'Balanced expression reflecting character alignment.';
   }
 
-  /**
-   * Generate image with retry logic
-   */
-  private async generateWithRetry(prompt: string, maxAttempts: number): Promise<string> {
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        console.log(`Character image generation attempt ${attempt}/${maxAttempts}`);
-        return await openRouterService.generateImage({ prompt });
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error('Unknown error');
-        console.warn(`Attempt ${attempt} failed:`, lastError.message);
-        
-        if (attempt < maxAttempts) {
-          // Wait before retry with exponential backoff
-          const waitTime = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-        }
-      }
-    }
-
-    throw lastError || new Error('All character image generation attempts failed');
-  }
 
   /**
    * Extract visually relevant elements from character enhancement selections

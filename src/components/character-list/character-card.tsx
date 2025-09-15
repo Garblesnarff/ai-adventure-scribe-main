@@ -19,6 +19,7 @@ import { User, Sword, Shield, Star } from 'lucide-react';
 import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
 import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Props interface for CharacterCard component
@@ -41,7 +42,14 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Use hot loading hook for background image
-  const { imageUrl: hotLoadedImage, isLoading: imageLoading, hasImage } = useCharacterImageHotLoading(character.id);
+  const {
+    imageUrl: hotLoadedImage,
+    isLoading: imageLoading,
+    hasImage,
+    error: imageError,
+    connectionStatus,
+    retryCount
+  } = useCharacterImageHotLoading(character.id);
 
   /**
    * Handles character deletion confirmation
@@ -134,7 +142,26 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
           <div className="absolute inset-0 bg-gradient-to-br from-infinite-purple/20 via-infinite-dark/40 to-infinite-purple/20 backdrop-blur-sm flex items-center justify-center">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-infinite-gold mb-2"></div>
-              <div className="text-xs text-infinite-gold font-medium">Generating image...</div>
+              <div className="text-xs text-infinite-gold font-medium">
+                {connectionStatus === 'connecting' && 'Connecting...'}
+                {connectionStatus === 'connected' && 'Generating image...'}
+                {connectionStatus === 'timeout' && retryCount > 0 && `Retrying... (${retryCount})`}
+                {connectionStatus === 'error' && 'Checking for updates...'}
+                {!connectionStatus && 'Generating image...'}
+              </div>
+              {connectionStatus === 'error' && (
+                <div className="text-xs text-infinite-gold/70 mt-1">Using fallback polling</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Error state overlay */}
+        {imageError && !imageLoading && !hasImage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-destructive/20 via-infinite-dark/40 to-destructive/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-xs text-destructive font-medium mb-1">Image generation failed</div>
+              <div className="text-xs text-muted-foreground">Using default background</div>
             </div>
           </div>
         )}
@@ -145,7 +172,9 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
             <div className="flex items-center gap-4 mb-3">
               {/* Avatar in popup */}
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-background">
-                {character.image_url ? (
+                {imageLoading ? (
+                  <Skeleton className="w-full h-full rounded-full" />
+                ) : character.image_url ? (
                   <img
                     src={character.image_url}
                     alt={`Portrait of ${character.name}`}
