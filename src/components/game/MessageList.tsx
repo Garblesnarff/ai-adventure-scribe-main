@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
+import { DiceRollMessage } from '@/components/game/DiceRollMessage';
 import { DMMessageVoiceControls } from '@/components/game/voice/DMMessageVoiceControls';
 import { ActionOptions } from '@/components/game/ActionOptions';
 import { parseMessageOptions, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
@@ -70,8 +71,15 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
               )}
 
               <div className={`flex flex-col ${isPlayer ? 'items-end' : 'items-start'} space-y-1`}> 
-                {/* Check if this is a combat message */}
-                {message.context?.combatData ? (
+                {/* Check if this is a dice roll message */}
+                {message.context?.diceRoll ? (
+                  <div className="w-full">
+                    <DiceRollMessage 
+                      data={message.context.diceRoll}
+                      playerName={isPlayer ? 'You' : message.sender}
+                    />
+                  </div>
+                ) : message.context?.combatData ? (
                   <div className="w-full">
                     {/* Handle different combat message types */}
                     {message.context.combatData.type === 'initiative' ? (
