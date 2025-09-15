@@ -122,7 +122,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                       <div className="absolute bottom-2 right-3">
                         <DMMessageVoiceControls
                           messageId={message.id || `${message.timestamp}-${index}`}
-                          messageText={message.text}
+                          messageText={parsedMessage ? parsedMessage.content : message.text}
                           narrationSegments={message.narrationSegments}
                         />
                       </div>

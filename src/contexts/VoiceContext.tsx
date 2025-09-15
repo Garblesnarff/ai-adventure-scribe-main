@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { NarrationSegment } from '@/hooks/use-ai-response';
+import { extractNarrativeContent } from '@/utils/parseMessageOptions';
 
 interface VoiceContextType {
   currentPlayingId: string | null;
@@ -89,7 +90,9 @@ export function VoiceProvider({ children }: VoiceProviderProps) {
       const aiSegments = convertNarrationToAISegments(narrationSegments);
       speakAISegments(aiSegments);
     } else {
-      speakPlainText(text);
+      // Extract narrative content as a safeguard (in case full text with options is passed)
+      const narrativeText = extractNarrativeContent(text);
+      speakPlainText(narrativeText);
     }
   }, [currentPlayingId, isPaused, resumePlayback, stopPlayback, initializeAudioContext, convertNarrationToAISegments, speakAISegments, speakPlainText]);
 

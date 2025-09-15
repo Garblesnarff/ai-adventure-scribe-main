@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useVoiceContext } from '@/contexts/VoiceContext';
 import { NarrationSegment } from '@/hooks/use-ai-response';
+import { extractNarrativeContent } from '@/utils/parseMessageOptions';
 
 interface DMMessageVoiceControlsProps {
   messageId: string;
@@ -47,7 +48,9 @@ export function DMMessageVoiceControls({
     if (isCurrentlyPlaying) {
       pauseMessage();
     } else {
-      playMessage(messageId, messageText, narrationSegments);
+      // Extract narrative content to exclude options from TTS
+      const narrativeText = extractNarrativeContent(messageText);
+      playMessage(messageId, narrativeText, narrationSegments);
     }
   }, [isCurrentlyPlaying, pauseMessage, playMessage, messageId, messageText, narrationSegments]);
 
