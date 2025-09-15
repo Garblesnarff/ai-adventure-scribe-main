@@ -132,6 +132,17 @@ export interface Character {
   ideals?: string[];
   bonds?: string[];
   flaws?: string[];
+  // Enhancement system integration
+  enhancementSelections?: import('./enhancement-options').OptionSelection[];
+  enhancementEffects?: {
+    traits?: string[];
+    skillBonus?: string[];
+    abilityBonus?: Record<string, number>;
+    languages?: string[];
+    equipment?: string[];
+    resistances?: string[];
+    expertise?: string[];
+  };
   // Inspiration System
   inspiration?: boolean;
   personalityNotes?: string;
