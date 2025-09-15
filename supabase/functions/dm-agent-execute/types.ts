@@ -154,9 +154,22 @@ export interface NarrationSegment {
   voice_category?: string;
 }
 
+export interface DiceRoll {
+  type: 'attack' | 'damage' | 'saving_throw' | 'ability_check' | 'initiative' | 'skill_check';
+  dice_notation: string; // e.g., "1d20+4", "2d6+3"
+  result: number;
+  modifier: number;
+  target?: number; // DC or AC
+  success?: boolean;
+  critical?: boolean;
+  actor: string;
+  context: string; // Description of what the roll is for
+}
+
 export interface StructuredDMResponse {
   text: string; // Display text for chat
   narration_segments: NarrationSegment[]; // Pre-segmented for voice
+  dice_rolls?: DiceRoll[]; // Structured dice roll data
 }
 
 export interface VoiceContext {

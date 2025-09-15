@@ -3,9 +3,12 @@ import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
 import { DiceRollMessage } from '@/components/game/DiceRollMessage';
+import { DiceRollRequest } from '@/components/game/DiceRollRequest';
 import { DMMessageVoiceControls } from '@/components/game/voice/DMMessageVoiceControls';
 import { ActionOptions } from '@/components/game/ActionOptions';
 import { parseMessageOptions, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
+import { parseRollRequests, removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
+import { rollDice } from '@/utils/diceUtils';
 
 interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
@@ -45,6 +48,86 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
     }
   }, [onSendFullMessage, sendMessage]);
 
+  // Handle dice roll requests
+  const handleDiceRoll = React.useCallback(async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
+    console.log('[MessageList] Handling dice roll:', { formula, advantage, disadvantage });
+
+    try {
+      // Parse the formula to extract die type, count, and modifier
+      const diceMatch = formula.match(/(\d+)d(\d+)([+\-]\d+)?/);
+      if (!diceMatch) {
+        console.error('[MessageList] Invalid dice formula:', formula);
+        return;
+      }
+
+      const count = parseInt(diceMatch[1]);
+      const dieType = parseInt(diceMatch[2]);
+      const modifierMatch = diceMatch[3];
+      const modifier = modifierMatch ? parseInt(modifierMatch) : 0;
+
+      // Roll the dice
+      const rollResult = rollDice(dieType, count, modifier, {
+        advantage: advantage || false,
+        disadvantage: disadvantage || false
+      });
+
+      // Create dice roll message
+      const diceRollMessage: ChatMessage = {
+        text: `Rolled ${formula}${advantage ? ' with advantage' : disadvantage ? ' with disadvantage' : ''}`,
+        sender: 'player',
+        context: {
+          intent: 'dice_roll',
+          diceRoll: {
+            formula,
+            count,
+            dieType,
+            modifier,
+            advantage: advantage || false,
+            disadvantage: disadvantage || false,
+            results: rollResult.results,
+            keptResults: rollResult.keptResults,
+            total: rollResult.total,
+            naturalRoll: rollResult.naturalRoll,
+            critical: rollResult.critical,
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+
+      await sendMessage(diceRollMessage);
+
+      // Send the result to the DM if we have the full message flow
+      if (onSendFullMessage) {
+        const resultMessage = `I rolled ${rollResult.total} (${formula}${advantage ? ' with advantage' : disadvantage ? ' with disadvantage' : ''})${rollResult.critical ? rollResult.naturalRoll === 20 ? ' - Critical success!' : ' - Critical failure!' : ''}`;
+        await onSendFullMessage(resultMessage);
+      }
+    } catch (error) {
+      console.error('[MessageList] Failed to handle dice roll:', error);
+    }
+  }, [sendMessage, onSendFullMessage]);
+
+  // Handle manual dice result input
+  const handleManualResult = React.useCallback(async (result: number) => {
+    console.log('[MessageList] Handling manual dice result:', result);
+
+    try {
+      const playerMessage: ChatMessage = {
+        text: `I rolled ${result}`,
+        sender: 'player',
+        timestamp: new Date().toISOString()
+      };
+
+      await sendMessage(playerMessage);
+
+      // Send to DM if we have the full message flow
+      if (onSendFullMessage) {
+        await onSendFullMessage(`I rolled ${result}`);
+      }
+    } catch (error) {
+      console.error('[MessageList] Failed to handle manual dice result:', error);
+    }
+  }, [sendMessage, onSendFullMessage]);
+
   return (
   <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 chat-scroll parchment-panel">
       {messages?.map((message, index) => {
@@ -58,6 +141,18 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
 
         // Parse DM message options
         const parsedMessage = isDM ? parseMessageOptions(message.text) : null;
+        
+        // Get roll requests - prefer structured over parsed
+        const structuredRollRequests = isDM && message.rollRequests ? message.rollRequests : [];
+        const parsedRollRequests = isDM && structuredRollRequests.length === 0 ? parseRollRequests(message.text) : [];
+        const rollRequests = structuredRollRequests.length > 0 ? 
+          structuredRollRequests.map(req => ({
+            ...req,
+            originalText: '',
+            confidence: 1.0
+          })) : 
+          parsedRollRequests;
+        const hasRollRequests = rollRequests.length > 0;
 
         return (
           <div key={message.id || message.timestamp} className={`flex ${isPlayer ? 'justify-end' : 'justify-start'} group`}>
@@ -105,7 +200,14 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                       isDM ? 'dm-bubble' : isSystem ? 'system-bubble' : 'player-bubble'
                     }`}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {parsedMessage ? parsedMessage.content || message.text : message.text}
+                      {(() => {
+                        let displayText = parsedMessage ? parsedMessage.content || message.text : message.text;
+                        // Remove roll request text for cleaner display if we have roll requests
+                        if (hasRollRequests) {
+                          displayText = removeRollRequestsFromMessage(displayText);
+                        }
+                        return displayText;
+                      })()}
                     </p>
 
                     {message.context && (
@@ -149,6 +251,28 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                       }}
                       delay={10000} // 10 second delay
                     />
+                  </div>
+                )}
+
+                {/* Dice Roll Requests for DM messages */}
+                {isDM && hasRollRequests && (
+                  <div className="w-full max-w-md mt-3 space-y-3">
+                    {rollRequests.map((request, reqIndex) => (
+                      <DiceRollRequest
+                        key={`${message.id || message.timestamp}-roll-${reqIndex}`}
+                        request={{
+                          type: request.type,
+                          formula: request.formula,
+                          purpose: request.purpose,
+                          dc: request.dc,
+                          ac: request.ac,
+                          advantage: request.advantage,
+                          disadvantage: request.disadvantage
+                        }}
+                        onRoll={handleDiceRoll}
+                        onManualResult={handleManualResult}
+                      />
+                    ))}
                   </div>
                 )}
 

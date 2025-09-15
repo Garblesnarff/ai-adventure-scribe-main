@@ -23,13 +23,39 @@ export interface NarrationSegment {
   voice_category?: string;
 }
 
+export interface DiceRoll {
+  type: 'attack' | 'damage' | 'saving_throw' | 'ability_check' | 'initiative' | 'skill_check';
+  dice_notation: string; // e.g., "1d20+4", "2d6+3"
+  result: number;
+  modifier: number;
+  target?: number; // DC or AC
+  success?: boolean;
+  critical?: boolean;
+  actor: string;
+  context: string; // Description of what the roll is for
+}
+
+export interface RollRequest {
+  type: 'check' | 'save' | 'attack' | 'damage' | 'initiative';
+  formula: string;
+  purpose: string;
+  dc?: number;
+  ac?: number;
+  advantage?: boolean;
+  disadvantage?: boolean;
+}
+
 export interface StructuredAIResponse {
   response: string;
   narration_segments?: NarrationSegment[];
+  dice_rolls?: DiceRoll[];
+  roll_requests?: RollRequest[];
 }
 
 export interface EnhancedChatMessage extends ChatMessage {
   narrationSegments?: NarrationSegment[];
+  diceRolls?: DiceRoll[];
+  rollRequests?: RollRequest[];
   combatDetection?: {
     isCombat: boolean;
     confidence: number;
@@ -254,6 +280,8 @@ export const useAIResponse = () => {
           intent: 'response',
         },
         narrationSegments: narrationSegments,
+        diceRolls: result.dice_rolls || [],
+        rollRequests: result.roll_requests || [],
         combatDetection: {
           isCombat: combatDetection.isCombat,
           confidence: combatDetection.confidence,

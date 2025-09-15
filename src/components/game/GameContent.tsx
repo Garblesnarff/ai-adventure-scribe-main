@@ -22,7 +22,8 @@ import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
 import { useInitialGreeting } from '@/hooks/use-initial-greeting';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
-import { Sword, X } from 'lucide-react';
+import { usePendingRolls } from '@/hooks/use-pending-rolls';
+import { Sword, X, Dice6 } from 'lucide-react';
 
 /**
  * GameContent Component
@@ -240,6 +241,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   // Get memory context for creating initial memories
   const { createMemory } = useMemoryContext();
 
+  // Track pending dice roll requests
+  const { hasPendingRolls, pendingRequests } = usePendingRolls();
+
   // Combat AI integration for automatic combat detection
   const combatAI = useCombatAIIntegration({
     sessionId,
@@ -437,11 +441,26 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                                 </div>
                               )}
 
+                              {/* Pending Roll Indicator */}
+                              {hasPendingRolls && (
+                                <div className="border-t border-orange-200 bg-orange-50 p-3">
+                                  <div className="flex items-center gap-2 text-orange-700">
+                                    <Dice6 className="w-4 h-4" />
+                                    <span className="text-sm font-medium">
+                                      {pendingRequests.length === 1 
+                                        ? `Please complete the ${pendingRequests[0].type} roll above`
+                                        : `Please complete ${pendingRequests.length} pending rolls above`
+                                      }
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Input Area at bottom */}
                               <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
                                 <ChatInput
                                   onSendMessage={handleSendMessage}
-                                  isDisabled={isProcessing}
+                                  isDisabled={isProcessing || hasPendingRolls}
                                 />
                               </div>
                             </>
