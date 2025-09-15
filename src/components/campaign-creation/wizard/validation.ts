@@ -61,6 +61,18 @@ export const validateCampaignParameters = (campaign: any, toast: any): boolean =
 };
 
 /**
+ * Validates the campaign enhancements step
+ * @param campaign - The campaign data to validate
+ * @param toast - Toast function for displaying validation messages
+ * @returns boolean indicating if validation passed
+ */
+export const validateCampaignEnhancements = (campaign: any, toast: any): boolean => {
+  // Enhancements are optional, so this step always passes validation
+  // Users can skip enhancements or select any number they want
+  return true;
+};
+
+/**
  * Validates the complete campaign data in the correct order:
  * 1. Genre
  * 2. Parameters

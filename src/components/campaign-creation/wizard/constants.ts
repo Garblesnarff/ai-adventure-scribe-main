@@ -1,6 +1,7 @@
 import BasicDetails from '../steps/basic-details';
 import GenreSelection from '../steps/GenreSelection';
 import CampaignParameters from '../steps/CampaignParameters';
+import CampaignEnhancements from '../steps/CampaignEnhancements';
 import { WizardStep } from './types';
 
 /**
@@ -10,5 +11,6 @@ import { WizardStep } from './types';
 export const wizardSteps: WizardStep[] = [
   { component: GenreSelection, label: 'Genre' },
   { component: CampaignParameters, label: 'Parameters' },
+  { component: CampaignEnhancements, label: 'Enhancements' },
   { component: BasicDetails, label: 'Details' },
 ];

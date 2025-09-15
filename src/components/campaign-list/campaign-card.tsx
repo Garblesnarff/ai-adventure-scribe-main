@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import CharacterSelectionModal from './character-selection-modal';
+import { useCampaignImageHotLoading } from '@/hooks/use-image-hot-loading';
 
 interface CampaignCardProps {
   campaign: {
@@ -44,6 +45,9 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCharacterModal, setShowCharacterModal] = useState(false);
+
+  // Use hot loading hook for background image
+  const { imageUrl: hotLoadedImage, isLoading: imageLoading, hasImage } = useCampaignImageHotLoading(campaign.id);
 
   /**
    * Handles campaign deletion confirmation
@@ -86,12 +90,24 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
     }
   }, [campaign.id, toast, queryClient]);
 
-  // Use campaign's generated background image, fallback to coverImage, then default
-  const resolvedImage = useMemo(() => 
-    campaign.background_image || 
-    (coverImage ? new URL(coverImage, import.meta.url).href : null) ||
-    new URL('/card-background.jpeg', import.meta.url).href, 
-  [campaign.background_image, coverImage]);
+  // Use hot loaded image, fallback to coverImage, then default
+  const resolvedImage = useMemo(() => {
+    // Priority: hot loaded image > static cover image > default background
+    if (hasImage && hotLoadedImage && hotLoadedImage !== '/campaign-background-placeholder.png') {
+      return hotLoadedImage;
+    }
+
+    if (coverImage) {
+      return new URL(coverImage, import.meta.url).href;
+    }
+
+    // If we don't have an image and it's loading, show placeholder
+    if (imageLoading || !hasImage) {
+      return hotLoadedImage || '/campaign-background-placeholder.png'; // This will be the placeholder
+    }
+
+    return new URL('/card-background.jpeg', import.meta.url).href;
+  }, [hotLoadedImage, hasImage, imageLoading, coverImage]);
 
   return (
     <Card
@@ -100,10 +116,22 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
     >
       {/* Hero / thumbnail area */}
       <div
-        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1]"
+        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500"
         onClick={() => navigate(`/campaign/${campaign.id}`)}
-        style={resolvedImage ? { backgroundImage: `url(${resolvedImage})` } : undefined}
+        style={resolvedImage ? {
+          backgroundImage: `url(${resolvedImage})`,
+          backgroundColor: '#6b7280' // fallback gray-500
+        } : { backgroundColor: '#6b7280' }}
       >
+        {/* Loading overlay for image generation */}
+        {imageLoading && !hasImage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-infinite-purple/20 via-infinite-dark/40 to-infinite-purple/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-infinite-gold mb-2"></div>
+              <div className="text-xs text-infinite-gold font-medium">Generating image...</div>
+            </div>
+          </div>
+        )}
         {/* Overlay and popup for all cards */}
         {isFeatured && (
           <div className="absolute top-2 right-2 z-10">

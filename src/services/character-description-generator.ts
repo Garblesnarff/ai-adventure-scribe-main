@@ -19,6 +19,19 @@ interface CharacterData {
   ability_scores?: any;
   alignment?: string | null;
   personality_notes?: string | null;
+  enhancementSelections?: Array<{
+    optionId: string;
+    value: string | string[] | number;
+    customValue?: string;
+    aiGenerated?: boolean;
+  }>;
+  enhancementEffects?: {
+    traits?: string[];
+    skillBonus?: string[];
+    abilityBonus?: Record<string, number>;
+    languages?: string[];
+    equipment?: string[];
+  };
 }
 
 interface EnhancedDescription {
@@ -127,6 +140,39 @@ export class CharacterDescriptionGenerator {
     if (characterData.personality_notes) {
       promptParts.push(`Personality Notes: ${characterData.personality_notes}`);
       promptParts.push('(Make sure to incorporate these personality notes and quirks into the generated personality traits and description)');
+    }
+
+    // Add enhancement selections if provided
+    if (characterData.enhancementSelections && characterData.enhancementSelections.length > 0) {
+      promptParts.push('\nCharacter Enhancements:');
+      characterData.enhancementSelections.forEach(selection => {
+        if (Array.isArray(selection.value)) {
+          promptParts.push(`- ${selection.value.join(', ')}`);
+        } else {
+          promptParts.push(`- ${selection.value}`);
+        }
+        if (selection.customValue) {
+          promptParts.push(`  Note: ${selection.customValue}`);
+        }
+      });
+      promptParts.push('(These enhancements are core parts of the character\'s identity and should be prominently featured in the description, personality, and backstory)');
+    }
+
+    // Add enhancement effects if provided
+    if (characterData.enhancementEffects) {
+      const effects = characterData.enhancementEffects;
+      if (effects.traits && effects.traits.length > 0) {
+        promptParts.push(`Special Traits: ${effects.traits.join(', ')}`);
+      }
+      if (effects.languages && effects.languages.length > 0) {
+        promptParts.push(`Additional Languages: ${effects.languages.join(', ')}`);
+      }
+      if (effects.equipment && effects.equipment.length > 0) {
+        promptParts.push(`Special Equipment: ${effects.equipment.join(', ')}`);
+      }
+      if (effects.skillBonus && effects.skillBonus.length > 0) {
+        promptParts.push(`Skill Bonuses: ${effects.skillBonus.join(', ')}`);
+      }
     }
 
     // Add ability score context if available
@@ -245,13 +291,17 @@ export class CharacterDescriptionGenerator {
    */
   async generateQuickDescription(characterData: CharacterData): Promise<string> {
     try {
+      const enhancementText = characterData.enhancementSelections && characterData.enhancementSelections.length > 0
+        ? `\n        Special Traits: ${characterData.enhancementSelections.map(s => Array.isArray(s.value) ? s.value.join(', ') : s.value).join('; ')}`
+        : '';
+
       const prompt = `Create a brief, engaging description (1-2 sentences) for this D&D character:
         Name: ${characterData.name}
         Race: ${characterData.race || 'Human'}
         Class: ${characterData.class || 'Adventurer'}
-        Background: ${characterData.background || 'Unknown'}
-        
-        Make it exciting and suitable for a character card.`;
+        Background: ${characterData.background || 'Unknown'}${enhancementText}
+
+        Make it exciting and suitable for a character card. If special traits are provided, incorporate them prominently.`;
 
       const response = await geminiService.generateText({
         prompt,

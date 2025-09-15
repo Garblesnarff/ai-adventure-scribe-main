@@ -447,19 +447,22 @@ export function validateOptionSelection<T extends OptionType>(
   selection: OptionSelection<T>
 ): boolean {
   switch (option.type) {
-    case 'multiple':
+    case 'multiple': {
       const values = selection.value as string[];
       return Array.isArray(values) &&
              values.length <= (option.max || Infinity) &&
              values.every(v => option.options?.includes(v));
-    case 'single':
+    }
+    case 'single': {
       return typeof selection.value === 'string' &&
              (option.options?.includes(selection.value as string) ?? true);
-    case 'number':
+    }
+    case 'number': {
       const num = selection.value as number;
       return typeof num === 'number' &&
              num >= (option.min || 0) &&
              num <= (option.max || Infinity);
+    }
     case 'text':
       return typeof selection.value === 'string';
     default:

@@ -47,7 +47,7 @@ import {
   makeOffHandAttack,
   canMakeOffHandAttack
 } from '@/utils/twoWeaponFighting';
-import { calculateDamageForAttack } from '@/utils/attackUtils';
+import { calculateAttackDamage } from '@/utils/attackUtils';
 import { createDefaultLightWeapons, equipMainHandWeapon, equipOffHandWeapon } from '@/utils/equipmentUtils';
 import { checkConcentration } from '@/utils/spell-management';
 
@@ -314,7 +314,7 @@ const CombatInterface: React.FC = () => {
     const isCritical = attackRoll.critical || false;
     
     // Calculate base damage with sneak attack and divine smite
-    const damageResult = calculateDamageForAttack(
+    const damageResult = calculateAttackDamage(
       { name: 'Longsword', damage: '1d8+3', damageType: 'slashing', properties: {} },
       participant,
       false,

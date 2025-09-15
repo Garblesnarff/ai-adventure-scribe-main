@@ -1,318 +1,484 @@
 /**
- * Attack utility functions for D&D 5e combat calculations
+ * Attack Resolution Utilities for D&D 5e Combat System
+ *
+ * Handles attack rolls, damage calculation, AC checks, critical hits,
+ * and multi-attack mechanics based on character equipment and stats.
  */
 
-import { Participant } from '@/types/combat';
-import { rollDice, rollDamage } from '@/utils/diceUtils';
-import { getClassFeatures, getSneakAttackDice } from '@/utils/classFeatures';
+import { Equipment } from '@/data/equipmentOptions';
+import { calculateProficiencyBonus } from '@/utils/character-calculations';
+import { rollAttack, rollDamage, calculateDamage } from '@/utils/diceUtils';
+import { CombatParticipant, CombatAction, DamageType, DiceRoll } from '@/types/combat';
+
+export interface AttackResolution {
+  hit: boolean;
+  roll: DiceRoll;
+  acHit: number; // The AC that was targeted/achieved
+  criticalHit: boolean;
+  criticalFail: boolean;
+  advantage: boolean;
+  disadvantage: boolean;
+}
+
+export interface DamageCalculation {
+  rolls: DiceRoll[];
+  totalBeforeResistance: number;
+  totalAfterResistance: number;
+  damageType: DamageType;
+  resistances: DamageType[];
+  vulnerabilities: DamageType[];
+  immunities: DamageType[];
+}
+
+export interface FullAttackResult {
+  resolution: AttackResolution;
+  damage: DamageCalculation | null; // null if attack missed
+  targetReducedHp?: number; // HP after damage applied
+  totalDamageDealt?: number;
+}
 
 /**
- * Calculates comprehensive damage for an attack, including sneak attack and divine smite
- * 
- * @param weapon - The weapon being used for the attack
- * @param participant - The participant making the attack
- * @param isRanged - Whether this is a ranged attack (affects sneak attack)
- * @param isCritical - Whether the attack was a critical hit
- * @param target - The target participant (for advantage calculations)
- * @param encounter - The current encounter (for ally positioning)
- * @param divineSmiteLevel - Spell slot level for Divine Smite (Paladin feature)
- * @returns Object containing damage calculations
+ * Resolve an attack: roll attack dice and check against target AC
  */
-export function calculateDamageForAttack(
-  weapon: any,
-  participant: Participant,
-  isRanged: boolean = false,
-  isCritical: boolean = false,
-  target?: Participant,
-  encounter?: any,
-  divineSmiteLevel?: number
-) {
-  const abilityModifier = participant.abilityScores?.strength?.modifier || 
-                         participant.abilityScores?.dexterity?.modifier || 0;
-  
-  // Base weapon damage
-  let baseDamageRoll = rollDamage(weapon.damage, abilityModifier);
-  
-  if (isCritical) {
-    baseDamageRoll.results = baseDamageRoll.results.flatMap(result => [result, result]);
-    baseDamageRoll.total *= 2;
-  }
-  
-  // Sneak Attack (Rogue feature)
-  let sneakAttackRoll = null;
-  if (participant.characterClass === 'rogue') {
-    const sneakAttackDice = getSneakAttackDice(participant.level || 1);
-    
-    // Sneak Attack conditions: advantage OR ally within 5ft of target (melee) OR ranged within 30ft
-    const hasAdvantage = participant.conditions?.some(c => c.name === 'advantage') || false;
-    const hasAllyAdvantage = encounter?.participants.some((p: Participant) => 
-      p.participantType === 'player' && 
-      p.id !== participant.id &&
-      Math.abs(p.position.x - target.position.x) <= 1 && // 5ft grid
-      Math.abs(p.position.y - target.position.y) <= 1
-    ) || false;
-    const isWithinRangedLimit = isRanged && Math.abs(participant.position.x - target.position.x) <= 6; // 30ft
-    
-    const canUseSneakAttack = hasAdvantage || 
-                             (!isRanged && hasAllyAdvantage) || 
-                             (isRanged && isWithinRangedLimit);
-    
-    if (canUseSneakAttack && sneakAttackDice > 0) {
-      sneakAttackRoll = rollDamage(`${sneakAttackDice}d6`, 0);
-      if (isCritical) {
-        sneakAttackRoll.results = sneakAttackRoll.results.flatMap(result => [result, result]);
-        sneakAttackRoll.total *= 2;
-      }
+export function resolveAttack(
+  weapon: Equipment | null,
+  attacker: CombatParticipant,
+  target: CombatParticipant,
+  options: {
+    advantage?: boolean;
+    disadvantage?: boolean;
+    spellAttack?: boolean;
+    divineSmiteLevel?: number;
+    sneakAttack?: boolean;
+  } = {}
+): AttackResolution {
+  const level = attacker.level || 1;
+  const profBonus = calculateProficiencyBonus(level);
+
+  // Calculate attack bonus based on weapon properties
+  let attackBonus = 0;
+
+  if (options.spellAttack) {
+    // Spell attack: prof + spellcasting ability
+    const spellAbility = getSpellcastingAbility(attacker);
+    attackBonus = profBonus + (spellAbility || 0);
+  } else if (weapon) {
+    // Physical weapon attack
+    const strMod = getAbilityModifier(attacker, 'strength');
+    const dexMod = getAbilityModifier(attacker, 'dexterity');
+
+    // Use finesse logic: higher of STR or DEX
+    if (weapon.weaponProperties?.finesse) {
+      attackBonus = profBonus + Math.max(strMod, dexMod);
     }
-  }
-  
-  // Divine Smite (Paladin feature)
-  let divineSmiteRoll = null;
-  if (divineSmiteLevel && participant.characterClass === 'paladin') {
-    // Divine Smite damage: 2d8 radiant + 1d8 per spell slot level above 1st
-    let smiteDice = 2;
-    if (divineSmiteLevel > 1) {
-      smiteDice += divineSmiteLevel - 1;
+    // Use STR for melee weapons
+    else if (!weapon.range) {
+      attackBonus = profBonus + strMod;
     }
-    
-    // Max 5d8 for 4th level slots
-    smiteDice = Math.min(smiteDice, 5);
-    
-    divineSmiteRoll = rollDamage(`${smiteDice}d8`, 0, false, 'radiant');
-    if (isCritical) {
-      divineSmiteRoll.results = divineSmiteRoll.results.flatMap(result => [result, result]);
-      divineSmiteRoll.total *= 2;
+    // Use DEX for ranged weapons
+    else {
+      attackBonus = profBonus + dexMod;
     }
-    
-    // Only works against undead/fiends with higher slots, but we'll allow it for all
+
+    // Add weapon-specific attack bonus (for magic weapons)
+    attackBonus += weapon.attackBonus || 0;
   }
-  
-  // Rage damage bonus (Barbarian)
-  let rageBonus = 0;
-  if (participant.isRaging && participant.characterClass === 'barbarian') {
-    rageBonus = Math.min(participant.level || 1, 9) <= 9 ? 2 : 
-                Math.min(participant.level || 1, 16) <= 16 ? 3 : 4;
-    
-    if (weapon.damageType === 'piercing' || weapon.damageType === 'slashing') {
-      // Double rage bonus for these damage types
-      rageBonus *= 2;
+
+  // Apply condition-based advantage/disadvantage
+  let hasAdvantage = options.advantage || false;
+  let hasDisadvantage = options.disadvantage || false;
+
+  // Check attacker conditions for advantage/disadvantage
+  attacker.conditions.forEach(condition => {
+    switch (condition.name) {
+      case 'invisible':
+        hasAdvantage = true; // Attacker has advantage
+        break;
+      case 'blinded':
+        hasDisadvantage = true; // Attacker has disadvantage
+        break;
+      case 'poisoned':
+        hasDisadvantage = true; // Attacker has disadvantage
+        break;
     }
-  }
-  
-  // Fighting Style bonuses
-  let fightingStyleBonus = 0;
-  if (participant.fightingStyles) {
-    if (participant.fightingStyles.some(fs => fs.name === 'dueling') && 
-        !participant.offHandWeapon) {
-      fightingStyleBonus += 2;
+  });
+
+  // Check target conditions for advantage/disadvantage
+  target.conditions.forEach(condition => {
+    switch (condition.name) {
+      case 'prone':
+        // melee advantage, but only if weapon is melee
+        if (!weapon?.range) hasAdvantage = true;
+        break;
+      case 'paralyzed':
+        hasAdvantage = true; // Auto-hit on critical (already covered)
+        break;
+      case 'stunned':
+        hasAdvantage = true; // Auto-hit on critical (already covered)
+        break;
+      case 'unconscious':
+        hasAdvantage = true; // Auto-hit on critical (already covered)
+        break;
+      case 'blinded':
+        hasAdvantage = true; // Attacker has advantage
+        break;
     }
-    if (participant.fightingStyles.some(fs => fs.name === 'great_weapon_fighting') && 
-        weapon.properties?.includes('two-handed')) {
-      // Reroll 1s and 2s on damage dice (handled in rollDamage if flag set)
-    }
+  });
+
+  // Can't have both advantage and disadvantage
+  if (hasAdvantage && hasDisadvantage) {
+    hasAdvantage = hasDisadvantage = false;
   }
-  
-  // Class feature damage bonuses
-  let classFeatureBonus = 0;
-  
-  // Fighter: None additional
-  // Paladin: Divine Smite handled separately
-  // Ranger: None additional here
-  // Barbarian: Reckless Attack handled in attack roll advantage
-  // Rogue: Sneak Attack handled separately
-  // Monk: Martial Arts handled in unarmed strikes
-  // etc.
-  
-  // Calculate total damage
-  let totalDamage = baseDamageRoll.total;
-  const damageComponents = [baseDamageRoll];
-  
-  if (sneakAttackRoll) {
-    totalDamage += sneakAttackRoll.total;
-    damageComponents.push(sneakAttackRoll);
+
+  // Roll attack
+  const roll = rollAttack(attackBonus, {
+    advantage: hasAdvantage,
+    disadvantage: hasDisadvantage
+  });
+
+  // Determine if attack hits
+  let targetAC = target.armorClass;
+  let hit = roll.total >= targetAC;
+
+  // Critical hit/fail rules
+  const criticalHit = roll.naturalRoll === 20;
+  const criticalFail = roll.naturalRoll === 1;
+
+  // Critical hits always hit (unless critical fail)
+  if (criticalHit && !criticalFail) {
+    hit = true;
   }
-  
-  if (divineSmiteRoll) {
-    totalDamage += divineSmiteRoll.total;
-    damageComponents.push(divineSmiteRoll);
-  }
-  
-  totalDamage += rageBonus + fightingStyleBonus + classFeatureBonus;
-  
+
   return {
-    baseDamageRoll,
-    sneakAttackRoll,
-    divineSmiteRoll,
-    rageBonus,
-    fightingStyleBonus,
-    classFeatureBonus,
-    totalDamage,
-    damageComponents,
-    damageType: weapon.damageType || 'slashing',
-    isCritical,
-    weaponUsed: weapon.name,
-    canApplySneakAttack: !!sneakAttackRoll,
-    canApplyDivineSmite: !!divineSmiteRoll,
-    description: buildDamageDescription({
-      weapon,
-      participant,
-      sneakAttack: !!sneakAttackRoll,
-      divineSmite: !!divineSmiteRoll,
-      rage: participant.isRaging,
-      critical: isCritical
-    })
+    hit,
+    roll,
+    acHit: targetAC,
+    criticalHit,
+    criticalFail,
+    advantage: hasAdvantage,
+    disadvantage: hasDisadvantage
   };
 }
 
 /**
- * Builds a descriptive string for the damage calculation
+ * Calculate damage for an attack
  */
-function buildDamageDescription(params: {
-  weapon: any;
-  participant: Participant;
-  sneakAttack?: boolean;
-  divineSmite?: boolean;
-  rage?: boolean;
-  critical?: boolean;
-}): string {
-  const parts = [`${params.weapon.name} attack`];
-  
-  if (params.critical) parts.push('CRITICAL HIT!');
-  if (params.sneakAttack) parts.push('Sneak Attack');
-  if (params.divineSmite) parts.push('Divine Smite');
-  if (params.rage) parts.push('Raging');
-  
-  return parts.join(' + ');
-}
+export function calculateAttackDamage(
+  weapon: Equipment | null,
+  attacker: CombatParticipant,
+  criticalHit: boolean,
+  options: {
+    divineSmiteLevel?: number;
+    sneakAttack?: boolean;
+  } = {}
+): DamageCalculation {
+  let damageRolls: DiceRoll[] = [];
+  let baseDamage = 0;
+  let damageType: DamageType = 'piercing';
 
-/**
- * Calculates attack bonus for a given weapon and participant
- */
-export function calculateAttackBonus(
-  weapon: any,
-  participant: Participant
-): number {
-  let abilityModifier = 0;
-  let proficiencyBonus = Math.floor((participant.level || 1) / 4) + 2;
-  
-  // Determine ability modifier based on weapon properties
-  if (weapon.properties?.includes('finesse')) {
-    abilityModifier = Math.max(
-      participant.abilityScores?.dexterity?.modifier || 0,
-      participant.abilityScores?.strength?.modifier || 0
-    );
-  } else if (weapon.properties?.includes('ranged')) {
-    abilityModifier = participant.abilityScores?.dexterity?.modifier || 0;
-  } else {
-    abilityModifier = participant.abilityScores?.strength?.modifier || 0;
-  }
-  
-  // Proficiency
-  let isProficient = false;
-  if (participant.proficiencies?.weapons?.includes(weapon.name)) {
-    isProficient = true;
-  } else if (weapon.properties?.includes('simple')) {
-    // Most classes proficient with simple weapons
-    const simpleWeaponClasses = ['fighter', 'paladin', 'ranger', 'barbarian', 'rogue', 'cleric', 'druid'];
-    isProficient = simpleWeaponClasses.includes(participant.characterClass || '');
-  } else if (weapon.properties?.includes('martial')) {
-    // Martial weapon proficiency
-    const martialClasses = ['fighter', 'paladin', 'ranger', 'barbarian'];
-    isProficient = martialClasses.includes(participant.characterClass || '');
-  }
-  
-  // Fighting Style bonuses
-  let fightingStyleBonus = 0;
-  if (participant.fightingStyles?.some(fs => fs.name === 'archery') && 
-      weapon.properties?.includes('ranged')) {
-    fightingStyleBonus += 2;
-  }
-  
-  // Magic weapon bonus
-  const magicBonus = weapon.magicBonus || 0;
-  
-  return abilityModifier + (isProficient ? proficiencyBonus : 0) + 
-         fightingStyleBonus + magicBonus;
-}
+  if (!weapon) {
+    // Unarmed strike
+    damageRolls = rollDamage('1d4', criticalHit, {});
+    baseDamage = damageRolls.reduce((sum, roll) =>
+      sum + roll.results.reduce((rSum, r) => rSum + r, 0) +
+      roll.modifier * roll.count, 0);
+    damageType = 'bludgeoning';
+  } else if (weapon.damage) {
+    // Weapon damage
+    damageRolls = rollDamage(weapon.damage.dice, criticalHit, {});
+    baseDamage = damageRolls.reduce((sum, roll) =>
+      sum + roll.results.reduce((rSum, r) => rSum + r, 0) +
+      roll.modifier * roll.count, 0);
+    damageType = weapon.damage.type;
 
-/**
- * Determines if an attack hits based on roll vs target AC
- */
-export function doesAttackHit(
-  attackRoll: number,
-  targetAC: number,
-  hasAdvantage: boolean = false,
-  hasDisadvantage: boolean = false
-): boolean {
-  // For advantage/disadvantage, we'd need the actual rolls, but for simple calculation:
-  const effectiveRoll = attackRoll;
-  
-  return effectiveRoll >= targetAC;
-}
+    // Add ability modifiers
+    const strMod = getAbilityModifier(attacker, 'strength');
+    const dexMod = getAbilityModifier(attacker, 'dexterity');
 
-/**
- * Calculates the expected hit chance percentage
- */
-export function calculateHitChance(
-  attackBonus: number,
-  targetAC: number,
-  hasAdvantage: boolean = false,
-  hasDisadvantage: boolean = false
-): number {
-  let hitChance = 0;
-  
-  if (hasAdvantage && !hasDisadvantage) {
-    // Advantage: take higher of two d20 rolls
-    for (let d20_1 = 1; d20_1 <= 20; d20_1++) {
-      for (let d20_2 = 1; d20_2 <= 20; d20_2++) {
-        const roll = Math.max(d20_1, d20_2) + attackBonus;
-        if (roll >= targetAC) hitChance += 0.0025; // 1/400 chance
-      }
+    if (weapon.weaponProperties?.finesse) {
+      baseDamage += Math.max(strMod, dexMod);
+    } else if (!weapon.range) {
+      // Melee weapon uses STR
+      baseDamage += strMod;
+    } else {
+      // Ranged weapon uses DEX
+      baseDamage += dexMod;
     }
-  } else if (hasDisadvantage && !hasAdvantage) {
-    // Disadvantage: take lower of two d20 rolls
-    for (let d20_1 = 1; d20_1 <= 20; d20_1++) {
-      for (let d20_2 = 1; d20_2 <= 20; d20_2++) {
-        const roll = Math.min(d20_1, d20_2) + attackBonus;
-        if (roll >= targetAC) hitChance += 0.0025;
-      }
-    }
-  } else {
-    // Normal roll
-    for (let d20 = 1; d20 <= 20; d20++) {
-      if (d20 + attackBonus >= targetAC) {
-        hitChance += 0.05; // 1/20 chance
-      }
+
+    // Magic weapon bonus
+    if (weapon.weaponProperties?.magical) {
+      baseDamage += weapon.magicBonus || 0;
     }
   }
-  
-  return Math.round(hitChance * 100);
+
+  // Add Divine Smite damage
+  if (options.divineSmiteLevel) {
+    const smiteRoll = rollDamage(`1d8+${options.divineSmiteLevel - 1}`, false, {});
+    damageRolls = [...damageRolls, ...smiteRoll];
+    damageType = 'radiant'; // Divine smite is radiant damage
+  }
+
+  // Add Sneak Attack damage
+  if (options.sneakAttack) {
+    const sneakDice = getSneakAttackDice(attacker.level || 1);
+    const sneakRoll = rollDamage(sneakDice, false, {});
+    damageRolls = [...damageRolls, ...sneakRoll];
+  }
+
+  // Add Barbarian Rage damage bonus
+  if (attacker.isRaging && attacker.characterClass === 'barbarian') {
+    const rageBonus = Math.floor((attacker.level || 1) / 4) || 2;
+    baseDamage += rageBonus;
+  }
+
+  const totalBeforeResistance = baseDamage;
+
+  // Apply resistances, immunities, vulnerabilities
+  const totalAfterResistance = calculateDamage(
+    totalBeforeResistance,
+    damageType,
+    attacker.damageResistances || [],
+    attacker.damageImmunities || [],
+    attacker.damageVulnerabilities || []
+  );
+
+  return {
+    rolls: damageRolls,
+    totalBeforeResistance,
+    totalAfterResistance,
+    damageType,
+    resistances: attacker.damageResistances || [],
+    vulnerabilities: attacker.damageVulnerabilities || [],
+    immunities: attacker.damageImmunities || []
+  };
 }
 
 /**
- * Gets the damage type resistances and vulnerabilities for a participant
+ * Execute complete attack resolution (attack + damage)
  */
-export function getDamageModifiers(
-  participant: Participant,
-  damageType: string
-): {
-  resistance: boolean;
-  vulnerability: boolean;
-  immunity: boolean;
-  multiplier: number;
-} {
-  const resistances = participant.resistances || [];
-  const vulnerabilities = participant.vulnerabilities || [];
-  const immunities = participant.immunities || [];
-  
-  const resistance = resistances.includes(damageType);
-  const vulnerability = vulnerabilities.includes(damageType);
-  const immunity = immunities.includes(damageType);
-  
-  let multiplier = 1;
-  if (immunity) multiplier = 0;
-  else if (vulnerability) multiplier = 2;
-  else if (resistance) multiplier = 0.5;
-  
-  return { resistance, vulnerability, immunity, multiplier };
+export function performAttack(
+  weapon: Equipment | null,
+  attacker: CombatParticipant,
+  target: CombatParticipant,
+  options: {
+    advantage?: boolean;
+    disadvantage?: boolean;
+    spellAttack?: boolean;
+    divineSmiteLevel?: number;
+    sneakAttack?: boolean;
+  } = {}
+): FullAttackResult {
+  // Resolve the attack
+  const resolution = resolveAttack(weapon, attacker, target, options);
+
+  // If attack misses and it's not a critical hit/fail, return result with no damage
+  if (!resolution.hit && !resolution.criticalHit && !resolution.criticalFail) {
+    return {
+      resolution,
+      damage: null
+    };
+  }
+
+  // Calculate damage
+  const damage = calculateAttackDamage(weapon, attacker, resolution.criticalHit, options);
+
+  // Calculate final damage after target's resistances/vulnerabilities
+  const damageToDeal = calculateDamage(
+    damage.totalBeforeResistance,
+    damage.damageType,
+    target.damageResistances || [],
+    target.damageImmunities || [],
+    target.damageVulnerabilities || []
+  );
+
+  // Apply temporary HP first
+  const tempHpToReduce = Math.min(target.temporaryHitPoints, damageToDeal);
+  const remainingDamage = damageToDeal - tempHpToReduce;
+  const newTempHp = target.temporaryHitPoints - tempHpToReduce;
+  const newHp = remainingDamage > 0 ? Math.max(0, target.currentHitPoints - remainingDamage) : target.currentHitPoints;
+
+  return {
+    resolution,
+    damage: {
+      ...damage,
+      totalAfterResistance: damageToDeal
+    },
+    targetReducedHp: newHp,
+    totalDamageDealt: damageToDeal
+  };
+}
+
+/**
+ * Get number of attacks for multi-attack feature
+ */
+export function getNumberOfAttacks(cfg: number, characterClass: string, level: number): number {
+  // Martial classes with Extra Attack
+  if (['fighter', 'paladin', 'ranger', 'barbarian'].includes(characterClass.toLowerCase())) {
+    if (level >= 11) return 3;      // Level 11: Three attacks
+    if (level >= 5) return 2;       // Level 5: Two attacks
+  }
+
+  // Other classes with Extra Attack
+  if (['rogue', 'monk'].includes(characterClass.toLowerCase())) {
+    if (level >= 5) return 2;       // Level 5: Two attacks
+  }
+
+  // Eldritch Knight and Arcane Trickster
+  if (characterClass.toLowerCase() === 'fighter') {
+    if ((cfg as any)?.specific?.['eldritch_knight'] && level >= 5) {
+      return 2;
+    }
+  }
+
+  return 1; // Default: one attack
+}
+
+/**
+ * Check if sneak attack can be applied
+ */
+export function canUseSneakAttack(attacker: CombatParticipant, target: CombatParticipant): boolean {
+  // Must be a rogue
+  if (attacker.characterClass !== 'rogue') return false;
+
+  // Basic condition: advantage, ally within 5ft, or target incapacitated
+  const hasAdvantage = attacker.conditions.some(c => c.name === 'invisible') ||
+                       target.conditions.some(c =>
+                         ['prone', 'stunned', 'paralyzed', 'unconscious'].includes(c.name));
+
+  // TODO: Check for ally within 5ft (requires position tracking)
+  // For now, return basic check
+  return hasAdvantage;
+}
+
+/**
+ * Get ability modifier from participant
+ * Uses default values for common abilities if not specified
+ */
+function getAbilityModifier(participant: CombatParticipant, ability: string): number {
+  // Default ability scores for basic combat
+  const defaultAbilityScores: { [key: string]: number } = {
+    strength: 14,     // Average human
+    dexterity: 14,
+    constitution: 14,
+    intelligence: 12,
+    wisdom: 12,
+    charisma: 12
+  };
+
+  // For spells, override with known ability scores based on class
+  if (ability === 'spellcasting') {
+    switch (participant.characterClass?.toLowerCase()) {
+      case 'wizard':
+      case 'artificer':
+      case 'arcane_trickster':
+        return Math.floor((participant.level || 3)); // Intellect bonus approximation
+      case 'sorcerer':
+      case 'bard':
+      case 'warlock':
+      case 'paladin':
+        return Math.floor((participant.level || 3)); // Charisma bonus approximation
+      case 'cleric':
+      case 'druid':
+      case 'ranger':
+        return Math.floor((participant.level || 3)); // Wisdom bonus approximation
+      default:
+        return 3; // Default +3 bonus
+    }
+  }
+
+  // Get modifier from default scores (floor of (score-10)/2)
+  const score = defaultAbilityScores[ability.toLowerCase()] || 12;
+  return Math.floor((score - 10) / 2);
+}
+
+/**
+ * Get spellcasting ability modifier
+ */
+function getSpellcastingAbility(attacker: CombatParticipant): number {
+  // Determine spellcasting ability based on class
+  let spellAbilityName: string;
+
+  switch (attacker.characterClass?.toLowerCase()) {
+    case 'wizard':
+    case 'artificer':
+    case 'cloak_of_elvenkind':
+    case 'arcane_trickster':
+      spellAbilityName = 'intelligence';
+      break;
+    case 'sorcerer':
+    case 'bard':
+    case 'warlock':
+    case 'paladin':
+      spellAbilityName = 'charisma';
+      break;
+    case 'cleric':
+    case 'druid':
+    case 'ranger':
+      spellAbilityName = 'wisdom';
+      break;
+    default:
+      return 0;
+  }
+
+  return getAbilityModifier(attacker, spellAbilityName);
+}
+
+/**
+ * Get sneak attack dice for rogue level
+ */
+function getSneakAttackDice(level: number): string {
+  const dice = Math.ceil((level + 1) / 2); // 1d6 at lvl 1-2, 2d6 at 3-4, etc.
+  return `${dice}d6`;
+}
+
+/**
+ * Create combat action from attack result
+ */
+export function createCombatActionFromAttack(
+  attacker: CombatParticipant,
+  target: CombatParticipant,
+  weapon: Equipment | null,
+  result: FullAttackResult
+): CombatAction {
+  const isSpellAttack = (weapon as any)?.isSpell || false;
+  const attackType = isSpellAttack ? 'cast_spell' : 'attack';
+
+  return {
+    id: crypto.randomUUID(),
+    encounterId: '', // Will be set by caller
+    participantId: attacker.id,
+    targetParticipantId: target.id,
+    round: 0, // Will be set by caller
+    turnOrder: 0, // Will be set by caller
+    actionType: attackType,
+    description: generateAttackDescription(attacker, target, weapon, result),
+    attackRoll: result.resolution.roll,
+    damageRolls: result.damage?.rolls || [],
+    hit: result.resolution.hit,
+    damageDealt: result.totalDamageDealt || 0,
+    damageType: result.damage?.damageType || 'piercing',
+    timestamp: new Date()
+  };
+}
+
+/**
+ * Generate attack description
+ */
+function generateAttackDescription(
+  attacker: CombatParticipant,
+  target: CombatParticipant,
+  weapon: Equipment | null,
+  result: FullAttackResult
+): string {
+  const weaponName = weapon?.name || 'unarmed strike';
+
+  if (!result.resolution.hit && !result.resolution.criticalHit) {
+    return `${attacker.name} misses ${target.name} with ${weaponName}.`;
+  }
+
+  if (result.resolution.criticalHit) {
+    return `${attacker.name} scores a critical hit on ${target.name} with ${weaponName} for ${result.totalDamageDealt} damage!`;
+  }
+
+  return `${attacker.name} hits ${target.name} with ${weaponName} for ${result.totalDamageDealt} damage.`;
 }

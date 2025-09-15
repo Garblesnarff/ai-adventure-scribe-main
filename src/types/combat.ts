@@ -22,7 +22,7 @@ export type ParticipantType =
   | 'npc'             // Friendly NPC
   | 'monster';        // Enemy creature
 
-export type ActionType = 
+export type ActionType =
   | 'attack'          // Weapon or spell attack
   | 'off_hand_attack' // Two-weapon fighting bonus action attack
   | 'cast_spell'      // Casting a spell
@@ -45,7 +45,11 @@ export type ActionType =
   | 'shield_spell'    // Shield reaction
   | 'absorb_elements' // Absorb elements reaction
   | 'hellish_rebuke'  // Hellish rebuke reaction
-  | 'divine_smite';   // Paladin's Divine Smite
+  | 'divine_smite'    // Paladin's Divine Smite
+  | 'use_class_feature' // Use a class feature (rage, second wind, etc.)
+  | 'end_rage'        // End rage
+  | 'short_rest'      // Take a short rest
+  | 'long_rest';      // Take a long rest
 
 export type ReactionTrigger = 
   | 'creature_leaves_reach'     // Opportunity attack
@@ -216,6 +220,17 @@ export interface CharacterResources {
   rages?: { max: number; current: number };
   actionSurge?: { max: number; current: number };
   layOnHands?: { max: number; current: number };
+}
+
+// ===========================
+// Spellcasting
+// ===========================
+
+export type SpellSlotLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+export interface SpellSlotConfig {
+  max: number;
+  current: number;
 }
 
 // ===========================

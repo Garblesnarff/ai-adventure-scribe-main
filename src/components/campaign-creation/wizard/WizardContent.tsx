@@ -12,6 +12,7 @@ import {
   validateBasicDetails,
   validateGenreSelection,
   validateCampaignParameters,
+  validateCampaignEnhancements,
   validateCompleteCampaign
 } from './validation';
 
@@ -30,7 +31,8 @@ const WizardContent: React.FC = () => {
    * Validates the current step's data based on the new step order:
    * 1. Genre Selection
    * 2. Campaign Parameters
-   * 3. Basic Details
+   * 3. Campaign Enhancements
+   * 4. Basic Details
    * @returns boolean indicating if validation passed
    */
   const validateCurrentStep = () => {
@@ -40,6 +42,8 @@ const WizardContent: React.FC = () => {
       case 1:
         return validateCampaignParameters(state.campaign, toast);
       case 2:
+        return validateCampaignEnhancements(state.campaign, toast);
+      case 3:
         return validateBasicDetails(state.campaign, toast);
       default:
         return true;
