@@ -15,41 +15,98 @@ interface ParsedRollRequest extends RollRequest {
  */
 export function parseRollRequests(message: string): ParsedRollRequest[] {
   const requests: ParsedRollRequest[] = [];
-  
-  // Common patterns for roll requests
+
+  // Enhanced patterns for roll requests including attack rolls and more natural language
   const patterns = [
     // "Make a Perception check (1d20+3, DC 12)"
     /make\s+an?\s+(\w+(?:\s+\w+)?)\s+(?:check|save|roll).*?\(([^)]+)(?:,\s*DC\s+(\d+))?\)/gi,
-    
+
     // "Roll initiative! (1d20+dex modifier)"
     /roll\s+initiative.*?\(([^)]+)\)/gi,
-    
+
     // "Please roll 1d20+5 for your spellcasting check"
     /(?:please\s+)?roll\s+([\dd+\-\s]+)(?:\s+for\s+(.+?))?(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi,
-    
+
     // "Make an attack roll with your longsword (1d20+5) against AC 15"
     /make\s+an?\s+attack\s+roll.*?\(([^)]+)\)(?:.*?(?:AC|against)\s+(\d+))?/gi,
-    
+
     // "Roll damage for your longsword (1d8+3)"
     /roll\s+damage.*?\(([^)]+)\)/gi,
-    
+
     // Generic "Roll [dice] to [purpose]"
-    /roll\s+([\dd+\-\s]+)\s+(?:to|for)\s+(.+?)(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi
+    /roll\s+([\dd+\-\s]+)\s+(?:to|for)\s+(.+?)(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi,
+
+    // Enhanced attack roll patterns
+    // "Please roll an attack roll with your dagger"
+    /(?:please\s+)?roll\s+an?\s+attack\s+roll/gi,
+
+    // "Make an attack" or "Roll for attack"
+    /(?:make\s+an?|roll\s+(?:for\s+)?)\s*attack(?:\s+roll)?/gi,
+
+    // "Roll to attack" or "Roll to hit"
+    /roll\s+to\s+(?:attack|hit)/gi,
+
+    // Initiative patterns
+    /roll\s+initiative/gi,
+
+    // Generic ability checks without parentheses
+    /make\s+a\s+(dexterity|strength|constitution|intelligence|wisdom|charisma)\s+(?:check|save|saving\s+throw)/gi,
+
+    // Skill checks without parentheses
+    /make\s+a\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)\s+check/gi
   ];
 
   let match;
-  
-  // Pattern 1: Skill/Ability checks and saves
+
+  // Pattern 1: Enhanced attack roll detection (without explicit dice)
+  const attackPatterns = [
+    /(?:please\s+)?(?:make\s+an?|roll\s+an?)\s*attack\s*(?:roll)?/gi,
+    /roll\s+to\s+(?:attack|hit)/gi,
+    /(?:make\s+an?|roll\s+(?:for\s+)?)\s*attack(?:\s+roll)?/gi
+  ];
+
+  attackPatterns.forEach(pattern => {
+    while ((match = pattern.exec(message)) !== null) {
+      requests.push({
+        type: 'attack',
+        formula: '1d20+modifier', // Will be calculated with character data
+        purpose: 'Attack roll',
+        originalText: match[0],
+        confidence: 0.95
+      });
+    }
+  });
+
+  // Pattern 2: Initiative (enhanced)
+  const initiativePatterns = [
+    /roll\s+initiative.*?\(([^)]+)\)/gi,
+    /roll\s+initiative/gi
+  ];
+
+  initiativePatterns.forEach(pattern => {
+    while ((match = pattern.exec(message)) !== null) {
+      const formula = match[1] ? normalizeFormula(match[1]) : '1d20+dex';
+      requests.push({
+        type: 'initiative',
+        formula,
+        purpose: 'Initiative roll for combat order',
+        originalText: match[0],
+        confidence: 0.95
+      });
+    }
+  });
+
+  // Pattern 3: Skill/Ability checks and saves with explicit dice
   const checkPattern = /make\s+an?\s+(constitution|dexterity|strength|intelligence|wisdom|charisma|[\w\s]+)\s+(check|save|saving\s+throw).*?\(([^)]+)(?:,\s*DC\s+(\d+))?\)/gi;
   while ((match = checkPattern.exec(message)) !== null) {
     const ability = match[1].toLowerCase();
     const type = match[2].toLowerCase();
     const formula = match[3].trim();
     const dc = match[4] ? parseInt(match[4]) : undefined;
-    
+
     const rollType = type.includes('save') ? 'save' : 'check';
     const purpose = `${ability.charAt(0).toUpperCase() + ability.slice(1)} ${type}`;
-    
+
     requests.push({
       type: rollType as 'save' | 'check',
       formula: normalizeFormula(formula),
@@ -60,34 +117,36 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     });
   }
 
-  // Pattern 2: Initiative
-  const initiativePattern = /roll\s+initiative.*?\(([^)]+)\)/gi;
-  while ((match = initiativePattern.exec(message)) !== null) {
-    requests.push({
-      type: 'initiative',
-      formula: normalizeFormula(match[1]),
-      purpose: 'Initiative roll for combat order',
-      originalText: match[0],
-      confidence: 0.95
-    });
-  }
+  // Pattern 4: Ability checks without explicit dice
+  const abilityCheckPattern = /make\s+a\s+(dexterity|strength|constitution|intelligence|wisdom|charisma)\s+(?:check|save|saving\s+throw)/gi;
+  while ((match = abilityCheckPattern.exec(message)) !== null) {
+    const ability = match[1].toLowerCase();
+    const isType = message.toLowerCase().includes('save') ? 'save' : 'check';
 
-  // Pattern 3: Attack rolls
-  const attackPattern = /make\s+an?\s+attack\s+roll.*?\(([^)]+)\)(?:.*?(?:AC|against).*?(\d+))?/gi;
-  while ((match = attackPattern.exec(message)) !== null) {
-    const ac = match[2] ? parseInt(match[2]) : undefined;
-    
     requests.push({
-      type: 'attack',
-      formula: normalizeFormula(match[1]),
-      purpose: 'Attack roll',
-      ac,
+      type: isType as 'save' | 'check',
+      formula: `1d20+${ability.slice(0, 3)}`, // Will be calculated with character data
+      purpose: `${ability.charAt(0).toUpperCase() + ability.slice(1)} ${isType}`,
       originalText: match[0],
       confidence: 0.9
     });
   }
 
-  // Pattern 4: Damage rolls
+  // Pattern 5: Skill checks without explicit dice
+  const skillCheckPattern = /make\s+a\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)\s+check/gi;
+  while ((match = skillCheckPattern.exec(message)) !== null) {
+    const skill = match[1].toLowerCase();
+
+    requests.push({
+      type: 'skill_check',
+      formula: `1d20+${skill}`, // Will be calculated with character data
+      purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
+      originalText: match[0],
+      confidence: 0.9
+    });
+  }
+
+  // Pattern 6: Damage rolls
   const damagePattern = /roll\s+damage.*?\(([^)]+)\)/gi;
   while ((match = damagePattern.exec(message)) !== null) {
     requests.push({
@@ -99,24 +158,24 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     });
   }
 
-  // Pattern 5: Generic roll requests
+  // Pattern 7: Generic roll requests with explicit dice
   const genericPattern = /(?:please\s+)?roll\s+([\dd+\-\s]+)(?:\s+for\s+(.+?))?(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi;
   while ((match = genericPattern.exec(message)) !== null) {
     // Skip if we already found this as a more specific pattern
     if (requests.some(r => r.originalText.includes(match[0]))) continue;
-    
+
     const formula = match[1].trim();
     const purpose = match[2] || 'Dice roll';
     const dc = match[3] ? parseInt(match[3]) : undefined;
     const ac = match[4] ? parseInt(match[4]) : undefined;
-    
+
     // Determine type based on context
     let type: RollRequest['type'] = 'check';
     if (purpose.toLowerCase().includes('attack')) type = 'attack';
     else if (purpose.toLowerCase().includes('damage')) type = 'damage';
     else if (purpose.toLowerCase().includes('save')) type = 'save';
     else if (purpose.toLowerCase().includes('initiative')) type = 'initiative';
-    
+
     requests.push({
       type,
       formula: normalizeFormula(formula),

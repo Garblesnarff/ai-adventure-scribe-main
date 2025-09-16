@@ -222,13 +222,22 @@ You MUST request dice rolls from players for uncertain outcomes. This maintains 
 - Combat actions: Request attack rolls, damage rolls, saving throws
 - Skill checks: Ask for Investigation, Perception, Persuasion, etc. rolls
 - Random events: Player rolls for random outcomes when they're the cause
-- Format: "Please roll [dice] for [purpose] (target DC [number])"
+- Use CHARACTER'S ACTUAL MODIFIERS in your requests
+- Format: "Please roll [dice with actual modifier] for [purpose] (target DC [number])"
 
-**REQUEST EXAMPLES:**
-✅ "The orc attacks you! Please roll 1d20+4 for your AC to defend"
-✅ "Please make a Perception check - roll 1d20+3 (DC 12) to notice the hidden mechanism"  
-✅ "Roll initiative! Everyone roll 1d20+dex modifier"
-✅ "Make a Dexterity saving throw - roll 1d20+dex (DC 15) to avoid the fireball"
+**REQUEST EXAMPLES (using character's actual stats):**
+✅ "The orc attacks you! Please roll an attack roll with your weapon"
+✅ "Please make a Perception check" (system will auto-calculate WIS modifier + proficiency)
+✅ "Roll initiative!" (system will auto-calculate DEX modifier)
+✅ "Make a Dexterity saving throw (DC 15) to avoid the fireball"
+✅ "Roll for a Stealth check to sneak past the guard"
+
+**PREFERRED SIMPLE REQUESTS (system calculates modifiers automatically):**
+✅ "Make an attack roll"
+✅ "Roll initiative"
+✅ "Make a Dexterity saving throw"
+✅ "Make a Perception check"
+✅ "Roll for Stealth"
 
 **FOR NPCs AND ENVIRONMENT:**
 ✅ "The orc attacks (rolling behind screen... hits AC 13) dealing 6 slashing damage"
@@ -245,9 +254,19 @@ You MUST request dice rolls from players for uncertain outcomes. This maintains 
           
           if (params.context.characterDetails) {
             const char = params.context.characterDetails;
-            contextPrompt += `\n\nPLAYER CHARACTER: ${char.name}, a level ${char.level} ${char.race} ${char.class}`;
+            contextPrompt += `\n\nPLAYER CHARACTER: ${char.name}, a level ${char.level} ${char.race || 'Unknown Race'} ${char.class || 'Unknown Class'}`;
             if (char.background) {
               contextPrompt += ` (${char.background} background)`;
+            }
+
+            // Add character stats for roll calculations
+            if (char.character_stats && char.character_stats.length > 0) {
+              const stats = char.character_stats[0];
+              contextPrompt += `\nAbility Scores: STR ${stats.strength}(${Math.floor((stats.strength - 10) / 2) >= 0 ? '+' : ''}${Math.floor((stats.strength - 10) / 2)}), DEX ${stats.dexterity}(${Math.floor((stats.dexterity - 10) / 2) >= 0 ? '+' : ''}${Math.floor((stats.dexterity - 10) / 2)}), CON ${stats.constitution}(${Math.floor((stats.constitution - 10) / 2) >= 0 ? '+' : ''}${Math.floor((stats.constitution - 10) / 2)}), INT ${stats.intelligence}(${Math.floor((stats.intelligence - 10) / 2) >= 0 ? '+' : ''}${Math.floor((stats.intelligence - 10) / 2)}), WIS ${stats.wisdom}(${Math.floor((stats.wisdom - 10) / 2) >= 0 ? '+' : ''}${Math.floor((stats.wisdom - 10) / 2)}), CHA ${stats.charisma}(${Math.floor((stats.charisma - 10) / 2) >= 0 ? '+' : ''}${Math.floor((stats.charisma - 10) / 2)})`;
+
+              // Calculate and include proficiency bonus
+              const profBonus = char.level >= 17 ? 6 : char.level >= 13 ? 5 : char.level >= 9 ? 4 : char.level >= 5 ? 3 : 2;
+              contextPrompt += `\nProficiency Bonus: +${profBonus}`;
             }
             contextPrompt += `.`;
           }

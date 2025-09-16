@@ -3,17 +3,25 @@
  * Displays when the DM requests a dice roll from the player
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Dice6, Zap, ArrowUp, ArrowDown, Target, AlertCircle } from 'lucide-react';
+import { Dice6, Zap, ArrowUp, ArrowDown, Target, AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCharacter } from '@/contexts/CharacterContext';
+import {
+  calculateRollWithBreakdown,
+  parseAbilityName,
+  SKILL_ABILITIES,
+  SKILL_ALIASES,
+  type AbilityName
+} from '@/utils/characterModifiers';
 
 export interface RollRequest {
   type: 'attack' | 'save' | 'check' | 'damage' | 'initiative' | 'skill_check';
-  formula: string;  // "1d20+5"
+  formula: string;  // "1d20+5" or "1d20+modifier" or "1d20+str"
   purpose: string;  // "Arcana check to understand the mechanism"
   dc?: number;      // Target DC if applicable
   ac?: number;      // Target AC for attacks
@@ -45,6 +53,99 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
   const [manualResult, setManualResult] = useState('');
   const [hasAdvantage, setHasAdvantage] = useState(request.advantage || false);
   const [hasDisadvantage, setHasDisadvantage] = useState(request.disadvantage || false);
+
+  const { state: characterState } = useCharacter();
+  const character = characterState.character;
+
+  // Calculate the actual roll formula with character modifiers
+  const rollCalculation = useMemo(() => {
+    if (!character) {
+      return {
+        formula: request.formula,
+        breakdown: [request.formula],
+        totalModifier: 0,
+        isProficient: false
+      };
+    }
+
+    // If formula already has numbers, use it as-is
+    if (/\d+d\d+[+\-]\d+/.test(request.formula)) {
+      return {
+        formula: request.formula,
+        breakdown: [request.formula],
+        totalModifier: 0,
+        isProficient: false
+      };
+    }
+
+    try {
+      // Parse the formula to determine what type of roll this is
+      let ability: AbilityName | undefined;
+      let skillName: string | undefined;
+
+      // Extract ability or skill from formula or purpose
+      if (request.formula.includes('+str') || request.formula.includes('strength')) {
+        ability = 'strength';
+      } else if (request.formula.includes('+dex') || request.formula.includes('dexterity')) {
+        ability = 'dexterity';
+      } else if (request.formula.includes('+con') || request.formula.includes('constitution')) {
+        ability = 'constitution';
+      } else if (request.formula.includes('+int') || request.formula.includes('intelligence')) {
+        ability = 'intelligence';
+      } else if (request.formula.includes('+wis') || request.formula.includes('wisdom')) {
+        ability = 'wisdom';
+      } else if (request.formula.includes('+cha') || request.formula.includes('charisma')) {
+        ability = 'charisma';
+      } else {
+        // Try to parse from purpose text
+        const purposeLower = request.purpose.toLowerCase();
+
+        // Check for skill names in purpose
+        for (const [skill, skillAbility] of Object.entries(SKILL_ABILITIES)) {
+          if (purposeLower.includes(skill)) {
+            skillName = skill;
+            ability = skillAbility;
+            break;
+          }
+        }
+
+        // Check for ability names in purpose
+        if (!ability) {
+          for (const abilityName of ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']) {
+            if (purposeLower.includes(abilityName) || purposeLower.includes(abilityName.slice(0, 3))) {
+              ability = abilityName as AbilityName;
+              break;
+            }
+          }
+        }
+      }
+
+      // Determine roll type and calculate
+      let rollType: 'attack' | 'save' | 'check' | 'skill' | 'initiative' = 'check';
+
+      if (request.type === 'skill_check' || skillName) {
+        rollType = 'skill';
+      } else if (request.type === 'save') {
+        rollType = 'save';
+      } else if (request.type === 'attack') {
+        rollType = 'attack';
+        ability = ability || 'strength'; // Default to strength for attacks
+      } else if (request.type === 'initiative') {
+        rollType = 'initiative';
+        ability = 'dexterity';
+      }
+
+      return calculateRollWithBreakdown(character, rollType, ability, skillName);
+    } catch (error) {
+      console.warn('Error calculating roll with character modifiers:', error);
+      return {
+        formula: request.formula,
+        breakdown: [request.formula],
+        totalModifier: 0,
+        isProficient: false
+      };
+    }
+  }, [character, request]);
 
   const getTypeColor = () => {
     switch (request.type) {
@@ -83,8 +184,9 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
     // Apply advantage/disadvantage rules
     const finalAdvantage = hasAdvantage && !hasDisadvantage;
     const finalDisadvantage = hasDisadvantage && !hasAdvantage;
-    
-    onRoll(request.formula, finalAdvantage, finalDisadvantage);
+
+    // Use the calculated formula with character modifiers
+    onRoll(rollCalculation.formula, finalAdvantage, finalDisadvantage);
   };
 
   const handleManualSubmit = () => {
@@ -134,7 +236,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         <div className="bg-white rounded-lg p-3 mb-4 border">
           <div className="flex items-center justify-between mb-2">
             <div className="text-lg font-mono font-bold text-slate-800">
-              {request.formula}
+              {rollCalculation.formula}
             </div>
             {(request.dc || request.ac) && (
               <Badge variant="outline" className="text-sm">
@@ -142,6 +244,19 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
               </Badge>
             )}
           </div>
+
+          {/* Modifier Breakdown */}
+          {rollCalculation.breakdown.length > 1 && (
+            <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+              <Info className="w-3 h-3" />
+              <span>{rollCalculation.breakdown.join(' + ')}</span>
+              {rollCalculation.isProficient && (
+                <Badge variant="secondary" className="text-xs px-1 py-0">
+                  Proficient
+                </Badge>
+              )}
+            </div>
+          )}
           
           {/* Advantage/Disadvantage Controls */}
           {request.type !== 'damage' && (
