@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { User, Sword, Shield, Star } from 'lucide-react';
+import { User, Sword, Shield, Star, AlertTriangle } from 'lucide-react';
 import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
 import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
@@ -266,17 +266,24 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Character</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{character.name}"? This action cannot be undone.
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader className="space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <AlertDialogTitle className="text-lg font-semibold text-foreground">Delete Character</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              Are you sure you want to delete <span className="font-semibold text-foreground">"{character.name}"</span>?{" "}
+              <span className="text-destructive font-medium">This action cannot be undone</span> and will permanently remove the character from your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete Character
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="px-4 py-2">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
+            >
+              Permanently Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
