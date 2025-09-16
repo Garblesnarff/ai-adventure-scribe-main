@@ -92,7 +92,54 @@ const CharacterList: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading characters...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        {/* Hero Header - show during loading for consistency */}
+        <div className="relative bg-cover bg-center py-20 px-4" style={{ backgroundImage: "url('/parchment-bg.png')" }}>
+          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="relative max-w-7xl mx-auto text-center">
+            <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg animate-pulse">Your Heroes Await</h1>
+            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">Select a character to embark on epic adventures or forge a new legend</p>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-8 -mt-10 relative z-10">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <Users className="w-6 h-6 text-infinite-purple animate-pulse" />
+              <h1 className="text-3xl font-bold text-foreground animate-pulse">Character Roster</h1>
+            </div>
+            <Button onClick={handleCreateNew} variant="fantasy" className="flex items-center gap-2 shadow-lg" disabled>
+              <Plus className="w-4 h-4" />
+              Forge New Hero
+            </Button>
+          </div>
+
+          {/* Search Bar - disabled during loading */}
+          <div className="mb-8">
+            <div className="relative max-w-md">
+              <input
+                type="text"
+                placeholder="Search characters by name, race, or class..."
+                value=""
+                disabled
+                className="w-full px-4 py-3 pl-10 pr-4 rounded-xl border-2 border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-infinite-purple focus:border-transparent transition-all duration-200 opacity-50"
+              />
+              <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Skeleton Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square bg-card rounded-lg shadow-md animate-pulse">
+                <div className="h-full w-full rounded-lg bg-muted"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

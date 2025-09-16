@@ -49,6 +49,7 @@ const GameContent: React.FC = () => {
   } = useGameSession(campaignIdFromParams, characterIdFromParams || undefined);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingPhase, setLoadingPhase] = useState<'initial' | 'data' | 'session' | 'greeting'>('initial');
   const [error, setError] = useState<string | null>(null);
   const [combatMode, setCombatMode] = useState(false);
   const [showCombatInterface, setShowCombatInterface] = useState(false);
@@ -58,14 +59,17 @@ const GameContent: React.FC = () => {
       if (!characterIdFromParams || !campaignIdFromParams) {
         setError("Character ID or Campaign ID is missing from URL parameters.");
         setIsLoading(false);
+        setLoadingPhase('initial');
         return;
       }
 
       setIsLoading(true);
+      setLoadingPhase('data');
       setError(null);
 
       try {
         // Fetch Character Data
+        setLoadingPhase('data');
         const { data: characterData, error: characterError } = await supabase
           .from('characters')
           .select(`
@@ -124,6 +128,7 @@ const GameContent: React.FC = () => {
         characterDispatch({ type: 'SET_CHARACTER', payload: loadedCharacter });
 
         // Fetch Campaign Data
+        setLoadingPhase('session');
         const { data: campaignData, error: campaignError } = await supabase
           .from('campaigns')
           .select('*')
@@ -141,6 +146,7 @@ const GameContent: React.FC = () => {
         setError(err.message);
       } finally {
         setIsLoading(false);
+        setLoadingPhase('greeting');
       }
     };
 
@@ -168,16 +174,82 @@ const GameContent: React.FC = () => {
   const combinedIsLoading = isLoading || sessionState === 'loading';
   const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
 
+  // Loading Overlay Component
+  const LoadingOverlay = () => {
+    const getPhaseMessage = () => {
+      switch (loadingPhase) {
+        case 'initial':
+          return "Welcome to your infinite realm...";
+        case 'data':
+          return "Loading character and campaign data...";
+        case 'session':
+          return "Initializing game session...";
+        case 'greeting':
+          return "The Dungeon Master is crafting your opening scene...";
+        default:
+          return "Preparing your adventure...";
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center">
+        <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 text-center">
+          <div className="flex flex-col items-center space-y-6">
+            {/* Animated DM icon */}
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple via-infinite-teal to-infinite-purple rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                <span className="text-3xl">🎭</span>
+              </div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
+            </div>
+
+            {/* Progress content */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {getPhaseMessage()}
+              </p>
+            </div>
+
+            {/* Animated progress dots */}
+            <div className="flex items-center justify-center gap-1">
+              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
+            </div>
+
+            {/* Loading spinner */}
+            <div className="w-8 h-8 border-2 border-infinite-purple/20 border-t-infinite-purple rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (combinedIsLoading) {
-    return <div className="text-center p-10 text-muted-foreground">Loading your realm...</div>;
+    return <LoadingOverlay />;
   }
 
   if (combinedError) {
-    return <div className="text-center p-10 text-destructive">Error: {combinedError}</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-10 max-w-md">
+          <div className="text-destructive mb-4">Error: {combinedError}</div>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
   }
 
   if (!sessionId || !sessionData) {
-    return <div className="text-center p-10 text-muted-foreground">Initializing your infinite story... If this persists, check campaign/character selection.</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-10 max-w-md">
+          <div className="text-muted-foreground mb-4">Initializing your infinite story... If this persists, check campaign/character selection.</div>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
   }
 
   // These are validated ones from params, used for data loading.
@@ -389,7 +461,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             <>
                               <MessageList onSendFullMessage={handleSendMessage} />
 
-                              {/* Enhanced loading indicator for initial greeting */}
+                              {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
                               {isGeneratingGreeting && (
                                 <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-20 animate-in fade-in duration-300">
                                   <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 transform animate-in slide-in-from-bottom-4 duration-500">
@@ -404,9 +476,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
                                       {/* Progress content */}
                                       <div className="space-y-3">
-                                        <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
+                                        <h3 className="text-lg font-semibold text-card-foreground">Crafting Opening Scene</h3>
                                         <p className="text-sm text-muted-foreground leading-relaxed">
-                                          The Dungeon Master is crafting your opening scene, initializing the world state, and preparing your character's introduction to the realm.
+                                          The Dungeon Master is generating your personalized adventure introduction based on your character and campaign.
                                         </p>
                                       </div>
 
