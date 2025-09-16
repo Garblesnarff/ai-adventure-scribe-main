@@ -75,6 +75,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
       const diceRollMessage: ChatMessage = {
         text: `Rolled ${formula}${advantage ? ' with advantage' : disadvantage ? ' with disadvantage' : ''}`,
         sender: 'player',
+        timestamp: new Date().toISOString(),
         context: {
           intent: 'dice_roll',
           diceRoll: {

@@ -256,6 +256,23 @@ export const useAIResponse = () => {
       let responseText = result.text;
       let narrationSegments = result.narrationSegments;
 
+      // Parse roll requests from the response if not already structured
+      let rollRequests: RollRequest[] = result.roll_requests || [];
+      if (rollRequests.length === 0) {
+        // Import roll request parser and check for roll requests in the text
+        const { parseRollRequests } = await import('@/utils/rollRequestParser');
+        const parsedRequests = parseRollRequests(responseText);
+        rollRequests = parsedRequests.map(req => ({
+          type: req.type,
+          formula: req.formula,
+          purpose: req.purpose,
+          dc: req.dc,
+          ac: req.ac,
+          advantage: req.advantage,
+          disadvantage: req.disadvantage
+        }));
+      }
+
       // Process voice assignments if we have narration segments
       if (narrationSegments && narrationSegments.length > 0) {
         console.log('🎭 Received structured response with', narrationSegments.length, 'narration segments');
@@ -275,13 +292,14 @@ export const useAIResponse = () => {
       return {
         text: responseText,
         sender: 'dm',
+        timestamp: new Date().toISOString(),
         context: {
           emotion: 'neutral',
           intent: 'response',
         },
         narrationSegments: narrationSegments,
         diceRolls: result.dice_rolls || [],
-        rollRequests: result.roll_requests || [],
+        rollRequests: rollRequests,
         combatDetection: {
           isCombat: combatDetection.isCombat,
           confidence: combatDetection.confidence,
