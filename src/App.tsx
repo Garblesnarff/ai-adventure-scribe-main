@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import Index from './pages/Index';
 import Landing from './pages/Landing';
+import DiceTest from './pages/DiceTest';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
 import CharacterWizard from './components/character-creation/character-wizard';
@@ -58,6 +59,7 @@ function App() {
                       <main>
                         <Routes>
                           <Route path="/" element={<Index />} />
+                          <Route path="/dice-test" element={<DiceTest />} />
                           <Route path="/characters" element={<CharacterList />} />
                           <Route path="/characters/create" element={<CharacterWizard />} />
                           <Route path="/character/:id" element={<CharacterSheet />} />

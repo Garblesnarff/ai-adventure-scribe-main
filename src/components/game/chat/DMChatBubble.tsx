@@ -7,6 +7,8 @@ import { ChatMessage } from '@/services/ai-service';
 import { NarrationSegment } from '@/hooks/use-ai-response';
 import { ActionOptions } from '@/components/game/ActionOptions';
 import { parseMessageOptions, extractNarrativeContent, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
+import { DiceRollEmbed } from '@/components/DiceRollEmbed';
+import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
 
 interface DMChatBubbleProps {
   message: ChatMessage;
@@ -33,6 +35,72 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
   const parsedMessage = useMemo(() => {
     return parseMessageOptions(message.content);
   }, [message.content]);
+
+  // Parse dice expressions from the message content
+  const diceExpressions = useMemo(() => {
+    return DiceEngine.findDiceExpressions(message.content);
+  }, [message.content]);
+
+  // Render message content with embedded dice components
+  const renderMessageContent = useMemo(() => {
+    const content = parsedMessage.content || message.content;
+
+    if (diceExpressions.length === 0) {
+      return <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3">{content}</p>;
+    }
+
+    // Split content around dice expressions and render with embedded dice components
+    const parts = [];
+    let lastIndex = 0;
+
+    diceExpressions.forEach((diceExpr, index) => {
+      // Add text before dice expression
+      if (diceExpr.index > lastIndex) {
+        const textBefore = content.slice(lastIndex, diceExpr.index);
+        if (textBefore) {
+          parts.push(
+            <span key={`text-${index}`}>
+              {textBefore}
+            </span>
+          );
+        }
+      }
+
+      // Add dice component
+      parts.push(
+        <DiceRollEmbed
+          key={`dice-${index}`}
+          expression={diceExpr.expression}
+          purpose={diceExpr.purpose}
+          autoRoll={true}
+          showAnimation={true}
+          onRoll={(result: DiceRollResult) => {
+            console.log('Dice rolled:', result);
+          }}
+        />
+      );
+
+      lastIndex = diceExpr.index + diceExpr.length;
+    });
+
+    // Add remaining text after last dice expression
+    if (lastIndex < content.length) {
+      const textAfter = content.slice(lastIndex);
+      if (textAfter) {
+        parts.push(
+          <span key="text-final">
+            {textAfter}
+          </span>
+        );
+      }
+    }
+
+    return (
+      <div className="text-sm leading-relaxed mb-3">
+        {parts}
+      </div>
+    );
+  }, [parsedMessage.content, message.content, diceExpressions]);
   const {
     segments,
     currentSegmentIndex,
@@ -142,10 +210,8 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
           <div className={`relative px-5 py-4 rounded-xl transition-all duration-200 bg-muted text-foreground ${
             isThisMessagePlaying ? 'ring-2 ring-infinite-purple ring-opacity-50 shadow-lg' : ''
           }`}>
-            {/* Message Content (narrative only) */}
-            <p className="text-sm leading-relaxed whitespace-pre-wrap mb-3">
-              {parsedMessage.content || message.content}
-            </p>
+            {/* Message Content with embedded dice */}
+            {renderMessageContent}
 
             {/* Voice Controls */}
             {isVoiceEnabled && (

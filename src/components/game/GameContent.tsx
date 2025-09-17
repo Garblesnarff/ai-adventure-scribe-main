@@ -9,7 +9,8 @@ import { Character } from '@/types/character'; // Assuming this type aligns with
 import { Campaign as CampaignType } from '@/types/campaign'; // Assuming this type aligns
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
-import { MemoryPanel } from './MemoryPanel'; // Will modify this later for notes
+import { GameSidePanel } from './MemoryPanel';
+import { StatsBar } from './StatsBar';
 import { MessageHandler } from './message/MessageHandler';
 import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
@@ -23,7 +24,7 @@ import { useInitialGreeting } from '@/hooks/use-initial-greeting';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { usePendingRolls } from '@/hooks/use-pending-rolls';
-import { Sword, X, Dice6 } from 'lucide-react';
+import { Sword, X, Dice6, ChevronDown } from 'lucide-react';
 
 /**
  * GameContent Component
@@ -307,6 +308,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   handleCombatToggle,
   handleAIResponse,
 }) => {
+  // Sidebar collapsible state
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+
   // Get message context for sending initial greeting
   const { messages, sendMessage, queueStatus, isLoading: messagesLoading } = useMessageContext();
 
@@ -390,9 +394,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   return (
           <div className="min-h-screen bg-background">
             <div className="max-w-7xl mx-auto p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(350px,500px)] gap-4">
                 {/* Main Content Area */}
-                <div className="lg:col-span-2">
+                <div className="flex-1 lg:col-span-1">
                   <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden">
                     {/* Enhanced Header with Combat Toggle */}
                     <div className="p-6 border-b border-border/60 bg-gradient-to-r from-infinite-dark/80 to-card/60">
@@ -411,6 +415,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                               {sessionData.current_scene_description ?? "Your infinite story unfolds..."}
                             </span>
                           </div>
+                          <StatsBar />
                         </div>
 
                         {/* Combat Mode Toggle */}
@@ -543,14 +548,41 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                   </Card>
                 </div>
 
-                {/* Memory Panel */}
-                <div className="lg:col-span-1">
-                  <MemoryPanel sessionData={sessionData} updateGameSessionState={updateGameSessionState} />
-                </div>
+                {/* Collapsible Side Panel */}
+                {!isPanelCollapsed ? (
+                  <div className="lg:col-span-1 min-w-[350px] max-w-[500px]">
+                    <GameSidePanel 
+                      sessionData={sessionData} 
+                      updateGameSessionState={updateGameSessionState}
+                      combatMode={combatMode}
+                      isCollapsed={isPanelCollapsed}
+                      onToggle={() => setIsPanelCollapsed(!isPanelCollapsed)}
+                    />
+                  </div>
+                ) : (
+                  <div className="lg:col-span-1 flex justify-end">
+                    {/* Collapsed state: Show toggle button only on large screens */}
+                    <div className="fixed right-4 top-1/2 z-30 lg:relative lg:right-auto lg:top-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsPanelCollapsed(false)}
+                        className="rounded-full p-2 h-auto shadow-lg lg:ml-auto"
+                      >
+                        <ChevronDown className="h-4 w-4 rotate-90 lg:rotate-0" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
   );
 };
+
+interface GameSidePanelProps extends MemoryPanelProps {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}
 
 export default GameContent;
