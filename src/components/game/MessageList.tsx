@@ -131,16 +131,26 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
 
   // Handle manual dice result input
   const handleManualResult = React.useCallback(async (result: number) => {
-    console.log('[MessageList] Handling manual dice result:', result);
-
     try {
+      // Ensure result is a number
+      let numericResult: number;
+      if (typeof result === 'number') {
+        numericResult = result;
+      } else if (typeof result === 'object' && result && 'total' in result) {
+        numericResult = (result as any).total;
+        console.warn('[MessageList] Received object in handleManualResult, extracting total:', numericResult);
+      } else {
+        console.error('[MessageList] Invalid result type in handleManualResult:', result);
+        return;
+      }
+
       // Send to DM through the full message flow
       if (onSendFullMessage) {
-        await onSendFullMessage(`I rolled ${result}`);
+        await onSendFullMessage(`I rolled ${numericResult}`);
       } else {
         // Fallback to direct message if no full message flow available
         const playerMessage: ChatMessage = {
-          text: `I rolled ${result}`,
+          text: `I rolled ${numericResult}`,
           sender: 'player',
           timestamp: new Date().toISOString()
         };

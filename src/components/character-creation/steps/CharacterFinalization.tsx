@@ -3,6 +3,7 @@ import { useCharacter } from '@/contexts/CharacterContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { characterDescriptionGenerator } from '@/services/character-description-generator';
 import { characterImageGenerator } from '@/services/character-image-generator';
@@ -10,13 +11,14 @@ import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucid
 
 /**
  * CharacterFinalization component for character creation
- * Final step to review character, generate AI description and portrait
+ * Final step to review character, generate AI description and detailed design sheet
  */
 const CharacterFinalization: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('fantasy');
 
   /**
    * Updates character description in context
@@ -96,7 +98,7 @@ const CharacterFinalization: React.FC = () => {
   };
 
   /**
-   * Generate character portrait using AI with full character context
+   * Generate detailed character design sheet using AI with full character context
    */
   const handleGenerateImage = async () => {
     if (!state.character?.name?.trim()) {
@@ -122,28 +124,35 @@ const CharacterFinalization: React.FC = () => {
         personality_notes: state.character.personality_notes,
         enhancementSelections: state.character.enhancementSelections || [],
         enhancementEffects: state.character.enhancementEffects || {},
+        theme: selectedTheme,
       };
+
+      console.log('Generating design sheet with theme:', selectedTheme);
+      console.log('Character data for generation:', characterData);
 
       const imageUrl = await characterImageGenerator.generateCharacterImage(
         characterData,
-        { style: 'portrait' }
+        { style: 'character-sheet', artStyle: 'fantasy-art', theme: selectedTheme }
       );
 
       dispatch({
         type: 'UPDATE_CHARACTER',
-        payload: { image_url: imageUrl }
+        payload: { 
+          image_url: imageUrl,
+          theme: selectedTheme
+        }
       });
 
       toast({
-        title: "Character Portrait Generated",
-        description: "Your character portrait has been created using all your character details!",
+        title: "Character Design Sheet Generated",
+        description: `Your detailed character design sheet in ${selectedTheme} theme has been created with front, back, side views, close-up sketches, annotations, and blueprint styling using all your character details!`,
       });
 
     } catch (error) {
-      console.error('Failed to generate character image:', error);
+      console.error('Failed to generate character design sheet:', error);
       toast({
-        title: "Image Generation Failed",
-        description: "Failed to generate character portrait. Please try again.",
+        title: "Design Sheet Generation Failed",
+        description: "Failed to generate character design sheet. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -270,9 +279,27 @@ const CharacterFinalization: React.FC = () => {
 
         {/* Right Column - Character Image */}
         <div className="space-y-4">
+          {/* Theme Selector */}
+          <div className="space-y-2">
+            <Label>Design Sheet Theme</Label>
+            <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select theme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fantasy">Fantasy (Default)</SelectItem>
+                <SelectItem value="cyberpunk">Cyberpunk</SelectItem>
+                <SelectItem value="sci-fi">Sci-Fi</SelectItem>
+                <SelectItem value="steampunk">Steampunk</SelectItem>
+                <SelectItem value="dystopian">Dystopian</SelectItem>
+                <SelectItem value="anime">Anime</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Character Portrait</Label>
+              <Label>Character Design Sheet</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -288,7 +315,7 @@ const CharacterFinalization: React.FC = () => {
                 ) : (
                   <>
                     <ImageIcon className="mr-2 h-4 w-4" />
-                    {state.character?.image_url ? 'Regenerate' : 'Generate'} Portrait
+                    {state.character?.image_url ? 'Regenerate' : 'Generate'} Design Sheet
                   </>
                 )}
               </Button>
@@ -299,14 +326,14 @@ const CharacterFinalization: React.FC = () => {
               {state.character?.image_url ? (
                 <img
                   src={state.character.image_url}
-                  alt={`Portrait of ${state.character.name}`}
+                  alt={`Design sheet of ${state.character.name}`}
                   className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
                 />
               ) : (
                 <div className="text-center text-muted-foreground">
                   <ImageIcon className="mx-auto h-12 w-12 mb-4" />
                   <p className="text-sm">
-                    Click "Generate Portrait" to create an AI image using your complete character profile
+                    Select a theme and click "Generate Design Sheet" to create a detailed AI character sheet with multiple views, close-up sketches, annotations, and blueprint styling using your complete character profile
                   </p>
                 </div>
               )}
@@ -322,7 +349,7 @@ const CharacterFinalization: React.FC = () => {
           <div className="text-sm">
             <p className="font-medium text-green-900 dark:text-green-100 mb-1">Enhanced AI Generation</p>
             <p className="text-green-800 dark:text-green-200">
-              The AI now has access to your complete character profile (race, class, background, abilities) and can generate much more accurate and detailed descriptions and portraits!
+              The AI now has access to your complete character profile (race, class, background, abilities, equipment, personality) and can generate detailed character design sheets with front, back, side views, close-up sketches of facial features and accessories, annotated design notes, labeled components, blueprint style with glowing trim, detailed line work, anatomy, flat colors, and professional concept art!
             </p>
           </div>
         </div>

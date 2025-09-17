@@ -65,36 +65,62 @@ const WizardContent: React.FC = () => {
    * @returns {Promise<void>}
    */
   const handleNext = async () => {
+    console.log('handleNext called at step:', currentStep);
+    
     if (currentStep < wizardSteps.length - 1) {
+      console.log('Navigating to next step:', currentStep + 1);
       setCurrentStep(currentStep + 1);
     } else {
+      console.log('Final step - attempting to save character');
       if (state.character) {
-        if (!validateCharacter()) {
+        console.log('Character data for save:', state.character);
+        const isValid = validateCharacter();
+        console.log('Character validation result:', isValid);
+        
+        if (!isValid) {
           toast({
-            title: "Incomplete Character",
-            description: "Please complete all required fields before saving.",
-            variant: "destructive",
+            title: "Character Validation Issues",
+            description: "Some optional fields are incomplete. You can still save and edit later, or complete the missing sections.",
+            variant: "default", // Changed to default instead of destructive to allow save
           });
-          return;
+          // Continue to save even with warnings (relaxed validation)
         }
 
         try {
+          console.log('Calling saveCharacter...');
           const savedCharacter = await saveCharacter(state.character);
+          console.log('Save result:', savedCharacter);
+          
           if (savedCharacter?.id) {
+            console.log('Character saved successfully, navigating to /characters');
             toast({
               title: "Success",
               description: "Character created successfully!",
             });
             navigate('/characters');
+          } else {
+            console.error('Save succeeded but no ID returned');
+            toast({
+              title: "Save Warning",
+              description: "Character may have saved but couldn't verify. Check your characters list.",
+              variant: "default",
+            });
           }
         } catch (error) {
           console.error('Error saving character:', error);
           toast({
-            title: "Error",
-            description: "Failed to save character data",
+            title: "Save Error",
+            description: `Failed to save character: ${error.message || 'Unknown error'}`,
             variant: "destructive",
           });
         }
+      } else {
+        console.error('No character data to save');
+        toast({
+          title: "No Character",
+          description: "No character data found to save.",
+          variant: "destructive",
+        });
       }
     }
   };
