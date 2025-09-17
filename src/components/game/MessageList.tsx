@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
+import { useGame } from '@/contexts/GameContext';
 import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
 import { DiceRollMessage } from '@/components/game/DiceRollMessage';
 import { DiceRollRequest } from '@/components/game/DiceRollRequest';
@@ -20,6 +21,7 @@ interface MessageListProps {
  */
 export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) => {
   const { messages = [], sendMessage } = useMessageContext();
+  const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
 
   // Group consecutive messages from the same sender
@@ -69,9 +71,15 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
     }
   }, [onSendFullMessage, sendMessage]);
 
-  // Handle dice roll requests
+  // Handle dice roll requests from GameContext queue
   const handleDiceRoll = React.useCallback(async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
-    console.log('[MessageList] Handling dice roll:', { formula, advantage, disadvantage });
+    console.log('[MessageList] Handling dice roll from queue:', { formula, advantage, disadvantage });
+
+    const currentRoll = getCurrentDiceRoll();
+    if (!currentRoll) {
+      console.warn('[MessageList] No current dice roll in queue');
+      return;
+    }
 
     try {
       // Parse the formula to extract die type, count, and modifier
@@ -93,7 +101,9 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
       });
 
       console.log('[MessageList] Roll result:', rollResult);
-      console.log('[MessageList] Roll result.total type:', typeof rollResult.total, rollResult.total);
+
+      // Complete the dice roll in GameContext
+      completeDiceRoll(currentRoll.id, rollResult);
 
       // Create dice roll message
       const diceRollMessage: ChatMessage = {
@@ -127,10 +137,16 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
     } catch (error) {
       console.error('[MessageList] Failed to handle dice roll:', error);
     }
-  }, [sendMessage, onSendFullMessage]);
+  }, [sendMessage, getCurrentDiceRoll, completeDiceRoll]);
 
-  // Handle manual dice result input
+  // Handle manual dice result input from GameContext queue
   const handleManualResult = React.useCallback(async (result: number) => {
+    const currentRoll = getCurrentDiceRoll();
+    if (!currentRoll) {
+      console.warn('[MessageList] No current dice roll in queue');
+      return;
+    }
+
     try {
       // Ensure result is a number
       let numericResult: number;
@@ -143,6 +159,9 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
         console.error('[MessageList] Invalid result type in handleManualResult:', result);
         return;
       }
+
+      // Complete the dice roll in GameContext
+      completeDiceRoll(currentRoll.id, { total: numericResult });
 
       // Send to DM through the full message flow
       if (onSendFullMessage) {
@@ -159,7 +178,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
     } catch (error) {
       console.error('[MessageList] Failed to handle manual dice result:', error);
     }
-  }, [sendMessage, onSendFullMessage]);
+  }, [sendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]);
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 chat-scroll parchment-panel">
@@ -314,27 +333,9 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                           </div>
                         )}
 
-                        {/* Dice Roll Requests */}
-                        {isDM && hasRollRequests && (
-                          <div className="w-full max-w-md mt-3 space-y-3">
-                            {rollRequests.map((request, reqIndex) => (
-                              <DiceRollRequest
-                                key={`${messageId}-roll-${reqIndex}`}
-                                request={{
-                                  type: request.type,
-                                  formula: request.formula,
-                                  purpose: request.purpose,
-                                  dc: request.dc,
-                                  ac: request.ac,
-                                  advantage: request.advantage,
-                                  disadvantage: request.disadvantage
-                                }}
-                                onRoll={handleDiceRoll}
-                                onManualResult={handleManualResult}
-                              />
-                            ))}
-                          </div>
-                        )}
+                        {/* Note: Dice Roll Requests are now handled globally by GameContext */}
+                        {/* Individual message-based roll requests no longer create popups */}
+                        {/* The GameContext manages the dice roll queue to prevent duplicates */}
 
                         {/* Timestamp - only on last message */}
                         <div className={`text-xs message-meta px-2 ${group.isPlayer ? 'text-right' : 'text-left'} mt-1`}>
@@ -349,6 +350,30 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
           </div>
         </div>
       ))}
+
+      {/* Global Dice Roll Request - Shows current roll from GameContext queue */}
+      {(() => {
+        const currentRoll = getCurrentDiceRoll();
+        if (!currentRoll) return null;
+
+        return (
+          <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50">
+            <DiceRollRequest
+              request={{
+                type: currentRoll.requestType as any,
+                formula: `${currentRoll.rollConfig.count}d${currentRoll.rollConfig.dieType}${currentRoll.rollConfig.modifier >= 0 ? '+' : ''}${currentRoll.rollConfig.modifier}`,
+                purpose: currentRoll.description,
+                advantage: currentRoll.rollConfig.advantage,
+                disadvantage: currentRoll.rollConfig.disadvantage
+              }}
+              onRoll={handleDiceRoll}
+              onManualResult={handleManualResult}
+              onCancel={() => cancelDiceRoll(currentRoll.id)}
+              className="shadow-2xl animate-in slide-in-from-bottom-4 duration-300"
+            />
+          </div>
+        );
+      })()}
 
       {/* Loading state */}
       {messages?.length === 0 && (

@@ -18,7 +18,9 @@ import { MessageProvider } from '@/contexts/MessageContext';
 import { VoiceProvider } from '@/contexts/VoiceContext';
 import { useGameSession } from '@/hooks/use-game-session';
 import { CombatProvider, useCombat } from '@/contexts/CombatContext';
+import { GameProvider } from '@/contexts/GameContext';
 import CombatInterface from '@/components/combat/CombatInterface';
+import { CombatStatus } from '@/components/combat/CombatStatus';
 import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
 import { useInitialGreeting } from '@/hooks/use-initial-greeting';
 import { useMessageContext } from '@/contexts/MessageContext';
@@ -260,10 +262,11 @@ const GameContent: React.FC = () => {
 
   return (
     <CombatProvider sessionId={sessionId}>
-      <MessageProvider sessionId={sessionId}>
-        <MemoryProvider sessionId={sessionId}>
-          <VoiceProvider>
-            <GameContentInner
+      <GameProvider>
+        <MessageProvider sessionId={sessionId}>
+          <MemoryProvider sessionId={sessionId}>
+            <VoiceProvider>
+              <GameContentInner
               sessionId={sessionId}
               campaignIdForHandler={campaignIdFromParams}
               characterIdForHandler={characterIdFromParams}
@@ -278,6 +281,7 @@ const GameContent: React.FC = () => {
           </VoiceProvider>
         </MemoryProvider>
       </MessageProvider>
+      </GameProvider>
     </CombatProvider>
   );
 };
@@ -416,6 +420,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             </span>
                           </div>
                           <StatsBar />
+                          <div className="mt-3">
+                            <CombatStatus />
+                          </div>
                         </div>
 
                         {/* Combat Mode Toggle */}

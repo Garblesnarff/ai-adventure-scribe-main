@@ -412,22 +412,25 @@ export interface CombatEncounter {
 export interface CombatState {
   activeEncounter: CombatEncounter | null;
   isInCombat: boolean;
-  
+
   // UI State
   selectedParticipantId?: string;
   selectedTargetId?: string;
   showInitiativeTracker: boolean;
   showCombatLog: boolean;
-  
+
   // Pending actions (before confirmation)
   pendingAction?: Partial<CombatAction>;
-  
+
   // Reaction system
   activeReactionOpportunities: ReactionOpportunity[];
   pendingReactionResponse?: {
     opportunityId: string;
     selectedReaction?: ActionType;
   };
+
+  // Dice roll management
+  diceRollQueue: DiceRollQueue;
 }
 
 // ===========================
@@ -448,6 +451,43 @@ export type CombatEvent =
   | { type: 'PARTICIPANT_UNCONSCIOUS'; participantId: string }
   | { type: 'PARTICIPANT_DEAD'; participantId: string }
   | { type: 'INITIATIVE_ROLLED'; participantId: string; initiative: number };
+
+// ===========================
+// Dice Roll Request Management
+// ===========================
+
+export type DiceRollRequestType =
+  | 'initiative'
+  | 'attack'
+  | 'damage'
+  | 'saving_throw'
+  | 'death_save'
+  | 'concentration_save'
+  | 'ability_check'
+  | 'skill_check';
+
+export interface DiceRollRequest {
+  id: string;
+  requestType: DiceRollRequestType;
+  participantId?: string;
+  description: string;
+  rollConfig: {
+    dieType: number;
+    count: number;
+    modifier: number;
+    advantage?: boolean;
+    disadvantage?: boolean;
+  };
+  timestamp: Date;
+  status: 'pending' | 'completed' | 'cancelled';
+  result?: DiceRoll;
+}
+
+export interface DiceRollQueue {
+  pendingRolls: DiceRollRequest[];
+  currentRollId?: string;
+  isProcessingRoll: boolean;
+}
 
 // ===========================
 // Helper Types

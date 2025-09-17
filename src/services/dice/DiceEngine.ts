@@ -135,6 +135,89 @@ export class DiceEngine {
   }
 
   /**
+   * Get weapon damage formula by weapon name
+   * This should eventually pull from character sheet data
+   */
+  static getWeaponDamageFormula(weaponName: string, ability: string = 'str'): string {
+    const weaponData: Record<string, { damage: string; versatile?: string; finesse?: boolean }> = {
+      // Simple melee weapons
+      'club': { damage: '1d4' },
+      'dagger': { damage: '1d4', finesse: true },
+      'dart': { damage: '1d4' },
+      'javelin': { damage: '1d6' },
+      'mace': { damage: '1d6' },
+      'staff': { damage: '1d6', versatile: '1d8' },
+      'spear': { damage: '1d6', versatile: '1d8' },
+
+      // Martial melee weapons
+      'battleaxe': { damage: '1d8', versatile: '1d10' },
+      'longsword': { damage: '1d8', versatile: '1d10' },
+      'rapier': { damage: '1d8', finesse: true },
+      'scimitar': { damage: '1d6', finesse: true },
+      'shortsword': { damage: '1d6', finesse: true },
+      'warhammer': { damage: '1d8', versatile: '1d10' },
+      'greatsword': { damage: '2d6' },
+      'greataxe': { damage: '1d12' },
+      'maul': { damage: '2d6' },
+
+      // Ranged weapons
+      'shortbow': { damage: '1d6' },
+      'longbow': { damage: '1d8' },
+      'crossbow': { damage: '1d8' },
+      'handcrossbow': { damage: '1d6' }
+    };
+
+    const weapon = weaponData[weaponName.toLowerCase()];
+    if (!weapon) {
+      return '1d6+' + ability; // Default weapon damage
+    }
+
+    // Use finesse weapons with dex if available
+    const abilityMod = weapon.finesse && ability === 'dex' ? 'dex' : 'str';
+    return weapon.damage + '+' + abilityMod;
+  }
+
+  /**
+   * Create a damage roll request with proper formula
+   */
+  static createDamageRollRequest(weaponName: string, critical: boolean = false, ability: string = 'str'): {
+    formula: string;
+    purpose: string;
+  } {
+    const baseFormula = this.getWeaponDamageFormula(weaponName, ability);
+
+    if (critical) {
+      const criticalFormula = baseFormula.replace(
+        /(\d+)d(\d+)/g,
+        (match, count, sides) => `${parseInt(count) * 2}d${sides}`
+      );
+      return {
+        formula: criticalFormula,
+        purpose: `Critical damage roll for ${weaponName}`
+      };
+    }
+
+    return {
+      formula: baseFormula,
+      purpose: `Damage roll for ${weaponName}`
+    };
+  }
+
+  /**
+   * Check if a roll result is a critical hit
+   */
+  static isCriticalHit(result: DiceRollResult): boolean {
+    return result.naturalRoll === 20 && result.rolls.some(r => r.dice === 20);
+  }
+
+  /**
+   * Check if a roll result is a critical miss
+   */
+  static isCriticalMiss(result: DiceRollResult): boolean {
+    return result.naturalRoll === 1 && result.rolls.some(r => r.dice === 20);
+  }
+
+  /**
    * Resolve advantage/disadvantage from multiple sources
    */
   static resolveAdvantage(sources: Array<{ advantage?: boolean; disadvantage?: boolean; source: string }>): {
