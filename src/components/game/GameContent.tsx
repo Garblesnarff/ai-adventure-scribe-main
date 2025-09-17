@@ -24,7 +24,7 @@ import { useInitialGreeting } from '@/hooks/use-initial-greeting';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { usePendingRolls } from '@/hooks/use-pending-rolls';
-import { Sword, X, Dice6, ChevronDown } from 'lucide-react';
+import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
 
 /**
  * GameContent Component
@@ -393,14 +393,14 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
   return (
           <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(350px,500px)] gap-4">
+            <div className="max-w-7xl mx-auto p-6 min-h-screen">
+              <div key={sessionId} className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 transition-all duration-300 ease-in-out min-h-screen grid-flow-row-dense">
                 {/* Main Content Area */}
                 <div className="flex-1 lg:col-span-1">
-                  <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden">
+                  <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
                     {/* Enhanced Header with Combat Toggle */}
-                    <div className="p-6 border-b border-border/60 bg-gradient-to-r from-infinite-dark/80 to-card/60">
-                      <div className="flex items-center justify-between">
+                    <div className="p-6 border-b border-border/60 bg-gradient-to-r from-slate-900/80 to-card/60 transition-colors duration-300">
+                      <div className="flex items-center justify-between animate-fade-in">
                         <div className="flex-1">
                           <h1 className="text-2xl font-semibold text-card-foreground mb-2">
                             {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
@@ -424,6 +424,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             variant={combatMode ? "destructive" : "outline"}
                             size="sm"
                             onClick={handleCombatToggle}
+                            className={combatMode ? 'animate-pulse' : ''}
                           >
                             {combatMode ? (
                               <>
@@ -450,7 +451,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                     </div>
 
                     {/* Content Area - Toggle between Chat and Combat */}
-                    <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50">
+                    <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50 transition-all duration-300">
                       {combatMode ? (
                         <CombatInterface />
                       ) : (
@@ -464,7 +465,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <>
-                              <MessageList onSendFullMessage={handleSendMessage} />
+                              <MessageList onSendFullMessage={handleSendMessage} className="overscroll-y-none" />
 
                               {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
                               {isGeneratingGreeting && (
@@ -503,7 +504,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
                               {/* Typing Indicator - shows when AI is responding */}
                               {queueStatus === 'processing' && (
-                                <div className="absolute bottom-24 left-6 z-10 animate-in slide-in-from-left-2 duration-300">
+                                <div className="absolute bottom-24 left-6 z-10 animate-in slide-in-from-left-2 duration-300 md:bottom-20">
                                   <div className="flex items-center gap-3 px-4 py-2 bg-card/90 backdrop-blur-sm border border-border/60 rounded-full shadow-lg">
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center">
                                       <span className="text-xs font-medium text-white">DM</span>
@@ -533,8 +534,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                                 </div>
                               )}
 
-                              {/* Input Area at bottom */}
-                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm">
+                              {/* Input Area at bottom - mobile safe */}
+                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-0">
                                 <ChatInput
                                   onSendMessage={handleSendMessage}
                                   isDisabled={isProcessing || hasPendingRolls}
@@ -550,7 +551,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
                 {/* Collapsible Side Panel */}
                 {!isPanelCollapsed ? (
-                  <div className="lg:col-span-1 min-w-[350px] max-w-[500px]">
+                  <div className="lg:col-span-1 min-w-[350px] max-w-[500px] transition-all duration-300 md:min-w-0">
                     <GameSidePanel 
                       sessionData={sessionData} 
                       updateGameSessionState={updateGameSessionState}
@@ -561,15 +562,16 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                   </div>
                 ) : (
                   <div className="lg:col-span-1 flex justify-end">
-                    {/* Collapsed state: Show toggle button only on large screens */}
-                    <div className="fixed right-4 top-1/2 z-30 lg:relative lg:right-auto lg:top-auto">
+                    {/* Collapsed state: Show toggle button - mobile bottom-right, desktop side */}
+                    <div className="fixed right-4 bottom-4 md:top-1/2 md:bottom-auto z-30 lg:relative lg:right-auto lg:top-auto lg:bottom-auto transition-all duration-300">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setIsPanelCollapsed(false)}
-                        className="rounded-full p-2 h-auto shadow-lg lg:ml-auto"
+                        onClick={() => setIsPanelCollapsed(prev => !prev)}
+                        className="rounded-full p-3 h-auto shadow-lg lg:ml-auto hover:scale-105"
                       >
-                        <ChevronDown className="h-4 w-4 rotate-90 lg:rotate-0" />
+                        <Menu className="h-5 w-5 lg:hidden" />
+                        <ChevronDown className="h-4 w-4 hidden lg:block rotate-90" />
                       </Button>
                     </div>
                   </div>
