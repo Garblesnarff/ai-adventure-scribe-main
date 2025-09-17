@@ -54,11 +54,16 @@ export const useCharacterSave = () => {
           ...character,
           // Use authenticated user ID if available, otherwise use local UUID
           user_id: user?.id || LOCAL_USER_ID,
+          // Ensure languages are stored as array for JSON parsing
+          languages: Array.isArray(character.languages) ? character.languages : character.languages ? character.languages.split(',') : [],
         }),
         ...transformMulticlassingForStorage(character)
       };
 
+      console.log('Saving character data:', characterData);
+
       // For new characters, we need to insert first to get an ID
+      let savedCharacter: Character;
       if (!characterData.id) {
         const { data: newCharacter, error: insertError } = await supabase
           .from('characters')
@@ -68,6 +73,7 @@ export const useCharacterSave = () => {
 
         if (insertError) throw insertError;
         characterData.id = newCharacter.id;
+        savedCharacter = { ...character, id: newCharacter.id };
       } else {
         // For existing characters, we can update
         const { error: updateError } = await supabase
@@ -76,6 +82,7 @@ export const useCharacterSave = () => {
           .eq('id', characterData.id);
 
         if (updateError) throw updateError;
+        savedCharacter = { ...character };
       }
 
       // Transform and save character stats
@@ -92,9 +99,12 @@ export const useCharacterSave = () => {
           onConflict: 'character_id'
         });
 
-      if (statsError) throw statsError;
+      if (statsError) {
+        console.warn('Stats save failed but continuing:', statsError);
+        // Don't throw - character core data saved
+      }
 
-      // Save equipment if present
+      // Save equipment if present (non-blocking)
       if (character.inventory && character.inventory.length > 0) {
         const equipmentData = transformEquipmentForStorage(
           character,
@@ -107,15 +117,11 @@ export const useCharacterSave = () => {
             onConflict: 'character_id,item_name'
           });
 
-        if (equipmentError) throw equipmentError;
+        if (equipmentError) {
+          console.warn('Equipment save failed but continuing:', equipmentError);
+          // Don't throw - character core data saved
+        }
       }
-
-      // Create saved character object with ID
-      const savedCharacter: Character = {
-        ...character,
-        id: characterData.id,
-        user_id: characterData.user_id
-      };
 
       // Generate background image asynchronously for new characters
       // Don't block character creation on image generation
@@ -128,8 +134,8 @@ export const useCharacterSave = () => {
     } catch (error) {
       console.error('Error saving character:', error);
       toast({
-        title: "Error",
-        description: "Failed to save character. Please try again.",
+        title: "Save Error",
+        description: `Failed to save character: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
       return null;

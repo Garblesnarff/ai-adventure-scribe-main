@@ -1,10 +1,11 @@
 /**
  * Character Image Generator Service
  * 
- * Generates character portraits using AI image generation based on D&D character data.
- * Creates detailed prompts from race, class, description, and background information.
+ * Generates character portraits and design sheets using AI image generation based on D&D character data.
+ * Creates detailed prompts from race, class, description, background, equipment, and personality information.
  * 
  * @author AI Dungeon Master Team
+ * @version 2.0 - Added dynamic theme support and detailed character sheet generation
  */
 
 import { openRouterService } from './openrouter-service';
@@ -27,6 +28,7 @@ interface CharacterData {
   personality_traits?: string | null;
   personality_notes?: string | null;
   alignment?: string | null;
+  theme?: string | null; // Theme for design sheet generation (fantasy, cyberpunk, etc.)
   enhancementSelections?: Array<{
     optionId: string;
     value: string | string[] | number;
@@ -47,20 +49,21 @@ interface CharacterImageOptions {
   fallbackToDefault?: boolean;
   style?: 'portrait' | 'action' | 'full-body' | 'character-sheet' | 'expression-sheet';
   artStyle?: 'fantasy-art' | 'anime' | 'realistic' | 'comic-book' | 'watercolor' | 'sketch' | 'oil-painting';
+  theme?: string; // Theme override for generation
   preferredProvider?: ImageGenerationProvider;
 }
 
 /**
- * Service class for generating character portrait images
+ * Service class for generating character images and design sheets
  */
 export class CharacterImageGenerator {
   private maxRetries = 3;
   private defaultFallbackImage = '/default-character-avatar.png';
 
   /**
-   * Generate a portrait image for a D&D character with intelligent provider fallbacks
+   * Generate character image or design sheet with intelligent provider fallbacks
    * @param characterData - Character data to base the image on
-   * @param options - Generation options
+   * @param options - Generation options including style and theme
    * @returns Promise resolving to image URL
    */
   async generateCharacterImage(
@@ -72,11 +75,14 @@ export class CharacterImageGenerator {
       fallbackToDefault = true,
       style = 'portrait',
       artStyle = 'fantasy-art',
+      theme = characterData.theme || options.theme || 'fantasy', // Use character theme, options theme, or default
       preferredProvider
     } = options;
 
-    const prompt = this.createImagePrompt(characterData, style, artStyle);
-    console.log('Generating character image with prompt:', prompt);
+    console.log(`Generating ${style} with theme: ${theme}, artStyle: ${artStyle}`);
+    
+    const prompt = this.createImagePrompt(characterData, style, artStyle, theme);
+    console.log('Generated prompt:', prompt);
 
     // Determine the provider order based on preference and availability
     const providerOrder = this.getProviderOrder(preferredProvider);
@@ -191,7 +197,6 @@ export class CharacterImageGenerator {
     throw new Error('Max retries exceeded for Gemini direct');
   }
 
-
   /**
    * Generate image using OpenRouter paid tier
    * @param prompt - Image generation prompt
@@ -223,13 +228,14 @@ export class CharacterImageGenerator {
   }
 
   /**
-   * Create a detailed character portrait prompt based on character data
+   * Create a detailed character image prompt based on character data
    * @param characterData - Character attributes
    * @param style - Image composition style
    * @param artStyle - Art style preference
+   * @param theme - Theme for design sheet (fantasy, cyberpunk, sci-fi, etc.)
    * @returns Formatted prompt string
    */
-  private createImagePrompt(characterData: CharacterData, style: string, artStyle: string): string {
+  private createImagePrompt(characterData: CharacterData, style: string, artStyle: string, theme: string): string {
     const promptParts: string[] = [];
 
     // Extract key physical details from descriptions
@@ -247,23 +253,31 @@ export class CharacterImageGenerator {
         promptParts.push('Full body D&D character portrait, standing pose, complete outfit and equipment visible');
         break;
       case 'character-sheet':
-        promptParts.push('D&D character turnaround sheet, multiple views of the same character, front view, side profile, back view, and 3/4 angle, consistent character across all poses');
+        const characterConcept = this.buildCharacterConcept(characterData, extractedDetails);
+        const designSheetPrompt = `Character design sheet for ${characterConcept}, detailed with front, back, and side views, including close-up sketches of facial features and accessories, annotated with design notes and labeled components, drawn in blueprint style with glowing trim in ${theme}. Detailed line work on the face and hands, detailed anatomy of the character, detailed lines around the edges. Detailed character sketches with flat color and detailed line art illustration. Professional concept art style.`;
+        promptParts.push(designSheetPrompt);
+        console.log('Generated design sheet concept:', characterConcept);
+        console.log('Full design sheet prompt:', designSheetPrompt);
         break;
       case 'expression-sheet':
         promptParts.push('D&D character expression sheet, same character with multiple facial expressions, happy, serious, angry, surprised, consistent character');
         break;
     }
 
-    // Build character description
-    const characterDesc = this.buildCharacterDescription(characterData, extractedDetails);
-    promptParts.push(characterDesc);
+    // For non-character-sheet styles, build character description
+    if (style !== 'character-sheet') {
+      const characterDesc = this.buildCharacterDescription(characterData, extractedDetails);
+      promptParts.push(characterDesc);
+    }
 
-    // Add art style
-    promptParts.push(this.getArtStylePrompt(artStyle));
+    // Add art style (for non-character-sheet styles)
+    if (style !== 'character-sheet') {
+      promptParts.push(this.getArtStylePrompt(artStyle));
+    }
 
     // Add composition requirements
     if (style === 'character-sheet' || style === 'expression-sheet') {
-      promptParts.push('Clean white background, organized layout, professional character reference');
+      promptParts.push('Clean white background, organized layout, professional character reference, consistent character design across all views');
     } else {
       promptParts.push('Clean background, character as main focus, professional composition');
     }
@@ -328,7 +342,7 @@ export class CharacterImageGenerator {
   }
 
   /**
-   * Build comprehensive character description from all available data
+   * Build comprehensive character description from all available data for non-sheet styles
    */
   private buildCharacterDescription(characterData: CharacterData, extractedDetails: any): string {
     const descParts: string[] = [];
@@ -387,7 +401,6 @@ export class CharacterImageGenerator {
 
     // Add personality notes for visual character traits
     if (characterData.personality_notes) {
-      // Extract visually relevant personality traits
       const personalityVisuals = this.extractVisualPersonalityTraits(characterData.personality_notes);
       if (personalityVisuals.length > 0) {
         descParts.push(personalityVisuals.join(', '));
@@ -398,7 +411,219 @@ export class CharacterImageGenerator {
   }
 
   /**
-   * Get art style specific prompting
+   * Build detailed character concept for design sheet prompts
+   * Combines race, class, appearance, outfit, weapons, and personality traits into a cohesive description
+   */
+  private buildCharacterConcept(characterData: CharacterData, extractedDetails: any): string {
+    const conceptParts: string[] = [];
+
+    // Core identity: race + class
+    if (characterData.race && characterData.class) {
+      conceptParts.push(`${characterData.race} ${characterData.class}`);
+    } else if (characterData.race) {
+      conceptParts.push(characterData.race);
+    } else if (characterData.class) {
+      conceptParts.push(characterData.class);
+    }
+
+    // Appearance description (if available)
+    if (characterData.appearance) {
+      conceptParts.push(characterData.appearance);
+    }
+
+    // Physical features from extraction
+    if (extractedDetails.physicalFeatures.length > 0) {
+      conceptParts.push(extractedDetails.physicalFeatures.join(' '));
+    }
+
+    // Outfit and equipment description
+    const outfitParts: string[] = [];
+    if (characterData.class) {
+      // Get class-specific styling and equipment
+      const classStyle = this.getClassPrompt(characterData.class);
+      if (classStyle) {
+        outfitParts.push(classStyle);
+      }
+    }
+    
+    // Add extracted equipment
+    if (extractedDetails.equipment.length > 0) {
+      outfitParts.push(...extractedDetails.equipment);
+    }
+    
+    // Add enhancement equipment
+    if (characterData.enhancementEffects?.equipment && characterData.enhancementEffects.equipment.length > 0) {
+      outfitParts.push(...characterData.enhancementEffects.equipment);
+    }
+    
+    if (outfitParts.length > 0) {
+      // Create concise outfit description
+      const outfitSummary = this.summarizeOutfit(outfitParts);
+      conceptParts.push(outfitSummary);
+    }
+
+    // Weapons description
+    const weaponParts: string[] = [];
+    if (characterData.class) {
+      const classWeapons = this.extractWeaponsFromClass(characterData.class);
+      if (classWeapons.length > 0) {
+        weaponParts.push(...classWeapons);
+      }
+    }
+    if (characterData.enhancementSelections) {
+      const enhancementWeapons = this.extractWeaponsFromEnhancements(characterData.enhancementSelections);
+      if (enhancementWeapons.length > 0) {
+        weaponParts.push(...enhancementWeapons);
+      }
+    }
+    if (weaponParts.length > 0) {
+      const weaponsSummary = this.summarizeWeapons(weaponParts);
+      conceptParts.push(weaponsSummary);
+    }
+
+    // Personality traits influencing visual appearance
+    if (characterData.personality_traits) {
+      const personalityVisuals = this.extractVisualPersonalityTraits(characterData.personality_traits);
+      if (personalityVisuals.length > 0) {
+        conceptParts.push(...personalityVisuals);
+      }
+    }
+
+    // Distinguishing marks
+    if (extractedDetails.distinguishingMarks.length > 0) {
+      conceptParts.push(...extractedDetails.distinguishingMarks);
+    }
+
+    // Join all parts into a cohesive concept description
+    const fullConcept = conceptParts.join(', ');
+    console.log('Built character concept:', fullConcept);
+    return fullConcept;
+  }
+
+  /**
+   * Summarize outfit description for concise prompt
+   */
+  private summarizeOutfit(outfitParts: string[]): string {
+    if (outfitParts.length === 0) return '';
+    
+    // Group similar items and create summary
+    const armorTypes = outfitParts.filter(part => 
+      part.includes('armor') || part.includes('chainmail') || part.includes('plate') || part.includes('leather')
+    );
+    const clothingTypes = outfitParts.filter(part => 
+      part.includes('robe') || part.includes('cloak') || part.includes('vestments') || part.includes('clothing')
+    );
+    const accessories = outfitParts.filter(part => 
+      part.includes('symbol') || part.includes('focus') || part.includes('instrument') || part.includes('book')
+    );
+
+    const summaryParts: string[] = [];
+    
+    if (armorTypes.length > 0) {
+      summaryParts.push(armorTypes[0].split(' with ')[0]); // Take base armor type
+    }
+    if (clothingTypes.length > 0) {
+      summaryParts.push(clothingTypes[0]);
+    }
+    if (accessories.length > 0) {
+      summaryParts.push(accessories[0]);
+    }
+
+    return `wearing ${summaryParts.join(' and ')}`;
+  }
+
+  /**
+   * Summarize weapons for concise prompt
+   */
+  private summarizeWeapons(weaponParts: string[]): string {
+    if (weaponParts.length === 0) return '';
+    
+    // Prioritize primary weapons
+    const primaryWeapons = weaponParts.filter(w => 
+      w.includes('sword') || w.includes('axe') || w.includes('staff') || w.includes('bow')
+    );
+    const secondaryWeapons = weaponParts.filter(w => 
+      !primaryWeapons.includes(w) && (w.includes('dagger') || w.includes('mace'))
+    );
+
+    const summary = primaryWeapons.length > 0 
+      ? `armed with ${primaryWeapons.join(' and ')}`
+      : `armed with ${weaponParts[0]}`;
+
+    return summary;
+  }
+
+  /**
+   * Extract weapons from class description
+   */
+  private extractWeaponsFromClass(characterClass: string): string[] {
+    const classWeaponsMap: Record<string, string[]> = {
+      'barbarian': ['greataxe', 'battleaxe'],
+      'fighter': ['longsword', 'shield'],
+      'paladin': ['longsword', 'mace', 'shield'],
+      'ranger': ['longbow', 'shortsword'],
+      'rogue': ['rapier', 'dagger'],
+      'bard': ['rapier', 'dagger'],
+      'cleric': ['mace', 'shield'],
+      'druid': ['quarterstaff', 'scimitar'],
+      'monk': ['quarterstaff', 'unarmed strikes'],
+      'sorcerer': ['light crossbow', 'dagger'],
+      'warlock': ['light crossbow', 'eldritch blast'],
+      'wizard': ['quarterstaff', 'dagger'],
+      'artificer': ['hand crossbow', 'simple weapon'],
+      'blood hunter': ['greatsword', 'hand crossbow'],
+    };
+
+    const weapons = classWeaponsMap[characterClass.toLowerCase()] || ['appropriate weapons'];
+    return weapons;
+  }
+
+  /**
+   * Extract weapons from enhancement selections
+   */
+  private extractWeaponsFromEnhancements(enhancementSelections: Array<{
+    optionId: string;
+    value: string | string[] | number;
+    customValue?: string;
+    aiGenerated?: boolean;
+  }>): string[] {
+    const weapons: string[] = [];
+
+    enhancementSelections.forEach(selection => {
+      const value = Array.isArray(selection.value) ? selection.value.join(' ') : String(selection.value);
+      const combined = `${value} ${selection.customValue || ''}`.toLowerCase();
+
+      if (combined.includes('sword') || combined.includes('blade')) {
+        weapons.push('sword');
+      }
+      if (combined.includes('axe')) {
+        weapons.push('axe');
+      }
+      if (combined.includes('bow') || combined.includes('arrow')) {
+        weapons.push('bow');
+      }
+      if (combined.includes('dagger') || combined.includes('knife')) {
+        weapons.push('dagger');
+      }
+      if (combined.includes('mace') || combined.includes('hammer')) {
+        weapons.push('mace');
+      }
+      if (combined.includes('staff') || combined.includes('quarterstaff')) {
+        weapons.push('quarterstaff');
+      }
+      if (combined.includes('crossbow')) {
+        weapons.push('crossbow');
+      }
+      if (combined.includes('spear') || combined.includes('lance')) {
+        weapons.push('spear');
+      }
+    });
+
+    return [...new Set(weapons)]; // Remove duplicates
+  }
+
+  /**
+   * Get art style specific prompting for non-sheet styles
    */
   private getArtStylePrompt(artStyle: string): string {
     const styleMap: Record<string, string> = {
@@ -419,70 +644,70 @@ export class CharacterImageGenerator {
    */
   private getRacePrompt(race: string): string {
     const raceMap: Record<string, string> = {
-      'human': 'Human features with medium build, varied skin tones, expressive face.',
-      'elf': 'Elven features with pointed ears, graceful build, ethereal beauty, bright eyes.',
-      'dwarf': 'Dwarven features with stocky build, impressive beard, sturdy appearance, weathered skin.',
-      'halfling': 'Halfling features with small stature, cheerful expression, curly hair, bare feet.',
-      'dragonborn': 'Dragonborn features with draconic scales, reptilian head, proud bearing, breath weapon hints.',
-      'gnome': 'Gnomish features with small size, large nose, twinkling eyes, mischievous expression.',
-      'half-elf': 'Half-elf features blending human and elven traits, slightly pointed ears, elegant build.',
-      'half-orc': 'Half-orc features with tusks, green-tinted skin, muscular build, fierce expression.',
-      'tiefling': 'Tiefling features with horns, tail, unusual skin color, demonic heritage, piercing eyes.',
-      'celestialborn': 'Celestialborn features with celestial beauty, subtle divine radiance, perfect proportions.',
-      'elementalborn': 'Elementalborn features with elemental manifestations, unique skin patterns, elemental aura.',
-      'catfolk': 'Catfolk features with feline characteristics, fur patterns, cat-like agility, whiskers.',
-      'ravenfolk': 'Ravenfolk features with raven-like appearance, black feathers, beak, dark eyes.',
-      'lizardfolk': 'Lizardfolk features with reptilian scales, crocodilian head, primitive appearance.',
-      'tortle': 'Tortle features with turtle-like shell, reptilian head, wise expression.',
+      'human': 'human features with varied skin tones and expressive face',
+      'elf': 'elven features with pointed ears, graceful build, and ethereal beauty',
+      'dwarf': 'dwarven features with stocky build, beard, and sturdy appearance',
+      'halfling': 'halfling features with small stature and cheerful expression',
+      'dragonborn': 'dragonborn features with draconic scales and proud bearing',
+      'gnome': 'gnomish features with small size and mischievous expression',
+      'half-elf': 'half-elf features blending human and elven traits',
+      'half-orc': 'half-orc features with tusks and muscular build',
+      'tiefling': 'tiefling features with horns, tail, and infernal heritage',
+      'celestialborn': 'celestialborn features with divine radiance',
+      'elementalborn': 'elementalborn features with elemental manifestations',
+      'catfolk': 'catfolk features with feline characteristics and agility',
+      'ravenfolk': 'ravenfolk features with avian characteristics',
+      'lizardfolk': 'lizardfolk features with reptilian scales',
+      'tortle': 'tortle features with turtle shell and wise expression',
     };
 
-    return raceMap[race.toLowerCase()] || `${race} racial features with appropriate fantasy characteristics.`;
+    return raceMap[race.toLowerCase()] || `${race.toLowerCase()} racial features`;
   }
 
   /**
-   * Get class-specific equipment and styling
+   * Get class-specific equipment and styling description
    */
   private getClassPrompt(characterClass: string): string {
     const classMap: Record<string, string> = {
-      'barbarian': 'Barbarian with primitive weapons, animal pelts, fierce expression, tribal markings.',
-      'bard': 'Bard with musical instrument, colorful clothing, charismatic smile, artistic accessories.',
-      'cleric': 'Cleric with holy symbol, divine armor, peaceful expression, religious vestments.',
-      'druid': 'Druid with natural materials, earth tones, animal companions, nature magic aura.',
-      'fighter': 'Fighter with martial weapons, practical armor, battle-tested equipment, warrior stance.',
-      'monk': 'Monk with simple robes, martial arts pose, serene expression, minimal equipment.',
-      'paladin': 'Paladin with shining armor, holy weapons, righteous bearing, divine radiance.',
-      'ranger': 'Ranger with bow and arrows, leather armor, nature camouflage, tracking gear.',
-      'rogue': 'Rogue with dark clothing, daggers, stealthy posture, tools and lockpicks.',
-      'sorcerer': 'Sorcerer with innate magic aura, elemental effects, mysterious appearance, arcane symbols.',
-      'warlock': 'Warlock with dark magic signs, otherworldly patron marks, eldritch energy, occult accessories.',
-      'wizard': 'Wizard with spellbook, arcane focus, scholarly robes, magical components, intelligent gaze.',
-      'artificer': 'Artificer with magical inventions, mechanical gadgets, crafting tools, innovative gear.',
-      'blood hunter': 'Blood hunter with scarred appearance, dark weapons, hunter markings, grim determination.',
+      'barbarian': 'wearing animal pelts and tribal markings',
+      'bard': 'wearing colorful clothing with artistic accessories',
+      'cleric': 'wearing religious vestments with holy symbol',
+      'druid': 'wearing natural materials in earth tones',
+      'fighter': 'wearing practical armor with martial equipment',
+      'monk': 'wearing simple robes for martial arts',
+      'paladin': 'wearing shining armor with holy symbols',
+      'ranger': 'wearing leather armor with nature camouflage',
+      'rogue': 'wearing dark clothing with stealth tools',
+      'sorcerer': 'with innate magic aura and arcane symbols',
+      'warlock': 'with eldritch energy and occult accessories',
+      'wizard': 'wearing scholarly robes with spellbook',
+      'artificer': 'with mechanical gadgets and crafting tools',
+      'blood hunter': 'with scarred appearance and hunter gear',
     };
 
-    return classMap[characterClass.toLowerCase()] || `${characterClass} with appropriate class equipment and styling.`;
+    return classMap[characterClass.toLowerCase()] || `${characterClass.toLowerCase()} class attire`;
   }
 
   /**
-   * Get background-specific environmental or equipment hints
+   * Get background-specific visual elements
    */
   private getBackgroundPrompt(background: string): string {
     const backgroundMap: Record<string, string> = {
-      'acolyte': 'Religious background with temple accessories, prayer beads, devotional items.',
-      'criminal': 'Criminal background with street clothes, hidden weapons, streetwise appearance.',
-      'folk hero': 'Folk hero background with simple but well-maintained gear, community symbols.',
-      'noble': 'Noble background with fine clothes, jewelry, aristocratic bearing, quality materials.',
-      'sage': 'Sage background with books, scrolls, scholarly accessories, intellectual appearance.',
-      'soldier': 'Military background with disciplined posture, uniform elements, battle experience.',
-      'charlatan': 'Charlatan background with deceptive appearance, multiple identities, tricks.',
-      'entertainer': 'Entertainer background with performance accessories, flashy clothes, stage presence.',
-      'guild artisan': 'Artisan background with craft tools, work clothes, skilled hands, trade symbols.',
-      'hermit': 'Hermit background with simple robes, walking stick, withdrawn appearance, wisdom.',
-      'outlander': 'Outlander background with survival gear, weathered appearance, natural elements.',
-      'sailor': 'Sailor background with maritime clothes, rope accessories, sea-weathered skin.',
+      'acolyte': 'with religious accessories and prayer beads',
+      'criminal': 'with streetwise appearance and hidden weapons',
+      'folk hero': 'with simple but well-maintained community gear',
+      'noble': 'with fine clothes and aristocratic jewelry',
+      'sage': 'with scholarly accessories and books',
+      'soldier': 'with military uniform and disciplined posture',
+      'charlatan': 'with deceptive accessories and multiple identities',
+      'entertainer': 'with performance accessories and flashy clothes',
+      'guild artisan': 'with craft tools and trade symbols',
+      'hermit': 'with simple robes and walking stick',
+      'outlander': 'with survival gear and weathered appearance',
+      'sailor': 'with maritime clothes and sea-weathered look',
     };
 
-    return backgroundMap[background.toLowerCase()] || `Background as ${background} with appropriate thematic elements.`;
+    return backgroundMap[background.toLowerCase()] || `${background.toLowerCase()} background elements`;
   }
 
   /**
@@ -490,25 +715,22 @@ export class CharacterImageGenerator {
    */
   private getAlignmentPrompt(alignment: string): string {
     const alignmentMap: Record<string, string> = {
-      'lawful good': 'Noble and righteous expression, lawful bearing, heroic confidence.',
-      'neutral good': 'Kind and compassionate expression, balanced demeanor, helpful nature.',
-      'chaotic good': 'Free-spirited expression, rebellious confidence, good-hearted mischief.',
-      'lawful neutral': 'Disciplined expression, orderly appearance, duty-bound demeanor.',
-      'true neutral': 'Balanced expression, pragmatic appearance, measured demeanor.',
-      'chaotic neutral': 'Unpredictable expression, free-spirited appearance, wild energy.',
-      'lawful evil': 'Controlled malevolence, tyrannical bearing, cold calculation.',
-      'neutral evil': 'Selfish expression, opportunistic demeanor, amoral confidence.',
-      'chaotic evil': 'Malevolent chaos, destructive energy, unpredictable danger.',
+      'lawful good': 'noble and righteous expression',
+      'neutral good': 'kind and compassionate expression',
+      'chaotic good': 'free-spirited and good-hearted expression',
+      'lawful neutral': 'disciplined and orderly expression',
+      'true neutral': 'balanced and pragmatic expression',
+      'chaotic neutral': 'unpredictable and wild expression',
+      'lawful evil': 'controlled and calculating expression',
+      'neutral evil': 'selfish and opportunistic expression',
+      'chaotic evil': 'malevolent and destructive expression',
     };
 
-    return alignmentMap[alignment.toLowerCase()] || 'Balanced expression reflecting character alignment.';
+    return alignmentMap[alignment.toLowerCase()] || 'balanced expression';
   }
-
 
   /**
    * Extract visually relevant elements from character enhancement selections
-   * @param enhancementSelections - Array of selected enhancement options
-   * @returns Array of visual descriptors based on enhancement content
    */
   private extractEnhancementVisuals(enhancementSelections: Array<{
     optionId: string;
@@ -560,7 +782,7 @@ export class CharacterImageGenerator {
         visualElements.push('unique posture');
       }
       if (combined.includes('familiar') || combined.includes('companion') || combined.includes('pet')) {
-        visualElements.push('animal companion nearby');
+        visualElements.push('animal companion');
       }
     });
 
@@ -569,28 +791,26 @@ export class CharacterImageGenerator {
   }
 
   /**
-   * Extract visually relevant personality traits from personality notes
-   * @param personalityNotes - User's personality notes
-   * @returns Array of visual descriptors
+   * Extract visually relevant personality traits from notes or traits
    */
-  private extractVisualPersonalityTraits(personalityNotes: string): string[] {
-    const notes = personalityNotes.toLowerCase();
+  private extractVisualPersonalityTraits(personalityText: string): string[] {
+    const notes = personalityText.toLowerCase();
     const visualTraits: string[] = [];
 
     // Nervous traits
     if (notes.includes('tourettes') || notes.includes('tics')) {
-      visualTraits.push('subtle facial tics or nervous expressions');
+      visualTraits.push('subtle facial tics');
     }
     if (notes.includes('fidgety') || notes.includes('restless')) {
       visualTraits.push('fidgety posture');
     }
     if (notes.includes('anxious') || notes.includes('nervous')) {
-      visualTraits.push('slightly anxious expression');
+      visualTraits.push('anxious expression');
     }
 
     // Confident traits
     if (notes.includes('confident') || notes.includes('bold')) {
-      visualTraits.push('confident stance and expression');
+      visualTraits.push('confident stance');
     }
     if (notes.includes('proud') || notes.includes('arrogant')) {
       visualTraits.push('proud bearing');
@@ -601,10 +821,10 @@ export class CharacterImageGenerator {
       visualTraits.push('shy demeanor');
     }
     if (notes.includes('friendly') || notes.includes('warm')) {
-      visualTraits.push('warm, friendly expression');
+      visualTraits.push('warm expression');
     }
 
-    // Physical quirks
+    // Physical quirks from personality
     if (notes.includes('scar') || notes.includes('scarred')) {
       visualTraits.push('visible scars');
     }

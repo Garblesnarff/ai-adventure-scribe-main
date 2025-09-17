@@ -63,7 +63,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
 
   // Calculate the actual roll formula with character modifiers
   const rollCalculation = useMemo(() => {
-    // For damage rolls, ALWAYS use the exact formula from the DM
+    // For damage rolls, ALWAYS use the exact formula from the DM - no modifier calculations
     if (request.type === 'damage') {
       return {
         formula: request.formula,
@@ -73,7 +73,8 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
       };
     }
 
-    if (!character) {
+    // If formula already has numbers (like "1d20+5"), use it as-is - no modifier calculations
+    if (/\d+d\d+[+\-]\d+/.test(request.formula)) {
       return {
         formula: request.formula,
         breakdown: [request.formula],
@@ -82,8 +83,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
       };
     }
 
-    // If formula already has numbers (like "1d20+5"), use it as-is
-    if (/\d+d\d+[+\-]\d+/.test(request.formula)) {
+    if (!character) {
       return {
         formula: request.formula,
         breakdown: [request.formula],
@@ -215,7 +215,6 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
       totalResult = 0;
     }
 
-    console.log('[DiceRollRequest] Calling onManualResult with:', totalResult);
     onManualResult(totalResult);
   };
 

@@ -1,10 +1,11 @@
 /**
  * Character Background Generator Service
  *
- * Generates background images for character cards using AI image generation.
- * Creates dynamic prompts based on character attributes like race, class, description, etc.
+ * Generates character card backgrounds using AI image generation with reference to character sheet.
+ * Creates themed card backgrounds with character integration and text overlay.
  *
  * @author AI Dungeon Master Team
+ * @version 2.1 - Added reference image support with text overlay
  */
 
 import { openRouterService } from './openrouter-service';
@@ -13,19 +14,20 @@ import { Character } from '@/types/character';
 interface ImageGenerationOptions {
   retryAttempts?: number;
   fallbackToDefault?: boolean;
-  referenceImageUrl?: string; // URL of character portrait image to use as reference
+  referenceImageUrl?: string;
+  useSimplifiedPrompt?: boolean;
 }
 
 /**
- * Service class for generating character background images
+ * Service class for generating character card backgrounds
  */
 export class CharacterBackgroundGenerator {
-  private maxRetries = 3;
+  private maxRetries = 2;
   private defaultFallbackImage = '/card-background.jpeg';
 
   /**
-   * Generate a background image for a character
-   * @param character - Character data to base the image on
+   * Generate a character card background using the character sheet as reference
+   * @param character - Character data to base the card on
    * @param options - Generation options
    * @returns Promise resolving to image URL
    */
@@ -36,8 +38,10 @@ export class CharacterBackgroundGenerator {
     const { retryAttempts = this.maxRetries, fallbackToDefault = true, referenceImageUrl } = options;
 
     try {
+      console.log('Generating character card background with reference image:', referenceImageUrl ? 'yes' : 'no');
+      
       const prompt = this.createImagePrompt(character, !!referenceImageUrl);
-      console.log('Generating character background with prompt:', prompt);
+      console.log('Background generation prompt:', prompt);
 
       let referenceImageBase64: string | undefined;
 
@@ -45,16 +49,16 @@ export class CharacterBackgroundGenerator {
       if (referenceImageUrl) {
         try {
           referenceImageBase64 = await this.convertImageUrlToBase64(referenceImageUrl);
-          console.log('Successfully converted reference image to base64');
+          console.log('Successfully converted reference character sheet to base64');
         } catch (error) {
-          console.warn('Failed to convert reference image to base64, proceeding without reference:', error);
+          console.warn('Failed to convert reference image to base64, proceeding without vision input:', error);
         }
       }
 
       const base64Image = await this.generateWithRetry(prompt, retryAttempts, referenceImageBase64);
       const imageUrl = await openRouterService.uploadImage(base64Image);
 
-      console.log('Successfully generated character background');
+      console.log('Successfully generated character card background');
       return imageUrl;
 
     } catch (error) {
@@ -70,7 +74,7 @@ export class CharacterBackgroundGenerator {
   }
 
   /**
-   * Create a detailed image generation prompt based on character data
+   * Create image generation prompt for character card background
    * @param character - Character attributes
    * @param hasReferenceImage - Whether a reference image is being used
    * @returns Formatted prompt string
@@ -78,128 +82,59 @@ export class CharacterBackgroundGenerator {
   private createImagePrompt(character: Character, hasReferenceImage: boolean = false): string {
     const promptParts: string[] = [];
 
+    const name = character.name || 'Unknown Adventurer';
+    const race = character.race?.name || 'mysterious';
+    const characterClass = character.class?.name || 'adventurer';
+
     if (hasReferenceImage) {
-      // When using reference image, focus on creating a background that complements the character
-      promptParts.push("Using the provided character image as reference, generate a fantasy-style character card background that maintains the character's visual style and identity.");
+      // Vision-enabled prompt: Use reference character sheet image
+      promptParts.push(
+        "Using the provided character sheet image as reference, generate a complete fantasy character card.",
+        "The reference image shows the character from multiple angles with detailed design.",
+        `The character is ${name}, a ${race} ${characterClass}.`,
+        "Create a square card background (1:1 aspect ratio) with the character centered.",
+        "Place the character from the reference image in the center of the card.",
+        "Add a thematic fantasy background that complements the character's race and class.",
+        "Include elegant text overlay at the bottom: '[name]' on the first line, '[race] [class]' on the second line.",
+        "Use fantasy-style typography with subtle glow or shadow effects.",
+        "The text should be readable and match the fantasy theme without overwhelming the character.",
+        "Background should frame the character without distracting from them - subtle mystical elements, atmospheric lighting.",
+        "Ensure the final image is a complete character card ready for display."
+      );
 
-      // Add character context to ensure background is appropriate
-      const name = character.name || 'Unknown Adventurer';
-      const race = character.race?.name || 'mysterious';
-      const characterClass = character.class?.name || 'adventurer';
-
-      promptParts.push(`This is ${name}, a ${race} ${characterClass}.`);
-
-      if (character.description?.trim()) {
-        promptParts.push(`Character details: ${character.description.trim()}`);
+      // Theme based on race/class
+      if (race.includes('elf')) {
+        promptParts.push('Theme: Mystical forest or ancient elven architecture with soft glowing lights');
+      } else if (race.includes('dwarf')) {
+        promptParts.push('Theme: Stone mountain hall or forge with warm torchlight');
+      } else if (characterClass.includes('wizard') || characterClass.includes('sorcerer')) {
+        promptParts.push('Theme: Arcane library or magical ritual circle with floating runes');
+      } else if (characterClass.includes('barbarian') || characterClass.includes('fighter')) {
+        promptParts.push('Theme: Rugged wilderness camp or ancient battleground ruins');
+      } else {
+        promptParts.push('Theme: Classic fantasy landscape with mystical elements');
       }
-
-      promptParts.push("Create an epic fantasy card background that complements this character while maintaining their visual consistency. The background should enhance the character without overwhelming them, creating a perfect card game aesthetic.");
     } else {
-      // Original logic when no reference image is available
-      promptParts.push("Can i get a 1:1 image of my D&D character:");
-
-      // Add character description (core element)
-      const characterDescription = character.description?.trim() ||
-        this.createFallbackDescription(character);
-      promptParts.push(characterDescription);
-
-      // Add fitting background request
-      promptParts.push("Can i get a fitting background for this character");
+      // Text-only prompt for fallback
+      promptParts.push(
+        `Create a complete fantasy character card for ${name}, a ${race} ${characterClass}`,
+        "Square 1:1 aspect ratio card format.",
+        "Center a fantasy character illustration matching the description.",
+        "Add thematic background appropriate for race and class.",
+        "Include text overlay: '[name]' on first line, '[race] [class]' on second line in elegant fantasy font.",
+        "Professional fantasy card art style with atmospheric lighting."
+      );
     }
 
-    // Add prominent text overlay requirements (only for non-reference image generation)
-    if (!hasReferenceImage) {
-      const name = character.name || 'Unknown Adventurer';
-      const race = character.race?.name || 'mysterious';
-      const characterClass = character.class?.name || 'adventurer';
-
-      promptParts.push(`Can i get its name "${name}", race "${race}", and class "${characterClass}" displayed prominently on the image.`);
-    }
-
-    // Style and technical requirements
+    // Common style requirements
     promptParts.push(
-      "Style: Epic fantasy portrait background art, cinematic composition, rich colors, detailed environment.",
-      "Format: Square 1:1 aspect ratio format suitable for card background with integrated character information text overlay.",
-      "Quality: High detail, professional digital art style, atmospheric lighting.",
-      "Text Integration: The character's name, race, and class must be rendered clearly as part of the image composition with proper typography, shadows, and effects that complement the fantasy theme.",
-      "Composition: Focus on the character as the main subject, with background elements that enhance their personality and background."
+      "Style: Epic fantasy character card art, high detail, professional digital illustration.",
+      "Composition: Character centered, text at bottom, balanced design.",
+      "Quality: High resolution, rich colors, atmospheric lighting, no artifacts.",
+      "Format: Square 1:1 aspect ratio, suitable for card display."
     );
 
     return promptParts.join('\n\n');
-  }
-
-  /**
-   * Create fallback description when character description is missing
-   * @param character - Character data
-   * @returns Generated fallback description
-   */
-  private createFallbackDescription(character: Character): string {
-    const parts: string[] = [];
-
-    const race = character.race?.name || 'mysterious';
-    const className = character.class?.name || 'adventurer';
-    const background = character.background?.name || character.background;
-    const level = character.level || 1;
-
-    parts.push(`A level ${level} ${race} ${className} with ${this.getAbilitySummary(character)} abilities.`);
-
-    if (background) {
-      parts.push(`They come from a ${background} background and have the following proficiencies: ${this.getProficienciesSummary(character)}.`);
-    }
-
-    if (character.alignment) {
-      parts.push(`This character's alignment is ${character.alignment}, giving them a distinct personality and moral compass.`);
-    }
-
-    if (character.personality_traits || character.appearance) {
-      const traits: string[] = [];
-      if (character.personality_traits) traits.push(`personality: ${character.personality_traits}`);
-      if (character.appearance) traits.push(`appearance: ${character.appearance}`);
-      parts.push(`They are known for their ${traits.join(' and ')}.`);
-    }
-
-    return parts.join(' ');
-  }
-
-  /**
-   * Get ability scores summary for fallback description
-   */
-  private getAbilitySummary(character: Character): string {
-    if (!character.abilityScores) return 'balanced';
-
-    const abilities = character.abilityScores;
-    const modifiers: string[] = [];
-
-    // Only include notable modifiers (4+)
-    if (abilities.strength.modifier >= 4) modifiers.push('strong');
-    if (abilities.dexterity.modifier >= 4) modifiers.push('nimble');
-    if (abilities.constitution.modifier >= 4) modifiers.push('tough');
-    if (abilities.intelligence.modifier >= 4) modifiers.push('intelligent');
-    if (abilities.wisdom.modifier >= 4) modifiers.push('wise');
-    if (abilities.charisma.modifier >= 4) modifiers.push('charismatic');
-
-    return modifiers.length > 0 ? modifiers.slice(0, 2).join(' and ') : 'balanced';
-  }
-
-  /**
-   * Get proficiencies summary for fallback description
-   */
-  private getProficienciesSummary(character: Character): string {
-    const profs: string[] = [];
-
-    if (character.skillProficiencies?.length) {
-      profs.push(`skills in ${character.skillProficiencies.slice(0, 3).join(', ')}`);
-    }
-
-    if (character.toolProficiencies?.length) {
-      profs.push(`tools including ${character.toolProficiencies.slice(0, 2).join(', ')}`);
-    }
-
-    if (character.languages?.length) {
-      profs.push(`languages: ${character.languages.slice(0, 3).join(', ')}`);
-    }
-
-    return profs.length > 0 ? profs.join(', and ') : 'various skills';
   }
 
   /**
@@ -210,14 +145,20 @@ export class CharacterBackgroundGenerator {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`Background generation attempt ${attempt}/${maxAttempts}`);
-        return await openRouterService.generateImage({ prompt, referenceImage });
+        console.log(`Card background generation attempt ${attempt}/${maxAttempts}`);
+
+        // Use Gemini model for vision + text capability
+        const base64Image = await openRouterService.generateImage({
+          prompt,
+          model: 'google/gemini-2.5-flash-preview' // Vision-capable model
+        });
+
+        return base64Image;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
         console.warn(`Attempt ${attempt} failed:`, lastError.message);
 
         if (attempt < maxAttempts) {
-          // Wait before retry with exponential backoff
           const waitTime = Math.pow(2, attempt - 1) * 1000;
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
@@ -234,22 +175,18 @@ export class CharacterBackgroundGenerator {
    */
   private async convertImageUrlToBase64(imageUrl: string): Promise<string> {
     try {
-      // Fetch the image
       const response = await fetch(imageUrl);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
       }
 
-      // Convert to blob
       const blob = await response.blob();
 
-      // Convert blob to base64
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const dataUrl = reader.result as string;
-          // Extract base64 data without the data URL prefix
           const base64Data = dataUrl.split(',')[1];
           resolve(base64Data);
         };
