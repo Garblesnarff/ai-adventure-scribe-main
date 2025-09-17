@@ -129,35 +129,60 @@ PARTICIPANTS:`;
   contextText += `
 
 **COMBAT RESPONSE REQUIREMENTS:**
-When combat is detected or active, you MUST:
-1. **REQUEST ALL PLAYER DICE ROLLS**: Players roll for their own actions
-   - Initiative: "Everyone roll initiative! (1d20+dex modifier)"
-   - Player attacks: "Make an attack roll with your [weapon] (1d20+attack bonus) against AC [number]"
-   - Player saves: "Make a [ability] saving throw (1d20+modifier, DC [number])"
-   - Player damage: "Roll damage for your [weapon/spell] ([dice notation])"
+When combat is detected or active, you MUST follow this EXACT sequence:
 
-2. **HANDLE NPC ACTIONS BEHIND SCREEN**: DM controls NPC rolls
-   - "The orc attacks (rolled behind screen, hits AC 15) for 8 slashing damage"
-   - "The goblin makes its saving throw (rolled secretly, succeeds)"
-   - Show results but not the actual roll numbers for NPCs
+**PHASE 1: ATTACK ROLLS**
+1. **REQUEST ATTACK ROLL FIRST**: "Make an attack roll with your [weapon] (1d20+attack bonus) against AC [AC]"
+2. **WAIT FOR PLAYER ROLL**: Do not continue until player provides their attack roll result
+3. **ACKNOWLEDGE RESULT**: "You rolled [number]..."
 
-3. **SHOW ALL MECHANICAL DETAILS**: Display AC, HP changes, bonuses, and DCs for players
-4. **NARRATE DRAMATICALLY**: Combine mechanical accuracy with cinematic description
-5. **TRACK COMBAT STATE**: Monitor initiative, conditions, and action economy
-6. **USE TACTICAL AI**: NPCs make intelligent decisions based on their capabilities
-7. **INCLUDE ENVIRONMENTAL FACTORS**: Terrain, cover, lighting effects
-8. **WAIT FOR ROLLS**: Don't continue combat until player has rolled
+**PHASE 2: DAMAGE ROLLS (CRITICAL - CURRENTLY MISSING)**
+4. **IF ATTACK HITS**: IMMEDIATELY request damage roll
+   - "That hits! Now roll damage for your [weapon] ([damage dice]+modifier)"
+   - "Your blade strikes true! Roll [damage dice] for damage"
+5. **IF CRITICAL HIT (Natural 20)**: Request CRITICAL damage
+   - "A natural 20! Critical hit! Roll double damage dice: [2x damage dice]+modifier"
+   - "Critical hit! Roll [doubled dice] for maximum damage!"
+6. **WAIT FOR DAMAGE ROLL**: Do not continue until player provides damage result
 
-**INTERACTIVE COMBAT EXAMPLES:**
-✅ "The hobgoblin captain swings at you! Make an attack roll to defend yourself (1d20+dex, your AC is 15)"
-✅ "Combat begins! Everyone roll initiative (1d20+dex modifier)"
-✅ "Make a Dexterity saving throw (1d20+3, DC 13) to avoid the fireball"
-✅ "Roll damage for your longsword attack (1d8+strength modifier)"
+**PHASE 3: RESOLUTION**
+7. **APPLY DAMAGE**: "Your attack deals [damage] [type] damage! The [enemy] [reaction]"
+8. **DESCRIBE IMPACT**: Narrate the wound and enemy's response
 
-**NEVER IN COMBAT:**
-❌ "You rolled 18 and hit" (Wait for player to actually roll!)
-❌ "Rolling your attack: 1d20+5 = 16" (Player should roll!)
-❌ "Your damage roll of 8 kills the orc" (Player hasn't rolled damage!)`;
+**COMPLETE COMBAT SEQUENCE EXAMPLES:**
+✅ CORRECT SEQUENCE:
+   DM: "Make an attack roll with your longsword (1d20+5) against AC 13"
+   Player: "I rolled 18"
+   DM: "18 hits! Roll damage for your longsword (1d8+3)"
+   Player: "I rolled 7"
+   DM: "Your blade deals 7 slashing damage, cutting deep into the orc's side!"
+
+✅ CRITICAL HIT SEQUENCE:
+   DM: "Make an attack roll with your shortsword (1d20+4) against AC 15"
+   Player: "I rolled 20"
+   DM: "Natural 20! Critical hit! Roll critical damage (2d6+2)"
+   Player: "I rolled 11"
+   DM: "Your blade finds a vital spot, dealing 11 piercing damage!"
+
+**OTHER ROLL REQUIREMENTS:**
+- Initiative: "Everyone roll initiative! (1d20+dex modifier)"
+- Saving throws: "Make a [ability] saving throw (1d20+modifier, DC [number])"
+- Skill checks: "Make a [skill] check (1d20+modifier, DC [number])"
+
+**NPC ACTIONS (DM CONTROLLED):**
+✅ "The orc attacks (rolled behind screen, hits AC 15) for 8 slashing damage"
+✅ "The goblin makes its saving throw (rolled secretly, succeeds)"
+
+**CRITICAL ERROR TO AVOID:**
+❌ "You rolled 18 and hit for 6 damage" (MISSING damage roll request!)
+❌ "Your attack succeeds, dealing damage" (MISSING specific damage roll!)
+❌ "The orc takes damage from your hit" (PLAYER NEVER ROLLED DAMAGE!)
+
+**MANDATORY DAMAGE ROLL TRIGGERS:**
+- Any successful attack roll → Request damage roll
+- Any critical hit → Request critical damage roll
+- Any spell attack that hits → Request spell damage roll
+- Any area effect → Request damage roll for affected targets`;
 
   return contextText;
 }

@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Hooks
 import { useToast } from '@/hooks/use-toast';
+import { useGame } from '@/contexts/GameContext';
+import { useCombat } from '@/contexts/CombatContext';
 
 // Project Utilities
 import { selectRelevantMemories } from '@/utils/memorySelection';
@@ -10,6 +12,7 @@ import { selectRelevantMemories } from '@/utils/memorySelection';
 // Project Services
 import { voiceConsistencyService } from '@/services/voice-consistency-service';
 import { AIService } from '@/services/ai-service';
+import { rollStateManager } from '@/services/combat/rollStateManager';
 
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
@@ -84,6 +87,8 @@ export interface EnhancedChatMessage extends ChatMessage {
  */
 export const useAIResponse = () => {
   const { toast } = useToast();
+  const { processAiResponse, setGamePhase, state: gameState } = useGame();
+  const { state: combatState } = useCombat();
 
   /**
    * Formats chat messages into a task object for the DM Agent.
@@ -236,14 +241,28 @@ export const useAIResponse = () => {
         narrationSegments: msg.narrationSegments
       }));
 
-      // Create proper GameContext for AIService
+      // Create proper GameContext for AIService with combat awareness
       const aiContext = {
         campaignId: gameContext.campaign?.id || '',
         characterId: gameContext.character?.id || '',
         sessionId: sessionId,
         campaignDetails: gameContext.campaign,
-        characterDetails: gameContext.character
+        characterDetails: gameContext.character,
+        // Add current game state for combat awareness
+        gameState: {
+          currentPhase: gameState.currentPhase,
+          isInCombat: combatState.isInCombat,
+          currentTurnPlayerId: combatState.activeEncounter?.currentTurnParticipantId,
+          pendingRolls: gameState.diceRollQueue.pendingRolls.length
+        }
       };
+
+      console.log('🎮 AI Context with combat awareness:', {
+        phase: gameState.currentPhase,
+        inCombat: combatState.isInCombat,
+        pendingRolls: gameState.diceRollQueue.pendingRolls.length,
+        currentTurn: combatState.activeEncounter?.currentTurnParticipantId
+      });
 
       // Use AIService directly which has local Gemini integration and combat detection
       const result = await AIService.chatWithDM({
@@ -256,11 +275,11 @@ export const useAIResponse = () => {
       let responseText = result.text;
       let narrationSegments = result.narrationSegments;
 
-      // Parse roll requests from the response if not already structured
+      // Parse roll requests from the response and process through GameContext
       let rollRequests: RollRequest[] = result.roll_requests || [];
       if (rollRequests.length === 0) {
         // Import roll request parser and check for roll requests in the text
-        const { parseRollRequests } = await import('@/utils/rollRequestParser');
+        const { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } = await import('@/utils/rollRequestParser');
         const parsedRequests = parseRollRequests(responseText);
         rollRequests = parsedRequests.map(req => ({
           type: req.type,
@@ -271,6 +290,62 @@ export const useAIResponse = () => {
           advantage: req.advantage,
           disadvantage: req.disadvantage
         }));
+
+        // Check for context-dependent roll requests (like damage after successful attacks)
+        if (detectsSuccessfulAttack(responseText)) {
+          console.log('🎯 Detected successful attack, checking for damage roll requirement');
+          const isCritical = detectsCriticalHit(responseText);
+
+          // Check if we're already waiting for damage and this confirms the hit
+          if (rollStateManager.isAwaitingDamage()) {
+            const awaitingRoll = rollStateManager.getAwaitingDamageRoll();
+            if (awaitingRoll) {
+              // Extract weapon name from context (this could be enhanced)
+              const weaponMatch = responseText.match(/(?:your|the)\s+(\w+)/i);
+              const weaponName = weaponMatch ? weaponMatch[1] : 'weapon';
+
+              // Create damage roll request based on hit confirmation
+              const { DiceEngine } = await import('@/services/dice/DiceEngine');
+              const damageRequest = DiceEngine.createDamageRollRequest(weaponName, isCritical);
+
+              rollRequests.push({
+                type: 'damage',
+                formula: damageRequest.formula,
+                purpose: damageRequest.purpose
+              });
+
+              console.log('🗡️ Added automatic damage roll request:', damageRequest);
+            }
+          }
+        }
+      }
+
+      // Track attack rolls in roll state manager
+      rollRequests.forEach(request => {
+        if (request.type === 'attack') {
+          const rollId = rollStateManager.addPendingRoll({
+            type: 'attack',
+            targetAC: request.ac,
+            context: request.purpose || 'Attack roll',
+            actorId: gameContext.character?.id || 'player'
+          });
+          console.log('⚔️ Tracking attack roll:', rollId);
+        }
+      });
+
+      // Process roll requests through GameContext for deduplication and proper queue management
+      if (rollRequests.length > 0) {
+        console.log('🎲 Processing', rollRequests.length, 'roll requests through GameContext');
+        processAiResponse(rollRequests);
+      }
+
+      // Update game phase based on combat detection
+      if (result.combatDetection?.isCombat && !gameState.isInCombat) {
+        console.log('⚔️ Combat detected, updating game phase');
+        setGamePhase('combat');
+      } else if (!result.combatDetection?.isCombat && gameState.currentPhase === 'combat' && !combatState.isInCombat) {
+        console.log('🕊️ Combat ended, returning to exploration');
+        setGamePhase('exploration');
       }
 
       // Process voice assignments if we have narration segments

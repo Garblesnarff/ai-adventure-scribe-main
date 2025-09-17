@@ -146,20 +146,62 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     });
   }
 
-  // Pattern 6: Damage rolls
-  const damagePattern = /roll\s+damage.*?\(([^)]+)\)/gi;
-  while ((match = damagePattern.exec(message)) !== null) {
-    requests.push({
-      type: 'damage',
-      formula: normalizeFormula(match[1]),
-      purpose: 'Damage roll',
-      originalText: match[0],
-      confidence: 0.85
-    });
-  }
+  // Pattern 6: Enhanced damage rolls with multiple patterns
+  const damagePatterns = [
+    // "Roll damage for your longsword (1d8+3)"
+    /roll\s+damage.*?\(([^)]+)\)/gi,
+
+    // "Roll critical damage (2d6+2)"
+    /roll\s+critical\s+damage.*?\(([^)]+)\)/gi,
+
+    // "Roll [dice] for damage"
+    /roll\s+([\dd+\s-]+)\s+for\s+damage/gi,
+
+    // "Now roll damage"
+    /now\s+roll\s+damage/gi,
+
+    // "Roll your weapon damage"
+    /roll\s+(?:your\s+)?(?:weapon\s+)?damage/gi,
+
+    // "That hits! Roll damage" (contextual damage after hit)
+    /(?:that\s+hits|you\s+hit).*?roll\s+damage/gi,
+
+    // "Critical hit! Roll double damage"
+    /critical\s+hit.*?roll.*?damage/gi
+  ];
+
+  damagePatterns.forEach((pattern, index) => {
+    while ((match = pattern.exec(message)) !== null) {
+      let formula = '1d6'; // Default damage
+      let confidence = 0.85;
+      let purpose = 'Damage roll';
+
+      // If we have explicit dice notation
+      if (match[1]) {
+        formula = normalizeFormula(match[1]);
+      }
+
+      // Higher confidence for explicit patterns
+      if (index < 2) confidence = 0.95;
+
+      // Special handling for critical damage
+      if (match[0].toLowerCase().includes('critical')) {
+        purpose = 'Critical damage roll';
+        confidence = 0.98;
+      }
+
+      requests.push({
+        type: 'damage',
+        formula,
+        purpose,
+        originalText: match[0],
+        confidence
+      });
+    }
+  });
 
   // Pattern 7: Generic roll requests with explicit dice
-  const genericPattern = /(?:please\s+)?roll\s+([\dd+\-\s]+)(?:\s+for\s+(.+?))?(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi;
+  const genericPattern = /(?:please\s+)?roll\s+([\dd+\s-]+)(?:\s+for\s+(.+?))?(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi;
   while ((match = genericPattern.exec(message)) !== null) {
     // Skip if we already found this as a more specific pattern
     if (requests.some(r => r.originalText.includes(match[0]))) continue;
@@ -208,13 +250,13 @@ function normalizeFormula(formula: string): string {
     .toLowerCase()
     .replace(/modifier/g, '') // Remove "modifier" word
     .replace(/\+\+/g, '+') // Fix double plus
-    .replace(/\-\-/g, '-') // Fix double minus
+    .replace(/--/g, '-') // Fix double minus
     .replace(/\+$/, '') // Remove trailing plus
-    .replace(/\-$/, ''); // Remove trailing minus
+    .replace(/-$/, ''); // Remove trailing minus
 
   // If it doesn't start with a dice notation, assume it's d20
   if (!/^\d*d\d+/.test(normalized)) {
-    if (/^[+\-]?\d+$/.test(normalized)) {
+    if (/^[+-]?\d+$/.test(normalized)) {
       // Just a modifier, add d20
       normalized = '1d20' + (normalized.startsWith('+') || normalized.startsWith('-') ? '' : '+') + normalized;
     } else if (normalized.includes('dex') || normalized.includes('str') || normalized.includes('con') || 
@@ -228,7 +270,7 @@ function normalizeFormula(formula: string): string {
   }
 
   // Ensure proper format
-  if (!normalized.match(/^\d*d\d+([+\-]\d+)*$/)) {
+  if (!normalized.match(/^\d*d\d+([+-]\d+)*$/)) {
     // If still not valid, default to d20
     return '1d20';
   }
@@ -242,6 +284,38 @@ function normalizeFormula(formula: string): string {
 export function containsRollRequest(message: string): boolean {
   const requests = parseRollRequests(message);
   return requests.length > 0;
+}
+
+/**
+ * Check if a message indicates a successful attack that should trigger damage roll
+ */
+export function detectsSuccessfulAttack(message: string): boolean {
+  const hitPatterns = [
+    /that\s+hits/gi,
+    /you\s+hit/gi,
+    /attack\s+hits/gi,
+    /\d+\s+hits/gi,
+    /successful\s+attack/gi,
+    /your\s+(?:sword|weapon|blade|attack).*?(?:hits|strikes|connects)/gi,
+    /critical\s+hit/gi,
+    /natural\s+20/gi
+  ];
+
+  return hitPatterns.some(pattern => pattern.test(message));
+}
+
+/**
+ * Check if a message indicates a critical hit
+ */
+export function detectsCriticalHit(message: string): boolean {
+  const critPatterns = [
+    /critical\s+hit/gi,
+    /natural\s+20/gi,
+    /nat\s+20/gi,
+    /crit(?:ical)?/gi
+  ];
+
+  return critPatterns.some(pattern => pattern.test(message));
 }
 
 /**
