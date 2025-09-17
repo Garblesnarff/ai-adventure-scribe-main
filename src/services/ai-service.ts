@@ -219,7 +219,7 @@ When combat is detected, you MUST:
 You MUST request dice rolls from players for uncertain outcomes. This maintains player agency and engagement.
 
 **MANDATORY DICE ROLL REQUESTS:**
-- Combat actions: Request attack rolls, damage rolls, saving throws
+- Combat actions: Request attack rolls, damage rolls (using character's specific weapon dice), saving throws
 - Skill checks: Ask for Investigation, Perception, Persuasion, etc. rolls
 - Random events: Player rolls for random outcomes when they're the cause
 - Use CHARACTER'S ACTUAL MODIFIERS in your requests
@@ -268,6 +268,12 @@ You MUST request dice rolls from players for uncertain outcomes. This maintains 
               const profBonus = char.level >= 17 ? 6 : char.level >= 13 ? 5 : char.level >= 9 ? 4 : char.level >= 5 ? 3 : 2;
               contextPrompt += `\nProficiency Bonus: +${profBonus}`;
             }
+
+            // Add default equipment for class-based damage rolls
+            const classEquipment = this.getClassEquipment(char.class?.name || char.class || 'Fighter');
+            contextPrompt += `\nEQUIPMENT: ${classEquipment.weapons.join(', ')} | ${classEquipment.armor}`;
+            contextPrompt += `\n**CRITICAL: USE EXACT WEAPON DICE from equipment list above for damage roll requests!**`;
+
             contextPrompt += `.`;
           }
           
@@ -477,7 +483,7 @@ Respond to player actions with clear consequences and vivid descriptions using D
 - **REQUEST INITIATIVE FROM PLAYERS**: "Roll initiative! (1d20+dex modifier)"
 - **REQUEST PLAYER ATTACK ROLLS**: "Make an attack roll with your [weapon] (1d20+attack bonus)"
 - **REQUEST SAVING THROWS**: "Make a [ability] saving throw (1d20+modifier, DC [number])"
-- **REQUEST DAMAGE ROLLS**: "Roll damage for your [weapon/spell] ([dice notation])"
+- **REQUEST DAMAGE ROLLS**: "Roll damage for your [weapon/spell] ([exact dice from character equipment])" - USE SPECIFIC WEAPON DICE (1d8 for longsword, 1d6 for shortsword, etc.)
 - **NPC ACTIONS**: Handle behind screen: "The orc attacks (rolled behind screen, hits AC 14)"
 - Apply D&D 5e rules: advantage/disadvantage, resistance, spell components, concentration
 - Describe hits/misses cinematically with mechanical accuracy
@@ -896,6 +902,94 @@ Remember: You're not just describing a scene - you're launching an epic story wh
       console.error('Failed to generate opening message:', error);
       // Fallback generic opening
       return `Welcome to your adventure! You find yourself at the beginning of an epic journey. Your character stands ready to face whatever challenges lie ahead. What would you like to do?`;
+    }
+  }
+
+  /**
+   * Get default equipment for a character class
+   * Used to provide the AI with weapon damage dice information
+   */
+  private static getClassEquipment(className: string): { weapons: string[]; armor: string } {
+    const classLower = className.toLowerCase();
+
+    switch (classLower) {
+      case 'fighter':
+        return {
+          weapons: ['Longsword (1d8)', 'Shortsword (1d6)', 'Handaxe (1d6)', 'Light Crossbow (1d8)'],
+          armor: 'Chain mail (AC 16)'
+        };
+
+      case 'rogue':
+        return {
+          weapons: ['Shortsword (1d6)', 'Dagger (1d4)', 'Shortbow (1d6)', 'Rapier (1d8)'],
+          armor: 'Leather armor (AC 11)'
+        };
+
+      case 'ranger':
+        return {
+          weapons: ['Longsword (1d8)', 'Shortsword (1d6)', 'Longbow (1d8)', 'Handaxe (1d6)'],
+          armor: 'Studded leather (AC 12)'
+        };
+
+      case 'barbarian':
+        return {
+          weapons: ['Greataxe (1d12)', 'Handaxe (1d6)', 'Javelin (1d6)'],
+          armor: 'Unarmored (AC 10 + Dex + Con)'
+        };
+
+      case 'wizard':
+        return {
+          weapons: ['Dagger (1d4)', 'Dart (1d4)', 'Light Crossbow (1d8)', 'Quarterstaff (1d6)'],
+          armor: 'No armor (AC 10)'
+        };
+
+      case 'sorcerer':
+        return {
+          weapons: ['Dagger (1d4)', 'Dart (1d4)', 'Light Crossbow (1d8)', 'Quarterstaff (1d6)'],
+          armor: 'No armor (AC 10)'
+        };
+
+      case 'warlock':
+        return {
+          weapons: ['Dagger (1d4)', 'Light Crossbow (1d8)', 'Scimitar (1d6)'],
+          armor: 'Leather armor (AC 11)'
+        };
+
+      case 'cleric':
+        return {
+          weapons: ['Mace (1d6)', 'Warhammer (1d8)', 'Light Crossbow (1d8)', 'Shield'],
+          armor: 'Scale mail (AC 14)'
+        };
+
+      case 'druid':
+        return {
+          weapons: ['Scimitar (1d6)', 'Shield', 'Dart (1d4)', 'Javelin (1d6)'],
+          armor: 'Leather armor (AC 11)'
+        };
+
+      case 'paladin':
+        return {
+          weapons: ['Longsword (1d8)', 'Javelin (1d6)', 'Shield'],
+          armor: 'Chain mail (AC 16)'
+        };
+
+      case 'bard':
+        return {
+          weapons: ['Rapier (1d8)', 'Shortsword (1d6)', 'Dagger (1d4)', 'Hand Crossbow (1d6)'],
+          armor: 'Leather armor (AC 11)'
+        };
+
+      case 'monk':
+        return {
+          weapons: ['Shortsword (1d6)', 'Dart (1d4)', 'Unarmed Strike (1d4)'],
+          armor: 'Unarmored (AC 10 + Dex + Wis)'
+        };
+
+      default:
+        return {
+          weapons: ['Longsword (1d8)', 'Shortsword (1d6)', 'Dagger (1d4)'],
+          armor: 'Leather armor (AC 11)'
+        };
     }
   }
 

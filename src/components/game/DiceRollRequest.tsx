@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dice6, Zap, ArrowUp, ArrowDown, Target, AlertCircle, Info } from 'lucide-react';
+import { DiceRollEmbed } from '@/components/DiceRollEmbed';
+import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
 import { cn } from '@/lib/utils';
 import { useCharacter } from '@/contexts/CharacterContext';
 import {
@@ -53,12 +55,24 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
   const [manualResult, setManualResult] = useState('');
   const [hasAdvantage, setHasAdvantage] = useState(request.advantage || false);
   const [hasDisadvantage, setHasDisadvantage] = useState(request.disadvantage || false);
+  const [showDiceAnimation, setShowDiceAnimation] = useState(false);
+  const [isRolling, setIsRolling] = useState(false);
 
   const { state: characterState } = useCharacter();
   const character = characterState.character;
 
   // Calculate the actual roll formula with character modifiers
   const rollCalculation = useMemo(() => {
+    // For damage rolls, ALWAYS use the exact formula from the DM
+    if (request.type === 'damage') {
+      return {
+        formula: request.formula,
+        breakdown: [request.formula],
+        totalModifier: 0,
+        isProficient: false
+      };
+    }
+
     if (!character) {
       return {
         formula: request.formula,
@@ -68,7 +82,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
       };
     }
 
-    // If formula already has numbers, use it as-is
+    // If formula already has numbers (like "1d20+5"), use it as-is
     if (/\d+d\d+[+\-]\d+/.test(request.formula)) {
       return {
         formula: request.formula,
@@ -79,7 +93,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
     }
 
     try {
-      // Parse the formula to determine what type of roll this is
+      // Only calculate modifiers for ability checks, saves, attacks, and initiative
       let ability: AbilityName | undefined;
       let skillName: string | undefined;
 
@@ -181,12 +195,28 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
   };
 
   const handleAutoRoll = () => {
-    // Apply advantage/disadvantage rules
-    const finalAdvantage = hasAdvantage && !hasDisadvantage;
-    const finalDisadvantage = hasDisadvantage && !hasAdvantage;
+    // Show the animated dice rolling
+    setShowDiceAnimation(true);
+    setIsRolling(true);
+  };
 
-    // Use the calculated formula with character modifiers
-    onRoll(rollCalculation.formula, finalAdvantage, finalDisadvantage);
+  const handleDiceRollComplete = (result: number | any, details?: any) => {
+    // After animation completes, submit the result
+    setIsRolling(false);
+
+    // Extract the total from DiceRollResult object if needed
+    let totalResult: number;
+    if (typeof result === 'number') {
+      totalResult = result;
+    } else if (result && typeof result === 'object' && 'total' in result) {
+      totalResult = result.total;
+    } else {
+      console.warn('Unexpected result type in handleDiceRollComplete:', result);
+      totalResult = 0;
+    }
+
+    console.log('[DiceRollRequest] Calling onManualResult with:', totalResult);
+    onManualResult(totalResult);
   };
 
   const handleManualSubmit = () => {
@@ -292,35 +322,56 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         {/* Roll Actions */}
         {!manualMode ? (
           <div className="space-y-3">
-            <Button
-              onClick={handleAutoRoll}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-              size="lg"
-            >
-              <Dice6 className="w-4 h-4 mr-2" />
-              Roll Dice
-            </Button>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setManualMode(true)}
-                className="flex-1 text-xs"
-                size="sm"
-              >
-                Enter Manually
-              </Button>
-              {onCancel && (
+            {showDiceAnimation ? (
+              // Show animated dice rolling
+              <div className="bg-slate-50 rounded-lg p-4 border-2 border-dashed border-slate-200">
+                <DiceRollEmbed
+                  expression={rollCalculation.formula}
+                  purpose={request.purpose}
+                  onRoll={handleDiceRollComplete}
+                  autoRoll={true}
+                  showAnimation={true}
+                  advantage={hasAdvantage && !hasDisadvantage}
+                  disadvantage={hasDisadvantage && !hasAdvantage}
+                />
+              </div>
+            ) : (
+              // Show roll dice button
+              <>
                 <Button
-                  variant="ghost"
-                  onClick={onCancel}
-                  className="flex-1 text-xs"
-                  size="sm"
+                  onClick={handleAutoRoll}
+                  disabled={isRolling}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  size="lg"
                 >
-                  Cancel
+                  <Dice6 className="w-4 h-4 mr-2" />
+                  {isRolling ? 'Rolling...' : 'Roll Dice'}
                 </Button>
-              )}
-            </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setManualMode(true)}
+                    disabled={isRolling}
+                    className="flex-1 text-xs"
+                    size="sm"
+                  >
+                    Enter Manually
+                  </Button>
+                  {onCancel && (
+                    <Button
+                      variant="ghost"
+                      onClick={onCancel}
+                      disabled={isRolling}
+                      className="flex-1 text-xs"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
