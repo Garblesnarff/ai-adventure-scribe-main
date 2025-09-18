@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Heart, Shield, Zap, Sword, ChevronDown } from 'lucide-react';
 import { Card } from '../ui/card';
@@ -101,78 +101,75 @@ export const CompactCharacterHeader: React.FC = () => {
 
   return (
     <Card className="p-4 space-y-4 bg-card">
-      {/* Portrait and Basic Info */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex-shrink-0">
-          {character.image_url ? (
-            <img
-              src={character.image_url}
-              alt={`${character.name} portrait`}
-              className="w-16 h-16 rounded-full object-cover border-2 border-border transition-transform duration-300 hover:scale-105"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xl font-bold border-2 border-border transition-transform duration-300 hover:scale-105">
-              {character.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+      {/* Enhanced Portrait and Basic Info */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-shrink-0 relative">
+          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-gradient-to-r from-infinite-purple to-infinite-teal bg-gradient-to-br from-infinite-purple/20 to-infinite-teal/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            {character.image_url ? (
+              <img
+                src={character.image_url}
+                alt={`${character.name} portrait`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center text-2xl font-bold text-white">
+                {character.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-infinite-gold rounded-full flex items-center justify-center text-xs font-bold text-infinite-dark border-2 border-background">
+            {character.level}
+          </div>
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold">{character.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            Level {character.level} {character.race?.name} {character.class?.name}
+          <h3 className="text-xl font-semibold text-card-foreground mb-1">{character.name}</h3>
+          <p className="text-sm text-muted-foreground mb-1">
+            {character.race?.name} {character.class?.name}
           </p>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
+            <span className="text-xs text-muted-foreground/80">Active Adventurer</span>
+          </div>
         </div>
       </div>
 
-      {/* Quick Stats - Circular Badges */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="flex justify-center">
-          <div className="relative group">
-            <div className="w-12 h-12 rounded-full bg-red-100 border-2 border-red-200 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105">
-              <Heart className="w-5 h-5 text-red-600" />
-              <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-background text-foreground px-2 py-1 rounded-md text-xs shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                Max Hit Points: {maxHp}
-              </div>
-            </div>
-            <div className="text-center mt-1 text-xs text-muted-foreground">HP</div>
-          </div>
-        </div>
-        
-        <div className="flex justify-center">
-          <div className="relative group">
-            <div className="w-12 h-12 rounded-full bg-blue-100 border-2 border-blue-200 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105">
-              <Shield className="w-5 h-5 text-blue-600" />
-              <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-background text-foreground px-2 py-1 rounded-md text-xs shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                Armor Class: {armorClass}
-              </div>
-            </div>
-            <div className="text-center mt-1 text-xs text-muted-foreground">AC</div>
-          </div>
-        </div>
-        
-        <div className="flex justify-center">
-          <div className="relative group">
-            <div className="w-12 h-12 rounded-full bg-green-100 border-2 border-green-200 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105">
-              <Zap className="w-5 h-5 text-green-600" />
-              <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-background text-foreground px-2 py-1 rounded-md text-xs shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                Proficiency: +{proficiency}
-              </div>
-            </div>
-            <div className="text-center mt-1 text-xs text-muted-foreground">PROF</div>
-          </div>
-        </div>
-        
-        <div className="flex justify-center">
-          <div className="relative group">
-            <div className="w-12 h-12 rounded-full bg-purple-100 border-2 border-purple-200 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-105">
-              <Sword className="w-5 h-5 text-purple-600" />
-              <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-background text-foreground px-2 py-1 rounded-md text-xs shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                Initiative: {initiative >= 0 ? '+' : ''}{initiative}
-              </div>
-            </div>
-            <div className="text-center mt-1 text-xs text-muted-foreground">INIT</div>
-          </div>
-        </div>
+      {/* Enhanced Stats - Animated Rings */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <StatRing
+          icon={<Heart className="w-6 h-6 text-red-400" />}
+          label="HP"
+          value={maxHp}
+          maxValue={maxHp}
+          color="red"
+          tooltipText={`Max Hit Points: ${maxHp}`}
+        />
+
+        <StatRing
+          icon={<Shield className="w-6 h-6 text-blue-400" />}
+          label="AC"
+          value={armorClass}
+          maxValue={25}
+          color="blue"
+          tooltipText={`Armor Class: ${armorClass}`}
+        />
+
+        <StatRing
+          icon={<Zap className="w-6 h-6 text-green-400" />}
+          label="PROF"
+          value={proficiency}
+          maxValue={6}
+          color="green"
+          tooltipText={`Proficiency: +${proficiency}`}
+        />
+
+        <StatRing
+          icon={<Sword className="w-6 h-6 text-purple-400" />}
+          label="INIT"
+          value={Math.max(0, initiative + 10)}
+          maxValue={20}
+          color="purple"
+          tooltipText={`Initiative: ${initiative >= 0 ? '+' : ''}${initiative}`}
+        />
       </div>
 
       {/* Key Skills (Accordion) */}
@@ -218,5 +215,98 @@ export const CompactCharacterHeader: React.FC = () => {
         </div>
       </div>
     </Card>
+  );
+};
+
+// StatRing Component for Enhanced Character Stats
+interface StatRingProps {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  maxValue: number;
+  color: 'red' | 'blue' | 'green' | 'purple';
+  tooltipText: string;
+}
+
+const StatRing: React.FC<StatRingProps> = ({ icon, label, value, maxValue, color, tooltipText }) => {
+  const [animatedValue, setAnimatedValue] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimatedValue(value);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  const percentage = Math.min((animatedValue / maxValue) * 100, 100);
+  const strokeDasharray = `${percentage} ${100 - percentage}`;
+
+  const colorClasses = {
+    red: 'from-red-500 to-red-600',
+    blue: 'from-blue-500 to-blue-600',
+    green: 'from-green-500 to-green-600',
+    purple: 'from-purple-500 to-purple-600'
+  };
+
+  return (
+    <div className="flex justify-center">
+      <div className="relative group cursor-help">
+        {/* Animated SVG Ring */}
+        <div className="w-16 h-16 relative">
+          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+            {/* Background circle */}
+            <path
+              className="stroke-muted/30"
+              strokeWidth="3"
+              fill="transparent"
+              strokeDasharray="100 0"
+              d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            {/* Progress circle */}
+            <path
+              className={`stroke-current transition-all duration-1000 ease-out`}
+              strokeWidth="3"
+              fill="transparent"
+              strokeDasharray={strokeDasharray}
+              strokeLinecap="round"
+              d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+              style={{
+                stroke: `url(#gradient-${color})`,
+              }}
+            />
+            {/* Gradient definitions */}
+            <defs>
+              <linearGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" className={`text-${color}-500`} stopColor="currentColor" />
+                <stop offset="100%" className={`text-${color}-400`} stopColor="currentColor" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Center content */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-card/80 backdrop-blur-sm rounded-full p-2 shadow-lg border border-border/50">
+              {icon}
+            </div>
+          </div>
+        </div>
+
+        {/* Label and value */}
+        <div className="text-center mt-2">
+          <div className="text-xs font-medium text-muted-foreground">{label}</div>
+          <div className="text-sm font-bold text-card-foreground">{value}</div>
+        </div>
+
+        {/* Enhanced tooltip */}
+        <div className="absolute -bottom-14 left-1/2 transform -translate-x-1/2 bg-card/95 backdrop-blur-sm text-card-foreground px-3 py-2 rounded-lg text-xs shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-20 border border-border/50">
+          {tooltipText}
+          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-card rotate-45 border-l border-t border-border/50"></div>
+        </div>
+      </div>
+    </div>
   );
 };

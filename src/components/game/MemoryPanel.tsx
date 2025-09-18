@@ -138,9 +138,17 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={toggleMobileDrawer}
-                className="rounded-full p-3 h-auto shadow-lg"
+                className={`relative rounded-full p-3 h-auto shadow-xl border-2 transition-all duration-300 hover-glow focus-glow ${
+                  isInCombat
+                    ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50 animate-pulse'
+                    : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50'
+                }`}
               >
                 <Menu className="h-5 w-5" />
+                {/* Context indicator */}
+                {(isInCombat || memories.length > 0) && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-infinite-gold rounded-full border border-background animate-pulse"></div>
+                )}
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[80vw] max-w-sm p-0">
@@ -190,9 +198,25 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
           variant="outline"
           size="sm"
           onClick={onToggle}
-          className="rounded-full p-2 h-auto shadow-lg"
+          className={`relative rounded-full p-3 h-auto shadow-xl border-2 transition-all duration-300 hover-glow focus-glow hover:scale-110 ${
+            isInCombat
+              ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50 animate-pulse'
+              : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50'
+          }`}
         >
           <ChevronDown className="h-4 w-4 rotate-90" />
+          {/* Enhanced context indicators */}
+          <div className="absolute -top-2 -right-2 flex flex-col gap-1">
+            {isInCombat && (
+              <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
+            )}
+            {memories.length > 0 && (
+              <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse shadow-lg"></div>
+            )}
+            {characterState.character && (
+              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse shadow-lg"></div>
+            )}
+          </div>
         </Button>
       </div>
     );
@@ -232,7 +256,11 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
         onMouseDown={startDrag}
       />
       
-      <Card className="h-full flex flex-col overflow-hidden">
+      <Card className={`h-full glass-strong shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-2xl hover-glow ${
+        isInCombat
+          ? 'border-red-400/50 bg-gradient-to-b from-red-900/10 to-card/90'
+          : 'border-infinite-purple/30 bg-gradient-to-b from-infinite-purple/5 to-card/90'
+      }`}>
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="flex gap-1 flex-shrink-0">
@@ -248,7 +276,11 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                 variant={activeTab === 'memory' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleTabChange('memory')}
-                className="h-8 px-2"
+                className={`h-8 px-2 transition-all duration-200 ${
+                  activeTab === 'memory'
+                    ? 'bg-infinite-teal text-white shadow-lg'
+                    : 'hover:bg-infinite-teal/20'
+                }`}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -257,25 +289,45 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                   variant={activeTab === 'combat' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleTabChange('combat')}
-                  className="h-8 px-2"
+                  className={`h-8 px-2 transition-all duration-200 ${
+                    activeTab === 'combat'
+                      ? 'bg-red-500 text-white shadow-lg animate-pulse'
+                      : 'hover:bg-red-500/20'
+                  }`}
                 >
                   <Sword className="h-4 w-4" />
                 </Button>
               )}
             </div>
-            <h3 className="font-semibold text-gray-900 capitalize truncate">{activeTab}</h3>
+            <h3 className="font-display font-semibold text-card-foreground capitalize truncate text-sm">
+              {activeTab === 'character' && '🎭 Character'}
+              {activeTab === 'memory' && '📚 Memories'}
+              {activeTab === 'combat' && '⚔️ Combat'}
+            </h3>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setIsExpanded(!isExpanded);
-              if (isExpanded) onToggle(); // Collapse panel when minimizing
-            }}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
-          >
-            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsExpanded(!isExpanded);
+                if (isExpanded) onToggle();
+              }}
+              className="h-8 w-8 p-0 rounded-full hover:bg-muted/20 transition-all duration-200 hover:scale-110"
+              title={isExpanded ? 'Minimize' : 'Expand'}
+            >
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPanelCollapsed(true)}
+              className="h-8 w-8 p-0 rounded-full hover:bg-red-500/20 transition-all duration-200 hover:scale-110"
+              title="Close Panel"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         
         {isExpanded && (
@@ -286,9 +338,9 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
               </TabsContent>
               
               <TabsContent value="memory" className="flex-1 mt-0 border-0 flex flex-col overflow-hidden bg-background">
-                {/* Session Notes Section */}
-                <div className="p-6 border-b border-border">
-                  <h4 className="font-semibold mb-3 text-foreground">Session Notes</h4>
+                {/* Compact Session Notes Section */}
+                <div className="p-4 border-b border-border">
+                  <h4 className="font-display font-semibold mb-2 text-foreground text-sm">📝 Session Notes</h4>
                   <Textarea
                     value={localSessionNotes}
                     onChange={(e) => setLocalSessionNotes(e.target.value)}
