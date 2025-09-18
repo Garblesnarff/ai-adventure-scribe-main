@@ -26,6 +26,7 @@ import { useInitialGreeting } from '@/hooks/use-initial-greeting';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { usePendingRolls } from '@/hooks/use-pending-rolls';
+import { FloatingActionPanel } from './FloatingActionPanel';
 import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
 
 /**
@@ -312,8 +313,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   handleCombatToggle,
   handleAIResponse,
 }) => {
-  // Sidebar collapsible state
+  // UI state management
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
 
   // Get message context for sending initial greeting
   const { messages, sendMessage, queueStatus, isLoading: messagesLoading } = useMessageContext();
@@ -397,61 +399,95 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
   return (
           <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto p-6 min-h-screen">
-              <div key={sessionId} className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 transition-all duration-300 ease-in-out min-h-screen grid-flow-row-dense">
-                {/* Main Content Area */}
-                <div className="flex-1 lg:col-span-1">
-                  <Card className="h-[80vh] bg-card/90 backdrop-blur-sm shadow-xl border border-border/50 flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
-                    {/* Enhanced Header with Combat Toggle */}
-                    <div className="p-6 border-b border-border/60 bg-gradient-to-r from-slate-900/80 to-card/60 transition-colors duration-300">
-                      <div className="flex items-center justify-between animate-fade-in">
+            <div className="container-game min-h-screen mobile-bottom-safe">
+              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out min-h-screen gap-4 md:gap-6 ${
+                isPanelCollapsed
+                  ? 'grid-cols-1'
+                  : 'grid-cols-1 md:grid-cols-[1fr_minmax(280px,350px)] lg:grid-cols-[1fr_minmax(300px,400px)] xl:grid-cols-[1fr_minmax(320px,420px)] 2xl:grid-cols-[1fr_minmax(350px,450px)]'
+              }`}>
+                {/* Main Content Area - Optimized for Maximum Space */}
+                <div className="flex-1 min-w-0 order-1 layout-main">
+                  <Card className="h-[80vh] md:h-[85vh] glass-strong shadow-2xl border-2 border-infinite-purple/30 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover-glow mobile-chat">
+                    {/* Cinematic Header with Atmospheric Effects */}
+                    <div className="relative p-8 border-b border-white/20 bg-cosmic overflow-hidden transition-all duration-500">
+                      {/* Animated Background Particles */}
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-60" style={{animationDelay: '0s'}}></div>
+                        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-infinite-teal rounded-full animate-pulse opacity-40" style={{animationDelay: '1s'}}></div>
+                        <div className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-infinite-purple rounded-full animate-pulse opacity-50" style={{animationDelay: '2s'}}></div>
+                        <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-infinite-gold rounded-full animate-pulse opacity-30" style={{animationDelay: '0.5s'}}></div>
+                      </div>
+
+                      {/* Atmospheric Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-infinite-purple/5 to-transparent opacity-60"></div>
+
+                      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 gap-4">
                         <div className="flex-1">
-                          <h1 className="text-2xl font-semibold text-card-foreground mb-2">
-                            {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
-                          </h1>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
-                              <span>Chapter {sessionData.turn_count ?? 0}</span>
+                          <div className="mb-4">
+                            <h1 className="text-responsive-2xl md:text-realm-title mb-2">
+                              {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
+                            </h1>
+                            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 text-sm">
+                              <div className="flex items-center gap-3 bg-infinite-gold/20 px-4 py-2 rounded-full border border-infinite-gold/30 w-fit">
+                                <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
+                                <span className="font-display text-infinite-gold font-medium text-responsive-sm">Chapter {sessionData.turn_count ?? 0}</span>
+                              </div>
+                              <div className="hidden md:block h-4 w-px bg-white/20"></div>
+                              <div className="flex-1">
+                                <p className="text-narrative text-muted-foreground leading-relaxed text-responsive-sm">
+                                  {sessionData.current_scene_description ?? "Your infinite story unfolds across realms of endless possibility..."}
+                                </p>
+                              </div>
                             </div>
-                            <span>•</span>
-                            <span className="max-w-md truncate text-muted-foreground/80">
-                              {sessionData.current_scene_description ?? "Your infinite story unfolds..."}
-                            </span>
                           </div>
-                          <StatsBar />
-                          <div className="mt-3">
+
+                          {/* Enhanced Stats and Combat Status */}
+                          <div className="space-compact-2 md:space-y-3">
+                            <StatsBar />
                             <CombatStatus />
                           </div>
                         </div>
 
-                        {/* Combat Mode Toggle */}
-                        <div className="flex items-center gap-3 ml-4">
+                        {/* Enhanced Combat Mode Toggle & Status */}
+                        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 md:ml-8 w-full md:w-auto">
                           <Button
                             variant={combatMode ? "destructive" : "outline"}
-                            size="sm"
+                            size="lg"
                             onClick={handleCombatToggle}
-                            className={combatMode ? 'animate-pulse' : ''}
+                            className={`relative overflow-hidden transition-all duration-300 border-2 hover-glow focus-glow ${
+                              combatMode
+                                ? 'bg-gradient-to-r from-red-600 to-red-700 border-red-500 animate-pulse shadow-2xl'
+                                : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50 hover:from-infinite-purple/30 hover:to-infinite-teal/30'
+                            }`}
                           >
-                            {combatMode ? (
-                              <>
-                                <X className="w-4 h-4 mr-2" />
-                                Exit Combat
-                              </>
-                            ) : (
-                              <>
-                                <Sword className="w-4 h-4 mr-2" />
-                                Combat Mode
-                              </>
-                            )}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                            <div className="relative flex items-center gap-2">
+                              {combatMode ? (
+                                <>
+                                  <X className="w-5 h-5" />
+                                  <span className="font-display font-medium">Exit Combat</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sword className="w-5 h-5" />
+                                  <span className="font-display font-medium">Enter Combat</span>
+                                </>
+                              )}
+                            </div>
                           </Button>
 
-                          {/* Status indicators */}
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 px-3 py-1 bg-infinite-purple/20 rounded-full border border-infinite-purple/30">
-                              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse"></div>
-                              <span className="text-xs font-medium text-infinite-teal">Active Realm</span>
+                          {/* Enhanced Status Indicators */}
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-infinite-teal/20 rounded-full border border-infinite-teal/40 glass">
+                              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse shadow-lg"></div>
+                              <span className="text-xs font-display font-medium text-infinite-teal">Realm Active</span>
                             </div>
+                            {combatMode && (
+                              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 rounded-full border border-red-400/40 glass">
+                                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
+                                <span className="text-xs font-display font-medium text-red-400">Combat Mode</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -556,33 +592,51 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                   </Card>
                 </div>
 
-                {/* Collapsible Side Panel */}
-                {!isPanelCollapsed ? (
-                  <div className="lg:col-span-1 min-w-[350px] max-w-[500px] transition-all duration-300 md:min-w-0">
-                    <GameSidePanel 
-                      sessionData={sessionData} 
+                {/* Responsive Side Panel */}
+                {!isPanelCollapsed && (
+                  <div className="order-2 md:order-2 w-full md:w-auto transition-all duration-300">
+                    <GameSidePanel
+                      sessionData={sessionData}
                       updateGameSessionState={updateGameSessionState}
                       combatMode={combatMode}
                       isCollapsed={isPanelCollapsed}
                       onToggle={() => setIsPanelCollapsed(!isPanelCollapsed)}
                     />
                   </div>
-                ) : (
-                  <div className="lg:col-span-1 flex justify-end">
-                    {/* Collapsed state: Show toggle button - mobile bottom-right, desktop side */}
-                    <div className="fixed right-4 bottom-4 md:top-1/2 md:bottom-auto z-30 lg:relative lg:right-auto lg:top-auto lg:bottom-auto transition-all duration-300">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsPanelCollapsed(prev => !prev)}
-                        className="rounded-full p-3 h-auto shadow-lg lg:ml-auto hover:scale-105"
-                      >
-                        <Menu className="h-5 w-5 lg:hidden" />
-                        <ChevronDown className="h-4 w-4 hidden lg:block rotate-90" />
-                      </Button>
-                    </div>
+                )}
+
+                {/* Floating Toggle Button when Collapsed */}
+                {isPanelCollapsed && (
+                  <div className="fixed right-4 bottom-4 md:top-1/2 md:bottom-auto md:right-6 z-40 md:transform md:-translate-y-1/2 transition-all duration-300">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsPanelCollapsed(false)}
+                      className={`rounded-full p-3 h-auto shadow-xl border-2 hover:scale-110 transition-all duration-300 hover-glow focus-glow ${
+                        combatMode
+                          ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50 animate-pulse'
+                          : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50'
+                      }`}
+                    >
+                      <Menu className="h-5 w-5 md:hidden" />
+                      <ChevronDown className="h-4 w-4 hidden md:block rotate-90" />
+                      {/* Context indicators */}
+                      <div className="absolute -top-2 -right-2 flex flex-col gap-1">
+                        {combatMode && (
+                          <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
+                        )}
+                        <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse shadow-lg"></div>
+                      </div>
+                    </Button>
                   </div>
                 )}
+
+                {/* Floating Action Panel for Quick RPG Actions */}
+                <FloatingActionPanel
+                  isVisible={isFloatingPanelVisible}
+                  onToggle={() => setIsFloatingPanelVisible(!isFloatingPanelVisible)}
+                  combatMode={combatMode}
+                />
               </div>
             </div>
           </div>

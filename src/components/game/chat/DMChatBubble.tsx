@@ -196,75 +196,85 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
   };
 
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-start animate-in slide-in-from-left-2 duration-500">
       <div className="flex max-w-[85%] flex-row items-start">
-        {/* DM Avatar */}
-        <div className="flex-shrink-0 mr-3">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-infinite-purple text-white">
-            DM
+        {/* Enhanced DM Avatar */}
+        <div className="flex-shrink-0 mr-4 relative">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold bg-gradient-to-br from-infinite-purple to-infinite-teal text-white shadow-lg border-2 border-white/20 hover-glow transition-all duration-300">
+            <span className="text-xs">🎭</span>
+          </div>
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-infinite-gold rounded-full flex items-center justify-center border-2 border-background">
+            <span className="text-[8px] font-bold text-infinite-dark">DM</span>
           </div>
         </div>
 
-        {/* Message Bubble */}
-        <div className="flex flex-col items-start space-y-2">
-          <div className={`relative px-5 py-4 rounded-xl transition-all duration-200 bg-muted text-foreground ${
-            isThisMessagePlaying ? 'ring-2 ring-infinite-purple ring-opacity-50 shadow-lg' : ''
+        {/* Enhanced Message Bubble */}
+        <div className="flex flex-col items-start space-y-3">
+          <div className={`relative px-6 py-4 rounded-2xl transition-all duration-300 glass-strong shadow-lg hover:shadow-xl ${
+            isThisMessagePlaying ? 'ring-2 ring-infinite-purple/70 shadow-2xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl' : 'hover:bg-card/80'
           }`}>
-            {/* Message Content with embedded dice */}
-            {renderMessageContent}
+            {/* Speech Bubble Tail */}
+            <div className="absolute left-[-8px] top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-card/90"></div>
+            <div className="absolute left-[-6px] top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-card"></div>
+            {/* Enhanced Message Content */}
+            <div className="text-narrative text-foreground-secondary">
+              {renderMessageContent}
+            </div>
 
-            {/* Voice Controls */}
+            {/* Enhanced Voice Controls */}
             {isVoiceEnabled && (
-              <div className="flex items-center gap-2 pt-2 border-t border-muted-foreground/10">
-                {/* Play/Pause Button */}
+              <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                {/* Enhanced Play/Pause Button */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handlePlayPause}
                   disabled={isProcessing}
-                  className="h-8 w-8 p-0 hover:bg-infinite-purple/10"
+                  className="h-9 w-9 p-0 rounded-full hover:bg-infinite-purple/20 focus-glow transition-all duration-200 hover:scale-105"
                 >
                   {isThisMessagePlaying ? (
-                    <Pause className="h-4 w-4" />
+                    <Pause className="h-4 w-4 text-infinite-teal" />
                   ) : (
-                    <Play className="h-4 w-4" />
+                    <Play className="h-4 w-4 text-infinite-gold" />
                   )}
                 </Button>
 
-                {/* Progress Bar */}
+                {/* Enhanced Progress Bar */}
                 {isThisMessagePlaying && (
-                  <div className="flex-1 flex items-center gap-2">
-                    <Progress 
-                      value={calculateProgress()} 
-                      className="h-2 flex-1" 
-                    />
-                    <span className="text-xs text-muted-foreground min-w-[4rem]">
+                  <div className="flex-1 flex items-center gap-3">
+                    <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-infinite-teal to-infinite-purple transition-all duration-300 ease-out rounded-full"
+                        style={{ width: `${calculateProgress()}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-muted-foreground/80 font-mono min-w-[4rem] bg-card/50 px-2 py-1 rounded">
                       {formatTime(currentSegmentIndex, segments.length)}
                     </span>
                   </div>
                 )}
 
-                {/* Volume Control */}
+                {/* Enhanced Volume Control */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={toggleMute}
-                  className="h-8 w-8 p-0 hover:bg-infinite-purple/10"
+                  className="h-9 w-9 p-0 rounded-full hover:bg-infinite-teal/20 focus-glow transition-all duration-200 hover:scale-105"
                 >
                   {isMuted ? (
-                    <VolumeX className="h-4 w-4" />
+                    <VolumeX className="h-4 w-4 text-red-400" />
                   ) : (
-                    <Volume2 className="h-4 w-4" />
+                    <Volume2 className="h-4 w-4 text-infinite-teal" />
                   )}
                 </Button>
 
-                {/* Error State */}
+                {/* Enhanced Error State */}
                 {error && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handlePlayPause}
-                    className="h-8 w-8 p-0 hover:bg-destructive/10 text-destructive"
+                    className="h-9 w-9 p-0 rounded-full hover:bg-destructive/20 text-destructive focus-glow transition-all duration-200 hover:scale-105"
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
@@ -272,53 +282,58 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
               </div>
             )}
 
-            {/* Processing Indicator */}
+            {/* Enhanced Processing Indicator */}
             {isProcessing && isThisMessagePlaying && (
-              <div className="flex items-center gap-2 pt-2 border-t border-muted-foreground/10">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="w-2 h-2 bg-infinite-purple rounded-full animate-pulse" />
-                  <span>Generating audio...</span>
+              <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-infinite-purple/10 px-3 py-1 rounded-full">
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-1.5 h-1.5 bg-infinite-gold rounded-full animate-bounce"></div>
+                  </div>
+                  <span className="font-medium">Weaving mystical audio...</span>
                 </div>
               </div>
             )}
 
-            {/* Current Segment Info */}
+            {/* Enhanced Current Segment Info */}
             {isThisMessagePlaying && currentSegmentIndex >= 0 && segments[currentSegmentIndex] && (
-              <div className="flex items-center gap-2 pt-2 border-t border-muted-foreground/10">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-infinite-purple font-medium">
-                    {segments[currentSegmentIndex].character || 'DM'}
+              <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                <div className="flex items-center gap-2 text-xs bg-gradient-to-r from-infinite-purple/10 to-infinite-teal/10 px-3 py-1 rounded-full">
+                  <span className="text-infinite-gold font-bold">
+                    🎭 {segments[currentSegmentIndex].character || 'Dungeon Master'}
                   </span>
-                  <span className="text-muted-foreground">
-                    Segment {currentSegmentIndex + 1} of {segments.length}
+                  <span className="text-muted-foreground/80 font-mono">
+                    {currentSegmentIndex + 1}/{segments.length}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Error Message */}
+            {/* Enhanced Error Message */}
             {error && !isProcessing && (
-              <div className="flex items-center gap-2 pt-2 border-t border-destructive/20">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <span className="text-xs text-destructive">
-                  Audio error - click retry
-                </span>
+              <div className="flex items-center gap-3 pt-3 border-t border-destructive/20">
+                <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 px-3 py-1 rounded-full">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">Mystical interference detected - click retry</span>
+                </div>
               </div>
             )}
 
-            {/* First Time User Help */}
+            {/* Enhanced First Time User Help */}
             {!hasUserInteracted && !isThisMessagePlaying && !isProcessing && !error && (
-              <div className="pt-2 border-t border-muted-foreground/10">
-                <span className="text-xs text-muted-foreground">
-                  Click ▶️ to hear this message
-                </span>
+              <div className="pt-3 border-t border-white/10">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/80 bg-infinite-gold/10 px-3 py-1 rounded-full animate-pulse">
+                  <span className="text-infinite-gold">✨</span>
+                  <span className="font-medium">Click play to hear the Dungeon Master's voice</span>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Action Options */}
+          {/* Enhanced Action Options */}
           {parsedMessage.hasOptions && (
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md animate-in slide-in-from-bottom-2 duration-500">
               <ActionOptions
                 options={parsedMessage.options}
                 onOptionSelect={handleOptionSelect}
@@ -327,11 +342,11 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
             </div>
           )}
 
-          {/* Timestamp */}
-          <div className="text-xs text-muted-foreground px-2">
-            {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
+          {/* Enhanced Timestamp */}
+          <div className="text-xs text-muted-foreground/60 px-2 font-mono bg-card/30 rounded px-2 py-1">
+            {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
             }) : ''}
           </div>
         </div>
