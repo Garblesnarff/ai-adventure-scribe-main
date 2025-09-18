@@ -131,58 +131,90 @@ PARTICIPANTS:`;
 **COMBAT RESPONSE REQUIREMENTS:**
 When combat is detected or active, you MUST follow this EXACT sequence:
 
-**PHASE 1: ATTACK ROLLS**
-1. **REQUEST ATTACK ROLL FIRST**: "Make an attack roll with your [weapon] (1d20+attack bonus) against AC [AC]"
-2. **WAIT FOR PLAYER ROLL**: Do not continue until player provides their attack roll result
-3. **ACKNOWLEDGE RESULT**: "You rolled [number]..."
+**PHASE 0: INITIATIVE (COMBAT START ONLY)**
+0. **COMBAT BEGINS**: ALWAYS request initiative first
+   - "Combat begins! Everyone roll initiative (1d20+dex modifier)"
+   - "Roll for initiative! (1d20 + your Dexterity modifier)"
+   - NEVER proceed to attacks without initiative order established
 
-**PHASE 2: DAMAGE ROLLS (CRITICAL - CURRENTLY MISSING)**
-4. **IF ATTACK HITS**: IMMEDIATELY request damage roll
-   - "That hits! Now roll damage for your [weapon] ([damage dice]+modifier)"
-   - "Your blade strikes true! Roll [damage dice] for damage"
-5. **IF CRITICAL HIT (Natural 20)**: Request CRITICAL damage
-   - "A natural 20! Critical hit! Roll double damage dice: [2x damage dice]+modifier"
-   - "Critical hit! Roll [doubled dice] for maximum damage!"
+**PHASE 1: ATTACK ROLLS**
+1. **REQUEST ATTACK ROLL FIRST**: "Make an attack roll with your [weapon] (1d20+[ability modifier]+[proficiency]) against AC [target AC]"
+   - ALWAYS include the target's AC number
+   - ALWAYS include full attack bonus breakdown
+   - NEVER skip straight to damage without attack roll first
+2. **WAIT FOR PLAYER ROLL**: Do not continue until player provides their attack roll result
+3. **ACKNOWLEDGE RESULT**: "You rolled [number]..." and compare to AC
+
+**PHASE 2: DAMAGE ROLLS (CRITICAL - ALWAYS REQUIRED)**
+4. **IF ATTACK HITS**: IMMEDIATELY request damage roll with FULL formula
+   - "That hits! Now roll damage: [weapon dice]+[ability modifier] ([example: 1d8+3])"
+   - "Your blade strikes true! Roll [weapon damage] + [modifier] for damage"
+   - ALWAYS include the ability modifier (STR or DEX for finesse)
+5. **IF CRITICAL HIT (Natural 20)**: Request CRITICAL damage with doubled dice
+   - "Natural 20! Critical hit! Roll critical damage: [2x weapon dice]+[modifier] (example: 2d8+3)"
+   - "Critical hit! Roll [doubled dice] + [modifier] for maximum damage!"
 6. **WAIT FOR DAMAGE ROLL**: Do not continue until player provides damage result
 
 **PHASE 3: RESOLUTION**
-7. **APPLY DAMAGE**: "Your attack deals [damage] [type] damage! The [enemy] [reaction]"
+7. **APPLY DAMAGE**: "Your attack deals [damage] [damage type] damage! The [enemy] [reaction]"
 8. **DESCRIBE IMPACT**: Narrate the wound and enemy's response
 
 **COMPLETE COMBAT SEQUENCE EXAMPLES:**
-✅ CORRECT SEQUENCE:
-   DM: "Make an attack roll with your longsword (1d20+5) against AC 13"
+✅ CORRECT FULL SEQUENCE:
+   DM: "A goblin appears! Roll initiative (1d20+dex modifier)"
+   Player: "I rolled 14"
+   DM: "You go first! Make an attack roll with your longsword (1d20+5) against AC 13"
    Player: "I rolled 18"
-   DM: "18 hits! Roll damage for your longsword (1d8+3)"
+   DM: "18 hits AC 13! Roll damage: 1d8+3 for your longsword"
    Player: "I rolled 7"
-   DM: "Your blade deals 7 slashing damage, cutting deep into the orc's side!"
+   DM: "Your blade deals 7 slashing damage, cutting deep into the goblin's side!"
 
 ✅ CRITICAL HIT SEQUENCE:
    DM: "Make an attack roll with your shortsword (1d20+4) against AC 15"
    Player: "I rolled 20"
-   DM: "Natural 20! Critical hit! Roll critical damage (2d6+2)"
+   DM: "Natural 20! Critical hit! Roll critical damage: 2d6+2 (doubled dice)"
    Player: "I rolled 11"
    DM: "Your blade finds a vital spot, dealing 11 piercing damage!"
 
-**OTHER ROLL REQUIREMENTS:**
-- Initiative: "Everyone roll initiative! (1d20+dex modifier)"
-- Saving throws: "Make a [ability] saving throw (1d20+modifier, DC [number])"
-- Skill checks: "Make a [skill] check (1d20+modifier, DC [number])"
+✅ FINESSE WEAPON EXAMPLE:
+   DM: "Make an attack roll with your rapier (1d20+dex+prof) against AC 14"
+   Player: "I rolled 16"
+   DM: "16 hits! Roll damage: 1d8+dex modifier for your rapier"
+
+**SKILL CHECKS AND SAVES (ALWAYS INCLUDE DC):**
+✅ "Make a Perception check (1d20+wis modifier, DC 12) to spot the trap"
+✅ "Roll a Constitution saving throw (1d20+con modifier, DC 15) against poison"
+✅ "Make a Stealth check (1d20+dex modifier, DC 14) to remain hidden"
 
 **NPC ACTIONS (DM CONTROLLED):**
-✅ "The orc attacks (rolled behind screen, hits AC 15) for 8 slashing damage"
-✅ "The goblin makes its saving throw (rolled secretly, succeeds)"
+✅ "The orc attacks (rolled 1d20+4 = 16, hits AC 15) for 8 slashing damage (rolled 1d12+3)"
+✅ "The wizard casts fireball (DC 13 Dex save) - roll 1d20+dex modifier"
 
-**CRITICAL ERROR TO AVOID:**
-❌ "You rolled 18 and hit for 6 damage" (MISSING damage roll request!)
+**CRITICAL ERRORS TO NEVER MAKE:**
+❌ "You rolled 18 and hit for 6 damage" (SKIPPED damage roll request!)
 ❌ "Your attack succeeds, dealing damage" (MISSING specific damage roll!)
+❌ "Roll 1d6 damage" (MISSING attack roll first!)
 ❌ "The orc takes damage from your hit" (PLAYER NEVER ROLLED DAMAGE!)
+❌ "Make a Perception check" (MISSING DC!)
+❌ "Roll a saving throw" (MISSING ability and DC!)
 
-**MANDATORY DAMAGE ROLL TRIGGERS:**
-- Any successful attack roll → Request damage roll
-- Any critical hit → Request critical damage roll
-- Any spell attack that hits → Request spell damage roll
-- Any area effect → Request damage roll for affected targets`;
+**ABSOLUTE REQUIREMENTS - NEVER VIOLATE:**
+1. INITIATIVE before any attacks in new combat
+2. ATTACK ROLL (1d20+bonus vs AC) before ANY damage
+3. DAMAGE ROLL with MODIFIERS after successful attacks
+4. AC must be stated for every attack
+5. DC must be stated for every check/save
+6. Ability modifiers must be included in damage formulas
+7. Critical hits DOUBLE the weapon dice, not the modifier
+
+**COMBAT VALIDATION CHECKLIST:**
+Before responding, verify:
+□ Is this a new combat? → Request initiative first
+□ Is player attacking? → Request attack roll vs AC first
+□ Did attack hit? → Request damage with modifiers
+□ Is this a critical? → Double the weapon dice
+□ Did I include AC/DC numbers? → Always include targets
+□ Did I include modifiers? → Damage must have +modifier`;
 
   return contextText;
 }

@@ -14,6 +14,8 @@ export interface PendingRoll {
   context: string;
   actorId: string;
   waitingFor?: 'damage' | 'confirmation';
+  character?: import('@/types/character').Character;
+  preferredAbility?: 'str' | 'dex';
 }
 
 export interface RollResult {
@@ -157,40 +159,39 @@ export class RollStateManager {
   }
 
   /**
-   * Get weapon damage formula for a given weapon name
-   * This should be enhanced to pull from character sheet data
+   * Get damage roll suggestion with character data
    */
-  getWeaponDamageFormula(weaponName: string): string {
-    const weaponDamage: Record<string, string> = {
-      'shortsword': '1d6',
-      'longsword': '1d8',
-      'scimitar': '1d6',
-      'dagger': '1d4',
-      'rapier': '1d8',
-      'warhammer': '1d8',
-      'battleaxe': '1d8',
-      'greatsword': '2d6',
-      'greataxe': '1d12',
-      'maul': '2d6',
-      'handaxe': '1d6',
-      'javelin': '1d6',
-      'spear': '1d6',
-      'club': '1d4',
-      'mace': '1d6'
-    };
+  getDamageRollSuggestion(attackRollId: string): { formula: string; purpose: string } | null {
+    const attackRoll = this.state.completedRolls.find(r => r.id === attackRollId);
+    if (!attackRoll) return null;
 
-    return weaponDamage[weaponName.toLowerCase()] || '1d6';
+    // Find the original pending roll to get weapon and character data
+    const originalPending = this.state.pendingRolls.find(p =>
+      p.weaponName && p.actorId === attackRoll.actorId
+    );
+
+    if (!originalPending?.weaponName) {
+      return { formula: '1d6+3', purpose: 'Damage roll' };
+    }
+
+    const isCritical = this.state.criticalHit === attackRollId;
+
+    // Use DiceEngine for proper damage formula calculation
+    const { DiceEngine } = require('../dice/DiceEngine');
+    return DiceEngine.createDamageRollRequest(
+      originalPending.weaponName,
+      isCritical,
+      originalPending.character,
+      originalPending.preferredAbility
+    );
   }
 
   /**
-   * Get critical damage formula (double the dice)
+   * Get attack roll suggestion with character data
    */
-  getCriticalDamageFormula(weaponName: string): string {
-    const baseDamage = this.getWeaponDamageFormula(weaponName);
-    // Double the dice but not the modifiers
-    return baseDamage.replace(/(\d+)d(\d+)/g, (match, count, sides) =>
-      `${parseInt(count) * 2}d${sides}`
-    );
+  getAttackRollSuggestion(weaponName: string, character?: import('@/types/character').Character): { formula: string; purpose: string } {
+    const { DiceEngine } = require('../dice/DiceEngine');
+    return DiceEngine.createAttackRollRequest(weaponName, character);
   }
 
   /**
