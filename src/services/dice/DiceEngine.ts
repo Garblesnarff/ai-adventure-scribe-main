@@ -135,15 +135,18 @@ export class DiceEngine {
   }
 
   /**
-   * Get weapon damage formula by weapon name
-   * This should eventually pull from character sheet data
+   * Get weapon damage formula by weapon name with actual character modifiers
    */
-  static getWeaponDamageFormula(weaponName: string, ability: string = 'str'): string {
-    const weaponData: Record<string, { damage: string; versatile?: string; finesse?: boolean }> = {
+  static getWeaponDamageFormula(
+    weaponName: string,
+    character?: import('@/types/character').Character,
+    preferredAbility?: 'str' | 'dex'
+  ): string {
+    const weaponData: Record<string, { damage: string; versatile?: string; finesse?: boolean; ranged?: boolean }> = {
       // Simple melee weapons
       'club': { damage: '1d4' },
       'dagger': { damage: '1d4', finesse: true },
-      'dart': { damage: '1d4' },
+      'dart': { damage: '1d4', ranged: true },
       'javelin': { damage: '1d6' },
       'mace': { damage: '1d6' },
       'staff': { damage: '1d6', versatile: '1d8' },
@@ -161,30 +164,114 @@ export class DiceEngine {
       'maul': { damage: '2d6' },
 
       // Ranged weapons
-      'shortbow': { damage: '1d6' },
-      'longbow': { damage: '1d8' },
-      'crossbow': { damage: '1d8' },
-      'handcrossbow': { damage: '1d6' }
+      'shortbow': { damage: '1d6', ranged: true },
+      'longbow': { damage: '1d8', ranged: true },
+      'crossbow': { damage: '1d8', ranged: true },
+      'handcrossbow': { damage: '1d6', ranged: true }
     };
 
     const weapon = weaponData[weaponName.toLowerCase()];
     if (!weapon) {
-      return '1d6+' + ability; // Default weapon damage
+      // Default weapon - use character's STR if available
+      const modifier = character?.abilityScores?.strength?.modifier ?? 0;
+      return modifier >= 0 ? `1d6+${modifier}` : `1d6${modifier}`;
     }
 
-    // Use finesse weapons with dex if available
-    const abilityMod = weapon.finesse && ability === 'dex' ? 'dex' : 'str';
-    return weapon.damage + '+' + abilityMod;
+    // Determine which ability to use
+    let abilityToUse: 'strength' | 'dexterity' = 'strength';
+
+    if (weapon.ranged) {
+      // Ranged weapons always use dex
+      abilityToUse = 'dexterity';
+    } else if (weapon.finesse) {
+      // Finesse weapons can use either STR or DEX - choose the better one
+      if (character?.abilityScores) {
+        const strMod = character.abilityScores.strength?.modifier ?? 0;
+        const dexMod = character.abilityScores.dexterity?.modifier ?? 0;
+        abilityToUse = (preferredAbility === 'dex' || dexMod > strMod) ? 'dexterity' : 'strength';
+      } else {
+        abilityToUse = preferredAbility === 'dex' ? 'dexterity' : 'strength';
+      }
+    }
+
+    // Get the actual modifier value
+    const modifier = character?.abilityScores?.[abilityToUse]?.modifier ?? 0;
+
+    // Format the damage formula with proper +/- signs
+    if (modifier === 0) {
+      return weapon.damage;
+    } else if (modifier > 0) {
+      return `${weapon.damage}+${modifier}`;
+    } else {
+      return `${weapon.damage}${modifier}`;
+    }
   }
 
   /**
-   * Create a damage roll request with proper formula
+   * Create an attack roll request with proper formula using character data
    */
-  static createDamageRollRequest(weaponName: string, critical: boolean = false, ability: string = 'str'): {
+  static createAttackRollRequest(
+    weaponName: string,
+    character?: import('@/types/character').Character,
+    preferredAbility?: 'str' | 'dex'
+  ): {
     formula: string;
     purpose: string;
   } {
-    const baseFormula = this.getWeaponDamageFormula(weaponName, ability);
+    const weaponData: Record<string, { finesse?: boolean; ranged?: boolean }> = {
+      'dagger': { finesse: true },
+      'rapier': { finesse: true },
+      'scimitar': { finesse: true },
+      'shortsword': { finesse: true },
+      'shortbow': { ranged: true },
+      'longbow': { ranged: true },
+      'crossbow': { ranged: true },
+      'handcrossbow': { ranged: true },
+      'dart': { ranged: true }
+    };
+
+    const weapon = weaponData[weaponName.toLowerCase()];
+
+    // Determine which ability to use for attack roll
+    let abilityToUse: 'strength' | 'dexterity' = 'strength';
+
+    if (weapon?.ranged) {
+      abilityToUse = 'dexterity';
+    } else if (weapon?.finesse && character?.abilityScores) {
+      const strMod = character.abilityScores.strength?.modifier ?? 0;
+      const dexMod = character.abilityScores.dexterity?.modifier ?? 0;
+      abilityToUse = (preferredAbility === 'dex' || dexMod > strMod) ? 'dexterity' : 'strength';
+    } else if (weapon?.finesse) {
+      abilityToUse = preferredAbility === 'dex' ? 'dexterity' : 'strength';
+    }
+
+    // Calculate attack bonus: ability modifier + proficiency bonus
+    const abilityMod = character?.abilityScores?.[abilityToUse]?.modifier ?? 0;
+    const proficiencyBonus = character?.level ? Math.floor((character.level - 1) / 4) + 2 : 2;
+    const attackBonus = abilityMod + proficiencyBonus;
+
+    // Format the attack formula
+    const formula = attackBonus >= 0 ? `1d20+${attackBonus}` : `1d20${attackBonus}`;
+
+    return {
+      formula,
+      purpose: `Attack roll with ${weaponName}`
+    };
+  }
+
+  /**
+   * Create a damage roll request with proper formula using character data
+   */
+  static createDamageRollRequest(
+    weaponName: string,
+    critical: boolean = false,
+    character?: import('@/types/character').Character,
+    preferredAbility?: 'str' | 'dex'
+  ): {
+    formula: string;
+    purpose: string;
+  } {
+    const baseFormula = this.getWeaponDamageFormula(weaponName, character, preferredAbility);
 
     if (critical) {
       const criticalFormula = baseFormula.replace(
