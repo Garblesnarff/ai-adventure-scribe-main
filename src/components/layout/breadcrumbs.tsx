@@ -33,7 +33,8 @@ const Breadcrumbs: React.FC = () => {
     return '/' + pathSegments.slice(0, index + 1).join('/');
   };
 
-  if (pathSegments.length === 0) return null;
+  // Hide breadcrumbs on home page and characters page
+  if (pathSegments.length === 0 || location.pathname === '/characters') return null;
 
   return (
     <div className="container mx-auto px-4 py-2">

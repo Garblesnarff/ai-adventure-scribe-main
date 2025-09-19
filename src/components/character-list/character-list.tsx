@@ -95,10 +95,10 @@ const CharacterList: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         {/* Hero Header - show during loading for consistency */}
-        <div className="relative bg-cover bg-center py-20 px-4" style={{ backgroundImage: "url('/parchment-bg.png')" }}>
+        <div className="relative bg-cover py-24 px-4" style={{ backgroundImage: "url('/character_page_hero_header.png')", backgroundPosition: "center top -700px" }}>
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative max-w-7xl mx-auto text-center">
-            <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg animate-pulse">Your Heroes Await</h1>
+            <div className="mb-4 h-14"></div>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">Select a character to embark on epic adventures or forge a new legend</p>
           </div>
         </div>
@@ -145,10 +145,10 @@ const CharacterList: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Hero Header */}
-      <div className="relative bg-cover bg-center py-20 px-4" style={{ backgroundImage: "url('/parchment-bg.png')" }}>
+      <div className="relative bg-cover py-24 px-4" style={{ backgroundImage: "url('/character_page_hero_header.png')", backgroundPosition: "center top -670px" }}>
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">Your Heroes Await</h1>
+          <div className="mb-4 h-14"></div>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">Select a character to embark on epic adventures or forge a new legend</p>
         </div>
       </div>
