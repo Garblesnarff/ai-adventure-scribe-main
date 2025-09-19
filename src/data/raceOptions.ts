@@ -65,7 +65,11 @@ export const baseRaces: CharacterRace[] = [
         abilityScoreIncrease: {
           intelligence: 1
         },
-        traits: ['High Elf Cantrip', 'Weapon Training']
+        traits: ['High Elf Cantrip', 'Weapon Training'],
+        bonusCantrip: {
+          source: 'wizard',
+          count: 1
+        }
       },
       {
         id: 'wood-elf',
@@ -83,7 +87,9 @@ export const baseRaces: CharacterRace[] = [
         abilityScoreIncrease: {
           charisma: 1
         },
-        traits: ['Superior Darkvision', 'Sunlight Sensitivity', 'Drow Magic']
+        traits: ['Superior Darkvision', 'Sunlight Sensitivity', 'Drow Magic'],
+        cantrips: ['dancing-lights'],
+        spells: ['faerie-fire'] // Gained at 3rd level in D&D 5E
       },
       {
         id: 'eladrin',
@@ -226,7 +232,8 @@ export const baseRaces: CharacterRace[] = [
         abilityScoreIncrease: {
           dexterity: 1
         },
-        traits: ['Natural Illusionist', 'Speak with Small Beasts']
+        traits: ['Natural Illusionist', 'Speak with Small Beasts'],
+        cantrips: ['minor-illusion']
       },
       {
         id: 'rock-gnome',
@@ -387,7 +394,9 @@ export const baseRaces: CharacterRace[] = [
         name: 'Standard Tiefling',
         description: 'The Player\'s Handbook version with standard traits.',
         abilityScoreIncrease: {},
-        traits: ['Thaumaturgy']
+        traits: ['Thaumaturgy'],
+        cantrips: ['thaumaturgy'],
+        spells: ['hellish-rebuke'] // Gained at 3rd level in D&D 5E
       }
       // Variants (e.g., Asmodeus, Baalzebul) can be added later with different spells
     ]
