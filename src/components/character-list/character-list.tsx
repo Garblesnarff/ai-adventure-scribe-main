@@ -100,19 +100,21 @@ const CharacterList: React.FC = () => {
           <div className="relative max-w-7xl mx-auto text-center">
             <div className="mb-4 h-14"></div>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">Select a character to embark on epic adventures or forge a new legend</p>
+            <div className="flex justify-center">
+              <Button onClick={handleCreateNew} variant="fantasy" className="flex items-center gap-2 shadow-lg" disabled>
+                <Plus className="w-4 h-4" />
+                Forge New Hero
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="container mx-auto px-4 py-8 -mt-10 relative z-10">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-center items-center mb-6">
             <div className="flex items-center gap-2">
               <Users className="w-6 h-6 text-infinite-purple animate-pulse" />
               <h1 className="text-3xl font-bold text-foreground animate-pulse">Character Roster</h1>
             </div>
-            <Button onClick={handleCreateNew} variant="fantasy" className="flex items-center gap-2 shadow-lg" disabled>
-              <Plus className="w-4 h-4" />
-              Forge New Hero
-            </Button>
           </div>
 
           {/* Search Bar - disabled during loading */}
@@ -150,19 +152,21 @@ const CharacterList: React.FC = () => {
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="mb-4 h-14"></div>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">Select a character to embark on epic adventures or forge a new legend</p>
+          <div className="flex justify-center">
+            <Button onClick={handleCreateNew} variant="fantasy" className="flex items-center gap-2 shadow-lg">
+              <Plus className="w-4 h-4" />
+              Forge New Hero
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 -mt-10 relative z-10">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-center items-center mb-6">
           <div className="flex items-center gap-2">
             <Users className="w-6 h-6 text-infinite-purple" />
             <h1 className="text-3xl font-bold text-foreground">Character Roster</h1>
           </div>
-          <Button onClick={handleCreateNew} variant="fantasy" className="flex items-center gap-2 shadow-lg">
-            <Plus className="w-4 h-4" />
-            Forge New Hero
-          </Button>
         </div>
 
         {/* Search Bar */}
