@@ -1075,6 +1075,14 @@
     z-index: 20 !important;
   }
 
+  /* Character card hover popup centering */
+  .character-card.group:hover .hover-popup {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: auto !important;
+    z-index: 20 !important;
+  }
+
   .hover-popup {
     position: absolute !important;
     left: 50% !important;

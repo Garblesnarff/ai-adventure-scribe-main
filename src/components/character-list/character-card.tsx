@@ -189,8 +189,8 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
         )}
         {/* Overlay and popup for character details */}
         <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-        <div className={`hover-popup ${isHovered ? 'opacity-100 translate-y-0 pointer-events-auto z-20' : 'opacity-0 translate-y-2 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
-          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border">
+        <div className={`hover-popup ${isHovered ? 'opacity-100 scale-100 pointer-events-auto z-20' : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
+          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border max-w-xs">
             <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : character.name}</div>
 
             {imageLoading ? (
