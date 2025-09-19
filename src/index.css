@@ -6,6 +6,28 @@
 
 /* InfiniteRealms Enhanced Color System */
 :root {
+  /* Light theme (default) */
+  --background: #ffffff;
+  --foreground: #0f0c1f;
+  --foreground-secondary: rgba(15, 12, 31, 0.9);
+  --foreground-muted: rgba(15, 12, 31, 0.7);
+
+  --muted: rgba(15, 12, 31, 0.08);
+  --muted-foreground: rgba(15, 12, 31, 0.7);
+  --muted-hover: rgba(15, 12, 31, 0.12);
+
+  --border: rgba(15, 12, 31, 0.15);
+  --border-hover: rgba(15, 12, 31, 0.25);
+  --input: rgba(15, 12, 31, 0.06);
+  --input-hover: rgba(15, 12, 31, 0.10);
+
+  --card: rgba(255, 255, 255, 0.95);
+  --card-hover: rgba(255, 255, 255, 0.98);
+  --card-foreground: #0f0c1f;
+  --card-border: rgba(15, 12, 31, 0.1);
+
+  --popover: #ffffff;
+  --popover-foreground: #0f0c1f;
   /* Enhanced Brand Colors with Multiple Shades */
   --infinite-purple: #7C3AED;
   --infinite-purple-light: #A855F7;
@@ -37,14 +59,6 @@
   --primary: var(--infinite-purple);
   --primary-foreground: #ffffff;
 
-  /* Enhanced Background System */
-  --background: var(--infinite-dark);
-  --background-secondary: var(--infinite-surface);
-  --background-tertiary: var(--infinite-dark-light);
-  --foreground: #ffffff;
-  --foreground-secondary: rgba(255, 255, 255, 0.9);
-  --foreground-muted: rgba(255, 255, 255, 0.7);
-
   /* Secondary Colors */
   --secondary: var(--infinite-gold);
   --secondary-foreground: var(--infinite-dark);
@@ -53,16 +67,6 @@
   --accent: var(--infinite-teal);
   --accent-foreground: #ffffff;
 
-  /* Enhanced Neutral Colors with Better Contrast */
-  --muted: rgba(255, 255, 255, 0.12);
-  --muted-foreground: rgba(255, 255, 255, 0.7);
-  --muted-hover: rgba(255, 255, 255, 0.18);
-
-  /* Enhanced Borders and Inputs */
-  --border: rgba(255, 255, 255, 0.15);
-  --border-hover: rgba(255, 255, 255, 0.25);
-  --input: rgba(255, 255, 255, 0.08);
-  --input-hover: rgba(255, 255, 255, 0.12);
   --ring: var(--infinite-purple-light);
 
   /* Status Colors */
@@ -75,22 +79,14 @@
   --info: var(--infinite-teal);
   --info-foreground: #ffffff;
 
-  /* Enhanced Card System */
-  --popover: var(--infinite-surface);
-  --popover-foreground: #ffffff;
-  --card: rgba(255, 255, 255, 0.06);
-  --card-hover: rgba(255, 255, 255, 0.09);
-  --card-foreground: #ffffff;
-  --card-border: rgba(255, 255, 255, 0.1);
-
-  /* Sidebar Enhancement */
-  --sidebar-background: var(--infinite-surface);
-  --sidebar-foreground: #ffffff;
+  /* Sidebar (light theme) */
+  --sidebar-background: rgba(15, 12, 31, 0.03);
+  --sidebar-foreground: #0f0c1f;
   --sidebar-primary: var(--infinite-purple);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--infinite-teal);
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.15);
+  --sidebar-border: rgba(15, 12, 31, 0.15);
   --sidebar-ring: var(--infinite-purple-light);
 
   /* Enhanced Shadows */
@@ -104,6 +100,69 @@
   --radius: 0.75rem;
   --radius-sm: 0.5rem;
   --radius-lg: 1rem;
+}
+
+/* Dark theme */
+.dark,
+[data-theme="dark"] {
+  /* Dark theme backgrounds and text */
+  --background: var(--infinite-dark);
+  --foreground: #ffffff;
+  --foreground-secondary: rgba(255, 255, 255, 0.9);
+  --foreground-muted: rgba(255, 255, 255, 0.7);
+
+  --muted: rgba(255, 255, 255, 0.12);
+  --muted-foreground: rgba(255, 255, 255, 0.7);
+  --muted-hover: rgba(255, 255, 255, 0.18);
+
+  --border: rgba(255, 255, 255, 0.15);
+  --border-hover: rgba(255, 255, 255, 0.25);
+  --input: rgba(255, 255, 255, 0.08);
+  --input-hover: rgba(255, 255, 255, 0.12);
+
+  --card: rgba(255, 255, 255, 0.06);
+  --card-hover: rgba(255, 255, 255, 0.09);
+  --card-foreground: #ffffff;
+  --card-border: rgba(255, 255, 255, 0.1);
+
+  --popover: var(--infinite-surface);
+  --popover-foreground: #ffffff;
+
+  /* Dark sidebar */
+  --sidebar-background: var(--infinite-surface);
+  --sidebar-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.15);
+}
+
+/* Automatically use dark theme based on system preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--infinite-dark);
+    --foreground: #ffffff;
+    --foreground-secondary: rgba(255, 255, 255, 0.9);
+    --foreground-muted: rgba(255, 255, 255, 0.7);
+
+    --muted: rgba(255, 255, 255, 0.12);
+    --muted-foreground: rgba(255, 255, 255, 0.7);
+    --muted-hover: rgba(255, 255, 255, 0.18);
+
+    --border: rgba(255, 255, 255, 0.15);
+    --border-hover: rgba(255, 255, 255, 0.25);
+    --input: rgba(255, 255, 255, 0.08);
+    --input-hover: rgba(255, 255, 255, 0.12);
+
+    --card: rgba(255, 255, 255, 0.06);
+    --card-hover: rgba(255, 255, 255, 0.09);
+    --card-foreground: #ffffff;
+    --card-border: rgba(255, 255, 255, 0.1);
+
+    --popover: var(--infinite-surface);
+    --popover-foreground: #ffffff;
+
+    --sidebar-background: var(--infinite-surface);
+    --sidebar-foreground: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.15);
+  }
 }
 
 @layer base {
@@ -190,9 +249,9 @@
     font-family: 'Inter', sans-serif;
   }
 
-  /* High contrast for accessibility */
+  /* High contrast for accessibility - responsive to theme */
   .text-muted-foreground {
-    color: hsl(210 40% 98%) !important; /* Near-white for dark themes */
+    color: hsl(var(--muted-foreground)) !important;
   }
 
   /* RPG-specific text styles */
