@@ -95,9 +95,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
   const canSend = input.trim().length > 0 && !isDisabled;
 
   return (
-    <div className="px-6 pb-6">
+    <div className="px-4 pb-4">
       <div className="chat-composer transition-all duration-200 focus-within:active-glow">
-        <div className="flex items-end gap-3">
+  <div className="flex items-end gap-2">
           {/* Quick action buttons */}
           <div className="flex items-center gap-2 pb-1">
             <Button
@@ -136,7 +136,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Describe what your character would like to do..."
-              className="min-h-[20px] max-h-32 resize-none border-0 shadow-none focus:ring-0 focus:border-0 p-0 text-sm leading-relaxed placeholder:text-gray-600 bg-transparent"
+              className="min-h-[20px] max-h-28 resize-none border-0 shadow-none focus:ring-0 focus:border-0 p-0 text-sm leading-relaxed placeholder:text-gray-600 bg-transparent"
               disabled={isDisabled}
               rows={1}
             />

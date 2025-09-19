@@ -83,8 +83,12 @@ const GameContent: React.FC = () => {
           .eq('id', characterIdFromParams)
           .single();
 
-        if (characterError) throw new Error(`Failed to load character: ${characterError.message}`);
-        if (!characterData) throw new Error('Character not found.');
+        if (characterError) {
+          throw new Error(`Failed to load character: ${characterError.message}`);
+        }
+        if (!characterData) {
+          throw new Error('Character not found.');
+        }
 
         // Basic transformation, assuming CharacterContext expects AbilityScores nested
         // and character_stats returns an array (hence [0]) or a single object if one-to-one.
@@ -139,8 +143,12 @@ const GameContent: React.FC = () => {
           .eq('id', campaignIdFromParams)
           .single();
 
-        if (campaignError) throw new Error(`Failed to load campaign: ${campaignError.message}`);
-        if (!campaignData) throw new Error('Campaign not found.');
+        if (campaignError) {
+          throw new Error(`Failed to load campaign: ${campaignError.message}`);
+        }
+        if (!campaignData) {
+          throw new Error('Campaign not found.');
+        }
         
         // Assuming CampaignContext UPDATE_CAMPAIGN can handle partial updates of CampaignType
         campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as unknown as Partial<CampaignType> });
@@ -269,8 +277,8 @@ const GameContent: React.FC = () => {
             <VoiceProvider>
               <GameContentInner
               sessionId={sessionId}
-              campaignIdForHandler={campaignIdFromParams}
-              characterIdForHandler={characterIdFromParams}
+              campaignIdForHandler={campaignIdFromParams ?? null}
+              characterIdForHandler={characterIdFromParams ?? null}
               sessionData={sessionData}
               updateGameSessionState={updateGameSessionState}
               characterState={characterState}
@@ -342,7 +350,13 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
     messages,
     messagesLoading,
     onGreetingGenerated: sendMessage,
-    onMemoryCreated: createMemory,
+    onMemoryCreated: async (memory: any) => {
+      try {
+        await createMemory(memory as any);
+      } catch (e) {
+        console.error('Failed to create memory from greeting:', e);
+      }
+    },
   });
 
   // Auto-toggle combat mode based on combat detection
@@ -399,17 +413,17 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
   return (
           <div className="min-h-screen bg-background">
-            <div className="container-game min-h-screen mobile-bottom-safe">
-              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out min-h-screen gap-4 md:gap-6 ${
+            <div className="w-full min-h-screen mobile-bottom-safe">
+              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out min-h-screen gap-2 md:gap-4 items-stretch w-full ${
                 isPanelCollapsed
                   ? 'grid-cols-1'
-                  : 'grid-cols-1 md:grid-cols-[1fr_minmax(280px,350px)] lg:grid-cols-[1fr_minmax(300px,400px)] xl:grid-cols-[1fr_minmax(320px,420px)] 2xl:grid-cols-[1fr_minmax(350px,450px)]'
+                  : 'grid-cols-1 md:grid-cols-[1fr_minmax(250px,350px)] lg:grid-cols-[1fr_minmax(260px,360px)] xl:grid-cols-[1fr_minmax(280px,380px)]'
               }`}>
                 {/* Main Content Area - Optimized for Maximum Space */}
-                <div className="flex-1 min-w-0 order-1 layout-main">
-                  <Card className="h-[80vh] md:h-[85vh] glass-strong shadow-2xl border-2 border-infinite-purple/30 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover-glow mobile-chat">
+                <div className="flex-1 min-w-0 order-1 layout-main flex flex-col h-full">
+                  <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden transition-all duration-300 hover:shadow-2xl hover-glow mobile-chat h-full">
                     {/* Cinematic Header with Atmospheric Effects */}
-                    <div className="relative p-8 border-b border-white/20 bg-cosmic overflow-hidden transition-all duration-500">
+                    <div className="relative p-2 md:p-3 border-b border-white/10 bg-cosmic overflow-hidden transition-all duration-500">
                       {/* Animated Background Particles */}
                       <div className="absolute inset-0 overflow-hidden">
                         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-60" style={{animationDelay: '0s'}}></div>
@@ -423,8 +437,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
                       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 gap-4">
                         <div className="flex-1">
-                          <div className="mb-4">
-                            <h1 className="text-responsive-2xl md:text-realm-title mb-2">
+                          <div className="mb-2">
+                            <h1 className="text-xl md:text-2xl font-display mb-1 truncate">
                               {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
                             </h1>
                             <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 text-sm">
@@ -441,10 +455,16 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             </div>
                           </div>
 
-                          {/* Enhanced Stats and Combat Status */}
-                          <div className="space-compact-2 md:space-y-3">
-                            <StatsBar />
-                            <CombatStatus />
+                          {/* Enhanced Stats and Combat Status (compact) */}
+                          <div className="flex items-center gap-3 text-sm mt-0">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm">
+                                <StatsBar />
+                              </div>
+                            </div>
+                            <div className="shrink-0">
+                              <CombatStatus />
+                            </div>
                           </div>
                         </div>
 
@@ -508,7 +528,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <>
-                              <MessageList onSendFullMessage={handleSendMessage} className="overscroll-y-none" />
+                              <MessageList onSendFullMessage={handleSendMessage} />
 
                               {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
                               {isGeneratingGreeting && (
@@ -642,10 +662,5 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
           </div>
   );
 };
-
-interface GameSidePanelProps extends MemoryPanelProps {
-  isCollapsed: boolean;
-  onToggle: () => void;
-}
 
 export default GameContent;

@@ -46,6 +46,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCharacterModal, setShowCharacterModal] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Use hot loading hook for background image
   const { imageUrl: hotLoadedImage, isLoading: imageLoading, hasImage } = useCampaignImageHotLoading(campaign.id);
@@ -114,6 +115,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
     <Card
       className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square"
       style={{ padding: 0 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Hero / thumbnail area */}
       <div
@@ -142,10 +145,25 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
           </div>
         )}
         <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-        <div className="hover-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
-          <div className="bg-white/95 p-4 rounded-lg shadow-md border border-border">
-            <div className="text-xl font-bold text-infinite-dark mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : campaign.name}</div>
-            {imageLoading ? <Skeleton className="h-4 w-full" /> : (campaign.description && <div className="text-base text-muted-foreground line-clamp-3 leading-relaxed mb-3 break-words hyphens-auto">{campaign.description}</div>)}
+            <div className={`hover-popup ${isHovered ? 'opacity-100 translate-y-0 pointer-events-auto z-20' : 'opacity-0 translate-y-2 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
+          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border">
+            <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : campaign.name}</div>
+            {imageLoading ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <>
+                {console.log('Campaign description:', campaign.description)}
+                <div className="description-section min-h-[3rem] max-h-[200px] overflow-y-auto text-sm text-foreground leading-relaxed mb-3 break-words hyphens-auto p-2 pr-3 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+                  {campaign.description ? (
+                    campaign.description
+                  ) : (
+                    <span className="italic text-muted-foreground">
+                      No description yet. Enter the campaign to begin your adventure!
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
             
             {/* Campaign badges in popup */}
             <div className="campaign-badges flex gap-1 flex-wrap text-xs mt-2 mb-4">
@@ -155,7 +173,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
               {campaign.tone && <span className="inline-flex items-center px-2 py-1 rounded-full bg-accent/10 text-accent-foreground border border-accent/20 font-medium">{campaign.tone}</span>}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-end">
               <Button size="sm" className="bg-infinite-gold text-infinite-dark flex items-center gap-2 hover:bg-infinite-purple" onClick={(e) => { e.stopPropagation(); setShowCharacterModal(true); }}>
                 <Play className="w-4 h-4" />
                 Play
