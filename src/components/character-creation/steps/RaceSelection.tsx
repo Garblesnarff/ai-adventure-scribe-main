@@ -70,15 +70,7 @@ const RaceSelection: React.FC = () => {
       
       <div className="space-y-6">
         {!showSubraces ? (
-          <>
-            <div className="text-center">
-              <h2 className="text-3xl font-bold mb-2">Choose Your Race</h2>
-              <p className="text-muted-foreground">
-                Your race determines ability score bonuses, traits, and cultural background
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {baseRaces.map((baseRace) => {
                 const isSelected = state.character?.race?.id === baseRace.id;
                 
@@ -178,7 +170,6 @@ const RaceSelection: React.FC = () => {
                 );
               })}
             </div>
-          </>
         ) : (
           <>
             <div className="text-center">

@@ -22,6 +22,25 @@ const WizardContent: React.FC = () => {
   const { toast } = useToast();
   const { scrollToTop } = useAutoScroll();
 
+  // Filter steps based on character state
+  const getFilteredSteps = React.useCallback(() => {
+    return wizardSteps.filter((step) => {
+      if (step.skipCondition) {
+        return !step.skipCondition(state.character);
+      }
+      return true;
+    });
+  }, [state.character]);
+
+  const filteredSteps = getFilteredSteps();
+
+  // Adjust current step if steps are filtered and current step is out of bounds
+  React.useEffect(() => {
+    if (currentStep >= filteredSteps.length && filteredSteps.length > 0) {
+      setCurrentStep(filteredSteps.length - 1);
+    }
+  }, [filteredSteps.length, currentStep]);
+
   // Scroll to top whenever the step changes
   React.useEffect(() => {
     scrollToTop();
@@ -66,8 +85,8 @@ const WizardContent: React.FC = () => {
    */
   const handleNext = async () => {
     console.log('handleNext called at step:', currentStep);
-    
-    if (currentStep < wizardSteps.length - 1) {
+
+    if (currentStep < filteredSteps.length - 1) {
       console.log('Navigating to next step:', currentStep + 1);
       setCurrentStep(currentStep + 1);
     } else {
@@ -136,17 +155,31 @@ const WizardContent: React.FC = () => {
   };
 
   // Get the component for the current step
-  const CurrentStepComponent = wizardSteps[currentStep].component;
+  const CurrentStepComponent = filteredSteps[currentStep]?.component;
+
+  // Handle case where no steps are available
+  if (!CurrentStepComponent) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">Character Creation</h1>
+            <p className="text-muted-foreground">Loading character creation steps...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <h1 className="text-3xl font-bold text-center mb-8">Create Your Character</h1>
-        <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
+        <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
         <CurrentStepComponent />
         <StepNavigation
           currentStep={currentStep}
-          totalSteps={wizardSteps.length}
+          totalSteps={filteredSteps.length}
           onNext={handleNext}
           onPrevious={handlePrevious}
           isLoading={isSaving}

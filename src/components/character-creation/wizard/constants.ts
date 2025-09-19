@@ -28,7 +28,14 @@ export const wizardSteps: WizardStep[] = [
   },
   {
     component: SubraceSelection,
-    label: 'Subrace'
+    label: 'Subrace',
+    skipCondition: (character) => {
+      // Skip if no race selected, race has no subraces, or subrace already selected
+      if (!character?.race) return true;
+      if (!character.race.subraces || character.race.subraces.length === 0) return true;
+      if (character.subrace) return true;
+      return false;
+    }
   },
   {
     component: ClassSelection,
