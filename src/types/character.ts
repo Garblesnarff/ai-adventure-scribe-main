@@ -285,6 +285,18 @@ export interface Character {
   backstory_elements?: string;
   created_at?: string;
   updated_at?: string;
+  // Character stats from character_stats table
+  character_stats?: {
+    strength?: number;
+    dexterity?: number;
+    constitution?: number;
+    intelligence?: number;
+    wisdom?: number;
+    charisma?: number;
+    max_hit_points?: number;
+    current_hit_points?: number;
+    armor_class?: number;
+  };
 }
 
 // Helper function to transform Character object for Supabase
