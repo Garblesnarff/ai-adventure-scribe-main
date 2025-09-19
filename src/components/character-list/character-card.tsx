@@ -225,41 +225,41 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">STR</span>
-                      <span>{character.abilityScores?.strength?.score || 10} ({formatModifier(character.abilityScores?.strength?.score || 10)})</span>
+                      <span>{character.character_stats?.strength || 10} ({formatModifier(character.character_stats?.strength || 10)})</span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">INT</span>
-                      <span>{character.abilityScores?.intelligence?.score || 10} ({formatModifier(character.abilityScores?.intelligence?.score || 10)})</span>
+                      <span>{character.character_stats?.intelligence || 10} ({formatModifier(character.character_stats?.intelligence || 10)})</span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">DEX</span>
-                      <span>{character.abilityScores?.dexterity?.score || 10} ({formatModifier(character.abilityScores?.dexterity?.score || 10)})</span>
+                      <span>{character.character_stats?.dexterity || 10} ({formatModifier(character.character_stats?.dexterity || 10)})</span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">WIS</span>
-                      <span>{character.abilityScores?.wisdom?.score || 10} ({formatModifier(character.abilityScores?.wisdom?.score || 10)})</span>
+                      <span>{character.character_stats?.wisdom || 10} ({formatModifier(character.character_stats?.wisdom || 10)})</span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">CON</span>
-                      <span>{character.abilityScores?.constitution?.score || 10} ({formatModifier(character.abilityScores?.constitution?.score || 10)})</span>
+                      <span>{character.character_stats?.constitution || 10} ({formatModifier(character.character_stats?.constitution || 10)})</span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">CHA</span>
-                      <span>{character.abilityScores?.charisma?.score || 10} ({formatModifier(character.abilityScores?.charisma?.score || 10)})</span>
+                      <span>{character.character_stats?.charisma || 10} ({formatModifier(character.character_stats?.charisma || 10)})</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Combat Stats */}
                 <div className="flex items-center gap-4 text-xs text-foreground mb-4 bg-accent/10 px-3 py-2 rounded">
-                  {character.hitPoints && (
+                  {character.character_stats?.max_hit_points && (
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">HP:</span> {character.hitPoints.current || character.hitPoints.maximum || 0}/{character.hitPoints.maximum || 0}
+                      <span className="font-medium">HP:</span> {character.character_stats.current_hit_points || character.character_stats.max_hit_points}/{character.character_stats.max_hit_points}
                     </span>
                   )}
-                  {character.armorClass && (
+                  {character.character_stats?.armor_class && (
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">AC:</span> {character.armorClass}
+                      <span className="font-medium">AC:</span> {character.character_stats.armor_class}
                     </span>
                   )}
                   <span className="flex items-center gap-1">
