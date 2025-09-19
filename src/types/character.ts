@@ -59,6 +59,11 @@ export interface Subrace {
   speed?: number;
   languages?: string[];
   cantrips?: string[];
+  spells?: string[]; // Racial spells gained at higher levels
+  bonusCantrip?: {
+    source: 'any' | 'wizard' | 'cleric' | 'druid' | 'bard' | 'sorcerer' | 'warlock';
+    count: number;
+  }; // For High Elf wizard cantrip, etc.
   weaponProficiencies?: string[];
   armorProficiencies?: string[];
 }
