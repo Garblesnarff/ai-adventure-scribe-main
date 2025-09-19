@@ -70,6 +70,7 @@ export default {
 			},
 			fontFamily: {
 				sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+				heading: ['Cinzel', 'serif'], // New: Fantasy accent for major headings
 				serif: ['"DM Serif Display"', '"Times New Roman"', 'serif'], // For narrative/immersive text
 			},
 			fontSize: {

@@ -17,7 +17,7 @@ import { Button } from '../ui/button';
  */
 export const CompactCharacterHeader: React.FC = () => {
   const { state: characterState } = useCharacter();
-  const character = characterState.character;
+  const character = characterState.character || ({} as any);
 
   const [skillsExpanded, setSkillsExpanded] = useState(false);
 
@@ -30,26 +30,26 @@ export const CompactCharacterHeader: React.FC = () => {
   }
 
   // Calculate HP (max HP formula from character sheet)
-  const maxHp = Math.max(1, 
-    character.level * (character.class?.hitDie || 8) + 
-    character.abilityScores.constitution.modifier * character.level
-  );
+  const lvl = character.level ?? 1;
+  const hitDie = character.class?.hitDie ?? 8;
+  const conMod = character?.abilityScores?.constitution?.modifier ?? 0;
+  const maxHp = Math.max(1, lvl * hitDie + conMod * lvl);
 
   // Calculate AC with unarmored defense support
   const armorClass = (() => {
-    let ac = 10 + character.abilityScores.dexterity.modifier;
-    const hasUnarmoredDefense = character.class && 
-      (character.class.name.toLowerCase() === 'barbarian' || 
-       character.class.name.toLowerCase() === 'monk');
-    const isWearingArmor = character.equippedArmor !== undefined && character.equippedArmor !== '';
+  let dexMod = character?.abilityScores?.dexterity?.modifier ?? 0;
+  let ac = 10 + dexMod;
+    const className = (character.class?.name ?? '').toString().toLowerCase();
+    const hasUnarmoredDefense = className === 'barbarian' || className === 'monk';
+    const isWearingArmor = !!(character.equippedArmor);
     
     if (hasUnarmoredDefense && !isWearingArmor) {
       switch (character.class!.name.toLowerCase()) {
         case 'barbarian':
-          ac = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.constitution.modifier;
+          ac = 10 + (character?.abilityScores?.dexterity?.modifier ?? 0) + (character?.abilityScores?.constitution?.modifier ?? 0);
           break;
         case 'monk':
-          ac = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.wisdom.modifier;
+          ac = 10 + (character?.abilityScores?.dexterity?.modifier ?? 0) + (character?.abilityScores?.wisdom?.modifier ?? 0);
           break;
       }
     }
@@ -57,10 +57,10 @@ export const CompactCharacterHeader: React.FC = () => {
   })();
 
   // Proficiency bonus
-  const proficiency = Math.floor((character.level - 1) / 4) + 2;
+  const proficiency = Math.floor((lvl - 1) / 4) + 2;
 
   // Initiative (DEX mod)
-  const initiative = character.abilityScores.dexterity.modifier;
+  const initiative = character?.abilityScores?.dexterity?.modifier ?? 0;
 
   // Key skills (top 3: Perception, Stealth, Arcana - with proficiency check)
   const getSkillMod = (skill: string, abilityMod: number, isProficient: boolean) => {
@@ -68,7 +68,7 @@ export const CompactCharacterHeader: React.FC = () => {
   };
 
   const isSkillProficient = (skill: string) => {
-    return character.skills?.includes(skill) || false;
+    return Array.isArray((character as any).skills) ? (character as any).skills.includes(skill) : false;
   };
 
   const keySkills = [
@@ -113,7 +113,7 @@ export const CompactCharacterHeader: React.FC = () => {
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center text-2xl font-bold text-white">
-                {character.name.charAt(0).toUpperCase()}
+                {(character.name || 'A').charAt(0).toUpperCase()}
               </div>
             )}
           </div>
@@ -133,8 +133,8 @@ export const CompactCharacterHeader: React.FC = () => {
         </div>
       </div>
 
-      {/* Enhanced Stats - Animated Rings */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+  {/* Enhanced Stats - Animated Rings */}
+  <div className="grid grid-cols-2 gap-4 mb-6">
         <StatRing
           icon={<Heart className="w-6 h-6 text-red-400" />}
           label="HP"
@@ -172,8 +172,8 @@ export const CompactCharacterHeader: React.FC = () => {
         />
       </div>
 
-      {/* Key Skills (Accordion) */}
-      <div className="space-y-2 overflow-hidden">
+  {/* Key Skills (Accordion) */}
+  <div className="space-y-2 overflow-hidden">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -199,6 +199,13 @@ export const CompactCharacterHeader: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Description and additional scrollable details */}
+      <div className="pt-2 border-t">
+        <div style={{ maxHeight: '18vh', overflow: 'auto' }} className="mt-2 mb-3 text-sm text-muted-foreground">
+          {character.description || 'No character description provided.'}
         </div>
       </div>
 

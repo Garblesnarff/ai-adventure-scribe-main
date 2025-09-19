@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useGame } from '@/contexts/GameContext';
@@ -23,10 +23,36 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
   const { messages = [], sendMessage } = useMessageContext();
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+  const messagesRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll behavior: scroll to bottom when new messages arrive unless user scrolled up
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el) {
+      return;
+    }
+    const onScroll = () => {
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+      setIsUserScrolledUp(!atBottom);
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el || isUserScrolledUp) {
+      return;
+    }
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [messages, isUserScrolledUp]);
 
   // Group consecutive messages from the same sender
   const groupedMessages = useMemo(() => {
-    if (!messages.length) return [];
+    if (!messages.length) {
+      return [];
+    }
 
     const groups: { sender: string; messages: ChatMessage[]; isPlayer: boolean }[] = [];
     let currentGroup = { sender: messages[0].sender, messages: [messages[0]], isPlayer: messages[0].sender === 'player' };
@@ -181,7 +207,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
   }, [sendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 chat-scroll parchment-panel">
+    <div
+      className="flex-1 overflow-y-auto px-6 py-6 space-y-4 chat-scroll parchment-panel"
+      role="log"
+      aria-live="polite"
+      ref={messagesRef}
+    >
       {groupedMessages.map((group, groupIndex) => (
         <div key={`group-${groupIndex}`} className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}>
           <div className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>
@@ -203,12 +234,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
 
                 // Parse for this message
                 const parsedMessage = isDM ? parseMessageOptions(message.text) : null;
-                const structuredRollRequests = isDM && message.rollRequests ? message.rollRequests : [];
+                const structuredRollRequests = isDM && (message as any).rollRequests ? (message as any).rollRequests as any[] : [];
                 const parsedRollRequests = isDM && structuredRollRequests.length === 0 ? parseRollRequests(message.text) : [];
                 const rollRequests = structuredRollRequests.length > 0 ? 
-                  structuredRollRequests.map(req => ({ ...req, originalText: '', confidence: 1.0 })) : 
+                  structuredRollRequests.map((req: any) => ({ ...req, originalText: req.originalText ?? '', confidence: req.confidence ?? 1.0 })) : 
                   parsedRollRequests;
-                const hasRollRequests = rollRequests.length > 0;
+                const hasRollRequests = Array.isArray(rollRequests) && rollRequests.length > 0;
 
                 // Truncation logic
                 const isLongMessage = message.text.length > 200;
@@ -253,20 +284,27 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                           />
                         ) : (
                           <CombatMessage 
-                            data={message.context.combatData}
+                            data={message.context.combatData as any}
                             timestamp={message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined}
                           />
                         )}
                       </div>
                     ) : (
                       /* Regular message bubble - only first/last have full styling */
-                      <div className={`relative px-4 py-3 rounded-xl transition-all duration-200 message-bubble ${
-                        isDM 
-                          ? 'dm-bubble border-l-4 border-l-primary/20' 
-                          : group.isPlayer 
-                            ? 'player-bubble ml-auto' 
-                            : 'system-bubble'
-                      } ${isFirstInGroup ? 'rounded-t-xl pt-4' : ''} ${isLastInGroup ? 'rounded-b-xl pb-4' : 'border-b border-border/20'}`}>
+                      <div
+                        className={
+                          `relative px-3 py-2 rounded-xl transition-all duration-200 message-bubble ` +
+                          (isDM
+                            ? 'dm-bubble border-l-4 border-l-primary/20 bg-gradient-to-r from-infinite-purple/80 to-infinite-teal/60 text-white shadow-md '
+                            : group.isPlayer
+                              ? 'player-bubble ml-auto bg-card text-card-foreground shadow-sm '
+                              : 'system-bubble bg-muted/20 '
+                          ) +
+                          (isFirstInGroup ? 'rounded-t-xl pt-3 ' : '') +
+                          (isLastInGroup ? 'rounded-b-xl pb-3 ' : 'border-b border-border/20 ') +
+                          'animate-in fade-in'
+                        }
+                      >
                         {/* Message content */}
                         <div className="text-sm leading-relaxed whitespace-pre-wrap">
                           {(() => {
@@ -312,7 +350,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                             <DMMessageVoiceControls
                               messageId={messageId}
                               messageText={parsedMessage ? parsedMessage.content : message.text}
-                              narrationSegments={message.narrationSegments}
+                              narrationSegments={message.narrationSegments as any}
                             />
                           </div>
                         )}
@@ -322,7 +360,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                     {/* Shared elements for group - options/rolls on last message only */}
                     {isLastInGroup && (
                       <>
-                        {/* Action Options */}
+                        {/* Action Options - render inline for DM bubbles */}
                         {isDM && parsedMessage && parsedMessage.hasOptions && (
                           <div className="w-full max-w-md mt-3">
                             <ActionOptions

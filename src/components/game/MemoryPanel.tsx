@@ -55,7 +55,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'character' | 'memory' | 'combat'>('character');
   const [localSessionNotes, setLocalSessionNotes] = useState('');
-  const [panelWidth, setPanelWidth] = useState('350px'); // Default fixed width
+  const [panelWidth, setPanelWidth] = useState('340px'); // Default fixed width (within 280-400px)
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -93,14 +93,19 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   }, []);
 
   const handleDrag = useCallback((e: MouseEvent) => {
-    if (!isDraggingRef.current || !panelRef.current) return;
+    if (!isDraggingRef.current || !panelRef.current) {
+      return;
+    }
 
     const rect = panelRef.current.getBoundingClientRect();
     const containerRect = panelRef.current.parentElement?.getBoundingClientRect();
-    if (!containerRect) return;
+    if (!containerRect) {
+      return;
+    }
 
   let newWidth = e.clientX - containerRect.left;
-  newWidth = Math.max(350, Math.min(500, newWidth)); // 350-500px constraints
+  // Enforce new constraints 280-400px
+  newWidth = Math.max(280, Math.min(400, newWidth));
 
   setPanelWidth(`${newWidth}px`);
   panelRef.current.style.width = `${newWidth}px`;
@@ -246,8 +251,8 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   return (
     <div 
       ref={panelRef} 
-      className="h-[80vh] bg-white shadow-sm border-0 flex flex-col resize-x lg:resize-x-none min-w-[20%] max-w-[40%]"
-      style={{ width: panelWidth }}
+      className="h-[80vh] bg-white shadow-sm border-0 flex flex-col resize-x lg:resize-x-none min-w-[280px] max-w-[400px]"
+      style={{ width: panelWidth, minWidth: '280px', maxWidth: '400px' }}
     >
       {/* Drag Handle for Desktop */}
       <div
@@ -321,7 +326,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsPanelCollapsed(true)}
+              onClick={() => onToggle()}
               className="h-8 w-8 p-0 rounded-full hover:bg-red-500/20 transition-all duration-200 hover:scale-110"
               title="Close Panel"
             >
@@ -334,7 +339,9 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
           <div className="flex-grow flex flex-col overflow-hidden">
             <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as any)} className="flex flex-col h-full">
               <TabsContent value="character" className="flex-1 p-0 mt-0 border-0 bg-background">
-                <CompactCharacterHeader />
+                <div style={{ maxHeight: '72vh', overflow: 'auto' }}>
+                  <CompactCharacterHeader />
+                </div>
               </TabsContent>
               
               <TabsContent value="memory" className="flex-1 mt-0 border-0 flex flex-col overflow-hidden bg-background">
@@ -365,7 +372,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                   />
                 </div>
                 
-                <ScrollArea className="flex-1 p-4">
+                <ScrollArea className="flex-1 p-4" style={{ maxHeight: '56vh' }}>
                   {memoriesLoading && <p className="text-xs text-muted-foreground">Loading memories...</p>}
                   {!memoriesLoading && sortedMemories.length === 0 && <p className="text-xs text-muted-foreground">No memories logged yet.</p>}
                   <div className="space-y-2">
@@ -378,7 +385,9 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
 
               {isInCombat && (
                 <TabsContent value="combat" className="flex-1 mt-0 border-0 bg-background">
-                  <CombatSummary />
+                  <div style={{ maxHeight: '72vh', overflow: 'auto' }}>
+                    <CombatSummary />
+                  </div>
                 </TabsContent>
               )}
             </Tabs>
@@ -418,13 +427,28 @@ const GameSidePanelContent: React.FC<{
   sessionData,
   updateGameSessionState,
   combatMode,
-  // ... other props
+  isExpanded,
+  setIsExpanded,
+  activeTab,
+  setActiveTab,
+  selectedType,
+  setSelectedType,
+  localSessionNotes,
+  setLocalSessionNotes,
+  memoriesLoading,
+  sortedMemories,
+  characterState,
+  isInCombat,
+  panelWidth,
+  panelRef,
+  dragHandleRef,
+  isDraggingRef,
+  startDrag,
+  handleDrag,
+  stopDrag,
+  isMobileDrawerOpen
 }) => {
-  // Re-implement the main content logic here for mobile drawer
-  // This is a simplified version - in production, you'd extract more shared logic
-  const { activeTab } = useState('character'); // Use passed state
-  const isInCombat = combatMode; // Simplified for mobile
-
+  // Mobile content uses the passed-in state and handlers
   const handleSaveNotes = () => {
     if (sessionData) {
       updateGameSessionState({ session_notes: localSessionNotes });
