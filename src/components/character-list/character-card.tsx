@@ -13,6 +13,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertDialogPortal,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { User, Sword, Shield, Star, AlertTriangle } from 'lucide-react';
@@ -40,6 +42,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   const { toast } = useToast();
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Use hot loading hook for background image
   const {
@@ -107,6 +110,23 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
   // Get first initial
   const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
 
+  // Calculate ability score modifier
+  const getModifier = (score: number) => {
+    return Math.floor((score - 10) / 2);
+  };
+
+  // Format modifier with + or - sign
+  const formatModifier = (score: number) => {
+    const modifier = getModifier(score);
+    return modifier >= 0 ? `+${modifier}` : `${modifier}`;
+  };
+
+  // Calculate proficiency bonus based on character level
+  const getProficiencyBonus = (level?: number) => {
+    if (!level) return 2;
+    return Math.ceil(level / 4) + 1;
+  };
+
   // Use hot loaded background image, fallback to default
   const resolvedBackgroundImage = useMemo(() => {
     // Priority: hot loaded image > character background image > default background
@@ -130,6 +150,8 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
     <Card
       className="character-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square"
       style={{ padding: 0 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Hero / background area */}
       <div
@@ -167,64 +189,87 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
         )}
         {/* Overlay and popup for character details */}
         <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-        <div className="hero-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
-          <div className="bg-white/95 p-4 rounded-lg shadow-md border border-border">
-            <div className="flex items-center gap-4 mb-3">
-              {/* Avatar in popup */}
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-background">
-                {imageLoading ? (
-                  <Skeleton className="w-full h-full rounded-full" />
-                ) : character.image_url ? (
-                  <img
-                    src={character.image_url}
-                    alt={`Portrait of ${character.name}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-xl font-bold text-white ${getAvatarColor(character.name)}">${getInitial(character.name)}</div>`;
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className={`w-full h-full flex items-center justify-center text-xl font-bold text-white ${getAvatarColor(character.name)}`}>
-                    {getInitial(character.name)}
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="text-xl font-bold text-infinite-dark mb-1 leading-tight break-words">{character.name}</div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className={`hover-popup ${isHovered ? 'opacity-100 translate-y-0 pointer-events-auto z-20' : 'opacity-0 translate-y-2 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
+          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border">
+            <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : character.name}</div>
+
+            {imageLoading ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <>
+                {/* Race/Class Info */}
+                <div className="flex items-center gap-3 text-sm text-foreground mb-3">
                   {character.race && (
                     <span className="flex items-center gap-1">
-                      <Shield className="w-3 h-3" />
+                      <Shield className="w-3 h-3 text-infinite-purple" />
                       {typeof character.race === 'string' ? character.race : character.race.name}
                     </span>
                   )}
                   {character.class && (
                     <span className="flex items-center gap-1">
-                      <Sword className="w-3 h-3" />
+                      <Sword className="w-3 h-3 text-infinite-gold" />
                       {typeof character.class === 'string' ? character.class : character.class.name}
                     </span>
                   )}
                   {character.level && (
                     <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      {character.level}
+                      <Star className="w-3 h-3 text-infinite-teal" />
+                      Level {character.level}
                     </span>
                   )}
                 </div>
-              </div>
-            </div>
 
-            {character.description && (
-              <div className="text-base text-muted-foreground line-clamp-3 leading-relaxed mb-3 break-words hyphens-auto">
-                {character.description}
-              </div>
+                {/* Ability Scores Grid */}
+                <div className="mb-3">
+                  <div className="text-sm font-semibold text-foreground mb-2">Ability Scores</div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
+                      <span className="font-medium">STR</span>
+                      <span>{character.abilityScores?.strength?.score || 10} ({formatModifier(character.abilityScores?.strength?.score || 10)})</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
+                      <span className="font-medium">INT</span>
+                      <span>{character.abilityScores?.intelligence?.score || 10} ({formatModifier(character.abilityScores?.intelligence?.score || 10)})</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
+                      <span className="font-medium">DEX</span>
+                      <span>{character.abilityScores?.dexterity?.score || 10} ({formatModifier(character.abilityScores?.dexterity?.score || 10)})</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
+                      <span className="font-medium">WIS</span>
+                      <span>{character.abilityScores?.wisdom?.score || 10} ({formatModifier(character.abilityScores?.wisdom?.score || 10)})</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
+                      <span className="font-medium">CON</span>
+                      <span>{character.abilityScores?.constitution?.score || 10} ({formatModifier(character.abilityScores?.constitution?.score || 10)})</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
+                      <span className="font-medium">CHA</span>
+                      <span>{character.abilityScores?.charisma?.score || 10} ({formatModifier(character.abilityScores?.charisma?.score || 10)})</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Combat Stats */}
+                <div className="flex items-center gap-4 text-xs text-foreground mb-4 bg-accent/10 px-3 py-2 rounded">
+                  {character.hitPoints && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-medium">HP:</span> {character.hitPoints.current || character.hitPoints.maximum || 0}/{character.hitPoints.maximum || 0}
+                    </span>
+                  )}
+                  {character.armorClass && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-medium">AC:</span> {character.armorClass}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <span className="font-medium">Prof:</span> +{getProficiencyBonus(character.level)}
+                  </span>
+                </div>
+              </>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-end">
               <Button size="sm" className="bg-infinite-gold text-infinite-dark flex items-center gap-2 hover:bg-infinite-purple" onClick={(e) => { e.stopPropagation(); setShowCampaignModal(true); }}>
                 <Play className="w-4 h-4" />
                 Play
@@ -244,19 +289,6 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
           </div>
         </div>
 
-        {/* Action popup for hovering */}
-        <div className="action-popup opacity-0 transform translate-y-2 transition-all duration-200 pointer-events-none">
-          <div className="bg-white/95 p-3 rounded-lg shadow-md border border-border">
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-7 px-2" onClick={(e) => { e.stopPropagation(); navigate(`/character/${character.id}`); }}>
-                View
-              </Button>
-              <Button size="sm" variant="default" className="h-7 px-2 bg-infinite-gold text-infinite-dark" onClick={(e) => { e.stopPropagation(); setShowCampaignModal(true); }}>
-                <Play className="w-3 h-3" />
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <CampaignSelectionModal
@@ -266,27 +298,27 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="sm:max-w-md">
-          <AlertDialogHeader className="space-y-2">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <AlertDialogTitle className="text-lg font-semibold text-foreground">Delete Character</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className="text-sm leading-relaxed">
-              Are you sure you want to delete <span className="font-semibold text-foreground">"{character.name}"</span>?{" "}
-              <span className="text-destructive font-medium">This action cannot be undone</span> and will permanently remove the character from your account.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-0">
-            <AlertDialogCancel className="px-4 py-2">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
-            >
-              Permanently Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+        <AlertDialogPortal>
+          <AlertDialogOverlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <AlertDialogContent className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border !bg-white dark:!bg-slate-100 rounded-lg border-infinite-purple/30 p-6 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg dark:border-gray-300 text-foreground">
+            <AlertDialogHeader className="flex flex-col space-y-2 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <AlertDialogTitle className="text-lg font-semibold text-foreground">Delete Character</AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                Are you sure you want to delete <span className="font-semibold text-foreground">"{character.name}"</span>?{" "}
+                <span className="text-destructive font-medium">This action cannot be undone</span> and will permanently remove the character from your account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2">
+              <AlertDialogCancel className="bg-white hover:bg-gray-50">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Permanently Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogPortal>
       </AlertDialog>
     </Card>
   );
