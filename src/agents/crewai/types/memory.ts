@@ -48,4 +48,6 @@ export interface MemoryQueryOptions {
     action?: string;
   };
   limit?: number;
+  query?: string;
+  semanticSearch?: boolean;
 }

@@ -126,26 +126,55 @@ GUIDELINES:
   }
 
   /**
-   * Save memories to the database
+   * Generate embedding for memory content
+   */
+  static async generateEmbedding(content: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-embedding', {
+        body: { text: content }
+      });
+
+      if (error) {
+        console.error('Error generating embedding:', error);
+        return null;
+      }
+
+      return data.embedding;
+    } catch (error) {
+      console.error('Failed to generate embedding:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save memories to the database with embeddings
    */
   static async saveMemories(memories: Omit<Memory, 'id' | 'created_at' | 'updated_at'>[]): Promise<void> {
     if (memories.length === 0) return;
 
     try {
+      // Generate embeddings for each memory
+      const memoriesWithEmbeddings = await Promise.all(
+        memories.map(async (memory) => {
+          const embedding = await this.generateEmbedding(memory.content);
+          return {
+            ...memory,
+            importance: Math.max(1, Math.min(5, memory.importance || 1)), // Ensure importance is between 1-5
+            embedding,
+          };
+        })
+      );
+
       const { error } = await supabase
         .from('memories')
-        .insert(memories.map(memory => ({
-          ...memory,
-          importance: Math.max(1, Math.min(5, memory.importance || 1)), // Ensure importance is between 1-5
-          embedding: null, // TODO: Generate embeddings
-        })));
+        .insert(memoriesWithEmbeddings);
 
       if (error) {
         console.error('Error saving memories:', error);
         throw new Error('Failed to save memories');
       }
 
-      console.log(`✅ Saved ${memories.length} memories`);
+      console.log(`✅ Saved ${memories.length} memories with embeddings`);
     } catch (error) {
       console.error('Error saving memories:', error);
       throw error;
@@ -153,7 +182,7 @@ GUIDELINES:
   }
 
   /**
-   * Retrieve relevant memories for context
+   * Retrieve relevant memories for context using semantic search
    */
   static async getRelevantMemories(
     sessionId: string,
@@ -161,8 +190,27 @@ GUIDELINES:
     limit: number = 10
   ): Promise<Memory[]> {
     try {
-      // For now, simple retrieval by importance and recency
-      // TODO: Implement semantic search with embeddings
+      // Generate embedding for the query
+      const queryEmbedding = await this.generateEmbedding(query);
+
+      if (queryEmbedding) {
+        // Use semantic search if embedding is available
+        const { data, error } = await supabase
+          .rpc('match_memories', {
+            query_embedding: queryEmbedding,
+            session_id: sessionId,
+            match_threshold: 0.7,
+            match_count: limit
+          });
+
+        if (!error && data && data.length > 0) {
+          console.log(`🔍 Found ${data.length} semantically relevant memories`);
+          return data as Memory[];
+        }
+      }
+
+      // Fallback to importance and recency if semantic search fails
+      console.log('📝 Falling back to importance-based memory retrieval');
       const { data, error } = await supabase
         .from('memories')
         .select('*')

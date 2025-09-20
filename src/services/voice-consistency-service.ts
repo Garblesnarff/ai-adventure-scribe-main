@@ -17,14 +17,19 @@ import { VoiceMapper, VoiceConfig } from './voice-mapper';
 
 export interface CharacterVoiceMapping {
   id: string;
-  sessionId: string;
-  characterName: string;
-  voiceCategory: string;
-  voiceId: string;
-  firstAppearance: Date;
-  lastUsed: Date;
-  appearanceCount: number;
-  metadata: Record<string, any>;
+  campaign_id: string;
+  character_name: string;
+  character_type: string;
+  voice_id: string;
+  voice_provider: string;
+  voice_settings: Record<string, any>;
+  voice_description?: string;
+  gender?: string;
+  age_range?: string;
+  personality_traits?: string[];
+  accent?: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface VoiceAssignment {
@@ -177,125 +182,75 @@ export class VoiceConsistencyService {
   }
 
   /**
-   * Get all voice mappings for a session
+   * Get all voice mappings for a campaign
    */
-  private async getSessionMappings(sessionId: string): Promise<CharacterVoiceMapping[]> {
-    // TODO: Database table 'character_voice_mappings' doesn't exist yet
-    // Return empty array for now to prevent errors
-    console.log('⚠️ Voice consistency database not available, using in-memory mapping');
-    return [];
-    
-    // Check cache first
-    // const cached = this.sessionCache.get(sessionId);
-    // if (cached) {
-    //   return Array.from(cached.values());
-    // }
+  private async getCampaignMappings(campaignId: string): Promise<CharacterVoiceMapping[]> {
+    try {
+      const { data, error } = await supabase
+        .from('character_voice_mappings')
+        .select('*')
+        .eq('campaign_id', campaignId);
 
-    // try {
-    //   const { data, error } = await supabase
-    //     .from('character_voice_mappings')
-    //     .select('*')
-    //     .eq('session_id', sessionId)
-    //     .order('first_appearance', { ascending: true });
+      if (error) {
+        console.error('Error fetching voice mappings:', error);
+        return [];
+      }
 
-    //   if (error) throw error;
-
-    //   const mappings: CharacterVoiceMapping[] = (data || []).map(row => ({
-    //     id: row.id,
-    //     sessionId: row.session_id,
-    //     characterName: row.character_name,
-    //     voiceCategory: row.voice_category,
-    //     voiceId: row.voice_id,
-    //     firstAppearance: new Date(row.first_appearance),
-    //     lastUsed: new Date(row.last_used),
-    //     appearanceCount: row.appearance_count,
-    //     metadata: row.metadata || {}
-    //   }));
-
-    //   // Update cache
-    //   const mappingMap = new Map();
-    //   mappings.forEach(mapping => {
-    //     mappingMap.set(mapping.characterName, mapping);
-    //   });
-    //   this.sessionCache.set(sessionId, mappingMap);
-
-    //   return mappings;
-    // } catch (error) {
-    //   console.error('Error fetching session mappings:', error);
-    //   return [];
-    // }
+      return data || [];
+    } catch (error) {
+      console.error('Error accessing voice mappings database:', error);
+      return [];
+    }
   }
 
   /**
    * Save a new character voice mapping
    */
   private async saveCharacterVoiceMapping(
-    sessionId: string,
+    campaignId: string,
     characterName: string,
-    voiceCategory: string,
-    voiceId: string
+    characterType: string,
+    voiceId: string,
+    voiceProvider: string = 'elevenlabs'
   ): Promise<void> {
-    // TODO: Database table doesn't exist yet, skip database save
-    console.log(`⚠️ Voice mapping not saved to database: ${characterName} -> ${voiceCategory}`);
-    return;
-    
-    // try {
-    //   const { error } = await supabase
-    //     .from('character_voice_mappings')
-    //     .insert({
-    //       session_id: sessionId,
-    //       character_name: characterName,
-    //       voice_category: voiceCategory,
-    //       voice_id: voiceId,
-    //       appearance_count: 1,
-    //       metadata: {}
-    //     });
+    try {
+      const { error } = await supabase
+        .from('character_voice_mappings')
+        .insert({
+          campaign_id: campaignId,
+          character_name: characterName,
+          character_type: characterType,
+          voice_id: voiceId,
+          voice_provider: voiceProvider,
+          voice_settings: {}
+        });
 
-    //   if (error) throw error;
+      if (error) throw error;
 
-    //   // Invalidate cache
-    //   this.sessionCache.delete(sessionId);
-
-    //   console.log(`💾 Saved voice mapping: ${characterName} -> ${voiceCategory}`);
-    // } catch (error) {
-    //   console.error('Error saving character voice mapping:', error);
-    // }
+      console.log(`💾 Saved voice mapping: ${characterName} -> ${voiceId}`);
+    } catch (error) {
+      console.error('Error saving character voice mapping:', error);
+    }
   }
 
   /**
    * Update character usage statistics
    */
   private async updateCharacterUsage(mappingId: string): Promise<void> {
-    // TODO: Database table doesn't exist yet, skip update
-    console.log(`⚠️ Character usage update skipped for mapping: ${mappingId}`);
-    return;
-    
-    // try {
-    //   // First get the current appearance count
-    //   const { data: currentData, error: fetchError } = await supabase
-    //     .from('character_voice_mappings')
-    //     .select('appearance_count')
-    //     .eq('id', mappingId)
-    //     .single();
+    try {
+      const { error } = await supabase
+        .from('character_voice_mappings')
+        .update({
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', mappingId);
 
-    //   if (fetchError) throw fetchError;
+      if (error) throw error;
 
-    //   const newCount = (currentData?.appearance_count || 0) + 1;
-
-    //   // Update with incremented count
-    //   const { error } = await supabase
-    //     .from('character_voice_mappings')
-    //     .update({
-    //       last_used: new Date().toISOString(),
-    //       appearance_count: newCount,
-    //       updated_at: new Date().toISOString()
-    //     })
-    //     .eq('id', mappingId);
-
-    //   if (error) throw error;
-    // } catch (error) {
-    //   console.error('Error updating character usage:', error);
-    // }
+      console.log(`📊 Updated character usage for mapping: ${mappingId}`);
+    } catch (error) {
+      console.error('Error updating character usage:', error);
+    }
   }
 
   /**

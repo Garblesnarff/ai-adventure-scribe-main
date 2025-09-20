@@ -23,7 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
 import { EnhancedMemory, MemoryQueryOptions } from '@/agents/crewai/types/memory';
-import { Json } from '@/integrations/supabase/types'; // Though Json is not directly used in class signature, it might be relevant for metadata.
+import { Json } from '@/integrations/supabase/types';
 
 
 export class EnhancedMemoryManager {
@@ -41,7 +41,10 @@ export class EnhancedMemoryManager {
     context: Partial<EnhancedMemory['context']> = {}
   ): Promise<void> {
     const importance = this.calculateImportance(content, type, category);
-    
+
+    // Generate embedding for semantic search
+    const embedding = await this.generateEmbedding(content);
+
     // Serialize the context and metadata for Supabase storage
     const metadata = {
       category,
@@ -61,7 +64,8 @@ export class EnhancedMemoryManager {
         type,
         content,
         importance,
-        metadata
+        metadata,
+        embedding
       });
 
     if (error) {
@@ -81,6 +85,11 @@ export class EnhancedMemoryManager {
 
   async retrieveMemories(options: MemoryQueryOptions = {}): Promise<EnhancedMemory[]> {
     console.log('[Memory] Retrieving memories with options:', options);
+
+    // If semantic search is requested, use embedding similarity
+    if (options.query && options.semanticSearch) {
+      return this.semanticSearch(options.query, options);
+    }
 
     let query = supabase
       .from('memories')
@@ -211,10 +220,70 @@ export class EnhancedMemoryManager {
     }
   }
 
+  /**
+   * Generate embedding for content using OpenAI API
+   */
+  private async generateEmbedding(content: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-embedding', {
+        body: { text: content }
+      });
+
+      if (error) {
+        console.error('[Memory] Error generating embedding:', error);
+        return null;
+      }
+
+      return data.embedding;
+    } catch (error) {
+      console.error('[Memory] Failed to generate embedding:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Perform semantic search using embedding similarity
+   */
+  private async semanticSearch(
+    query: string,
+    options: MemoryQueryOptions
+  ): Promise<EnhancedMemory[]> {
+    try {
+      const queryEmbedding = await this.generateEmbedding(query);
+
+      if (!queryEmbedding) {
+        console.warn('[Memory] Failed to generate query embedding, falling back to regular search');
+        return this.retrieveMemories({ ...options, semanticSearch: false });
+      }
+
+      // Use Supabase vector similarity search
+      let rpcQuery = supabase
+        .rpc('match_memories', {
+          query_embedding: queryEmbedding,
+          session_id: this.sessionId,
+          match_threshold: 0.7,
+          match_count: options.limit || 10
+        });
+
+      const { data, error } = await rpcQuery;
+
+      if (error) {
+        console.error('[Memory] Error in semantic search:', error);
+        throw error;
+      }
+
+      return data.map(this.transformDatabaseMemory);
+    } catch (error) {
+      console.error('[Memory] Semantic search failed:', error);
+      // Fallback to regular search
+      return this.retrieveMemories({ ...options, semanticSearch: false });
+    }
+  }
+
   private transformDatabaseMemory(dbMemory: any): EnhancedMemory {
     const metadata = dbMemory.metadata || {};
     const context = metadata.context ? JSON.parse(metadata.context) : {};
-    
+
     return {
       id: dbMemory.id,
       type: dbMemory.type,

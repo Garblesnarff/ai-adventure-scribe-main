@@ -1,5 +1,6 @@
 import { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
+import { getAveragePartyLevel } from '@/utils/character-level-utils';
 
 export interface NPCRequest {
   role: 'shopkeeper' | 'guard' | 'noble' | 'commoner' | 'villain' | 'ally' | 'mentor' | 'mysterious' | 'authority';
@@ -360,7 +361,7 @@ GUIDELINES:
           genre: campaign.genre || 'fantasy',
           currentStory: playerAction,
           locationName,
-          playerLevel: 1, // TODO: Get from character data
+          playerLevel: await getAveragePartyLevel(campaignId, sessionId),
         }
       };
 
