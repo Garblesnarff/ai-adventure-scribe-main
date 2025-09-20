@@ -52,6 +52,8 @@ const SpellSelection: React.FC = () => {
     availableCantrips,
     availableSpells,
     racialSpells,
+    isLoadingSpells,
+    spellsError,
     selectedCantrips,
     selectedSpells,
     toggleCantrip,
@@ -107,6 +109,38 @@ const SpellSelection: React.FC = () => {
   const handleManualSave = () => {
     updateCharacterSpells();
   };
+
+  // Show loading state
+  if (isLoadingSpells) {
+    return (
+      <div className="text-center space-y-4">
+        <Wand2 className="w-16 h-16 mx-auto text-purple-500 animate-pulse" />
+        <h2 className="text-2xl font-bold">Loading Spells...</h2>
+        <p className="text-muted-foreground">
+          Fetching available spells for your {currentClass?.name} class.
+        </p>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (spellsError) {
+    return (
+      <div className="text-center space-y-4">
+        <AlertTriangle className="w-16 h-16 mx-auto text-red-500" />
+        <h2 className="text-2xl font-bold">Failed to Load Spells</h2>
+        <p className="text-muted-foreground">
+          {spellsError}
+        </p>
+        <Button
+          onClick={() => window.location.reload()}
+          variant="outline"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   // If not a spellcaster and no racial spells, don't show this step
   if (!isSpellcaster && !hasRacialSpells) {

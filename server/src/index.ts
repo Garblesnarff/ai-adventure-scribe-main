@@ -1,9 +1,9 @@
 import 'dotenv/config';
 import http from 'http';
 import { WebSocketServer } from 'ws';
-import { createClient } from './lib/db';
-import { createApp } from './app';
-import { registerWebsocketHandlers } from './ws';
+import { createClient } from './lib/db.js';
+import { createApp } from './app.js';
+import { registerWebsocketHandlers } from './ws.js';
 
 // Database
 const pool = createClient();

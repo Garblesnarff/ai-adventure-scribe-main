@@ -26,12 +26,12 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ currentStep, tota
           key={index}
           className={`flex items-center space-x-2 text-xs transition-all duration-300 ${
             isCurrent ? 'text-infinite-purple font-semibold' :
-            isCompleted ? 'text-green-600' :
+            isCompleted ? 'text-success' :
             'text-muted-foreground'
           }`}
         >
           {isCompleted ? (
-            <CheckCircle className="w-4 h-4 text-green-600" />
+            <CheckCircle className="w-4 h-4 text-success" />
           ) : isCurrent ? (
             <Circle className="w-4 h-4 text-infinite-purple fill-infinite-purple" />
           ) : (

@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { Pool } from 'pg';
-import { registerRoutes } from './routes';
+import { registerRoutes } from './routes/index.js';
 
 export function createApp(db: Pool) {
   const app = express();

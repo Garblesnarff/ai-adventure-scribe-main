@@ -79,6 +79,127 @@
   --info: var(--infinite-teal);
   --info-foreground: #ffffff;
 
+  /* Unified Color System - Brand Utilities */
+  /* Status utilities */
+  --text-success: #10B981;
+  --bg-success: rgba(16, 185, 129, 0.1);
+  --border-success: rgba(16, 185, 129, 0.2);
+
+  --text-error: #EF4444;
+  --bg-error: rgba(239, 68, 68, 0.1);
+  --border-error: rgba(239, 68, 68, 0.2);
+
+  --text-warning: var(--infinite-gold);
+  --bg-warning: rgba(245, 158, 11, 0.1);
+  --border-warning: rgba(245, 158, 11, 0.2);
+
+  --text-info: var(--infinite-teal);
+  --bg-info: rgba(8, 145, 178, 0.1);
+  --border-info: rgba(8, 145, 178, 0.2);
+
+  /* Brand utilities */
+  --text-brand-primary: var(--infinite-purple);
+  --bg-brand-primary: rgba(124, 58, 237, 0.1);
+  --border-brand-primary: rgba(124, 58, 237, 0.2);
+
+  --text-brand-secondary: var(--infinite-gold);
+  --bg-brand-secondary: rgba(245, 158, 11, 0.1);
+  --border-brand-secondary: rgba(245, 158, 11, 0.2);
+
+  --text-brand-accent: var(--infinite-teal);
+  --bg-brand-accent: rgba(8, 145, 178, 0.1);
+  --border-brand-accent: rgba(8, 145, 178, 0.2);
+
+@layer components {
+  /* Status Badge Components */
+  .badge-success {
+    @apply bg-success/20 text-success border-success/30;
+  }
+
+  .badge-error {
+    @apply bg-error/20 text-error border-error/30;
+  }
+
+  .badge-warning {
+    @apply bg-warning/20 text-warning border-warning/30;
+  }
+
+  .badge-info {
+    @apply bg-info/20 text-info border-info/30;
+  }
+
+  /* Brand Badge Components */
+  .badge-brand-primary {
+    @apply bg-brand-primary/20 text-brand-primary border-brand-primary/30;
+  }
+
+  .badge-brand-secondary {
+    @apply bg-brand-secondary/20 text-brand-secondary border-brand-secondary/30;
+  }
+
+  .badge-brand-accent {
+    @apply bg-brand-accent/20 text-brand-accent border-brand-accent/30;
+  }
+
+  /* Text Status Classes */
+  .text-status-success { @apply text-success; }
+  .text-status-error { @apply text-error; }
+  .text-status-warning { @apply text-warning; }
+  .text-status-info { @apply text-info; }
+
+  /* Background Status Classes */
+  .bg-status-success { @apply bg-success; }
+  .bg-status-error { @apply bg-error; }
+  .bg-status-warning { @apply bg-warning; }
+  .bg-status-info { @apply bg-info; }
+
+  /* Border Status Classes */
+  .border-status-success { @apply border-success; }
+  .border-status-error { @apply border-error; }
+  .border-status-warning { @apply border-warning; }
+  .border-status-info { @apply border-info; }
+
+  /* Combined Status Classes */
+  .status-success { @apply bg-success/10 text-success border-success/20; }
+  .status-error { @apply bg-error/10 text-error border-error/20; }
+  .status-warning { @apply bg-warning/10 text-warning border-warning/20; }
+  .status-info { @apply bg-info/10 text-info border-info/20; }
+
+  /* Brand Background Classes */
+  .brand-bg-primary { @apply bg-brand-primary; }
+  .brand-bg-secondary { @apply bg-brand-secondary; }
+  .brand-bg-accent { @apply bg-brand-accent; }
+}
+
+@layer utilities {
+  .text-success { color: var(--text-success); }
+  .text-error { color: var(--text-error); }
+  .text-warning { color: var(--text-warning); }
+  .text-info { color: var(--text-info); }
+
+  .bg-success { background-color: var(--bg-success); }
+  .bg-error { background-color: var(--bg-error); }
+  .bg-warning { background-color: var(--bg-warning); }
+  .bg-info { background-color: var(--bg-info); }
+
+  .border-success { border-color: var(--border-success); }
+  .border-error { border-color: var(--border-error); }
+  .border-warning { border-color: var(--border-warning); }
+  .border-info { border-color: var(--border-info); }
+
+  .text-brand-primary { color: var(--text-brand-primary); }
+  .bg-brand-primary { background-color: var(--bg-brand-primary); }
+  .border-brand-primary { border-color: var(--border-brand-primary); }
+
+  .text-brand-secondary { color: var(--text-brand-secondary); }
+  .bg-brand-secondary { background-color: var(--bg-brand-secondary); }
+  .border-brand-secondary { border-color: var(--border-brand-secondary); }
+
+  .text-brand-accent { color: var(--text-brand-accent); }
+  .bg-brand-accent { background-color: var(--bg-brand-accent); }
+  .border-brand-accent { border-color: var(--border-brand-accent); }
+}
+
   /* Sidebar (light theme) */
   --sidebar-background: rgba(15, 12, 31, 0.03);
   --sidebar-foreground: #0f0c1f;

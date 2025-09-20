@@ -19,7 +19,7 @@
 import { Character, Spell } from '@/types/character';
 import { CombatParticipant, CombatAction } from '@/types/combat';
 import { classes as classOptions } from '@/data/classOptions';
-import { allSpells } from '@/data/spellOptions';
+import { spellApi } from '@/services/spellApi';
 import { validateSpellCast } from '@/utils/spellComponents';
 import { consumeMaterialComponents, trackComponentUsage } from '@/utils/spellComponents';
 
@@ -155,20 +155,20 @@ export function restoreSpellSlots(character: Character): Character {
  * Handles spell casting logic: deduct slot, set concentration if applicable
  * @param action - The combat action being taken
  * @param participant - The casting participant
- * @param spellName - Name of the spell being cast
+ * @param spellId - ID of the spell being cast
  * @param spellLevel - Level at which spell is cast (may be higher than innate level)
  * @returns Updated participant and action with spell details
  */
-export function castSpell(
+export async function castSpell(
   action: Partial<CombatAction>,
   participant: CombatParticipant,
-  spellName: string,
+  spellId: string,
   spellLevel: SpellSlotLevel
-): { updatedParticipant: CombatParticipant; updatedAction: CombatAction } {
+): Promise<{ updatedParticipant: CombatParticipant; updatedAction: CombatAction }> {
   // Find the spell being cast
-  const spell = allSpells.find((s: Spell) => s.name === spellName);
+  const spell = await spellApi.getSpellById(spellId);
   if (!spell) {
-    throw new Error(`Spell ${spellName} not found`);
+    throw new Error(`Spell ${spellId} not found`);
   }
 
   // Validate spell casting requirements (components, preparation, etc.)
@@ -198,7 +198,7 @@ export function castSpell(
   // Mock validation for now - in real implementation, implement validateSpellCast
   const validation = { canCast: true, reasons: [] };
   if (!validation.canCast) {
-    throw new Error(`Cannot cast ${spellName}: ${validation.reasons.join(', ')}`);
+    throw new Error(`Cannot cast ${spell.name}: ${validation.reasons.join(', ')}`);
   }
 
   if (!participant.spellSlots || participant.spellSlots[spellLevel]?.current <= 0) {
@@ -212,7 +212,7 @@ export function castSpell(
   // Set concentration if spell requires it
   let concentrationSpell = null;
   if (spell.concentration && !participant.activeConcentration) {
-    concentrationSpell = spellName;
+    concentrationSpell = spell.name;
   } else if (spell.concentration && participant.activeConcentration) {
     throw new Error(`${participant.name} is already concentrating on ${participant.activeConcentration}`);
   }
@@ -224,20 +224,20 @@ export function castSpell(
   };
 
   // Create detailed action description with component information
-  let description = `${action.description} (Cast ${spellName} using level ${spellLevel} slot)`;
+  let description = `${action.description} (Cast ${spell.name} using level ${spellLevel} slot)`;
   
   // Add component information to the action description
   const components = [];
-  if (spell.verbal) components.push('V');
-  if (spell.somatic) components.push('S');
-  if (spell.material) components.push('M');
-  
+  if (spell.components_verbal) components.push('V');
+  if (spell.components_somatic) components.push('S');
+  if (spell.components_material) components.push('M');
+
   if (components.length > 0) {
     description += ` [Components: ${components.join(', ')}]`;
   }
-  
-  if (spell.material && spell.materialDescription) {
-    description += ` [Material: ${spell.materialDescription}]`;
+
+  if (spell.components_material && spell.material_components) {
+    description += ` [Material: ${spell.material_components}]`;
   }
 
   const fullAction: CombatAction = {
@@ -247,12 +247,12 @@ export function castSpell(
     spellName: spell.name,
     spellLevel: spell.level,
     components: {
-      verbal: spell.verbal || false,
-      somatic: spell.somatic || false,
-      material: spell.material || false,
-      materialDescription: spell.materialDescription,
-      materialCost: spell.materialCost,
-      materialConsumed: spell.materialConsumed
+      verbal: spell.components_verbal || false,
+      somatic: spell.components_somatic || false,
+      material: spell.components_material || false,
+      materialDescription: spell.material_components,
+      materialCost: spell.material_cost,
+      materialConsumed: spell.material_consumed || false
     }
   };
 

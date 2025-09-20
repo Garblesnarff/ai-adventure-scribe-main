@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getBearerToken, verifyToken, AuthTokenPayload } from '../lib/jwt';
+import { getBearerToken, verifyToken, AuthTokenPayload } from '../lib/jwt.js';
 
 declare global {
   namespace Express {
