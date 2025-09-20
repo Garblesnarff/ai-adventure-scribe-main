@@ -30,8 +30,7 @@ const RaceSelection: React.FC = () => {
         description: `You have chosen ${baseRace.name}. Now select a subrace.`,
         duration: 1000,
       });
-      // Auto-scroll to continue with subrace selection
-      scrollToNavigation();
+      // Do NOT auto-scroll when showing subrace selection - user stays on same page
     } else {
       toast({
         title: "Race Selected",
