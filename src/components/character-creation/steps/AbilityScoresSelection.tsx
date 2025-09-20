@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateAbilityScores } from '@/utils/diceRolls';
 import { calculateModifier } from '@/utils/abilityScoreUtils';
 import DiceRoller from '@/components/ui/dice-roller';
-import { Info, RotateCcw, Shuffle } from 'lucide-react';
+import { Info, RotateCcw, Shuffle, TrendingUp, Target, Zap } from 'lucide-react';
 
 /**
  * Component for handling ability score selection in character creation
@@ -43,22 +43,28 @@ const AbilityScoresSelection: React.FC = () => {
    * Handles increasing an ability score if points are available
    */
   const handleIncreaseScore = (ability: keyof AbilityScores) => {
-    const currentScore = state.character?.abilityScores[ability].score || 8;
+    const currentScore = state.character?.abilityScores?.[ability]?.score || 8;
     if (currentScore < 15 && remainingPoints >= (pointCost[currentScore + 1] - pointCost[currentScore])) {
-      const newScores = {
+      const newScores: AbilityScores = {
+        strength: { score: 8, modifier: -1, savingThrow: false },
+        dexterity: { score: 8, modifier: -1, savingThrow: false },
+        constitution: { score: 8, modifier: -1, savingThrow: false },
+        intelligence: { score: 8, modifier: -1, savingThrow: false },
+        wisdom: { score: 8, modifier: -1, savingThrow: false },
+        charisma: { score: 8, modifier: -1, savingThrow: false },
         ...state.character?.abilityScores,
         [ability]: {
           score: currentScore + 1,
           modifier: calculateModifier(currentScore + 1),
-          savingThrow: state.character?.abilityScores[ability].savingThrow || false
+          savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
         }
       };
-      
+
       dispatch({
         type: 'UPDATE_CHARACTER',
         payload: { abilityScores: newScores }
       });
-      
+
       setRemainingPoints(prev => prev - (pointCost[currentScore + 1] - pointCost[currentScore]));
     }
   };
@@ -67,22 +73,28 @@ const AbilityScoresSelection: React.FC = () => {
    * Handles decreasing an ability score and refunding points
    */
   const handleDecreaseScore = (ability: keyof AbilityScores) => {
-    const currentScore = state.character?.abilityScores[ability].score || 8;
+    const currentScore = state.character?.abilityScores?.[ability]?.score || 8;
     if (currentScore > 8) {
-      const newScores = {
+      const newScores: AbilityScores = {
+        strength: { score: 8, modifier: -1, savingThrow: false },
+        dexterity: { score: 8, modifier: -1, savingThrow: false },
+        constitution: { score: 8, modifier: -1, savingThrow: false },
+        intelligence: { score: 8, modifier: -1, savingThrow: false },
+        wisdom: { score: 8, modifier: -1, savingThrow: false },
+        charisma: { score: 8, modifier: -1, savingThrow: false },
         ...state.character?.abilityScores,
         [ability]: {
           score: currentScore - 1,
           modifier: calculateModifier(currentScore - 1),
-          savingThrow: state.character?.abilityScores[ability].savingThrow || false
+          savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
         }
       };
-      
+
       dispatch({
         type: 'UPDATE_CHARACTER',
         payload: { abilityScores: newScores }
       });
-      
+
       setRemainingPoints(prev => prev + (pointCost[currentScore] - pointCost[currentScore - 1]));
     }
   };
@@ -92,13 +104,21 @@ const AbilityScoresSelection: React.FC = () => {
    */
   const handleRollScores = () => {
     const rolledScores = generateAbilityScores();
-    const newScores = { ...state.character?.abilityScores };
-    
+    const newScores: AbilityScores = {
+      strength: { score: 8, modifier: -1, savingThrow: false },
+      dexterity: { score: 8, modifier: -1, savingThrow: false },
+      constitution: { score: 8, modifier: -1, savingThrow: false },
+      intelligence: { score: 8, modifier: -1, savingThrow: false },
+      wisdom: { score: 8, modifier: -1, savingThrow: false },
+      charisma: { score: 8, modifier: -1, savingThrow: false },
+      ...state.character?.abilityScores,
+    };
+
     abilities.forEach((ability, index) => {
       newScores[ability] = {
         score: rolledScores[index],
         modifier: calculateModifier(rolledScores[index]),
-        savingThrow: state.character?.abilityScores[ability].savingThrow || false
+        savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
       };
     });
 
@@ -120,13 +140,21 @@ const AbilityScoresSelection: React.FC = () => {
    */
   const handleStandardArray = () => {
     const standardArray = [15, 14, 13, 12, 10, 8];
-    const newScores = { ...state.character?.abilityScores };
-    
+    const newScores: AbilityScores = {
+      strength: { score: 8, modifier: -1, savingThrow: false },
+      dexterity: { score: 8, modifier: -1, savingThrow: false },
+      constitution: { score: 8, modifier: -1, savingThrow: false },
+      intelligence: { score: 8, modifier: -1, savingThrow: false },
+      wisdom: { score: 8, modifier: -1, savingThrow: false },
+      charisma: { score: 8, modifier: -1, savingThrow: false },
+      ...state.character?.abilityScores,
+    };
+
     abilities.forEach((ability, index) => {
       newScores[ability] = {
         score: standardArray[index],
         modifier: calculateModifier(standardArray[index]),
-        savingThrow: state.character?.abilityScores[ability].savingThrow || false
+        savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
       };
     });
 
@@ -145,13 +173,21 @@ const AbilityScoresSelection: React.FC = () => {
    * Resets all ability scores to 8
    */
   const handleReset = () => {
-    const newScores = { ...state.character?.abilityScores };
-    
+    const newScores: AbilityScores = {
+      strength: { score: 8, modifier: -1, savingThrow: false },
+      dexterity: { score: 8, modifier: -1, savingThrow: false },
+      constitution: { score: 8, modifier: -1, savingThrow: false },
+      intelligence: { score: 8, modifier: -1, savingThrow: false },
+      wisdom: { score: 8, modifier: -1, savingThrow: false },
+      charisma: { score: 8, modifier: -1, savingThrow: false },
+      ...state.character?.abilityScores,
+    };
+
     abilities.forEach((ability) => {
       newScores[ability] = {
         score: 8,
         modifier: calculateModifier(8),
-        savingThrow: state.character?.abilityScores[ability].savingThrow || false
+        savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
       };
     });
 
@@ -212,7 +248,7 @@ const AbilityScoresSelection: React.FC = () => {
               Distribute 27 points among your abilities. Scores range from 8-15, with higher scores costing more points.
             </p>
             <div className="flex items-center justify-between">
-              <p className="text-lg">Points Remaining: <Badge variant="outline">{remainingPoints}</Badge></p>
+              <div className="text-lg">Points Remaining: <Badge variant="outline">{remainingPoints}</Badge></div>
               <Button onClick={handleReset} variant="ghost" size="sm">
                 <RotateCcw className="w-4 h-4 mr-1" />
                 Reset
@@ -284,8 +320,8 @@ const AbilityScoresSelection: React.FC = () => {
       {/* Ability Scores Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {abilities.map((ability) => {
-          const currentScore = state.character?.abilityScores[ability].score || 8;
-          const modifier = state.character?.abilityScores[ability].modifier || 0;
+          const currentScore = state.character?.abilityScores?.[ability]?.score || 8;
+          const modifier = state.character?.abilityScores?.[ability]?.modifier || 0;
           const nextCost = method === 'pointBuy' ? (pointCost[currentScore + 1] - pointCost[currentScore]) : 0;
           
           return (

@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import StepNavigation from '../shared/StepNavigation';
 import ProgressIndicator from '../shared/ProgressIndicator';
+import CharacterPreview from '../shared/CharacterPreview';
 import { WizardStep } from './types';
 import { wizardSteps } from './constants';
 
@@ -129,7 +130,7 @@ const WizardContent: React.FC = () => {
           console.error('Error saving character:', error);
           toast({
             title: "Save Error",
-            description: `Failed to save character: ${error.message || 'Unknown error'}`,
+            description: `Failed to save character: ${error instanceof Error ? error.message : 'Unknown error'}`,
             variant: "destructive",
           });
         }
@@ -173,18 +174,32 @@ const WizardContent: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <h1 className="text-3xl font-bold text-center mb-8">Create Your Character</h1>
-        <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
-        <CurrentStepComponent />
-        <StepNavigation
-          currentStep={currentStep}
-          totalSteps={filteredSteps.length}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          isLoading={isSaving}
-        />
-      </Card>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Main Character Creation Area */}
+        <div className="xl:col-span-2">
+          <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <h1 className="text-3xl font-bold text-center mb-8">Create Your Character</h1>
+            <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
+            <div className="min-h-[600px]">
+              <CurrentStepComponent />
+            </div>
+            <StepNavigation
+              currentStep={currentStep}
+              totalSteps={filteredSteps.length}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              isLoading={isSaving}
+            />
+          </Card>
+        </div>
+
+        {/* Character Preview Sidebar */}
+        <div className="xl:col-span-1">
+          <div className="sticky top-8">
+            <CharacterPreview />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
