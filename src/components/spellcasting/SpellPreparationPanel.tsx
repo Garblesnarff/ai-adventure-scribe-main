@@ -32,8 +32,13 @@ import {
   Package
 } from 'lucide-react';
 import { Spell } from '@/types/character';
-import { getSpellPreparationLimit, prepareSpell, unprepareSpell } from '@/utils/spellComponents';
-import { allSpells } from '@/data/spellOptions';
+import { spellApi } from '@/services/spellApi';
+import {
+  calculateSpellPreparationLimits,
+  validateSpellPreparation,
+  getSpellPreparationType,
+  getSpellPreparationInfo
+} from '@/utils/spell-preparation';
 
 // ===========================
 // Props Interface
@@ -45,32 +50,59 @@ interface SpellPreparationPanelProps {
 // ===========================
 // Main Component
 // ===========================
-const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({ 
-  className = '' 
+const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
+  className = ''
 }) => {
   const { state, dispatch } = useCharacter();
   const character = state.character;
-  
+
   const [preparedSpells, setPreparedSpells] = useState<string[]>(character?.preparedSpells || []);
   const [knownSpells, setKnownSpells] = useState<Spell[]>([]);
-  
-  // Calculate spell preparation limit
-  const preparationLimit = character ? getSpellPreparationLimit(character) : 0;
-  const canPrepareSpells = character?.class?.spellcasting !== undefined && 
-    ['cleric', 'druid', 'paladin', 'wizard'].includes(character.class.id || '');
-  
-  // Get known spells (from character's known spells or all spells for demo)
+  const [availableSpells, setAvailableSpells] = useState<Spell[]>([]);
+  const [isLoadingSpells, setIsLoadingSpells] = useState(false);
+  const [preparationLimits, setPreparationLimits] = useState<any>(null);
+
+  // Get spell preparation info and limits
+  const preparationInfo = character ? getSpellPreparationInfo(character) : null;
+  const canPrepareSpells = preparationInfo && preparationInfo.preparationType === 'prepared';
+
+  // Calculate preparation limits
   useEffect(() => {
-    if (character?.knownSpells) {
-      const spells = allSpells.filter(spell => 
-        character.knownSpells.includes(spell.name)
-      );
-      setKnownSpells(spells);
-    } else {
-      // For demo purposes, show all spells
-      setKnownSpells(allSpells.filter(spell => spell.level > 0));
+    if (character) {
+      const limits = calculateSpellPreparationLimits(character);
+      setPreparationLimits(limits);
     }
-    
+  }, [character]);
+  
+  // Fetch available spells for the character's class
+  useEffect(() => {
+    if (character?.class?.name) {
+      setIsLoadingSpells(true);
+      spellApi.getClassSpells(character.class.name, character.level || 1)
+        .then(({ cantrips, spells }) => {
+          // For prepared casters, show all available spells they can choose from
+          const allAvailableSpells = [...cantrips, ...spells];
+          setAvailableSpells(allAvailableSpells);
+
+          // If character already has known spells, filter to those
+          if (character.knownSpells) {
+            const characterKnownSpells = allAvailableSpells.filter(spell =>
+              character.knownSpells.includes(spell.name)
+            );
+            setKnownSpells(characterKnownSpells);
+          } else {
+            // For prepared casters, they can prepare from all available spells
+            setKnownSpells(spells); // Only leveled spells, not cantrips
+          }
+        })
+        .catch(error => {
+          console.error('Failed to fetch class spells:', error);
+          setAvailableSpells([]);
+          setKnownSpells([]);
+        })
+        .finally(() => setIsLoadingSpells(false));
+    }
+
     if (character?.preparedSpells) {
       setPreparedSpells(character.preparedSpells);
     }
@@ -85,35 +117,49 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
     spellsByLevel[spell.level].push(spell);
   });
   
-  // Toggle spell preparation
-  const toggleSpellPreparation = (spellName: string) => {
-    if (!character) return;
-    
+  // Toggle spell preparation with validation
+  const toggleSpellPreparation = async (spellName: string) => {
+    if (!character || !preparationLimits) return;
+
     try {
-      let updatedCharacter = { ...character };
-      
+      let newPreparedSpells: string[];
+
       if (preparedSpells.includes(spellName)) {
         // Unprepare spell
-        updatedCharacter = unprepareSpell(updatedCharacter, spellName);
-        setPreparedSpells(prev => prev.filter(name => name !== spellName));
+        newPreparedSpells = preparedSpells.filter(name => name !== spellName);
       } else {
-        // Prepare spell
-        const spell = knownSpells.find(s => s.name === spellName);
-        if (spell && preparedSpells.length < preparationLimit) {
-          updatedCharacter = prepareSpell(updatedCharacter, spell);
-          setPreparedSpells(prev => [...prev, spellName]);
+        // Prepare spell - check if we have room
+        if (preparedSpells.length >= (preparationLimits.spellsPrepared || 0)) {
+          alert(`You can only prepare ${preparationLimits.spellsPrepared} spells.`);
+          return;
         }
+        newPreparedSpells = [...preparedSpells, spellName];
       }
-      
-      // Update character context
+
+      // Validate the new spell preparation
+      const validation = await validateSpellPreparation(
+        character,
+        newPreparedSpells,
+        character.knownSpells || [],
+        character.spellbookSpells || []
+      );
+
+      if (!validation.valid) {
+        alert(`Cannot prepare spell: ${validation.errors.join(', ')}`);
+        return;
+      }
+
+      // Update state and character context
+      setPreparedSpells(newPreparedSpells);
       dispatch({
         type: 'UPDATE_CHARACTER',
         payload: {
-          preparedSpells: updatedCharacter.preparedSpells
+          preparedSpells: newPreparedSpells
         }
       });
     } catch (error) {
       console.error('Error preparing/unpreparing spell:', error);
+      alert('Failed to update spell preparation. Please try again.');
     }
   };
   
@@ -150,7 +196,7 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
           Spell Preparation
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Prepare spells for casting. You can prepare {preparationLimit} spells.
+          Prepare spells for casting. You can prepare {preparationLimits?.spellsPrepared || 0} spells.
         </p>
       </CardHeader>
       <CardContent>
@@ -159,13 +205,13 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium">Spells Prepared</span>
             <Badge variant="outline">
-              {preparedSpells.length} / {preparationLimit}
+              {preparedSpells.length} / {preparationLimits?.spellsPrepared || 0}
             </Badge>
           </div>
           <div className="w-full bg-secondary rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all" 
-              style={{ width: `${(preparedSpells.length / preparationLimit) * 100}%` }}
+            <div
+              className="bg-primary h-2 rounded-full transition-all"
+              style={{ width: `${(preparedSpells.length / (preparationLimits?.spellsPrepared || 1)) * 100}%` }}
             />
           </div>
         </div>
@@ -173,7 +219,13 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
         <Separator className="my-4" />
         
         {/* Spell List by Level */}
-        <ScrollArea className="h-[400px] pr-4">
+        {isLoadingSpells ? (
+          <div className="text-center py-8">
+            <BookOpen className="w-12 h-12 mx-auto text-gray-300 mb-2 animate-pulse" />
+            <p>Loading available spells...</p>
+          </div>
+        ) : (
+          <ScrollArea className="h-[400px] pr-4">
           {Object.entries(spellsByLevel)
             .sort(([a], [b]) => parseInt(a) - parseInt(b))
             .map(([level, spells]) => (
@@ -182,7 +234,7 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
                 <div className="space-y-3">
                   {spells.map((spell) => {
                     const isPrepared = preparedSpells.includes(spell.name);
-                    const canPrepare = !isPrepared && preparedSpells.length < preparationLimit;
+                    const canPrepare = !isPrepared && preparedSpells.length < (preparationLimits?.spellsPrepared || 0);
                     
                     return (
                       <div 
@@ -207,29 +259,29 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
                             </div>
                             
                             <p className="text-xs text-muted-foreground mb-2">
-                              {spell.school} • {spell.castingTime} • {spell.range}
+                              {spell.school} • {spell.casting_time} • {spell.range}
                             </p>
-                            
+
                             {/* Component Requirements */}
                             <div className="flex flex-wrap gap-2 mb-2">
-                              {spell.verbal && (
+                              {spell.components_verbal && (
                                 <div className="flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">
                                   {getComponentIcon('verbal')}
                                   <span>V</span>
                                 </div>
                               )}
-                              {spell.somatic && (
+                              {spell.components_somatic && (
                                 <div className="flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
                                   {getComponentIcon('somatic')}
                                   <span>S</span>
                                 </div>
                               )}
-                              {spell.material && (
+                              {spell.components_material && (
                                 <div className="flex items-center gap-1 text-xs bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded">
                                   {getComponentIcon('material')}
                                   <span>M</span>
-                                  {spell.materialDescription && (
-                                    <span className="ml-1">({spell.materialDescription})</span>
+                                  {spell.material_components && (
+                                    <span className="ml-1">({spell.material_components})</span>
                                   )}
                                 </div>
                               )}
@@ -256,6 +308,7 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
               </div>
             ))}
         </ScrollArea>
+        )}
       </CardContent>
     </Card>
   );

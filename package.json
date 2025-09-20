@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server:dev": "ts-node-dev --respawn --transpile-only --project server/tsconfig.json server/src/index.ts",
+    "server:dev": "npm run server:build && npm run server:start",
     "server:build": "tsc -p server/tsconfig.json",
     "server:start": "node server/dist/index.js",
     "server:migrate": "ts-node --project server/tsconfig.json server/src/scripts/migrate.ts",

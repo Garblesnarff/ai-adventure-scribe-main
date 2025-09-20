@@ -241,7 +241,7 @@ const AbilityScoresSelection: React.FC = () => {
         <TabsContent value="pointBuy" className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-blue-500" />
+              <Info className="w-4 h-4 text-info" />
               <h3 className="font-semibold">Point Buy System</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
@@ -260,7 +260,7 @@ const AbilityScoresSelection: React.FC = () => {
         <TabsContent value="standardArray" className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-green-500" />
+              <Info className="w-4 h-4 text-success" />
               <h3 className="font-semibold">Standard Array</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
@@ -282,7 +282,7 @@ const AbilityScoresSelection: React.FC = () => {
         <TabsContent value="roll" className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-orange-500" />
+              <Info className="w-4 h-4 text-warning" />
               <h3 className="font-semibold">Roll 4d6 Drop Lowest</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
@@ -350,8 +350,8 @@ const AbilityScoresSelection: React.FC = () => {
                       {currentScore}
                     </div>
                     <div className={`text-sm font-medium ${
-                      modifier > 0 ? 'text-green-600' :
-                      modifier < 0 ? 'text-red-600' : 'text-muted-foreground'
+                      modifier > 0 ? 'text-success' :
+                      modifier < 0 ? 'text-error' : 'text-muted-foreground'
                     }`}>
                       {modifier >= 0 ? '+' : ''}{modifier}
                     </div>

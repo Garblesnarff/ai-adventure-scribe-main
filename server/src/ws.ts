@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Pool } from 'pg';
-import { verifyToken } from './lib/jwt';
+import { verifyToken } from './lib/jwt.js';
 import url from 'url';
 
 type RoomId = string;

@@ -69,11 +69,11 @@ const WizardHeader: React.FC<Props> = ({ step = 1, totalSteps = 4, autosaveKey =
       <div className="mt-4">
         <span aria-live="polite" className={`text-xs px-2 py-1 rounded-full transition-all duration-300 ${
           status === 'saving'
-            ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/50'
+            ? 'text-warning bg-warning dark:bg-warning/80'
             : status === 'saved'
-            ? 'text-green-600 bg-green-100 dark:bg-green-900/50'
+            ? 'text-success bg-success dark:bg-success/80'
             : status === 'error'
-            ? 'text-red-600 bg-red-100 dark:bg-red-900/50'
+            ? 'text-error bg-error dark:bg-error/80'
             : 'text-muted-foreground'
         }`}>
           {status === 'saving' && '✨ Autosaving your epic tale...'}
