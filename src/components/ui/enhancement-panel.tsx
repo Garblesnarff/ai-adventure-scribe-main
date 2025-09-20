@@ -251,13 +251,19 @@ export function EnhancementPanel({
             </div>
           ) : (
             <Tabs defaultValue={Object.keys(groupedOptions)[0]} className="w-full">
-              <TabsList className="grid w-full grid-cols-auto">
-                {Object.keys(groupedOptions).map(group => (
-                  <TabsTrigger key={group} value={group} className="capitalize">
-                    {group} ({groupedOptions[group].length})
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              <div className="flex justify-start mb-4">
+                <TabsList className="bg-muted/50 p-1 rounded-lg">
+                  {Object.keys(groupedOptions).map(group => (
+                    <TabsTrigger
+                      key={group}
+                      value={group}
+                      className="capitalize text-sm px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                    >
+                      {group} ({groupedOptions[group].length})
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
               {Object.entries(groupedOptions).map(([group, options]) => (
                 <TabsContent key={group} value={group} className="mt-4 space-y-4">

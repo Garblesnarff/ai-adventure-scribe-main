@@ -212,18 +212,18 @@ const SpellSelection: React.FC = () => {
               <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
             </Button>
           </CollapsibleTrigger>
+
+          {/* Filter Panel */}
+          <CollapsibleContent>
+            <SpellFilterPanel
+              filters={filters}
+              onChange={setFilters}
+              availableSchools={availableSchools}
+              isOpen={isFilterOpen}
+            />
+          </CollapsibleContent>
         </Collapsible>
       </div>
-
-      {/* Filter Panel */}
-      <CollapsibleContent>
-        <SpellFilterPanel
-          filters={filters}
-          onChange={setFilters}
-          availableSchools={availableSchools}
-          isOpen={isFilterOpen}
-        />
-      </CollapsibleContent>
 
       {/* Validation Alerts */}
       {validation.errors.length > 0 && (
