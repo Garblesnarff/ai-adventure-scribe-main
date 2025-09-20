@@ -1,6 +1,7 @@
 import { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
 import { MemoryManager } from '../memory-manager';
+import { getAveragePartyLevel } from '@/utils/character-level-utils';
 
 export interface QuestRequest {
   type: 'main' | 'side' | 'personal' | 'fetch' | 'kill' | 'escort' | 'investigation' | 'social' | 'exploration';
@@ -418,7 +419,7 @@ GUIDELINES:
           sessionId,
           characterId,
           genre: campaign.data.genre || 'fantasy',
-          playerLevel: 1, // TODO: Get from character data
+          playerLevel: await getAveragePartyLevel(campaignId, sessionId),
           recentMemories: memories,
         }
       };

@@ -1,5 +1,6 @@
 import { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
+import { getAveragePartyLevel } from '@/utils/character-level-utils';
 
 export interface LocationRequest {
   type: 'settlement' | 'dungeon' | 'wilderness' | 'landmark' | 'building' | 'room';
@@ -284,7 +285,7 @@ GUIDELINES:
           sessionId,
           genre: campaign.genre || 'fantasy',
           currentStory: playerAction,
-          playerLevel: 1, // TODO: Get from character data
+          playerLevel: await getAveragePartyLevel(campaignId, sessionId),
         }
       };
 
