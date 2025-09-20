@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Sparkles, User, Scroll, Crown, Heart } from 'lucide-react';
 
 /**
@@ -16,6 +17,7 @@ import { Sparkles, User, Scroll, Crown, Heart } from 'lucide-react';
 const BasicInfo: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
+  const { scrollToNavigation } = useAutoScroll();
 
   /**
    * Updates character name in context
@@ -48,6 +50,8 @@ const BasicInfo: React.FC = () => {
       type: 'UPDATE_CHARACTER',
       payload: { alignment }
     });
+    // Auto-scroll to navigation after alignment selection
+    setTimeout(() => scrollToNavigation(), 100);
   };
 
   /**

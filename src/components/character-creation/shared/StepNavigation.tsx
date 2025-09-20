@@ -26,7 +26,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   const isLastStep = currentStep === totalSteps - 1;
 
   return (
-    <div className="mt-8 space-y-4">
+    <div className="mt-8 space-y-4" data-testid="step-navigation">
       {/* Progress Summary */}
       <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground">
         <Badge variant="outline" className="px-3 py-1">
