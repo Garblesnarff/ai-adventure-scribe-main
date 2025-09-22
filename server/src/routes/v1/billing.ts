@@ -1,6 +1,6 @@
 import express, { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
-import { requireAuth } from '../../middleware/auth';
+import { requireAuth } from '../../middleware/auth.js';
 import Stripe from 'stripe';
 
 export default function stripeRouter(db: Pool) {

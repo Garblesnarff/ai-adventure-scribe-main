@@ -20,7 +20,7 @@ import {
   getSorceryPoints,
   getMetamagicOptionsKnown
 } from '@/data/spellcastingFeatures';
-import { allSpells } from '@/data/spellOptions';
+import { spellApi } from '@/services/spellApi';
 import { Spell } from '@/types/character';
 import { 
   Sparkles, 
@@ -52,6 +52,8 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   const [selectedMetamagic, setSelectedMetamagic] = useState<string[]>([]);
   const [ritualSpells, setRitualSpells] = useState<string[]>([]);
   const [pactMagicSpells, setPactMagicSpells] = useState<string[]>([]);
+  const [allSpells, setAllSpells] = useState<Spell[]>([]);
+  const [isLoadingSpells, setIsLoadingSpells] = useState(true);
 
   // Check if character has spellcasting
   const hasSpellcasting = characterClass?.spellcasting !== undefined;
@@ -60,26 +62,92 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   const usesPactMagic = hasPactMagic(characterClass?.id || '');
   const usesMetamagic = hasMetamagic(characterClass?.id || '', level);
 
+  // Check if all required selections are complete
+  const hasRequiredPreparations = !canPrepareSpells || preparedSpells.length === maxPreparedSpells;
+  const hasRequiredMetamagic = !usesMetamagic || selectedMetamagic.length === maxMetamagicOptions;
+  const hasRequiredPactSpells = !usesPactMagic || pactMagicSpells.length === maxPactSpells;
+  const allSelectionsComplete = hasRequiredPreparations && hasRequiredMetamagic && hasRequiredPactSpells;
+
   // Calculate spell preparation limits
   const maxPreparedSpells = canPrepareSpells ? calculateSpellsKnown(characterClass?.id || '', level, abilityModifier) : 0;
   const availableSpells = allSpells.filter((spell: Spell) => spell.level <= Math.min(5, Math.ceil(level / 2)));
   const availableRitualSpells = allSpells.filter((spell: Spell) => spell.ritual && spell.level <= Math.min(5, Math.ceil(level / 2)));
-  
+
   // Pact Magic progression
   const pactProgression = usesPactMagic ? getPactMagicProgression(level) : null;
   const maxPactSpells = pactProgression?.spellsKnown || 0;
-  
+
   // Metamagic
   const sorceryPoints = usesMetamagic ? getSorceryPoints(level) : 0;
   const maxMetamagicOptions = usesMetamagic ? getMetamagicOptionsKnown(level) : 0;
 
-  if (!hasSpellcasting) {
+  // Fetch all spells on component mount
+  useEffect(() => {
+    const fetchSpells = async () => {
+      try {
+        const spells = await spellApi.getAllSpells();
+        setAllSpells(spells);
+      } catch (error) {
+        console.error('Failed to fetch spells:', error);
+      } finally {
+        setIsLoadingSpells(false);
+      }
+    };
+
+    fetchSpells();
+  }, []);
+
+  // Auto-apply when all required selections are made
+  useEffect(() => {
+    // Don't auto-apply if component is still loading or has no spellcasting
+    if (isLoadingSpells || !hasSpellcasting) return;
+
+    // Auto-apply when all required features are complete
+    if (allSelectionsComplete) {
+      applySpellcastingFeatures();
+    }
+  }, [preparedSpells, selectedMetamagic, pactMagicSpells, ritualSpells, isLoadingSpells, hasSpellcasting, allSelectionsComplete]);
+
+  if (isLoadingSpells) {
+    return (
+      <div className="text-center space-y-4">
+        <Sparkles className="w-16 h-16 mx-auto text-muted-foreground animate-pulse" />
+        <h2 className="text-2xl font-bold">Loading Spells...</h2>
+        <p className="text-muted-foreground">
+          Fetching spell data from the library.
+        </p>
+      </div>
+    );
+  }
+
+  // Auto-apply empty configuration for characters with no advanced features
+  useEffect(() => {
+    if (!isLoadingSpells && (!hasSpellcasting || (!canPrepareSpells && !usesMetamagic && !usesPactMagic && !usesRitualCasting))) {
+      dispatch({
+        type: 'UPDATE_CHARACTER',
+        payload: {
+          advancedSpellcastingComplete: true
+        }
+      });
+    }
+  }, [isLoadingSpells, hasSpellcasting, canPrepareSpells, usesMetamagic, usesPactMagic, usesRitualCasting, dispatch]);
+
+  // If no advanced features are needed, show completion message
+  if (!hasSpellcasting || (!canPrepareSpells && !usesMetamagic && !usesPactMagic && !usesRitualCasting)) {
     return (
       <div className="text-center space-y-4">
         <Sparkles className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">No Spellcasting</h2>
+        <h2 className="text-2xl font-bold">
+          {!hasSpellcasting ? 'No Spellcasting' : 'No Advanced Features'}
+        </h2>
         <p className="text-muted-foreground">
-          Your character class does not have spellcasting abilities.
+          {!hasSpellcasting
+            ? 'Your character class does not have spellcasting abilities.'
+            : 'Your character does not have advanced spellcasting features at this level.'
+          }
+        </p>
+        <p className="text-sm text-green-600 font-medium">
+          ✓ This step is complete - you can continue to the next step.
         </p>
       </div>
     );
@@ -88,11 +156,11 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   /**
    * Handle spell preparation
    */
-  const handleSpellPreparation = (spellName: string, checked: boolean) => {
+  const handleSpellPreparation = (spellId: string, checked: boolean) => {
     if (checked && preparedSpells.length < maxPreparedSpells) {
-      setPreparedSpells([...preparedSpells, spellName]);
+      setPreparedSpells([...preparedSpells, spellId]);
     } else if (!checked) {
-      setPreparedSpells(preparedSpells.filter(s => s !== spellName));
+      setPreparedSpells(preparedSpells.filter(s => s !== spellId));
     }
   };
 
@@ -110,11 +178,11 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   /**
    * Handle pact magic spells
    */
-  const handlePactSpellSelection = (spellName: string, checked: boolean) => {
+  const handlePactSpellSelection = (spellId: string, checked: boolean) => {
     if (checked && pactMagicSpells.length < maxPactSpells) {
-      setPactMagicSpells([...pactMagicSpells, spellName]);
+      setPactMagicSpells([...pactMagicSpells, spellId]);
     } else if (!checked) {
-      setPactMagicSpells(pactMagicSpells.filter(s => s !== spellName));
+      setPactMagicSpells(pactMagicSpells.filter(s => s !== spellId));
     }
   };
 
@@ -149,6 +217,9 @@ const AdvancedSpellcastingSelection: React.FC = () => {
       updates.ritualSpells = ritualSpells;
     }
 
+    // Mark advanced spellcasting as complete
+    updates.advancedSpellcastingComplete = true;
+
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: updates
@@ -160,24 +231,14 @@ const AdvancedSpellcastingSelection: React.FC = () => {
     });
   };
 
-  // Auto-apply when all required selections are made
-  useEffect(() => {
-    const hasRequiredPreparations = !canPrepareSpells || preparedSpells.length === maxPreparedSpells;
-    const hasRequiredMetamagic = !usesMetamagic || selectedMetamagic.length === maxMetamagicOptions;
-    const hasRequiredPactSpells = !usesPactMagic || pactMagicSpells.length === maxPactSpells;
 
-    if (hasRequiredPreparations && hasRequiredMetamagic && hasRequiredPactSpells) {
-      applySpellcastingFeatures();
-    }
-  }, [preparedSpells, selectedMetamagic, pactMagicSpells, ritualSpells]);
-
-  const getSpellCard = (spell: Spell, isSelected: boolean, onSelectionChange: (name: string, checked: boolean) => void, disabled: boolean = false) => (
+  const getSpellCard = (spell: Spell, isSelected: boolean, onSelectionChange: (id: string, checked: boolean) => void, disabled: boolean = false) => (
     <div
       key={spell.id}
       className={`p-3 border rounded-lg cursor-pointer transition-all ${
         isSelected ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      onClick={() => !disabled && onSelectionChange(spell.name, !isSelected)}
+      onClick={() => !disabled && onSelectionChange(spell.id, !isSelected)}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -197,7 +258,7 @@ const AdvancedSpellcastingSelection: React.FC = () => {
         <Checkbox
           checked={isSelected}
           disabled={disabled}
-          onCheckedChange={(checked) => onSelectionChange(spell.name, checked === true)}
+          onCheckedChange={(checked) => onSelectionChange(spell.id, checked === true)}
         />
       </div>
     </div>
@@ -289,9 +350,9 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                   {availableSpells.map((spell) => 
                     getSpellCard(
                       spell, 
-                      preparedSpells.includes(spell.name),
+                      preparedSpells.includes(spell.id),
                       handleSpellPreparation,
-                      !preparedSpells.includes(spell.name) && preparedSpells.length >= maxPreparedSpells
+                      !preparedSpells.includes(spell.id) && preparedSpells.length >= maxPreparedSpells
                     )
                   )}
                 </div>
@@ -350,9 +411,9 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                     .map((spell: Spell) => 
                       getSpellCard(
                         spell, 
-                        pactMagicSpells.includes(spell.name),
+                        pactMagicSpells.includes(spell.id),
                         handlePactSpellSelection,
-                        !pactMagicSpells.includes(spell.name) && pactMagicSpells.length >= maxPactSpells
+                        !pactMagicSpells.includes(spell.id) && pactMagicSpells.length >= maxPactSpells
                       )
                     )}
                 </div>
@@ -500,11 +561,32 @@ const AdvancedSpellcastingSelection: React.FC = () => {
         )}
       </Tabs>
 
-      {/* Manual Apply Button (fallback) */}
-      <div className="flex justify-center">
-        <Button onClick={applySpellcastingFeatures} className="mt-4">
-          Apply Spellcasting Features
-        </Button>
+      {/* Completion Status and Manual Apply Button */}
+      <div className="mt-6 space-y-4">
+        {allSelectionsComplete && (
+          <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-center gap-2 text-green-700">
+              <Shield className="w-5 h-5" />
+              <span className="font-medium">All selections complete!</span>
+            </div>
+            <p className="text-sm text-green-600 mt-1">
+              Your advanced spellcasting features have been configured automatically.
+            </p>
+          </div>
+        )}
+
+        {!allSelectionsComplete && (
+          <div className="text-center">
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                Complete your selections above to continue to the next step.
+              </p>
+            </div>
+            <Button onClick={applySpellcastingFeatures} variant="outline">
+              Apply Current Selections
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

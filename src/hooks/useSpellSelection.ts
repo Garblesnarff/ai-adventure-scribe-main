@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Spell, Character } from '@/types/character';
-import { getClassSpells } from '@/data/spellOptions';
+import { spellApi } from '@/services/spellApi';
 import {
   validateSpellSelection,
   getSpellcastingInfo,
@@ -20,6 +20,10 @@ interface UseSpellSelectionReturn {
   availableCantrips: Spell[];
   availableSpells: Spell[];
   racialSpells: ReturnType<typeof getRacialSpells>;
+
+  // Loading states
+  isLoadingSpells: boolean;
+  spellsError: string | null;
 
   // Current selections
   selectedCantrips: string[];
@@ -64,6 +68,12 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   const [selectedCantrips, setSelectedCantrips] = useState<string[]>([]);
   const [selectedSpells, setSelectedSpells] = useState<string[]>([]);
 
+  // Loading state
+  const [isLoadingSpells, setIsLoadingSpells] = useState(false);
+  const [spellsError, setSpellsError] = useState<string | null>(null);
+  const [availableCantrips, setAvailableCantrips] = useState<Spell[]>([]);
+  const [availableSpells, setAvailableSpells] = useState<Spell[]>([]);
+
   // Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<SpellFilters>({
@@ -95,18 +105,34 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     return currentClass ? getSpellcastingInfo(currentClass, character?.level || 1) : null;
   }, [currentClass, character?.level]);
 
-  // Available spells
-  const { availableCantrips, availableSpells } = useMemo(() => {
-    if (!isSpellcaster || !currentClass) {
-      return { availableCantrips: [], availableSpells: [] };
-    }
+  // Fetch available spells from API
+  useEffect(() => {
+    const fetchSpells = async () => {
+      if (!isSpellcaster || !currentClass?.name) {
+        setAvailableCantrips([]);
+        setAvailableSpells([]);
+        return;
+      }
 
-    const { cantrips, spells } = getClassSpells(currentClass.name);
-    return {
-      availableCantrips: cantrips,
-      availableSpells: spells
+      setIsLoadingSpells(true);
+      setSpellsError(null);
+
+      try {
+        const { cantrips, spells } = await spellApi.getClassSpells(currentClass.name, character?.level || 1);
+        setAvailableCantrips(cantrips);
+        setAvailableSpells(spells);
+      } catch (error) {
+        console.error('Failed to fetch spells:', error);
+        setSpellsError(error instanceof Error ? error.message : 'Failed to load spells');
+        setAvailableCantrips([]);
+        setAvailableSpells([]);
+      } finally {
+        setIsLoadingSpells(false);
+      }
     };
-  }, [isSpellcaster, currentClass?.name]);
+
+    fetchSpells();
+  }, [isSpellcaster, currentClass?.name, character?.level]);
 
   // Racial spells
   const racialSpells = useMemo(() => {
@@ -231,6 +257,10 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     availableCantrips,
     availableSpells,
     racialSpells,
+
+    // Loading states
+    isLoadingSpells,
+    spellsError,
 
     // Current selections
     selectedCantrips,

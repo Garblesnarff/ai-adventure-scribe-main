@@ -28,7 +28,7 @@ import {
   Clock
 } from 'lucide-react';
 import { Spell } from '@/types/character';
-import { allSpells } from '@/data/spellOptions';
+import { spellApi } from '@/services/spellApi';
 import { consumeMaterialComponents } from '@/utils/spellComponents';
 
 // ===========================
@@ -50,11 +50,24 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
 }) => {
   const { state } = useCombat();
   const { activeEncounter } = state;
-  
-  // Find the selected spell
-  const selectedSpell = selectedSpellName 
-    ? allSpells.find((spell: Spell) => spell.name === selectedSpellName)
-    : null;
+  const [selectedSpell, setSelectedSpell] = React.useState<Spell | null>(null);
+  const [isLoadingSpell, setIsLoadingSpell] = React.useState(false);
+
+  // Fetch the selected spell from API
+  React.useEffect(() => {
+    if (selectedSpellName) {
+      setIsLoadingSpell(true);
+      spellApi.getSpellByName(selectedSpellName)
+        .then(spell => setSelectedSpell(spell))
+        .catch(error => {
+          console.error('Failed to fetch spell:', error);
+          setSelectedSpell(null);
+        })
+        .finally(() => setIsLoadingSpell(false));
+    } else {
+      setSelectedSpell(null);
+    }
+  }, [selectedSpellName]);
   
   if (!activeEncounter) {
     return (
@@ -109,7 +122,12 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
       </CardHeader>
 
       <CardContent>
-        {selectedSpell ? (
+        {isLoadingSpell ? (
+          <div className="text-center text-gray-500 py-8">
+            <BookOpen className="w-12 h-12 mx-auto text-gray-300 mb-2 animate-pulse" />
+            <p>Loading spell...</p>
+          </div>
+        ) : selectedSpell ? (
           <div className="space-y-4">
             {/* Spell Info */}
             <div className="p-3 bg-muted rounded-lg">
@@ -120,7 +138,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                {selectedSpell.school} • {selectedSpell.castingTime} • {selectedSpell.range}
+                {selectedSpell.school} • {selectedSpell.casting_time} • {selectedSpell.range}
               </p>
               {selectedSpellLevel && selectedSpellLevel !== selectedSpell.level && (
                 <Badge variant="secondary" className="mt-2">
@@ -140,7 +158,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
               
               <div className="space-y-3">
                 {/* Verbal Component */}
-                {selectedSpell.verbal !== undefined && (
+                {selectedSpell.components_verbal !== undefined && (
                   <div className="flex items-center justify-between p-2 border rounded">
                     <div className="flex items-center gap-2">
                       <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
@@ -148,14 +166,14 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                       </div>
                       <span>Verbal (V)</span>
                     </div>
-                    <Badge variant={selectedSpell.verbal ? "default" : "secondary"}>
-                      {selectedSpell.verbal ? 'Required' : 'Not Required'}
+                    <Badge variant={selectedSpell.components_verbal ? "default" : "secondary"}>
+                      {selectedSpell.components_verbal ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
                 )}
-                
+
                 {/* Somatic Component */}
-                {selectedSpell.somatic !== undefined && (
+                {selectedSpell.components_somatic !== undefined && (
                   <div className="flex items-center justify-between p-2 border rounded">
                     <div className="flex items-center gap-2">
                       <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded">
@@ -163,14 +181,14 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                       </div>
                       <span>Somatic (S)</span>
                     </div>
-                    <Badge variant={selectedSpell.somatic ? "default" : "secondary"}>
-                      {selectedSpell.somatic ? 'Required' : 'Not Required'}
+                    <Badge variant={selectedSpell.components_somatic ? "default" : "secondary"}>
+                      {selectedSpell.components_somatic ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
                 )}
-                
+
                 {/* Material Component */}
-                {selectedSpell.material !== undefined && (
+                {selectedSpell.components_material !== undefined && (
                   <div className="p-2 border rounded">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -179,22 +197,22 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                         </div>
                         <span>Material (M)</span>
                       </div>
-                      <Badge variant={selectedSpell.material ? "default" : "secondary"}>
-                        {selectedSpell.material ? 'Required' : 'Not Required'}
+                      <Badge variant={selectedSpell.components_material ? "default" : "secondary"}>
+                        {selectedSpell.components_material ? 'Required' : 'Not Required'}
                       </Badge>
                     </div>
-                    
-                    {selectedSpell.material && selectedSpell.materialDescription && (
+
+                    {selectedSpell.components_material && selectedSpell.material_components && (
                       <div className="mt-2 p-2 bg-muted rounded text-sm">
                         <p className="font-medium mb-1">Material Required:</p>
-                        <p>{selectedSpell.materialDescription}</p>
-                        {selectedSpell.materialCost && (
+                        <p>{selectedSpell.material_components}</p>
+                        {selectedSpell.material_cost && (
                           <p className="mt-1 text-xs">
-                            Cost: {selectedSpell.materialCost} gp
-                            {selectedSpell.materialConsumed && ' (consumed)'}
+                            Cost: {selectedSpell.material_cost} gp
+                            {selectedSpell.material_consumed && ' (consumed)'}
                           </p>
                         )}
-                        {selectedSpell.materialConsumed && (
+                        {selectedSpell.material_consumed && (
                           <p className="mt-1 text-xs text-red-500 font-medium">
                             ⚠️ This component is consumed when cast
                           </p>

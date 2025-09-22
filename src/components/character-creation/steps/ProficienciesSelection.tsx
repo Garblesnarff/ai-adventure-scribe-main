@@ -157,8 +157,17 @@ const ProficienciesSelection: React.FC = () => {
                   <Checkbox
                     id={skill}
                     checked={selectedSkills.includes(skill)}
+                    disabled={!selectedSkills.includes(skill) && selectedSkills.length >= numSkillChoices}
                     onCheckedChange={(checked) => {
                       if (checked) {
+                        if (selectedSkills.length >= numSkillChoices) {
+                          toast({
+                            title: 'Skill Limit Reached',
+                            description: `You can only select ${numSkillChoices} skill${numSkillChoices > 1 ? 's' : ''} for your ${currentClass?.name} class.`,
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
                         setSelectedSkills(prev => [...prev, skill]);
                       } else {
                         setSelectedSkills(prev => prev.filter(s => s !== skill));
@@ -189,8 +198,17 @@ const ProficienciesSelection: React.FC = () => {
                   <Checkbox
                     id={lang}
                     checked={selectedLanguages.includes(lang)}
+                    disabled={!selectedLanguages.includes(lang) && selectedLanguages.length >= numLanguageChoices}
                     onCheckedChange={(checked) => {
                       if (checked) {
+                        if (selectedLanguages.length >= numLanguageChoices) {
+                          toast({
+                            title: 'Language Limit Reached',
+                            description: `You can only select ${numLanguageChoices} language${numLanguageChoices > 1 ? 's' : ''} from your background.`,
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
                         setSelectedLanguages(prev => [...prev, lang]);
                       } else {
                         setSelectedLanguages(prev => prev.filter(l => l !== lang));

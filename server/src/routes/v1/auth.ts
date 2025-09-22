@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
-import { signToken } from '../../lib/jwt';
+import { signToken } from '../../lib/jwt.js';
 
 export default function authRouter(db: Pool) {
   const router = Router();

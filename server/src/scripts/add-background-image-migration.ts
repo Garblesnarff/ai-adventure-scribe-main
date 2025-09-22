@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db';
+import { createClient } from '../lib/db.js';
 
 async function addBackgroundImageColumn() {
   console.log('🚀 Adding background_image column to campaigns table...');
