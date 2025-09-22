@@ -60,37 +60,37 @@ const WizardContent: React.FC = () => {
     const stepLabel = filteredSteps[stepIndex]?.label || '';
     const character = state.character;
 
-    switch (stepIndex) {
-      // Step 0: Basic Info - Require name
-      case 0:
+    switch (stepLabel) {
+      // Basic Info - Require name
+      case 'Basic Info':
         if (!character.name?.trim()) {
           return { isValid: false, message: "Please enter a character name before proceeding" };
         }
         break;
 
-      // Step 1: Race Selection - Require race
-      case 1:
+      // Race Selection - Require race
+      case 'Race':
         if (!character.race) {
           return { isValid: false, message: "Please select a race for your character" };
         }
         break;
 
-      // Step 2: Subrace Selection - Validate if applicable (auto-skipped if not needed)
-      case 2:
+      // Subrace Selection - Validate if applicable (auto-skipped if not needed)
+      case 'Subrace':
         if (character.race?.subraces?.length && !character.subrace) {
           return { isValid: false, message: "Please select a subrace for your character" };
         }
         break;
 
-      // Step 3: Class Selection - Require class
-      case 3:
+      // Class Selection - Require class
+      case 'Class':
         if (!character.class) {
           return { isValid: false, message: "Please select a class for your character" };
         }
         break;
 
-      // Step 4: Class Features - Validate feature choices if applicable
-      case 4: {
+      // Class Features - Validate feature choices if applicable
+      case 'Class Features': {
         const classFeatures = character.class?.classFeatures?.filter(f => f.choices) || [];
         if (classFeatures.length > 0) {
           const hasAllFeatures = classFeatures.every(feature =>
@@ -103,8 +103,8 @@ const WizardContent: React.FC = () => {
         break;
       }
 
-      // Step 5: Ability Scores - Ensure all scores are set
-      case 5: {
+      // Ability Scores - Ensure all scores are set
+      case 'Ability Scores': {
         if (!character.abilityScores) {
           return { isValid: false, message: "Please set your ability scores" };
         }
@@ -119,15 +119,15 @@ const WizardContent: React.FC = () => {
         break;
       }
 
-      // Step 6: Background Selection - Require background
-      case 6:
+      // Background Selection - Require background
+      case 'Background':
         if (!character.background) {
           return { isValid: false, message: "Please select a background for your character" };
         }
         break;
 
-      // Step 7: Proficiencies - Validate skill and language selections
-      case 7:
+      // Proficiencies - Validate skill and language selections
+      case 'Proficiencies & Languages':
         if (!character.skillProficiencies?.length) {
           return { isValid: false, message: "Please complete your skill proficiency selections" };
         }
@@ -136,8 +136,8 @@ const WizardContent: React.FC = () => {
         }
         break;
 
-      // Step 8: Spells - Validate spell selection for spellcasters
-      case 8: {
+      // Spells - Validate spell selection for spellcasters
+      case 'Spells': {
         const spellcasting = character.class?.spellcasting;
         if (spellcasting) {
           // Check cantrips if class learns them
@@ -164,8 +164,8 @@ const WizardContent: React.FC = () => {
         break;
       }
 
-      // Step 9: Advanced Spellcasting - Validate advanced spellcasting features
-      case 9: {
+      // Advanced Spellcasting - Validate advanced spellcasting features
+      case 'Advanced Spellcasting': {
         const spellcasting = character.class?.spellcasting;
         if (spellcasting) {
           const classId = character.class?.id?.toLowerCase() || '';
