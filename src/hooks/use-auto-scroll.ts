@@ -15,23 +15,27 @@ export const useAutoScroll = () => {
       // Look for the step navigation container
       const navigationElement = document.querySelector('[data-testid="step-navigation"]') ||
                                document.querySelector('.flex.justify-between') ||
-                               // Fallback: look for navigation buttons
-                               document.querySelector('button:contains("Next")');
-      
+                               // Fallback: look for navigation buttons containing specific text
+                               Array.from(document.querySelectorAll('button')).find(btn =>
+                                 btn.textContent?.includes('Continue') ||
+                                 btn.textContent?.includes('Complete') ||
+                                 btn.textContent?.includes('Next')
+                               );
+
       if (navigationElement) {
-        navigationElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'nearest',
+        navigationElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
           inline: 'nearest'
         });
       } else {
         // Fallback: scroll to bottom of the page
-        window.scrollTo({ 
-          top: document.documentElement.scrollHeight, 
-          behavior: 'smooth' 
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth'
         });
       }
-    }, 100);
+    }, 150);
   }, []);
 
   /**

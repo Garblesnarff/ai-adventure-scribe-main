@@ -63,7 +63,23 @@ export const wizardSteps: WizardStep[] = [
   },
   {
     component: AdvancedSpellcastingSelection,
-    label: 'Advanced Spellcasting'
+    label: 'Advanced Spellcasting',
+    skipCondition: (character) => {
+      // Skip if no spellcasting ability
+      if (!character?.class?.spellcasting) return true;
+
+      const classId = character.class.id?.toLowerCase() || '';
+      const level = character.level || 1;
+
+      // Skip if class doesn't have advanced spellcasting features
+      const needsPreparation = ['cleric', 'druid', 'paladin', 'wizard'].includes(classId);
+      const needsPactMagic = classId === 'warlock';
+      const needsMetamagic = classId === 'sorcerer' && level >= 3;
+      const needsRituals = ['bard', 'cleric', 'druid', 'wizard', 'warlock'].includes(classId);
+
+      // Skip if none of the advanced features are needed
+      return !(needsPreparation || needsPactMagic || needsMetamagic || needsRituals);
+    }
   },
   {
     component: EquipmentSelection,

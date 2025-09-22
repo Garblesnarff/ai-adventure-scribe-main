@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Character, Spell } from '@/types/character';
 import DiceRoller from '@/components/ui/dice-roller';
 import { metamagicOptions } from '@/data/spellcastingFeatures';
-import { allSpells } from '@/data/spellOptions';
+import { spellApi } from '@/services/spellApi';
 import { 
   Wand2, 
   Heart, 
@@ -37,12 +37,32 @@ interface SpellSlots {
  * Supports metamagic, pact magic, spell preparation, ritual casting
  */
 const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpdate }) => {
+  // State for fetched spells
+  const [allSpells, setAllSpells] = useState<Spell[]>([]);
+  const [isLoadingSpells, setIsLoadingSpells] = useState(true);
+
+  // Fetch all spells on component mount
+  useEffect(() => {
+    const fetchSpells = async () => {
+      try {
+        const spells = await spellApi.getAllSpells();
+        setAllSpells(spells);
+      } catch (error) {
+        console.error('Failed to fetch spells:', error);
+      } finally {
+        setIsLoadingSpells(false);
+      }
+    };
+
+    fetchSpells();
+  }, []);
+
   // Calculate spellcasting info
   const characterClass = character?.class;
   const level = character?.level || 1;
   const spellcastingAbility = characterClass?.spellcasting?.ability;
-  const spellcastingMod = spellcastingAbility 
-    ? character?.abilityScores?.[spellcastingAbility]?.modifier || 0 
+  const spellcastingMod = spellcastingAbility
+    ? character?.abilityScores?.[spellcastingAbility]?.modifier || 0
     : 0;
   const proficiencyBonus = Math.floor((level - 1) / 4) + 2;
   const spellAttackBonus = spellcastingMod + proficiencyBonus;
@@ -76,27 +96,27 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
   const hasMetamagic = character?.metamagicOptions && character.metamagicOptions.length > 0;
   const canCastRituals = characterClass?.spellcasting?.ritualCasting || false;
 
-  // Get spells
-  const knownCantrips = (character?.cantrips || []).map(cantripName => 
-    allSpells.find((spell: Spell) => spell.name === cantripName)
-  ).filter(Boolean);
+  // Get spells (only if not loading)
+  const knownCantrips = !isLoadingSpells ? (character?.cantrips || []).map(cantripId =>
+    allSpells.find((spell: Spell) => spell.id === cantripId)
+  ).filter(Boolean) : [];
 
-  const knownSpells = (character?.knownSpells || []).map(spellName => 
-    allSpells.find((spell: Spell) => spell.name === spellName)
-  ).filter(Boolean);
+  const knownSpells = !isLoadingSpells ? (character?.knownSpells || []).map(spellId =>
+    allSpells.find((spell: Spell) => spell.id === spellId)
+  ).filter(Boolean) : [];
 
-  const preparedSpells = (character?.preparedSpells || []).map(spellName => 
-    allSpells.find((spell: Spell) => spell.name === spellName)
-  ).filter(Boolean);
+  const preparedSpells = !isLoadingSpells ? (character?.preparedSpells || []).map(spellId =>
+    allSpells.find((spell: Spell) => spell.id === spellId)
+  ).filter(Boolean) : [];
 
-  const pactMagicSpells = (character?.pactMagicSpells || []).map(spellName => 
-    allSpells.find((spell: Spell) => spell.name === spellName)
-  ).filter(Boolean);
+  const pactMagicSpells = !isLoadingSpells ? (character?.pactMagicSpells || []).map(spellId =>
+    allSpells.find((spell: Spell) => spell.id === spellId)
+  ).filter(Boolean) : [];
 
-  const ritualSpells = allSpells.filter((spell: Spell) => 
-    spell.ritual && 
-    (character?.ritualSpells?.includes(spell.name) || preparedSpells.some(p => p?.id === spell.id))
-  );
+  const ritualSpells = !isLoadingSpells ? allSpells.filter((spell: Spell) =>
+    spell.ritual &&
+    (character?.ritualSpells?.includes(spell.id) || preparedSpells.some(p => p?.id === spell.id))
+  ) : [];
 
   const availableMetamagic = metamagicOptions.filter(option =>
     character?.metamagicOptions?.includes(option.id)
@@ -176,6 +196,18 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
       }));
     }
   };
+
+  if (isLoadingSpells) {
+    return (
+      <div className="text-center space-y-4">
+        <Wand2 className="w-16 h-16 mx-auto text-muted-foreground animate-pulse" />
+        <h2 className="text-2xl font-bold">Loading Spells...</h2>
+        <p className="text-muted-foreground">
+          Fetching spell data from the library.
+        </p>
+      </div>
+    );
+  }
 
   if (!hasSpellcasting) {
     return (

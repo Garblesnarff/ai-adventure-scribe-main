@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
-import { requireAuth } from '../../middleware/auth';
+import { requireAuth } from '../../middleware/auth.js';
 
 export default function sessionRouter(db: Pool) {
   const router = Router();

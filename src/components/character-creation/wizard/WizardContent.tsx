@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import StepNavigation from '../shared/StepNavigation';
 import ProgressIndicator from '../shared/ProgressIndicator';
+import CharacterPreview from '../shared/CharacterPreview';
 import { WizardStep } from './types';
 import { wizardSteps } from './constants';
 
@@ -47,46 +48,234 @@ const WizardContent: React.FC = () => {
   }, [currentStep, scrollToTop]);
 
   /**
-   * Validates the current character state
+   * Validates the current step before allowing navigation
+   * @param stepIndex The current step index
+   * @returns {object} Validation result with success flag and error message
+   */
+  const validateCurrentStep = (stepIndex: number) => {
+    if (!state.character) {
+      return { isValid: false, message: "No character data found" };
+    }
+
+    const stepLabel = filteredSteps[stepIndex]?.label || '';
+    const character = state.character;
+
+    switch (stepIndex) {
+      // Step 0: Basic Info - Require name
+      case 0:
+        if (!character.name?.trim()) {
+          return { isValid: false, message: "Please enter a character name before proceeding" };
+        }
+        break;
+
+      // Step 1: Race Selection - Require race
+      case 1:
+        if (!character.race) {
+          return { isValid: false, message: "Please select a race for your character" };
+        }
+        break;
+
+      // Step 2: Subrace Selection - Validate if applicable (auto-skipped if not needed)
+      case 2:
+        if (character.race?.subraces?.length && !character.subrace) {
+          return { isValid: false, message: "Please select a subrace for your character" };
+        }
+        break;
+
+      // Step 3: Class Selection - Require class
+      case 3:
+        if (!character.class) {
+          return { isValid: false, message: "Please select a class for your character" };
+        }
+        break;
+
+      // Step 4: Class Features - Validate feature choices if applicable
+      case 4: {
+        const classFeatures = character.class?.classFeatures?.filter(f => f.choices) || [];
+        if (classFeatures.length > 0) {
+          const hasAllFeatures = classFeatures.every(feature =>
+            character.classFeatures?.[feature.id]
+          );
+          if (!hasAllFeatures) {
+            return { isValid: false, message: "Please complete your class feature selections" };
+          }
+        }
+        break;
+      }
+
+      // Step 5: Ability Scores - Ensure all scores are set
+      case 5: {
+        if (!character.abilityScores) {
+          return { isValid: false, message: "Please set your ability scores" };
+        }
+        // Check if any ability score is missing or invalid
+        const abilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+        const hasAllScores = abilities.every(ability =>
+          character.abilityScores?.[ability as keyof typeof character.abilityScores]?.score >= 8
+        );
+        if (!hasAllScores) {
+          return { isValid: false, message: "Please complete your ability score selection" };
+        }
+        break;
+      }
+
+      // Step 6: Background Selection - Require background
+      case 6:
+        if (!character.background) {
+          return { isValid: false, message: "Please select a background for your character" };
+        }
+        break;
+
+      // Step 7: Proficiencies - Validate skill and language selections
+      case 7:
+        if (!character.skillProficiencies?.length) {
+          return { isValid: false, message: "Please complete your skill proficiency selections" };
+        }
+        if (!character.languages?.length) {
+          return { isValid: false, message: "Please complete your language selections" };
+        }
+        break;
+
+      // Step 8: Spells - Validate spell selection for spellcasters
+      case 8: {
+        const spellcasting = character.class?.spellcasting;
+        if (spellcasting) {
+          // Check cantrips if class learns them
+          if (spellcasting.cantripsKnown > 0) {
+            const cantripCount = character.cantrips?.length || 0;
+            if (cantripCount < spellcasting.cantripsKnown) {
+              return {
+                isValid: false,
+                message: `Please select ${spellcasting.cantripsKnown} cantrip${spellcasting.cantripsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
+              };
+            }
+          }
+          // Check spells if class learns them
+          if (spellcasting.spellsKnown > 0) {
+            const spellCount = character.knownSpells?.length || 0;
+            if (spellCount < spellcasting.spellsKnown) {
+              return {
+                isValid: false,
+                message: `Please select ${spellcasting.spellsKnown} spell${spellcasting.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
+              };
+            }
+          }
+        }
+        break;
+      }
+
+      // Step 9: Advanced Spellcasting - Validate advanced spellcasting features
+      case 9: {
+        const spellcasting = character.class?.spellcasting;
+        if (spellcasting) {
+          const classId = character.class?.id?.toLowerCase() || '';
+          const level = character.level || 1;
+
+          // Check if spell preparation is required and completed
+          const needsPreparation = ['cleric', 'druid', 'paladin', 'wizard'].includes(classId);
+          if (needsPreparation) {
+            const maxPreparedSpells = Math.max(1, level + (character.abilityScores?.[spellcasting.ability]?.modifier || 0));
+            const preparedCount = character.preparedSpells?.length || 0;
+            if (preparedCount < maxPreparedSpells) {
+              return {
+                isValid: false,
+                message: `Please prepare ${maxPreparedSpells} spells for your ${character.class?.name}`
+              };
+            }
+          }
+
+          // Check if metamagic is required and completed (Sorcerer level 3+)
+          const needsMetamagic = classId === 'sorcerer' && level >= 3;
+          if (needsMetamagic) {
+            const maxMetamagicOptions = level < 10 ? 2 : level < 17 ? 3 : 4;
+            const metamagicCount = character.metamagicOptions?.length || 0;
+            if (metamagicCount < maxMetamagicOptions) {
+              return {
+                isValid: false,
+                message: `Please select ${maxMetamagicOptions} metamagic option${maxMetamagicOptions > 1 ? 's' : ''} for your ${character.class?.name}`
+              };
+            }
+          }
+
+          // Check if pact magic spells are required and completed (Warlock)
+          const needsPactMagic = classId === 'warlock';
+          if (needsPactMagic) {
+            const pactProgression = level === 1 ? { spellsKnown: 2 } :
+                                   level === 2 ? { spellsKnown: 3 } :
+                                   level === 3 ? { spellsKnown: 4 } :
+                                   { spellsKnown: Math.min(15, 2 + level) };
+            const pactSpellCount = character.pactMagicSpells?.length || 0;
+            if (pactSpellCount < pactProgression.spellsKnown) {
+              return {
+                isValid: false,
+                message: `Please select ${pactProgression.spellsKnown} pact magic spell${pactProgression.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
+              };
+            }
+          }
+        }
+        break;
+      }
+
+      // Steps 10-12: Optional steps (equipment, enhancements, finalization)
+      default:
+        break;
+    }
+
+    return { isValid: true, message: "" };
+  };
+
+  /**
+   * Validates the final character state for saving
    * Checks if all required fields are present and properly set
    * @returns {boolean} True if character data is valid, false otherwise
    */
   const validateCharacter = () => {
     if (!state.character) return false;
-    const { race, class: characterClass, abilityScores, background, skillProficiencies, languages } = state.character;
-    
-    // Basic required fields
-    const hasBasicFields = !!(race && characterClass && abilityScores && background && skillProficiencies?.length && languages?.length);
-    
+    const { race, class: characterClass, abilityScores, background, skillProficiencies, languages, name } = state.character;
+
+    // Basic required fields including name
+    const hasBasicFields = !!(name?.trim() && race && characterClass && abilityScores && background && skillProficiencies?.length && languages?.length);
+
     // If race has subraces, subrace must be selected
     const hasValidSubrace = !race?.subraces?.length || !!state.character.subrace;
-    
+
     // If class is spellcaster, spells must be selected
     const spellcasting = characterClass?.spellcasting;
     const hasValidSpells = !spellcasting || (
       (spellcasting.cantripsKnown === 0 || (state.character.cantrips?.length || 0) >= spellcasting.cantripsKnown) &&
       (!spellcasting.spellsKnown || (state.character.knownSpells?.length || 0) >= spellcasting.spellsKnown)
     );
-    
+
     // If class has features with choices, they must be selected
     const classFeatures = characterClass?.classFeatures?.filter(f => f.choices) || [];
     const hasValidClassFeatures = classFeatures.length === 0 || (
-      state.character.classFeatures && 
+      state.character.classFeatures &&
       classFeatures.every(feature => state.character?.classFeatures?.[feature.id])
     );
-    
+
     return hasBasicFields && hasValidSubrace && hasValidSpells && hasValidClassFeatures;
   };
 
   /**
    * Handles navigation to the next step
-   * On final step, validates and saves the complete character
+   * Validates current step before proceeding, on final step validates and saves the complete character
    * @returns {Promise<void>}
    */
   const handleNext = async () => {
     console.log('handleNext called at step:', currentStep);
 
     if (currentStep < filteredSteps.length - 1) {
+      // Validate current step before proceeding
+      const validation = validateCurrentStep(currentStep);
+      if (!validation.isValid) {
+        toast({
+          title: "Please Complete This Step",
+          description: validation.message,
+          variant: "destructive",
+        });
+        return; // Don't proceed if validation fails
+      }
+
       console.log('Navigating to next step:', currentStep + 1);
       setCurrentStep(currentStep + 1);
     } else {
@@ -129,7 +318,7 @@ const WizardContent: React.FC = () => {
           console.error('Error saving character:', error);
           toast({
             title: "Save Error",
-            description: `Failed to save character: ${error.message || 'Unknown error'}`,
+            description: `Failed to save character: ${error instanceof Error ? error.message : 'Unknown error'}`,
             variant: "destructive",
           });
         }
@@ -173,18 +362,32 @@ const WizardContent: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <h1 className="text-3xl font-bold text-center mb-8">Create Your Character</h1>
-        <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
-        <CurrentStepComponent />
-        <StepNavigation
-          currentStep={currentStep}
-          totalSteps={filteredSteps.length}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          isLoading={isSaving}
-        />
-      </Card>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Main Character Creation Area */}
+        <div className="xl:col-span-2">
+          <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <h1 className="text-3xl font-bold text-center mb-8">Create Your Character</h1>
+            <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
+            <div className="min-h-[600px]">
+              <CurrentStepComponent />
+            </div>
+            <StepNavigation
+              currentStep={currentStep}
+              totalSteps={filteredSteps.length}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              isLoading={isSaving}
+            />
+          </Card>
+        </div>
+
+        {/* Character Preview Sidebar */}
+        <div className="xl:col-span-1">
+          <div className="sticky top-8">
+            <CharacterPreview />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
