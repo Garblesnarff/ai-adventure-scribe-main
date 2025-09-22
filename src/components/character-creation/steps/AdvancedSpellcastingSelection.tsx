@@ -62,12 +62,6 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   const usesPactMagic = hasPactMagic(characterClass?.id || '');
   const usesMetamagic = hasMetamagic(characterClass?.id || '', level);
 
-  // Check if all required selections are complete
-  const hasRequiredPreparations = !canPrepareSpells || preparedSpells.length === maxPreparedSpells;
-  const hasRequiredMetamagic = !usesMetamagic || selectedMetamagic.length === maxMetamagicOptions;
-  const hasRequiredPactSpells = !usesPactMagic || pactMagicSpells.length === maxPactSpells;
-  const allSelectionsComplete = hasRequiredPreparations && hasRequiredMetamagic && hasRequiredPactSpells;
-
   // Calculate spell preparation limits
   const maxPreparedSpells = canPrepareSpells ? calculateSpellsKnown(characterClass?.id || '', level, abilityModifier) : 0;
   const availableSpells = allSpells.filter((spell: Spell) => spell.level <= Math.min(5, Math.ceil(level / 2)));
@@ -80,6 +74,12 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   // Metamagic
   const sorceryPoints = usesMetamagic ? getSorceryPoints(level) : 0;
   const maxMetamagicOptions = usesMetamagic ? getMetamagicOptionsKnown(level) : 0;
+
+  // Check if all required selections are complete
+  const hasRequiredPreparations = !canPrepareSpells || preparedSpells.length === maxPreparedSpells;
+  const hasRequiredMetamagic = !usesMetamagic || selectedMetamagic.length === maxMetamagicOptions;
+  const hasRequiredPactSpells = !usesPactMagic || pactMagicSpells.length === maxPactSpells;
+  const allSelectionsComplete = hasRequiredPreparations && hasRequiredMetamagic && hasRequiredPactSpells;
 
   // Fetch all spells on component mount
   useEffect(() => {
@@ -108,18 +108,6 @@ const AdvancedSpellcastingSelection: React.FC = () => {
     }
   }, [preparedSpells, selectedMetamagic, pactMagicSpells, ritualSpells, isLoadingSpells, hasSpellcasting, allSelectionsComplete]);
 
-  if (isLoadingSpells) {
-    return (
-      <div className="text-center space-y-4">
-        <Sparkles className="w-16 h-16 mx-auto text-muted-foreground animate-pulse" />
-        <h2 className="text-2xl font-bold">Loading Spells...</h2>
-        <p className="text-muted-foreground">
-          Fetching spell data from the library.
-        </p>
-      </div>
-    );
-  }
-
   // Auto-apply empty configuration for characters with no advanced features
   useEffect(() => {
     if (!isLoadingSpells && (!hasSpellcasting || (!canPrepareSpells && !usesMetamagic && !usesPactMagic && !usesRitualCasting))) {
@@ -131,6 +119,18 @@ const AdvancedSpellcastingSelection: React.FC = () => {
       });
     }
   }, [isLoadingSpells, hasSpellcasting, canPrepareSpells, usesMetamagic, usesPactMagic, usesRitualCasting, dispatch]);
+
+  if (isLoadingSpells) {
+    return (
+      <div className="text-center space-y-4">
+        <Sparkles className="w-16 h-16 mx-auto text-muted-foreground animate-pulse" />
+        <h2 className="text-2xl font-bold">Loading Spells...</h2>
+        <p className="text-muted-foreground">
+          Fetching spell data from the library.
+        </p>
+      </div>
+    );
+  }
 
   // If no advanced features are needed, show completion message
   if (!hasSpellcasting || (!canPrepareSpells && !usesMetamagic && !usesPactMagic && !usesRitualCasting)) {
