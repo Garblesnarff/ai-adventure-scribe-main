@@ -1,6 +1,7 @@
 import { Spell } from '@/types/character';
+import { supabase } from '@/integrations/supabase/client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 
 interface ApiSpell {
   id: string;
@@ -91,7 +92,8 @@ function convertApiSpellToSpell(apiSpell: ApiSpell): Spell {
 
 class SpellApiService {
   private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-    const token = localStorage.getItem('authToken');
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...options,
@@ -122,7 +124,7 @@ class SpellApiService {
     if (filters?.level !== undefined) params.append('level', filters.level.toString());
     if (filters?.school) params.append('school', filters.school);
     if (filters?.class) params.append('class', filters.class);
-    if (filters?.ritual !== undefined) params.append('ritual', filters.ritual.toString());
+    if (filters?.ritual !== undefined) params.append('ritual', String(filters.ritual));
     if (filters?.components) params.append('components', filters.components);
 
     const url = `/v1/spells${params.toString() ? `?${params.toString()}` : ''}`;

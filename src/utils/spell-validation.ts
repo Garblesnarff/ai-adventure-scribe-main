@@ -316,7 +316,8 @@ export function validateSpellSelection(
       // Add more bonus cantrip sources as needed
     }
 
-    if (!isRacialCantrip && !isValidBonusCantrip && !availableCantripIds.includes(cantripId)) {
+    // Only validate availability if we have actual data (not placeholder arrays)
+    if (!isRacialCantrip && !isValidBonusCantrip && availableCantripIds.length > 0 && !availableCantripIds.includes(cantripId)) {
       errors.push({
         type: 'INVALID_SPELL',
         message: `${cantripId} is not available as a cantrip for ${character.class.name}`,
@@ -340,7 +341,8 @@ export function validateSpellSelection(
 
   // Validate each selected spell
   selectedSpells.forEach(spellId => {
-    if (!availableSpellIds.includes(spellId)) {
+    // Only validate availability if we have actual data (not placeholder arrays)
+    if (availableSpellIds.length > 0 && !availableSpellIds.includes(spellId)) {
       errors.push({
         type: 'INVALID_SPELL',
         message: `${spellId} is not available as a 1st level spell for ${character.class.name}`,

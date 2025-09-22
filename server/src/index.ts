@@ -14,8 +14,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 registerWebsocketHandlers(wss, pool);
 
-const PORT = Number(process.env.PORT || 4000);
+const PORT = Number(process.env.PORT || 8888);
 server.listen(PORT, () => {
   console.log(`API listening on http://localhost:${PORT}`);
 });
-
