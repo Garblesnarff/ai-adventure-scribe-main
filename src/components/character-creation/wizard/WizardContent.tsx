@@ -164,7 +164,59 @@ const WizardContent: React.FC = () => {
         break;
       }
 
-      // Steps 9-12: Optional steps (equipment, enhancements, finalization)
+      // Step 9: Advanced Spellcasting - Validate advanced spellcasting features
+      case 9: {
+        const spellcasting = character.class?.spellcasting;
+        if (spellcasting) {
+          const classId = character.class?.id?.toLowerCase() || '';
+          const level = character.level || 1;
+
+          // Check if spell preparation is required and completed
+          const needsPreparation = ['cleric', 'druid', 'paladin', 'wizard'].includes(classId);
+          if (needsPreparation) {
+            const maxPreparedSpells = Math.max(1, level + (character.abilityScores?.[spellcasting.ability]?.modifier || 0));
+            const preparedCount = character.preparedSpells?.length || 0;
+            if (preparedCount < maxPreparedSpells) {
+              return {
+                isValid: false,
+                message: `Please prepare ${maxPreparedSpells} spells for your ${character.class?.name}`
+              };
+            }
+          }
+
+          // Check if metamagic is required and completed (Sorcerer level 3+)
+          const needsMetamagic = classId === 'sorcerer' && level >= 3;
+          if (needsMetamagic) {
+            const maxMetamagicOptions = level < 10 ? 2 : level < 17 ? 3 : 4;
+            const metamagicCount = character.metamagicOptions?.length || 0;
+            if (metamagicCount < maxMetamagicOptions) {
+              return {
+                isValid: false,
+                message: `Please select ${maxMetamagicOptions} metamagic option${maxMetamagicOptions > 1 ? 's' : ''} for your ${character.class?.name}`
+              };
+            }
+          }
+
+          // Check if pact magic spells are required and completed (Warlock)
+          const needsPactMagic = classId === 'warlock';
+          if (needsPactMagic) {
+            const pactProgression = level === 1 ? { spellsKnown: 2 } :
+                                   level === 2 ? { spellsKnown: 3 } :
+                                   level === 3 ? { spellsKnown: 4 } :
+                                   { spellsKnown: Math.min(15, 2 + level) };
+            const pactSpellCount = character.pactMagicSpells?.length || 0;
+            if (pactSpellCount < pactProgression.spellsKnown) {
+              return {
+                isValid: false,
+                message: `Please select ${pactProgression.spellsKnown} pact magic spell${pactProgression.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
+              };
+            }
+          }
+        }
+        break;
+      }
+
+      // Steps 10-12: Optional steps (equipment, enhancements, finalization)
       default:
         break;
     }

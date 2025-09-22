@@ -1,52 +1,60 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth.js';
+import { supabaseService } from '../../lib/supabase.js';
 
 export default function spellRouter(db: Pool) {
   const router = Router();
-  router.use(requireAuth);
+  // Removed authentication requirement for spell data - spells are public game information
 
   // Get all spells with optional filtering
   router.get('/', async (req: Request, res: Response) => {
     const { level, school, class: className, ritual, components } = req.query;
-    const client = await db.connect();
 
     try {
-      let query = `
-        SELECT DISTINCT s.id, s.name, s.level, s.school, s.ritual, s.concentration,
-               s.casting_time, s.range, s.duration, s.description,
-               s.components_verbal, s.components_somatic, s.components_material,
-               s.material_components, s.attack_save, s.damage_effect
-        FROM spells s
+      let selectClause = `
+        id, name, level, school, ritual, concentration,
+        casting_time, range_text, duration, description,
+        components_verbal, components_somatic, components_material,
+        material_components
       `;
-      const conditions: string[] = [];
-      const values: any[] = [];
-      let paramCount = 0;
+
+      // If filtering by class, include class relationship
+      if (className) {
+        selectClause = `
+          id, name, level, school, ritual, concentration,
+          casting_time, range_text, duration, description,
+          components_verbal, components_somatic, components_material,
+          material_components,
+          class_spells!inner(
+            source_feature,
+            classes!inner(name)
+          )
+        `;
+      }
+
+      let query = supabaseService
+        .from('spells')
+        .select(selectClause);
 
       // Filter by class if specified
       if (className) {
-        query += ` INNER JOIN class_spells cs ON s.id = cs.spell_id
-                   INNER JOIN classes c ON cs.class_id = c.id`;
-        conditions.push(`c.name = $${++paramCount}`);
-        values.push(className);
+        query = query.eq('class_spells.classes.name', className);
       }
 
       // Filter by spell level
       if (level) {
-        conditions.push(`s.level = $${++paramCount}`);
-        values.push(parseInt(level as string));
+        query = query.eq('level', parseInt(level as string));
       }
 
       // Filter by school
       if (school) {
-        conditions.push(`s.school = $${++paramCount}`);
-        values.push(school);
+        query = query.eq('school', school);
       }
 
       // Filter by ritual
       if (ritual) {
-        conditions.push(`s.ritual = $${++paramCount}`);
-        values.push(ritual === 'true');
+        query = query.eq('ritual', ritual === 'true');
       }
 
       // Filter by components
@@ -55,175 +63,189 @@ export default function spellRouter(db: Pool) {
         componentArray.forEach(component => {
           switch (component.trim().toUpperCase()) {
             case 'V':
-              conditions.push(`s.components_verbal = true`);
+              query = query.eq('components_verbal', true);
               break;
             case 'S':
-              conditions.push(`s.components_somatic = true`);
+              query = query.eq('components_somatic', true);
               break;
             case 'M':
-              conditions.push(`s.components_material = true`);
+              query = query.eq('components_material', true);
               break;
           }
         });
       }
 
-      if (conditions.length > 0) {
-        query += ` WHERE ${conditions.join(' AND ')}`;
+      query = query.order('level').order('name');
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching spells:', error);
+        return res.status(500).json({ error: 'Failed to fetch spells' });
       }
 
-      query += ` ORDER BY s.level, s.name`;
-
-      const result = await client.query(query, values);
-      return res.json(result.rows);
+      return res.json(data);
     } catch (e) {
       console.error('Error fetching spells:', e);
       return res.status(500).json({ error: 'Failed to fetch spells' });
-    } finally {
-      client.release();
     }
   });
 
   // Get spells available to a specific class at a specific level
   router.get('/class/:className/level/:level', async (req: Request, res: Response) => {
     const { className, level } = req.params;
-    const client = await db.connect();
 
     try {
-      const result = await client.query(`
-        SELECT DISTINCT s.id, s.name, s.level, s.school, s.ritual, s.concentration,
-               s.casting_time, s.range, s.duration, s.description,
-               s.components_verbal, s.components_somatic, s.components_material,
-               s.material_components, s.attack_save, s.damage_effect,
-               cs.source_feature
-        FROM spells s
-        INNER JOIN class_spells cs ON s.id = cs.spell_id
-        INNER JOIN classes c ON cs.class_id = c.id
-        WHERE c.name = $1 AND s.level <= $2
-        ORDER BY s.level, s.name
-      `, [className, parseInt(level)]);
+      const { data, error } = await supabaseService
+        .from('spells')
+        .select(`
+          id, name, level, school, ritual, concentration,
+          casting_time, range_text, duration, description,
+          components_verbal, components_somatic, components_material,
+          material_components,
+          class_spells!inner(
+            source_feature,
+            classes!inner(name)
+          )
+        `)
+        .eq('class_spells.classes.name', className)
+        .lte('level', parseInt(level))
+        .order('level')
+        .order('name');
 
-      return res.json(result.rows);
+      if (error) {
+        console.error('Error fetching class spells:', error);
+        return res.status(500).json({ error: 'Failed to fetch class spells' });
+      }
+
+      return res.json(data);
     } catch (e) {
       console.error('Error fetching class spells:', e);
       return res.status(500).json({ error: 'Failed to fetch class spells' });
-    } finally {
-      client.release();
     }
   });
 
   // Get spell progression for a class
   router.get('/progression/:className', async (req: Request, res: Response) => {
     const { className } = req.params;
-    const client = await db.connect();
 
     try {
-      const result = await client.query(`
-        SELECT sp.character_level, sp.cantrips_known, sp.spells_known,
-               sp.spells_prepared_formula,
-               sp.spell_slots_1, sp.spell_slots_2, sp.spell_slots_3, sp.spell_slots_4,
-               sp.spell_slots_5, sp.spell_slots_6, sp.spell_slots_7, sp.spell_slots_8,
-               sp.spell_slots_9
-        FROM spell_progression sp
-        INNER JOIN classes c ON sp.class_id = c.id
-        WHERE c.name = $1
-        ORDER BY sp.character_level
-      `, [className]);
+      const { data, error } = await supabaseService
+        .from('spell_progression')
+        .select(`
+          character_level, cantrips_known, spells_known,
+          spells_prepared_formula,
+          spell_slots_1, spell_slots_2, spell_slots_3, spell_slots_4,
+          spell_slots_5, spell_slots_6, spell_slots_7, spell_slots_8,
+          spell_slots_9,
+          classes!inner(name)
+        `)
+        .eq('classes.name', className)
+        .order('character_level');
 
-      return res.json(result.rows);
+      if (error) {
+        console.error('Error fetching spell progression:', error);
+        return res.status(500).json({ error: 'Failed to fetch spell progression' });
+      }
+
+      return res.json(data);
     } catch (e) {
       console.error('Error fetching spell progression:', e);
       return res.status(500).json({ error: 'Failed to fetch spell progression' });
-    } finally {
-      client.release();
     }
   });
 
   // Get multiclass spell slots for a given caster level
   router.get('/multiclass/slots/:casterLevel', async (req: Request, res: Response) => {
     const { casterLevel } = req.params;
-    const client = await db.connect();
 
     try {
-      const result = await client.query(`
-        SELECT caster_level, spell_slots_1, spell_slots_2, spell_slots_3, spell_slots_4,
-               spell_slots_5, spell_slots_6, spell_slots_7, spell_slots_8, spell_slots_9
-        FROM multiclass_spell_slots
-        WHERE caster_level = $1
-      `, [parseInt(casterLevel)]);
+      const { data, error } = await supabaseService
+        .from('multiclass_spell_slots')
+        .select(`
+          caster_level, spell_slots_1, spell_slots_2, spell_slots_3, spell_slots_4,
+          spell_slots_5, spell_slots_6, spell_slots_7, spell_slots_8, spell_slots_9
+        `)
+        .eq('caster_level', parseInt(casterLevel))
+        .single();
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Caster level not found' });
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Caster level not found' });
+        }
+        console.error('Error fetching multiclass spell slots:', error);
+        return res.status(500).json({ error: 'Failed to fetch multiclass spell slots' });
       }
 
-      return res.json(result.rows[0]);
+      return res.json(data);
     } catch (e) {
       console.error('Error fetching multiclass spell slots:', e);
       return res.status(500).json({ error: 'Failed to fetch multiclass spell slots' });
-    } finally {
-      client.release();
     }
   });
 
   // Get all classes with their spellcasting information
   router.get('/classes', async (req: Request, res: Response) => {
-    const client = await db.connect();
-
     try {
-      const result = await client.query(`
-        SELECT id, name, spellcasting_ability, caster_type, spell_slots_start_level
-        FROM classes
-        WHERE spellcasting_ability IS NOT NULL
-        ORDER BY
-          CASE caster_type
-            WHEN 'full' THEN 1
-            WHEN 'pact' THEN 2
-            WHEN 'half' THEN 3
-            WHEN 'third' THEN 4
-          END,
-          name
-      `);
+      const { data, error } = await supabaseService
+        .from('classes')
+        .select(`
+          id, name, spellcasting_ability, caster_type, spell_slots_start_level
+        `)
+        .not('spellcasting_ability', 'is', null)
+        .order('caster_type')
+        .order('name');
 
-      return res.json(result.rows);
+      if (error) {
+        console.error('Error fetching spellcasting classes:', error);
+        return res.status(500).json({ error: 'Failed to fetch spellcasting classes' });
+      }
+
+      return res.json(data);
     } catch (e) {
       console.error('Error fetching spellcasting classes:', e);
       return res.status(500).json({ error: 'Failed to fetch spellcasting classes' });
-    } finally {
-      client.release();
     }
   });
 
   // Get a specific spell by ID
   router.get('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
-    const client = await db.connect();
 
     try {
-      const result = await client.query(`
-        SELECT s.id, s.name, s.level, s.school, s.ritual, s.concentration,
-               s.casting_time, s.range, s.duration, s.description,
-               s.components_verbal, s.components_somatic, s.components_material,
-               s.material_components, s.attack_save, s.damage_effect,
-               array_agg(DISTINCT c.name) as available_classes
-        FROM spells s
-        LEFT JOIN class_spells cs ON s.id = cs.spell_id
-        LEFT JOIN classes c ON cs.class_id = c.id
-        WHERE s.id = $1
-        GROUP BY s.id, s.name, s.level, s.school, s.ritual, s.concentration,
-                 s.casting_time, s.range, s.duration, s.description,
-                 s.components_verbal, s.components_somatic, s.components_material,
-                 s.material_components, s.attack_save, s.damage_effect
-      `, [id]);
+      const { data, error } = await supabaseService
+        .from('spells')
+        .select(`
+          id, name, level, school, ritual, concentration,
+          casting_time, range_text, duration, description,
+          components_verbal, components_somatic, components_material,
+          material_components,
+          class_spells(
+            classes(name)
+          )
+        `)
+        .eq('id', id)
+        .single();
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Spell not found' });
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: 'Spell not found' });
+        }
+        console.error('Error fetching spell:', error);
+        return res.status(500).json({ error: 'Failed to fetch spell' });
       }
 
-      return res.json(result.rows[0]);
+      // Transform the data to match the expected format
+      const result: any = {
+        ...data,
+        available_classes: data.class_spells?.map((cs: any) => cs.classes.name) || []
+      };
+      delete result.class_spells;
+
+      return res.json(result);
     } catch (e) {
       console.error('Error fetching spell:', e);
       return res.status(500).json({ error: 'Failed to fetch spell' });
-    } finally {
-      client.release();
     }
   });
 
@@ -235,8 +257,6 @@ export default function spellRouter(db: Pool) {
       return res.status(400).json({ error: 'classLevels must be an array' });
     }
 
-    const client = await db.connect();
-
     try {
       let totalCasterLevel = 0;
       let pactMagicSlots = { level: 0, slots: 0 };
@@ -245,16 +265,17 @@ export default function spellRouter(db: Pool) {
         const { className, level } = classLevel;
 
         // Get class caster type
-        const classResult = await client.query(
-          'SELECT caster_type FROM classes WHERE name = $1',
-          [className]
-        );
+        const { data: classData, error } = await supabaseService
+          .from('classes')
+          .select('caster_type')
+          .eq('name', className)
+          .single();
 
-        if (classResult.rows.length === 0) {
+        if (error || !classData) {
           return res.status(400).json({ error: `Class ${className} not found` });
         }
 
-        const casterType = classResult.rows[0].caster_type;
+        const casterType = classData.caster_type;
 
         switch (casterType) {
           case 'full':
@@ -282,11 +303,12 @@ export default function spellRouter(db: Pool) {
       // Get multiclass spell slots for the calculated caster level
       let spellSlots = null;
       if (totalCasterLevel > 0) {
-        const slotsResult = await client.query(
-          'SELECT * FROM multiclass_spell_slots WHERE caster_level = $1',
-          [Math.min(totalCasterLevel, 20)]
-        );
-        spellSlots = slotsResult.rows[0] || null;
+        const { data: slotsData } = await supabaseService
+          .from('multiclass_spell_slots')
+          .select('*')
+          .eq('caster_level', Math.min(totalCasterLevel, 20))
+          .single();
+        spellSlots = slotsData || null;
       }
 
       return res.json({
@@ -297,8 +319,6 @@ export default function spellRouter(db: Pool) {
     } catch (e) {
       console.error('Error calculating multiclass caster level:', e);
       return res.status(500).json({ error: 'Failed to calculate multiclass caster level' });
-    } finally {
-      client.release();
     }
   });
 
