@@ -81,21 +81,29 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   const hasRequiredPactSpells = !usesPactMagic || pactMagicSpells.length === maxPactSpells;
   const allSelectionsComplete = hasRequiredPreparations && hasRequiredMetamagic && hasRequiredPactSpells;
 
-  // Fetch all spells on component mount
+  // Fetch class-specific spells on component mount
   useEffect(() => {
     const fetchSpells = async () => {
+      if (!characterClass?.name) {
+        setAllSpells([]);
+        setIsLoadingSpells(false);
+        return;
+      }
+
       try {
-        const spells = await spellApi.getAllSpells();
-        setAllSpells(spells);
+        const { cantrips, spells } = await spellApi.getClassSpells(characterClass.name, level);
+        const allClassSpells = [...cantrips, ...spells];
+        setAllSpells(allClassSpells);
       } catch (error) {
-        console.error('Failed to fetch spells:', error);
+        console.error('Failed to fetch class spells:', error);
+        setAllSpells([]);
       } finally {
         setIsLoadingSpells(false);
       }
     };
 
     fetchSpells();
-  }, []);
+  }, [characterClass?.name, level]);
 
   // Auto-apply when all required selections are made
   useEffect(() => {

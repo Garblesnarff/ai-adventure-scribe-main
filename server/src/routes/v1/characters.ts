@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth.js';
+import { supabaseService } from '../../lib/supabase.js';
 
 export default function characterRouter(db: Pool) {
   const router = Router();
@@ -149,6 +150,104 @@ export default function characterRouter(db: Pool) {
       return res.status(500).json({ error: 'Failed to delete character' });
     } finally {
       client.release();
+    }
+  });
+
+  // Validate and save character spells
+  router.post('/:id/spells', async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const characterId = req.params.id;
+    const { spells, className } = req.body;
+
+    if (!spells || !className) {
+      return res.status(400).json({ error: 'Missing required fields: spells and className' });
+    }
+
+    try {
+      // Verify character ownership
+      const { data: character, error: charError } = await supabaseService
+        .from('characters')
+        .select('id, class')
+        .eq('id', characterId)
+        .eq('user_id', userId)
+        .single();
+
+      if (charError || !character) {
+        return res.status(404).json({ error: 'Character not found' });
+      }
+
+      // Get class ID
+      const { data: classData, error: classError } = await supabaseService
+        .from('classes')
+        .select('id')
+        .eq('name', className)
+        .single();
+
+      if (classError || !classData) {
+        return res.status(400).json({ error: 'Invalid class name' });
+      }
+
+      // Validate each spell against class spell list
+      const validationErrors: string[] = [];
+
+      for (const spellId of spells) {
+        const { data: classSpell, error: spellError } = await supabaseService
+          .from('class_spells')
+          .select('id')
+          .eq('class_id', classData.id)
+          .eq('spell_id', spellId)
+          .single();
+
+        if (spellError || !classSpell) {
+          // Get spell name for error message
+          const { data: spellData } = await supabaseService
+            .from('spells')
+            .select('name')
+            .eq('id', spellId)
+            .single();
+
+          validationErrors.push(`${className} cannot learn ${spellData?.name || spellId}`);
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          error: 'Invalid spell selection',
+          details: validationErrors
+        });
+      }
+
+      // Clear existing spells for this character and class
+      await supabaseService
+        .from('character_spells')
+        .delete()
+        .eq('character_id', characterId)
+        .eq('source_class_id', classData.id);
+
+      // Insert validated spells
+      if (spells.length > 0) {
+        const spellInserts = spells.map((spellId: string) => ({
+          character_id: characterId,
+          spell_id: spellId,
+          source_class_id: classData.id,
+          is_prepared: true,
+          source_feature: 'base'
+        }));
+
+        const { error: insertError } = await supabaseService
+          .from('character_spells')
+          .insert(spellInserts);
+
+        if (insertError) {
+          console.error('Error inserting character spells:', insertError);
+          return res.status(500).json({ error: 'Failed to save character spells' });
+        }
+      }
+
+      return res.json({ success: true, message: 'Character spells saved successfully' });
+    } catch (error) {
+      console.error('Error validating character spells:', error);
+      return res.status(500).json({ error: 'Failed to validate character spells' });
     }
   });
 
