@@ -10,6 +10,7 @@ import ProgressIndicator from '../shared/ProgressIndicator';
 import CharacterPreview from '../shared/CharacterPreview';
 import { WizardStep } from './types';
 import { wizardSteps } from './constants';
+import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
 
 /**
  * Main content component for the character creation wizard
@@ -138,26 +139,33 @@ const WizardContent: React.FC = () => {
 
       // Spells - Validate spell selection for spellcasters
       case 'Spells': {
-        const spellcasting = character.class?.spellcasting;
-        if (spellcasting) {
-          // Check cantrips if class learns them
-          if (spellcasting.cantripsKnown > 0) {
-            const cantripCount = character.cantrips?.length || 0;
-            if (cantripCount < spellcasting.cantripsKnown) {
-              return {
-                isValid: false,
-                message: `Please select ${spellcasting.cantripsKnown} cantrip${spellcasting.cantripsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
-              };
+        if (character.class?.spellcasting) {
+          const spellcastingInfo = getSpellcastingInfo(character.class, character.level || 1);
+          if (spellcastingInfo) {
+            // Get racial spell bonuses
+            const racialSpells = getRacialSpells(character.race?.name || '', character.subrace);
+
+            // Check cantrips if class learns them
+            if (spellcastingInfo.cantripsKnown > 0) {
+              const expectedCantrips = spellcastingInfo.cantripsKnown + racialSpells.cantrips.length + racialSpells.bonusCantrips;
+              const cantripCount = character.cantrips?.length || 0;
+              if (cantripCount < expectedCantrips) {
+                return {
+                  isValid: false,
+                  message: `Please select ${expectedCantrips} cantrip${expectedCantrips > 1 ? 's' : ''} for your ${character.class?.name}`
+                };
+              }
             }
-          }
-          // Check spells if class learns them
-          if (spellcasting.spellsKnown > 0) {
-            const spellCount = character.knownSpells?.length || 0;
-            if (spellCount < spellcasting.spellsKnown) {
-              return {
-                isValid: false,
-                message: `Please select ${spellcasting.spellsKnown} spell${spellcasting.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
-              };
+
+            // Check spells if class learns them
+            if (spellcastingInfo.spellsKnown && spellcastingInfo.spellsKnown > 0) {
+              const spellCount = character.knownSpells?.length || 0;
+              if (spellCount < spellcastingInfo.spellsKnown) {
+                return {
+                  isValid: false,
+                  message: `Please select ${spellcastingInfo.spellsKnown} spell${spellcastingInfo.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
+                };
+              }
             }
           }
         }
@@ -241,10 +249,20 @@ const WizardContent: React.FC = () => {
 
     // If class is spellcaster, spells must be selected
     const spellcasting = characterClass?.spellcasting;
-    const hasValidSpells = !spellcasting || (
-      (spellcasting.cantripsKnown === 0 || (state.character.cantrips?.length || 0) >= spellcasting.cantripsKnown) &&
-      (!spellcasting.spellsKnown || (state.character.knownSpells?.length || 0) >= spellcasting.spellsKnown)
-    );
+    let hasValidSpells = true;
+    if (spellcasting) {
+      const spellcastingInfo = getSpellcastingInfo(characterClass, state.character?.level || 1);
+      if (spellcastingInfo) {
+        const racialSpells = getRacialSpells(race?.name || '', state.character?.subrace);
+        const expectedCantrips = spellcastingInfo.cantripsKnown + racialSpells.cantrips.length + racialSpells.bonusCantrips;
+        const expectedSpells = spellcastingInfo.spellsKnown || 0;
+
+        const hasEnoughCantrips = expectedCantrips === 0 || (state.character.cantrips?.length || 0) >= expectedCantrips;
+        const hasEnoughSpells = expectedSpells === 0 || (state.character.knownSpells?.length || 0) >= expectedSpells;
+
+        hasValidSpells = hasEnoughCantrips && hasEnoughSpells;
+      }
+    }
 
     // If class has features with choices, they must be selected
     const classFeatures = characterClass?.classFeatures?.filter(f => f.choices) || [];

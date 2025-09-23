@@ -11,7 +11,7 @@ interface ApiSpell {
   ritual: boolean;
   concentration: boolean;
   casting_time: string;
-  range: string;
+  range_text: string;
   duration: string;
   description: string;
   components_verbal: boolean;
@@ -75,7 +75,7 @@ function convertApiSpellToSpell(apiSpell: ApiSpell): Spell {
     level: apiSpell.level,
     school: apiSpell.school,
     castingTime: apiSpell.casting_time,
-    range: apiSpell.range,
+    range: apiSpell.range_text,
     duration: apiSpell.duration,
     description: apiSpell.description,
     verbal: apiSpell.components_verbal,
