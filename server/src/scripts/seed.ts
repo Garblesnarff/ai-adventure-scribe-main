@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.js';
+import { createClient } from '../lib/db';
 
 const races = [
   { name: 'Human', description: 'Versatile and ambitious.' },

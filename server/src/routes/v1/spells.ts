@@ -2,6 +2,14 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth.js';
 import { supabaseService } from '../../lib/supabase.js';
+import {
+  getClassSpells,
+  getSpellById,
+  getSpellsByLevel,
+  getSpellsBySchool,
+  spellProgression,
+  spellcastingClasses
+} from '../../data/spellData.js';
 
 export default function spellRouter(db: Pool) {
   const router = Router();
@@ -12,49 +20,50 @@ export default function spellRouter(db: Pool) {
     const { level, school, class: className, ritual, components } = req.query;
 
     try {
-      let selectClause = `
-        id, name, level, school, ritual, concentration,
-        casting_time, range_text, duration, description,
-        components_verbal, components_somatic, components_material,
-        material_components
-      `;
+      let spells;
 
-      // If filtering by class, include class relationship
+      // Get spells by class if specified
       if (className) {
-        selectClause = `
-          id, name, level, school, ritual, concentration,
-          casting_time, range_text, duration, description,
-          components_verbal, components_somatic, components_material,
-          material_components,
-          class_spells!inner(
-            source_feature,
-            classes!inner(name)
-          )
-        `;
+        const classSpells = getClassSpells(className as string);
+        spells = [...classSpells.cantrips, ...classSpells.spells];
+      } else if (level !== undefined) {
+        spells = getSpellsByLevel(parseInt(level as string));
+      } else if (school) {
+        spells = getSpellsBySchool(school as string);
+      } else {
+        // Get all spells - combine cantrips and level 1+ spells
+        const bardSpells = getClassSpells('Bard');
+        const druidSpells = getClassSpells('Druid');
+        const clericSpells = getClassSpells('Cleric');
+        const sorcererSpells = getClassSpells('Sorcerer');
+        const warlockSpells = getClassSpells('Warlock');
+        const wizardSpells = getClassSpells('Wizard');
+
+        // Combine all unique spells
+        const allClassSpells = [
+          ...bardSpells.cantrips, ...bardSpells.spells,
+          ...druidSpells.cantrips, ...druidSpells.spells,
+          ...clericSpells.cantrips, ...clericSpells.spells,
+          ...sorcererSpells.cantrips, ...sorcererSpells.spells,
+          ...warlockSpells.cantrips, ...warlockSpells.spells,
+          ...wizardSpells.cantrips, ...wizardSpells.spells
+        ];
+
+        // Remove duplicates by id
+        const uniqueSpells = allClassSpells.filter((spell, index, self) =>
+          index === self.findIndex(s => s.id === spell.id)
+        );
+
+        spells = uniqueSpells;
       }
 
-      let query = supabaseService
-        .from('spells')
-        .select(selectClause);
-
-      // Filter by class if specified
-      if (className) {
-        query = query.eq('class_spells.classes.name', className);
-      }
-
-      // Filter by spell level
-      if (level) {
-        query = query.eq('level', parseInt(level as string));
-      }
-
-      // Filter by school
-      if (school) {
-        query = query.eq('school', school);
-      }
+      // Apply additional filters
+      let filteredSpells = spells;
 
       // Filter by ritual
-      if (ritual) {
-        query = query.eq('ritual', ritual === 'true');
+      if (ritual !== undefined) {
+        const isRitual = ritual === 'true';
+        filteredSpells = filteredSpells.filter(spell => spell.ritual === isRitual);
       }
 
       // Filter by components
@@ -63,28 +72,27 @@ export default function spellRouter(db: Pool) {
         componentArray.forEach(component => {
           switch (component.trim().toUpperCase()) {
             case 'V':
-              query = query.eq('components_verbal', true);
+              filteredSpells = filteredSpells.filter(spell => spell.components_verbal);
               break;
             case 'S':
-              query = query.eq('components_somatic', true);
+              filteredSpells = filteredSpells.filter(spell => spell.components_somatic);
               break;
             case 'M':
-              query = query.eq('components_material', true);
+              filteredSpells = filteredSpells.filter(spell => spell.components_material);
               break;
           }
         });
       }
 
-      query = query.order('level').order('name');
+      // Sort by level then name
+      filteredSpells.sort((a, b) => {
+        if (a.level !== b.level) {
+          return a.level - b.level;
+        }
+        return a.name.localeCompare(b.name);
+      });
 
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching spells:', error);
-        return res.status(500).json({ error: 'Failed to fetch spells' });
-      }
-
-      return res.json(data);
+      return res.json(filteredSpells);
     } catch (e) {
       console.error('Error fetching spells:', e);
       return res.status(500).json({ error: 'Failed to fetch spells' });
@@ -96,29 +104,25 @@ export default function spellRouter(db: Pool) {
     const { className, level } = req.params;
 
     try {
-      const { data, error } = await supabaseService
-        .from('spells')
-        .select(`
-          id, name, level, school, ritual, concentration,
-          casting_time, range_text, duration, description,
-          components_verbal, components_somatic, components_material,
-          material_components,
-          class_spells!inner(
-            source_feature,
-            classes!inner(name)
-          )
-        `)
-        .eq('class_spells.classes.name', className)
-        .lte('level', parseInt(level))
-        .order('level')
-        .order('name');
+      const classSpells = getClassSpells(className);
 
-      if (error) {
-        console.error('Error fetching class spells:', error);
-        return res.status(500).json({ error: 'Failed to fetch class spells' });
-      }
+      // Filter spells by level (include spells up to the specified level)
+      const maxLevel = parseInt(level);
+      const { cantrips, spells } = classSpells;
 
-      return res.json(data);
+      const availableCantrips = cantrips; // Cantrips are always available
+      const availableSpells = spells.filter(spell => spell.level <= maxLevel);
+
+      // Combine and sort
+      const allSpells = [...availableCantrips, ...availableSpells];
+      allSpells.sort((a, b) => {
+        if (a.level !== b.level) {
+          return a.level - b.level;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      return res.json(allSpells);
     } catch (e) {
       console.error('Error fetching class spells:', e);
       return res.status(500).json({ error: 'Failed to fetch class spells' });
@@ -130,25 +134,13 @@ export default function spellRouter(db: Pool) {
     const { className } = req.params;
 
     try {
-      const { data, error } = await supabaseService
-        .from('spell_progression')
-        .select(`
-          character_level, cantrips_known, spells_known,
-          spells_prepared_formula,
-          spell_slots_1, spell_slots_2, spell_slots_3, spell_slots_4,
-          spell_slots_5, spell_slots_6, spell_slots_7, spell_slots_8,
-          spell_slots_9,
-          classes!inner(name)
-        `)
-        .eq('classes.name', className)
-        .order('character_level');
+      const progression = spellProgression[className];
 
-      if (error) {
-        console.error('Error fetching spell progression:', error);
-        return res.status(500).json({ error: 'Failed to fetch spell progression' });
+      if (!progression) {
+        return res.status(404).json({ error: `Spell progression not found for class: ${className}` });
       }
 
-      return res.json(data);
+      return res.json(progression);
     } catch (e) {
       console.error('Error fetching spell progression:', e);
       return res.status(500).json({ error: 'Failed to fetch spell progression' });
@@ -187,21 +179,7 @@ export default function spellRouter(db: Pool) {
   // Get all classes with their spellcasting information
   router.get('/classes', async (req: Request, res: Response) => {
     try {
-      const { data, error } = await supabaseService
-        .from('classes')
-        .select(`
-          id, name, spellcasting_ability, caster_type, spell_slots_start_level
-        `)
-        .not('spellcasting_ability', 'is', null)
-        .order('caster_type')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching spellcasting classes:', error);
-        return res.status(500).json({ error: 'Failed to fetch spellcasting classes' });
-      }
-
-      return res.json(data);
+      return res.json(spellcastingClasses);
     } catch (e) {
       console.error('Error fetching spellcasting classes:', e);
       return res.status(500).json({ error: 'Failed to fetch spellcasting classes' });
@@ -213,36 +191,13 @@ export default function spellRouter(db: Pool) {
     const { id } = req.params;
 
     try {
-      const { data, error } = await supabaseService
-        .from('spells')
-        .select(`
-          id, name, level, school, ritual, concentration,
-          casting_time, range_text, duration, description,
-          components_verbal, components_somatic, components_material,
-          material_components,
-          class_spells(
-            classes(name)
-          )
-        `)
-        .eq('id', id)
-        .single();
+      const spell = getSpellById(id);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Spell not found' });
-        }
-        console.error('Error fetching spell:', error);
-        return res.status(500).json({ error: 'Failed to fetch spell' });
+      if (!spell) {
+        return res.status(404).json({ error: 'Spell not found' });
       }
 
-      // Transform the data to match the expected format
-      const result: any = {
-        ...data,
-        available_classes: data.class_spells?.map((cs: any) => cs.classes.name) || []
-      };
-      delete result.class_spells;
-
-      return res.json(result);
+      return res.json(spell);
     } catch (e) {
       console.error('Error fetching spell:', e);
       return res.status(500).json({ error: 'Failed to fetch spell' });
