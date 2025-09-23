@@ -66,7 +66,8 @@ const SpellSelection: React.FC = () => {
     filteredSpells,
     validation,
     canProceed,
-    updateCharacterSpells
+    updateCharacterSpells,
+    refetchSpells
   } = useSpellSelection();
 
   const currentClass = character?.class as CharacterClass | undefined;
@@ -133,7 +134,7 @@ const SpellSelection: React.FC = () => {
           {spellsError}
         </p>
         <Button
-          onClick={() => window.location.reload()}
+          onClick={() => refetchSpells()}
           variant="outline"
         >
           Try Again

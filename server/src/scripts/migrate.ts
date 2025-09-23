@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.js';
+import { createClient } from '../lib/db';
 
 async function run() {
   const db = createClient();

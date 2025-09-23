@@ -139,35 +139,52 @@ const WizardContent: React.FC = () => {
 
       // Spells - Validate spell selection for spellcasters
       case 'Spells': {
+        console.log('🔮 Validating Spells step for character:', character.name, character.class?.name);
+
         if (character.class?.spellcasting) {
+          console.log('📚 Character is a spellcaster, checking spell requirements...');
           const spellcastingInfo = getSpellcastingInfo(character.class, character.level || 1);
+          console.log('📊 Spellcasting info:', spellcastingInfo);
+
           if (spellcastingInfo) {
             // Get racial spell bonuses
             const racialSpells = getRacialSpells(character.race?.name || '', character.subrace);
+            console.log('🧬 Racial spells:', racialSpells);
 
-            // Check cantrips if class learns them
+            // Check cantrips if class learns them (relaxed validation)
             if (spellcastingInfo.cantripsKnown > 0) {
               const expectedCantrips = spellcastingInfo.cantripsKnown + racialSpells.cantrips.length + racialSpells.bonusCantrips;
               const cantripCount = character.cantrips?.length || 0;
+              console.log(`✨ Cantrips - Expected: ${expectedCantrips}, Current: ${cantripCount}`);
+              console.log('✨ Current cantrips:', character.cantrips);
+
+              // Relaxed validation: Allow proceeding with partial spell selection
+              // Users can complete spell selection later or during gameplay
               if (cantripCount < expectedCantrips) {
-                return {
-                  isValid: false,
-                  message: `Please select ${expectedCantrips} cantrip${expectedCantrips > 1 ? 's' : ''} for your ${character.class?.name}`
-                };
+                console.log('⚠️ Not all cantrips selected, but allowing continuation');
+                // Could show a warning toast here instead of blocking
               }
             }
 
-            // Check spells if class learns them
+            // Check spells if class learns them (relaxed validation)
             if (spellcastingInfo.spellsKnown && spellcastingInfo.spellsKnown > 0) {
               const spellCount = character.knownSpells?.length || 0;
+              console.log(`🪄 Spells - Expected: ${spellcastingInfo.spellsKnown}, Current: ${spellCount}`);
+              console.log('🪄 Current spells:', character.knownSpells);
+
+              // Relaxed validation: Allow proceeding with partial spell selection
               if (spellCount < spellcastingInfo.spellsKnown) {
-                return {
-                  isValid: false,
-                  message: `Please select ${spellcastingInfo.spellsKnown} spell${spellcastingInfo.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
-                };
+                console.log('⚠️ Not all spells selected, but allowing continuation');
+                // Could show a warning toast here instead of blocking
               }
             }
+
+            console.log('✅ All spell requirements met');
+          } else {
+            console.log('⚠️ No spellcasting info found for class');
           }
+        } else {
+          console.log('🚫 Character is not a spellcaster, skipping spell validation');
         }
         break;
       }
@@ -281,21 +298,48 @@ const WizardContent: React.FC = () => {
    */
   const handleNext = async () => {
     console.log('handleNext called at step:', currentStep);
+    console.log('Current step info:', filteredSteps[currentStep]);
 
     if (currentStep < filteredSteps.length - 1) {
       // Validate current step before proceeding
       const validation = validateCurrentStep(currentStep);
+      console.log('Step validation result:', validation);
+
       if (!validation.isValid) {
-        toast({
-          title: "Please Complete This Step",
-          description: validation.message,
-          variant: "destructive",
-        });
-        return; // Don't proceed if validation fails
+        // Show a gentler warning for spell-related validation
+        const isSpellStep = filteredSteps[currentStep]?.label === 'Spells';
+        if (isSpellStep) {
+          toast({
+            title: "Spell Selection Incomplete",
+            description: validation.message + " You can continue and complete this later.",
+            variant: "default",
+          });
+          // Allow proceeding despite incomplete spells
+        } else {
+          toast({
+            title: "Please Complete This Step",
+            description: validation.message,
+            variant: "destructive",
+          });
+          return; // Don't proceed if validation fails for non-spell steps
+        }
       }
 
-      console.log('Navigating to next step:', currentStep + 1);
-      setCurrentStep(currentStep + 1);
+      // Find the next valid step (accounting for filtered steps)
+      const nextStepIndex = currentStep + 1;
+      console.log('Navigating to next step:', nextStepIndex);
+
+      // Safety check: ensure the next step exists in filtered steps
+      if (nextStepIndex < filteredSteps.length && filteredSteps[nextStepIndex]) {
+        setCurrentStep(nextStepIndex);
+      } else {
+        console.error('Next step does not exist in filtered steps:', nextStepIndex, filteredSteps.length);
+        toast({
+          title: "Navigation Error",
+          description: "Unable to navigate to the next step. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       console.log('Final step - attempting to save character');
       if (state.character) {

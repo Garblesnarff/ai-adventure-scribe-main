@@ -48,6 +48,9 @@ interface UseSpellSelectionReturn {
 
   // Save to character
   updateCharacterSpells: () => void;
+
+  // Retry functionality
+  refetchSpells: () => Promise<void>;
 }
 
 /**
@@ -105,32 +108,33 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     return currentClass ? getSpellcastingInfo(currentClass, character?.level || 1) : null;
   }, [currentClass, character?.level]);
 
+  // Spell fetching function
+  const fetchSpells = async () => {
+    if (!isSpellcaster || !currentClass?.name) {
+      setAvailableCantrips([]);
+      setAvailableSpells([]);
+      return;
+    }
+
+    setIsLoadingSpells(true);
+    setSpellsError(null);
+
+    try {
+      const { cantrips, spells } = await spellApi.getClassSpells(currentClass.name, character?.level || 1);
+      setAvailableCantrips(cantrips);
+      setAvailableSpells(spells);
+    } catch (error) {
+      console.error('Failed to fetch spells:', error);
+      setSpellsError(error instanceof Error ? error.message : 'Failed to load spells');
+      setAvailableCantrips([]);
+      setAvailableSpells([]);
+    } finally {
+      setIsLoadingSpells(false);
+    }
+  };
+
   // Fetch available spells from API
   useEffect(() => {
-    const fetchSpells = async () => {
-      if (!isSpellcaster || !currentClass?.name) {
-        setAvailableCantrips([]);
-        setAvailableSpells([]);
-        return;
-      }
-
-      setIsLoadingSpells(true);
-      setSpellsError(null);
-
-      try {
-        const { cantrips, spells } = await spellApi.getClassSpells(currentClass.name, character?.level || 1);
-        setAvailableCantrips(cantrips);
-        setAvailableSpells(spells);
-      } catch (error) {
-        console.error('Failed to fetch spells:', error);
-        setSpellsError(error instanceof Error ? error.message : 'Failed to load spells');
-        setAvailableCantrips([]);
-        setAvailableSpells([]);
-      } finally {
-        setIsLoadingSpells(false);
-      }
-    };
-
     fetchSpells();
   }, [isSpellcaster, currentClass?.name, character?.level]);
 
@@ -222,15 +226,46 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   };
 
   // Validation
-  const validation = useMemo(() => {
-    if (!character) {
-      return { valid: false, errors: [], warnings: [] };
-    }
+  const [validation, setValidation] = useState<ReturnType<typeof validateSpellSelection>>({ valid: false, errors: [], warnings: [] });
+  const [isValidating, setIsValidating] = useState(false);
 
-    return validateSpellSelection(character, selectedCantrips, selectedSpells);
-  }, [character, selectedCantrips, selectedSpells]);
+  // Perform async validation when character, selections, or available spells change
+  useEffect(() => {
+    let mounted = true;
 
-  const canProceed = validation.valid;
+    const runValidation = async () => {
+      if (!character) {
+        setValidation({ valid: false, errors: [], warnings: [] });
+        return;
+      }
+
+      setIsValidating(true);
+
+      const availableCantripIds = availableCantrips.map(c => c.id);
+      const availableSpellIds = availableSpells.map(s => s.id);
+
+      try {
+        // Dynamically import the async validator to avoid circular deps in some setups
+        const { validateSpellSelectionAsync } = await import('@/utils/spell-validation');
+        const result = await validateSpellSelectionAsync(character, selectedCantrips, selectedSpells, availableCantripIds, availableSpellIds);
+        if (mounted) setValidation(result);
+      } catch (error) {
+        console.error('Async spell validation failed:', error);
+        // Fall back to synchronous validation
+        const { validateSpellSelection } = await import('@/utils/spell-validation');
+        const result = validateSpellSelection(character, selectedCantrips, selectedSpells, availableCantripIds, availableSpellIds);
+        if (mounted) setValidation(result);
+      } finally {
+        if (mounted) setIsValidating(false);
+      }
+    };
+
+    runValidation();
+
+    return () => { mounted = false; };
+  }, [character, selectedCantrips, selectedSpells, availableCantrips, availableSpells]);
+
+  const canProceed = validation.valid && !isValidating;
 
   // Save to character
   const updateCharacterSpells = () => {
@@ -284,6 +319,9 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     canProceed,
 
     // Save to character
-    updateCharacterSpells
+    updateCharacterSpells,
+
+    // Retry functionality
+    refetchSpells: fetchSpells
   };
 }
