@@ -689,22 +689,20 @@ export const firstLevelSpells: Spell[] = [
     description: 'You attempt to charm a humanoid you can see within range. It must make a Wisdom saving throw, and it does so with advantage if you or your companions are fighting it.'
   },
   {
-    id: 'chromatic-orb',
-    name: 'Chromatic Orb',
+    id: 'hideous-laughter',
+    name: 'Hideous Laughter',
     level: 1,
-    school: 'Evocation',
+    school: 'Enchantment',
     castingTime: '1 action',
-    range: '90 feet',
-    components: 'V, S, M (a diamond worth at least 50 gp)',
+    range: '30 feet',
+    components: 'V, S, M (tiny tarts and a feather that is waved in the air)',
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a diamond worth at least 50 gp',
-    materialCost: 50,
-    materialConsumed: true,
-    duration: 'Instantaneous',
-    description: 'You hurl a 4-inch-diameter sphere of energy at a creature that you can see within range. Choose acid, cold, fire, lightning, poison, or thunder for the type of orb you create.',
-    damage: '3d8'
+    materialDescription: 'tiny tarts and a feather that is waved in the air',
+    duration: 'Concentration, up to 1 minute',
+    description: 'A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter if this spell affects it.',
+    concentration: true
   },
   {
     id: 'color-spray',
@@ -856,20 +854,22 @@ export const firstLevelSpells: Spell[] = [
     description: 'Slick grease covers the ground in a 10-foot square centered on a point within range and turns it into difficult terrain for the duration.'
   },
   {
-    id: 'hold-person',
-    name: 'Hold Person',
+    id: 'illusory-script',
+    name: 'Illusory Script',
     level: 1,
-    school: 'Enchantment',
-    castingTime: '1 action',
-    range: '60 feet',
-    components: 'V, S, M (a small, straight piece of iron)',
-    verbal: true,
+    school: 'Illusion',
+    castingTime: '1 minute',
+    range: 'Touch',
+    components: 'S, M (a lead-based ink worth at least 10 gp, which the spell consumes)',
+    verbal: false,
     somatic: true,
     material: true,
-    materialDescription: 'a small, straight piece of iron',
-    duration: 'Concentration, up to 1 minute',
-    description: 'Choose a humanoid that you can see within range. The target must succeed on a Wisdom saving throw or be paralyzed for the duration.',
-    concentration: true
+    materialDescription: 'a lead-based ink worth at least 10 gp',
+    materialCost: 10,
+    materialConsumed: true,
+    duration: '10 days',
+    description: 'You write on parchment, paper, or some other suitable writing material and imbue it with a potent illusion that lasts for the duration.',
+    ritual: true
   },
   {
     id: 'identify',
@@ -1464,23 +1464,6 @@ export const firstLevelSpells: Spell[] = [
     materialCost: 100,
     duration: 'Instantaneous',
     description: 'You choose one object that you must touch throughout the casting of the spell.',
-    ritual: true
-  },
-  {
-    id: 'illusory-script',
-    name: 'Illusory Script',
-    level: 1,
-    school: 'Illusion',
-    castingTime: '1 minute',
-    range: 'Touch',
-    components: 'S, M (a lead-based ink worth at least 10 gp, which the spell consumes)',
-    somatic: true,
-    material: true,
-    materialDescription: 'a lead-based ink worth at least 10 gp, which the spell consumes',
-    materialCost: 10,
-    materialConsumed: true,
-    duration: '10 days',
-    description: 'You write on parchment, paper, or some other suitable writing material and imbue it with a potent illusion that lasts for the duration.',
     ritual: true
   },
   {
@@ -2501,10 +2484,10 @@ const classSpellMappings = {
       'prestidigitation', 'ray-of-frost', 'shocking-grasp', 'true-strike'
     ],
     spells: [
-      'alarm', 'burning-hands', 'charm-person', 'chromatic-orb', 'color-spray',
+      'alarm', 'burning-hands', 'charm-person', 'color-spray',
       'comprehend-languages', 'detect-magic', 'disguise-self', 'expeditious-retreat',
       'false-life', 'feather-fall', 'find-familiar', 'fog-cloud', 'grease',
-      'hold-person', 'identify', 'jump', 'longstrider', 'mage-armor', 'magic-missile',
+      'hideous-laughter', 'identify', 'illusory-script', 'jump', 'longstrider', 'mage-armor', 'magic-missile',
       'protection-from-evil-and-good', 'shield', 'silent-image', 'sleep',
       'tensers-floating-disk', 'thunderwave', 'unseen-servant'
     ]
@@ -2523,15 +2506,15 @@ const classSpellMappings = {
   },
   Bard: {
     cantrips: [
-      'blade-ward', 'friends', 'mage-hand-bard', 'mending-bard', 'message-bard',
-      'minor-illusion-bard', 'prestidigitation-bard', 'true-strike-bard', 'vicious-mockery'
+      'dancing-lights', 'light', 'mage-hand', 'mending', 'message',
+      'minor-illusion', 'prestidigitation', 'true-strike', 'vicious-mockery'
     ],
     spells: [
-      'animal-friendship', 'bane-bard', 'charm-person-bard', 'comprehend-languages-bard',
-      'cure-wounds-bard', 'detect-magic-bard', 'disguise-self-bard', 'dissonant-whispers',
-      'faerie-fire', 'feather-fall-bard', 'healing-word-bard', 'heroism', 'identify-bard',
-      'illusory-script', 'longstrider-bard', 'silent-image-bard', 'sleep-bard',
-      'speak-with-animals', 'tashas-hideous-laughter', 'thunderwave-bard'
+      'animal-friendship', 'bane', 'charm-person', 'comprehend-languages',
+      'cure-wounds', 'detect-magic', 'disguise-self', 'faerie-fire',
+      'feather-fall', 'healing-word', 'heroism', 'hideous-laughter',
+      'identify', 'illusory-script', 'longstrider', 'silent-image',
+      'sleep', 'speak-with-animals', 'thunderwave', 'unseen-servant'
     ]
   },
   Druid: {
@@ -2554,21 +2537,20 @@ const classSpellMappings = {
       'prestidigitation', 'ray-of-frost', 'shocking-grasp', 'true-strike'
     ],
     spells: [
-      'burning-hands-sorcerer', 'charm-person-sorcerer', 'chromatic-orb-sorcerer',
-      'color-spray-sorcerer', 'comprehend-languages-sorcerer', 'detect-magic-sorcerer',
-      'disguise-self-sorcerer', 'expeditious-retreat-sorcerer', 'false-life-sorcerer',
-      'feather-fall-sorcerer', 'fog-cloud-sorcerer', 'jump-sorcerer', 'mage-armor-sorcerer',
-      'magic-missile-sorcerer', 'ray-of-sickness', 'shield-sorcerer', 'silent-image-sorcerer'
+      'burning-hands', 'charm-person', 'color-spray', 'comprehend-languages',
+      'detect-magic', 'disguise-self', 'expeditious-retreat', 'false-life',
+      'feather-fall', 'fog-cloud', 'jump', 'mage-armor', 'magic-missile',
+      'shield', 'silent-image', 'sleep', 'thunderwave'
     ]
   },
   Warlock: {
     cantrips: [
-      'blade-ward-warlock', 'chill-touch-warlock', 'eldritch-blast', 'friends-warlock',
-      'mage-hand-warlock', 'minor-illusion-warlock', 'prestidigitation-warlock'
+      'chill-touch', 'eldritch-blast', 'mage-hand', 'minor-illusion',
+      'poison-spray', 'prestidigitation', 'true-strike'
     ],
     spells: [
-      'arms-of-hadar', 'charm-person-warlock', 'comprehend-languages-warlock',
-      'expeditious-retreat-warlock', 'hellish-rebuke', 'hex', 'protection-from-evil-and-good-warlock'
+      'charm-person', 'comprehend-languages', 'expeditious-retreat',
+      'hellish-rebuke', 'illusory-script', 'protection-from-evil-and-good', 'unseen-servant'
     ]
   },
   Paladin: {
