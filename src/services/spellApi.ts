@@ -1,5 +1,6 @@
 import { Spell } from '@/types/character';
 import { supabase } from '@/integrations/supabase/client';
+import { localSpellService } from './localSpellService';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 
@@ -91,24 +92,52 @@ function convertApiSpellToSpell(apiSpell: ApiSpell): Spell {
 }
 
 class SpellApiService {
+  private useLocalFallback: boolean = false;
+
   private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    // If we've already determined the API is unavailable, skip the API call
+    if (this.useLocalFallback) {
+      throw new Error('API unavailable, using local fallback');
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+          ...options.headers,
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return response;
+    } catch (error) {
+      // Check if this is a connection error (backend not running)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.log('API unavailable, switching to local spell data');
+        this.useLocalFallback = true;
+      }
+      throw error;
     }
+  }
 
-    return response;
+  private async tryApiWithFallback<T>(
+    apiCall: () => Promise<T>,
+    fallbackCall: () => Promise<T>
+  ): Promise<T> {
+    try {
+      return await apiCall();
+    } catch (error) {
+      console.log('API call failed, using local fallback:', error);
+      return await fallbackCall();
+    }
   }
 
   // Get all spells with optional filtering
@@ -119,66 +148,101 @@ class SpellApiService {
     ritual?: boolean;
     components?: string;
   }): Promise<Spell[]> {
-    const params = new URLSearchParams();
+    return this.tryApiWithFallback(
+      async () => {
+        const params = new URLSearchParams();
 
-    if (filters?.level !== undefined) params.append('level', filters.level.toString());
-    if (filters?.school) params.append('school', filters.school);
-    if (filters?.class) params.append('class', filters.class);
-    if (filters?.ritual !== undefined) params.append('ritual', String(filters.ritual));
-    if (filters?.components) params.append('components', filters.components);
+        if (filters?.level !== undefined) params.append('level', filters.level.toString());
+        if (filters?.school) params.append('school', filters.school);
+        if (filters?.class) params.append('class', filters.class);
+        if (filters?.ritual !== undefined) params.append('ritual', String(filters.ritual));
+        if (filters?.components) params.append('components', filters.components);
 
-    const url = `/v1/spells${params.toString() ? `?${params.toString()}` : ''}`;
-    const response = await this.fetchWithAuth(url);
-    const apiSpells: ApiSpell[] = await response.json();
+        const url = `/v1/spells${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await this.fetchWithAuth(url);
+        const apiSpells: ApiSpell[] = await response.json();
 
-    return apiSpells.map(convertApiSpellToSpell);
+        return apiSpells.map(convertApiSpellToSpell);
+      },
+      () => localSpellService.getAllSpells(filters)
+    );
   }
 
   // Get spells available to a specific class at a specific level
   async getClassSpells(className: string, level: number = 1): Promise<{ cantrips: Spell[], spells: Spell[] }> {
-    const response = await this.fetchWithAuth(`/v1/spells/class/${encodeURIComponent(className)}/level/${level}`);
-    const apiSpells: ApiSpell[] = await response.json();
+    return this.tryApiWithFallback(
+      async () => {
+        const response = await this.fetchWithAuth(`/v1/spells/class/${encodeURIComponent(className)}/level/${level}`);
+        const apiSpells: ApiSpell[] = await response.json();
 
-    const allSpells = apiSpells.map(convertApiSpellToSpell);
+        const allSpells = apiSpells.map(convertApiSpellToSpell);
 
-    return {
-      cantrips: allSpells.filter(spell => spell.level === 0),
-      spells: allSpells.filter(spell => spell.level > 0)
-    };
+        return {
+          cantrips: allSpells.filter(spell => spell.level === 0),
+          spells: allSpells.filter(spell => spell.level > 0)
+        };
+      },
+      () => localSpellService.getClassSpells(className, level)
+    );
   }
 
   // Get spell progression for a class
   async getSpellProgression(className: string): Promise<SpellProgression[]> {
-    const response = await this.fetchWithAuth(`/v1/spells/progression/${encodeURIComponent(className)}`);
-    return response.json();
+    return this.tryApiWithFallback(
+      async () => {
+        const response = await this.fetchWithAuth(`/v1/spells/progression/${encodeURIComponent(className)}`);
+        return response.json();
+      },
+      () => localSpellService.getSpellProgression(className)
+    );
   }
 
   // Get multiclass spell slots
   async getMulticlassSpellSlots(casterLevel: number): Promise<MulticlassSpellSlots> {
-    const response = await this.fetchWithAuth(`/v1/spells/multiclass/slots/${casterLevel}`);
-    return response.json();
+    return this.tryApiWithFallback(
+      async () => {
+        const response = await this.fetchWithAuth(`/v1/spells/multiclass/slots/${casterLevel}`);
+        return response.json();
+      },
+      () => localSpellService.getMulticlassSpellSlots(casterLevel)
+    );
   }
 
   // Get all spellcasting classes
   async getSpellcastingClasses(): Promise<SpellcastingClass[]> {
-    const response = await this.fetchWithAuth('/v1/spells/classes');
-    return response.json();
+    return this.tryApiWithFallback(
+      async () => {
+        const response = await this.fetchWithAuth('/v1/spells/classes');
+        return response.json();
+      },
+      () => localSpellService.getSpellcastingClasses()
+    );
   }
 
   // Calculate multiclass caster level and spell slots
   async calculateMulticlassCasterLevel(classLevels: { className: string; level: number }[]): Promise<MulticlassCalculation> {
-    const response = await this.fetchWithAuth('/v1/spells/multiclass/calculate', {
-      method: 'POST',
-      body: JSON.stringify({ classLevels }),
-    });
-    return response.json();
+    return this.tryApiWithFallback(
+      async () => {
+        const response = await this.fetchWithAuth('/v1/spells/multiclass/calculate', {
+          method: 'POST',
+          body: JSON.stringify({ classLevels }),
+        });
+        return response.json();
+      },
+      () => localSpellService.calculateMulticlassCasterLevel(classLevels)
+    );
   }
 
   // Get a specific spell by ID
   async getSpellById(spellId: string): Promise<Spell> {
-    const response = await this.fetchWithAuth(`/v1/spells/${spellId}`);
-    const apiSpell: ApiSpell = await response.json();
-    return convertApiSpellToSpell(apiSpell);
+    return this.tryApiWithFallback(
+      async () => {
+        const response = await this.fetchWithAuth(`/v1/spells/${spellId}`);
+        const apiSpell: ApiSpell = await response.json();
+        return convertApiSpellToSpell(apiSpell);
+      },
+      () => localSpellService.getSpellById(spellId)
+    );
   }
 }
 
