@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Spell, Character } from '@/types/character';
 import { spellApi } from '@/services/spellApi';
+import { characterSpellService } from '@/services/characterSpellApi';
 import {
   validateSpellSelection,
   getSpellcastingInfo,
@@ -46,8 +47,9 @@ interface UseSpellSelectionReturn {
   validation: SpellValidationResult;
   canProceed: boolean;
 
-  // Save to character
-  updateCharacterSpells: () => void;
+  // Save to character and database
+  updateCharacterSpells: () => Promise<void>;
+  isSavingSpells: boolean;
 
   // Retry functionality
   refetchSpells: () => Promise<void>;
@@ -76,6 +78,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   const [spellsError, setSpellsError] = useState<string | null>(null);
   const [availableCantrips, setAvailableCantrips] = useState<Spell[]>([]);
   const [availableSpells, setAvailableSpells] = useState<Spell[]>([]);
+  const [isSavingSpells, setIsSavingSpells] = useState(false);
 
   // Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -267,20 +270,52 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
   const canProceed = validation.valid && !isValidating;
 
-  // Save to character
-  const updateCharacterSpells = () => {
-    if (!character || !validation.valid) {
+  // Save to character and database
+  const updateCharacterSpells = async () => {
+    if (!character || !character.id) {
       return;
     }
 
-    dispatch({
-      type: 'UPDATE_CHARACTER',
-      payload: {
-        cantrips: selectedCantrips,
-        knownSpells: selectedSpells,
-      },
-    });
+    setIsSavingSpells(true);
+    try {
+      // Combine cantrips and spells for API call
+      const allSpells = [...selectedCantrips, ...selectedSpells];
+
+      // Save to database first
+      await characterSpellService.saveCharacterSpells(character.id, {
+        spells: allSpells,
+        className: character.class?.name || ''
+      });
+
+      // Then update local context
+      dispatch({
+        type: 'UPDATE_CHARACTER',
+        payload: {
+          cantrips: selectedCantrips,
+          knownSpells: selectedSpells,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to save character spells:', error);
+      setSpellsError(error instanceof Error ? error.message : 'Failed to save spells');
+      throw error; // Re-throw so calling components can handle
+    } finally {
+      setIsSavingSpells(false);
+    }
   };
+
+  // Auto-save selections to character immediately when they change
+  useEffect(() => {
+    if (character) {
+      dispatch({
+        type: 'UPDATE_CHARACTER',
+        payload: {
+          cantrips: selectedCantrips,
+          knownSpells: selectedSpells,
+        },
+      });
+    }
+  }, [selectedCantrips, selectedSpells, character, dispatch]);
 
   return {
     // Character and class info
@@ -318,8 +353,9 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     validation,
     canProceed,
 
-    // Save to character
+    // Save to character and database
     updateCharacterSpells,
+    isSavingSpells,
 
     // Retry functionality
     refetchSpells: fetchSpells

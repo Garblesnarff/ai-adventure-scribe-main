@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Character } from '@/types/character';
 import DiceRoller from '@/components/ui/dice-roller';
-import { Wand2, Circle, Dot, Book, Target } from 'lucide-react';
+import { Wand2, Circle, Dot, Book, Target, Loader2 } from 'lucide-react';
+import { characterSpellService, CharacterSpellData } from '@/services/characterSpellApi';
 
 interface SpellsTabProps {
   character: Character;
@@ -17,24 +18,34 @@ interface SpellSlots {
 }
 
 interface Spell {
+  id: string;
   name: string;
   level: number;
   school: string;
-  castingTime: string;
-  range: string;
-  components: string;
+  casting_time: string;
+  range_text: string;
+  components_verbal: boolean;
+  components_somatic: boolean;
+  components_material: boolean;
+  material_components?: string;
   duration: string;
+  concentration: boolean;
+  ritual: boolean;
   description: string;
-  damage?: string;
-  prepared?: boolean;
-  ritual?: boolean;
-  concentration?: boolean;
+  higher_level_text?: string;
+  is_prepared?: boolean;
+  source_feature?: string;
 }
 
 /**
  * Spells tab with spell slot tracking and spell management
  */
 const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
+  // State for spell data
+  const [spells, setSpells] = useState<Spell[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Example spell slots for a caster (would be calculated based on class/level)
   const [spellSlots, setSpellSlots] = useState<SpellSlots>({
     1: { total: 4, used: 1 },
@@ -44,51 +55,36 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
     5: { total: 1, used: 1 },
   });
 
+  // Load character spells
+  useEffect(() => {
+    const loadSpells = async () => {
+      if (!character?.id) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const spellData = await characterSpellService.getCharacterSpells(character.id);
+        const allSpells = [...spellData.cantrips, ...spellData.spells];
+        setSpells(allSpells);
+      } catch (err) {
+        console.error('Failed to load character spells:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load spells');
+        setSpells([]); // Fallback to empty array
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSpells();
+  }, [character?.id]);
+
   // Spellcasting ability (would be determined by class)
   const spellcastingAbility = 'intelligence'; // Example: Wizard
-  const spellcastingMod = character.abilityScores[spellcastingAbility].modifier;
+  const spellcastingMod = character.abilityScores?.[spellcastingAbility]?.modifier || 0;
   const proficiencyBonus = Math.floor((character.level - 1) / 4) + 2;
   const spellAttackBonus = spellcastingMod + proficiencyBonus;
   const spellSaveDC = 8 + spellcastingMod + proficiencyBonus;
-
-  // Example spells (would come from database)
-  const knownSpells: Spell[] = [
-    {
-      name: 'Fire Bolt',
-      level: 0,
-      school: 'Evocation',
-      castingTime: '1 action',
-      range: '120 feet',
-      components: 'V, S',
-      duration: 'Instantaneous',
-      description: 'A mote of fire at a creature or object within range.',
-      damage: '1d10',
-    },
-    {
-      name: 'Magic Missile',
-      level: 1,
-      school: 'Evocation',
-      castingTime: '1 action',
-      range: '120 feet',
-      components: 'V, S',
-      duration: 'Instantaneous',
-      description: 'Three glowing darts of magical force.',
-      damage: '1d4+1',
-      prepared: true,
-    },
-    {
-      name: 'Fireball',
-      level: 3,
-      school: 'Evocation',
-      castingTime: '1 action',
-      range: '150 feet',
-      components: 'V, S, M',
-      duration: 'Instantaneous',
-      description: 'A bright flash and a booming explosion.',
-      damage: '8d6',
-      prepared: true,
-    },
-  ];
 
   const consumeSpellSlot = (level: number) => {
     if (spellSlots[level] && spellSlots[level].used < spellSlots[level].total) {
@@ -124,8 +120,40 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
     });
   };
 
-  const cantrips = knownSpells.filter(spell => spell.level === 0);
-  const leveledSpells = knownSpells.filter(spell => spell.level > 0);
+  const cantrips = spells.filter(spell => spell.level === 0);
+  const leveledSpells = spells.filter(spell => spell.level > 0);
+
+  // Helper function to format spell components
+  const formatComponents = (spell: Spell) => {
+    const components = [];
+    if (spell.components_verbal) components.push('V');
+    if (spell.components_somatic) components.push('S');
+    if (spell.components_material) components.push('M');
+    return components.join(', ');
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading spells...</span>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-red-500 mb-2">Failed to load spells</div>
+        <div className="text-sm text-muted-foreground mb-4">{error}</div>
+        <Button onClick={() => window.location.reload()} variant="outline">
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -207,25 +235,30 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {cantrips.map((spell, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium">{spell.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {spell.school} • {spell.castingTime} • {spell.range}
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {spell.description}
+            {cantrips.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No cantrips learned yet
+              </div>
+            ) : (
+              cantrips.map((spell) => (
+                <div key={spell.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">{spell.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {spell.school} • {spell.casting_time} • {spell.range_text}
+                    </div>
+                    {formatComponents(spell) && (
+                      <div className="text-xs text-muted-foreground">
+                        Components: {formatComponents(spell)}
+                      </div>
+                    )}
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {spell.description}
+                    </div>
                   </div>
                 </div>
-                {spell.damage && (
-                  <DiceRoller
-                    dice={spell.damage}
-                    label="Cast"
-                  />
-                )}
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
@@ -240,57 +273,58 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {leveledSpells.map((spell, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-start gap-3 flex-1">
-                  {/* Prepared indicator */}
-                  <div className="flex flex-col items-center gap-1 mt-1">
-                    {spell.prepared ? (
-                      <Dot className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-gray-400" />
-                    )}
-                    <Badge variant="outline" className="text-xs px-1">
-                      {spell.level}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{spell.name}</span>
-                      {spell.ritual && (
-                        <Badge variant="secondary" className="text-xs">R</Badge>
-                      )}
-                      {spell.concentration && (
-                        <Badge variant="secondary" className="text-xs">C</Badge>
-                      )}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {spell.school} • {spell.castingTime} • {spell.range}
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {spell.description}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  {spell.damage && (
-                    <DiceRoller
-                      dice={spell.damage}
-                      label="Damage"
-                    />
-                  )}
-                  {spell.name.includes('Attack') && (
-                    <DiceRoller
-                      dice="1d20"
-                      modifier={spellAttackBonus}
-                      label="Attack"
-                    />
-                  )}
-                </div>
+            {leveledSpells.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No spells learned yet
               </div>
-            ))}
+            ) : (
+              leveledSpells.map((spell) => (
+                <div key={spell.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-start gap-3 flex-1">
+                    {/* Prepared indicator */}
+                    <div className="flex flex-col items-center gap-1 mt-1">
+                      {spell.is_prepared ? (
+                        <Dot className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-gray-400" />
+                      )}
+                      <Badge variant="outline" className="text-xs px-1">
+                        {spell.level}
+                      </Badge>
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{spell.name}</span>
+                        {spell.ritual && (
+                          <Badge variant="secondary" className="text-xs">R</Badge>
+                        )}
+                        {spell.concentration && (
+                          <Badge variant="secondary" className="text-xs">C</Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {spell.school} • {spell.casting_time} • {spell.range_text}
+                      </div>
+                      {formatComponents(spell) && (
+                        <div className="text-xs text-muted-foreground">
+                          Components: {formatComponents(spell)}
+                          {spell.material_components && ` (${spell.material_components})`}
+                        </div>
+                      )}
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {spell.description}
+                      </div>
+                      {spell.higher_level_text && (
+                        <div className="text-xs text-muted-foreground mt-1 italic">
+                          <strong>At Higher Levels:</strong> {spell.higher_level_text}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

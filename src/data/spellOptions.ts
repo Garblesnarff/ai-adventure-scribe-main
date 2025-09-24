@@ -2577,7 +2577,9 @@ const classSpellMappings = {
  * Uses proper class-to-spell mappings instead of hardcoded filtering
  */
 export const getClassSpells = (className: string): { cantrips: Spell[], spells: Spell[] } => {
-  const mapping = classSpellMappings[className as keyof typeof classSpellMappings];
+  // Normalize className to match classSpellMappings keys (capitalize first letter)
+  const normalizedClassName = className.charAt(0).toUpperCase() + className.slice(1).toLowerCase();
+  const mapping = classSpellMappings[normalizedClassName as keyof typeof classSpellMappings];
 
   if (!mapping) {
     return { cantrips: [], spells: [] };
