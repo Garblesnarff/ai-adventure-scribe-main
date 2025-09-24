@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.ts';
+import { createClient } from '../lib/db.js';
 
 /**
  * Comprehensive D&D 5E Database Seeding Script

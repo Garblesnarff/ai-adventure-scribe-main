@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.ts';
+import { createClient } from '../lib/db.js';
 
 /**
  * Comprehensive D&D 5E Bard Spell Data Migration
@@ -627,12 +627,12 @@ async function run() {
           spell.name, spell.level, spell.school, spell.casting_time, spell.range_text,
           spell.duration, spell.concentration, spell.ritual, spell.components_verbal,
           spell.components_somatic, spell.components_material, spell.material_components || null,
-          spell.material_cost_gp || 0, spell.material_consumed || false, spell.description,
-          spell.higher_level_text || null,
-          spell.damage_at_slot_level ? JSON.stringify(spell.damage_at_slot_level) : null,
-          spell.heal_at_slot_level ? JSON.stringify(spell.heal_at_slot_level) : null,
-          spell.damage_type || null,
-          spell.area_of_effect ? JSON.stringify(spell.area_of_effect) : null
+          (spell as any).material_cost_gp || 0, (spell as any).material_consumed || false, spell.description,
+          (spell as any).higher_level_text || null,
+          (spell as any).damage_at_slot_level ? JSON.stringify((spell as any).damage_at_slot_level) : null,
+          (spell as any).heal_at_slot_level ? JSON.stringify((spell as any).heal_at_slot_level) : null,
+          (spell as any).damage_type || null,
+          (spell as any).area_of_effect ? JSON.stringify((spell as any).area_of_effect) : null
         ]
       );
 

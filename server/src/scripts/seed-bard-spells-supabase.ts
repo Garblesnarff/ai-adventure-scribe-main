@@ -592,14 +592,14 @@ async function run() {
       components_somatic: spell.components_somatic,
       components_material: spell.components_material,
       material_components: spell.material_components || null,
-      material_cost_gp: spell.material_cost_gp || 0,
-      material_consumed: spell.material_consumed || false,
+      material_cost_gp: (spell as any).material_cost_gp || 0,
+      material_consumed: (spell as any).material_consumed || false,
       description: spell.description,
-      higher_level_text: spell.higher_level_text || null,
-      damage_at_slot_level: spell.damage_at_slot_level || null,
-      heal_at_slot_level: spell.heal_at_slot_level || null,
-      damage_type: spell.damage_type || null,
-      area_of_effect: spell.area_of_effect || null
+      higher_level_text: (spell as any).higher_level_text || null,
+      damage_at_slot_level: (spell as any).damage_at_slot_level || null,
+      heal_at_slot_level: (spell as any).heal_at_slot_level || null,
+      damage_type: (spell as any).damage_type || null,
+      area_of_effect: (spell as any).area_of_effect || null
     }));
 
     const { data: spellData, error: spellError } = await supabaseService
