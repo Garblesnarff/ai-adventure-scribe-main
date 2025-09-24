@@ -72,13 +72,13 @@ export default function spellRouter(db: Pool) {
         componentArray.forEach(component => {
           switch (component.trim().toUpperCase()) {
             case 'V':
-              filteredSpells = filteredSpells.filter(spell => spell.components_verbal);
+              filteredSpells = filteredSpells.filter(spell => spell.verbal);
               break;
             case 'S':
-              filteredSpells = filteredSpells.filter(spell => spell.components_somatic);
+              filteredSpells = filteredSpells.filter(spell => spell.somatic);
               break;
             case 'M':
-              filteredSpells = filteredSpells.filter(spell => spell.components_material);
+              filteredSpells = filteredSpells.filter(spell => spell.material);
               break;
           }
         });
@@ -134,7 +134,7 @@ export default function spellRouter(db: Pool) {
     const { className } = req.params;
 
     try {
-      const progression = spellProgression[className];
+      const progression = spellProgression[className as keyof typeof spellProgression];
 
       if (!progression) {
         return res.status(404).json({ error: `Spell progression not found for class: ${className}` });
