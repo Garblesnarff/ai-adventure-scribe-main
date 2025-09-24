@@ -12,9 +12,9 @@ export default function characterRouter(db: Pool) {
     const client = await db.connect();
     try {
       const result = await client.query(
-        `SELECT id, name, description, race, class, level, alignment, experience_points, 
+        `SELECT id, name, description, race, class, level, alignment, experience_points,
          image_url, appearance, personality_traits, backstory_elements, background,
-         created_at, updated_at 
+         created_at, updated_at
          FROM characters WHERE user_id = $1 ORDER BY created_at DESC`,
         [userId]
       );
@@ -248,6 +248,83 @@ export default function characterRouter(db: Pool) {
     } catch (error) {
       console.error('Error validating character spells:', error);
       return res.status(500).json({ error: 'Failed to validate character spells' });
+    }
+  });
+
+  // Get character spells with full spell data
+  router.get('/:id/spells', async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const characterId = req.params.id;
+
+    try {
+      // Verify character ownership
+      const { data: character, error: charError } = await supabaseService
+        .from('characters')
+        .select('id, class, level')
+        .eq('id', characterId)
+        .eq('user_id', userId)
+        .single();
+
+      if (charError || !character) {
+        return res.status(404).json({ error: 'Character not found' });
+      }
+
+      // Get character spells with full spell data
+      const { data: characterSpells, error: spellsError } = await supabaseService
+        .from('character_spells')
+        .select(`
+          spell_id,
+          is_prepared,
+          source_feature,
+          spells (
+            id,
+            name,
+            level,
+            school,
+            casting_time,
+            range_text,
+            components_verbal,
+            components_somatic,
+            components_material,
+            material_components,
+            duration,
+            concentration,
+            ritual,
+            description,
+            higher_level_text
+          )
+        `)
+        .eq('character_id', characterId);
+
+      if (spellsError) {
+        console.error('Error fetching character spells:', spellsError);
+        return res.status(500).json({ error: 'Failed to fetch character spells' });
+      }
+
+      // Transform the data to a more usable format
+      const spells = characterSpells?.map((cs: any) => ({
+        ...cs.spells,
+        is_prepared: cs.is_prepared,
+        source_feature: cs.source_feature
+      })) || [];
+
+      // Separate cantrips (level 0) from leveled spells
+      const cantrips = spells.filter((spell: any) => spell.level === 0);
+      const leveledSpells = spells.filter((spell: any) => spell.level > 0);
+
+      return res.json({
+        character: {
+          id: character.id,
+          class: character.class,
+          level: character.level
+        },
+        cantrips,
+        spells: leveledSpells,
+        total_spells: spells.length
+      });
+    } catch (error) {
+      console.error('Error fetching character spells:', error);
+      return res.status(500).json({ error: 'Failed to fetch character spells' });
     }
   });
 

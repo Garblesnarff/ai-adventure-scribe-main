@@ -69,25 +69,27 @@ interface MulticlassCalculation {
 }
 
 // Convert API spell to frontend Spell type
-function convertApiSpellToSpell(apiSpell: ApiSpell): Spell {
+function convertApiSpellToSpell(apiSpell: any): Spell {
+  // The server returns spell objects directly from spellData.ts, not in API format
+  // So the properties are: castingTime (not casting_time), verbal (not components_verbal), etc.
   return {
     id: apiSpell.id,
     name: apiSpell.name,
     level: apiSpell.level,
     school: apiSpell.school,
-    castingTime: apiSpell.casting_time,
-    range: apiSpell.range_text,
+    castingTime: apiSpell.castingTime,
+    range: apiSpell.range,
     duration: apiSpell.duration,
     description: apiSpell.description,
-    verbal: apiSpell.components_verbal,
-    somatic: apiSpell.components_somatic,
-    material: apiSpell.components_material,
-    materialComponents: apiSpell.material_components || '',
+    verbal: apiSpell.verbal,
+    somatic: apiSpell.somatic,
+    material: apiSpell.material,
+    materialComponents: apiSpell.materialComponents || '',
     concentration: apiSpell.concentration,
     ritual: apiSpell.ritual,
-    damage: apiSpell.damage_effect ? true : false,
-    attackSave: apiSpell.attack_save || '',
-    damageEffect: apiSpell.damage_effect || ''
+    damage: apiSpell.damage || false,
+    attackSave: apiSpell.attackSave || '',
+    damageEffect: apiSpell.damageEffect || ''
   };
 }
 
@@ -160,7 +162,7 @@ class SpellApiService {
 
         const url = `/v1/spells${params.toString() ? `?${params.toString()}` : ''}`;
         const response = await this.fetchWithAuth(url);
-        const apiSpells: ApiSpell[] = await response.json();
+        const apiSpells: any[] = await response.json();
 
         return apiSpells.map(convertApiSpellToSpell);
       },
@@ -173,7 +175,7 @@ class SpellApiService {
     return this.tryApiWithFallback(
       async () => {
         const response = await this.fetchWithAuth(`/v1/spells/class/${encodeURIComponent(className)}/level/${level}`);
-        const apiSpells: ApiSpell[] = await response.json();
+        const apiSpells: any[] = await response.json();
 
         const allSpells = apiSpells.map(convertApiSpellToSpell);
 
@@ -238,7 +240,7 @@ class SpellApiService {
     return this.tryApiWithFallback(
       async () => {
         const response = await this.fetchWithAuth(`/v1/spells/${spellId}`);
-        const apiSpell: ApiSpell = await response.json();
+        const apiSpell: any = await response.json();
         return convertApiSpellToSpell(apiSpell);
       },
       () => localSpellService.getSpellById(spellId)

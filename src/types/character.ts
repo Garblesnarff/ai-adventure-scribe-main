@@ -29,25 +29,27 @@ export interface Spell {
   name: string;
   level: number;
   school: string;
-  castingTime: string;
-  range: string;
+  casting_time: string;
+  range_text: string;
   components: string;
   // Detailed component breakdown
-  verbal?: boolean;
-  somatic?: boolean;
-  material?: boolean;
-  materialDescription?: string;
-  materialCost?: number;
-  materialConsumed?: boolean;
+  components_verbal?: boolean;
+  components_somatic?: boolean;
+  components_material?: boolean;
+  material_components?: string;
+  material_cost_gp?: number;
+  material_consumed?: boolean;
   duration: string;
   description: string;
+  higher_level_text?: string;
   damage?: string;
   ritual?: boolean;
   concentration?: boolean;
   // Preparation requirements
-  prepared?: boolean;
+  is_prepared?: boolean;
   alwaysPrepared?: boolean; // For certain class features
   preparationRequirement?: string; // Special preparation requirements
+  source_feature?: string;
 }
 
 export interface Subrace {

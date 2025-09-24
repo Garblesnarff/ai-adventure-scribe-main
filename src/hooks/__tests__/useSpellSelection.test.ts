@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useSpellSelection } from '../useSpellSelection';
 import { Character, CharacterClass, CharacterRace, Subrace } from '@/types/character';
+import { spellApi } from '@/services/spellApi';
 import React from 'react';
 
 /**
@@ -28,26 +29,31 @@ vi.mock('@/contexts/CharacterContext', () => ({
   useCharacter: () => mockCharacterContext
 }));
 
+// Mock spell API service
+vi.mock('@/services/spellApi', () => ({
+  spellApi: {
+    getClassSpells: vi.fn()
+  }
+}));
+
 // Mock spell data
-vi.mock('@/data/spellOptions', () => ({
-  getClassSpells: (className: string) => {
-    const mockSpells = {
-      Wizard: {
-        cantrips: [
-          { id: 'mage-hand', name: 'Mage Hand', level: 0, school: 'Conjuration', verbal: true, somatic: true },
-          { id: 'prestidigitation', name: 'Prestidigitation', level: 0, school: 'Transmutation', verbal: true, somatic: true },
-          { id: 'light', name: 'Light', level: 0, school: 'Evocation', verbal: true, material: true },
-          { id: 'minor-illusion', name: 'Minor Illusion', level: 0, school: 'Illusion', somatic: true, material: true }
-        ],
-        spells: [
-          { id: 'magic-missile', name: 'Magic Missile', level: 1, school: 'Evocation', verbal: true, somatic: true },
-          { id: 'shield', name: 'Shield', level: 1, school: 'Abjuration', verbal: true, somatic: true },
-          { id: 'detect-magic', name: 'Detect Magic', level: 1, school: 'Divination', verbal: true, somatic: true, ritual: true },
-          { id: 'burning-hands', name: 'Burning Hands', level: 1, school: 'Evocation', verbal: true, somatic: true, damage: '3d6' },
-          { id: 'sleep', name: 'Sleep', level: 1, school: 'Enchantment', verbal: true, somatic: true, material: true },
-          { id: 'color-spray', name: 'Color Spray', level: 1, school: 'Illusion', verbal: true, somatic: true, material: true }
-        ]
-      },
+const mockSpellData = {
+  Wizard: {
+    cantrips: [
+      { id: 'mage-hand', name: 'Mage Hand', level: 0, school: 'Conjuration', verbal: true, somatic: true },
+      { id: 'prestidigitation', name: 'Prestidigitation', level: 0, school: 'Transmutation', verbal: true, somatic: true },
+      { id: 'light', name: 'Light', level: 0, school: 'Evocation', verbal: true, material: true },
+      { id: 'minor-illusion', name: 'Minor Illusion', level: 0, school: 'Illusion', somatic: true, material: true }
+    ],
+    spells: [
+      { id: 'magic-missile', name: 'Magic Missile', level: 1, school: 'Evocation', verbal: true, somatic: true },
+      { id: 'shield', name: 'Shield', level: 1, school: 'Abjuration', verbal: true, somatic: true },
+      { id: 'detect-magic', name: 'Detect Magic', level: 1, school: 'Divination', verbal: true, somatic: true, ritual: true },
+      { id: 'burning-hands', name: 'Burning Hands', level: 1, school: 'Evocation', verbal: true, somatic: true, damage: '3d6' },
+      { id: 'sleep', name: 'Sleep', level: 1, school: 'Enchantment', verbal: true, somatic: true, material: true },
+      { id: 'color-spray', name: 'Color Spray', level: 1, school: 'Illusion', verbal: true, somatic: true, material: true }
+    ]
+  },
       Cleric: {
         cantrips: [
           { id: 'guidance', name: 'Guidance', level: 0, school: 'Divination', verbal: true, somatic: true },
@@ -65,10 +71,6 @@ vi.mock('@/data/spellOptions', () => ({
       }
     };
 
-    return mockSpells[className] || { cantrips: [], spells: [] };
-  }
-}));
-
 describe('useSpellSelection Hook', () => {
   let mockWizard: CharacterClass;
   let mockCleric: CharacterClass;
@@ -80,6 +82,14 @@ describe('useSpellSelection Hook', () => {
     // Reset mocks
     vi.clearAllMocks();
     mockCharacterContext.dispatch.mockClear();
+
+    // Mock spell API to return test data
+    const mockGetClassSpells = vi.mocked(spellApi.getClassSpells);
+    mockGetClassSpells.mockImplementation(async (className: string) => {
+      // Normalize className to match our mock data keys
+      const normalizedClassName = className.charAt(0).toUpperCase() + className.slice(1).toLowerCase();
+      return mockSpellData[normalizedClassName as keyof typeof mockSpellData] || { cantrips: [], spells: [] };
+    });
 
     // Mock character classes
     mockWizard = {
