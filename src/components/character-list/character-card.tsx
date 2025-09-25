@@ -156,7 +156,10 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
       {/* Hero / background area */}
       <div
         className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative"
-        onClick={() => navigate(`/character/${character.id}`)}
+        onClick={() => {
+          // Character access is now properly restricted by RLS, so navigation should work
+          navigate(`/character/${character.id}`);
+        }}
         style={resolvedBackgroundImage ? { backgroundImage: `url(${resolvedBackgroundImage})` } : undefined}
       >
         {/* Loading overlay for image generation */}
@@ -274,7 +277,11 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                 <Play className="w-4 h-4" />
                 Play
               </Button>
-              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/character/${character.id}`); }}>
+              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => {
+                e.stopPropagation();
+                // Character access is now properly restricted by RLS, so navigation should work
+                navigate(`/character/${character.id}`);
+              }}>
                 View Details
               </Button>
               <Button

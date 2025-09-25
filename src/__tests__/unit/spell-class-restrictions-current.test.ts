@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
-  validateSpellSelectionAsync,
+  validateSpellSelection,
   getSpellcastingInfo,
   getRacialSpells,
   getMaxSpellCounts,
@@ -37,11 +37,11 @@ describe('Current Spell Validation Implementation', () => {
   });
 
   describe('Working Features - Count Validation', () => {
-  it('should enforce correct cantrip counts for wizards', async () => {
+    it('should enforce correct cantrip counts for wizards', () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Too few cantrips
-      const result1 = await validateSpellSelectionAsync(
+      const result1 = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation'], // 2 instead of 3
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -57,7 +57,7 @@ describe('Current Spell Validation Implementation', () => {
       );
 
       // Too many cantrips
-      const result2 = await validateSpellSelectionAsync(
+      const result2 = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'], // 4 instead of 3
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -73,11 +73,11 @@ describe('Current Spell Validation Implementation', () => {
       );
     });
 
-  it('should enforce correct spell counts for wizards', async () => {
+    it('should enforce correct spell counts for wizards', () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Too few spells
-      const result1 = await validateSpellSelectionAsync(
+      const result1 = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation', 'light'],
         ['magic-missile', 'shield'] // 2 instead of 6
@@ -93,11 +93,11 @@ describe('Current Spell Validation Implementation', () => {
       );
     });
 
-  it('should validate cleric spell counts correctly', async () => {
+    it('should validate cleric spell counts correctly', () => {
       const clericCharacter = createMockCharacter('Test Cleric', mockCleric, mockHuman);
 
       // Cleric needs 3 cantrips but no spells known (prepared instead)
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         clericCharacter,
         ['guidance', 'thaumaturgy'], // 2 instead of 3
         []
@@ -115,11 +115,11 @@ describe('Current Spell Validation Implementation', () => {
   });
 
   describe('Working Features - Racial Spell Integration', () => {
-  it('should handle High Elf wizard cantrip bonus correctly', async () => {
+    it('should handle High Elf wizard cantrip bonus correctly', () => {
       const highElfWizard = createMockCharacter('High Elf Wizard', mockWizard, mockHuman, mockHighElfSubrace);
 
       // High Elf gets 1 bonus wizard cantrip (3 class + 1 racial = 4 total)
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         highElfWizard,
         ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'], // 4 cantrips
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -129,11 +129,11 @@ describe('Current Spell Validation Implementation', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should handle Tiefling racial cantrips correctly', async () => {
+    it('should handle Tiefling racial cantrips correctly', () => {
       const tieflingWizard = createMockCharacter('Tiefling Wizard', mockWizard, mockHuman, mockTieflingSubrace);
 
       // Tiefling gets thaumaturgy as racial cantrip (3 class + 1 racial = 4 total)
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         tieflingWizard,
         ['mage-hand', 'prestidigitation', 'light', 'thaumaturgy'], // 4 cantrips
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -143,10 +143,10 @@ describe('Current Spell Validation Implementation', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should allow racial spells for non-spellcasters', async () => {
+    it('should allow racial spells for non-spellcasters', () => {
       const tieflingFighter = createMockCharacter('Tiefling Fighter', mockFighter, mockHuman, mockTieflingSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         tieflingFighter,
         ['thaumaturgy'], // Only racial cantrip
         []
@@ -158,7 +158,7 @@ describe('Current Spell Validation Implementation', () => {
   });
 
   describe('Working Features - Helper Functions', () => {
-  it('should return correct spellcasting info for different classes', async () => {
+    it('should return correct spellcasting info for different classes', () => {
       const wizardInfo = getSpellcastingInfo(mockWizard, 1);
       expect(wizardInfo).toEqual({
         cantripsKnown: 3,
@@ -185,7 +185,7 @@ describe('Current Spell Validation Implementation', () => {
       expect(fighterInfo).toBeNull();
     });
 
-  it('should return correct max spell counts', async () => {
+    it('should return correct max spell counts', () => {
       const wizardCounts = getMaxSpellCounts(mockWizard, 1);
       expect(wizardCounts).toEqual({ cantrips: 3, spells: 6 });
 
@@ -196,7 +196,7 @@ describe('Current Spell Validation Implementation', () => {
       expect(fighterCounts).toEqual({ cantrips: 0, spells: 0 });
     });
 
-  it('should provide helpful validation rules', async () => {
+    it('should provide helpful validation rules', () => {
       const wizardRules = getSpellValidationRules(mockWizard);
       expect(wizardRules).toContain('Must select exactly 3 cantrips.');
       expect(wizardRules).toContain('Must select exactly 6 spells known.');
@@ -213,11 +213,11 @@ describe('Current Spell Validation Implementation', () => {
   });
 
   describe('CRITICAL BUG - Missing Class Spell Restrictions', () => {
-  it('should document the current bug: wizards can select divine spells', async () => {
+    it('should document the current bug: wizards can select divine spells', () => {
       const wizardCharacter = createMockCharacter('Buggy Wizard', mockWizard, mockHuman);
 
       // THIS IS THE BUG: These divine spells should be REJECTED but currently pass validation
-      const divineSpellSelection = await validateSpellSelectionAsync(
+      const divineSpellSelection = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation', 'guidance'], // guidance is CLERIC cantrip
         ['magic-missile', 'shield', 'cure-wounds', 'healing-word', 'bless', 'guiding-bolt'] // divine spells
@@ -236,11 +236,11 @@ describe('Current Spell Validation Implementation', () => {
       // );
     });
 
-  it('should document the reverse bug: clerics can select arcane spells', async () => {
+    it('should document the reverse bug: clerics can select arcane spells', () => {
       const clericCharacter = createMockCharacter('Buggy Cleric', mockCleric, mockHuman);
 
       // THIS IS THE BUG: These arcane spells should be REJECTED but currently pass validation
-      const arcaneSpellSelection = await validateSpellSelectionAsync(
+      const arcaneSpellSelection = validateSpellSelection(
         clericCharacter,
         ['guidance', 'thaumaturgy', 'mage-hand'], // mage-hand is WIZARD cantrip
         [] // No spells for simplicity
@@ -253,7 +253,7 @@ describe('Current Spell Validation Implementation', () => {
       // expect(arcaneSpellSelection.valid).toBe(false);
     });
 
-  it('should identify the root cause: placeholder validation function', async () => {
+    it('should identify the root cause: placeholder validation function', () => {
       // The bug is in spell-validation.ts line 408:
       // isSpellValidForClass() always returns true (placeholder)
 
@@ -263,7 +263,7 @@ describe('Current Spell Validation Implementation', () => {
       // Any spell ID passes validation currently
       const invalidSpells = ['definitely-not-a-real-spell', 'cure-wounds', 'guidance'];
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         wizardCharacter,
         invalidSpells.slice(0, 3), // Use as cantrips
         invalidSpells.slice(0, 6).concat(['more-fake-spells', 'another-fake', 'last-fake']) // Pad to 6 spells
@@ -275,8 +275,8 @@ describe('Current Spell Validation Implementation', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle null character gracefully', async () => {
-      const result = await validateSpellSelectionAsync(null, ['mage-hand'], ['magic-missile']);
+    it('should handle null character gracefully', () => {
+      const result = validateSpellSelection(null, ['mage-hand'], ['magic-missile']);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
@@ -287,20 +287,22 @@ describe('Current Spell Validation Implementation', () => {
       );
     });
 
-    it('should handle null spell arrays by showing appropriate errors', async () => {
+    it('should handle null spell arrays by showing appropriate errors', () => {
       const wizardCharacter = createMockCharacter('Null Test Wizard', mockWizard, mockHuman);
 
       // Current implementation doesn't handle null gracefully, which is a bug we should document
-      await expect(validateSpellSelectionAsync(wizardCharacter, null as any, null as any)).rejects.toThrow('Cannot read properties of null');
+      expect(() => {
+        validateSpellSelection(wizardCharacter, null as any, null as any);
+      }).toThrow('Cannot read properties of null');
 
       // This documents that null handling needs to be improved
       // When fixed, this should return validation errors instead of throwing
     });
 
-    it('should handle empty spell arrays', async () => {
+    it('should handle empty spell arrays', () => {
       const wizardCharacter = createMockCharacter('Empty Test Wizard', mockWizard, mockHuman);
 
-      const result = await validateSpellSelectionAsync(wizardCharacter, [], []);
+      const result = validateSpellSelection(wizardCharacter, [], []);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(

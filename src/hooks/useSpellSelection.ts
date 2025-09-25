@@ -99,6 +99,11 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Initialize from character data
   useEffect(() => {
     if (character) {
+      console.log('🎯 [useSpellSelection] Initializing spell selection from character:', {
+        characterId: character.id,
+        cantrips: character.cantrips,
+        knownSpells: character.knownSpells
+      });
       setSelectedCantrips(character.cantrips || []);
       setSelectedSpells(character.knownSpells || []);
     }
@@ -209,17 +214,32 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   };
 
   const toggleSpell = (spellId: string) => {
+    console.log('🪄 [useSpellSelection] toggleSpell called:', spellId);
     setSelectedSpells(prev => {
-      if (prev.includes(spellId)) {
-        return prev.filter(id => id !== spellId);
+      const isRemoving = prev.includes(spellId);
+      const maxSpells = spellcastingInfo?.spellsKnown || 0;
+
+      let newSelection: string[];
+      if (isRemoving) {
+        newSelection = prev.filter(id => id !== spellId);
       } else {
         // Check if we've reached the limit
-        const maxSpells = spellcastingInfo?.spellsKnown || 0;
         if (prev.length >= maxSpells) {
+          console.log('🚫 [useSpellSelection] Spell limit reached, cannot add more spells');
           return prev; // Don't add if at limit
         }
-        return [...prev, spellId];
+        newSelection = [...prev, spellId];
       }
+
+      console.log('🪄 [useSpellSelection] selectedSpells updated:', {
+        action: isRemoving ? 'removed' : 'added',
+        spellId,
+        previousCount: prev.length,
+        newCount: newSelection.length,
+        newSelection
+      });
+
+      return newSelection;
     });
   };
 
@@ -307,6 +327,13 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Auto-save selections to character immediately when they change
   useEffect(() => {
     if (character) {
+      console.log('🔄 [useSpellSelection] Auto-saving spell selections to character context:', {
+        characterId: character.id,
+        cantrips: selectedCantrips,
+        knownSpells: selectedSpells,
+        cantripCount: selectedCantrips.length,
+        spellCount: selectedSpells.length
+      });
       dispatch({
         type: 'UPDATE_CHARACTER',
         payload: {

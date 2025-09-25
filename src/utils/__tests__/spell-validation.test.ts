@@ -100,17 +100,14 @@ describe('Spell Validation System', () => {
       },
       classFeatures: [],
       armorProficiencies: [],
-      it('should validate correct Wizard spell selection', async () => {
-        const mapping = getClassSpells(wizardCharacter.class.name);
-        const result = await validateSpellSelectionAsync(
-          wizardCharacter,
-          ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
-          mapping.cantrips.map(c => c.id),
-          mapping.spells.map(s => s.id)
-        );
-        expect(result.valid).toBe(true);
-        expect(result.errors).toHaveLength(0);
+      weaponProficiencies: []
+    };
+
+    mockBard = {
+      id: 'bard',
+      name: 'Bard',
+      description: 'Jack of all trades',
+      hitDie: 8,
       primaryAbility: 'charisma',
       savingThrowProficiencies: ['dexterity', 'charisma'],
       skillChoices: ['Any'],

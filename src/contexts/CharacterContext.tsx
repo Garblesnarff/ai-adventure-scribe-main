@@ -125,71 +125,242 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
   console.log('Reducer action:', action.type, 'payload' in action ? action.payload : 'No payload');
   console.log('Current state:', state);
 
-  switch (action.type) {
-    case 'SET_CHARACTER':
-      return {
-        ...state,
-        character: action.payload,
-        isDirty: false,
-      };
-    case 'UPDATE_CHARACTER':
-      console.log('🔄 UPDATE_CHARACTER reducer called');
-      console.log('🔄 Current state.character:', state.character);
-      console.log('🔄 Action payload:', action.payload);
+  // Enhanced error boundary for reducer operations
+  try {
+    switch (action.type) {
+      case 'SET_CHARACTER': {
+        // Validate character data before setting
+        if (!action.payload || typeof action.payload !== 'object') {
+          console.error('Invalid character payload:', action.payload);
+          return {
+            ...state,
+            error: 'Invalid character data provided'
+          };
+        }
 
-      const updatedCharacter = {
-        ...state.character,
-        ...action.payload
-      };
+        return {
+          ...state,
+          character: action.payload,
+          isDirty: false,
+          error: null // Clear any previous errors
+        };
+      }
 
-      console.log('🔄 Updated character after merge:', updatedCharacter);
-      console.log('🔄 Class specifically:', updatedCharacter?.class);
+      case 'UPDATE_CHARACTER': {
+        console.log('🔄 UPDATE_CHARACTER reducer called');
+        console.log('🔄 Current state.character:', state.character);
+        console.log('🔄 Action payload:', action.payload);
 
-      const newState = {
-        ...state,
-        character: updatedCharacter,
-        isDirty: true,
-      };
+        // Special logging for spell-related updates
+        if (action.payload.cantrips || action.payload.knownSpells) {
+          console.log('🎯 [CharacterContext] Spell update detected:', {
+            incomingCantrips: action.payload.cantrips,
+            incomingKnownSpells: action.payload.knownSpells,
+            currentCantrips: state.character?.cantrips,
+            currentKnownSpells: state.character?.knownSpells
+          });
+        }
 
-      console.log('🔄 New state returned from reducer:', newState);
-      return newState;
-    case 'SET_STEP':
-      return {
-        ...state,
-        currentStep: action.payload,
-      };
-    case 'SET_LOADING':
-      return {
-        ...state,
-        isLoading: action.payload,
-      };
-    case 'SET_ERROR':
-      return {
-        ...state,
-        error: action.payload,
-      };
-    case 'UPDATE_SPELL_SLOTS':
-      return {
-        ...state,
-        character: {
+        // Validate current character state
+        if (!state.character || typeof state.character !== 'object') {
+          console.error('No character to update or invalid character state');
+          return {
+            ...state,
+            error: 'No character data to update'
+          };
+        }
+
+        // Validate payload
+        if (!action.payload || typeof action.payload !== 'object') {
+          console.error('Invalid update payload:', action.payload);
+          return {
+            ...state,
+            error: 'Invalid character update data'
+          };
+        }
+
+        // Safe merge with validation
+        const updatedCharacter = {
           ...state.character,
-          spellSlots: action.payload,
-        },
-        isDirty: true,
-      };
-    case 'UPDATE_CONCENTRATION':
-      return {
-        ...state,
-        character: {
-          ...state.character,
-          activeConcentration: action.payload,
-        },
-        isDirty: true,
-      };
-    case 'RESET':
-      return initialState;
-    default:
-      return state;
+          ...action.payload
+        };
+
+        console.log('🔄 Updated character after merge:', updatedCharacter);
+        console.log('🔄 Class specifically:', updatedCharacter?.class);
+
+        // Additional logging for spell updates
+        if (action.payload.cantrips || action.payload.knownSpells) {
+          console.log('🎯 [CharacterContext] Final spell state after update:', {
+            finalCantrips: updatedCharacter.cantrips,
+            finalKnownSpells: updatedCharacter.knownSpells,
+            cantripCount: updatedCharacter.cantrips?.length || 0,
+            spellCount: updatedCharacter.knownSpells?.length || 0
+          });
+        }
+
+        const newState = {
+          ...state,
+          character: updatedCharacter,
+          isDirty: true,
+          error: null // Clear any previous errors on successful update
+        };
+
+        console.log('🔄 New state returned from reducer:', newState);
+        return newState;
+      }
+      case 'SET_STEP': {
+        // Validate step number
+        const step = action.payload;
+        if (typeof step !== 'number' || step < 0 || step > 20) {
+          console.error('Invalid step number:', step);
+          return {
+            ...state,
+            error: 'Invalid character creation step'
+          };
+        }
+
+        return {
+          ...state,
+          currentStep: step,
+          error: null
+        };
+      }
+
+      case 'SET_LOADING': {
+        // Validate loading boolean
+        const loading = action.payload;
+        if (typeof loading !== 'boolean') {
+          console.error('Invalid loading value:', loading);
+          return {
+            ...state,
+            error: 'Invalid loading state'
+          };
+        }
+
+        return {
+          ...state,
+          isLoading: loading,
+          error: null
+        };
+      }
+
+      case 'SET_ERROR': {
+        // Validate error message
+        const error = action.payload;
+        if (error !== null && typeof error !== 'string') {
+          console.error('Invalid error value:', error);
+          return {
+            ...state,
+            error: 'Invalid error message format'
+          };
+        }
+
+        return {
+          ...state,
+          error: error
+        };
+      }
+
+      case 'UPDATE_SPELL_SLOTS': {
+        // Validate spell slots payload
+        const spellSlots = action.payload;
+        if (!spellSlots || typeof spellSlots !== 'object') {
+          console.error('Invalid spell slots payload:', spellSlots);
+          return {
+            ...state,
+            error: 'Invalid spell slot data'
+          };
+        }
+
+        // Validate spell slot structure
+        for (const [level, slots] of Object.entries(spellSlots)) {
+          const levelNum = parseInt(level, 10);
+          if (isNaN(levelNum) || levelNum < 0 || levelNum > 9) {
+            console.error('Invalid spell slot level:', level);
+            return {
+              ...state,
+              error: 'Invalid spell slot level'
+            };
+          }
+
+          if (!slots || typeof slots !== 'object' ||
+              typeof slots.max !== 'number' || typeof slots.current !== 'number' ||
+              slots.max < 0 || slots.current < 0 || slots.current > slots.max) {
+            console.error('Invalid spell slot data for level', level, ':', slots);
+            return {
+              ...state,
+              error: 'Invalid spell slot structure'
+            };
+          }
+        }
+
+        // Validate character exists before updating
+        if (!state.character) {
+          console.error('No character to update spell slots for');
+          return {
+            ...state,
+            error: 'No character data to update'
+          };
+        }
+
+        return {
+          ...state,
+          character: {
+            ...state.character,
+            spellSlots: spellSlots,
+          },
+          isDirty: true,
+          error: null
+        };
+      }
+
+      case 'UPDATE_CONCENTRATION': {
+        // Validate concentration payload
+        const concentration = action.payload;
+        if (concentration !== null && typeof concentration !== 'string') {
+          console.error('Invalid concentration payload:', concentration);
+          return {
+            ...state,
+            error: 'Invalid concentration spell data'
+          };
+        }
+
+        // Validate character exists before updating
+        if (!state.character) {
+          console.error('No character to update concentration for');
+          return {
+            ...state,
+            error: 'No character data to update'
+          };
+        }
+
+        return {
+          ...state,
+          character: {
+            ...state.character,
+            activeConcentration: concentration,
+          },
+          isDirty: true,
+          error: null
+        };
+      }
+
+      case 'RESET': {
+        console.log('Resetting character state to initial state');
+        return initialState;
+      }
+
+      default: {
+        console.warn('Unknown action type dispatched:', action);
+        return state;
+      }
+    }
+  } catch (error) {
+    console.error('Unexpected error in character reducer:', error);
+    return {
+      ...state,
+      error: 'An unexpected error occurred while updating character data'
+    };
   }
 }
 // Added reducer cases for spell slot and concentration updates

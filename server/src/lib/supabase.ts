@@ -8,25 +8,32 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const supabaseService = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+  "pFRa8nkfmyY/V4HQPv8DDavb9d1t6BhLK3CKxHAPFhzLEcxUa/v2FqKdJJdaaLLyNyEgl/Wx4D3rPrQx5MSMlg==";
+
 export async function verifySupabaseToken(token: string): Promise<{ userId: string; email?: string } | null> {
   try {
-    // Try to decode the JWT token
-    const decoded = jwt.decode(token) as any;
+    // Verify the token with the secret
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
 
     if (!decoded || !decoded.sub) {
+      console.log('Token verification failed: missing sub claim');
       return null;
     }
 
-    // Check if it's a Supabase token by looking for expected fields
-    if (decoded.iss && decoded.iss.includes('supabase') && decoded.sub) {
+    // Additional validation for Supabase token structure
+    if (decoded.iss && decoded.iss.includes('supabase')) {
+      console.log('Successfully verified Supabase token for user:', decoded.sub);
       return {
         userId: decoded.sub,
         email: decoded.email
       };
     }
 
+    console.log('Token verification failed: not a Supabase token');
     return null;
   } catch (error) {
+    console.error('Token verification failed:', error.message);
     return null;
   }
 }
