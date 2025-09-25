@@ -152,8 +152,8 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       return { cantrips: [], spells: [], bonusCantrips: 0 };
     }
 
-    return getRacialSpells(character.race?.name || '', character.subrace);
-  }, [character?.race?.name, character?.subrace?.name]);
+    return getRacialSpells(character.race?.name || '', character.subrace || undefined);
+  }, [character?.race?.name, character?.subrace]);
 
   // Spell filtering function
   const filterSpells = (spells: Spell[], searchTerm: string, filters: SpellFilters): Spell[] => {
@@ -175,9 +175,9 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       }
 
       // Component filters
-      if (filters.components.verbal && !spell.verbal) return false;
-      if (filters.components.somatic && !spell.somatic) return false;
-      if (filters.components.material && !spell.material) return false;
+      if (filters.components.verbal && !spell.components_verbal) return false;
+      if (filters.components.somatic && !spell.components_somatic) return false;
+      if (filters.components.material && !spell.components_material) return false;
 
       // Property filters
       if (filters.properties.concentration && !spell.concentration) return false;
@@ -327,20 +327,28 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Auto-save selections to character immediately when they change
   useEffect(() => {
     if (character) {
-      console.log('🔄 [useSpellSelection] Auto-saving spell selections to character context:', {
-        characterId: character.id,
-        cantrips: selectedCantrips,
-        knownSpells: selectedSpells,
-        cantripCount: selectedCantrips.length,
-        spellCount: selectedSpells.length
-      });
-      dispatch({
-        type: 'UPDATE_CHARACTER',
-        payload: {
+      // Only log when there are actual changes to reduce noise
+      const currentCantrips = character.cantrips || [];
+      const currentSpells = character.knownSpells || [];
+      const cantripsChanged = JSON.stringify(selectedCantrips.sort()) !== JSON.stringify(currentCantrips.sort());
+      const spellsChanged = JSON.stringify(selectedSpells.sort()) !== JSON.stringify(currentSpells.sort());
+
+      if (cantripsChanged || spellsChanged) {
+        console.log('🔄 [useSpellSelection] Auto-saving spell selections to character context:', {
+          characterId: character.id,
           cantrips: selectedCantrips,
           knownSpells: selectedSpells,
-        },
-      });
+          cantripCount: selectedCantrips.length,
+          spellCount: selectedSpells.length
+        });
+        dispatch({
+          type: 'UPDATE_CHARACTER',
+          payload: {
+            cantrips: selectedCantrips,
+            knownSpells: selectedSpells,
+          },
+        });
+      }
     }
   }, [selectedCantrips, selectedSpells, character, dispatch]);
 

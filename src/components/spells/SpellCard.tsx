@@ -73,7 +73,17 @@ const SpellCard: React.FC<SpellCardProps> = ({
           ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
           ${className}
         `}
-        onClick={() => !isDisabled && onToggle(spell.id)}
+        onClick={() => {
+          console.log(`🪄 [SpellCard] Click on ${spell.name}:`, {
+            spellId: spell.id,
+            isSelected,
+            isDisabled,
+            willToggle: !isDisabled
+          });
+          if (!isDisabled) {
+            onToggle(spell.id);
+          }
+        }}
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
