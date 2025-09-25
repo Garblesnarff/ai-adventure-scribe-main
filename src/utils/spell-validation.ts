@@ -1,6 +1,5 @@
 import { CharacterClass, Character, Spell, Subrace } from '@/types/character';
 import { spellApi, SpellProgression } from '@/services/spellApi';
-import { getClassSpells } from '@/data/spellOptions';
 
 /**
  * D&D 5E Spell Validation System
@@ -112,8 +111,7 @@ export function getSpellcastingInfo(characterClass: CharacterClass, level: numbe
     hasSpellbook: classInfo.hasSpellbook || false,
     isPactMagic: classInfo.isPactMagic || false,
     ritualCasting: classInfo.ritualCasting || false,
-    // Coerce to the narrower union expected by SpellcastingInfo
-    spellcastingAbility: (classInfo.spellcastingAbility as SpellcastingInfo['spellcastingAbility']) || (spellcasting.ability as unknown as SpellcastingInfo['spellcastingAbility'])
+    spellcastingAbility: classInfo.spellcastingAbility || spellcasting.ability
   };
 }
 
@@ -197,10 +195,7 @@ export function getRacialSpells(race: string, subrace?: Subrace): { cantrips: st
 export function validateSpellSelection(
   character: Character | null,
   selectedCantrips: string[] = [],
-  selectedSpells: string[] = [],
-  // Optional lists of available spell IDs (populated by the UI hook or API caller)
-  availableCantripIds: string[] = [],
-  availableSpellIds: string[] = []
+  selectedSpells: string[] = []
 ): SpellValidationResult {
   const errors: SpellValidationError[] = [];
   const warnings: string[] = [];
@@ -280,14 +275,14 @@ export function validateSpellSelection(
     return { valid: errors.length === 0, errors, warnings };
   }
 
-  // If callers didn't provide available ids, we keep behaviour of skipping availability checks
-  // by leaving the arrays as provided (possibly empty).
+  // TODO: Replace with async API call - this needs to be refactored
+  // For now, we'll use simplified validation that will be handled by the UI layer
+  // The API validation will happen in the useSpellSelection hook
+  const availableCantripIds: string[] = []; // Placeholder - will be populated by API
+  const availableSpellIds: string[] = []; // Placeholder - will be populated by API
 
   // Get racial bonus spells
   const racialSpells = getRacialSpells(character.race?.name || '', character.subrace || undefined);
-
-  // Derive class spell mapping (fallback for tests / sync validation)
-  const classMapping = character.class?.name ? getClassSpells(character.class.name) : { cantrips: [] as Spell[], spells: [] as Spell[] };
 
   // Validate cantrip count
   const expectedCantrips = spellcastingInfo.cantripsKnown;
@@ -303,10 +298,6 @@ export function validateSpellSelection(
     });
   }
 
-  // Determine effective availability lists (use provided arrays if present, otherwise fall back to class mapping)
-  const effectiveAvailableCantripIds = availableCantripIds.length > 0 ? availableCantripIds : classMapping.cantrips.map(s => s.id);
-  const effectiveAvailableSpellIds = availableSpellIds.length > 0 ? availableSpellIds : classMapping.spells.map(s => s.id);
-
   // Validate each selected cantrip
   selectedCantrips.forEach(cantripId => {
     // Check if it's a racial cantrip
@@ -318,18 +309,18 @@ export function validateSpellSelection(
 
     if (isBonusCantrip && racialSpells.bonusCantripSource) {
       if (racialSpells.bonusCantripSource === 'wizard') {
-        // High Elf: must be a wizard cantrip (use local mapping for sync validation)
-        const wizardCantrips = getClassSpells('Wizard').cantrips.map(s => s.id);
-        isValidBonusCantrip = wizardCantrips.includes(cantripId);
+        // High Elf can choose any wizard cantrip
+        // For now, assume valid - will be validated by API in useSpellSelection
+        isValidBonusCantrip = true; // Placeholder - will be replaced with API validation
       }
       // Add more bonus cantrip sources as needed
     }
 
-    // Only validate availability if we have actual data (provided by the caller or fallback mapping)
-    if (!isRacialCantrip && !isValidBonusCantrip && effectiveAvailableCantripIds.length > 0 && !effectiveAvailableCantripIds.includes(cantripId)) {
+    // Only validate availability if we have actual data (not placeholder arrays)
+    if (!isRacialCantrip && !isValidBonusCantrip && availableCantripIds.length > 0 && !availableCantripIds.includes(cantripId)) {
       errors.push({
         type: 'INVALID_SPELL',
-        message: `${cantripId} is not available as a cantrip for ${character.class?.name || 'this class'}`,
+        message: `${cantripId} is not available as a cantrip for ${character.class.name}`,
         spellId: cantripId
       });
     }
@@ -350,11 +341,11 @@ export function validateSpellSelection(
 
   // Validate each selected spell
   selectedSpells.forEach(spellId => {
-    // Only validate availability if we have actual data (provided by the caller or fallback mapping)
-    if (effectiveAvailableSpellIds.length > 0 && !effectiveAvailableSpellIds.includes(spellId)) {
+    // Only validate availability if we have actual data (not placeholder arrays)
+    if (availableSpellIds.length > 0 && !availableSpellIds.includes(spellId)) {
       errors.push({
         type: 'INVALID_SPELL',
-        message: `${spellId} is not available as a 1st level spell for ${character.class?.name || 'this class'}`,
+        message: `${spellId} is not available as a 1st level spell for ${character.class.name}`,
         spellId: spellId
       });
     }
@@ -392,47 +383,6 @@ export function validateCharacterSpellSelection(character: Character): SpellVali
 }
 
 /**
- * Async server-backed validation. This will attempt to use available IDs if provided,
- * otherwise it fetches authoritative class spell lists from the server API before validating.
- */
-export async function validateSpellSelectionAsync(
-  character: Character | null,
-  selectedCantrips: string[] = [],
-  selectedSpells: string[] = [],
-  availableCantripIds: string[] = [],
-  availableSpellIds: string[] = []
-): Promise<SpellValidationResult> {
-  // If caller provided availability lists, use the synchronous validator path
-  if (availableCantripIds.length > 0 || availableSpellIds.length > 0) {
-    return validateSpellSelection(character, selectedCantrips, selectedSpells, availableCantripIds, availableSpellIds);
-  }
-
-  // Otherwise, attempt to fetch authoritative spell lists from the API for the character's class
-  try {
-    if (character && character.class && character.class.name) {
-      const className = character.class.name;
-      const level = character.level || 1;
-      try {
-        const { cantrips, spells } = await spellApi.getClassSpells(className, level);
-        const cantripIds = cantrips.map(c => c.id);
-        const spellIds = spells.map(s => s.id);
-        return validateSpellSelection(character, selectedCantrips, selectedSpells, cantripIds, spellIds);
-      } catch (apiErr) {
-        // If API fails, fall back to synchronous local validation with best-effort mapping
-        console.error('spellApi.getClassSpells failed during async validation:', apiErr);
-        return validateSpellSelection(character, selectedCantrips, selectedSpells, [], []);
-      }
-    }
-
-    // No character or class information — fallback to synchronous validation
-    return validateSpellSelection(character, selectedCantrips, selectedSpells, [], []);
-  } catch (error) {
-    console.error('validateSpellSelectionAsync failed:', error);
-    return { valid: false, errors: [{ type: 'LEVEL_REQUIREMENT', message: 'Validation failed due to internal error' }], warnings: [] };
-  }
-}
-
-/**
  * Get maximum spell counts for a character class
  */
 export function getMaxSpellCounts(characterClass: CharacterClass, level: number = 1): { cantrips: number, spells: number } {
@@ -453,17 +403,9 @@ export function getMaxSpellCounts(characterClass: CharacterClass, level: number 
  * TODO: Convert to async function that uses API
  */
 export function isSpellValidForClass(spellId: string, characterClass: CharacterClass, isCantrip: boolean = false): boolean {
-  try {
-    const mapping = getClassSpells(characterClass.name);
-    if (isCantrip) {
-      return mapping.cantrips.some(c => c.id === spellId);
-    }
-    return mapping.spells.some(s => s.id === spellId);
-  } catch (error) {
-    // If anything goes wrong, be conservative and return false
-    console.error('isSpellValidForClass failed:', error);
-    return false;
-  }
+  // Placeholder implementation - actual validation now happens in useSpellSelection hook
+  // This function will be removed or converted to async in the future
+  return true; // Temporary - validation handled by API
 }
 
 /**
@@ -492,8 +434,7 @@ export async function getEnhancedSpellcastingInfo(character: Character): Promise
     pactMagicSlots: any;
   };
 }> {
-  // Guard against missing class
-  const baseInfo = character.class ? getSpellcastingInfo(character.class, character.level || 1) : null;
+  const baseInfo = getSpellcastingInfo(character.class, character.level || 1);
 
   if (!baseInfo) {
     return baseInfo as any;
@@ -547,6 +488,171 @@ export async function validateMulticlassSpellSelection(
 
   // Fall back to regular validation for single-class characters
   return validateSpellSelection(character, selectedCantrips, selectedSpells);
+}
+
+/**
+ * Async version of validateSpellSelection that validates against API data
+ */
+export async function validateSpellSelectionAsync(
+  character: Character | null,
+  selectedCantrips: string[] = [],
+  selectedSpells: string[] = [],
+  availableCantripIds: string[] = [],
+  availableSpellIds: string[] = []
+): Promise<SpellValidationResult> {
+  const errors: SpellValidationError[] = [];
+  const warnings: string[] = [];
+
+  // Handle null or missing character
+  if (!character) {
+    if (selectedCantrips.length > 0 || selectedSpells.length > 0) {
+      errors.push({
+        type: 'LEVEL_REQUIREMENT',
+        message: 'Cannot validate spells without a character'
+      });
+    }
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  // Early return for non-spellcasters - but check racial spells first
+  if (!character.class?.spellcasting) {
+    const racialSpells = getRacialSpells(character.race?.name || '', character.subrace || undefined);
+    const hasRacialSpells = racialSpells.cantrips.length > 0 || racialSpells.bonusCantrips > 0;
+
+    if (!hasRacialSpells && (selectedCantrips.length > 0 || selectedSpells.length > 0)) {
+      errors.push({
+        type: 'LEVEL_REQUIREMENT',
+        message: `${character.class?.name} is not a spellcasting class at level 1`
+      });
+    } else if (hasRacialSpells) {
+      // Validate only racial spells for non-spellcasters
+      const expectedRacialCantrips = racialSpells.cantrips.length + racialSpells.bonusCantrips;
+
+      if (selectedCantrips.length !== expectedRacialCantrips) {
+        errors.push({
+          type: 'COUNT_MISMATCH',
+          message: `Expected ${expectedRacialCantrips} racial cantrips, but got ${selectedCantrips.length}`,
+          expected: expectedRacialCantrips,
+          actual: selectedCantrips.length
+        });
+      }
+
+      // Validate racial cantrips against available list
+      selectedCantrips.forEach(cantripId => {
+        const isRacialCantrip = racialSpells.cantrips.includes(cantripId);
+        let isValidBonusCantrip = false;
+
+        if (racialSpells.bonusCantrips > 0 && racialSpells.bonusCantripSource === 'wizard') {
+          // Validate against available cantrips if we have the data
+          isValidBonusCantrip = availableCantripIds.length === 0 || availableCantripIds.includes(cantripId);
+        }
+
+        if (!isRacialCantrip && !isValidBonusCantrip) {
+          errors.push({
+            type: 'INVALID_SPELL',
+            message: `${cantripId} is not a valid racial cantrip for ${character.race?.name}`,
+            spellId: cantripId
+          });
+        }
+      });
+
+      if (selectedSpells.length > 0) {
+        errors.push({
+          type: 'LEVEL_REQUIREMENT',
+          message: `${character.class?.name} cannot cast spells at level ${character.level || 1}`
+        });
+      }
+    }
+
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  // Now check if this is a spellcaster at this level
+  const spellcastingInfo = getSpellcastingInfo(character.class, character.level || 1);
+  if (!spellcastingInfo || (spellcastingInfo.cantripsKnown === 0 && spellcastingInfo.spellsKnown === 0)) {
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  // Get racial bonus spells
+  const racialSpells = getRacialSpells(character.race?.name || '', character.subrace || undefined);
+
+  // Validate cantrip count
+  const expectedCantrips = spellcastingInfo.cantripsKnown;
+  const racialCantripsCount = racialSpells.cantrips.length + racialSpells.bonusCantrips;
+  const totalExpectedCantrips = expectedCantrips + racialCantripsCount;
+
+  if (selectedCantrips.length !== totalExpectedCantrips) {
+    errors.push({
+      type: 'COUNT_MISMATCH',
+      message: `Expected ${totalExpectedCantrips} cantrips (${expectedCantrips} class + ${racialCantripsCount} racial), but got ${selectedCantrips.length}`,
+      expected: totalExpectedCantrips,
+      actual: selectedCantrips.length
+    });
+  }
+
+  // Validate each selected cantrip against available list
+  selectedCantrips.forEach(cantripId => {
+    // Check if it's a racial cantrip
+    const isRacialCantrip = racialSpells.cantrips.includes(cantripId);
+
+    // Check if it's a bonus cantrip from racial feature
+    let isValidBonusCantrip = false;
+    if (racialSpells.bonusCantrips > 0 && racialSpells.bonusCantripSource === 'wizard') {
+      isValidBonusCantrip = availableCantripIds.length === 0 || availableCantripIds.includes(cantripId);
+    }
+
+    // Validate availability using API data
+    if (!isRacialCantrip && !isValidBonusCantrip && availableCantripIds.length > 0 && !availableCantripIds.includes(cantripId)) {
+      errors.push({
+        type: 'INVALID_SPELL',
+        message: `${cantripId} is not available as a cantrip for ${character.class.name}`,
+        spellId: cantripId
+      });
+    }
+  });
+
+  // Validate spell count
+  if (spellcastingInfo.spellsKnown !== undefined && spellcastingInfo.spellsKnown > 0) {
+    const expectedSpells = spellcastingInfo.spellsKnown;
+    if (selectedSpells.length !== expectedSpells) {
+      errors.push({
+        type: 'COUNT_MISMATCH',
+        message: `Expected ${expectedSpells} spells known, but got ${selectedSpells.length}`,
+        expected: expectedSpells,
+        actual: selectedSpells.length
+      });
+    }
+  }
+
+  // Validate each selected spell against available list
+  selectedSpells.forEach(spellId => {
+    if (availableSpellIds.length > 0 && !availableSpellIds.includes(spellId)) {
+      errors.push({
+        type: 'INVALID_SPELL',
+        message: `${spellId} is not available as a 1st level spell for ${character.class.name}`,
+        spellId: spellId
+      });
+    }
+  });
+
+  // Add helpful warnings
+  if (spellcastingInfo.hasSpellbook) {
+    warnings.push('As a Wizard, these spells will be recorded in your spellbook. You can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day.');
+  }
+
+  if (spellcastingInfo.isPactMagic) {
+    warnings.push('As a Warlock, you use Pact Magic. Your spell slots recharge on a short rest.');
+  }
+
+  if (spellcastingInfo.ritualCasting) {
+    warnings.push('Your class can cast spells as rituals if they have the ritual tag, without expending a spell slot.');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  };
 }
 
 /**

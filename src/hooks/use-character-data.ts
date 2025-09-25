@@ -212,12 +212,25 @@ export const useCharacterData = (characterId: string | undefined) => {
 
     try {
       setLoading(true);
-      
-      // Fetch basic character info
+
+      // Get the current user session for ownership check
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Not Authenticated",
+          description: "Please log in to view your characters.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Fetch basic character info WITH ownership check
       const { data: characterData, error: characterError } = await supabase
         .from('characters')
         .select('*')
         .eq('id', characterId)
+        .eq('user_id', session.user.id)  // CRITICAL: Add ownership check
         .maybeSingle();
 
       if (characterError) throw characterError;

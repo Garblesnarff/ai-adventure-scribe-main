@@ -8,6 +8,12 @@ export default function characterRouter() {
 
   router.get('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
+
+    console.log('[CHARACTERS_LIST] Request details:', {
+      userId,
+      timestamp: new Date().toISOString()
+    });
+
     try {
       const { data: characters, error } = await supabaseService
         .from('characters')
@@ -20,13 +26,19 @@ export default function characterRouter() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching characters:', error);
+        console.error('[CHARACTERS_LIST] Database error:', error);
         return res.status(500).json({ error: 'Failed to fetch characters' });
       }
 
+      console.log('[CHARACTERS_LIST] Response:', {
+        userId,
+        characterCount: characters?.length || 0,
+        characters: characters?.map(c => ({ id: c.id, name: c.name }))
+      });
+
       return res.json(characters || []);
     } catch (e) {
-      console.error('Error fetching characters:', e);
+      console.error('[CHARACTERS_LIST] Error fetching characters:', e);
       return res.status(500).json({ error: 'Failed to fetch characters' });
     }
   });
@@ -297,18 +309,37 @@ export default function characterRouter() {
     const userId = req.user!.userId;
     const characterId = req.params.id;
 
+    console.log('[CHARACTER_SPELLS] Request details:', {
+      userId,
+      characterId,
+      timestamp: new Date().toISOString()
+    });
+
     try {
-      // Verify character ownership
+      // Verify character ownership with detailed logging
       const { data: character, error: charError } = await supabaseService
         .from('characters')
-        .select('id, class, level')
+        .select('id, class, level, user_id')  // Include user_id for debugging
         .eq('id', characterId)
         .eq('user_id', userId)
         .single();
 
-      if (charError || !character) {
+      if (charError) {
+        console.log('[CHARACTER_SPELLS] Database error:', charError);
         return res.status(404).json({ error: 'Character not found' });
       }
+
+      if (!character) {
+        console.log('[CHARACTER_SPELLS] No character found for:', { characterId, userId });
+        return res.status(404).json({ error: 'Character not found' });
+      }
+
+      console.log('[CHARACTER_SPELLS] Character found:', {
+        characterId: character.id,
+        class: character.class,
+        level: character.level,
+        ownerId: character.user_id
+      });
 
       // Get character spells with full spell data
       const { data: characterSpells, error: spellsError } = await supabaseService
@@ -338,9 +369,18 @@ export default function characterRouter() {
         .eq('character_id', characterId);
 
       if (spellsError) {
-        console.error('Error fetching character spells:', spellsError);
+        console.error('[CHARACTER_SPELLS] Error fetching character spells:', spellsError);
         return res.status(500).json({ error: 'Failed to fetch character spells' });
       }
+
+      console.log('[CHARACTER_SPELLS] Raw spells data:', {
+        spellCount: characterSpells?.length || 0,
+        spells: characterSpells?.map(cs => ({
+          spellName: cs.spells?.name,
+          level: cs.spells?.level,
+          prepared: cs.is_prepared
+        }))
+      });
 
       // Transform the data to a more usable format
       const spells = characterSpells?.map((cs: any) => ({
@@ -353,7 +393,7 @@ export default function characterRouter() {
       const cantrips = spells.filter((spell: any) => spell.level === 0);
       const leveledSpells = spells.filter((spell: any) => spell.level > 0);
 
-      return res.json({
+      const response = {
         character: {
           id: character.id,
           class: character.class,
@@ -362,7 +402,16 @@ export default function characterRouter() {
         cantrips,
         spells: leveledSpells,
         total_spells: spells.length
+      };
+
+      console.log('[CHARACTER_SPELLS] Response:', {
+        characterId: response.character.id,
+        cantripCount: response.cantrips.length,
+        spellCount: response.spells.length,
+        totalSpells: response.total_spells
       });
+
+      return res.json(response);
     } catch (error) {
       console.error('Error fetching character spells:', error);
       return res.status(500).json({ error: 'Failed to fetch character spells' });

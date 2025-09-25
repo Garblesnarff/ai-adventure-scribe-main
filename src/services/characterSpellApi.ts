@@ -56,8 +56,27 @@ class CharacterSpellService {
   }
 
   async getCharacterSpells(characterId: string): Promise<CharacterSpellsResponse> {
-    const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`);
-    return response.json();
+    try {
+      const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`);
+      return response.json();
+    } catch (error) {
+      console.warn(`[CharacterSpellService] Failed to fetch spells for character ${characterId}:`, error);
+
+      if (error instanceof Error && error.message.includes('Character not found')) {
+        return {
+          character: {
+            id: characterId,
+            class: 'Unknown',
+            level: 1
+          },
+          cantrips: [],
+          spells: [],
+          total_spells: 0
+        };
+      }
+
+      throw error;
+    }
   }
 
   async saveCharacterSpells(

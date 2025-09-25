@@ -46,6 +46,19 @@ const CharacterList: React.FC = () => {
   const fetchCharacters = React.useCallback(async () => {
     try {
       setLoading(true);
+
+      // Get the current user session for ownership filtering
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Not Authenticated",
+          description: "Please log in to view your characters.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('characters')
         .select(`
@@ -55,6 +68,7 @@ const CharacterList: React.FC = () => {
             max_hit_points, current_hit_points, armor_class
           )
         `)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -70,7 +84,7 @@ const CharacterList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, navigate]);
 
   React.useEffect(() => {
     fetchCharacters();

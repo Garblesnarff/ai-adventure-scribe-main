@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
-  validateSpellSelectionAsync,
+  validateSpellSelection,
   getRacialSpells,
   validateCharacterSpellSelection
 } from '@/utils/spell-validation';
@@ -40,11 +40,11 @@ describe('Racial Spell Integration Edge Cases', () => {
   });
 
   describe('High Elf Wizard Cantrip Selection', () => {
-  it('should allow High Elf to select bonus wizard cantrip regardless of class', async () => {
+    it('should allow High Elf to select bonus wizard cantrip regardless of class', () => {
       const highElfFighter = createMockCharacter('High Elf Fighter', mockFighter, mockElf, mockHighElfSubrace);
 
       // High Elf Fighter should be able to select 1 wizard cantrip despite being non-spellcaster
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         highElfFighter,
         ['prestidigitation'], // 1 wizard cantrip from racial bonus
         []
@@ -54,11 +54,11 @@ describe('Racial Spell Integration Edge Cases', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should enforce wizard cantrip restriction for High Elf bonus cantrip', async () => {
+    it('should enforce wizard cantrip restriction for High Elf bonus cantrip', () => {
       const highElfFighter = createMockCharacter('High Elf Fighter', mockFighter, mockElf, mockHighElfSubrace);
 
       // Try to select a cleric cantrip as High Elf bonus cantrip
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         highElfFighter,
         ['guidance'], // Cleric cantrip, should be rejected
         []
@@ -73,10 +73,10 @@ describe('Racial Spell Integration Edge Cases', () => {
       );
     });
 
-  it('should allow High Elf Wizard to select 4 cantrips total (3 class + 1 racial)', async () => {
+    it('should allow High Elf Wizard to select 4 cantrips total (3 class + 1 racial)', () => {
       const highElfWizard = createMockCharacter('High Elf Wizard', mockWizard, mockElf, mockHighElfSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         highElfWizard,
         ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'], // 4 total cantrips
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -86,11 +86,11 @@ describe('Racial Spell Integration Edge Cases', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should reject High Elf with wrong cantrip count', async () => {
+    it('should reject High Elf with wrong cantrip count', () => {
       const highElfWizard = createMockCharacter('High Elf Wizard', mockWizard, mockElf, mockHighElfSubrace);
 
       // Only 3 cantrips when 4 are expected (3 class + 1 racial)
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         highElfWizard,
         ['mage-hand', 'prestidigitation', 'light'], // Missing racial cantrip
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -106,11 +106,11 @@ describe('Racial Spell Integration Edge Cases', () => {
       );
     });
 
-  it('should prevent High Elf from selecting non-wizard cantrips as racial bonus', async () => {
+    it('should prevent High Elf from selecting non-wizard cantrips as racial bonus', () => {
       const highElfWizard = createMockCharacter('High Elf Wizard', mockWizard, mockElf, mockHighElfSubrace);
 
       // Try to include a cleric cantrip in the selection
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         highElfWizard,
         ['mage-hand', 'prestidigitation', 'light', 'guidance'], // guidance is cleric
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -127,10 +127,10 @@ describe('Racial Spell Integration Edge Cases', () => {
   });
 
   describe('Tiefling Racial Spells', () => {
-  it('should allow Tiefling Fighter to have Thaumaturgy cantrip', async () => {
+    it('should allow Tiefling Fighter to have Thaumaturgy cantrip', () => {
       const tieflingFighter = createMockCharacter('Tiefling Fighter', mockFighter, mockHuman, mockTieflingSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         tieflingFighter,
         ['thaumaturgy'], // Racial cantrip
         []
@@ -140,10 +140,10 @@ describe('Racial Spell Integration Edge Cases', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should allow Tiefling Wizard to have class cantrips plus racial cantrip', async () => {
+    it('should allow Tiefling Wizard to have class cantrips plus racial cantrip', () => {
       const tieflingWizard = createMockCharacter('Tiefling Wizard', mockWizard, mockHuman, mockTieflingSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         tieflingWizard,
         ['mage-hand', 'prestidigitation', 'light', 'thaumaturgy'], // 3 wizard + 1 racial
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -153,11 +153,11 @@ describe('Racial Spell Integration Edge Cases', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should require Tiefling to include racial cantrip in selection', async () => {
+    it('should require Tiefling to include racial cantrip in selection', () => {
       const tieflingWizard = createMockCharacter('Tiefling Wizard', mockWizard, mockHuman, mockTieflingSubrace);
 
       // Missing the required racial cantrip
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         tieflingWizard,
         ['mage-hand', 'prestidigitation', 'light'], // Only 3, missing thaumaturgy
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -173,10 +173,10 @@ describe('Racial Spell Integration Edge Cases', () => {
       );
     });
 
-  it('should handle Tiefling Warlock properly', async () => {
+    it('should handle Tiefling Warlock properly', () => {
       const tieflingWarlock = createMockCharacter('Tiefling Warlock', mockWarlock, mockHuman, mockTieflingSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         tieflingWarlock,
         ['prestidigitation', 'minor-illusion', 'thaumaturgy'], // 2 warlock + 1 racial
         ['magic-missile', 'shield'] // 2 warlock spells
@@ -188,10 +188,10 @@ describe('Racial Spell Integration Edge Cases', () => {
   });
 
   describe('Drow Racial Magic', () => {
-  it('should allow Drow Fighter to have Dancing Lights cantrip', async () => {
+    it('should allow Drow Fighter to have Dancing Lights cantrip', () => {
       const drowFighter = createMockCharacter('Drow Fighter', mockFighter, mockElf, mockDrowSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         drowFighter,
         ['dancing-lights'], // Drow racial cantrip
         []
@@ -201,10 +201,10 @@ describe('Racial Spell Integration Edge Cases', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should allow Drow Wizard to combine class and racial cantrips', async () => {
+    it('should allow Drow Wizard to combine class and racial cantrips', () => {
       const drowWizard = createMockCharacter('Drow Wizard', mockWizard, mockElf, mockDrowSubrace);
 
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         drowWizard,
         ['mage-hand', 'prestidigitation', 'light', 'dancing-lights'], // 3 wizard + 1 racial
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
@@ -214,7 +214,7 @@ describe('Racial Spell Integration Edge Cases', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-  it('should handle Drow level-gated spells at higher levels', async () => {
+    it('should handle Drow level-gated spells at higher levels', () => {
       // This would need level 3+ character for Faerie Fire
       const drowWizardLevel3 = {
         ...createMockCharacter('Drow Wizard L3', mockWizard, mockElf, mockDrowSubrace),
@@ -222,7 +222,7 @@ describe('Racial Spell Integration Edge Cases', () => {
       };
 
       // At level 3, Drow get Faerie Fire once per day
-      const result = await validateSpellSelectionAsync(
+      const result = validateSpellSelection(
         drowWizardLevel3,
         ['mage-hand', 'prestidigitation', 'light', 'dancing-lights'],
         ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']

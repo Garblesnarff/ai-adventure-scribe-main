@@ -300,98 +300,146 @@ const WizardContent: React.FC = () => {
     console.log('handleNext called at step:', currentStep);
     console.log('Current step info:', filteredSteps[currentStep]);
 
-    if (currentStep < filteredSteps.length - 1) {
-      // Validate current step before proceeding
-      const validation = validateCurrentStep(currentStep);
-      console.log('Step validation result:', validation);
+    // Enhanced error boundary for navigation
+    try {
+      if (currentStep < filteredSteps.length - 1) {
+        // Validate current step before proceeding
+        const validation = validateCurrentStep(currentStep);
+        console.log('Step validation result:', validation);
 
-      if (!validation.isValid) {
-        // Show a gentler warning for spell-related validation
-        const isSpellStep = filteredSteps[currentStep]?.label === 'Spells';
-        if (isSpellStep) {
-          toast({
-            title: "Spell Selection Incomplete",
-            description: validation.message + " You can continue and complete this later.",
-            variant: "default",
-          });
-          // Allow proceeding despite incomplete spells
+        if (!validation.isValid) {
+          // Show a gentler warning for spell-related validation
+          const isSpellStep = filteredSteps[currentStep]?.label === 'Spells';
+          if (isSpellStep) {
+            toast({
+              title: "Spell Selection Incomplete",
+              description: validation.message + " You can continue and complete this later.",
+              variant: "default",
+            });
+            // Allow proceeding despite incomplete spells
+          } else {
+            toast({
+              title: "Please Complete This Step",
+              description: validation.message,
+              variant: "destructive",
+            });
+            return; // Don't proceed if validation fails for non-spell steps
+          }
+        }
+
+        // Find the next valid step (accounting for filtered steps)
+        const nextStepIndex = currentStep + 1;
+        console.log('Navigating to next step:', nextStepIndex);
+
+        // Enhanced safety check: ensure the next step exists in filtered steps
+        if (nextStepIndex < filteredSteps.length && filteredSteps[nextStepIndex]) {
+          setCurrentStep(nextStepIndex);
         } else {
+          console.error('Next step does not exist in filtered steps:', nextStepIndex, filteredSteps.length);
           toast({
-            title: "Please Complete This Step",
-            description: validation.message,
+            title: "Navigation Error",
+            description: "Unable to navigate to the next step. The wizard may need to be restarted.",
             variant: "destructive",
           });
-          return; // Don't proceed if validation fails for non-spell steps
+          // Attempt recovery by resetting to the last valid step
+          const lastValidStep = Math.max(0, filteredSteps.length - 1);
+          if (currentStep !== lastValidStep) {
+            setCurrentStep(lastValidStep);
+          }
         }
-      }
-
-      // Find the next valid step (accounting for filtered steps)
-      const nextStepIndex = currentStep + 1;
-      console.log('Navigating to next step:', nextStepIndex);
-
-      // Safety check: ensure the next step exists in filtered steps
-      if (nextStepIndex < filteredSteps.length && filteredSteps[nextStepIndex]) {
-        setCurrentStep(nextStepIndex);
       } else {
-        console.error('Next step does not exist in filtered steps:', nextStepIndex, filteredSteps.length);
-        toast({
-          title: "Navigation Error",
-          description: "Unable to navigate to the next step. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else {
-      console.log('Final step - attempting to save character');
-      if (state.character) {
+        console.log('Final step - attempting to save character');
+
+        // Enhanced character existence check
+        if (!state.character) {
+          console.error('No character data to save');
+          toast({
+            title: "No Character Data",
+            description: "Character data appears to be missing. Please restart the character creation process.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Enhanced validation with detailed feedback
         console.log('Character data for save:', state.character);
         const isValid = validateCharacter();
         console.log('Character validation result:', isValid);
-        
+
         if (!isValid) {
-          toast({
-            title: "Character Validation Issues",
-            description: "Some optional fields are incomplete. You can still save and edit later, or complete the missing sections.",
-            variant: "default", // Changed to default instead of destructive to allow save
-          });
-          // Continue to save even with warnings (relaxed validation)
+          // Check for critical missing fields
+          const criticalMissing = [];
+          if (!state.character.name?.trim()) criticalMissing.push('name');
+          if (!state.character.race) criticalMissing.push('race');
+          if (!state.character.class) criticalMissing.push('class');
+          if (!state.character.background) criticalMissing.push('background');
+          if (!state.character.abilityScores) criticalMissing.push('ability scores');
+
+          if (criticalMissing.length > 0) {
+            toast({
+              title: "Critical Fields Missing",
+              description: `Please complete these required fields: ${criticalMissing.join(', ')}. Character cannot be saved without them.`,
+              variant: "destructive",
+            });
+            return;
+          } else {
+            toast({
+              title: "Character Validation Issues",
+              description: "Some optional fields are incomplete. You can still save and edit later, or complete the missing sections.",
+              variant: "default",
+            });
+          }
         }
 
+        // Enhanced save with better error handling
         try {
           console.log('Calling saveCharacter...');
           const savedCharacter = await saveCharacter(state.character);
           console.log('Save result:', savedCharacter);
-          
+
           if (savedCharacter?.id) {
             console.log('Character saved successfully, navigating to /characters');
             toast({
-              title: "Success",
-              description: "Character created successfully!",
+              title: "Success!",
+              description: "Character created successfully! Background image generation may continue in the background.",
             });
             navigate('/characters');
           } else {
             console.error('Save succeeded but no ID returned');
             toast({
-              title: "Save Warning",
-              description: "Character may have saved but couldn't verify. Check your characters list.",
+              title: "Partial Save Success",
+              description: "Character was saved but some data may be incomplete. Please check your characters list and edit if needed.",
               variant: "default",
             });
+            // Still navigate to give user a chance to see their characters
+            navigate('/characters');
           }
         } catch (error) {
           console.error('Error saving character:', error);
+
+          // Enhanced error message with recovery suggestions
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const isNetworkError = errorMessage.toLowerCase().includes('network') ||
+                                errorMessage.toLowerCase().includes('fetch') ||
+                                errorMessage.toLowerCase().includes('connection');
+
           toast({
             title: "Save Error",
-            description: `Failed to save character: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            description: isNetworkError
+              ? `Network connection issue: ${errorMessage}. Please check your internet connection and try again.`
+              : `Failed to save character: ${errorMessage}. Please try again or contact support if the issue persists.`,
             variant: "destructive",
           });
         }
-      } else {
-        console.error('No character data to save');
-        toast({
-          title: "No Character",
-          description: "No character data found to save.",
-          variant: "destructive",
-        });
       }
+    } catch (unexpectedError) {
+      // Catch-all error handler for any unexpected errors in navigation
+      console.error('Unexpected error in handleNext:', unexpectedError);
+      toast({
+        title: "Unexpected Error",
+        description: "An unexpected error occurred during navigation. Please refresh the page and try again.",
+        variant: "destructive",
+      });
     }
   };
 

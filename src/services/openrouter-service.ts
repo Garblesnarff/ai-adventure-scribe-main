@@ -40,6 +40,13 @@ interface ImageGenerationRequest {
   referenceImage?: string; // base64 encoded image to use as reference
 }
 
+interface TextGenerationRequest {
+  prompt: string;
+  model?: string;
+  maxTokens?: number;
+  temperature?: number;
+}
+
 interface ModelConfig {
   id: string;
   dailyLimit?: number;
@@ -62,13 +69,34 @@ export class OpenRouterService {
   private apiKey: string;
   private baseUrl = 'https://openrouter.ai/api/v1';
   
-  // Model configurations - note: OpenRouter does not offer free image generation models
-  private models: ModelConfig[] = [
+  // Model configurations - text models are cheaper and some have free tiers
+  private imageModels: ModelConfig[] = [
     {
       id: 'google/gemini-2.5-flash-image-preview',
       isFree: false // All image models on OpenRouter are paid (~$0.04 per generation)
     }
   ];
+
+  private textModels: ModelConfig[] = [
+    {
+      id: 'google/gemini-flash-1.5',
+      isFree: true, // Free tier available with credits
+      dailyLimit: 1000
+    },
+    {
+      id: 'google/gemini-2.0-flash-exp:free',
+      isFree: true,
+      dailyLimit: 100
+    },
+    {
+      id: 'anthropic/claude-3.5-sonnet',
+      isFree: false
+    }
+  ];
+
+  private get models(): ModelConfig[] {
+    return [...this.imageModels, ...this.textModels];
+  }
 
   constructor() {
     this.apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
@@ -127,16 +155,18 @@ export class OpenRouterService {
   /**
    * Select the best available model based on free tier limits and balance
    * @param hasBalance - Whether the API key has positive balance
+   * @param modelType - Type of model to select (text or image)
    * @returns Model configuration to use
    */
-  private selectAvailableModel(hasBalance: boolean = true): ModelConfig {
+  private selectAvailableModel(hasBalance: boolean = true, modelType: 'text' | 'image' = 'image'): ModelConfig {
+    const availableModels = modelType === 'text' ? this.textModels : this.imageModels;
     // Only try free models if we have positive balance
     if (hasBalance) {
       // Try free models first (1000 requests/day with $10+ credits)
-      for (const model of this.models.filter(m => m.isFree)) {
+      for (const model of availableModels.filter(m => m.isFree)) {
         if (model.dailyLimit && modelUsageTracker.canUseModel(model.id, model.dailyLimit)) {
           const remaining = modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit);
-          console.log(`Using free model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
+          console.log(`Using free ${modelType} model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
           return model;
         }
       }
@@ -145,15 +175,15 @@ export class OpenRouterService {
     }
 
     // Fall back to paid models
-    const paidModel = this.models.find(m => !m.isFree);
+    const paidModel = availableModels.find(m => !m.isFree);
     if (paidModel) {
-      console.log(`${hasBalance ? 'Free tier exhausted' : 'Insufficient balance'}, using paid model: ${paidModel.id}`);
+      console.log(`${hasBalance ? 'Free tier exhausted' : 'Insufficient balance'}, using paid ${modelType} model: ${paidModel.id}`);
       return paidModel;
     }
 
     // Fallback to first model if none available
-    console.warn('No suitable model found, using first available model');
-    return this.models[0];
+    console.warn(`No suitable ${modelType} model found, using first available model`);
+    return availableModels[0];
   }
 
   /**
@@ -180,7 +210,7 @@ export class OpenRouterService {
 
     // Check API key balance before proceeding
     const hasBalance = await this.hasPositiveBalance();
-    const selectedModel = this.selectAvailableModel(hasBalance);
+    const selectedModel = this.selectAvailableModel(hasBalance, 'image');
 
     try {
       // Build message content based on whether we have a reference image
@@ -392,6 +422,157 @@ export class OpenRouterService {
     } catch (error) {
       console.error('Error generating image with OpenRouter:', error);
       throw new Error(`Image generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Generate text using OpenRouter API with automatic fallback to paid models
+   * @param request - Text generation request parameters
+   * @returns Promise resolving to generated text
+   */
+  async generateText(request: TextGenerationRequest): Promise<string> {
+    const { prompt, model, maxTokens = 1000, temperature = 0.8 } = request;
+
+    // Check API key balance before proceeding
+    const hasBalance = await this.hasPositiveBalance();
+    const selectedModel = this.selectAvailableModel(hasBalance, 'text');
+
+    try {
+      const requestBody = {
+        model: model || selectedModel.id,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: maxTokens,
+        temperature: temperature,
+      };
+
+      console.log('OpenRouter text generation request:', JSON.stringify(requestBody, null, 2));
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'AI Adventure Scribe',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        // Check if it's a 403 error (insufficient balance or key limit exceeded)
+        if (response.status === 403) {
+          console.error(`OpenRouter API 403 error: ${errorText}`);
+
+          // If we were trying a free model, try paid models
+          if (selectedModel.isFree) {
+            console.warn(`Free model blocked (403), trying paid text model`);
+            const paidTextModel = this.textModels.find(m => !m.isFree);
+            if (paidTextModel) {
+              return this.generateTextWithModel(prompt, paidTextModel, maxTokens, temperature);
+            }
+          }
+        }
+
+        // Check if it's a rate limit error for free tier
+        if (response.status === 429 && selectedModel.isFree) {
+          console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid text model`);
+          const paidTextModel = this.textModels.find(m => !m.isFree);
+          if (paidTextModel) {
+            return this.generateTextWithModel(prompt, paidTextModel, maxTokens, temperature);
+          }
+        }
+
+        throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      console.log('OpenRouter text response:', JSON.stringify(data, null, 2));
+
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error('No text generated in API response');
+      }
+
+      const choice = data.choices[0];
+      if (!choice.message || !choice.message.content) {
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+
+      // Record successful usage for free tier models
+      if (selectedModel.isFree && selectedModel.dailyLimit) {
+        modelUsageTracker.recordUsage(selectedModel.id, selectedModel.dailyLimit);
+      }
+
+      return choice.message.content.trim();
+    } catch (error) {
+      console.error('Error generating text with OpenRouter:', error);
+      throw new Error(`Text generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Generate text with a specific model (used for fallback)
+   * @param prompt - Text generation prompt
+   * @param model - Specific model to use
+   * @param maxTokens - Maximum tokens to generate
+   * @param temperature - Temperature for generation
+   * @returns Promise resolving to generated text
+   */
+  private async generateTextWithModel(prompt: string, model: ModelConfig, maxTokens: number = 1000, temperature: number = 0.8): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'AI Adventure Scribe',
+        },
+        body: JSON.stringify({
+          model: model.id,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: maxTokens,
+          temperature: temperature,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error('No text generated in API response');
+      }
+
+      const choice = data.choices[0];
+      if (!choice.message || !choice.message.content) {
+        throw new Error('Invalid response format from OpenRouter API');
+      }
+
+      // Record successful usage for free tier models
+      if (model.isFree && model.dailyLimit) {
+        modelUsageTracker.recordUsage(model.id, model.dailyLimit);
+      }
+
+      return choice.message.content.trim();
+    } catch (error) {
+      console.error('Error generating text with specific model:', error);
+      throw error;
     }
   }
 

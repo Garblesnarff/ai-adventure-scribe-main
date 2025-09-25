@@ -83,7 +83,17 @@ const SpellSelection: React.FC = () => {
 
   // Auto-save when valid selection is made
   useEffect(() => {
+    console.log('🎯 [SpellSelection] Auto-save check:', {
+      canProceed,
+      validationValid: validation.valid,
+      selectedCantrips: selectedCantrips,
+      selectedSpells: selectedSpells,
+      cantripCount: selectedCantrips.length,
+      spellCount: selectedSpells.length
+    });
+
     if (canProceed && validation.valid) {
+      console.log('✅ [SpellSelection] Triggering updateCharacterSpells');
       updateCharacterSpells();
     }
   }, [canProceed, validation.valid, updateCharacterSpells]);

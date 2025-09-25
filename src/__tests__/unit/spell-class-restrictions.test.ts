@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { validateSpellSelectionAsync, getSpellcastingInfo } from '@/utils/spell-validation';
+import { validateSpellSelection, getSpellcastingInfo } from '@/utils/spell-validation';
 import { spellApi } from '@/services/spellApi';
 import {
   mockWizard,
@@ -42,14 +42,14 @@ describe('Spell Class Restriction Enforcement', () => {
   });
 
   describe('Wizard Spell Restrictions', () => {
-  it('should validate wizard spell count requirements', async () => {
+    it('should validate wizard spell count requirements', () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Test basic count validation (current implementation)
       const tooFewCantrips = ['mage-hand', 'prestidigitation']; // Only 2, needs 3
       const correctSpells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
 
-  const result = await validateSpellSelectionAsync(wizardCharacter, tooFewCantrips, correctSpells);
+      const result = validateSpellSelection(wizardCharacter, tooFewCantrips, correctSpells);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
@@ -84,13 +84,13 @@ describe('Spell Class Restriction Enforcement', () => {
       expect(problematicDivineSpells).toContain('cure-wounds'); // The historical bug spell
     });
 
-  it('should allow valid wizard spell selections', async () => {
+    it('should allow valid wizard spell selections', () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       const validCantrips = ['mage-hand', 'prestidigitation', 'light'];
       const validSpells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
 
-  const result = await validateSpellSelectionAsync(wizardCharacter, validCantrips, validSpells);
+      const result = validateSpellSelection(wizardCharacter, validCantrips, validSpells);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -99,7 +99,7 @@ describe('Spell Class Restriction Enforcement', () => {
       );
     });
 
-  it('should reject specific divine spells that were historically problematic', async () => {
+    it('should reject specific divine spells that were historically problematic', async () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       const problematicDivineSpells = [
@@ -121,7 +121,7 @@ describe('Spell Class Restriction Enforcement', () => {
         const cantrips = ['mage-hand', 'prestidigitation', 'light'];
         const spells = ['magic-missile', 'shield', spellId]; // Include problematic spell
 
-  const result = await validateSpellSelectionAsync(wizardCharacter, cantrips, spells);
+        const result = validateSpellSelection(wizardCharacter, cantrips, spells);
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
@@ -135,7 +135,7 @@ describe('Spell Class Restriction Enforcement', () => {
   });
 
   describe('Cleric Spell Restrictions', () => {
-  it('should prevent clerics from selecting wizard-only spells', async () => {
+    it('should prevent clerics from selecting wizard-only spells', async () => {
       const clericCharacter = createMockCharacter('Test Cleric', mockCleric, mockHuman);
 
       // Mock API to reject arcane spells for clerics
@@ -150,7 +150,7 @@ describe('Spell Class Restriction Enforcement', () => {
       const invalidCantrips = ['guidance', 'thaumaturgy', 'mage-hand']; // mage-hand is wizard
       const invalidSpells = ['cure-wounds']; // Only one spell for cleric, but this would be invalid
 
-  const result = await validateSpellSelectionAsync(clericCharacter, invalidCantrips, invalidSpells);
+      const result = validateSpellSelection(clericCharacter, invalidCantrips, invalidSpells);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
@@ -161,7 +161,7 @@ describe('Spell Class Restriction Enforcement', () => {
       );
     });
 
-  it('should allow clerics to select only cleric spells', async () => {
+    it('should allow clerics to select only cleric spells', async () => {
       const clericCharacter = createMockCharacter('Test Cleric', mockCleric, mockHuman);
 
       // Mock API to validate cleric spells
@@ -176,7 +176,7 @@ describe('Spell Class Restriction Enforcement', () => {
       const validCantrips = ['guidance', 'thaumaturgy', 'sacred-flame'];
       const validSpells = ['cure-wounds']; // Cleric only needs 1 prepared spell at level 1
 
-  const result = await validateSpellSelectionAsync(clericCharacter, validCantrips, validSpells);
+      const result = validateSpellSelection(clericCharacter, validCantrips, validSpells);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -184,7 +184,7 @@ describe('Spell Class Restriction Enforcement', () => {
   });
 
   describe('Bard Spell Restrictions', () => {
-  it('should prevent bards from selecting class-specific spells they cannot learn', async () => {
+    it('should prevent bards from selecting class-specific spells they cannot learn', async () => {
       const bardCharacter = createMockCharacter('Test Bard', mockBard, mockHuman);
 
       // Bards have access to many spells but not class-specific ones like Magic Missile or Cure Wounds
@@ -199,7 +199,7 @@ describe('Spell Class Restriction Enforcement', () => {
       const cantrips = ['prestidigitation', 'minor-illusion'];
       const invalidSpells = ['charm-person', 'thunderwave', 'cure-wounds', 'healing-word']; // cure-wounds not on bard list
 
-  const result = await validateSpellSelectionAsync(bardCharacter, cantrips, invalidSpells);
+      const result = validateSpellSelection(bardCharacter, cantrips, invalidSpells);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
@@ -212,7 +212,7 @@ describe('Spell Class Restriction Enforcement', () => {
   });
 
   describe('Cross-Class Contamination Prevention', () => {
-  it('should maintain strict boundaries between divine and arcane spells', async () => {
+    it('should maintain strict boundaries between divine and arcane spells', async () => {
       const testCases = [
         {
           className: 'Wizard',
@@ -246,7 +246,7 @@ describe('Spell Class Restriction Enforcement', () => {
           const cantrips = ['prestidigitation', 'light'];
           const spells = [forbiddenSpell];
 
-          const result = await validateSpellSelectionAsync(testCase.character, cantrips, spells);
+          const result = validateSpellSelection(testCase.character, cantrips, spells);
 
           expect(result.valid).toBe(false);
           expect(result.errors).toContainEqual(
@@ -259,7 +259,7 @@ describe('Spell Class Restriction Enforcement', () => {
       }
     });
 
-  it('should validate spell counts correctly while enforcing class restrictions', async () => {
+    it('should validate spell counts correctly while enforcing class restrictions', async () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Mock API to allow only wizard spells
@@ -273,7 +273,7 @@ describe('Spell Class Restriction Enforcement', () => {
       const mixedCantrips = ['mage-hand', 'prestidigitation', 'guidance']; // guidance is cleric
       const mixedSpells = ['magic-missile', 'shield', 'cure-wounds', 'detect-magic', 'burning-hands', 'sleep']; // cure-wounds is cleric
 
-  const result = await validateSpellSelectionAsync(wizardCharacter, mixedCantrips, mixedSpells);
+      const result = validateSpellSelection(wizardCharacter, mixedCantrips, mixedSpells);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
@@ -292,7 +292,7 @@ describe('Spell Class Restriction Enforcement', () => {
   });
 
   describe('Edge Cases and Security', () => {
-  it('should handle attempts to exploit spell ID manipulation', async () => {
+    it('should handle attempts to exploit spell ID manipulation', async () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Test various forms of spell ID manipulation
@@ -317,7 +317,7 @@ describe('Spell Class Restriction Enforcement', () => {
         const cantrips = ['mage-hand', 'prestidigitation', 'light'];
         const spells = ['magic-missile', 'shield', spellId];
 
-  const result = await validateSpellSelectionAsync(wizardCharacter, cantrips, spells);
+        const result = validateSpellSelection(wizardCharacter, cantrips, spells);
 
         expect(result.valid).toBe(false);
         expect(result.errors.some(error =>
@@ -326,7 +326,7 @@ describe('Spell Class Restriction Enforcement', () => {
       }
     });
 
-  it('should maintain validation even with network failures', async () => {
+    it('should maintain validation even with network failures', async () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Mock API to throw network error
@@ -335,14 +335,14 @@ describe('Spell Class Restriction Enforcement', () => {
       const cantrips = ['mage-hand', 'prestidigitation', 'light'];
       const spells = ['magic-missile', 'shield', 'cure-wounds'];
 
-  const result = await validateSpellSelectionAsync(wizardCharacter, cantrips, spells);
+      const result = validateSpellSelection(wizardCharacter, cantrips, spells);
 
       // Should still validate basic requirements
       expect(result.valid).toBe(true); // Basic validation passes (API placeholder)
       // Note: In production, this would need proper error handling
     });
 
-  it('should prevent empty or null spell selections from bypassing validation', async () => {
+    it('should prevent empty or null spell selections from bypassing validation', async () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       const testCases = [
@@ -352,7 +352,7 @@ describe('Spell Class Restriction Enforcement', () => {
       ];
 
       for (const testCase of testCases) {
-  const result = await validateSpellSelectionAsync(wizardCharacter, testCase.cantrips, testCase.spells);
+        const result = validateSpellSelection(wizardCharacter, testCase.cantrips, testCase.spells);
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
@@ -365,13 +365,13 @@ describe('Spell Class Restriction Enforcement', () => {
   });
 
   describe('Non-Spellcaster Validation', () => {
-  it('should prevent non-spellcasters from selecting any spells', async () => {
+    it('should prevent non-spellcasters from selecting any spells', () => {
       const fighterCharacter = createMockCharacter('Test Fighter', mockFighter, mockHuman);
 
       const cantrips = ['mage-hand'];
       const spells = ['magic-missile'];
 
-  const result = await validateSpellSelectionAsync(fighterCharacter, cantrips, spells);
+      const result = validateSpellSelection(fighterCharacter, cantrips, spells);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
@@ -382,14 +382,14 @@ describe('Spell Class Restriction Enforcement', () => {
       );
     });
 
-  it('should allow racial spells for non-spellcasters', async () => {
+    it('should allow racial spells for non-spellcasters', () => {
       const fighterCharacter = createMockCharacter('Test Fighter', mockFighter, mockHuman);
 
       // Even non-spellcasters can have racial spells
       const cantrips: string[] = [];
       const spells: string[] = [];
 
-  const result = await validateSpellSelectionAsync(fighterCharacter, cantrips, spells);
+      const result = validateSpellSelection(fighterCharacter, cantrips, spells);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
