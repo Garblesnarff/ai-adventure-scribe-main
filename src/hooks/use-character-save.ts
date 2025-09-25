@@ -9,6 +9,8 @@ import {
   transformEquipmentForStorage,
   transformMulticlassingForStorage
 } from '@/utils/characterTransformations';
+import { characterSpellService } from '@/services/characterSpellApi';
+import { convertSpellIdsToDatabase } from '@/utils/spell-id-mapping';
 
 // Project Types
 import { Character, transformCharacterForStorage } from '@/types/character';
@@ -119,6 +121,32 @@ export const useCharacterSave = () => {
 
         if (equipmentError) {
           console.warn('Equipment save failed but continuing:', equipmentError);
+          // Don't throw - character core data saved
+        }
+      }
+
+      // Save spells if present (non-blocking)
+      if ((character.cantrips && character.cantrips.length > 0) || (character.knownSpells && character.knownSpells.length > 0)) {
+        try {
+          const frontendSpellIds = [...(character.cantrips || []), ...(character.knownSpells || [])];
+          console.log('🔄 Frontend spell IDs:', frontendSpellIds);
+
+          // Convert frontend kebab-case IDs to database UUIDs
+          const databaseSpellIds = convertSpellIdsToDatabase(frontendSpellIds);
+          console.log('🔄 Converted to database UUIDs:', databaseSpellIds);
+
+          if (databaseSpellIds.length === 0) {
+            console.warn('⚠️ No valid spell mappings found, skipping spell save');
+            return savedCharacter;
+          }
+
+          await characterSpellService.saveCharacterSpells(characterData.id, {
+            spells: databaseSpellIds,
+            className: character.class?.name || ''
+          });
+          console.log(`✅ Successfully saved ${databaseSpellIds.length}/${frontendSpellIds.length} spells for character ${characterData.id}`);
+        } catch (spellError) {
+          console.warn('❌ Spell save failed but continuing:', spellError);
           // Don't throw - character core data saved
         }
       }
