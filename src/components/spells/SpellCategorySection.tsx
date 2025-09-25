@@ -45,6 +45,17 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
   const isComplete = selectedCount === maxSpells;
   const isOverLimit = selectedCount > maxSpells;
 
+  // Debug logging for spell categories
+  console.log(`🎯 [SpellCategorySection] ${title} - Render:`, {
+    spellCount: spells.length,
+    selectedCount,
+    maxSpells,
+    spellNames: spells.slice(0, 3).map(s => s.name),
+    selectedSpells,
+    isComplete,
+    isOverLimit
+  });
+
   const getIcon = () => {
     switch (icon) {
       case 'cantrip':

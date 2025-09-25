@@ -372,30 +372,42 @@ const SpellSelection: React.FC = () => {
 
         {/* 1st Level Spells Tab */}
         <TabsContent value="spells" className="space-y-4">
-          {(spellcastingInfo?.spellsKnown || 0) > 0 ? (
-            <SpellCategorySection
-              title="1st Level Spells"
-              description={spellcastingInfo?.hasSpellbook ?
-                "These spells will be recorded in your spellbook. You can prepare some each day." :
-                "These are the spells you know and can cast using spell slots."
-              }
-              spells={filteredSpells}
-              selectedSpells={selectedSpells}
-              maxSpells={spellcastingInfo?.spellsKnown || 0}
-              onToggleSpell={toggleSpell}
-              icon="spell"
-              info={spellcastingInfo?.hasSpellbook ?
-                "As a Wizard, you can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day." :
-                undefined
-              }
-            />
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Wand2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-              <p>Your class doesn't learn 1st level spells at character creation.</p>
-              <p className="text-sm">You may gain spellcasting abilities at higher levels.</p>
-            </div>
-          )}
+          {(() => {
+            const spellsKnown = spellcastingInfo?.spellsKnown || 0;
+            console.log(`🎯 [SpellSelection] 1st Level Tab Render:`, {
+              spellsKnown,
+              filteredSpellsCount: filteredSpells.length,
+              availableSpellsCount: availableSpells.length,
+              filteredSpellNames: filteredSpells.slice(0, 3).map(s => s.name),
+              spellcastingInfo,
+              willShowSpells: spellsKnown > 0
+            });
+
+            return spellsKnown > 0 ? (
+              <SpellCategorySection
+                title="1st Level Spells"
+                description={spellcastingInfo?.hasSpellbook ?
+                  "These spells will be recorded in your spellbook. You can prepare some each day." :
+                  "These are the spells you know and can cast using spell slots."
+                }
+                spells={filteredSpells}
+                selectedSpells={selectedSpells}
+                maxSpells={spellcastingInfo?.spellsKnown || 0}
+                onToggleSpell={toggleSpell}
+                icon="spell"
+                info={spellcastingInfo?.hasSpellbook ?
+                  "As a Wizard, you can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day." :
+                  undefined
+                }
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Wand2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                <p>Your class doesn't learn 1st level spells at character creation.</p>
+                <p className="text-sm">You may gain spellcasting abilities at higher levels.</p>
+              </div>
+            );
+          })()}
         </TabsContent>
 
         {/* Racial Spells Tab */}

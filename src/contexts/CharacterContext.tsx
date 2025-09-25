@@ -147,18 +147,34 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'UPDATE_CHARACTER': {
-        console.log('🔄 UPDATE_CHARACTER reducer called');
-        console.log('🔄 Current state.character:', state.character);
-        console.log('🔄 Action payload:', action.payload);
-
-        // Special logging for spell-related updates
-        if (action.payload.cantrips || action.payload.knownSpells) {
-          console.log('🎯 [CharacterContext] Spell update detected:', {
-            incomingCantrips: action.payload.cantrips,
-            incomingKnownSpells: action.payload.knownSpells,
-            currentCantrips: state.character?.cantrips,
-            currentKnownSpells: state.character?.knownSpells
+        // Only log when there are actual changes to reduce noise
+        const currentCharacter = state.character;
+        const payload = action.payload;
+        const hasChanges = currentCharacter && payload &&
+          Object.keys(payload).some(key => {
+            const currentValue = currentCharacter[key as keyof Character];
+            const newValue = payload[key as keyof typeof payload];
+            return JSON.stringify(currentValue) !== JSON.stringify(newValue);
           });
+
+        if (hasChanges) {
+          console.log('🔄 UPDATE_CHARACTER reducer called');
+          console.log('🔄 Current state.character:', state.character);
+          console.log('🔄 Action payload:', payload);
+
+          // Special logging for spell-related updates
+          if (payload.cantrips || payload.knownSpells || payload.preparedSpells || payload.ritualSpells) {
+            console.log('🎯 [CharacterContext] Spell update detected:', {
+              incomingCantrips: payload.cantrips,
+              incomingKnownSpells: payload.knownSpells,
+              incomingPreparedSpells: payload.preparedSpells,
+              incomingRitualSpells: payload.ritualSpells,
+              currentCantrips: state.character?.cantrips,
+              currentKnownSpells: state.character?.knownSpells,
+              currentPreparedSpells: state.character?.preparedSpells,
+              currentRitualSpells: state.character?.ritualSpells
+            });
+          }
         }
 
         // Validate current character state
@@ -185,17 +201,27 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           ...action.payload
         };
 
-        console.log('🔄 Updated character after merge:', updatedCharacter);
-        console.log('🔄 Class specifically:', updatedCharacter?.class);
-
-        // Additional logging for spell updates
-        if (action.payload.cantrips || action.payload.knownSpells) {
+        // Additional logging for spell updates - include both property naming conventions
+        if (hasChanges && (payload.cantrips || payload.knownSpells || payload.preparedSpells || payload.ritualSpells)) {
           console.log('🎯 [CharacterContext] Final spell state after update:', {
             finalCantrips: updatedCharacter.cantrips,
             finalKnownSpells: updatedCharacter.knownSpells,
+            finalPreparedSpells: updatedCharacter.preparedSpells,
+            finalRitualSpells: updatedCharacter.ritualSpells,
             cantripCount: updatedCharacter.cantrips?.length || 0,
-            spellCount: updatedCharacter.knownSpells?.length || 0
+            spellCount: updatedCharacter.knownSpells?.length || 0,
+            preparedSpellCount: updatedCharacter.preparedSpells?.length || 0,
+            ritualSpellCount: updatedCharacter.ritualSpells?.length || 0
           });
+        }
+
+        // Handle property name mapping for backward compatibility
+        // If we receive preparedSpells/ritualSpells, map them to cantrips/knownSpells
+        if ((payload as any).preparedSpells !== undefined) {
+          updatedCharacter.cantrips = (payload as any).preparedSpells;
+        }
+        if ((payload as any).ritualSpells !== undefined) {
+          updatedCharacter.knownSpells = (payload as any).ritualSpells;
         }
 
         const newState = {
@@ -205,7 +231,6 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           error: null // Clear any previous errors on successful update
         };
 
-        console.log('🔄 New state returned from reducer:', newState);
         return newState;
       }
       case 'SET_STEP': {
