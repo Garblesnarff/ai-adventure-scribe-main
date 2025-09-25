@@ -11,7 +11,7 @@ import spellRouter from './v1/spells.js';
 export function registerRoutes(app: Express, db: Pool) {
   app.use('/v1/auth', authRouter(db));
   app.use('/v1/campaigns', campaignRouter(db));
-  app.use('/v1/characters', characterRouter(db));
+  app.use('/v1/characters', characterRouter());
   app.use('/v1/sessions', sessionRouter(db));
   app.use('/v1/ai', aiRouter(db));
   app.use('/v1/billing', stripeRouter(db));

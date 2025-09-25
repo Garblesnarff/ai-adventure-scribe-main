@@ -133,16 +133,26 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         isDirty: false,
       };
     case 'UPDATE_CHARACTER':
+      console.log('🔄 UPDATE_CHARACTER reducer called');
+      console.log('🔄 Current state.character:', state.character);
+      console.log('🔄 Action payload:', action.payload);
+
       const updatedCharacter = {
         ...state.character,
         ...action.payload
       };
-      console.log('Updated character:', updatedCharacter);
-      return {
+
+      console.log('🔄 Updated character after merge:', updatedCharacter);
+      console.log('🔄 Class specifically:', updatedCharacter?.class);
+
+      const newState = {
         ...state,
         character: updatedCharacter,
         isDirty: true,
       };
+
+      console.log('🔄 New state returned from reducer:', newState);
+      return newState;
     case 'SET_STEP':
       return {
         ...state,

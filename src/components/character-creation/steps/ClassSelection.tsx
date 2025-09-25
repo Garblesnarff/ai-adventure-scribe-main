@@ -12,18 +12,29 @@ const ClassSelection: React.FC = () => {
   const { scrollToNavigation } = useAutoScroll();
 
   const handleClassSelect = (characterClass: CharacterClass) => {
-    console.log('Selecting class:', characterClass); // Debug log
+    console.log('🎯 handleClassSelect called with:', characterClass);
+    console.log('🎯 Current character state before dispatch:', state.character);
+    console.log('🎯 Character class before update:', state.character?.class);
+
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: { class: characterClass }
     });
-    
+
+    console.log('🎯 Dispatched UPDATE_CHARACTER with payload:', { class: characterClass });
+
+    // Add a small delay to check if state updated
+    setTimeout(() => {
+      console.log('🎯 Character state after dispatch (with delay):', state.character);
+      console.log('🎯 Character class after update:', state.character?.class);
+    }, 100);
+
     toast({
       title: "Class Selected",
       description: `You have chosen the ${characterClass.name} class.`,
       duration: 1000,
     });
-    
+
     // Auto-scroll to navigation to proceed to next step
     scrollToNavigation();
   };
