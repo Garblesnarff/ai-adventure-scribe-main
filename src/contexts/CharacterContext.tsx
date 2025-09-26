@@ -100,7 +100,12 @@ const initialState: CharacterState = {
     skillProficiencies: [],
     toolProficiencies: [],
     savingThrowProficiencies: [],
-    languages: []
+    languages: [],
+    // Spell arrays for spellcasting classes
+    cantrips: [],
+    knownSpells: [],
+    preparedSpells: [],
+    ritualSpells: []
   },
   isDirty: false,
   currentStep: 0,
@@ -215,14 +220,10 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           });
         }
 
-        // Handle property name mapping for backward compatibility
-        // If we receive preparedSpells/ritualSpells, map them to cantrips/knownSpells
-        if ((payload as any).preparedSpells !== undefined) {
-          updatedCharacter.cantrips = (payload as any).preparedSpells;
-        }
-        if ((payload as any).ritualSpells !== undefined) {
-          updatedCharacter.knownSpells = (payload as any).ritualSpells;
-        }
+        // Note: Removed incorrect property mapping that was causing spell data loss
+        // preparedSpells should remain as preparedSpells (used by classes like Cleric/Wizard)
+        // cantrips and knownSpells should remain separate (from Step 8 spell selection)
+        // This allows both Step 8 (cantrips/knownSpells) and Step 9 (preparedSpells) to coexist
 
         const newState = {
           ...state,

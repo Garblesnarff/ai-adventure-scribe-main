@@ -1,0 +1,211 @@
+/**
+ * Character Loading Service
+ *
+ * Loads complete character data including spells from database
+ * and transforms it into the proper format for the frontend
+ *
+ * @author AI Dungeon Master Team
+ */
+
+import { supabase } from '@/integrations/supabase/client';
+import { Character } from '@/types/character';
+import { characterSpellService } from './characterSpellApi';
+import { convertSpellIdsToFrontend } from '@/utils/spell-id-mapping';
+
+export class CharacterLoaderService {
+  /**
+   * Load a complete character with all spell data populated
+   * @param characterId - Character ID to load
+   * @returns Complete character object with spell arrays populated
+   */
+  async loadCharacterWithSpells(characterId: string): Promise<Character | null> {
+    try {
+      console.log(`🔄 [CharacterLoader] Loading character ${characterId} with spells`);
+
+      // Fetch Character Data from database
+      const { data: characterData, error: characterError } = await supabase
+        .from('characters')
+        .select(`
+          *,
+          character_stats(*)
+        `)
+        .eq('id', characterId)
+        .single();
+
+      if (characterError) {
+        console.error('[CharacterLoader] Database error:', characterError);
+        throw new Error(`Failed to load character: ${characterError.message}`);
+      }
+
+      if (!characterData) {
+        console.error('[CharacterLoader] Character not found');
+        return null;
+      }
+
+      // Transform basic character data
+      const stats = Array.isArray(characterData.character_stats)
+        ? characterData.character_stats[0]
+        : characterData.character_stats;
+
+      const characterRace = characterData.race ? { name: characterData.race } : null;
+      const characterClass = characterData.class ? { name: characterData.class } : null;
+      const characterBackground = characterData.background ? { name: characterData.background } : null;
+
+      // Parse spell data from the characters table first (primary source)
+      let cantrips: string[] = [];
+      let knownSpells: string[] = [];
+      let preparedSpells: string[] = [];
+      let ritualSpells: string[] = [];
+
+      // Parse spell data from database fields - supports both JSONB arrays and comma-separated strings
+      const parseSpellData = (spellData: string[] | string | null): string[] => {
+        if (!spellData) return [];
+
+        // Handle JSONB array format (preferred)
+        if (Array.isArray(spellData)) {
+          return spellData.filter(spell => spell && typeof spell === 'string');
+        }
+
+        // Handle comma-separated string format (legacy)
+        if (typeof spellData === 'string') {
+          if (spellData.trim() === '') return [];
+          return spellData.split(',').map(spell => spell.trim()).filter(spell => spell.length > 0);
+        }
+
+        return [];
+      };
+
+      console.log(`📖 [CharacterLoader] Loading spells from characters table for ${characterId}`);
+      cantrips = parseSpellData(characterData.cantrips);
+      knownSpells = parseSpellData(characterData.known_spells);
+      preparedSpells = parseSpellData(characterData.prepared_spells); // Now exists in database
+      ritualSpells = parseSpellData(characterData.ritual_spells); // Now exists in database
+
+      console.log(`📊 [CharacterLoader] Parsed spells from characters table:`, {
+        cantrips: cantrips.length,
+        knownSpells: knownSpells.length,
+        preparedSpells: preparedSpells.length,
+        ritualSpells: ritualSpells.length,
+        rawCantrips: characterData.cantrips,
+        rawKnownSpells: characterData.known_spells
+      });
+
+      // Optional enhancement: Try to load additional spell data from API
+      try {
+        console.log(`🔍 [CharacterLoader] Attempting to enhance with API data...`);
+        const spellData = await characterSpellService.getCharacterSpells(characterId);
+
+        if (spellData && (spellData.cantrips.length > 0 || spellData.spells.length > 0)) {
+          console.log(`🎯 [CharacterLoader] Found API spell data:`, {
+            apiCantrips: spellData.cantrips.length,
+            apiSpells: spellData.spells.length
+          });
+
+          // Convert database UUID spell IDs back to frontend kebab-case IDs
+          const cantripUUIDs = spellData.cantrips.map(c => c.spell_id);
+          const spellUUIDs = spellData.spells.map(s => s.spell_id);
+
+          const apiCantrips = convertSpellIdsToFrontend(cantripUUIDs);
+          const apiKnownSpells = convertSpellIdsToFrontend(spellUUIDs);
+
+          // Merge API data with database data (prefer API data if available)
+          if (apiCantrips.length > 0) {
+            console.log(`🔄 [CharacterLoader] Using API cantrips instead of database cantrips`);
+            cantrips = apiCantrips;
+          }
+          if (apiKnownSpells.length > 0) {
+            console.log(`🔄 [CharacterLoader] Using API spells instead of database spells`);
+            knownSpells = apiKnownSpells;
+            // Update prepared spells if we got new known spells
+            if (preparedSpells.length === 0) {
+              preparedSpells = [...knownSpells];
+            }
+          }
+
+          console.log(`✅ [CharacterLoader] Enhanced with API data:`, {
+            finalCantrips: cantrips.length,
+            finalKnownSpells: knownSpells.length,
+            finalPreparedSpells: preparedSpells.length
+          });
+        } else {
+          console.log(`📝 [CharacterLoader] No API spell data found, using database data`);
+        }
+      } catch (spellError) {
+        console.warn(`⚠️ [CharacterLoader] API enhancement failed, using database data:`, spellError);
+        // Continue with database spell data - this is not a fatal error
+      }
+
+      // Construct complete character object
+      const loadedCharacter: Character = {
+        id: characterData.id,
+        user_id: characterData.user_id || '',
+        name: characterData.name,
+        race: characterRace as any,
+        class: characterClass as any,
+        level: characterData.level || 1,
+        background: characterBackground as any,
+        abilityScores: {
+          strength: {
+            score: stats?.strength || 10,
+            modifier: Math.floor(((stats?.strength || 10) - 10) / 2),
+            savingThrow: false
+          },
+          dexterity: {
+            score: stats?.dexterity || 10,
+            modifier: Math.floor(((stats?.dexterity || 10) - 10) / 2),
+            savingThrow: false
+          },
+          constitution: {
+            score: stats?.constitution || 10,
+            modifier: Math.floor(((stats?.constitution || 10) - 10) / 2),
+            savingThrow: false
+          },
+          intelligence: {
+            score: stats?.intelligence || 10,
+            modifier: Math.floor(((stats?.intelligence || 10) - 10) / 2),
+            savingThrow: false
+          },
+          wisdom: {
+            score: stats?.wisdom || 10,
+            modifier: Math.floor(((stats?.wisdom || 10) - 10) / 2),
+            savingThrow: false
+          },
+          charisma: {
+            score: stats?.charisma || 10,
+            modifier: Math.floor(((stats?.charisma || 10) - 10) / 2),
+            savingThrow: false
+          },
+        },
+        experience: characterData.experience_points || 0,
+        alignment: characterData.alignment || '',
+        description: characterData.description || '',
+        personalityTraits: [],
+        ideals: [],
+        bonds: [],
+        flaws: [],
+        equipment: [],
+        // Spell data - this is the key fix!
+        cantrips,
+        knownSpells,
+        preparedSpells,
+        ritualSpells
+      };
+
+      console.log(`🎯 [CharacterLoader] Successfully loaded character with spells:`, {
+        name: loadedCharacter.name,
+        id: loadedCharacter.id,
+        cantrips: loadedCharacter.cantrips?.length || 0,
+        knownSpells: loadedCharacter.knownSpells?.length || 0
+      });
+
+      return loadedCharacter;
+
+    } catch (error) {
+      console.error('[CharacterLoader] Error loading character with spells:', error);
+      return null;
+    }
+  }
+}
+
+// Export singleton instance
+export const characterLoaderService = new CharacterLoaderService();

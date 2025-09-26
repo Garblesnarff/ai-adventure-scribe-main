@@ -78,7 +78,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash-lite-latest',
         maxTokens: 1000,
         temperature: 0.8,
       });
@@ -107,6 +107,7 @@ export class CharacterDescriptionGenerator {
 
         const response = await openRouterService.generateText({
           prompt,
+          model: 'gemini-2.5-flash-lite-latest',
           maxTokens: 1000,
           temperature: 0.8
         });
@@ -331,7 +332,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash-lite-latest',
         maxTokens: 100,
         temperature: 0.7,
       });
@@ -346,6 +347,7 @@ export class CharacterDescriptionGenerator {
 
         const response = await openRouterService.generateText({
           prompt,
+          model: 'gemini-2.5-flash-lite-latest',
           maxTokens: 100,
           temperature: 0.7
         });

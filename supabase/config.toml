@@ -1,1 +1,3 @@
 project_id = "cnalyhtalikwsopogula"
+[db]
+major_version = "15"

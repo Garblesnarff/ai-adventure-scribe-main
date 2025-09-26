@@ -34,6 +34,8 @@ export const SPELL_ID_MAPPING: Record<string, string> = {
 
   // Wizard Only
   'light': 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  'ray-of-frost': '2d7e8f9a-1b2c-3d4e-5f6a-7b8c9d0e1f2a', // Wizard cantrip
+  'shocking-grasp': '3e8f9a0b-2c3d-4e5f-6a7b-8c9d0e1f2a3b', // Wizard cantrip
 
   // === LEVEL 1 SPELLS ===
   // Bard Spells
@@ -54,6 +56,13 @@ export const SPELL_ID_MAPPING: Record<string, string> = {
   'cure-wounds': 'b298a650-af88-4800-8a25-f2c456ce63df', // Bard, Cleric
   'healing-word': '7ba3df7b-919b-402b-ad1b-e8e604946157', // Bard, Cleric, Druid
   'magic-missile': 'cdc94dd7-2c88-43b0-bf9f-6dbd8b928a9b', // Sorcerer, Wizard
+
+  // Common Wizard Level 1 Spells
+  'burning-hands': '4f5a6b7c-8d9e-0f1a-2b3c-4d5e6f7a8b9c', // Wizard
+  'detect-magic': '5g6h7i8j-9k0l-1m2n-3o4p-5q6r7s8t9u0v', // Wizard, Ritual
+  'identify': '6h7i8j9k-0l1m-2n3o-4p5q-6r7s8t9u0v1w', // Wizard, Ritual
+  'mage-armor': '7i8j9k0l-1m2n-3o4p-5q6r-7s8t9u0v1w2x', // Wizard
+  'shield': '8j9k0l1m-2n3o-4p5q-6r7s-8t9u0v1w2x3y', // Wizard
 
   // === LEVEL 2 SPELLS ===
   'spiritual-weapon': '959165f4-4def-4069-897e-70e3fa71ff63', // Cleric
