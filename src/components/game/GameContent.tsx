@@ -7,6 +7,7 @@ import { useCampaign } from '@/contexts/CampaignContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Character } from '@/types/character'; // Assuming this type aligns with what CharacterContext expects
 import { Campaign as CampaignType } from '@/types/campaign'; // Assuming this type aligns
+import { characterLoaderService } from '@/services/character-loader';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
 import { GameSidePanel } from './MemoryPanel';
@@ -72,67 +73,25 @@ const GameContent: React.FC = () => {
       setError(null);
 
       try {
-        // Fetch Character Data
+        // Load character with all spell data populated
         setLoadingPhase('data');
-        const { data: characterData, error: characterError } = await supabase
-          .from('characters')
-          .select(`
-            *,
-            character_stats(*)
-          `)
-          .eq('id', characterIdFromParams)
-          .single();
+        console.log(`🔄 [GameContent] Loading character ${characterIdFromParams} with spells`);
 
-        if (characterError) {
-          throw new Error(`Failed to load character: ${characterError.message}`);
-        }
-        if (!characterData) {
-          throw new Error('Character not found.');
+        const loadedCharacter = await characterLoaderService.loadCharacterWithSpells(characterIdFromParams);
+
+        if (!loadedCharacter) {
+          throw new Error('Character not found or failed to load.');
         }
 
-        // Basic transformation, assuming CharacterContext expects AbilityScores nested
-        // and character_stats returns an array (hence [0]) or a single object if one-to-one.
-        // This needs to align with how CharacterContext expects the data.
-        const stats = Array.isArray(characterData.character_stats) ? characterData.character_stats[0] : characterData.character_stats;
-        
-        // Handling for race, class, background being potentially just strings from DB
-        // For now, we'll pass them as is, assuming CharacterContext or downstream components
-        // might expect simplified versions or will be updated.
-        // Ideally, these would be fetched as related objects or mapped to the rich types.
-        const characterRace = characterData.race ? { name: characterData.race } : null;
-        const characterClass = characterData.class ? { name: characterData.class } : null;
-        const characterBackground = characterData.background ? { name: characterData.background } : null;
+        console.log(`✅ [GameContent] Successfully loaded character with spells:`, {
+          name: loadedCharacter.name,
+          id: loadedCharacter.id,
+          cantrips: loadedCharacter.cantrips?.length || 0,
+          knownSpells: loadedCharacter.knownSpells?.length || 0,
+          preparedSpells: loadedCharacter.preparedSpells?.length || 0,
+          ritualSpells: loadedCharacter.ritualSpells?.length || 0
+        });
 
-        const defaultAbilityScore = { score: 10, modifier: 0, savingThrow: false };
-
-        const loadedCharacter: Character = {
-          id: characterData.id,
-          user_id: characterData.user_id || '',
-          name: characterData.name,
-          // These are simplified to pass string names; context might need adjustment
-          // For MVP, this might be acceptable, but full objects are better long-term.
-          race: characterRace as any, // Using 'any' to bypass strict type checking for now
-          class: characterClass as any, // Using 'any' to bypass strict type checking for now
-          level: characterData.level || 1,
-          background: characterBackground as any, // Using 'any' to bypass strict type checking for now
-          abilityScores: {
-            strength: { score: stats?.strength || 10, modifier: Math.floor(((stats?.strength || 10) - 10) / 2), savingThrow: false },
-            dexterity: { score: stats?.dexterity || 10, modifier: Math.floor(((stats?.dexterity || 10) - 10) / 2), savingThrow: false },
-            constitution: { score: stats?.constitution || 10, modifier: Math.floor(((stats?.constitution || 10) - 10) / 2), savingThrow: false },
-            intelligence: { score: stats?.intelligence || 10, modifier: Math.floor(((stats?.intelligence || 10) - 10) / 2), savingThrow: false },
-            wisdom: { score: stats?.wisdom || 10, modifier: Math.floor(((stats?.wisdom || 10) - 10) / 2), savingThrow: false },
-            charisma: { score: stats?.charisma || 10, modifier: Math.floor(((stats?.charisma || 10) - 10) / 2), savingThrow: false },
-          },
-          experience: characterData.experience_points || 0,
-          alignment: characterData.alignment || '',
-          description: characterData.description || '',
-          personalityTraits: [], 
-          ideals: [],
-          bonds: [],
-          flaws: [],
-          equipment: [],
-          // created_at and updated_at are available on characterData if needed
-        };
         characterDispatch({ type: 'SET_CHARACTER', payload: loadedCharacter });
 
         // Fetch Campaign Data

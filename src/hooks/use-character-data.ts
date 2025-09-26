@@ -113,7 +113,10 @@ const transformCharacterData = (
     primaryAbility: 'strength',
     savingThrowProficiencies: [],
     skillChoices: [],
-    numSkillChoices: 2
+    numSkillChoices: 2,
+    classFeatures: [],
+    armorProficiencies: [],
+    weaponProficiencies: []
   },
   level: characterData.level,
   background: {
@@ -170,7 +173,12 @@ const transformCharacterData = (
   personalityTraits: [],
   ideals: [],
   bonds: [],
-  flaws: []
+  flaws: [],
+  // Spell data - this was missing!
+  cantrips: characterData.cantrips ? characterData.cantrips.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : [],
+  knownSpells: characterData.known_spells ? characterData.known_spells.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : [],
+  preparedSpells: characterData.prepared_spells ? characterData.prepared_spells.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : [],
+  ritualSpells: characterData.ritual_spells ? characterData.ritual_spells.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : []
 });
 
 /**
@@ -228,8 +236,11 @@ export const useCharacterData = (characterId: string | undefined) => {
       // Fetch basic character info WITH ownership check
       const { data: characterData, error: characterError } = await supabase
         .from('characters')
-        .select('*')
-        .eq('id', characterId)
+        .select(`
+          *,
+          character_stats(*)
+        `)
+        .eq('id', characterId!)
         .eq('user_id', session.user.id)  // CRITICAL: Add ownership check
         .maybeSingle();
 
@@ -245,26 +256,23 @@ export const useCharacterData = (characterId: string | undefined) => {
         return;
       }
 
-      // Fetch character stats
-      const { data: statsData, error: statsError } = await supabase
-        .from('character_stats')
-        .select('*')
-        .eq('character_id', characterId)
-        .maybeSingle();
-
-      if (statsError) throw statsError;
+      // Extract character data and stats
+      const characterRecord = Array.isArray(characterData) ? characterData[0] : characterData;
+      const statsData = Array.isArray(characterRecord.character_stats) 
+        ? characterRecord.character_stats[0] 
+        : characterRecord.character_stats;
 
       // Fetch character equipment
       const { data: equipmentData, error: equipmentError } = await supabase
         .from('character_equipment')
         .select('*')
-        .eq('character_id', characterId);
+        .eq('character_id', characterId!);
 
       if (equipmentError) throw equipmentError;
 
       // Transform and set character data
       const transformedCharacter = transformCharacterData(
-        characterData,
+        characterRecord,
         statsData,
         equipmentData
       );

@@ -330,8 +330,10 @@ export function transformCharacterForStorage(character: Character) {
     tool_proficiencies: (character.toolProficiencies || []).join(','),
     saving_throw_proficiencies: (character.savingThrowProficiencies || []).join(','),
     languages: (character.languages || []).join(','),
-    cantrips: (character.cantrips || []).join(','),
-    known_spells: (character.knownSpells || []).join(','),
+    cantrips: JSON.stringify(character.cantrips || []),
+    known_spells: JSON.stringify(character.knownSpells || []),
+    prepared_spells: JSON.stringify(character.preparedSpells || []),
+    ritual_spells: JSON.stringify(character.ritualSpells || []),
     // New: Persist spell slots and concentration
     spell_slots: JSON.stringify(character.spellSlots || {}),
     active_concentration: character.activeConcentration || null,
