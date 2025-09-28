@@ -7,6 +7,7 @@ import sessionRouter from './v1/sessions.js';
 import aiRouter from './v1/ai.js';
 import stripeRouter, { billingWebhookRouter } from './v1/billing.js';
 import spellRouter from './v1/spells.js';
+import personalityRouter from './v1/personality.js';
 
 export function registerRoutes(app: Express, db: Pool) {
   app.use('/v1/auth', authRouter(db));
@@ -17,5 +18,6 @@ export function registerRoutes(app: Express, db: Pool) {
   app.use('/v1/billing', stripeRouter(db));
   app.use('/v1/billing', billingWebhookRouter(db));
   app.use('/v1/spells', spellRouter(db));
+  app.use('/v1/personality', personalityRouter);
 }
 

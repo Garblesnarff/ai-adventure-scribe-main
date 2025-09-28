@@ -78,7 +78,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-2.5-flash-lite-latest',
+        model: 'gemini-2.5-flash-lite-preview-09-2025',
         maxTokens: 1000,
         temperature: 0.8,
       });
@@ -107,7 +107,7 @@ export class CharacterDescriptionGenerator {
 
         const response = await openRouterService.generateText({
           prompt,
-          model: 'gemini-2.5-flash-lite-latest',
+          model: 'google/gemini-flash-1.5',
           maxTokens: 1000,
           temperature: 0.8
         });
@@ -291,23 +291,31 @@ export class CharacterDescriptionGenerator {
    */
   private extractSections(text: string): Record<string, string> {
     const sections: Record<string, string> = {};
-    const sectionRegex = /([A-Z]+):\s*([^A-Z]*?)(?=[A-Z]+:|$)/g;
-    
+
+    // Try markdown headers first (### SECTION)
+    const markdownRegex = /###\s+(DESCRIPTION|APPEARANCE|PERSONALITY|BACKSTORY)\s*\n\n(.*?)(?=###|$)/gis;
     let match;
-    while ((match = sectionRegex.exec(text)) !== null) {
+    while ((match = markdownRegex.exec(text)) !== null) {
+      const [, key, value] = match;
+      sections[key.trim().toUpperCase()] = value.trim();
+    }
+
+    // Try colon format (SECTION:)
+    const colonRegex = /([A-Z]+):\s*([^A-Z]*?)(?=[A-Z]+:|$)/g;
+    while ((match = colonRegex.exec(text)) !== null) {
       const [, key, value] = match;
       sections[key.trim()] = value.trim();
     }
-    
+
     // Also try lowercase section headers
     const lowercaseRegex = /\b(description|appearance|personality|backstory):\s*([^\n]*(?:\n(?!\b(?:description|appearance|personality|backstory):)[^\n]*)*)/gi;
-    
+
     let lowercaseMatch;
     while ((lowercaseMatch = lowercaseRegex.exec(text)) !== null) {
       const [, key, value] = lowercaseMatch;
       sections[key.toLowerCase()] = value.trim();
     }
-    
+
     return sections;
   }
 
@@ -332,7 +340,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-2.5-flash-lite-latest',
+        model: 'gemini-2.5-flash-lite-preview-09-2025',
         maxTokens: 100,
         temperature: 0.7,
       });
@@ -347,7 +355,7 @@ export class CharacterDescriptionGenerator {
 
         const response = await openRouterService.generateText({
           prompt,
-          model: 'gemini-2.5-flash-lite-latest',
+          model: 'google/gemini-flash-1.5',
           maxTokens: 100,
           temperature: 0.7
         });

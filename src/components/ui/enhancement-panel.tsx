@@ -252,14 +252,23 @@ export function EnhancementPanel({
           ) : (
             <Tabs defaultValue={Object.keys(groupedOptions)[0]} className="w-full">
               <div className="flex justify-start mb-4">
-                <TabsList className="bg-muted/50 p-1 rounded-lg">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-auto p-2 bg-gradient-to-r from-infinite-dark/10 via-infinite-purple/5 to-infinite-teal/10 backdrop-blur-sm border-2 border-infinite-purple/20 shadow-lg">
                   {Object.keys(groupedOptions).map(group => (
                     <TabsTrigger
                       key={group}
                       value={group}
-                      className="capitalize text-sm px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                      className="
+                        flex flex-col items-center gap-2 px-3 py-4 text-xs font-semibold rounded-lg transition-all duration-300 ease-in-out
+                        data-[state=active]:bg-gradient-to-br data-[state=active]:from-infinite-purple/20 data-[state=active]:to-infinite-purple/10
+                        data-[state=active]:text-infinite-purple data-[state=active]:shadow-lg data-[state=active]:shadow-infinite-purple/25
+                        data-[state=active]:border-2 data-[state=active]:border-infinite-purple/30 data-[state=active]:transform data-[state=active]:scale-[1.02]
+                        hover:bg-infinite-gold/10 hover:text-infinite-gold hover:shadow-md hover:shadow-infinite-gold/20
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-infinite-purple/50 focus-visible:ring-offset-2
+                        disabled:opacity-50 disabled:pointer-events-none
+                      "
                     >
-                      {group} ({groupedOptions[group].length})
+                      <span className="capitalize font-ui tracking-wide text-center leading-tight">{group}</span>
+                      <span className="text-[10px] opacity-75">({groupedOptions[group].length})</span>
                     </TabsTrigger>
                   ))}
                 </TabsList>

@@ -375,9 +375,9 @@ export default function characterRouter() {
 
       console.log('[CHARACTER_SPELLS] Raw spells data:', {
         spellCount: characterSpells?.length || 0,
-        spells: characterSpells?.map(cs => ({
-          spellName: cs.spells?.name,
-          level: cs.spells?.level,
+        spells: characterSpells?.map((cs: any) => ({
+          spellName: Array.isArray(cs.spells) ? cs.spells[0]?.name : cs.spells?.name,
+          level: Array.isArray(cs.spells) ? cs.spells[0]?.level : cs.spells?.level,
           prepared: cs.is_prepared
         }))
       });
