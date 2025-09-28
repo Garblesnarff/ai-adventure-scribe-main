@@ -1,5 +1,6 @@
 import { WizardStep } from './types';
 import BasicInfo from '../steps/BasicInfo';
+import PersonalitySelection from '../steps/PersonalitySelection';
 import RaceSelection from '../steps/RaceSelection';
 import SubraceSelection from '../steps/SubraceSelection';
 import ClassSelection from '../steps/ClassSelection';
@@ -21,6 +22,14 @@ export const wizardSteps: WizardStep[] = [
   {
     component: BasicInfo,
     label: 'Basic Info'
+  },
+  {
+    component: PersonalitySelection,
+    label: 'Personality',
+    skipCondition: (character) => {
+      // Skip if no background selected yet
+      return !character?.background;
+    }
   },
   {
     component: RaceSelection,
@@ -48,10 +57,6 @@ export const wizardSteps: WizardStep[] = [
   {
     component: AbilityScoresSelection,
     label: 'Ability Scores'
-  },
-  {
-    component: BackgroundSelection,
-    label: 'Background'
   },
   {
     component: ProficienciesSelection,
