@@ -306,34 +306,85 @@ const SpellSelection: React.FC = () => {
         </Alert>
       )}
 
-      {/* Spell Selection Tabs */}
+      {/* Enhanced Spell Selection Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="cantrips" className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Cantrips
+        <TabsList className="grid w-full grid-cols-3 h-auto p-2 bg-gradient-to-r from-infinite-dark/10 via-infinite-purple/5 to-infinite-teal/10 backdrop-blur-sm border-2 border-infinite-purple/20 shadow-lg">
+          <TabsTrigger
+            value="cantrips"
+            className={`
+              flex items-center gap-3 px-6 py-4 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out
+              data-[state=active]:bg-gradient-to-br data-[state=active]:from-infinite-gold/20 data-[state=active]:to-infinite-gold/10
+              data-[state=active]:text-infinite-gold data-[state=active]:shadow-lg data-[state=active]:shadow-infinite-gold/25
+              data-[state=active]:border-2 data-[state=active]:border-infinite-gold/30 data-[state=active]:transform data-[state=active]:scale-[1.02]
+              hover:bg-infinite-purple/10 hover:text-infinite-purple hover:shadow-md hover:shadow-infinite-purple/20
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-infinite-gold/50 focus-visible:ring-offset-2
+              disabled:opacity-50 disabled:pointer-events-none
+            `}
+          >
+            <Sparkles className="w-5 h-5 transition-colors duration-200" />
+            <span className="font-ui tracking-wide">Cantrips</span>
             {(spellcastingInfo?.cantripsKnown || 0) + totalRacialCantrips > 0 && (
-              <Badge variant="secondary" className="ml-1">
+              <Badge
+                variant="secondary"
+                className={`
+                  ml-2 px-2 py-1 text-xs font-bold bg-infinite-gold/20 text-infinite-gold border border-infinite-gold/30
+                  data-[state=active]:bg-infinite-gold/30 data-[state=active]:text-infinite-gold-dark
+                `}
+              >
                 {selectedCantrips.length}/{(spellcastingInfo?.cantripsKnown || 0) + totalRacialCantrips}
               </Badge>
             )}
           </TabsTrigger>
 
-          <TabsTrigger value="spells" className="flex items-center gap-2">
-            <Wand2 className="w-4 h-4" />
-            1st Level
+          <TabsTrigger
+            value="spells"
+            className={`
+              flex items-center gap-3 px-6 py-4 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out
+              data-[state=active]:bg-gradient-to-br data-[state=active]:from-infinite-purple/20 data-[state=active]:to-infinite-purple/10
+              data-[state=active]:text-infinite-purple data-[state=active]:shadow-lg data-[state=active]:shadow-infinite-purple/25
+              data-[state=active]:border-2 data-[state=active]:border-infinite-purple/30 data-[state=active]:transform data-[state=active]:scale-[1.02]
+              hover:bg-infinite-teal/10 hover:text-infinite-teal hover:shadow-md hover:shadow-infinite-teal/20
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-infinite-purple/50 focus-visible:ring-offset-2
+              disabled:opacity-50 disabled:pointer-events-none
+            `}
+          >
+            <Wand2 className="w-5 h-5 transition-colors duration-200" />
+            <span className="font-ui tracking-wide">1st Level</span>
             {(spellcastingInfo?.spellsKnown || 0) > 0 && (
-              <Badge variant="secondary" className="ml-1">
+              <Badge
+                variant="secondary"
+                className={`
+                  ml-2 px-2 py-1 text-xs font-bold bg-infinite-purple/20 text-infinite-purple border border-infinite-purple/30
+                  data-[state=active]:bg-infinite-purple/30 data-[state=active]:text-infinite-purple-dark
+                `}
+              >
                 {selectedSpells.length}/{spellcastingInfo?.spellsKnown}
               </Badge>
             )}
           </TabsTrigger>
 
-          <TabsTrigger value="racial" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Racial
+          <TabsTrigger
+            value="racial"
+            className={`
+              flex items-center gap-3 px-6 py-4 text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out
+              data-[state=active]:bg-gradient-to-br data-[state=active]:from-infinite-teal/20 data-[state=active]:to-infinite-teal/10
+              data-[state=active]:text-infinite-teal data-[state=active]:shadow-lg data-[state=active]:shadow-infinite-teal/25
+              data-[state=active]:border-2 data-[state=active]:border-infinite-teal/30 data-[state=active]:transform data-[state=active]:scale-[1.02]
+              hover:bg-accent/10 hover:text-accent hover:shadow-md hover:shadow-accent/20
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-infinite-teal/50 focus-visible:ring-offset-2
+              disabled:opacity-50 disabled:pointer-events-none
+            `}
+          >
+            <Users className="w-5 h-5 transition-colors duration-200" />
+            <span className="font-ui tracking-wide">Racial</span>
             {hasRacialSpells && (
-              <Badge variant="secondary" className="ml-1">
+              <Badge
+                variant="secondary"
+                className={`
+                  ml-2 px-2 py-1 text-xs font-bold bg-infinite-teal/20 text-infinite-teal border border-infinite-teal/30
+                  data-[state=active]:bg-infinite-teal/30 data-[state=active]:text-infinite-teal-dark
+                `}
+              >
                 {racialSpells.cantrips.length + racialSpells.bonusCantrips}
               </Badge>
             )}
@@ -351,6 +402,7 @@ const SpellSelection: React.FC = () => {
               maxSpells={spellcastingInfo?.cantripsKnown || 0}
               onToggleSpell={toggleCantrip}
               icon="cantrip"
+              colorTheme="gold"
               info={spellcastingInfo?.hasSpellbook ?
                 "As a Wizard, you also learn these cantrips in addition to your spellbook spells." :
                 undefined
@@ -395,6 +447,7 @@ const SpellSelection: React.FC = () => {
                 maxSpells={spellcastingInfo?.spellsKnown || 0}
                 onToggleSpell={toggleSpell}
                 icon="spell"
+                colorTheme="purple"
                 info={spellcastingInfo?.hasSpellbook ?
                   "As a Wizard, you can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day." :
                   undefined
@@ -425,6 +478,7 @@ const SpellSelection: React.FC = () => {
                   onToggleSpell={toggleCantrip}
                   icon="racial"
                   showProgress={false}
+                  colorTheme="teal"
                   info="These cantrips are automatically known and don't count against your class cantrip limit."
                 />
               )}
@@ -445,6 +499,7 @@ const SpellSelection: React.FC = () => {
                   maxSpells={racialSpells.bonusCantrips}
                   onToggleSpell={toggleCantrip}
                   icon="racial"
+                  colorTheme="teal"
                   info={`This bonus cantrip is granted by your ${character?.subrace?.name || character?.race?.name} heritage.`}
                 />
               )}

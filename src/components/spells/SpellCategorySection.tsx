@@ -17,6 +17,7 @@ interface SpellCategorySectionProps {
   showProgress?: boolean;
   info?: string;
   className?: string;
+  colorTheme?: 'gold' | 'purple' | 'teal';
 }
 
 /**
@@ -38,7 +39,8 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
   icon = 'spell',
   showProgress = true,
   info,
-  className = ''
+  className = '',
+  colorTheme = 'purple'
 }) => {
   const selectedCount = selectedSpells.length;
   const progressPercentage = maxSpells > 0 ? (selectedCount / maxSpells) * 100 : 0;
@@ -151,6 +153,7 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
                   isDisabled={isDisabled}
                   onToggle={onToggleSpell}
                   showLevel={icon !== 'cantrip'}
+                  colorTheme={colorTheme}
                 />
               );
             })}
