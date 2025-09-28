@@ -25,6 +25,7 @@ interface SpellCardProps {
   onToggle: (spellId: string) => void;
   showLevel?: boolean;
   className?: string;
+  colorTheme?: 'gold' | 'purple' | 'teal';
 }
 
 /**
@@ -43,7 +44,8 @@ const SpellCard: React.FC<SpellCardProps> = ({
   isDisabled,
   onToggle,
   showLevel = true,
-  className = ''
+  className = '',
+  colorTheme = 'purple'
 }) => {
   const components = getComponentTrackingInfo(spell);
 
@@ -61,13 +63,49 @@ const SpellCard: React.FC<SpellCardProps> = ({
 
   const schoolColor = schoolColors[spell.school] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 
+  // Get theme-specific colors for selection highlighting
+  const getThemeColors = () => {
+    switch (colorTheme) {
+      case 'gold':
+        return {
+          border: 'border-infinite-gold',
+          bg: 'bg-infinite-gold/10',
+          shadow: 'shadow-infinite-gold/20',
+          checkbox: 'data-[state=checked]:bg-infinite-gold data-[state=checked]:border-infinite-gold'
+        };
+      case 'purple':
+        return {
+          border: 'border-infinite-purple',
+          bg: 'bg-infinite-purple/10',
+          shadow: 'shadow-infinite-purple/20',
+          checkbox: 'data-[state=checked]:bg-infinite-purple data-[state=checked]:border-infinite-purple'
+        };
+      case 'teal':
+        return {
+          border: 'border-infinite-teal',
+          bg: 'bg-infinite-teal/10',
+          shadow: 'shadow-infinite-teal/20',
+          checkbox: 'data-[state=checked]:bg-infinite-teal data-[state=checked]:border-infinite-teal'
+        };
+      default:
+        return {
+          border: 'border-primary',
+          bg: 'bg-primary/5',
+          shadow: 'shadow-primary/20',
+          checkbox: 'data-[state=checked]:bg-primary data-[state=checked]:border-primary'
+        };
+    }
+  };
+
+  const themeColors = getThemeColors();
+
   return (
     <TooltipProvider>
       <Card
         className={`
           transition-all duration-200 cursor-pointer hover:shadow-md
           ${isSelected
-            ? 'border-primary bg-primary/5 shadow-sm'
+            ? `${themeColors.border} ${themeColors.bg} shadow-sm ${themeColors.shadow}`
             : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
           }
           ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -155,7 +193,7 @@ const SpellCard: React.FC<SpellCardProps> = ({
                 <Checkbox
                   checked={isSelected}
                   disabled={isDisabled}
-                  className="mt-1"
+                  className={`mt-1 ${themeColors.checkbox}`}
                   aria-label={`Select ${spell.name}`}
                 />
               </div>
@@ -166,11 +204,11 @@ const SpellCard: React.FC<SpellCardProps> = ({
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      <span className="truncate">{spell.castingTime}</span>
+                      <span className="truncate">{spell.casting_time}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Casting Time: {spell.castingTime}</p>
+                    <p>Casting Time: {spell.casting_time}</p>
                   </TooltipContent>
                 </Tooltip>
 
@@ -178,11 +216,11 @@ const SpellCard: React.FC<SpellCardProps> = ({
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1">
                       <Target className="w-3 h-3" />
-                      <span className="truncate">{spell.range}</span>
+                      <span className="truncate">{spell.range_text}</span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Range: {spell.range}</p>
+                    <p>Range: {spell.range_text}</p>
                   </TooltipContent>
                 </Tooltip>
 

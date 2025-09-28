@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Spell Loading</title>
+    <script type="module">
+        // Test the spell loading functionality
+        window.testSpellLoading = async function() {
+            try {
+                console.log('🔍 Testing spell loading...');
+
+                // Import the character loader service
+                const response = await fetch('/src/services/character-loader.ts');
+                const serviceCode = await response.text();
+
+                // Test direct database query
+                const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.38.0');
+
+                const supabaseUrl = 'https://cnalyhtalikwsopogula.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuYWx5aHRhbGlrd3NvcG9ndWxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjczOTA0MzUsImV4cCI6MjA0Mjk2NjQzNX0.WIzpf6c0EqWZYaJ5zcSUfPtEsBLOQ9_yJQFMO9n0PCA';
+
+                const supabase = createClient(supabaseUrl, supabaseKey);
+
+                // Test loading character with spells
+                const { data: characterData, error } = await supabase
+                    .from('characters')
+                    .select(`
+                        id, name, cantrips, known_spells, prepared_spells, ritual_spells
+                    `)
+                    .eq('id', '98ec7239-63f3-42b1-a151-a8053993afee')
+                    .single();
+
+                if (error) {
+                    console.error('❌ Database error:', error);
+                    document.getElementById('result').innerHTML = `<div style="color: red;">Database error: ${error.message}</div>`;
+                    return;
+                }
+
+                console.log('📊 Raw character data:', characterData);
+
+                // Test the parsing logic
+                const parseSpellString = (spellString) => {
+                    if (!spellString || spellString.trim() === '') return [];
+                    return spellString.split(',').map(spell => spell.trim()).filter(spell => spell.length > 0);
+                };
+
+                const cantrips = parseSpellString(characterData.cantrips);
+                const knownSpells = parseSpellString(characterData.known_spells);
+                const preparedSpells = parseSpellString(characterData.prepared_spells);
+                const ritualSpells = parseSpellString(characterData.ritual_spells);
+
+                const result = {
+                    name: characterData.name,
+                    cantrips,
+                    knownSpells,
+                    preparedSpells,
+                    ritualSpells
+                };
+
+                console.log('✅ Parsed spell data:', result);
+
+                document.getElementById('result').innerHTML = `
+                    <div style="color: green;">
+                        <h3>✅ Spell Loading Test Successful!</h3>
+                        <h4>Character: ${result.name}</h4>
+                        <ul>
+                            <li><strong>Cantrips (${result.cantrips.length}):</strong> ${result.cantrips.join(', ') || 'None'}</li>
+                            <li><strong>Known Spells (${result.knownSpells.length}):</strong> ${result.knownSpells.join(', ') || 'None'}</li>
+                            <li><strong>Prepared Spells (${result.preparedSpells.length}):</strong> ${result.preparedSpells.join(', ') || 'None'}</li>
+                            <li><strong>Ritual Spells (${result.ritualSpells.length}):</strong> ${result.ritualSpells.join(', ') || 'None'}</li>
+                        </ul>
+                        <p><strong>Raw Database Data:</strong></p>
+                        <pre>${JSON.stringify(characterData, null, 2)}</pre>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('❌ Test failed:', error);
+                document.getElementById('result').innerHTML = `<div style="color: red;">Test failed: ${error.message}</div>`;
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>Spell Loading Test</h1>
+    <button onclick="testSpellLoading()" style="padding: 10px 20px; font-size: 16px;">Test Spell Loading</button>
+    <div id="result" style="margin-top: 20px; padding: 20px; border: 1px solid #ccc;"></div>
+</body>
+</html>

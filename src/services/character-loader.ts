@@ -57,29 +57,17 @@ export class CharacterLoaderService {
       let preparedSpells: string[] = [];
       let ritualSpells: string[] = [];
 
-      // Parse spell data from database fields - supports both JSONB arrays and comma-separated strings
-      const parseSpellData = (spellData: string[] | string | null): string[] => {
-        if (!spellData) return [];
-
-        // Handle JSONB array format (preferred)
-        if (Array.isArray(spellData)) {
-          return spellData.filter(spell => spell && typeof spell === 'string');
-        }
-
-        // Handle comma-separated string format (legacy)
-        if (typeof spellData === 'string') {
-          if (spellData.trim() === '') return [];
-          return spellData.split(',').map(spell => spell.trim()).filter(spell => spell.length > 0);
-        }
-
-        return [];
+      // Parse spell data from database fields - handles comma-separated TEXT format
+      const parseSpellString = (spellString: string | null): string[] => {
+        if (!spellString || spellString.trim() === '') return [];
+        return spellString.split(',').map(spell => spell.trim()).filter(spell => spell.length > 0);
       };
 
       console.log(`📖 [CharacterLoader] Loading spells from characters table for ${characterId}`);
-      cantrips = parseSpellData(characterData.cantrips);
-      knownSpells = parseSpellData(characterData.known_spells);
-      preparedSpells = parseSpellData(characterData.prepared_spells); // Now exists in database
-      ritualSpells = parseSpellData(characterData.ritual_spells); // Now exists in database
+      cantrips = parseSpellString(characterData.cantrips);
+      knownSpells = parseSpellString(characterData.known_spells);
+      preparedSpells = parseSpellString(characterData.prepared_spells); // Now exists in database
+      ritualSpells = parseSpellString(characterData.ritual_spells); // Now exists in database
 
       console.log(`📊 [CharacterLoader] Parsed spells from characters table:`, {
         cantrips: cantrips.length,
