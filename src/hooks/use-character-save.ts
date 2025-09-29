@@ -56,8 +56,6 @@ export const useCharacterSave = () => {
           ...character,
           // Use authenticated user ID if available, otherwise use local UUID
           user_id: user?.id || LOCAL_USER_ID,
-          // Ensure languages are stored as array for JSON parsing
-          languages: Array.isArray(character.languages) ? character.languages : character.languages ? character.languages.split(',') : [],
         }),
         ...transformMulticlassingForStorage(character)
       };

@@ -205,7 +205,10 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                   {character.race && (
                     <span className="flex items-center gap-1">
                       <Shield className="w-3 h-3 text-infinite-purple" />
-                      {typeof character.race === 'string' ? character.race : character.race.name}
+                      {character.subrace
+                        ? `${typeof character.subrace === 'string' ? character.subrace : character.subrace.name} (${typeof character.race === 'string' ? character.race : character.race.name})`
+                        : (typeof character.race === 'string' ? character.race : character.race.name)
+                      }
                     </span>
                   )}
                   {character.class && (

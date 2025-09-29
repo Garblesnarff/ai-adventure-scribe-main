@@ -286,10 +286,12 @@ export interface Character {
   // New AI-generated fields
   image_url?: string;
   background_image?: string;
+  theme?: string;
   appearance?: string;
   personality_traits?: string;
   personality_notes?: string;
   backstory_elements?: string;
+  sessionNotes?: string;
   created_at?: string;
   updated_at?: string;
   // Character stats from character_stats table
@@ -322,14 +324,16 @@ export function transformCharacterForStorage(character: Character) {
     experience_points: character.experience || 0,
     image_url: character.image_url || '',
     background_image: character.background_image || '',
+    theme: character.theme || '',
     appearance: character.appearance || '',
     personality_traits: character.personality_traits || '',
     personality_notes: character.personality_notes || '',
     backstory_elements: character.backstory_elements || '',
+    session_notes: character.sessionNotes || '',
     skill_proficiencies: (character.skillProficiencies || []).join(','),
     tool_proficiencies: (character.toolProficiencies || []).join(','),
     saving_throw_proficiencies: (character.savingThrowProficiencies || []).join(','),
-    languages: (character.languages || []).join(','),
+    languages: character.languages || [],
     cantrips: (character.cantrips || []).join(','),
     known_spells: (character.knownSpells || []).join(','),
     prepared_spells: (character.preparedSpells || []).join(','),

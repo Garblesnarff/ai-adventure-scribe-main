@@ -14,11 +14,16 @@ interface CharacterData {
   name: string;
   description?: string | null;
   race?: string | null;
+  subrace?: string | null;
   class?: string | null;
   background?: string | null;
   level?: number | null;
   ability_scores?: any;
   alignment?: string | null;
+  personalityTraits?: string[];
+  ideals?: string[];
+  bonds?: string[];
+  flaws?: string[];
   personality_notes?: string | null;
   enhancementSelections?: Array<{
     optionId: string;
@@ -158,15 +163,53 @@ export class CharacterDescriptionGenerator {
     // Character basics
     promptParts.push(`Character Name: ${characterData.name}`);
     if (characterData.race) promptParts.push(`Race: ${characterData.race}`);
+    if (characterData.subrace) promptParts.push(`Subrace: ${characterData.subrace}`);
     if (characterData.class) promptParts.push(`Class: ${characterData.class}`);
     if (characterData.background) promptParts.push(`Background: ${characterData.background}`);
     if (characterData.level) promptParts.push(`Level: ${characterData.level}`);
     if (characterData.alignment) promptParts.push(`Alignment: ${characterData.alignment}`);
     
+    // Add personality elements if provided
+    if (characterData.personalityTraits && characterData.personalityTraits.length > 0) {
+      const traits = characterData.personalityTraits.filter(trait => trait.trim()).join('; ');
+      if (traits) {
+        promptParts.push(`Personality Traits: ${traits}`);
+      }
+    }
+
+    if (characterData.ideals && characterData.ideals.length > 0) {
+      const ideals = characterData.ideals.filter(ideal => ideal.trim()).join('; ');
+      if (ideals) {
+        promptParts.push(`Ideals: ${ideals}`);
+      }
+    }
+
+    if (characterData.bonds && characterData.bonds.length > 0) {
+      const bonds = characterData.bonds.filter(bond => bond.trim()).join('; ');
+      if (bonds) {
+        promptParts.push(`Bonds: ${bonds}`);
+      }
+    }
+
+    if (characterData.flaws && characterData.flaws.length > 0) {
+      const flaws = characterData.flaws.filter(flaw => flaw.trim()).join('; ');
+      if (flaws) {
+        promptParts.push(`Flaws: ${flaws}`);
+      }
+    }
+
     // Add personality notes if provided
     if (characterData.personality_notes) {
-      promptParts.push(`Personality Notes: ${characterData.personality_notes}`);
-      promptParts.push('(Make sure to incorporate these personality notes and quirks into the generated personality traits and description)');
+      promptParts.push(`Additional Personality Notes: ${characterData.personality_notes}`);
+    }
+
+    // Instructions for using provided personality data
+    if ((characterData.personalityTraits && characterData.personalityTraits.some(t => t.trim())) ||
+        (characterData.ideals && characterData.ideals.some(i => i.trim())) ||
+        (characterData.bonds && characterData.bonds.some(b => b.trim())) ||
+        (characterData.flaws && characterData.flaws.some(f => f.trim())) ||
+        characterData.personality_notes) {
+      promptParts.push('(IMPORTANT: Use the provided personality traits, ideals, bonds, and flaws EXACTLY as given. These are the character\'s defining characteristics and should be incorporated prominently into the description and personality section)');
     }
 
     // Add enhancement selections if provided
@@ -237,10 +280,13 @@ export class CharacterDescriptionGenerator {
     // D&D-specific guidelines
     promptParts.push('\nGuidelines:');
     promptParts.push('- Use D&D 5E lore and terminology');
-    promptParts.push('- Make the character feel authentic to their race and class');
+    promptParts.push('- Make the character feel authentic to their SPECIFIED race and subrace (if provided)');
     promptParts.push('- Include specific details that make the character unique');
     promptParts.push('- Ensure the personality matches their background and alignment');
     promptParts.push('- Create hooks for future roleplay and storytelling');
+    promptParts.push('- NEVER assume details not explicitly provided (e.g., do not assume Hill Dwarf if only Dwarf is specified)');
+    promptParts.push('- Only use the specific subrace if explicitly provided in the character data');
+    promptParts.push('- Base descriptions strictly on the provided information without making assumptions');
     
     return promptParts.join('\n');
   }

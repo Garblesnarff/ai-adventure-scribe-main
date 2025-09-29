@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Character } from '@/types/character';
 import PersonalityManager from '../PersonalityManager';
+import CharacterOverview from './components/CharacterOverview';
+import EnhancementDetails from './components/EnhancementDetails';
+import EditableDescription from './components/EditableDescription';
 import { FileText, Heart, Brain, Link, Frown } from 'lucide-react';
 
 interface NotesTabProps {
@@ -18,16 +21,31 @@ interface NotesTabProps {
  * Notes & Backstory tab for character roleplay information
  */
 const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(character.sessionNotes || '');
+
+  const handleSessionNotesChange = (newNotes: string) => {
+    setNotes(newNotes);
+    onUpdate({
+      ...character,
+      sessionNotes: newNotes
+    });
+  };
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="personality" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="personality">Personality</TabsTrigger>
           <TabsTrigger value="description">Description</TabsTrigger>
+          <TabsTrigger value="enhancements">Enhancements</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <CharacterOverview character={character} onUpdate={onUpdate} />
+        </TabsContent>
 
         {/* Personality Tab with Enhanced Manager */}
         <TabsContent value="personality">
@@ -66,29 +84,25 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
 
                   {/* Description */}
                   <div className="lg:col-span-2 space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                        Appearance
-                      </label>
-                      <Textarea
-                        value={character.appearance || ''}
-                        placeholder="Describe your character's physical appearance..."
-                        className="min-h-[100px] resize-none"
-                        readOnly
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                        Personality
-                      </label>
-                      <Textarea
-                        value={character.personality_traits || ''}
-                        placeholder="What makes your character unique? How do they act?"
-                        className="min-h-[100px] resize-none"
-                        readOnly
-                      />
-                    </div>
+                    <EditableDescription
+                      label="Appearance"
+                      value={character.appearance || ''}
+                      field="appearance"
+                      character={character}
+                      onUpdate={onUpdate}
+                      placeholder="Describe your character's physical appearance..."
+                      isAiGenerated={!!character.appearance}
+                    />
+
+                    <EditableDescription
+                      label="Personality"
+                      value={character.personality_traits || ''}
+                      field="personality_traits"
+                      character={character}
+                      onUpdate={onUpdate}
+                      placeholder="What makes your character unique? How do they act?"
+                      isAiGenerated={!!character.personality_traits}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -100,15 +114,24 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
                 <CardTitle>Backstory</CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea
+                <EditableDescription
+                  label=""
                   value={character.backstory_elements || ''}
+                  field="backstory_elements"
+                  character={character}
+                  onUpdate={onUpdate}
                   placeholder="Tell your character's story. Where do they come from? What drives them? What are their goals?"
-                  className="min-h-[150px] resize-none"
-                  readOnly
+                  className="min-h-[150px]"
+                  isAiGenerated={!!character.backstory_elements}
                 />
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Enhancements Tab */}
+        <TabsContent value="enhancements">
+          <EnhancementDetails character={character} onUpdate={onUpdate} />
         </TabsContent>
 
         {/* Notes Tab */}
@@ -120,7 +143,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
             <CardContent>
               <Textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => handleSessionNotesChange(e.target.value)}
                 placeholder="Keep track of important events, NPCs met, quests received, and other session notes..."
                 className="min-h-[300px] resize-none"
               />
