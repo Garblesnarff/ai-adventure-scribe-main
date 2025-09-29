@@ -20,6 +20,7 @@ interface CharacterData {
   name: string;
   description?: string | null;
   race?: string | null;
+  subrace?: string | null;
   class?: string | null;
   background?: string | null;
   level?: number | null;
@@ -252,13 +253,14 @@ export class CharacterImageGenerator {
       case 'full-body':
         promptParts.push('Full body D&D character portrait, standing pose, complete outfit and equipment visible');
         break;
-      case 'character-sheet':
+      case 'character-sheet': {
         const characterConcept = this.buildCharacterConcept(characterData, extractedDetails);
         const designSheetPrompt = `Character design sheet for ${characterConcept}, detailed with front, back, and side views, including close-up sketches of facial features and accessories, annotated with design notes and labeled components, drawn in blueprint style with glowing trim in ${theme}. Detailed line work on the face and hands, detailed anatomy of the character, detailed lines around the edges. Detailed character sketches with flat color and detailed line art illustration. Professional concept art style.`;
         promptParts.push(designSheetPrompt);
         console.log('Generated design sheet concept:', characterConcept);
         console.log('Full design sheet prompt:', designSheetPrompt);
         break;
+      }
       case 'expression-sheet':
         promptParts.push('D&D character expression sheet, same character with multiple facial expressions, happy, serious, angry, surprised, consistent character');
         break;
@@ -347,11 +349,15 @@ export class CharacterImageGenerator {
   private buildCharacterDescription(characterData: CharacterData, extractedDetails: any): string {
     const descParts: string[] = [];
 
-    // Add race and class
-    if (characterData.race && characterData.class) {
-      descParts.push(`${characterData.race} ${characterData.class}`);
-    } else if (characterData.race) {
-      descParts.push(characterData.race);
+    // Add race/subrace and class
+    const raceDescription = characterData.subrace
+      ? `${characterData.subrace} ${characterData.race}`
+      : characterData.race;
+
+    if (raceDescription && characterData.class) {
+      descParts.push(`${raceDescription} ${characterData.class}`);
+    } else if (raceDescription) {
+      descParts.push(raceDescription);
     } else if (characterData.class) {
       descParts.push(characterData.class);
     }
@@ -361,9 +367,10 @@ export class CharacterImageGenerator {
       descParts.push(extractedDetails.physicalFeatures.join(', '));
     }
 
-    // Add race-specific features
-    if (characterData.race) {
-      descParts.push(this.getRacePrompt(characterData.race));
+    // Add race-specific features (prioritize subrace if available)
+    const raceForPrompt = characterData.subrace || characterData.race;
+    if (raceForPrompt) {
+      descParts.push(this.getRacePrompt(raceForPrompt));
     }
 
     // Add class-specific equipment
@@ -644,6 +651,7 @@ export class CharacterImageGenerator {
    */
   private getRacePrompt(race: string): string {
     const raceMap: Record<string, string> = {
+      // Base races
       'human': 'human features with varied skin tones and expressive face',
       'elf': 'elven features with pointed ears, graceful build, and ethereal beauty',
       'dwarf': 'dwarven features with stocky build, beard, and sturdy appearance',
@@ -659,6 +667,31 @@ export class CharacterImageGenerator {
       'ravenfolk': 'ravenfolk features with avian characteristics',
       'lizardfolk': 'lizardfolk features with reptilian scales',
       'tortle': 'tortle features with turtle shell and wise expression',
+
+      // Elf subraces
+      'high elf': 'high elven features with pointed ears, refined bearing, and arcane elegance',
+      'wood elf': 'wood elven features with pointed ears, natural grace, and forest-dwelling appearance',
+      'dark elf': 'dark elven features with pointed ears, pale or dark skin, and mysterious aura',
+      'drow': 'drow features with pointed ears, dark skin, white hair, and underground nobility',
+
+      // Dwarf subraces
+      'mountain dwarf': 'mountain dwarven features with stocky build, thick beard, and hardy mountain appearance',
+      'hill dwarf': 'hill dwarven features with stocky build, well-groomed beard, and pastoral strength',
+
+      // Halfling subraces
+      'lightfoot halfling': 'lightfoot halfling features with small stature, nimble build, and wandering spirit',
+      'stout halfling': 'stout halfling features with small but robust build and determined expression',
+
+      // Human variants
+      'variant human': 'human features with varied skin tones, expressive face, and adaptable appearance',
+
+      // Gnome subraces
+      'forest gnome': 'forest gnomish features with small size, nature-connected appearance, and woodland charm',
+      'rock gnome': 'rock gnomish features with small size, tinker-focused hands, and inventive expression',
+
+      // Tiefling variants
+      'asmodeus tiefling': 'tiefling features with prominent horns, forked tail, and regal infernal heritage',
+      'zariel tiefling': 'tiefling features with warrior-like horns, strong tail, and martial infernal bearing'
     };
 
     return raceMap[race.toLowerCase()] || `${race.toLowerCase()} racial features`;

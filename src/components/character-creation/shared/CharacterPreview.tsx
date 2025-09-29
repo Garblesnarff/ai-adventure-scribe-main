@@ -96,7 +96,10 @@ const CharacterPreview: React.FC = () => {
             <div className="flex flex-wrap gap-2 justify-center mt-2">
               {character.race && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {character.race.name}
+                  {character.subrace
+                    ? `${character.subrace.name} (${character.race.name})`
+                    : character.race.name
+                  }
                 </Badge>
               )}
               {character.class && (
