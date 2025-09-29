@@ -39,17 +39,17 @@ router.get('/random/:type', async (req, res) => {
       .from(tableName)
       .select('*');
 
-    // Add background filter if provided
-    if (background && typeof background === 'string') {
+    // Add background filter if provided (only for traits table)
+    if (background && typeof background === 'string' && tableName === 'personality_traits') {
       query = query.or(`background.eq.${background},background.is.null`);
     }
 
-    // Add alignment filter for ideals only
-    if (type === 'ideals' && alignment && typeof alignment === 'string') {
-      // Extract the first part of alignment (Lawful, Neutral, Chaotic)
-      const ethicalAxis = alignment.split(' ')[0];
-      query = query.or(`alignment.eq.${ethicalAxis},alignment.is.null`);
-    }
+    // Add alignment filter for ideals only (if alignment column exists)
+    // Note: Current ideals table doesn't have alignment column, so this is disabled
+    // if (type === 'ideals' && alignment && typeof alignment === 'string') {
+    //   const ethicalAxis = alignment.split(' ')[0];
+    //   query = query.or(`alignment.eq.${ethicalAxis},alignment.is.null`);
+    // }
 
     const { data, error } = await query;
 
@@ -115,16 +115,17 @@ router.get('/batch/random', async (req, res) => {
         .from(tableName)
         .select('*');
 
-      // Add background filter if provided
-      if (background && typeof background === 'string') {
+      // Add background filter if provided (only for traits table)
+      if (background && typeof background === 'string' && tableName === 'personality_traits') {
         query = query.or(`background.eq.${background},background.is.null`);
       }
 
-      // Add alignment filter for ideals only
-      if (type === 'ideals' && alignment && typeof alignment === 'string') {
-        const ethicalAxis = alignment.split(' ')[0];
-        query = query.or(`alignment.eq.${ethicalAxis},alignment.is.null`);
-      }
+      // Add alignment filter for ideals only (if alignment column exists)
+      // Note: Current ideals table doesn't have alignment column, so this is disabled
+      // if (type === 'ideals' && alignment && typeof alignment === 'string') {
+      //   const ethicalAxis = alignment.split(' ')[0];
+      //   query = query.or(`alignment.eq.${ethicalAxis},alignment.is.null`);
+      // }
 
       const { data, error } = await query;
 
@@ -202,8 +203,8 @@ router.get('/:type', async (req, res) => {
       .select('*')
       .limit(parseInt(limit as string));
 
-    // Add background filter if provided
-    if (background && typeof background === 'string') {
+    // Add background filter if provided (only for traits table)
+    if (background && typeof background === 'string' && tableName === 'personality_traits') {
       query = query.eq('background', background);
     }
 
