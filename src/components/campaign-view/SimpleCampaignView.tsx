@@ -33,6 +33,7 @@ interface CharacterListItem {
   race: string;
   class: string;
   level: number | null;
+  avatar_url?: string | null;
 }
 
 export const SimpleCampaignView: React.FC = () => {
@@ -88,7 +89,7 @@ export const SimpleCampaignView: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('characters')
-        .select('id, name, race, class, level')
+        .select('id, name, race, class, level, avatar_url')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -324,10 +325,18 @@ export const SimpleCampaignView: React.FC = () => {
                         <Card key={character.id} className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border/50 overflow-hidden bg-gradient-to-br from-muted/50 to-transparent hover:from-accent/10">
                           <CardContent className="p-6 relative">
                             {/* Character Avatar */}
-                            <div className={`absolute -top-4 left-6 w-20 h-20 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-105 transition-transform duration-300 ${getCharacterAvatarColor(character.name)}`}>
-                              <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white">
-                                {getInitial(character.name)}
-                              </div>
+                            <div className={`absolute -top-4 left-6 w-20 h-20 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-105 transition-transform duration-300 ${!character.avatar_url ? getCharacterAvatarColor(character.name) : ''}`}>
+                              {character.avatar_url ? (
+                                <img
+                                  src={character.avatar_url}
+                                  alt={`${character.name} avatar`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white">
+                                  {getInitial(character.name)}
+                                </div>
+                              )}
                             </div>
 
                             <div className="pt-12 space-y-4">
