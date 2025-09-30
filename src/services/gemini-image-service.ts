@@ -13,6 +13,7 @@ import { GeminiApiManager } from './gemini-api-manager';
 interface GeminiImageGenerationRequest {
   prompt: string;
   referenceImage?: string; // base64 encoded image to use as reference
+  referenceImages?: string[]; // Multiple base64 encoded images for multi-image reference
 }
 
 /**
@@ -73,7 +74,7 @@ export class GeminiImageService {
    * @returns Promise resolving to base64 encoded image data
    */
   async generateImage(request: GeminiImageGenerationRequest): Promise<string> {
-    const { prompt, referenceImage } = request;
+    const { prompt, referenceImage, referenceImages } = request;
 
     // Check if we can use free tier
     if (!this.canUseFreeToday()) {
@@ -89,11 +90,24 @@ export class GeminiImageService {
           model: this.MODEL_NAME,
         });
 
-        // Build the content based on whether we have a reference image
+        // Build the content based on whether we have reference images
         let content;
 
-        if (referenceImage) {
-          // Multimodal request with reference image and text prompt
+        if (referenceImages && referenceImages.length > 0) {
+          // Multimodal request with multiple reference images and text prompt
+          content = [
+            {
+              text: prompt
+            },
+            ...referenceImages.map(imageData => ({
+              inlineData: {
+                mimeType: 'image/png',
+                data: imageData
+              }
+            }))
+          ];
+        } else if (referenceImage) {
+          // Multimodal request with single reference image and text prompt
           content = [
             {
               text: prompt

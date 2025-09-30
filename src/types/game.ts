@@ -75,6 +75,8 @@ export interface ChatMessage {
     voice_category?: string;
   }>;
   options?: ActionOption[];
+  characterName?: string;
+  characterAvatar?: string;
 }
 
 /**

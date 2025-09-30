@@ -72,9 +72,9 @@ const CharacterPreview: React.FC = () => {
         <div className="text-center space-y-3">
           <div className="relative">
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-              {character.image_url ? (
+              {character.avatar_url ? (
                 <img
-                  src={character.image_url}
+                  src={character.avatar_url}
                   alt={character.name || 'Character'}
                   className="w-full h-full object-cover rounded-full"
                 />

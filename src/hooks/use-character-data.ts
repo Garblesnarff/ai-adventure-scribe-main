@@ -165,6 +165,7 @@ const transformCharacterData = (
     magicEffects: item.magic_effects ? JSON.parse(item.magic_effects) : {}
   })) || [],
   // AI-generated fields
+  avatar_url: characterData.avatar_url,
   image_url: characterData.image_url,
   appearance: characterData.appearance,
   personality_traits: characterData.personality_traits,

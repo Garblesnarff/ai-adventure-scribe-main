@@ -17,8 +17,10 @@ const CharacterFinalization: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('fantasy');
+  const [generationStep, setGenerationStep] = useState<'idle' | 'avatar' | 'sheet' | 'background'>('idle');
 
   /**
    * Updates character description in context
@@ -104,6 +106,76 @@ const CharacterFinalization: React.FC = () => {
   };
 
   /**
+   * Generate character avatar portrait
+   */
+  const handleGenerateAvatar = async () => {
+    if (!state.character?.name?.trim()) {
+      toast({
+        title: "Character Incomplete",
+        description: "Character name is required for avatar generation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingAvatar(true);
+    setGenerationStep('avatar');
+    try {
+      const characterData = {
+        name: state.character.name,
+        description: state.character.description,
+        race: state.character.race?.name || null,
+        subrace: state.character.subrace?.name || null,
+        class: state.character.class?.name || null,
+        background: state.character.background?.name || null,
+        alignment: state.character.alignment || null,
+        appearance: state.character.appearance,
+        personality_traits: state.character.personality_traits,
+        personality_notes: state.character.personality_notes,
+        enhancementSelections: state.character.enhancementSelections || [],
+        enhancementEffects: state.character.enhancementEffects || {},
+        theme: selectedTheme,
+      };
+
+      console.log('Generating avatar with theme:', selectedTheme);
+
+      const avatarBase64 = await characterImageGenerator.generateAvatarImage(
+        characterData,
+        { artStyle: 'fantasy-art', theme: selectedTheme }
+      );
+
+      // Upload avatar to get URL
+      const { openRouterService } = await import('@/services/openrouter-service');
+      const avatarUrl = await openRouterService.uploadImage(avatarBase64);
+
+      dispatch({
+        type: 'UPDATE_CHARACTER',
+        payload: {
+          avatar_url: avatarUrl,
+          theme: selectedTheme
+        }
+      });
+
+      toast({
+        title: "Avatar Generated",
+        description: "Your character avatar portrait has been created!",
+      });
+
+      setGenerationStep('idle');
+    } catch (error) {
+      console.error('Failed to generate avatar:', error);
+      toast({
+        title: "Avatar Generation Failed",
+        description: "Failed to generate character avatar. Please try again.",
+        variant: "destructive",
+      });
+      setGenerationStep('idle');
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
+  };
+
+  /**
    * Generate detailed character design sheet using AI with full character context
    */
   const handleGenerateImage = async () => {
@@ -117,11 +189,13 @@ const CharacterFinalization: React.FC = () => {
     }
 
     setIsGeneratingImage(true);
+    setGenerationStep('sheet');
     try {
       const characterData = {
         name: state.character.name,
         description: state.character.description,
         race: state.character.race?.name || null,
+        subrace: state.character.subrace?.name || null,
         class: state.character.class?.name || null,
         background: state.character.background?.name || null,
         alignment: state.character.alignment || null,
@@ -136,14 +210,34 @@ const CharacterFinalization: React.FC = () => {
       console.log('Generating design sheet with theme:', selectedTheme);
       console.log('Character data for generation:', characterData);
 
+      // Get avatar base64 if it exists for reference
+      let avatarReference: string | undefined;
+      if (state.character.avatar_url) {
+        try {
+          const response = await fetch(state.character.avatar_url);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          avatarReference = await new Promise<string>((resolve) => {
+            reader.onloadend = () => {
+              const base64 = reader.result as string;
+              resolve(base64.split(',')[1]); // Remove data:image/png;base64, prefix
+            };
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.warn('Could not fetch avatar for reference:', error);
+        }
+      }
+
       const imageUrl = await characterImageGenerator.generateCharacterImage(
         characterData,
-        { style: 'character-sheet', artStyle: 'fantasy-art', theme: selectedTheme }
+        { style: 'character-sheet', artStyle: 'fantasy-art', theme: selectedTheme },
+        avatarReference
       );
 
       dispatch({
         type: 'UPDATE_CHARACTER',
-        payload: { 
+        payload: {
           image_url: imageUrl,
           theme: selectedTheme
         }
@@ -151,8 +245,10 @@ const CharacterFinalization: React.FC = () => {
 
       toast({
         title: "Character Design Sheet Generated",
-        description: `Your detailed character design sheet in ${selectedTheme} theme has been created with front, back, side views, close-up sketches, annotations, and blueprint styling using all your character details!`,
+        description: `Your detailed character design sheet in ${selectedTheme} theme has been created${avatarReference ? ' using your avatar as reference' : ''}!`,
       });
+
+      setGenerationStep('idle');
 
     } catch (error) {
       console.error('Failed to generate character design sheet:', error);
@@ -161,6 +257,7 @@ const CharacterFinalization: React.FC = () => {
         description: "Failed to generate character design sheet. Please try again.",
         variant: "destructive",
       });
+      setGenerationStep('idle');
     } finally {
       setIsGeneratingImage(false);
     }
@@ -283,7 +380,7 @@ const CharacterFinalization: React.FC = () => {
           )}
         </div>
 
-        {/* Right Column - Character Image */}
+        {/* Right Column - Character Images */}
         <div className="space-y-4">
           {/* Theme Selector */}
           <div className="space-y-2">
@@ -303,6 +400,51 @@ const CharacterFinalization: React.FC = () => {
             </Select>
           </div>
 
+          {/* Avatar Portrait */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Character Avatar</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateAvatar}
+                disabled={isGeneratingAvatar || !state.character?.name?.trim()}
+              >
+                {isGeneratingAvatar ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    {state.character?.avatar_url ? 'Regenerate' : 'Generate'} Avatar
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Avatar Preview */}
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 h-64 flex items-center justify-center bg-muted/20">
+              {state.character?.avatar_url ? (
+                <img
+                  src={state.character.avatar_url}
+                  alt={`Avatar of ${state.character.name}`}
+                  className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
+                />
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <ImageIcon className="mx-auto h-10 w-10 mb-2" />
+                  <p className="text-xs">
+                    Generate avatar first (portrait style)
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Character Design Sheet */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Character Design Sheet</Label>
@@ -316,7 +458,7 @@ const CharacterFinalization: React.FC = () => {
                 {isGeneratingImage ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {generationStep === 'sheet' && 'Creating Sheet...'}
                   </>
                 ) : (
                   <>
@@ -326,9 +468,9 @@ const CharacterFinalization: React.FC = () => {
                 )}
               </Button>
             </div>
-            
+
             {/* Image Preview */}
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 h-80 flex items-center justify-center bg-muted/20">
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 h-64 flex items-center justify-center bg-muted/20">
               {state.character?.image_url ? (
                 <img
                   src={state.character.image_url}
@@ -337,9 +479,9 @@ const CharacterFinalization: React.FC = () => {
                 />
               ) : (
                 <div className="text-center text-muted-foreground">
-                  <ImageIcon className="mx-auto h-12 w-12 mb-4" />
-                  <p className="text-sm">
-                    Select a theme and click "Generate Design Sheet" to create a detailed AI character sheet with multiple views, close-up sketches, annotations, and blueprint styling using your complete character profile
+                  <ImageIcon className="mx-auto h-10 w-10 mb-2" />
+                  <p className="text-xs">
+                    Generate character sheet with multiple views
                   </p>
                 </div>
               )}
@@ -355,7 +497,7 @@ const CharacterFinalization: React.FC = () => {
           <div className="text-sm">
             <p className="font-medium text-green-900 dark:text-green-100 mb-1">Enhanced AI Generation</p>
             <p className="text-green-800 dark:text-green-200">
-              The AI now has access to your complete character profile (race, class, background, abilities, equipment, personality) and can generate detailed character design sheets with front, back, side views, close-up sketches of facial features and accessories, annotated design notes, labeled components, blueprint style with glowing trim, detailed line work, anatomy, flat colors, and professional concept art!
+              Generate in order: First create a portrait <strong>Avatar</strong>, then the <strong>Character Sheet</strong> will use it as reference for consistency! The avatar will be used throughout the app for character identification in chats, character lists, and more.
             </p>
           </div>
         </div>

@@ -284,6 +284,7 @@ export interface Character {
   isHidden?: boolean;
   stealthCheckBonus?: number;
   // New AI-generated fields
+  avatar_url?: string;
   image_url?: string;
   background_image?: string;
   theme?: string;
@@ -322,6 +323,7 @@ export function transformCharacterForStorage(character: Character) {
     background: character.background?.name || null,
     alignment: character.alignment || '',
     experience_points: character.experience || 0,
+    avatar_url: character.avatar_url || '',
     image_url: character.image_url || '',
     background_image: character.background_image || '',
     theme: character.theme || '',

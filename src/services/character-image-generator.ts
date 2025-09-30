@@ -62,14 +62,57 @@ export class CharacterImageGenerator {
   private defaultFallbackImage = '/default-character-avatar.png';
 
   /**
+   * Generate character avatar (portrait) image
+   * @param characterData - Character data to base the avatar on
+   * @param options - Generation options
+   * @returns Promise resolving to base64 encoded image data
+   */
+  async generateAvatarImage(
+    characterData: CharacterData,
+    options: Omit<CharacterImageOptions, 'style'> = {}
+  ): Promise<string> {
+    const {
+      retryAttempts = this.maxRetries,
+      artStyle = 'fantasy-art',
+      theme = characterData.theme || 'fantasy',
+      preferredProvider
+    } = options;
+
+    console.log(`Generating avatar portrait with theme: ${theme}, artStyle: ${artStyle}`);
+
+    const prompt = this.createImagePrompt(characterData, 'portrait', artStyle, theme);
+    console.log('Generated avatar prompt:', prompt);
+
+    const providerOrder = this.getProviderOrder(preferredProvider);
+    let lastError: Error | null = null;
+
+    for (const provider of providerOrder) {
+      try {
+        console.log(`Attempting avatar generation with provider: ${provider}`);
+        const base64Image = await this.generateWithProvider(prompt, provider, retryAttempts);
+        console.log(`Successfully generated avatar with provider: ${provider}`);
+        return base64Image;
+      } catch (error) {
+        console.warn(`Provider ${provider} failed:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        continue;
+      }
+    }
+
+    throw lastError || new Error('All image generation providers failed for avatar');
+  }
+
+  /**
    * Generate character image or design sheet with intelligent provider fallbacks
    * @param characterData - Character data to base the image on
    * @param options - Generation options including style and theme
+   * @param referenceImageBase64 - Optional base64 reference image (e.g., avatar)
    * @returns Promise resolving to image URL
    */
   async generateCharacterImage(
     characterData: CharacterData,
-    options: CharacterImageOptions = {}
+    options: CharacterImageOptions = {},
+    referenceImageBase64?: string
   ): Promise<string> {
     const {
       retryAttempts = this.maxRetries,
@@ -81,7 +124,7 @@ export class CharacterImageGenerator {
     } = options;
 
     console.log(`Generating ${style} with theme: ${theme}, artStyle: ${artStyle}`);
-    
+
     const prompt = this.createImagePrompt(characterData, style, artStyle, theme);
     console.log('Generated prompt:', prompt);
 
@@ -94,7 +137,12 @@ export class CharacterImageGenerator {
     for (const provider of providerOrder) {
       try {
         console.log(`Attempting image generation with provider: ${provider}`);
-        const base64Image = await this.generateWithProvider(prompt, provider, retryAttempts);
+        const base64Image = await this.generateWithProvider(
+          prompt,
+          provider,
+          retryAttempts,
+          referenceImageBase64
+        );
         const imageUrl = await openRouterService.uploadImage(base64Image);
 
         console.log(`Successfully generated character image with provider: ${provider}`);
@@ -149,19 +197,21 @@ export class CharacterImageGenerator {
    * @param prompt - Image generation prompt
    * @param provider - Provider to use
    * @param retryAttempts - Number of retry attempts
+   * @param referenceImageBase64 - Optional reference image
    * @returns Promise resolving to base64 encoded image data
    */
   private async generateWithProvider(
     prompt: string,
     provider: ImageGenerationProvider,
-    retryAttempts: number
+    retryAttempts: number,
+    referenceImageBase64?: string
   ): Promise<string> {
     switch (provider) {
       case ImageGenerationProvider.GEMINI_DIRECT:
-        return this.generateWithGeminiDirect(prompt, retryAttempts);
+        return this.generateWithGeminiDirect(prompt, retryAttempts, referenceImageBase64);
 
       case ImageGenerationProvider.OPENROUTER_PAID:
-        return this.generateWithOpenRouterPaid(prompt, retryAttempts);
+        return this.generateWithOpenRouterPaid(prompt, retryAttempts, referenceImageBase64);
 
       default:
         throw new Error(`Unknown provider: ${provider}`);
@@ -172,16 +222,24 @@ export class CharacterImageGenerator {
    * Generate image using Gemini direct API
    * @param prompt - Image generation prompt
    * @param retryAttempts - Number of retry attempts
+   * @param referenceImageBase64 - Optional reference image
    * @returns Promise resolving to base64 encoded image data
    */
-  private async generateWithGeminiDirect(prompt: string, retryAttempts: number): Promise<string> {
+  private async generateWithGeminiDirect(
+    prompt: string,
+    retryAttempts: number,
+    referenceImageBase64?: string
+  ): Promise<string> {
     if (!geminiImageService.canUseFreeToday()) {
       throw new Error(`Gemini free tier exhausted for today. Remaining: ${geminiImageService.getRemainingFreeRequests()}`);
     }
 
     for (let attempt = 1; attempt <= retryAttempts; attempt++) {
       try {
-        const base64Image = await geminiImageService.generateImage({ prompt });
+        const base64Image = await geminiImageService.generateImage({
+          prompt,
+          referenceImage: referenceImageBase64
+        });
         return base64Image;
       } catch (error) {
         console.warn(`Gemini direct attempt ${attempt}/${retryAttempts} failed:`, error);
@@ -202,9 +260,14 @@ export class CharacterImageGenerator {
    * Generate image using OpenRouter paid tier
    * @param prompt - Image generation prompt
    * @param retryAttempts - Number of retry attempts
+   * @param referenceImageBase64 - Optional reference image (currently not supported by OpenRouter)
    * @returns Promise resolving to base64 encoded image data
    */
-  private async generateWithOpenRouterPaid(prompt: string, retryAttempts: number): Promise<string> {
+  private async generateWithOpenRouterPaid(
+    prompt: string,
+    retryAttempts: number,
+    referenceImageBase64?: string
+  ): Promise<string> {
     for (let attempt = 1; attempt <= retryAttempts; attempt++) {
       try {
         // Use paid model directly

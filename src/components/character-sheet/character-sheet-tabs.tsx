@@ -90,13 +90,13 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
       {/* Character Header - Always Visible */}
       <div className="mb-6 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border">
         <div className="flex items-center gap-4">
-          {/* Character Portrait */}
+          {/* Character Portrait/Avatar */}
           <div className="flex-shrink-0">
-            {character.image_url ? (
+            {character.avatar_url ? (
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary">
                 <img
-                  src={character.image_url}
-                  alt={`${character.name || 'Character'} portrait`}
+                  src={character.avatar_url}
+                  alt={`${character.name || 'Character'} avatar`}
                   className="w-full h-full object-cover"
                 />
               </div>

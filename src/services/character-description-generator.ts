@@ -178,21 +178,27 @@ export class CharacterDescriptionGenerator {
     }
 
     if (characterData.ideals && characterData.ideals.length > 0) {
-      const ideals = characterData.ideals.filter(ideal => ideal.trim()).join('; ');
+      const ideals = characterData.ideals
+        .filter(ideal => typeof ideal === 'string' && ideal.trim())
+        .join('; ');
       if (ideals) {
         promptParts.push(`Ideals: ${ideals}`);
       }
     }
 
     if (characterData.bonds && characterData.bonds.length > 0) {
-      const bonds = characterData.bonds.filter(bond => bond.trim()).join('; ');
+      const bonds = characterData.bonds
+        .filter(bond => typeof bond === 'string' && bond.trim())
+        .join('; ');
       if (bonds) {
         promptParts.push(`Bonds: ${bonds}`);
       }
     }
 
     if (characterData.flaws && characterData.flaws.length > 0) {
-      const flaws = characterData.flaws.filter(flaw => flaw.trim()).join('; ');
+      const flaws = characterData.flaws
+        .filter(flaw => typeof flaw === 'string' && flaw.trim())
+        .join('; ');
       if (flaws) {
         promptParts.push(`Flaws: ${flaws}`);
       }
