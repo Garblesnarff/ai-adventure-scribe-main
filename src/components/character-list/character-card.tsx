@@ -194,6 +194,17 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
         <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
         <div className={`hover-popup ${isHovered ? 'opacity-100 scale-100 pointer-events-auto z-20' : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
           <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border max-w-xs">
+            {/* Avatar Display */}
+            {character.avatar_url && (
+              <div className="flex justify-center mb-3">
+                <img
+                  src={character.avatar_url}
+                  alt={`${character.name} avatar`}
+                  className="w-20 h-20 rounded-full object-cover border-2 border-infinite-purple shadow-md"
+                />
+              </div>
+            )}
+
             <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : character.name}</div>
 
             {imageLoading ? (

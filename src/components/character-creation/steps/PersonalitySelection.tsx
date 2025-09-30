@@ -75,7 +75,25 @@ const PersonalitySelection: React.FC = () => {
       };
 
       const element = await personalityService.getRandomPersonalityElement(fieldType, options);
-      const randomText = element.text;
+
+      // Extract the text based on the field type
+      let randomText: string;
+      switch (fieldType) {
+        case 'traits':
+          randomText = element.text;
+          break;
+        case 'ideals':
+          randomText = element.ideal;
+          break;
+        case 'bonds':
+          randomText = element.bond;
+          break;
+        case 'flaws':
+          randomText = element.flaw;
+          break;
+        default:
+          randomText = element.text;
+      }
 
       switch (fieldType) {
         case 'traits':
@@ -134,15 +152,15 @@ const PersonalitySelection: React.FC = () => {
       }
 
       if (batchData.ideals) {
-        handleIdealChange(batchData.ideals.text);
+        handleIdealChange(batchData.ideals.ideal);
       }
 
       if (batchData.bonds) {
-        handleBondChange(batchData.bonds.text);
+        handleBondChange(batchData.bonds.bond);
       }
 
       if (batchData.flaws) {
-        handleFlawChange(batchData.flaws.text);
+        handleFlawChange(batchData.flaws.flaw);
       }
 
       toast({

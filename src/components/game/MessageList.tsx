@@ -216,12 +216,26 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
       {groupedMessages.map((group, groupIndex) => (
         <div key={`group-${groupIndex}`} className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}>
           <div className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>
-            {/* Avatar only for first message in group */}
-            {!group.isPlayer && (
+            {/* Avatar for first message in group */}
+            {!group.isPlayer ? (
               <div className="flex-shrink-0 mr-3 mb-2">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-primary text-primary-foreground" aria-hidden>
                   DM
                 </div>
+              </div>
+            ) : (
+              <div className="flex-shrink-0 ml-3 mb-2">
+                {group.messages[0].characterAvatar ? (
+                  <img
+                    src={group.messages[0].characterAvatar}
+                    alt="Character avatar"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-card"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium bg-card text-card-foreground border-2 border-primary" aria-hidden>
+                    {group.messages[0].characterName?.charAt(0).toUpperCase() || 'P'}
+                  </div>
+                )}
               </div>
             )}
 

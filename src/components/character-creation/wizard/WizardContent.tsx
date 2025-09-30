@@ -259,7 +259,7 @@ const WizardContent: React.FC = () => {
     const { race, class: characterClass, abilityScores, background, skillProficiencies, languages, name } = state.character;
 
     // Basic required fields including name
-    const hasBasicFields = !!(name?.trim() && race && characterClass && abilityScores && background && skillProficiencies?.length && languages?.length);
+    const hasBasicFields = !!(name?.trim() && race && characterClass && abilityScores && background && skillProficiencies !== undefined && languages !== undefined);
 
     // If race has subraces, subrace must be selected
     const hasValidSubrace = !race?.subraces?.length || !!state.character.subrace;
