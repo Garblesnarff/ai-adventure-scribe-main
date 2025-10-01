@@ -22,9 +22,9 @@ interface GeminiImageGenerationRequest {
  */
 export class GeminiImageService {
   private geminiManager: GeminiApiManager;
-  private readonly MODEL_NAME = 'gemini-2.0-flash-image-preview';
+  private readonly MODEL_NAME = 'gemini-2.0-flash-preview-image-generation';
   private usageToday = 0;
-  private readonly DAILY_FREE_LIMIT = 15; // Conservative estimate for free tier
+  private readonly DAILY_FREE_LIMIT = 500; // Google AI free tier limit
 
   constructor() {
     this.geminiManager = getGeminiApiManager();
