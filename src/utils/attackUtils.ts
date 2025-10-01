@@ -334,20 +334,37 @@ export function getNumberOfAttacks(cfg: number, characterClass: string, level: n
 }
 
 /**
- * Check if sneak attack can be applied
+ * Check if sneak attack can be applied.
  */
-export function canUseSneakAttack(attacker: CombatParticipant, target: CombatParticipant): boolean {
+export function canUseSneakAttack(
+  attacker: CombatParticipant,
+  target: CombatParticipant,
+  allParticipants: CombatParticipant[] = []
+): boolean {
   // Must be a rogue
-  if (attacker.characterClass !== 'rogue') return false;
+  if (attacker.characterClass?.toLowerCase() !== 'rogue') return false;
 
-  // Basic condition: advantage, ally within 5ft, or target incapacitated
+  // Basic condition: advantage on the attack roll.
   const hasAdvantage = attacker.conditions.some(c => c.name === 'invisible') ||
                        target.conditions.some(c =>
                          ['prone', 'stunned', 'paralyzed', 'unconscious'].includes(c.name));
 
-  // TODO: Check for ally within 5ft (requires position tracking)
-  // For now, return basic check
-  return hasAdvantage;
+  if (hasAdvantage) return true;
+
+  // Sneak attack also applies if another enemy of the target is within 5 feet of it,
+  // that enemy isn't incapacitated, and the attacker doesn't have disadvantage.
+
+  // TODO: This is a placeholder for ally position tracking.
+  // A full implementation requires iterating through `allParticipants` and calculating
+  // the distance between each of the attacker's allies and the target.
+  // For now, we'll simulate this by checking if any other non-incapacitated ally exists.
+  const isAllyNearby = allParticipants.some(p =>
+    p.id !== attacker.id &&
+    p.participantType === attacker.participantType &&
+    !p.conditions.some(c => c.name === 'incapacitated')
+  );
+
+  return isAllyNearby;
 }
 
 /**
