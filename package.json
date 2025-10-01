@@ -25,7 +25,10 @@
     "seed:test-data": "node scripts/seed-test-data.js",
     "install:all": "npm install && cd server && npm install",
     "mvp:setup": "echo 'Setting up MVP...' && npm install && echo 'Next: Copy .env.example to .env.local and configure your Supabase credentials'",
-    "mvp:build": "npm run lint && npm run build"
+    "mvp:build": "npm run lint && npm run build",
+    "check-deps": "npx depcheck || true",
+    "check-unused-exports": "npx ts-prune --paths ./tsconfig.json || true",
+    "check-dead": "npm run check-deps && npm run check-unused-exports"
   },
   "dependencies": {
     "@11labs/react": "^0.0.4",
@@ -75,6 +78,7 @@
     "cmdk": "^1.0.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
+    "depcheck": "^1.4.7",
     "dotenv": "^16.6.1",
     "embla-carousel-react": "^8.3.0",
     "express": "^4.19.2",
@@ -102,6 +106,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.160.1",
+    "ts-prune": "^0.10.3",
     "uuid": "^9.0.1",
     "vaul": "^0.9.3",
     "ws": "^8.18.0",

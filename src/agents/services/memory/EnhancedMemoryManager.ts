@@ -20,9 +20,10 @@
 
 // External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
+import { calculateImportance } from '@/utils/memory/importance';
 
 // Project Types
-import { EnhancedMemory, MemoryQueryOptions } from '@/agents/crewai/types/memory';
+import { EnhancedMemory, MemoryQueryOptions } from '@/types/memory';
 import { Json } from '@/integrations/supabase/types';
 
 
@@ -40,7 +41,7 @@ export class EnhancedMemoryManager {
     category: EnhancedMemory['category'],
     context: Partial<EnhancedMemory['context']> = {}
   ): Promise<void> {
-    const importance = this.calculateImportance(content, type, category);
+    const importance = calculateImportance({ content, type, category });
 
     // Generate embedding for semantic search
     const embedding = await this.generateEmbedding(content);
@@ -119,50 +120,6 @@ export class EnhancedMemoryManager {
     }
 
     return data.map(this.transformDatabaseMemory);
-  }
-
-  private calculateImportance(
-    content: string,
-    type: EnhancedMemory['type'],
-    category: EnhancedMemory['category']
-  ): number {
-    let importance = 0;
-
-    // Base importance by type
-    switch (type) {
-      case 'action':
-        importance += 3; // Player actions are highly important
-        break;
-      case 'dialogue':
-        importance += 2;
-        break;
-      case 'scene_state':
-        importance += 2;
-        break;
-      case 'description':
-        importance += 1;
-        break;
-    }
-
-    // Additional importance by category
-    switch (category) {
-      case 'player_action':
-        importance += 2;
-        break;
-      case 'npc':
-        importance += 1;
-        break;
-      case 'location':
-        importance += 1;
-        break;
-    }
-
-    // Content-based importance
-    if (content.includes('quest') || content.includes('mission')) importance += 1;
-    if (content.includes('danger') || content.includes('threat')) importance += 1;
-    if (content.length > 200) importance += 1; // Detailed descriptions
-
-    return Math.min(10, importance); // Cap at 10
   }
 
   private async updateSceneState(memory: Partial<EnhancedMemory>): Promise<void> {

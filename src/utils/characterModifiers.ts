@@ -8,6 +8,7 @@
  */
 
 import { Character } from '@/types/character';
+import { Equipment } from '@/data/equipmentOptions';
 
 // D&D 5e ability names
 export type AbilityName = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
@@ -150,16 +151,37 @@ export function calculateSaveModifier(character: Character, ability: AbilityName
 }
 
 /**
- * Calculate attack roll modifier (simplified - assumes proficiency for now)
+ * Calculate attack roll modifier.
+ * This function now considers weapon properties like 'finesse'.
+ * @param character The character making the attack.
+ * @param weapon The weapon being used (optional). If not provided, defaults to an unarmed strike (strength).
+ * @returns The total attack modifier.
  */
-export function calculateAttackModifier(character: Character, attackType: 'melee' | 'ranged' = 'melee'): number {
-  // For melee attacks, typically use Strength
-  // For ranged attacks, typically use Dexterity
-  // TODO: This could be enhanced with weapon-specific logic
-  const ability = attackType === 'ranged' ? 'dexterity' : 'strength';
+export function calculateAttackModifier(character: Character, weapon?: Equipment | null): number {
+  let abilityMod: number;
+  const proficiencyBonus = getProficiencyBonus(character); // Assume proficiency with the weapon
 
-  const abilityMod = getAbilityModifier(character, ability);
-  const proficiencyBonus = getProficiencyBonus(character); // Assume proficiency
+  const strMod = getAbilityModifier(character, 'strength');
+  const dexMod = getAbilityModifier(character, 'dexterity');
+
+  if (weapon) {
+    const isFinesse = weapon.weaponProperties?.finesse;
+    const isRanged = !!weapon.range;
+
+    if (isFinesse) {
+      // Use the higher of DEX or STR for finesse weapons
+      abilityMod = Math.max(strMod, dexMod);
+    } else if (isRanged) {
+      // Use DEX for ranged weapons
+      abilityMod = dexMod;
+    } else {
+      // Use STR for non-finesse melee weapons
+      abilityMod = strMod;
+    }
+  } else {
+    // Default to STR for unarmed strikes or unspecified melee attacks
+    abilityMod = strMod;
+  }
 
   return abilityMod + proficiencyBonus;
 }
@@ -244,7 +266,7 @@ export function calculateRollWithBreakdown(
     case 'skill':
       if (!skillName) throw new Error('Skill name required for skill check');
       const skillAbility = SKILL_ABILITIES[skillName.toLowerCase()] ||
-                          SKILL_ABILITIES[SKILL_ALIASES[skillName.toLowerCase()]];
+                          SKILL_ALIASES[SKILL_ALIASES[skillName.toLowerCase()]];
       if (!skillAbility) throw new Error(`Unknown skill: ${skillName}`);
 
       usedAbility = skillAbility;

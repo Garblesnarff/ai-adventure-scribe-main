@@ -9,12 +9,7 @@
  */
 
 import { CombatParticipant, Condition, ConditionName, DiceRoll, DamageType } from '@/types/combat';
-
-// Local d20 function since it doesn't exist in diceUtils
-async function d20(options: DiceRollOptions = {}): Promise<DiceRoll> {
-  return rollDice(20, 1, 0, options);
-}
-import { rollDice, DiceRollOptions } from '@/utils/diceUtils';
+import { d20 } from './diceRolls';
 import { Equipment } from '@/data/equipmentOptions';
 
 // ===========================
@@ -535,27 +530,31 @@ export function removeConditionEffects(participant: CombatParticipant, condition
  * @param saveModifier - Additional modifier (e.g., from proficiency)
  * @returns {success: boolean, roll: DiceRoll}
  */
-export async function handleConditionSave(
+export function handleConditionSave(
   participant: CombatParticipant,
   condition: Condition,
   saveModifier: number = 0
-): Promise<{ success: boolean; roll: DiceRoll }> {
+): { success: boolean; roll: DiceRoll } {
   // Most conditions use Constitution saves
   const totalModifier = saveModifier; // Simplified - would normally calculate based on CON modifier
-  const roll = await d20({
-    advantage: false,
-    disadvantage: false
-  });
-  const adjustedRoll = roll.total + totalModifier;
+  const rollResult = d20();
+  const adjustedRoll = rollResult + totalModifier;
 
   const dc = condition.saveDC || 10; // Default DC if not specified
   const success = adjustedRoll >= dc;
 
-  // Return roll result adjusted for total
+  // Construct the DiceRoll object
   const finalRoll: DiceRoll = {
-    ...roll,
+    dieType: 20,
+    count: 1,
     modifier: totalModifier,
-    total: adjustedRoll
+    results: [rollResult],
+    keptResults: [rollResult],
+    total: adjustedRoll,
+    advantage: false,
+    disadvantage: false,
+    critical: rollResult === 20,
+    naturalRoll: rollResult,
   };
 
   return { success, roll: finalRoll };
