@@ -7,7 +7,7 @@ import { useGame } from '@/contexts/GameContext';
 import { useCombat } from '@/contexts/CombatContext';
 
 // Project Utilities
-import { selectRelevantMemories } from '@/utils/memorySelection';
+import { selectRelevantMemories } from '@/utils/memory/selection';
 
 // Project Services
 import { voiceConsistencyService } from '@/services/voice-consistency-service';
