@@ -11,17 +11,16 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DiceRoller from '@/components/ui/dice-roller';
+import HPTracker from './HPTracker';
 import { 
   Sword, 
   Shield, 
-  Heart, 
   Skull, 
   Zap, 
   Target, 
-  AlertCircle 
 } from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
-import { MonsterAttack, DamageType } from '@/types/combat';
+import { MonsterAttack } from '@/types/combat';
 
 interface EnemyCardProps {
   enemyId: string;
@@ -40,16 +39,6 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
   if (!enemy || enemy.participantType !== 'monster') {
     return null;
   }
-
-  // D&D 5e rule: Players don't know enemy HP unless previously defeated or DM reveals
-  const showHP = false; // This would be controlled by game state or DM setting
-  const hpPercent = showHP ? (enemy.currentHitPoints / enemy.maxHitPoints) * 100 : 0;
-  
-  const getHPColor = () => {
-    if (hpPercent <= 25) return 'bg-red-500';
-    if (hpPercent <= 50) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
 
   const getChallengeRatingColor = (cr: string) => {
     const numCR = parseFloat(cr);
@@ -101,7 +90,6 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
             {enemy.name}
           </CardTitle>
           
-          {/* Challenge Rating */}
           {enemy.monsterData?.challengeRating && (
             <Badge 
               className={getChallengeRatingColor(enemy.monsterData.challengeRating)}
@@ -112,7 +100,6 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
           )}
         </div>
         
-        {/* Enemy Type and Alignment */}
         {enemy.monsterData?.type && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Target className="w-3 h-3" />
@@ -125,45 +112,12 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {/* HP Display (Hidden by default per D&D rules) */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-1">
-              <Heart className="w-4 h-4" />
-              Hit Points
-            </span>
-            {!showHP ? (
-              <Badge variant="outline" className="text-xs">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Unknown
-              </Badge>
-            ) : (
-              <span className="text-sm font-medium">
-                {enemy.currentHitPoints}/{enemy.maxHitPoints}
-              </span>
-            )}
-          </div>
-          
-          {showHP && (
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all ${getHPColor()}`}
-                style={{ width: `${hpPercent}%` }}
-              />
-            </div>
-          )}
-        </div>
+        <HPTracker
+            participant={enemy}
+            showHPDetails={false}
+            isInteractive={false}
+        />
 
-        {/* Armor Class */}
-        <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-          <span className="flex items-center gap-1 text-sm">
-            <Shield className="w-4 h-4" />
-            Armor Class
-          </span>
-          <span className="font-medium text-sm">{enemy.armorClass}</span>
-        </div>
-
-        {/* Special Abilities */}
         {enemy.monsterData?.specialAbilities && enemy.monsterData.specialAbilities.length > 0 && (
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-purple-700 mb-1">
@@ -178,7 +132,6 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
           </div>
         )}
 
-        {/* Attacks/Actions */}
         {enemy.monsterData?.attacks && enemy.monsterData.attacks.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs font-medium text-red-700">
@@ -193,7 +146,6 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
           </div>
         )}
 
-        {/* Condition Indicators */}
         {enemy.conditions.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-2 border-t">
             {enemy.conditions.map((condition, index) => (

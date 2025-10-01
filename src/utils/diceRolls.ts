@@ -25,3 +25,11 @@ export const roll4d6DropLowest = (): number => {
 export const generateAbilityScores = (): number[] => {
   return Array.from({ length: 6 }, roll4d6DropLowest);
 };
+
+/**
+ * Simulates rolling a 20-sided die
+ * @returns Random number between 1 and 20
+ */
+export const d20 = (): number => {
+  return Math.floor(Math.random() * 20) + 1;
+};

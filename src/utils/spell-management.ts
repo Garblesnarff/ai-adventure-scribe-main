@@ -278,9 +278,11 @@ export function checkConcentration(participant: CombatParticipant, damageTaken: 
   if (damageTaken === 0) return true;
 
   const dc = Math.max(10, Math.floor(damageTaken / 2));
-  // TODO: Roll Con save using ability modifier from character data
-  const conMod = 0; // Placeholder; fetch from CharacterContext
-  const roll = Math.floor(Math.random() * 20) + 1 + conMod; // Simulate d20 roll
+
+  // A proper implementation would also check for proficiency in Constitution saving throws.
+  // For now, we'll just use the ability modifier.
+  const conMod = (participant.abilityScores as any)?.constitution?.modifier || 0;
+  const roll = Math.floor(Math.random() * 20) + 1 + conMod;
 
   const maintained = roll >= dc;
   if (!maintained) {
