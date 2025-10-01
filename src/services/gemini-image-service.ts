@@ -89,6 +89,9 @@ export class GeminiImageService {
       const result = await this.geminiManager.executeWithRotation(async (genAI: GoogleGenerativeAI) => {
         const model = genAI.getGenerativeModel({
           model: this.MODEL_NAME,
+          generationConfig: {
+            responseModalities: ["Text", "Image"]
+          }
         });
 
         // Build the content based on whether we have reference images
