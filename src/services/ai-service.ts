@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { GeminiApiManager } from './gemini-api-manager';
+import { getGeminiApiManager } from './gemini-api-manager-singleton';
+import type { GeminiApiManager } from './gemini-api-manager';
 import { MemoryManager, MemoryContext } from './memory-manager';
 import { WorldBuilderService } from './world-builders/world-builder-service';
 import { voiceConsistencyService } from './voice-consistency-service';
@@ -27,21 +28,11 @@ export interface GameContext {
 }
 
 export class AIService {
-  private static geminiManager: GeminiApiManager | null = null;
-
   /**
-   * Initialize the Gemini API manager (lazy loading)
+   * Get the shared Gemini API manager instance
    */
   private static getGeminiManager(): GeminiApiManager {
-    if (!this.geminiManager) {
-      try {
-        this.geminiManager = new GeminiApiManager();
-      } catch (error) {
-        console.warn('Failed to initialize Gemini API manager:', error);
-        throw error;
-      }
-    }
-    return this.geminiManager;
+    return getGeminiApiManager();
   }
   /**
    * Generate a campaign description using AI with fallback

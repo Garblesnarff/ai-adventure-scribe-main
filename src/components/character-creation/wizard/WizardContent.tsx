@@ -74,6 +74,10 @@ const WizardContent: React.FC = () => {
         if (!character.race) {
           return { isValid: false, message: "Please select a race for your character" };
         }
+        // If race has subraces, ensure one is selected
+        if (character.race.subraces && character.race.subraces.length > 0 && !character.subrace) {
+          return { isValid: false, message: "Please select a subrace for your character" };
+        }
         break;
 
       // Subrace Selection - Validate if applicable (auto-skipped if not needed)

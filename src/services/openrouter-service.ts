@@ -79,14 +79,10 @@ export class OpenRouterService {
 
   private textModels: ModelConfig[] = [
     {
-      id: 'google/gemini-flash-1.5',
-      isFree: true, // Free tier available with credits
+      // Use configured model from environment (default to free tier Gemini 2.0)
+      id: import.meta.env.VITE_OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free',
+      isFree: true, // Free tier with 1000 requests/day
       dailyLimit: 1000
-    },
-    {
-      id: 'google/gemini-2.0-flash-exp:free',
-      isFree: true,
-      dailyLimit: 100
     },
     {
       id: 'anthropic/claude-3.5-sonnet',

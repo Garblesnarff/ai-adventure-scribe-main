@@ -8,7 +8,8 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GeminiApiManager } from './gemini-api-manager';
+import { getGeminiApiManager } from './gemini-api-manager-singleton';
+import type { GeminiApiManager } from './gemini-api-manager';
 
 interface GeminiImageGenerationRequest {
   prompt: string;
@@ -26,7 +27,7 @@ export class GeminiImageService {
   private readonly DAILY_FREE_LIMIT = 15; // Conservative estimate for free tier
 
   constructor() {
-    this.geminiManager = new GeminiApiManager();
+    this.geminiManager = getGeminiApiManager();
   }
 
   /**

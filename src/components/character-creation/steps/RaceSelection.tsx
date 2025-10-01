@@ -9,6 +9,9 @@ import { CharacterRace, Subrace } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Check, Users, Zap, Globe, Search, Filter, Grid, List, Heart, Star, Eye } from 'lucide-react';
+import { HalfElfAbilityChoice } from '../modals/HalfElfAbilityChoice';
+import { VariantHumanChoice } from '../modals/VariantHumanChoice';
+import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
 
 const RaceSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -24,6 +27,12 @@ const RaceSelection: React.FC = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
   const [comparisonRaces, setComparisonRaces] = useState<CharacterRace[]>([]);
+
+  // Half-Elf ability choice modal state
+  const [showHalfElfModal, setShowHalfElfModal] = useState(false);
+
+  // Variant Human ability + feat choice modal state
+  const [showVariantHumanModal, setShowVariantHumanModal] = useState(false);
 
   // Race categories for filtering
   const raceCategories = [
@@ -87,6 +96,13 @@ const RaceSelection: React.FC = () => {
       payload: { race: baseRace, subrace: null }
     });
     setSelectedBaseRace(baseRace);
+
+    // Check if this is Half-Elf - requires ability choice
+    if (baseRace.id === 'half-elf') {
+      setShowHalfElfModal(true);
+      return;
+    }
+
     if (baseRace.subraces && baseRace.subraces.length > 0) {
       setShowSubraces(true);
       toast({
@@ -108,6 +124,18 @@ const RaceSelection: React.FC = () => {
 
   const handleSubraceSelect = (subrace: Subrace) => {
     console.log('Selecting subrace:', subrace);
+
+    // Check if this is Variant Human - requires ability + feat choice
+    if (subrace.id === 'variant-human') {
+      dispatch({
+        type: 'UPDATE_CHARACTER',
+        payload: { subrace }
+      });
+      setShowSubraces(false);
+      setShowVariantHumanModal(true);
+      return;
+    }
+
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: { subrace }
@@ -119,6 +147,47 @@ const RaceSelection: React.FC = () => {
       duration: 1000,
     });
     // Auto-scroll to navigation to proceed to next step
+    scrollToNavigation();
+  };
+
+  const handleHalfElfAbilityChoice = (abilities: [AbilityScoreName, AbilityScoreName]) => {
+    dispatch({
+      type: 'UPDATE_CHARACTER',
+      payload: {
+        racialAbilityChoices: {
+          ...state.character?.racialAbilityChoices,
+          halfElf: abilities
+        }
+      }
+    });
+    toast({
+      title: "Abilities Selected",
+      description: `You have chosen +1 to ${abilities[0]} and ${abilities[1]}.`,
+      duration: 2000,
+    });
+    scrollToNavigation();
+  };
+
+  const handleVariantHumanChoice = (abilities: [AbilityScoreName, AbilityScoreName], feat: string) => {
+    dispatch({
+      type: 'UPDATE_CHARACTER',
+      payload: {
+        racialAbilityChoices: {
+          ...state.character?.racialAbilityChoices,
+          variantHuman: abilities
+        },
+        feats: [feat]
+      }
+    });
+
+    // Format feat name for display (convert kebab-case to Title Case)
+    const featName = feat.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+    toast({
+      title: "Variant Human Customization Complete",
+      description: `You have chosen +1 to ${abilities[0]} and ${abilities[1]}, plus the ${featName} feat.`,
+      duration: 3000,
+    });
     scrollToNavigation();
   };
 
@@ -622,6 +691,25 @@ const RaceSelection: React.FC = () => {
           </p>
         </Card>
       )}
+
+      {/* Half-Elf Ability Choice Modal */}
+      <HalfElfAbilityChoice
+        isOpen={showHalfElfModal}
+        onClose={() => setShowHalfElfModal(false)}
+        onConfirm={handleHalfElfAbilityChoice}
+        currentChoices={state.character?.racialAbilityChoices?.halfElf as [AbilityScoreName, AbilityScoreName] | undefined}
+      />
+
+      {/* Variant Human Ability + Feat Choice Modal */}
+      <VariantHumanChoice
+        isOpen={showVariantHumanModal}
+        onClose={() => setShowVariantHumanModal(false)}
+        onConfirm={handleVariantHumanChoice}
+        currentChoices={{
+          abilities: state.character?.racialAbilityChoices?.variantHuman as [AbilityScoreName, AbilityScoreName] | undefined,
+          feat: state.character?.feats?.[0]
+        }}
+      />
     </div>
   );
 };

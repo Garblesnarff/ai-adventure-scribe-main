@@ -133,6 +133,11 @@ export interface Character {
   level?: number;
   background?: CharacterBackground | null;
   abilityScores?: AbilityScores;
+  // Racial ability choices (e.g., Half-Elf chooses 2 abilities for +1)
+  racialAbilityChoices?: {
+    halfElf?: [string, string]; // Two abilities chosen for +1 bonus
+    variantHuman?: [string, string]; // Two abilities chosen for +1 bonus
+  };
   experience?: number;
   alignment?: string;
   personalityTraits?: string[];

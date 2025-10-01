@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { AbilityScores } from '@/types/character';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { generateAbilityScores } from '@/utils/diceRolls';
 import { calculateModifier } from '@/utils/abilityScoreUtils';
+import {
+  calculateRacialBonuses,
+  getTotalRacialBonus,
+  formatRacialBonus,
+  type AbilityScoreName
+} from '@/utils/racialAbilityBonuses';
 import DiceRoller from '@/components/ui/dice-roller';
-import { Info, RotateCcw, Shuffle, TrendingUp, Target, Zap } from 'lucide-react';
+import { Info, RotateCcw, Shuffle, AlertTriangle } from 'lucide-react';
 
 /**
  * Component for handling ability score selection in character creation
@@ -208,7 +215,7 @@ const AbilityScoresSelection: React.FC = () => {
   const getAbilityDescription = (ability: keyof AbilityScores) => {
     const descriptions = {
       strength: "Physical power, athletic ability, melee attacks",
-      dexterity: "Agility, reflexes, ranged attacks, AC, initiative", 
+      dexterity: "Agility, reflexes, ranged attacks, AC, initiative",
       constitution: "Health, stamina, hit points, concentration",
       intelligence: "Reasoning, memory, arcane magic, investigation",
       wisdom: "Awareness, insight, divine magic, perception",
@@ -216,6 +223,45 @@ const AbilityScoresSelection: React.FC = () => {
     };
     return descriptions[ability];
   };
+
+  // Calculate racial bonuses (useMemo to avoid recalculation)
+  const racialBonuses = useMemo(
+    () => calculateRacialBonuses(
+      state.character?.race || null,
+      state.character?.subrace || null,
+      state.character?.racialAbilityChoices
+    ),
+    [state.character?.race, state.character?.subrace, state.character?.racialAbilityChoices]
+  );
+
+  // Calculate final scores with racial bonuses applied
+  const getFinalScore = (ability: keyof AbilityScores): number => {
+    const baseScore = state.character?.abilityScores?.[ability]?.score || 8;
+    const totalRacialBonus = getTotalRacialBonus(ability as AbilityScoreName, racialBonuses);
+    // Cap at 20 per D&D 5E rules
+    return Math.min(baseScore + totalRacialBonus, 20);
+  };
+
+  // Validate point buy: 27 points total
+  const pointsUsed = useMemo(() => {
+    if (method !== 'pointBuy') return 0;
+    return abilities.reduce((total, ability) => {
+      const score = state.character?.abilityScores?.[ability]?.score || 8;
+      return total + (pointCost[score] || 0);
+    }, 0);
+  }, [method, state.character?.abilityScores]);
+
+  const pointBuyValid = method !== 'pointBuy' || pointsUsed <= 27;
+
+  // Validate standard array: must use exactly [15,14,13,12,10,8]
+  const standardArrayValid = useMemo(() => {
+    if (method !== 'standardArray') return true;
+    const usedScores = abilities
+      .map(ability => state.character?.abilityScores?.[ability]?.score || 8)
+      .sort((a, b) => b - a);
+    const expectedArray = [15, 14, 13, 12, 10, 8];
+    return JSON.stringify(usedScores) === JSON.stringify(expectedArray);
+  }, [method, state.character?.abilityScores]);
 
   // Calculate total modifier bonus
   const totalModifier = abilities.reduce((total, ability) => {
@@ -317,13 +363,44 @@ const AbilityScoresSelection: React.FC = () => {
         </TabsContent>
       </Tabs>
       
+      {/* Validation Alerts */}
+      {!pointBuyValid && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            You have exceeded your point budget! You have used {pointsUsed} points (maximum 27).
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!standardArrayValid && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Standard Array must use exactly: 15, 14, 13, 12, 10, 8 (each value once).
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Racial Bonus Info */}
+      {racialBonuses.length > 0 && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Your {state.character?.race?.name} grants racial ability bonuses that will be added to your base scores.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Ability Scores Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {abilities.map((ability) => {
-          const currentScore = state.character?.abilityScores?.[ability]?.score || 8;
-          const modifier = state.character?.abilityScores?.[ability]?.modifier || 0;
-          const nextCost = method === 'pointBuy' ? (pointCost[currentScore + 1] - pointCost[currentScore]) : 0;
-          
+          const baseScore = state.character?.abilityScores?.[ability]?.score || 8;
+          const racialBonus = getTotalRacialBonus(ability as AbilityScoreName, racialBonuses);
+          const finalScore = getFinalScore(ability);
+          const modifier = calculateModifier(finalScore);
+          const nextCost = method === 'pointBuy' ? (pointCost[baseScore + 1] - pointCost[baseScore]) : 0;
+
           return (
             <Card key={ability} className="p-4 hover:shadow-md transition-shadow">
               <div className="space-y-3">
@@ -333,37 +410,43 @@ const AbilityScoresSelection: React.FC = () => {
                     {getAbilityDescription(ability)}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDecreaseScore(ability)}
-                    disabled={method !== 'pointBuy' || currentScore === 8}
+                    disabled={method !== 'pointBuy' || baseScore === 8}
                     className="w-8 h-8 p-0"
                   >
                     -
                   </Button>
-                  
-                  <div className="text-center">
+
+                  <div className="text-center space-y-1">
+                    <div className="text-xs text-muted-foreground">Base: {baseScore}</div>
+                    {racialBonus > 0 && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                        {formatRacialBonus(racialBonus)} racial
+                      </Badge>
+                    )}
                     <div className="text-3xl font-bold">
-                      {currentScore}
+                      {finalScore}
                     </div>
                     <div className={`text-sm font-medium ${
-                      modifier > 0 ? 'text-success' :
-                      modifier < 0 ? 'text-error' : 'text-muted-foreground'
+                      modifier > 0 ? 'text-green-600' :
+                      modifier < 0 ? 'text-red-600' : 'text-muted-foreground'
                     }`}>
                       {modifier >= 0 ? '+' : ''}{modifier}
                     </div>
                   </div>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleIncreaseScore(ability)}
                     disabled={
                       method !== 'pointBuy' ||
-                      currentScore === 15 ||
+                      baseScore === 15 ||
                       remainingPoints < nextCost
                     }
                     className="w-8 h-8 p-0"
@@ -371,8 +454,8 @@ const AbilityScoresSelection: React.FC = () => {
                     +
                   </Button>
                 </div>
-                
-                {method === 'pointBuy' && currentScore < 15 && (
+
+                {method === 'pointBuy' && baseScore < 15 && (
                   <div className="text-center">
                     <Badge variant="outline" className="text-xs">
                       Next: {nextCost} point{nextCost !== 1 ? 's' : ''}
