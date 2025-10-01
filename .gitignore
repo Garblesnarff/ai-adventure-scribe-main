@@ -5,6 +5,7 @@ server/dist
 server/.env
 *.log
 **/.DS_Store
+CLAUDE.md
 # Logs
 logs
 *.log
