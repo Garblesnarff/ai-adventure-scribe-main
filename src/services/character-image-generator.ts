@@ -83,7 +83,7 @@ export class CharacterImageGenerator {
     const prompt = this.createImagePrompt(characterData, 'portrait', artStyle, theme);
     console.log('Generated avatar prompt:', prompt);
 
-    const providerOrder = this.getProviderOrder(preferredProvider);
+    const providerOrder = this.getProviderOrder(preferredProvider, 'portrait');
     let lastError: Error | null = null;
 
     for (const provider of providerOrder) {
@@ -129,7 +129,7 @@ export class CharacterImageGenerator {
     console.log('Generated prompt:', prompt);
 
     // Determine the provider order based on preference and availability
-    const providerOrder = this.getProviderOrder(preferredProvider);
+    const providerOrder = this.getProviderOrder(preferredProvider, style);
 
     let lastError: Error | null = null;
 
@@ -171,9 +171,10 @@ export class CharacterImageGenerator {
   /**
    * Determine the order of providers to try based on preference and availability
    * @param preferredProvider - Optional preferred provider
+   * @param style - Image style (affects quality requirements)
    * @returns Array of providers in order of preference
    */
-  private getProviderOrder(preferredProvider?: ImageGenerationProvider): ImageGenerationProvider[] {
+  private getProviderOrder(preferredProvider?: ImageGenerationProvider, style?: string): ImageGenerationProvider[] {
     const allProviders = [
       ImageGenerationProvider.GEMINI_DIRECT,
       ImageGenerationProvider.OPENROUTER_PAID
@@ -185,10 +186,21 @@ export class CharacterImageGenerator {
       return [preferredProvider, ...others];
     }
 
-    // Default order: try free Gemini direct first, then paid OpenRouter as fallback
+    // For high-quality needs (cards, sheets), prefer OpenRouter paid (Gemini 2.5)
+    // For avatars/portraits, use free Gemini 2.0 first
+    const needsHighQuality = style && ['character-sheet', 'expression-sheet', 'full-body', 'action'].includes(style);
+
+    if (needsHighQuality) {
+      return [
+        ImageGenerationProvider.OPENROUTER_PAID,    // Gemini 2.5 - Best quality for cards/sheets
+        ImageGenerationProvider.GEMINI_DIRECT       // Gemini 2.0 - Fallback if paid fails
+      ];
+    }
+
+    // Default for portraits/avatars: try free first
     return [
-      ImageGenerationProvider.GEMINI_DIRECT,      // Free with Gemini API (15/day)
-      ImageGenerationProvider.OPENROUTER_PAID     // Paid OpenRouter as fallback
+      ImageGenerationProvider.GEMINI_DIRECT,      // Free with Gemini API (500/day) - Good for avatars
+      ImageGenerationProvider.OPENROUTER_PAID     // Paid fallback - Better quality if needed
     ];
   }
 
