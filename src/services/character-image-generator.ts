@@ -272,7 +272,7 @@ export class CharacterImageGenerator {
    * Generate image using OpenRouter paid tier
    * @param prompt - Image generation prompt
    * @param retryAttempts - Number of retry attempts
-   * @param referenceImageBase64 - Optional reference image (currently not supported by OpenRouter)
+   * @param referenceImageBase64 - Optional reference image for style consistency
    * @returns Promise resolving to base64 encoded image data
    */
   private async generateWithOpenRouterPaid(
@@ -285,7 +285,8 @@ export class CharacterImageGenerator {
         // Use paid model directly
         const base64Image = await openRouterService.generateImage({
           prompt,
-          model: 'google/gemini-2.5-flash-image-preview'
+          model: 'google/gemini-2.5-flash-image-preview',
+          referenceImage: referenceImageBase64
         });
         return base64Image;
       } catch (error) {
