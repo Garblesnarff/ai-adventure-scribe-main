@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { GeminiApiManager } from './gemini-api-manager';
+import { getGeminiApiManager } from './gemini-api-manager-singleton';
+import type { GeminiApiManager } from './gemini-api-manager';
 
 export interface Memory {
   id: string;
@@ -36,13 +37,8 @@ export interface MemoryContext {
 }
 
 export class MemoryManager {
-  private static geminiManager: GeminiApiManager | null = null;
-
   private static getGeminiManager(): GeminiApiManager {
-    if (!this.geminiManager) {
-      this.geminiManager = new GeminiApiManager();
-    }
-    return this.geminiManager;
+    return getGeminiApiManager();
   }
 
   /**

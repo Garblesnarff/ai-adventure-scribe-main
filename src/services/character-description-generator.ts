@@ -83,14 +83,14 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-2.5-flash-lite-preview-09-2025',
+        model: 'gemini-2.5-flash-lite',
         maxTokens: 1000,
         temperature: 0.8,
       });
 
       console.log('Raw Gemini response:', response);
       console.log('Response type:', typeof response);
-      console.log('Response length:', response?.length || 0);
+      console.log('Response length:', response.length);
 
       if (!response || response.trim() === '') {
         console.warn('Empty or null response from Gemini API');
@@ -112,7 +112,7 @@ export class CharacterDescriptionGenerator {
 
         const response = await openRouterService.generateText({
           prompt,
-          model: 'google/gemini-flash-1.5',
+          model: 'google/gemini-2.0-flash-exp:free',
           maxTokens: 1000,
           temperature: 0.8
         });
@@ -267,21 +267,27 @@ export class CharacterDescriptionGenerator {
     promptParts.push(`Tone: Write in a ${tone} style appropriate for D&D fantasy setting.`);
 
     // Output format requirements
-    promptParts.push('\nPlease provide the following sections:');
-    
-    promptParts.push('DESCRIPTION: A comprehensive overview of the character (2-3 sentences)');
-    
+    promptParts.push('\nPlease provide the following sections with EXACT formatting using bold markdown headers:');
+    promptParts.push('');
+    promptParts.push('**DESCRIPTION:** A comprehensive overview of the character (2-3 sentences)');
+    promptParts.push('');
+
     if (includeAppearance) {
-      promptParts.push('APPEARANCE: Detailed physical description including height, build, facial features, hair, eyes, scars, tattoos, and clothing style (3-4 sentences)');
+      promptParts.push('**APPEARANCE:** Detailed physical description including height, build, facial features, hair, eyes, scars, tattoos, and clothing style (3-4 sentences)');
+      promptParts.push('');
     }
-    
+
     if (includePersonality) {
-      promptParts.push('PERSONALITY: Character traits, mannerisms, speech patterns, motivations, fears, and quirks (3-4 sentences)');
+      promptParts.push('**PERSONALITY:** Character traits, mannerisms, speech patterns, motivations, fears, and quirks (3-4 sentences)');
+      promptParts.push('');
     }
-    
+
     if (includeBackstory) {
-      promptParts.push('BACKSTORY: Brief background story explaining how they became who they are, their origins, and what drives them to adventure (3-4 sentences)');
+      promptParts.push('**BACKSTORY:** Brief background story explaining how they became who they are, their origins, and what drives them to adventure (3-4 sentences)');
+      promptParts.push('');
     }
+
+    promptParts.push('IMPORTANT: Always start each section with the bold header format shown above (e.g., **DESCRIPTION:**). Include all four section headers even if some sections are brief.');
 
     // D&D-specific guidelines
     promptParts.push('\nGuidelines:');
@@ -344,29 +350,71 @@ export class CharacterDescriptionGenerator {
   private extractSections(text: string): Record<string, string> {
     const sections: Record<string, string> = {};
 
-    // Try markdown headers first (### SECTION)
-    const markdownRegex = /###\s+(DESCRIPTION|APPEARANCE|PERSONALITY|BACKSTORY)\s*\n\n(.*?)(?=###|$)/gis;
-    let match;
-    while ((match = markdownRegex.exec(text)) !== null) {
-      const [, key, value] = match;
-      sections[key.trim().toUpperCase()] = value.trim();
+    console.log('=== PARSING DEBUG ===');
+    console.log('Full text to parse:', text);
+    console.log('Text length:', text.length);
+
+    // First, let's try a more reliable approach by splitting the text by section headers
+    const sectionHeaders = ['**DESCRIPTION:**', '**APPEARANCE:**', '**PERSONALITY:**', '**BACKSTORY:**'];
+
+    // Find all section positions
+    const sectionPositions: Array<{header: string, start: number}> = [];
+    sectionHeaders.forEach(header => {
+      const index = text.indexOf(header);
+      if (index !== -1) {
+        sectionPositions.push({header, start: index});
+      }
+    });
+
+    console.log('Found section positions:', sectionPositions);
+
+    // Sort by position
+    sectionPositions.sort((a, b) => a.start - b.start);
+
+    // Extract each section
+    for (let i = 0; i < sectionPositions.length; i++) {
+      const currentPos = sectionPositions[i];
+      const nextPos = sectionPositions[i + 1];
+
+      // Extract the header
+      const header = currentPos.header.replace(/^\*\*(.*):\*\*$/, '$1').toUpperCase();
+
+      // Extract the content
+      let contentStart = currentPos.start + currentPos.header.length;
+      let contentEnd = nextPos ? nextPos.start : text.length;
+      let content = text.substring(contentStart, contentEnd).trim();
+
+      if (content) {
+        sections[header] = content;
+        console.log(`✅ Extracted ${header}:`, content.substring(0, 100) + '...');
+      }
     }
 
-    // Try colon format (SECTION:)
-    const colonRegex = /([A-Z]+):\s*([^A-Z]*?)(?=[A-Z]+:|$)/g;
-    while ((match = colonRegex.exec(text)) !== null) {
-      const [, key, value] = match;
-      sections[key.trim()] = value.trim();
+    // If no sections were found with the position-based approach, try the original regex as fallback
+    if (Object.keys(sections).length === 0) {
+      console.log('Position-based approach failed, trying regex fallback...');
+
+      // Try bold markdown headers with colon (**SECTION:**)
+      const boldMarkdownRegex = /\*\*(DESCRIPTION|APPEARANCE|PERSONALITY|BACKSTORY)\*\*:\s*([\s\S]*?)(?=\*\*[A-Z]+:\*\*|$)/g;
+      let match;
+      while ((match = boldMarkdownRegex.exec(text)) !== null) {
+        const [, key, value] = match;
+        const sectionKey = key.trim().toUpperCase();
+        const cleanedValue = value.trim();
+        if (cleanedValue) {
+          sections[sectionKey] = cleanedValue;
+          console.log(`Extracted ${sectionKey} (regex fallback):`, cleanedValue.substring(0, 100) + '...');
+        }
+      }
     }
 
-    // Also try lowercase section headers
-    const lowercaseRegex = /\b(description|appearance|personality|backstory):\s*([^\n]*(?:\n(?!\b(?:description|appearance|personality|backstory):)[^\n]*)*)/gi;
-
-    let lowercaseMatch;
-    while ((lowercaseMatch = lowercaseRegex.exec(text)) !== null) {
-      const [, key, value] = lowercaseMatch;
-      sections[key.toLowerCase()] = value.trim();
-    }
+    // Log final extraction results
+    console.log('=== PARSING RESULTS ===');
+    console.log('Final extracted sections:', Object.keys(sections));
+    console.log('Section count:', Object.keys(sections).length);
+    Object.entries(sections).forEach(([key, value]) => {
+      console.log(`${key}: ${value.substring(0, 150)}...`);
+    });
 
     return sections;
   }
@@ -392,7 +440,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-2.5-flash-lite-preview-09-2025',
+        model: 'gemini-2.5-flash-lite',
         maxTokens: 100,
         temperature: 0.7,
       });
@@ -407,7 +455,7 @@ export class CharacterDescriptionGenerator {
 
         const response = await openRouterService.generateText({
           prompt,
-          model: 'google/gemini-flash-1.5',
+          model: 'google/gemini-2.0-flash-exp:free',
           maxTokens: 100,
           temperature: 0.7
         });

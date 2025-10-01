@@ -1,16 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GeminiApiManager } from './gemini-api-manager';
+import { getGeminiApiManager } from './gemini-api-manager-singleton';
 
 /**
  * Gemini Service Wrapper
- * 
+ *
  * Provides a simple interface for text generation using the Gemini API Manager
  * for key rotation and error handling.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
-const geminiManager = new GeminiApiManager();
+const geminiManager = getGeminiApiManager();
 
 export const geminiService = {
   /**

@@ -18,18 +18,18 @@ import CharacterFinalization from '../steps/CharacterFinalization';
  * Array of steps for the character creation wizard
  * Order determines the sequence of steps in the creation process
  */
+/**
+ * D&D 5E Character Creation Flow:
+ * 1. Choose Race (determines racial traits and ability bonuses)
+ * 2. Choose Class (determines class features and proficiencies)
+ * 3. Determine Ability Scores (point buy, standard array, or rolling)
+ * 4. Describe Your Character (background, personality, appearance)
+ * 5. Choose Equipment (starting gear from class and background)
+ */
 export const wizardSteps: WizardStep[] = [
   {
     component: BasicInfo,
     label: 'Basic Info'
-  },
-  {
-    component: PersonalitySelection,
-    label: 'Personality',
-    skipCondition: (character) => {
-      // Skip if no background selected yet
-      return !character?.background;
-    }
   },
   {
     component: RaceSelection,
@@ -57,6 +57,18 @@ export const wizardSteps: WizardStep[] = [
   {
     component: AbilityScoresSelection,
     label: 'Ability Scores'
+  },
+  {
+    component: BackgroundSelection,
+    label: 'Background'
+  },
+  {
+    component: PersonalitySelection,
+    label: 'Personality',
+    skipCondition: (character) => {
+      // Skip if no background selected yet
+      return !character?.background;
+    }
   },
   {
     component: ProficienciesSelection,

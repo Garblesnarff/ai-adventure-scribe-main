@@ -1,4 +1,5 @@
-import { GeminiApiManager } from '../gemini-api-manager';
+import { getGeminiApiManager } from '../gemini-api-manager-singleton';
+import type { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
 import { MemoryManager } from '../memory-manager';
 import { getAveragePartyLevel } from '@/utils/character-level-utils';
@@ -115,13 +116,8 @@ export interface QuestStage {
 }
 
 export class QuestGenerator {
-  private static geminiManager: GeminiApiManager | null = null;
-
   private static getGeminiManager(): GeminiApiManager {
-    if (!this.geminiManager) {
-      this.geminiManager = new GeminiApiManager();
-    }
-    return this.geminiManager;
+    return getGeminiApiManager();
   }
 
   /**
