@@ -34,6 +34,16 @@ interface CharacterListItem {
   class: string;
   level: number | null;
   avatar_url?: string | null;
+  character_stats?: {
+    strength?: number;
+    dexterity?: number;
+    constitution?: number;
+    intelligence?: number;
+    wisdom?: number;
+    charisma?: number;
+    armor_class?: number;
+    max_hit_points?: number;
+  };
 }
 
 export const SimpleCampaignView: React.FC = () => {
@@ -85,18 +95,26 @@ export const SimpleCampaignView: React.FC = () => {
 
   const loadUserCharacters = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('characters')
-        .select('id, name, race, class, level, avatar_url')
+        .select(`
+          id, name, race, class, level, avatar_url,
+          character_stats (
+            strength, dexterity, constitution,
+            intelligence, wisdom, charisma,
+            armor_class, max_hit_points
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setCharacters((data || []).map(char => ({
         ...char,
-        level: char.level || 1
+        level: char.level || 1,
+        character_stats: Array.isArray(char.character_stats) ? char.character_stats[0] : char.character_stats
       })) as CharacterListItem[]);
     } catch (error) {
       console.error('Error loading characters:', error);
@@ -347,7 +365,7 @@ export const SimpleCampaignView: React.FC = () => {
                                   <span>Level {character.level || 1}</span>
                                 </div>
                               </div>
-                              
+
                               <div className="flex items-center gap-3 text-sm">
                                 <div className="flex items-center gap-1 text-muted-foreground">
                                   <Shield className="w-4 h-4" />
@@ -359,7 +377,45 @@ export const SimpleCampaignView: React.FC = () => {
                                 </div>
                               </div>
 
-                              <Button 
+                              {character.character_stats && (
+                                <div className="space-y-3">
+                                  {/* HP and AC */}
+                                  <div className="flex gap-4 text-sm">
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-semibold text-foreground">HP:</span>
+                                      <span className="text-muted-foreground">{character.character_stats.max_hit_points || '—'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-semibold text-foreground">AC:</span>
+                                      <span className="text-muted-foreground">{character.character_stats.armor_class || '—'}</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Ability Scores */}
+                                  <div className="grid grid-cols-3 gap-2 text-xs">
+                                    {[
+                                      { name: 'STR', value: character.character_stats.strength },
+                                      { name: 'DEX', value: character.character_stats.dexterity },
+                                      { name: 'CON', value: character.character_stats.constitution },
+                                      { name: 'INT', value: character.character_stats.intelligence },
+                                      { name: 'WIS', value: character.character_stats.wisdom },
+                                      { name: 'CHA', value: character.character_stats.charisma }
+                                    ].map(stat => {
+                                      const modifier = stat.value ? Math.floor((stat.value - 10) / 2) : 0;
+                                      const modifierText = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+                                      return (
+                                        <div key={stat.name} className="flex flex-col items-center p-2 bg-muted/50 rounded">
+                                          <span className="font-semibold text-muted-foreground">{stat.name}</span>
+                                          <span className="text-base font-bold text-foreground">{stat.value || '—'}</span>
+                                          <span className="text-xs text-muted-foreground">({modifierText})</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              <Button
                                 onClick={() => startGameWithCharacter(character)}
                                 variant="fantasy"
                                 size="lg"
