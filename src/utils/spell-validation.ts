@@ -399,14 +399,40 @@ export function getMaxSpellCounts(characterClass: CharacterClass, level: number 
 }
 
 /**
- * Check if a spell is valid for a character class
- * TODO: Convert to async function that uses API
+ * Checks if a spell is valid for a character's class by calling a placeholder API endpoint.
+ * This function is intended to be used in asynchronous validation flows.
+ * @param spellId The ID of the spell to validate.
+ * @param characterClass The name of the character's class.
+ * @returns A promise that resolves to true if the spell is valid, false otherwise.
  */
-export function isSpellValidForClass(spellId: string, characterClass: CharacterClass, isCantrip: boolean = false): boolean {
-  // Placeholder implementation - actual validation now happens in useSpellSelection hook
-  // This function will be removed or converted to async in the future
-  return true; // Temporary - validation handled by API
-}
+export const isSpellValidForClass = async (
+  spellId: string,
+  characterClass: string
+): Promise<boolean> => {
+  // TODO: Implement the backend for this API endpoint.
+  // This placeholder simulates the frontend part of the API call.
+  try {
+    const response = await fetch(`/api/spells/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ spellId, characterClass }),
+    });
+
+    if (!response.ok) {
+      console.error(`Spell validation API call failed for ${spellId}/${characterClass}:`, response.statusText);
+      return false;
+    }
+
+    // Assuming the API returns a JSON object like { isValid: boolean }
+    const result = await response.json();
+    return result?.isValid || false;
+  } catch (error) {
+    console.error(`Error during spell validation API call for ${spellId}/${characterClass}:`, error);
+    return false;
+  }
+};
 
 /**
  * Calculate multiclass caster level for spell slot determination

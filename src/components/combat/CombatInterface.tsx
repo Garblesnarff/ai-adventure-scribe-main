@@ -30,7 +30,10 @@ import { useCharacter } from '@/contexts/CharacterContext';
 import InitiativeTracker from './InitiativeTracker';
 import EnemyCard from './EnemyCard';
 import DiceRoller from '@/components/ui/dice-roller';
+import DeathSaveManager from './DeathSaveManager';
+import HPTracker from './HPTracker';
 import ReactionOpportunityPanel from './ReactionOpportunityPanel';
+import ActionPanel from './ActionPanel';
 import { ActionType, ReactionOpportunity } from '@/types/combat';
 import { rollDice, rollAttack, rollDamage, calculateDamage } from '@/utils/diceUtils';
 import { getRacialTraits, canUseRacialTrait, useRacialTrait } from '@/utils/racialTraits';
@@ -50,6 +53,7 @@ import {
 import { calculateAttackDamage } from '@/utils/attackUtils';
 import { createDefaultLightWeapons, equipMainHandWeapon, equipOffHandWeapon } from '@/utils/equipmentUtils';
 import { checkConcentration } from '@/utils/spell-management';
+import { rollDeathSave, needsDeathSaves } from '@/utils/combat/deathSaves';
 
 const CombatInterface: React.FC = () => {
   const { 
@@ -482,38 +486,33 @@ const CombatInterface: React.FC = () => {
     if (!activeEncounter) return;
 
     const participant = activeEncounter.participants.find(p => p.id === participantId);
-    if (!participant || (participant.currentHitPoints || 0) > 0) return; // Simplified check
+    if (!participant || !needsDeathSaves(participant)) return;
 
-    // Simple death save logic
-    const rollResult = Math.floor(Math.random() * 20) + 1;
-    const isSuccess = rollResult >= 10;
-    const currentSaves = participant.deathSaves || { successes: 0, failures: 0 };
-    const newSaves = isSuccess 
-      ? { ...currentSaves, successes: Math.min(3, currentSaves.successes + 1) }
-      : { ...currentSaves, failures: Math.min(3, currentSaves.failures + 1) };
-    
-    const isStable = newSaves.successes >= 3;
-    const isDead = newSaves.failures >= 3;
-    const description = `${participant.name} death save: ${rollResult} ${isSuccess ? '(Success)' : '(Failure)'} (${newSaves.successes}/3, ${newSaves.failures}/3)`;
+    const { updatedParticipant, roll } = rollDeathSave(participant);
 
-    // Update participant
+    // Update participant state
     updateParticipant(participantId, {
-      deathSaves: newSaves,
-      isStable,
-      isDead
+      deathSaves: updatedParticipant.deathSaves,
+      isStable: updatedParticipant.isStable,
+      isDead: updatedParticipant.isDead,
+      currentHitPoints: updatedParticipant.currentHitPoints,
+      isUnconscious: updatedParticipant.isUnconscious,
     });
+
+    const description = `${participant.name} death save: ${roll.total} ${roll.total >= 10 ? '(Success)' : '(Failure)'} (${updatedParticipant.deathSaves.successes}/3, ${updatedParticipant.deathSaves.failures}/3)`;
 
     const action = {
       participantId,
       actionType: 'death_save' as ActionType,
       description,
       deathSaveResult: {
-        roll: rollResult,
-        result: isSuccess ? 'success' : 'failure',
-        successes: newSaves.successes,
-        failures: newSaves.failures,
-        isStable,
-        isDead
+        roll: roll.total,
+        result: roll.total >= 10 ? 'success' : 'failure',
+        successes: updatedParticipant.deathSaves.successes,
+        failures: updatedParticipant.deathSaves.failures,
+        isStable: updatedParticipant.isStable,
+        isDead: updatedParticipant.isDead,
+        isCritical: roll.critical,
       }
     };
 
@@ -586,54 +585,48 @@ const CombatInterface: React.FC = () => {
     }
   };
 
-  // Handle damage with all the new systems
-  const handleEnhancedDamage = async (participantId: string, damage: number, damageType: string) => {
+  // Handle applying direct damage
+  const handleApplyDamage = async (participantId: string, damageAmount: number, damageType: string) => {
     if (!activeEncounter) return;
-
     const participant = activeEncounter.participants.find(p => p.id === participantId);
     if (!participant) return;
 
-    // Simple damage application
-    const newHP = Math.max(0, (participant.currentHitPoints || 0) - damage);
+    const newHP = Math.max(0, (participant.currentHitPoints || 0) - damageAmount);
     const isUnconscious = newHP <= 0;
-    const isDead = newHP <= 0 && (participant.deathSaves?.failures || 0) >= 3;
 
-    // Check concentration
     let concentrationLost = false;
-    if (participant.activeConcentration && damage > 0) {
-      concentrationLost = !checkConcentration(participant as any, damage);
-      if (concentrationLost) {
-        participant.activeConcentration = null;
-      }
+    if (participant.activeConcentration && damageAmount > 0) {
+      concentrationLost = !checkConcentration(participant as any, damageAmount);
     }
 
-    // Update participant
-    updateParticipant(participantId, {
-      deathSaves: newSaves,
-      isStable: isStable as any,
-      isDead: isDead as any
-    } as any);
-    // Update participant
-    updateParticipant(participantId, {
+    const updatedProps: Partial<CombatParticipant> = {
       currentHitPoints: newHP,
-      isUnconscious: isUnconscious as any,
-      isDead: isDead as any
-    } as any);
+      isUnconscious,
+    };
+
+    if (concentrationLost) {
+      updatedProps.activeConcentration = null;
+    }
+
+    if (isUnconscious && (participant.currentHitPoints || 0) > 0) {
+      updatedProps.isStable = false;
+      updatedProps.deathSaves = { successes: 0, failures: 0 };
+    }
+
+    updateParticipant(participantId, updatedProps);
 
     const action = {
       participantId,
       actionType: 'damage_dealt' as ActionType,
-      description: `${participant.name} takes ${damage} ${damageType} damage`,
-      damageDealt: damage,
-      damageType: damageType as any, // Type assertion
+      description: `${participant.name} takes ${damageAmount} ${damageType} damage.`,
+      damageDealt: damageAmount,
+      damageType: damageType as any,
       effects: {
+        newHitPoints: newHP,
         unconscious: isUnconscious,
-        instantDeath: isDead,
         concentrationLost,
-        newHitPoints: newHP
       }
     };
-
     await takeAction(action);
   };
 
@@ -780,355 +773,21 @@ const CombatInterface: React.FC = () => {
         {/* Main Combat Area */}
         <div className={`lg:col-span-${localShowInitiativeTracker ? '3' : '4'}`}>
           <div className="space-y-6">
-            {/* Current Turn Info */}
             {activeEncounter?.currentTurnParticipantId && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
-                      <span className="font-semibold">
-                        {activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId)?.name}'s Turn
-                      </span>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={nextTurn}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Next Turn
-                    </Button>
-                  </div>
-                  
-                  {/* Quick Actions */}
-                  <Separator className="my-3" />
-                  
-                  {/* Action Validation Display */}
-                  {actionValidation && !actionValidation.isValid && (
-                    <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
-                      <div className="flex items-center gap-2 text-destructive text-sm font-medium">
-                        <AlertTriangle className="w-4 h-4" />
-                        Action Invalid
-                      </div>
-                      <ul className="text-xs text-destructive/80 mt-1 ml-6">
-                        {actionValidation.errors.map((error, i) => (
-                          <li key={i}>• {error}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {actionValidation && actionValidation.suggestions.length > 0 && (
-                    <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-md">
-                      <div className="text-amber-800 text-sm font-medium">Tactical Suggestions</div>
-                      <ul className="text-xs text-amber-700 mt-1">
-                        {actionValidation.suggestions.map((suggestion, i) => (
-                          <li key={i}>• {suggestion}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    {/* Basic Actions */}
-                    <div className="flex gap-2 flex-wrap">
-                      <DiceRoller 
-                        dice="1d20" 
-                        label="Initiative" 
-                        modifier={0}
-                        onRoll={(result) => rollInitiative(activeEncounter.currentTurnParticipantId!)}
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('action' as ActionType, activeEncounter.currentTurnParticipantId!, undefined, { type: 'short_rest' })}
-                      >
-                        Short Rest
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('action' as ActionType, activeEncounter.currentTurnParticipantId!, undefined, { type: 'long_rest' })}
-                      >
-                        Long Rest
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('grapple', activeEncounter.currentTurnParticipantId!, selectedEnemy)}
-                      >
-                        Grapple
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('shove', activeEncounter.currentTurnParticipantId!, selectedEnemy)}
-                      >
-                        Shove
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleTwoWeaponAttack(activeEncounter.currentTurnParticipantId!, selectedEnemy)}
-                      >
-                        Two-Weapon Attack
-                      </Button>
-                      {/* Divine Smite button for Paladins */}
-                      {activeEncounter.currentTurnParticipantId && 
-                       activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId)?.characterClass === 'paladin' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEnhancedAttack(activeEncounter.currentTurnParticipantId!, selectedEnemy || undefined, 'divine_smite', false, false, 1)}
-                        >
-                          Divine Smite (1st)
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Movement & Utility */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('dash', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Dash
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('dodge', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Dodge
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('help', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Help
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('hide', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Hide
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('ready', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Ready Action
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('short_rest', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Short Rest
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('long_rest', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Long Rest
-                      </Button>
-                    </div>
-
-                    {/* Spellcasting */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleCombatAction('cast_spell', activeEncounter.currentTurnParticipantId!)}
-                      >
-                        Cast Spell
-                      </Button>
-                    </div>
-
-                    {/* Class Features */}
-                    {activeEncounter?.currentTurnParticipantId && (() => {
-                      const currentParticipant = activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId);
-                      if (!currentParticipant?.classFeatures) return null;
-
-                      return (
-                        <div className="flex gap-2 flex-wrap">
-                          {currentParticipant.classFeatures
-                            .filter(feature => feature.type !== 'passive')
-                            .map(feature => {
-                              const canUse = canUseClassFeature(feature, (currentParticipant.resources || {}) as any);
-                              return (
-                                <Button
-                                  key={feature.name}
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleClassFeature(activeEncounter.currentTurnParticipantId!, feature.name)}
-                                  disabled={!canUse}
-                                  className={currentParticipant.isRaging && feature.name === 'rage' ? 'bg-red-500 text-white' : ''}
-                                >
-                                  {feature.name === 'rage' && currentParticipant.isRaging ? (
-                                    <>
-                                      <Flame className="w-4 h-4 mr-1" />
-                                      Stop Raging
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Zap className="w-4 h-4 mr-1" />
-                                      {feature.name.replace('_', ' ')}
-                                    </>
-                                  )}
-                                  {feature.maxUses && (
-                                    <span className="ml-1 text-xs">
-                                      ({feature.currentUses || 0}/{feature.maxUses})
-                                    </span>
-                                  )}
-                                </Button>
-                              );
-                            })}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Racial Traits */}
-                    {activeEncounter?.currentTurnParticipantId && (() => {
-                      const currentParticipant = activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId);
-                      if (!currentParticipant?.racialTraits) return null;
-
-                      const activeTraits = currentParticipant.racialTraits.filter(trait => 
-                        trait.type === 'active' && canUseRacialTrait(trait)
-                      );
-
-                      if (activeTraits.length === 0) return null;
-
-                      return (
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium text-muted-foreground">Racial Traits:</div>
-                          <div className="flex gap-2 flex-wrap">
-                            {activeTraits.map(trait => (
-                              <Button
-                                key={trait.name}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRacialTraitUse(currentParticipant.id, trait.name)}
-                                className="bg-green-50 hover:bg-green-100 border-green-200"
-                              >
-                                {trait.name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                {trait.currentUses !== undefined && (
-                                  <span className="ml-1 text-xs">({trait.currentUses}/{trait.maxUses})</span>
-                                )}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Status Effects and Conditions */}
-                    {activeEncounter?.currentTurnParticipantId && (() => {
-                      const currentParticipant = activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId);
-                      if (!currentParticipant) return null;
-
-                      // Simplified status display - stubbed functions
-                      const hasConditions = currentParticipant.conditions && currentParticipant.conditions.length > 0;
-                      const isDying = currentParticipant.currentHitPoints <= 0 && !(currentParticipant as any).isDead;
-                      const isDead = (currentParticipant as any).isDead || false;
-                      const hasConcentration = currentParticipant.activeConcentration;
-
-                      if (!hasConditions && !isDying && !isDead && !hasConcentration) {
-                        return null;
-                      }
-
-                      return (
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium text-muted-foreground">Status:</div>
-                          <div className="flex gap-2 flex-wrap">
-                            {hasConcentration && (
-                              <Badge variant="outline" className="border-blue-500 text-blue-700">
-                                Concentrating
-                              </Badge>
-                            )}
-                            
-                            {isDying && (
-                              <div className="flex gap-2">
-                                <Badge variant="destructive">
-                                  Dying ({currentParticipant.deathSaves?.successes || 0}/3, {currentParticipant.deathSaves?.failures || 0}/3)
-                                </Badge>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDeathSave(currentParticipant.id)}
-                                >
-                                  Roll Death Save
-                                </Button>
-                              </div>
-                            )}
-                            
-                            {isDead && (
-                              <Badge variant="destructive">Dead</Badge>
-                            )}
-                            
-                            {hasConditions && currentParticipant.conditions.map(condition => (
-                              <Badge 
-                                key={condition.name} 
-                                variant="outline" 
-                                className="border-orange-500 text-orange-700"
-                              >
-                                {condition.name.charAt(0).toUpperCase() + condition.name.slice(1)}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Fighting Style Information */}
-                    {activeEncounter?.currentTurnParticipantId && (() => {
-                      const currentParticipant = activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId);
-                      if (!currentParticipant?.fightingStyles || currentParticipant.fightingStyles.length === 0) return null;
-
-                      return (
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium text-muted-foreground">Fighting Styles:</div>
-                          <div className="flex gap-2 flex-wrap">
-                            {currentParticipant.fightingStyles.map(style => (
-                              <Badge 
-                                key={style.name} 
-                                variant="outline" 
-                                className="border-purple-500 text-purple-700"
-                              >
-                                {style.name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            AC: {currentParticipant.armorClass || 10}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Vision Information */}
-                    {activeEncounter?.currentTurnParticipantId && (() => {
-                      const currentParticipant = activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId);
-                      if (!currentParticipant?.visionTypes || currentParticipant.visionTypes.length <= 1) return null;
-
-                      return (
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium text-muted-foreground">Vision:</div>
-                          <div className="text-xs text-muted-foreground">
-                            {currentParticipant.visionTypes?.join(', ') || 'Normal'}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </CardContent>
-              </Card>
+              <ActionPanel
+                activeEncounter={activeEncounter}
+                currentParticipantId={activeEncounter.currentTurnParticipantId}
+                selectedEnemyId={selectedEnemy}
+                actionValidation={actionValidation}
+                onCombatAction={handleCombatAction}
+                onNextTurn={nextTurn}
+                onRollInitiative={rollInitiative}
+                onTwoWeaponAttack={handleTwoWeaponAttack}
+                onEnhancedAttack={handleEnhancedAttack}
+                onClassFeatureUse={handleClassFeature}
+                onRacialTraitUse={handleRacialTraitUse}
+                onDeathSave={handleDeathSave}
+              />
             )}
 
             <ReactionOpportunityPanel 
@@ -1138,6 +797,27 @@ const CombatInterface: React.FC = () => {
                 setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunityId))
               }
             />
+
+            {/* Player Character Trackers */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Party Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {playerParticipants.map((participant) => (
+                  <HPTracker
+                    key={participant.id}
+                    participant={participant}
+                    onDamage={handleApplyDamage}
+                    onHeal={handleHealing}
+                    isInteractive={true}
+                  />
+                ))}
+              </CardContent>
+            </Card>
 
             {/* Enemy Cards */}
             <Card>

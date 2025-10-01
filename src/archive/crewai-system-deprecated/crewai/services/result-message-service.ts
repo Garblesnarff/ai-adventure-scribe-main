@@ -19,6 +19,7 @@
 
 // External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
+import { calculateImportance } from '@/utils/memory/importance';
 
 // Base Service
 import { BaseMessageService } from './base-message-service'; // Assuming kebab-case
@@ -113,12 +114,19 @@ export class ResultMessageService extends BaseMessageService {
 
   private async storeResultInMemory(payload: ResultMessagePayload): Promise<void> {
     try {
+      const importance = calculateImportance({
+        content: JSON.stringify(payload.data),
+        type: 'task_result',
+        error: payload.error,
+        priority: payload.data?.priority,
+      });
+
       const { error } = await supabase
         .from('memories')
         .insert({
           type: 'task_result',
           content: JSON.stringify(payload.data),
-          importance: this.calculateImportance(payload),
+          importance: importance,
           metadata: {
             taskId: payload.taskId,
             executionTime: payload.executionTime,
@@ -143,21 +151,6 @@ export class ResultMessageService extends BaseMessageService {
         }
       });
     }
-  }
-
-  private calculateImportance(payload: ResultMessagePayload): number {
-    // Basic importance calculation
-    let importance = 5; // Default importance
-
-    if (payload.error) {
-      importance += 2; // Increase importance for errors
-    }
-
-    if (payload.data?.priority === 'high') {
-      importance += 2;
-    }
-
-    return Math.min(10, importance); // Cap at 10
   }
 
   // Public method for retrieving cached results
