@@ -206,7 +206,7 @@ export const useCharacterData = (characterId: string | undefined) => {
         description: "The character ID is invalid. Redirecting to characters page.",
         variant: "destructive",
       });
-      navigate('/characters');
+      navigate('/app/characters');
       return false;
     }
     return true;
@@ -253,7 +253,7 @@ export const useCharacterData = (characterId: string | undefined) => {
           description: "The requested character could not be found. Redirecting to characters page.",
           variant: "destructive",
         });
-        navigate('/characters');
+        navigate('/app/characters');
         return;
       }
 

@@ -115,18 +115,20 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
 
   return (
     <Card
-      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square"
+      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square w-full"
       style={{ padding: 0 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Hero / thumbnail area */}
       <div
-        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500"
+        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500 overflow-hidden"
         onClick={() => navigate(`/campaign/${campaign.id}`)}
         style={resolvedImage ? {
           backgroundImage: `url(${resolvedImage})`,
-          backgroundColor: '#6b7280' // fallback gray-500
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          backgroundColor: '#6b7280'
         } : { backgroundColor: '#6b7280' }}
       >
         {/* Loading overlay for image generation */}

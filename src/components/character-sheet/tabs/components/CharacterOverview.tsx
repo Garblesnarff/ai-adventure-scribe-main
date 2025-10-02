@@ -131,11 +131,11 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-full max-w-md mx-auto rounded-lg overflow-hidden border">
+            <div className="w-full max-w-md mx-auto rounded-lg overflow-hidden border aspect-video">
               <img
                 src={character.background_image}
                 alt={`${character.name} background`}
-                className="w-full h-auto object-cover"
+                className="w-full h-full object-cover object-center"
               />
             </div>
           </CardContent>
