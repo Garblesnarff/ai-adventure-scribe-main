@@ -91,7 +91,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
    * Handles creating a new character
    */
   const handleCreateCharacter = () => {
-    navigate('/characters/create');
+    navigate('/app/characters/create');
     onClose();
   };
 

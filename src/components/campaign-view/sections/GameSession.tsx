@@ -74,7 +74,7 @@ export const GameSession: React.FC<GameSessionProps> = ({ campaignId }) => {
           Select a character to start playing this campaign
         </p>
         <Button
-          onClick={() => navigate('/characters')}
+          onClick={() => navigate('/app/characters')}
           className="mx-auto"
         >
           Choose Character

@@ -108,7 +108,7 @@ const CharacterList: React.FC = () => {
    * Navigates to character creation page
    */
   const handleCreateNew = () => {
-    navigate('/characters/create');
+    navigate('/app/characters/create');
   };
 
   if (loading) {

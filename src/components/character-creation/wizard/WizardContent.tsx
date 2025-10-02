@@ -407,7 +407,7 @@ const WizardContent: React.FC = () => {
               title: "Success!",
               description: "Character created successfully! Background image generation may continue in the background.",
             });
-            navigate('/characters');
+            navigate('/app/characters');
           } else {
             console.error('Save succeeded but no ID returned');
             toast({

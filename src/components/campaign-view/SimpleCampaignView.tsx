@@ -231,10 +231,12 @@ export const SimpleCampaignView: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100">
       {/* Campaign Banner Header */}
       <div className="relative">
-        <div 
-          className="h-64 bg-cover bg-center relative" 
-          style={{ 
-            backgroundImage: `url('/card-background.jpeg')` 
+        <div
+          className="h-48 sm:h-56 md:h-64 lg:h-72 bg-cover bg-center bg-no-repeat relative overflow-hidden"
+          style={{
+            backgroundImage: `url('/card-background.jpeg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center center'
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent"></div>

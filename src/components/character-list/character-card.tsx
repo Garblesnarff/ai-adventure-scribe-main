@@ -148,19 +148,23 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
 
   return (
     <Card
-      className="character-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square"
+      className="character-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square w-full"
       style={{ padding: 0 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Hero / background area */}
       <div
-        className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative"
+        className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative overflow-hidden"
         onClick={() => {
           // Character access is now properly restricted by RLS, so navigation should work
-          navigate(`/character/${character.id}`);
+          navigate(`/app/character/${character.id}`);
         }}
-        style={resolvedBackgroundImage ? { backgroundImage: `url(${resolvedBackgroundImage})` } : undefined}
+        style={resolvedBackgroundImage ? {
+          backgroundImage: `url(${resolvedBackgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center'
+        } : undefined}
       >
         {/* Loading overlay for image generation */}
         {imageLoading && !hasImage && (
@@ -294,7 +298,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
               <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => {
                 e.stopPropagation();
                 // Character access is now properly restricted by RLS, so navigation should work
-                navigate(`/character/${character.id}`);
+                navigate(`/app/character/${character.id}`);
               }}>
                 View Details
               </Button>
