@@ -48,11 +48,11 @@ function App() {
             >
               <div className="min-h-screen">
                 <Routes>
-                  {/* Public landing page */}
-                  <Route path="/welcome" element={<Landing />} />
-                  
+                  {/* Public landing page - main entry point */}
+                  <Route path="/" element={<Landing />} />
+
                   {/* Protected app routes */}
-                  <Route path="/*" element={
+                  <Route path="/app/*" element={
                     <ProtectedRoute>
                       <Navigation />
                       <Breadcrumbs />

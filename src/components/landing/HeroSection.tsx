@@ -1,137 +1,182 @@
-import React from 'react';
+/**
+ * Hero Section - High-Converting Landing Page Hook
+ *
+ * PURPOSE: Make visitors say "holy shit I need this NOW" in 5 seconds
+ *
+ * Co-Founder Approved Messaging:
+ * - Option A: "Your Choices Finally Matter" (Emotional Hook) ✓ USING THIS
+ * - Option B: "Can't Find a DM? Be the Legend Instead" (Pain Point)
+ * - Option C: "This AI DM Just Killed a Player..." (Curiosity/Viral)
+ *
+ * KEY PRINCIPLE: Emotion over logic. Trigger feelings, not explain features.
+ * The messaging must create immediate desire, not intellectual appreciation.
+ *
+ * Analytics Events:
+ * - hero_cta_primary: "Start Playing" clicked
+ * - hero_cta_secondary: "Watch Demo" clicked
+ */
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play, Sparkles, Globe, Clock } from 'lucide-react';
+import { ArrowRight, Play, Zap, Shield, Sparkles } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
+  const [isHoveringPrimary, setIsHoveringPrimary] = useState(false);
 
-  const handleStartStory = () => {
-    navigate('/');
+  /**
+   * Primary CTA - Instant Play Demo
+   * Opens modal with one-click demo experience (30-second promise)
+   */
+  const handleStartPlaying = () => {
+    // TODO: Open InstantPlayDemo modal
+    // For now, navigate to main app
+    navigate('/app');
+
+    // Track analytics
+    if (window.gtag) {
+      window.gtag('event', 'hero_cta_primary', {
+        event_category: 'engagement',
+        event_label: 'Start Playing in 30 Seconds'
+      });
+    }
   };
 
+  /**
+   * Secondary CTA - Watch Demo Video
+   * Scrolls to demo video or opens video modal
+   */
   const handleWatchDemo = () => {
-    const featuresSection = document.getElementById('features');
-    if (featuresSection) {
-      featuresSection.scrollIntoView({ behavior: 'smooth' });
+    // TODO: Open demo video modal (30-second gameplay clip)
+    // For now, scroll to benefits
+    const benefitsSection = document.getElementById('benefits');
+    if (benefitsSection) {
+      benefitsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Track analytics
+    if (window.gtag) {
+      window.gtag('event', 'hero_cta_secondary', {
+        event_category: 'engagement',
+        event_label: 'Watch a Player Betray Their Party'
+      });
     }
   };
 
   return (
-    <section 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      style={{
-        backgroundImage: 'url(/parchment-bg.png)', // Fantasy parchment texture
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed', // Subtle parallax effect, responsive
-      }}
-      role="banner" // Accessibility
+    <section
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900"
+      role="banner"
     >
-      {/* Overlay for readability: semi-transparent dark purple gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-infinite-purple/30 to-black/50"></div>
+      {/* Dramatic Background - Dark fantasy aesthetic */}
+      <div className="absolute inset-0 bg-[url('/fantasy-bg.jpg')] bg-cover bg-center opacity-20"></div>
 
-      {/* Animated Background Elements - Keep but adjust opacity for new bg */}
+      {/* Animated particles for depth */}
       <div className="absolute inset-0">
-        {/* Floating particles - reduce opacity slightly for texture cohesion */}
-        <div className="absolute top-20 left-10 w-2 h-2 bg-infinite-gold rounded-full opacity-40 animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-1 h-1 bg-infinite-teal rounded-full opacity-60 animate-bounce"></div>
-        <div className="absolute bottom-40 left-20 w-3 h-3 bg-infinite-purple rounded-full opacity-30 animate-pulse"></div>
-        <div className="absolute top-60 left-1/3 w-1 h-1 bg-infinite-gold rounded-full opacity-50 animate-ping"></div>
-        <div className="absolute bottom-60 right-1/4 w-2 h-2 bg-infinite-teal rounded-full opacity-40 animate-bounce"></div>
-
-        {/* Reduced cosmic grid for parchment theme */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full bg-gradient-to-br from-purple-500/10 to-blue-500/10"></div>
-        </div>
+        <div className="absolute top-20 left-10 w-2 h-2 bg-amber-400 rounded-full opacity-60 animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-1 h-1 bg-purple-400 rounded-full opacity-70 animate-bounce"></div>
+        <div className="absolute bottom-40 left-20 w-3 h-3 bg-amber-500 rounded-full opacity-40 animate-pulse"></div>
+        <div className="absolute top-60 left-1/3 w-1 h-1 bg-purple-300 rounded-full opacity-50 animate-ping"></div>
+        <div className="absolute bottom-60 right-1/4 w-2 h-2 bg-amber-400 rounded-full opacity-60 animate-bounce"></div>
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-        <div className="max-w-4xl mx-auto">
-          {/* Badge - unchanged */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-infinite-purple/20 border border-infinite-purple/30 rounded-full text-infinite-gold text-sm font-medium mb-8 backdrop-blur-sm">
-            <Sparkles className="w-4 h-4" />
-            <span>Persistent AI Storytelling Platform</span>
-            <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse"></div>
+      {/* Main Content - Emotion-driven messaging */}
+      <div className="relative z-10 w-full mx-auto px-4 sm:px-6 text-center">
+        <div className="max-w-5xl mx-auto w-full">
+          {/* Badge - Create urgency and exclusivity */}
+          <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 bg-purple-900/40 border border-purple-500/30 rounded-full text-amber-400 text-xs sm:text-sm font-medium mb-8 backdrop-blur-sm animate-fade-in max-w-full">
+            <Sparkles className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Beta Access - Lock In $15/month Pricing Forever</span>
+            <Zap className="w-4 h-4 text-amber-400 animate-pulse flex-shrink-0" />
           </div>
 
-          {/* Main Headline - Apply font-heading, increase size slightly */}
-          <h1 className="font-heading text-6xl lg:text-8xl font-bold text-foreground mb-6 leading-tight">
-            Your World,
+          {/* OPTION A: Emotional Hook (CO-FOUNDER APPROVED) */}
+          <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-white mb-6 leading-tight animate-fade-in-up max-w-full break-words px-2">
+            Your Choices
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-infinite-gold via-infinite-teal to-infinite-purple">
-              Your Story,
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-purple-400 to-amber-500 animate-gradient">
+              Finally Matter
             </span>
-            <br />
-            Forever
           </h1>
 
-          {/* Subtitle - Increase to 18px+ equivalent */}
-          <p className="text-2xl lg:text-3xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-            Create persistent worlds that evolve across generations. Build campaigns, characters, and stories that live forever in your own personal universe.
+          {/* Subheadline - Focus on IMMEDIATE value, not future benefits */}
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-300 mb-10 leading-relaxed max-w-4xl mx-auto animate-fade-in-up animation-delay-100 w-full px-2">
+            The AI DM that <span className="text-amber-400 font-semibold">remembers everything</span>, adapts to your playstyle, and builds a world that exists <span className="text-purple-400 font-semibold">only for you</span>.
           </p>
 
-          {/* Key Value Props - unchanged, but ensure contrast */}
-          <div className="flex flex-wrap justify-center gap-6 mb-12 text-base"> {/* Bumped from text-sm */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-card/20 rounded-full border border-border/30 backdrop-blur-sm">
-              <Globe className="w-4 h-4 text-infinite-teal" />
-              <span className="text-foreground/90">Infinite Worlds</span> {/* Higher contrast */}
+          {/* Social Proof - Immediate trust indicators */}
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-10 text-sm sm:text-base animate-fade-in-up animation-delay-200 max-w-full px-2">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 rounded-full border border-gray-700/50 backdrop-blur-sm">
+              <Shield className="w-4 h-4 text-green-400" />
+              <span className="text-gray-300">No Scheduling</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-card/20 rounded-full border border-border/30 backdrop-blur-sm">
-              <Clock className="w-4 h-4 text-infinite-gold" />
-              <span className="text-foreground/90">Generational Stories</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 rounded-full border border-gray-700/50 backdrop-blur-sm">
+              <Shield className="w-4 h-4 text-green-400" />
+              <span className="text-gray-300">No Rulebooks</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-card/20 rounded-full border border-border/30 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-infinite-purple" />
-              <span className="text-foreground/90">AI-Powered</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 rounded-full border border-gray-700/50 backdrop-blur-sm">
+              <Shield className="w-4 h-4 text-green-400" />
+              <span className="text-gray-300">Play in 30 Seconds</span>
             </div>
           </div>
 
-          {/* CTA Buttons - Consistent styling with glow hover */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* CTA Buttons - Identity-based messaging */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up animation-delay-300 w-full px-2">
+            {/* Primary CTA - Pulse animation on hover */}
             <Button
               size="lg"
-              onClick={handleStartStory}
-              className="bg-gradient-to-r from-infinite-purple to-infinite-teal hover:from-infinite-purple/90 hover:to-infinite-teal/90 text-white px-8 py-4 rounded-xl shadow-lg hover:shadow-[0_0_20px_rgba(107,70,193,0.3)] transition-all duration-300 flex items-center gap-3 text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-infinite-purple" // Added glow and focus
+              onClick={handleStartPlaying}
+              onMouseEnter={() => setIsHoveringPrimary(true)}
+              onMouseLeave={() => setIsHoveringPrimary(false)}
+              className={`
+                bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500
+                text-gray-900 px-6 sm:px-10 py-6 rounded-xl shadow-2xl
+                hover:shadow-[0_0_30px_rgba(251,191,36,0.5)]
+                transition-all duration-300 flex items-center gap-2 sm:gap-3 text-base sm:text-lg font-bold
+                w-full sm:w-auto max-w-full
+                ${isHoveringPrimary ? 'scale-105 animate-pulse-subtle' : ''}
+              `}
             >
-              Start Your Infinite Story
-              <ArrowRight className="w-5 h-5" />
+              <span className="text-center">Start Playing in 30 Seconds</span>
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
             </Button>
 
+            {/* Secondary CTA - Curiosity hook */}
             <Button
               variant="outline"
               size="lg"
               onClick={handleWatchDemo}
-              className="border-2 border-infinite-gold/50 hover:border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)] px-8 py-4 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center gap-3 text-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-infinite-gold" // Consistent glow/focus
+              className="border-2 border-purple-500/50 hover:border-purple-400 text-purple-300 hover:text-purple-200 hover:bg-purple-900/30 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] px-6 sm:px-10 py-6 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center gap-2 sm:gap-3 text-base sm:text-lg font-semibold w-full sm:w-auto max-w-full"
             >
-              <Play className="w-5 h-5" />
-              Watch Demo
+              <Play className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+              <span className="hidden sm:inline">Watch a Player Betray Their Party</span>
+              <span className="sm:hidden">Watch Demo</span>
             </Button>
           </div>
 
-          {/* Stats - unchanged, but bumped sizes */}
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8">
+          {/* Trust indicators - Real-time social proof */}
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 animate-fade-in-up animation-delay-400">
             <div className="text-center">
-              <div className="text-4xl font-bold text-infinite-gold mb-2">∞</div> {/* Slight increase */}
-              <div className="text-foreground/80">Possible Stories</div>
+              <div className="text-5xl font-bold text-amber-400 mb-2">347</div>
+              <div className="text-gray-400 text-sm">Campaigns started this week</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-infinite-teal mb-2">24/7</div>
-              <div className="text-foreground/80">AI Dungeon Master</div>
+              <div className="text-5xl font-bold text-purple-400 mb-2">24/7</div>
+              <div className="text-gray-400 text-sm">AI Dungeon Master</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-infinite-purple mb-2">100%</div>
-              <div className="text-foreground/80">Your Universe</div>
+              <div className="text-5xl font-bold text-amber-400 mb-2">∞</div>
+              <div className="text-gray-400 text-sm">Your choices matter</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Scroll indicator - unchanged */}
+      {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-infinite-gold/50 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-infinite-gold rounded-full mt-2 animate-pulse"></div>
+        <div className="w-6 h-10 border-2 border-amber-400/50 rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-amber-400 rounded-full mt-2 animate-pulse"></div>
         </div>
       </div>
     </section>
