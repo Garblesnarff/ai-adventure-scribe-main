@@ -172,6 +172,10 @@ export class CharacterLoaderService {
         bonds: [],
         flaws: [],
         equipment: [],
+        // Character images
+        avatar_url: characterData.avatar_url,
+        image_url: characterData.image_url,
+        background_image: characterData.background_image,
         // Spell data - this is the key fix!
         cantrips,
         knownSpells,
