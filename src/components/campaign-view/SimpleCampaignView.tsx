@@ -347,11 +347,16 @@ export const SimpleCampaignView: React.FC = () => {
                         return (
                         <Card 
                           key={character.id} 
-                          className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border/50 overflow-hidden relative"
+                          className="group cursor-pointer hover:shadow-2xl hover:shadow-infinite-purple/50 transition-all duration-500 border-2 border-border/50 hover:border-infinite-gold/70 overflow-hidden relative"
                         >
-                          {/* Background Image Layer */}
+                          {/* Glow effect on hover */}
+                          <div className="absolute inset-0 z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                            <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
+                          </div>
+                          
+                          {/* Background Image Layer with zoom on hover */}
                           <div 
-                            className="absolute inset-0 z-0"
+                            className="absolute inset-0 z-0 transition-transform duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
                             style={{
                               backgroundImage: `url(${backgroundImage})`,
                               backgroundSize: 'cover',
@@ -359,11 +364,11 @@ export const SimpleCampaignView: React.FC = () => {
                             }}
                           />
                           {/* Dark Overlay for Text Readability */}
-                          <div className="absolute inset-0 z-0 bg-gradient-to-br from-black/60 via-black/70 to-black/80" />
+                          <div className="absolute inset-0 z-0 bg-gradient-to-br from-black/60 via-black/70 to-black/80 transition-opacity duration-500 group-hover:from-black/50 group-hover:via-black/60 group-hover:to-black/70" />
                           
                           <CardContent className="p-6 relative z-10">
                             {/* Character Avatar */}
-                            <div className={`absolute -top-4 left-6 w-20 h-20 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-105 transition-transform duration-300 ${!character.avatar_url ? getCharacterAvatarColor(character.name) : ''}`}>
+                            <div className={`absolute -top-4 left-6 w-20 h-20 rounded-full overflow-hidden border-4 border-infinite-gold/80 shadow-lg shadow-infinite-gold/50 group-hover:scale-110 group-hover:border-infinite-purple group-hover:shadow-infinite-purple/70 transition-all duration-300 ${!character.avatar_url ? getCharacterAvatarColor(character.name) : ''}`}>
                               {character.avatar_url ? (
                                 <img
                                   src={character.avatar_url}
