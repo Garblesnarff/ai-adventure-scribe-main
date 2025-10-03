@@ -1204,16 +1204,48 @@
     z-index: 20 !important;
   }
 
+  /* Race card hover popup centering */
+  .race-card.group:hover .hover-popup {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: auto !important;
+    z-index: 20 !important;
+  }
+
   .hover-popup {
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
-    transform: translate(-50%, -12%) !important;
-    width: 320px;
-    max-width: calc(100vw - 2rem);
+    transform: translate(-50%, -50%) !important;
     z-index: 10;
     transition: opacity 0.2s ease, transform 0.2s ease !important;
     filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.2));
+  }
+
+  /* Custom scrollbar for hover popup */
+  .hover-popup::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .hover-popup::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+  }
+
+  .hover-popup::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  .hover-popup::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Firefox scrollbar support for hover popup */
+  .hover-popup {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
   }
 
   .description-section:empty::before {
