@@ -34,6 +34,7 @@ interface CharacterListItem {
   class: string;
   level: number | null;
   avatar_url?: string | null;
+  background_image?: string | null;
   character_stats?: {
     strength?: number;
     dexterity?: number;
@@ -100,7 +101,7 @@ export const SimpleCampaignView: React.FC = () => {
       const { data, error } = await supabase
         .from('characters')
         .select(`
-          id, name, race, class, level, avatar_url,
+          id, name, race, class, level, avatar_url, background_image,
           character_stats (
             strength, dexterity, constitution,
             intelligence, wisdom, charisma,
@@ -341,9 +342,26 @@ export const SimpleCampaignView: React.FC = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {memoizedCharacters.map((character) => (
-                        <Card key={character.id} className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border/50 overflow-hidden bg-gradient-to-br from-muted/50 to-transparent hover:from-accent/10">
-                          <CardContent className="p-6 relative">
+                      {memoizedCharacters.map((character) => {
+                        const backgroundImage = character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
+                        return (
+                        <Card 
+                          key={character.id} 
+                          className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-border/50 overflow-hidden relative"
+                        >
+                          {/* Background Image Layer */}
+                          <div 
+                            className="absolute inset-0 z-0"
+                            style={{
+                              backgroundImage: `url(${backgroundImage})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center'
+                            }}
+                          />
+                          {/* Dark Overlay for Text Readability */}
+                          <div className="absolute inset-0 z-0 bg-gradient-to-br from-black/60 via-black/70 to-black/80" />
+                          
+                          <CardContent className="p-6 relative z-10">
                             {/* Character Avatar */}
                             <div className={`absolute -top-4 left-6 w-20 h-20 rounded-full overflow-hidden border-4 border-background shadow-lg group-hover:scale-105 transition-transform duration-300 ${!character.avatar_url ? getCharacterAvatarColor(character.name) : ''}`}>
                               {character.avatar_url ? (
@@ -361,19 +379,19 @@ export const SimpleCampaignView: React.FC = () => {
 
                             <div className="pt-12 space-y-4">
                               <div>
-                                <h3 className="text-xl font-bold text-foreground group-hover:text-infinite-purple transition-colors">{character.name}</h3>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                <h3 className="text-xl font-bold text-white drop-shadow-lg group-hover:text-infinite-purple transition-colors">{character.name}</h3>
+                                <div className="flex items-center gap-2 text-sm text-gray-200 mt-1">
                                   <Star className="w-4 h-4 text-infinite-gold" />
                                   <span>Level {character.level || 1}</span>
                                 </div>
                               </div>
 
                               <div className="flex items-center gap-3 text-sm">
-                                <div className="flex items-center gap-1 text-muted-foreground">
+                                <div className="flex items-center gap-1 text-gray-200">
                                   <Shield className="w-4 h-4" />
                                   <span>{character.race}</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-muted-foreground">
+                                <div className="flex items-center gap-1 text-gray-200">
                                   <Sword className="w-4 h-4" />
                                   <span>{character.class}</span>
                                 </div>
@@ -384,12 +402,12 @@ export const SimpleCampaignView: React.FC = () => {
                                   {/* HP and AC */}
                                   <div className="flex gap-4 text-sm">
                                     <div className="flex items-center gap-1">
-                                      <span className="font-semibold text-foreground">HP:</span>
-                                      <span className="text-muted-foreground">{character.character_stats.max_hit_points || '—'}</span>
+                                      <span className="font-semibold text-white">HP:</span>
+                                      <span className="text-gray-200">{character.character_stats.max_hit_points || '—'}</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <span className="font-semibold text-foreground">AC:</span>
-                                      <span className="text-muted-foreground">{character.character_stats.armor_class || '—'}</span>
+                                      <span className="font-semibold text-white">AC:</span>
+                                      <span className="text-gray-200">{character.character_stats.armor_class || '—'}</span>
                                     </div>
                                   </div>
 
@@ -406,10 +424,10 @@ export const SimpleCampaignView: React.FC = () => {
                                       const modifier = stat.value ? Math.floor((stat.value - 10) / 2) : 0;
                                       const modifierText = modifier >= 0 ? `+${modifier}` : `${modifier}`;
                                       return (
-                                        <div key={stat.name} className="flex flex-col items-center p-2 bg-muted/50 rounded">
-                                          <span className="font-semibold text-muted-foreground">{stat.name}</span>
-                                          <span className="text-base font-bold text-foreground">{stat.value || '—'}</span>
-                                          <span className="text-xs text-muted-foreground">({modifierText})</span>
+                                        <div key={stat.name} className="flex flex-col items-center p-2 bg-black/40 rounded backdrop-blur-sm">
+                                          <span className="font-semibold text-gray-300">{stat.name}</span>
+                                          <span className="text-base font-bold text-white">{stat.value || '—'}</span>
+                                          <span className="text-xs text-gray-300">({modifierText})</span>
                                         </div>
                                       );
                                     })}
@@ -429,7 +447,8 @@ export const SimpleCampaignView: React.FC = () => {
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
                 </CardContent>
