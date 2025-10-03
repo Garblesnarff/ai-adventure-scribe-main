@@ -52,13 +52,13 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   return (
     <div className="mt-8 space-y-6">
       {/* Progress Overview */}
-      <Card className="p-4 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 dark:from-amber-950/20 dark:to-yellow-950/20 border-amber-200 dark:border-amber-800">
+      <Card className="p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <div className="text-sm font-medium text-infinite-purple">
+            <div className="text-sm font-medium text-blue-700 dark:text-blue-300">
               Campaign Creation Progress
             </div>
-            <Badge variant="outline" className="px-2 py-1 border-infinite-gold text-infinite-gold">
+            <Badge variant="outline" className="px-2 py-1 border-blue-500 text-blue-600">
               {currentStep + 1} / {totalSteps}
             </Badge>
           </div>
@@ -75,7 +75,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
                 index < currentStep
                   ? 'bg-green-500 text-white'
                   : index === currentStep
-                  ? 'bg-infinite-purple text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
               }`}>
                 {index < currentStep ? (
@@ -85,7 +85,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
                 )}
               </div>
               <span className={`text-xs text-center transition-all duration-300 ${
-                index === currentStep ? 'text-infinite-purple font-medium' : 'text-muted-foreground'
+                index === currentStep ? 'text-blue-600 font-medium' : 'text-muted-foreground'
               }`}>
                 {step.label}
               </span>
@@ -120,7 +120,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
             size="sm"
             onClick={onNext}
             disabled={isLoading}
-            className="flex-1 bg-gradient-to-r from-infinite-purple to-infinite-teal text-white hover:from-infinite-purple/90 hover:to-infinite-teal/90 transition-all duration-200 hover:scale-105"
+            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 hover:scale-105"
           >
             {isLoading ? (
               <>

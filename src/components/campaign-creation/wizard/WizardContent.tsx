@@ -104,52 +104,43 @@ const WizardContent: React.FC = () => {
   const hasDraft = !!restore();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 py-8 relative overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-5 mix-blend-multiply"
-        style={{ backgroundImage: "url('/parchment-bg.png')" }}
-      />
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
-          {/* Main Wizard Content */}
-          <div className="flex-1 max-w-4xl">
-            <div className="parchment-panel animate-fade-in-up">
-              <Card className="p-0 bg-transparent border-0 shadow-none">
-                <div className="p-6">
-                  <WizardHeader step={currentStep + 1} totalSteps={wizardSteps.length} autosaveKey={storageKey} formSnapshot={state.campaign} />
-                  <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
-                  {hasDraft && (
-                    <div className="flex justify-end mb-3">
-                      <button className="btn btn-sm mr-2" onClick={() => {
-                        const draft = restore();
-                        if (draft) {
-                          // dispatch restored draft using provided dispatch from context
-                          dispatch({ type: 'UPDATE_CAMPAIGN', payload: draft });
-                        }
-                      }}>
-                        Restore draft
-                      </button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => clear()}>Clear draft</button>
-                    </div>
-                  )}
-                  <CurrentStepComponent isLoading={isSaving} />
-                  <StepNavigation
-                    currentStep={currentStep}
-                    totalSteps={wizardSteps.length}
-                    onNext={handleNext}
-                    onPrevious={handlePrevious}
-                    isLoading={isSaving}
-                  />
-                </div>
-              </Card>
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Main Campaign Creation Area */}
+        <div className="xl:col-span-2">
+          <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <WizardHeader step={currentStep + 1} totalSteps={wizardSteps.length} autosaveKey={storageKey} formSnapshot={state.campaign} />
+            <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
+            {hasDraft && (
+              <div className="flex justify-end mb-3">
+                <button className="btn btn-sm mr-2" onClick={() => {
+                  const draft = restore();
+                  if (draft) {
+                    dispatch({ type: 'UPDATE_CAMPAIGN', payload: draft });
+                  }
+                }}>
+                  Restore draft
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => clear()}>Clear draft</button>
+              </div>
+            )}
+            <div className="min-h-[600px]">
+              <CurrentStepComponent isLoading={isSaving} />
             </div>
-          </div>
+            <StepNavigation
+              currentStep={currentStep}
+              totalSteps={wizardSteps.length}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              isLoading={isSaving}
+            />
+          </Card>
+        </div>
 
-          {/* Campaign Preview Sidebar */}
-          <div className="lg:w-80 xl:w-96">
-            <div className="sticky top-8">
-              <CampaignPreview />
-            </div>
+        {/* Campaign Preview Sidebar */}
+        <div className="xl:col-span-1">
+          <div className="sticky top-8">
+            <CampaignPreview />
           </div>
         </div>
       </div>
