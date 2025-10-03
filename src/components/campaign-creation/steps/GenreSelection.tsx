@@ -54,7 +54,7 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
     <div className="space-y-8 parchment animate-fade-in-up">
       <div className="text-center mb-6">
         <Label className="text-xl font-serif font-semibold flex items-center justify-center">
-          <BookOpen className="h-5 w-5 mr-2 text-infinite-purple" />
+          <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
           Choose Your Campaign Genre
         </Label>
         <p className="text-sm text-muted-foreground mt-2">Select the world and tone for your epic adventure</p>
@@ -105,15 +105,15 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
               onClick={() => handleGenreChange(genre.value)}
               className={`choice-btn p-4 cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg border-2 relative overflow-hidden ${
                 isSelected
-                  ? 'border-infinite-gold bg-gradient-to-r from-amber-50 to-yellow-50 ring-2 ring-infinite-gold/20'
-                  : 'border-amber-200 hover:border-infinite-gold/50 bg-white/60 backdrop-blur-sm'
+                  ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-blue-500/20'
+                  : 'border-gray-200 hover:border-blue-300 bg-white/60 backdrop-blur-sm'
               }`}
             >
               <div className="flex items-center space-x-3 relative z-10">
                 <RadioGroupItem 
                   value={genre.value} 
                   id={genre.value} 
-                  className="text-infinite-purple"
+                  className="text-blue-600"
                 />
                 <div className={`flex items-center ${colorClass}`}>
                   {icon}
@@ -126,7 +126,7 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                 </div>
               </div>
               {isSelected && (
-                <div className="absolute inset-0 bg-gradient-to-r from-infinite-gold/10 to-transparent pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none"></div>
               )}
             </div>
           );
