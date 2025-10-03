@@ -7,6 +7,7 @@ import { useAIResponse } from '@/hooks/use-ai-response';
 import { useSessionValidator } from '../session/SessionValidator';
 import { parseDiceCommand } from '@/utils/diceCommandParser';
 import { rollDice } from '@/utils/diceUtils';
+import { useCharacter } from '@/contexts/CharacterContext';
 
 interface MessageHandlerProps {
   sessionId: string; // Should be non-null if we reach here
@@ -34,6 +35,18 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   const { extractMemories } = useMemoryContext();
   const { getAIResponse } = useAIResponse(); // getAIResponse returns the AI ChatMessage
   const { toast } = useToast();
+  const { state: characterState } = useCharacter();
+  const character = characterState.character;
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[MessageHandler] Character data:', {
+      name: character?.name,
+      avatar_url: character?.avatar_url,
+      hasCharacter: !!character
+    });
+  }, [character]);
+  
   // Assuming validateSession is still relevant or adapted
   const validateSession = useSessionValidator({ sessionId, campaignId, characterId }); 
 
@@ -77,6 +90,8 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
           const diceRollMessage: ChatMessage = {
             text: `Rolled ${diceCommand.formula}${diceCommand.label ? ` for ${diceCommand.label}` : ''}`,
             sender: 'player',
+            characterName: character?.name,
+            characterAvatar: character?.avatar_url,
             context: {
               intent: 'dice_roll',
               diceRoll: {
@@ -135,6 +150,8 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       const playerMessage: ChatMessage = {
         text: playerInput,
         sender: 'player',
+        characterName: character?.name,
+        characterAvatar: character?.avatar_url,
         context: {
           intent: isFirstMessage ? 'first_action' : 'query',
           isFirstMessage

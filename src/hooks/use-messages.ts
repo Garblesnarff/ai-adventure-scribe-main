@@ -26,12 +26,32 @@ export const useMessages = (sessionId: string | null) => {
         return [];
       }
 
+      // Get the character data for this session to add avatar info to player messages
+      const { data: sessionData } = await supabase
+        .from('game_sessions')
+        .select('character_id')
+        .eq('id', sessionId)
+        .single();
+
+      let characterData = null;
+      if (sessionData?.character_id) {
+        const { data: char } = await supabase
+          .from('characters')
+          .select('name, avatar_url')
+          .eq('id', sessionData.character_id)
+          .single();
+        characterData = char;
+      }
+
       return data.map(msg => ({
         text: msg.message,
         sender: msg.speaker_type as ChatMessage['sender'],
         id: msg.id,
         timestamp: msg.timestamp,
         context: msg.context as MessageContext,
+        // Add character info to player messages
+        characterName: msg.speaker_type === 'player' && characterData ? characterData.name : undefined,
+        characterAvatar: msg.speaker_type === 'player' && characterData ? characterData.avatar_url : undefined,
       }));
     },
     enabled: !!sessionId,
