@@ -74,7 +74,7 @@ const WizardContent: React.FC = () => {
           title: "Campaign Created Successfully!",
           description: "Your new campaign is ready. Select or create a character to begin your adventure.",
         });
-        navigate(`/campaign/${campaignId}`);
+        navigate(`/app/campaign/${campaignId}`);
       } catch (error) {
         console.error('Error saving campaign:', error);
         toast({

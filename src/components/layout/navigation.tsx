@@ -18,8 +18,8 @@ const Navigation: React.FC = () => {
    * @returns boolean indicating if path is active
    */
   const isActive = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
+    if (path === '/app') {
+      return location.pathname === '/app' || location.pathname === '/app/';
     }
     return location.pathname.startsWith(path);
   };
@@ -34,7 +34,7 @@ const Navigation: React.FC = () => {
         <div className="flex h-14 items-center justify-between">
           {/* Logo/Home */}
           <Link
-            to="/"
+            to="/app"
             className="flex items-center space-x-2 font-bold text-xl text-infinite-gold hover:text-infinite-gold/80 transition-colors"
           >
             <Sword className="h-6 w-6 text-infinite-purple" />
@@ -45,9 +45,9 @@ const Navigation: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex space-x-4">
               <Link
-                to="/"
+                to="/app"
                 className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                  ${isActive('/') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/70 hover:text-infinite-gold hover:bg-infinite-purple/10'}`}
+                  ${isActive('/app') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/70 hover:text-infinite-gold hover:bg-infinite-purple/10'}`}
               >
                 <Home className="h-4 w-4" />
                 <span>Home</span>

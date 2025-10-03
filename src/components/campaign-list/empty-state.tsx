@@ -16,7 +16,7 @@ const EmptyState = () => {
       <p className="text-muted-foreground mb-6">You haven't created any campaigns yet. Your tales await.</p>
       <div className="flex items-center justify-center">
         <Button
-          onClick={() => navigate('/campaigns/create')}
+          onClick={() => navigate('/app/campaigns/create')}
           className="flex items-center gap-2 bg-infinite-gold text-infinite-dark"
         >
           <Plus className="w-4 h-4" />

@@ -79,7 +79,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
    * Handles starting a game with the selected character
    */
   const startGameWithCharacter = (character: Character) => {
-    navigate(`/campaign/${campaignId}?character=${character.id}`);
+    navigate(`/app/campaign/${campaignId}?character=${character.id}`);
     onClose();
     toast({
       title: "Starting Adventure!",

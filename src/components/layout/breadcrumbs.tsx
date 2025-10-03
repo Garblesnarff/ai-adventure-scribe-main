@@ -34,13 +34,13 @@ const Breadcrumbs: React.FC = () => {
   };
 
   // Hide breadcrumbs on home page and characters page
-  if (pathSegments.length === 0 || location.pathname === '/characters') return null;
+  if (pathSegments.length === 0 || pathSegments.length === 1 && pathSegments[0] === 'app' || location.pathname === '/app/characters') return null;
 
   return (
     <div className="container mx-auto px-4 py-2">
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Link
-          to="/"
+          to="/app"
           className="hover:text-foreground transition-colors"
         >
           Home
