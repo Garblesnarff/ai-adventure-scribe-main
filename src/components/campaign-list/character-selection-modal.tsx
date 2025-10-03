@@ -19,6 +19,8 @@ interface Character {
   race: string;
   class: string;
   level: number;
+  avatar_url?: string | null;
+  background_image?: string | null;
   character_stats?: {
     strength?: number;
     dexterity?: number;
@@ -61,7 +63,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
       const { data, error } = await supabase
         .from('characters')
         .select(`
-          id, name, race, class, level,
+          id, name, race, class, level, avatar_url, background_image,
           character_stats (
             strength, dexterity, constitution,
             intelligence, wisdom, charisma,
@@ -120,9 +122,31 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
 
                 const stats = character.character_stats;
 
+                // Resolve background image
+                const backgroundImage = character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
+
                 return (
-                  <Card key={character.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
+                  <Card key={character.id} className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden">
+                    <div 
+                      className="relative h-32 bg-cover bg-center"
+                      style={{
+                        backgroundImage: `url(${backgroundImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/90" />
+                      {character.avatar_url && (
+                        <div className="absolute -bottom-8 left-4 z-10">
+                          <img
+                            src={character.avatar_url}
+                            alt={`${character.name} avatar`}
+                            className="w-16 h-16 rounded-full object-cover border-4 border-background shadow-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="p-4 pt-10">
                       <div className="space-y-3">
                         <div>
                           <h3 className="font-semibold text-lg">{character.name}</h3>
