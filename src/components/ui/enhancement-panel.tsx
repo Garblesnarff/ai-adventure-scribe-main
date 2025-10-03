@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Filter, Sparkles, RotateCcw } from 'lucide-react';
+import { Search, Filter, Sparkles, RotateCcw, Grid, List, Eye } from 'lucide-react';
 import {
   EnhancementOption,
   OptionSelection,
@@ -47,6 +47,15 @@ export function EnhancementPanel({
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [showOnlyAvailable, setShowOnlyAvailable] = React.useState(true);
   const [isGenerating, setIsGenerating] = React.useState<string | null>(null);
+  const [viewMode, setViewMode] = React.useState<'grid' | 'list' | 'compact'>('grid');
+
+  const CARD_TAGS = React.useMemo(() => new Set(['plot', 'hooks', 'story', 'worldbuilding', 'politics', 'tone', 'economy']), []);
+  const CARD_IDS = React.useMemo(() => new Set(['story-hooks', 'world-features', 'social-dynamics', 'tone-modifiers', 'economic-factors', 'secrets', 'personal-goals', 'special-training']), []);
+
+  const shouldUseCards = (option: EnhancementOption) => {
+    if (CARD_IDS.has(option.id)) return true;
+    return option.tags.some(t => CARD_TAGS.has(t));
+  };
 
   // Get the appropriate options based on category
   const allOptions = category === 'character' ? CHARACTER_ENHANCEMENTS : CAMPAIGN_ENHANCEMENTS;
@@ -195,6 +204,22 @@ export function EnhancementPanel({
             </Button>
           </div>
 
+          {/* View toggles */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">View:</span>
+            <div className="flex border rounded-md">
+              <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')} className="rounded-r-none">
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')} className="rounded-none border-x">
+                <List className="w-4 h-4" />
+              </Button>
+              <Button variant={viewMode === 'compact' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('compact')} className="rounded-l-none">
+                <Eye className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
           {/* Tag Filter */}
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Filter by tags:</p>
@@ -275,7 +300,7 @@ export function EnhancementPanel({
               </div>
 
               {Object.entries(groupedOptions).map(([group, options]) => (
-                <TabsContent key={group} value={group} className="mt-4 space-y-4">
+                <TabsContent key={group} value={group} className={viewMode === 'list' ? 'mt-4 space-y-4' : viewMode === 'grid' ? 'mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3'}>
                   {options.map(option => {
                     const isSelected = selections.some(s => s.optionId === option.id);
                     const selectedOptionIds = selections.map(s => s.optionId);
@@ -285,7 +310,75 @@ export function EnhancementPanel({
                       campaignData,
                       selectedOptionIds
                     );
+                    const itemLayout = shouldUseCards(option) ? 'cards' : 'list';
 
+                    // When using cards layout, render per-value cards directly (no nested card wrapper)
+                    if (itemLayout === 'cards' && option.options && option.options.length > 0) {
+                      const selection = getSelectionValue(option.id);
+                      const max = option.max || (option.type === 'multiple' ? Infinity : 1);
+                      const selectedValues: string[] = (selection?.value as string[]) || [];
+                      const atMax = selectedValues.length >= max;
+
+                      const onToggle = (opt: string) => {
+                        if (!isAvailable && !isSelected) return;
+                        if (option.type === 'multiple') {
+                          const isAlready = selectedValues.includes(opt);
+                          if (isAlready) {
+                            handleSelectionChange({ optionId: option.id, value: selectedValues.filter(v => v !== opt), timestamp: new Date().toISOString() });
+                          } else if (!atMax) {
+                            handleSelectionChange({ optionId: option.id, value: [...selectedValues, opt], timestamp: new Date().toISOString() });
+                          }
+                        } else {
+                          handleSelectionChange({ optionId: option.id, value: opt as any, timestamp: new Date().toISOString() });
+                        }
+                      };
+
+                      return (
+                        <div key={option.id} className="space-y-3">
+                          {option.max && option.type === 'multiple' && (
+                            <div className="text-xs text-muted-foreground mb-1">
+                              Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
+                            </div>
+                          )}
+                          <div role={option.type === 'multiple' ? 'group' : 'radiogroup'} aria-label={option.name} className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ${viewMode === 'compact' ? 'gap-3' : 'gap-4'}`}>
+                            {option.options.map((opt) => {
+                              const isChecked = option.type === 'multiple'
+                                ? selectedValues.includes(opt)
+                                : (selection?.value as string) === opt;
+                              const canSelect = option.type === 'multiple' ? (isChecked || !atMax) : true;
+                              return (
+                                <Card
+                                  key={opt}
+                                  role={option.type === 'multiple' ? 'checkbox' : 'radio'}
+                                  aria-checked={isChecked}
+                                  aria-disabled={!canSelect || (!isAvailable && !isSelected)}
+                                  tabIndex={0}
+                                  className={`cursor-pointer transition-all rounded-lg border ${
+                                    isChecked ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30' : (!canSelect || (!isAvailable && !isSelected)) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/60 hover:border-primary/40 hover:shadow-md'
+                                  } ${viewMode === 'compact' ? 'p-3' : 'p-4'} hover:-translate-y-px`}
+                                  onClick={() => { if (canSelect) onToggle(opt); }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      if (canSelect) onToggle(opt);
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className={`${viewMode === 'compact' ? 'text-xs' : 'text-sm'} leading-snug break-words`}>{opt}</span>
+                                    {isChecked && (
+                                      <Badge variant="secondary" className="text-[10px]">Selected</Badge>
+                                    )}
+                                  </div>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Default: render the standard selector card
                     return (
                       <OptionSelector
                         key={option.id}
@@ -295,6 +388,8 @@ export function EnhancementPanel({
                         disabled={!isAvailable && !isSelected}
                         onAIGenerate={option.aiGenerated ? handleAIGenerate : undefined}
                         isGenerating={isGenerating === option.id}
+                        compact={viewMode === 'compact'}
+                        itemLayout={itemLayout}
                       />
                     );
                   })}

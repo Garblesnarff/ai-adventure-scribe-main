@@ -31,6 +31,8 @@ interface OptionSelectorProps<T extends OptionType = OptionType> {
   showMechanicalEffects?: boolean;
   onAIGenerate?: (optionId: string) => Promise<string>;
   isGenerating?: boolean;
+  compact?: boolean;
+  itemLayout?: 'list' | 'cards';
 }
 
 export function OptionSelector<T extends OptionType = OptionType>({
@@ -40,9 +42,12 @@ export function OptionSelector<T extends OptionType = OptionType>({
   disabled = false,
   showMechanicalEffects = true,
   onAIGenerate,
-  isGenerating = false
+  isGenerating = false,
+  compact = false,
+  itemLayout = 'list'
 }: OptionSelectorProps<T>) {
   const [customValue, setCustomValue] = React.useState(value?.customValue || '');
+  const headerId = React.useId();
 
   const handleValueChange = (newValue: any) => {
     const selection: OptionSelection<T> = {
@@ -122,6 +127,45 @@ export function OptionSelector<T extends OptionType = OptionType>({
           );
         }
 
+        // Cards layout for single-choice options
+        if (itemLayout === 'cards' && option.options && option.options.length > 0) {
+          const selected = (value?.value as string) || '';
+          return (
+            <div role="radiogroup" aria-labelledby={headerId} className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ${compact ? 'gap-3' : 'gap-4'}`}>
+              {option.options.map((opt) => {
+                const isSelected = selected === opt;
+                return (
+                  <Card
+                    key={opt}
+                    role="radio"
+                    aria-checked={isSelected}
+                    tabIndex={0}
+                    aria-disabled={disabled}
+                    className={`cursor-pointer transition-all rounded-lg border ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30' : 'border-border/60 hover:border-primary/40 hover:shadow-md'
+                    } ${compact ? 'p-3' : 'p-4'} hover:-translate-y-px`}
+                    onClick={() => !disabled && handleValueChange(opt)}
+                    onKeyDown={(e) => {
+                      if (disabled) return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleValueChange(opt);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`${compact ? 'text-xs' : 'text-sm'} leading-snug break-words`}>{opt}</span>
+                      {isSelected && (
+                        <Badge variant="secondary" className="text-[10px]">Selected</Badge>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        }
+
         return (
           <RadioGroup
             value={value?.value as string || ''}
@@ -144,45 +188,106 @@ export function OptionSelector<T extends OptionType = OptionType>({
         );
 
       case 'multiple':
-        const selectedValues = (value?.value as string[]) || [];
-        const maxSelections = option.max || Infinity;
+        {
+          const selectedValues = (value?.value as string[]) || [];
+          const maxSelections = option.max || Infinity;
 
-        return (
-          <div className="space-y-2">
-            {option.max && (
-              <p className="text-xs text-muted-foreground">
-                Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
-              </p>
-            )}
-            {option.options?.map((optionValue) => {
-              const isSelected = selectedValues.includes(optionValue);
-              const canSelect = isSelected || selectedValues.length < maxSelections;
-
-              return (
-                <div key={optionValue} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${option.id}-${optionValue}`}
-                    checked={isSelected}
-                    disabled={disabled || !canSelect}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        handleValueChange([...selectedValues, optionValue]);
-                      } else {
-                        handleValueChange(selectedValues.filter(v => v !== optionValue));
-                      }
-                    }}
-                  />
-                  <Label
-                    htmlFor={`${option.id}-${optionValue}`}
-                    className={`text-sm cursor-pointer ${!canSelect && !isSelected ? 'text-muted-foreground' : ''}`}
-                  >
-                    {optionValue}
-                  </Label>
+          // Cards layout for multiple-choice options
+          if (itemLayout === 'cards' && option.options && option.options.length > 0) {
+            const atMax = selectedValues.length >= maxSelections;
+            return (
+              <div className="space-y-2">
+                {option.max && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
+                  </p>
+                )}
+                <div role="group" aria-labelledby={headerId} className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ${compact ? 'gap-3' : 'gap-4'}`}>
+                  {option.options.map((opt) => {
+                    const isSelected = selectedValues.includes(opt);
+                    const canSelect = isSelected || !atMax;
+                    return (
+                      <Card
+                        key={opt}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        aria-disabled={disabled || !canSelect}
+                        tabIndex={0}
+                        className={`cursor-pointer transition-all rounded-lg border ${
+                          isSelected ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30' : (disabled || !canSelect) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/60 hover:border-primary/40 hover:shadow-md'
+                        } ${compact ? 'p-3' : 'p-4'} hover:-translate-y-px`}
+                        onClick={() => {
+                          if (disabled || (!canSelect && !isSelected)) return;
+                          if (isSelected) {
+                            handleValueChange(selectedValues.filter(v => v !== opt));
+                          } else {
+                            handleValueChange([...selectedValues, opt]);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (disabled || (!canSelect && !isSelected)) return;
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            if (isSelected) {
+                              handleValueChange(selectedValues.filter(v => v !== opt));
+                            } else {
+                              handleValueChange([...selectedValues, opt]);
+                            }
+                          }
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`${compact ? 'text-xs' : 'text-sm'} leading-snug break-words`}>{opt}</span>
+                          {isSelected && (
+                            <Badge variant="secondary" className="text-[10px]">Selected</Badge>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        );
+              </div>
+            );
+          }
+
+          // Default list layout
+          return (
+            <div className="space-y-2">
+              {option.max && (
+                <p className="text-xs text-muted-foreground">
+                  Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
+                </p>
+              )}
+              {option.options?.map((optionValue) => {
+                const isSelected = selectedValues.includes(optionValue);
+                const canSelect = isSelected || selectedValues.length < maxSelections;
+
+                return (
+                  <div key={optionValue} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${option.id}-${optionValue}`}
+                      checked={isSelected}
+                      disabled={disabled || !canSelect}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleValueChange([...selectedValues, optionValue]);
+                        } else {
+                          handleValueChange(selectedValues.filter(v => v !== optionValue));
+                        }
+                      }}
+                    />
+                    <Label
+                      htmlFor={`${option.id}-${optionValue}`}
+                      className={`text-sm cursor-pointer ${!canSelect && !isSelected ? 'text-muted-foreground' : ''}`}
+                    >
+                      {optionValue}
+                    </Label>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
 
       case 'number':
         return (
@@ -279,12 +384,12 @@ export function OptionSelector<T extends OptionType = OptionType>({
   };
 
   return (
-    <Card className={`transition-all duration-200 ${disabled ? 'opacity-60' : 'hover:shadow-md'}`}>
-      <CardHeader className="pb-3">
+    <Card className={`transition-all duration-200 ${disabled ? 'opacity-60' : 'hover:shadow-md'} ${compact ? 'p-2' : ''}`}>
+      <CardHeader className={compact ? 'py-2' : 'pb-3'}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             {option.icon && <span className="text-lg">{option.icon}</span>}
-            <CardTitle className="text-base">{option.name}</CardTitle>
+            <CardTitle className={compact ? 'text-sm' : 'text-base'}>{option.name}</CardTitle>
             {option.aiGenerated && (
               <Badge variant="outline" className="text-xs">
                 <Sparkles className="w-3 h-3 mr-1" />
@@ -293,7 +398,7 @@ export function OptionSelector<T extends OptionType = OptionType>({
             )}
           </div>
         </div>
-        <CardDescription className="text-sm">
+        <CardDescription className={compact ? 'text-xs' : 'text-sm'}>
           {option.description}
         </CardDescription>
 
@@ -308,13 +413,13 @@ export function OptionSelector<T extends OptionType = OptionType>({
         )}
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className={compact ? 'space-y-2 pt-0' : 'space-y-4'}>
         {renderOptionInput()}
 
         {/* Custom value input for additional details */}
         {option.type !== 'text' && (
           <div className="space-y-2">
-            <Label htmlFor={`${option.id}-custom`} className="text-sm font-medium">
+            <Label htmlFor={`${option.id}-custom`} className={compact ? 'text-xs font-medium' : 'text-sm font-medium'}>
               Additional Notes (Optional)
             </Label>
             <Input
@@ -323,7 +428,7 @@ export function OptionSelector<T extends OptionType = OptionType>({
               onChange={(e) => handleCustomValueChange(e.target.value)}
               disabled={disabled}
               placeholder="Add custom details or modifications..."
-              className="text-sm"
+              className={compact ? 'text-xs h-8' : 'text-sm'}
             />
           </div>
         )}
