@@ -24,7 +24,7 @@ const Index = () => {
           <p className="text-xl text-white/95 mb-12 max-w-3xl mx-auto drop-shadow-lg leading-relaxed">Step into boundless worlds of adventure, where every choice shapes destiny and legends are forged in the fires of imagination</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
             <Button
-              onClick={() => navigate('/campaigns/create')}
+              onClick={() => navigate('/app/campaigns/create')}
               variant="fantasy"
               size="lg"
               className="px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"

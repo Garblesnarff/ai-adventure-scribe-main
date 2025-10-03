@@ -22,6 +22,7 @@ export interface CharacterRace {
   traits: string[];
   languages: string[];
   subraces?: Subrace[];
+  backgroundImage?: string;
 }
 
 export interface Spell {

@@ -72,7 +72,7 @@ export const SimpleCampaignView: React.FC = () => {
       const character = characters.find(c => c.id === characterIdFromUrl);
       if (character) {
         // Navigate directly to the game route with this character
-        navigate(`/game/${campaignId}?character=${character.id}`);
+        navigate(`/app/game/${campaignId}?character=${character.id}`);
       }
     }
   }, [characterIdFromUrl, characters, navigate, campaignId]);
@@ -179,7 +179,7 @@ export const SimpleCampaignView: React.FC = () => {
 
   const startGameWithCharacter = useCallback(async (character: CharacterListItem) => {
     // Navigate to the game route with campaign ID and character ID as query param
-    navigate(`/game/${campaignId}?character=${character.id}`);
+    navigate(`/app/game/${campaignId}?character=${character.id}`);
   }, [navigate, campaignId]);
 
 
@@ -334,7 +334,7 @@ export const SimpleCampaignView: React.FC = () => {
                     <div className="text-center py-12 bg-muted/30 rounded-xl">
                       <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-6 text-lg">No heroes forged yet</p>
-                      <Button onClick={() => window.location.href = '/characters/create'} variant="fantasy" size="lg" className="px-8">
+                      <Button onClick={() => navigate('/app/characters/create')} variant="fantasy" size="lg" className="px-8">
                         <Play className="w-5 h-5 mr-2" />
                         Forge Your First Hero
                       </Button>

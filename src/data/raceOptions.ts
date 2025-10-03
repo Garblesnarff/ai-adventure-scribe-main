@@ -16,6 +16,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 25,
     languages: ['Common', 'Dwarvish'],
+    backgroundImage: '/dwarf-class-card-background.png',
     subraces: [
       {
         id: 'hill-dwarf',
@@ -57,6 +58,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Elvish'],
+    backgroundImage: '/elf-class-card-background.png',
     subraces: [
       {
         id: 'high-elf',
@@ -130,6 +132,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 25,
     languages: ['Common', 'Halfling'],
+    backgroundImage: '/halfling-class-card-background.png',
     subraces: [
       {
         id: 'lightfoot-halfling',
@@ -159,6 +162,7 @@ export const baseRaces: CharacterRace[] = [
     abilityScoreIncrease: {},
     speed: 30,
     languages: ['Common'],
+    backgroundImage: '/human-class-card-background.png',
     subraces: [
       {
         id: 'standard-human',
@@ -211,6 +215,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Draconic'],
+    backgroundImage: '/dragonborn-class-card-background.png',
     subraces: []
   },
   // Additional races with subraces
@@ -224,6 +229,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 25,
     languages: ['Common', 'Gnomish'],
+    backgroundImage: '/gnome-class-card-background.png',
     subraces: [
       {
         id: 'forest-gnome',
@@ -263,6 +269,7 @@ export const baseRaces: CharacterRace[] = [
     abilityScoreIncrease: {},
     speed: 30,
     languages: ['Common', 'Primordial'],
+    backgroundImage: '/elementalborn-class-card-background.png',
     subraces: [
       {
         id: 'air-elementalborn',
@@ -316,6 +323,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Celestial'],
+    backgroundImage: '/celestialborn-class-card-background.png',
     subraces: [
       {
         id: 'guardian-celestialborn',
@@ -356,6 +364,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Astral'],
+    backgroundImage: '/astralborn-class-card-background.png',
     subraces: [
       {
         id: 'astral-warrior',
@@ -388,6 +397,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Infernal'],
+    backgroundImage: '/tiefling-class-card-background.png',
     subraces: [
       {
         id: 'standard-tiefling',
@@ -411,6 +421,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Elvish', 'One extra language of your choice'],
+    backgroundImage: '/halfelf-class-card-background.png',
     subraces: []
   },
   {
@@ -424,6 +435,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Orc'],
+    backgroundImage: '/halforc-class-card-background.png',
     subraces: []
   },
   {
@@ -437,6 +449,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Elvish', 'Giant'],
+    backgroundImage: '/forestgiant-class-card-background.png',
     subraces: []
   },
   {
@@ -450,6 +463,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Giant'],
+    backgroundImage: '/stonegiant-class-card-background.png',
     subraces: []
   },
   {
@@ -463,6 +477,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Auran'],
+    backgroundImage: '/ravenfolk-class-card-background.png',
     subraces: []
   },
   {
@@ -476,6 +491,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Draconic'],
+    backgroundImage: '/lizardfolk-class-card-background.png',
     subraces: []
   },
   {
@@ -489,6 +505,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Choice of One'],
+    backgroundImage: '/catfolk-class-card-background.png',
     subraces: []
   },
   {
@@ -503,6 +520,7 @@ export const baseRaces: CharacterRace[] = [
     },
     speed: 30,
     languages: ['Common', 'Primordial'],
+    backgroundImage: '/seaborn-class-card-background.png',
     subraces: []
   },
   {
@@ -510,6 +528,7 @@ export const baseRaces: CharacterRace[] = [
     name: 'Serpentfolk',
     description: 'The serpentine serpentfolk are utterly without emotion. They deal in absolutes and judge others by their strength and cunning.',
     traits: ['Darkvision', 'Innate Spellcasting', 'Magic Resistance', 'Poison Immunity'],
+    backgroundImage: '/serpentfolk-class-card-background.png',
     abilityScoreIncrease: {
       charisma: 2,
       intelligence: 1

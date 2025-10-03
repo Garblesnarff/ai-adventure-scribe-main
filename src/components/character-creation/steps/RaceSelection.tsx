@@ -27,6 +27,7 @@ const RaceSelection: React.FC = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
   const [comparisonRaces, setComparisonRaces] = useState<CharacterRace[]>([]);
+  const [hoveredRaceId, setHoveredRaceId] = useState<string | null>(null);
 
   // Half-Elf ability choice modal state
   const [showHalfElfModal, setShowHalfElfModal] = useState(false);
@@ -281,13 +282,14 @@ const RaceSelection: React.FC = () => {
               {filteredRaces.map((baseRace) => {
                 const isSelected = state.character?.race?.id === baseRace.id;
                 const isFavorite = favorites.has(baseRace.id);
+                const isHovered = hoveredRaceId === baseRace.id;
 
                 // Different card layouts based on view mode
                 if (viewMode === 'list') {
                   return (
                     <Card
                       key={baseRace.id}
-                      className={`cursor-pointer transition-all hover:shadow-lg border-2 relative ${
+                      className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
                         isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
                       }`}
                       onClick={() => handleBaseRaceSelect(baseRace)}
@@ -298,12 +300,20 @@ const RaceSelection: React.FC = () => {
                           handleBaseRaceSelect(baseRace);
                         }
                       }}
+                      style={baseRace.backgroundImage ? {
+                        backgroundImage: `url(${baseRace.backgroundImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      } : undefined}
                     >
-                      <CardContent className="p-4">
+                      {baseRace.backgroundImage && (
+                        <div className="absolute inset-0 bg-black/60 z-0" />
+                      )}
+                      <CardContent className={`p-4 relative z-10 ${baseRace.backgroundImage ? 'text-white' : ''}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1">
                             <div className="flex items-center gap-2 min-w-0">
-                              <Users className="w-5 h-5 text-primary flex-shrink-0" />
+                              <Users className={`w-5 h-5 flex-shrink-0 ${baseRace.backgroundImage ? 'text-yellow-400' : 'text-primary'}`} />
                               <h3 className="text-xl font-bold truncate">{baseRace.name}</h3>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -345,8 +355,8 @@ const RaceSelection: React.FC = () => {
                             )}
                           </div>
                         </div>
-                        <p className="text-muted-foreground text-sm mt-2 line-clamp-2">{baseRace.description}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <p className={`text-sm mt-2 line-clamp-2 ${baseRace.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{baseRace.description}</p>
+                        <div className={`flex items-center gap-4 mt-2 text-xs ${baseRace.backgroundImage ? 'text-gray-300' : 'text-muted-foreground'}`}>
                           <span>Speed: {baseRace.speed}ft</span>
                           <span>{baseRace.languages.length} languages</span>
                           {baseRace.subraces && baseRace.subraces.length > 0 && (
@@ -362,7 +372,7 @@ const RaceSelection: React.FC = () => {
                   return (
                     <Card
                       key={baseRace.id}
-                      className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-4 ${
+                      className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-4 overflow-hidden ${
                         isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
                       }`}
                       onClick={() => handleBaseRaceSelect(baseRace)}
@@ -373,10 +383,18 @@ const RaceSelection: React.FC = () => {
                           handleBaseRaceSelect(baseRace);
                         }
                       }}
+                      style={baseRace.backgroundImage ? {
+                        backgroundImage: `url(${baseRace.backgroundImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      } : undefined}
                     >
-                      <div className="flex items-center justify-between mb-2">
+                      {baseRace.backgroundImage && (
+                        <div className="absolute inset-0 bg-black/60 z-0" />
+                      )}
+                      <div className={`flex items-center justify-between mb-2 relative z-10 ${baseRace.backgroundImage ? 'text-white' : ''}`}>
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-primary" />
+                          <Users className={`w-4 h-4 ${baseRace.backgroundImage ? 'text-yellow-400' : 'text-primary'}`} />
                           <h3 className="font-bold text-lg">{baseRace.name}</h3>
                         </div>
                         {isSelected && (
@@ -385,16 +403,16 @@ const RaceSelection: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-1 mb-2">
+                      <div className="flex flex-wrap gap-1 mb-2 relative z-10">
                         {Object.entries(baseRace.abilityScoreIncrease).map(([ability, bonus]) => (
                           <Badge key={ability} variant="secondary" className="text-xs">
                             +{bonus} {ability.substring(0, 3)}
                           </Badge>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{baseRace.description}</p>
+                      <p className={`text-xs line-clamp-2 relative z-10 ${baseRace.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{baseRace.description}</p>
                       {baseRace.subraces && baseRace.subraces.length > 0 && (
-                        <div className="text-xs text-muted-foreground text-center mt-2 pt-1 border-t">
+                        <div className={`text-xs text-center mt-2 pt-1 border-t relative z-10 ${baseRace.backgroundImage ? 'text-gray-300 border-gray-400' : 'text-muted-foreground'}`}>
                           {baseRace.subraces.length} subraces
                         </div>
                       )}
@@ -406,10 +424,20 @@ const RaceSelection: React.FC = () => {
                 return (
                   <Card
                     key={baseRace.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative ${
-                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    className={`cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
+                      isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
                     }`}
+                    style={{
+                      padding: 0,
+                      ...(baseRace.backgroundImage ? {
+                        backgroundImage: `url(${baseRace.backgroundImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      } : {})
+                    }}
                     onClick={() => handleBaseRaceSelect(baseRace)}
+                    onMouseEnter={() => setHoveredRaceId(baseRace.id)}
+                    onMouseLeave={() => setHoveredRaceId(null)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
@@ -418,115 +446,116 @@ const RaceSelection: React.FC = () => {
                       }
                     }}
                   >
-                    {isSelected && (
-                      <div className="absolute top-3 right-3">
+                    {/* Edge blur overlay - creates vignette effect without color */}
+                    <div className="absolute inset-0" style={{
+                      boxShadow: 'inset 0 0 60px 20px rgba(0, 0, 0, 0.3)'
+                    }} />
+
+                    {/* Top-right indicators */}
+                    <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                      {/* Favorite and comparison buttons */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(baseRace.id);
+                        }}
+                        className="p-1 bg-white/10 hover:bg-white/20"
+                      >
+                        <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToComparison(baseRace);
+                        }}
+                        className="p-1 bg-white/10 hover:bg-white/20"
+                        disabled={comparisonRaces.length >= 3 && !comparisonRaces.find(r => r.id === baseRace.id)}
+                      >
+                        <Star className="w-4 h-4 text-white" />
+                      </Button>
+
+                      {/* Selected indicator */}
+                      {isSelected && (
                         <div className="bg-primary text-primary-foreground rounded-full p-1">
                           <Check className="w-4 h-4" />
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-primary" />
-                          <h3 className="text-2xl font-bold">{baseRace.name}</h3>
+                    {/* Hover popup */}
+                    <div className={`hover-popup ${isHovered ? 'opacity-100 scale-100 pointer-events-auto z-20' : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
+                      <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border max-w-sm">
+                        {/* Race name */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users className="w-5 h-5 text-infinite-purple" />
+                          <h3 className="text-xl font-bold text-foreground">{baseRace.name}</h3>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(baseRace.id);
-                            }}
-                            className="p-1"
-                          >
-                            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToComparison(baseRace);
-                            }}
-                            className="p-1"
-                            disabled={comparisonRaces.length >= 3 && !comparisonRaces.find(r => r.id === baseRace.id)}
-                          >
-                            <Star className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
 
-                    <CardContent className="space-y-4">
-                      <p className="text-muted-foreground">{baseRace.description}</p>
+                        {/* Description */}
+                        <p className="text-sm text-foreground mb-3 leading-relaxed">{baseRace.description}</p>
 
-                      {/* Ability Score Increases */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className="w-4 h-4 text-orange-500" />
-                          <h4 className="font-semibold">Ability Score Increases</h4>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {Object.entries(baseRace.abilityScoreIncrease).map(([ability, bonus]) => (
-                            <Badge key={ability} variant="secondary" className="capitalize">
-                              {ability.substring(0, 3)} +{bonus}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Speed */}
-                      <div>
-                        <p className="text-sm">
-                          <span className="font-medium">Speed:</span> {baseRace.speed} feet
-                        </p>
-                      </div>
-
-                      {/* Languages */}
-                      {baseRace.languages.length > 0 && (
-                        <div>
+                        {/* Ability Score Increases */}
+                        <div className="mb-3">
                           <div className="flex items-center gap-2 mb-2">
-                            <Globe className="w-4 h-4 text-blue-500" />
-                            <h4 className="font-semibold">Languages</h4>
+                            <Zap className="w-4 h-4 text-orange-500" />
+                            <h4 className="font-semibold text-foreground text-sm">Ability Score Increases</h4>
                           </div>
                           <div className="flex flex-wrap gap-1">
-                            {baseRace.languages.map((language: string, index: number) => (
-                              <Badge key={index} variant="outline">{language}</Badge>
+                            {Object.entries(baseRace.abilityScoreIncrease).map(([ability, bonus]) => (
+                              <Badge key={ability} variant="secondary" className="capitalize text-xs">
+                                {ability.substring(0, 3)} +{bonus}
+                              </Badge>
                             ))}
                           </div>
                         </div>
-                      )}
 
-                      {/* Racial Traits */}
-                      <div>
-                        <h4 className="font-semibold mb-2">Racial Traits</h4>
-                        <div className="space-y-1">
-                          {baseRace.traits.slice(0, 3).map((trait: string, index: number) => (
-                            <div key={index} className="text-sm p-2 bg-muted/30 rounded">
-                              <span className="font-medium">{trait.split(':')[0]}:</span>
-                              <span className="text-muted-foreground ml-1">
-                                {trait.split(':')[1] || trait}
-                              </span>
-                            </div>
-                          ))}
-                          {baseRace.traits.length > 3 && (
-                            <div className="text-xs text-muted-foreground text-center">
-                              +{baseRace.traits.length - 3} more traits
-                            </div>
-                          )}
+                        {/* Speed */}
+                        <div className="mb-3">
+                          <p className="text-sm text-foreground">
+                            <span className="font-medium">Speed:</span> {baseRace.speed} feet
+                          </p>
                         </div>
+
+                        {/* Languages */}
+                        {baseRace.languages.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Globe className="w-4 h-4 text-blue-500" />
+                              <h4 className="font-semibold text-foreground text-sm">Languages</h4>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {baseRace.languages.map((language: string, index: number) => (
+                                <Badge key={index} variant="outline" className="text-xs">{language}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Racial Traits */}
+                        <div className="mb-3">
+                          <h4 className="font-semibold text-foreground text-sm mb-2">Racial Traits</h4>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {baseRace.traits.map((trait: string, index: number) => (
+                              <div key={index} className="text-xs p-2 bg-muted/30 rounded">
+                                <span className="font-medium">{trait.split(':')[0]}</span>
+                                {trait.includes(':') && <span className="text-muted-foreground">: {trait.split(':')[1]}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Subraces Indicator */}
+                        {baseRace.subraces && baseRace.subraces.length > 0 && (
+                          <div className="text-xs text-center pt-2 border-t text-muted-foreground">
+                            Has {baseRace.subraces.length} subrace{baseRace.subraces.length > 1 ? 's' : ''} available
+                          </div>
+                        )}
                       </div>
-
-                      {/* Subraces Indicator */}
-                      {baseRace.subraces && baseRace.subraces.length > 0 && (
-                        <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-                          Has Subraces ({baseRace.subraces.length})
-                        </div>
-                      )}
-                    </CardContent>
+                    </div>
                   </Card>
                 );
               })}

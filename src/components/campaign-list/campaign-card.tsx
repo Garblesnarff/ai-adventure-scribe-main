@@ -123,7 +123,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
       {/* Hero / thumbnail area */}
       <div
         className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500 overflow-hidden"
-        onClick={() => navigate(`/campaign/${campaign.id}`)}
+        onClick={() => navigate(`/app/campaign/${campaign.id}`)}
         style={resolvedImage ? {
           backgroundImage: `url(${resolvedImage})`,
           backgroundSize: 'cover',
@@ -182,7 +182,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
                 <Play className="w-4 h-4" />
                 Play
               </Button>
-              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/campaign/${campaign.id}`); }}>
+              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/app/campaign/${campaign.id}`); }}>
                 Enter
               </Button>
               <Button
