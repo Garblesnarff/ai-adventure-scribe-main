@@ -115,14 +115,19 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
 
   return (
     <Card
-      className="campaign-card featured-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square w-full"
-      style={{ padding: 0 }}
+      className="campaign-card featured-card group relative border-2 border-border/30 shadow-md transition-all duration-500 hover:shadow-2xl hover:shadow-infinite-purple/50 hover:border-infinite-gold aspect-square w-full"
+      style={{ padding: '2px' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 z-[5] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
+      </div>
+      
       {/* Hero / thumbnail area */}
       <div
-        className="campaign-hero featured flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500 overflow-hidden"
+        className="campaign-hero featured flex items-end p-4 cursor-pointer h-full w-full bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500 overflow-hidden transition-all duration-700 ease-out group-hover:scale-[1.02] group-hover:brightness-110 rounded-sm"
         onClick={() => navigate(`/app/campaign/${campaign.id}`)}
         style={resolvedImage ? {
           backgroundImage: `url(${resolvedImage})`,

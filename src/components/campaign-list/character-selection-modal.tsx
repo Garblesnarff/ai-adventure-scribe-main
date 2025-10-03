@@ -126,9 +126,14 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                 const backgroundImage = character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
 
                 return (
-                  <Card key={character.id} className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden">
+                  <Card key={character.id} className="group cursor-pointer hover:shadow-xl hover:shadow-infinite-purple/30 transition-all duration-500 overflow-hidden border-2 border-border/30 hover:border-infinite-gold/70 relative">
+                    {/* Glow effect on hover */}
+                    <div className="absolute inset-0 z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                      <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(168,85,247,0.3)]" />
+                    </div>
+                    
                     <div 
-                      className="relative h-32 bg-cover bg-center"
+                      className="relative h-32 bg-cover bg-center transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
                       style={{
                         backgroundImage: `url(${backgroundImage})`,
                         backgroundSize: 'cover',
@@ -141,7 +146,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                           <img
                             src={character.avatar_url}
                             alt={`${character.name} avatar`}
-                            className="w-16 h-16 rounded-full object-cover border-4 border-background shadow-lg"
+                            className="w-16 h-16 rounded-full object-cover border-4 border-infinite-gold/80 shadow-lg shadow-infinite-gold/50 transition-all duration-300 group-hover:scale-110 group-hover:border-infinite-purple group-hover:shadow-infinite-purple/70"
                           />
                         </div>
                       )}

@@ -148,14 +148,19 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
 
   return (
     <Card
-      className="character-card group relative overflow-hidden border border-border/30 shadow-md transition-all duration-300 hover:shadow-xl hover:border-infinite-purple/50 aspect-square w-full"
-      style={{ padding: 0 }}
+      className="character-card group relative border-2 border-border/30 shadow-md transition-all duration-500 hover:shadow-2xl hover:shadow-infinite-purple/50 hover:border-infinite-gold aspect-square w-full"
+      style={{ padding: '2px' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 z-[5] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
+      </div>
+      
       {/* Hero / background area */}
       <div
-        className="character-hero group flex items-end p-4 cursor-pointer aspect-square bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative overflow-hidden"
+        className="character-hero group flex items-end p-4 cursor-pointer h-full w-full bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative overflow-hidden transition-all duration-700 ease-out group-hover:scale-[1.02] group-hover:brightness-110 rounded-sm"
         onClick={() => {
           // Character access is now properly restricted by RLS, so navigation should work
           navigate(`/app/character/${character.id}`);
@@ -204,7 +209,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                 <img
                   src={character.avatar_url}
                   alt={`${character.name} avatar`}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-infinite-purple shadow-md"
+                  className="w-20 h-20 rounded-full object-cover border-4 border-infinite-gold/80 shadow-lg shadow-infinite-gold/50 transition-all duration-300 hover:scale-110 hover:border-infinite-purple hover:shadow-infinite-purple/70"
                 />
               </div>
             )}
