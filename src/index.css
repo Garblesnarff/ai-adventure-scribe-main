@@ -914,12 +914,13 @@
     position: relative;
   }
 
-  .campaign-card:hover .campaign-hero.featured .hover-popup {
+  /* Removed to allow JS-controlled 1-second hover delay */
+  /* .campaign-card:hover .campaign-hero.featured .hover-popup {
     opacity: 1;
     transform: translate(-50%, -50%);
     pointer-events: auto;
     z-index: 12;
-  }
+  } */
 
   /* center the popup within the image area */
   .hover-popup {
@@ -1188,13 +1189,13 @@
     will-change: transform;
   }
 
-  /* Campaign hover popup enhancements */
-  .campaign-card.group:hover .hover-popup {
+  /* Campaign hover popup enhancements - removed to allow JS-controlled delay */
+  /* .campaign-card.group:hover .hover-popup {
     opacity: 1 !important;
     transform: translate(-50%, -50%) !important;
     pointer-events: auto !important;
     z-index: 20 !important;
-  }
+  } */
 
   /* Character card hover popup centering */
   .character-card.group:hover .hover-popup {
@@ -1216,7 +1217,7 @@
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -50%);
     z-index: 10;
     transition: opacity 0.2s ease, transform 0.2s ease !important;
     filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.2));

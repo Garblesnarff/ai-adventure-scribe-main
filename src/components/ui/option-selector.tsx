@@ -401,16 +401,6 @@ export function OptionSelector<T extends OptionType = OptionType>({
         <CardDescription className={compact ? 'text-xs' : 'text-sm'}>
           {option.description}
         </CardDescription>
-
-        {option.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {option.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
       </CardHeader>
 
       <CardContent className={compact ? 'space-y-2 pt-0' : 'space-y-4'}>
