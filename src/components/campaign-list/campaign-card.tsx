@@ -49,9 +49,34 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCharacterModal, setShowCharacterModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Use hot loading hook for background image
   const { imageUrl: hotLoadedImage, isLoading: imageLoading, hasImage } = useCampaignImageHotLoading(campaign.id);
+
+  // Handle hover with delay
+  const handleMouseEnter = useCallback(() => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(true);
+    }, 1000);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsHovered(false);
+  }, []);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Handles campaign deletion confirmation
@@ -117,8 +142,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
     <Card
       className="campaign-card featured-card group relative border-2 border-border/30 shadow-md transition-all duration-500 hover:shadow-2xl hover:shadow-infinite-purple/50 hover:border-infinite-gold aspect-square w-full"
       style={{ padding: '2px' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Glow effect on hover */}
       <div className="absolute inset-0 z-[5] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
@@ -146,15 +171,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
           </div>
         )}
         {/* Overlay and popup for all cards */}
-        {isFeatured && (
-          <div className="absolute top-2 right-2 z-10">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-infinite-gold text-infinite-dark">
-              Featured
-            </span>
-          </div>
-        )}
         <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-            <div className={`hover-popup ${isHovered ? 'opacity-100 translate-y-0 pointer-events-auto z-20' : 'opacity-0 translate-y-2 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
+            <div className={`hover-popup ${isHovered ? 'opacity-100 pointer-events-auto z-20' : 'opacity-0 pointer-events-none'} absolute left-1/2 top-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
           <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border">
             <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : campaign.name}</div>
             {imageLoading ? (
