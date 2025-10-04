@@ -300,7 +300,7 @@ export function EnhancementPanel({
               </div>
 
               {Object.entries(groupedOptions).map(([group, options]) => (
-                <TabsContent key={group} value={group} className={viewMode === 'list' ? 'mt-4 space-y-4' : viewMode === 'grid' ? 'mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3'}>
+                <TabsContent key={group} value={group} className="mt-4 space-y-6">
                   {options.map(option => {
                     const isSelected = selections.some(s => s.optionId === option.id);
                     const selectedOptionIds = selections.map(s => s.optionId);
@@ -340,7 +340,7 @@ export function EnhancementPanel({
                               Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
                             </div>
                           )}
-                          <div role={option.type === 'multiple' ? 'group' : 'radiogroup'} aria-label={option.name} className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ${viewMode === 'compact' ? 'gap-3' : 'gap-4'}`}>
+                          <div role={option.type === 'multiple' ? 'group' : 'radiogroup'} aria-label={option.name} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
                             {option.options.map((opt) => {
                               const isChecked = option.type === 'multiple'
                                 ? selectedValues.includes(opt)
@@ -353,9 +353,9 @@ export function EnhancementPanel({
                                   aria-checked={isChecked}
                                   aria-disabled={!canSelect || (!isAvailable && !isSelected)}
                                   tabIndex={0}
-                                  className={`cursor-pointer transition-all rounded-lg border ${
-                                    isChecked ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30' : (!canSelect || (!isAvailable && !isSelected)) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/60 hover:border-primary/40 hover:shadow-md'
-                                  } ${viewMode === 'compact' ? 'p-3' : 'p-4'} hover:-translate-y-px`}
+                                  className={`w-full cursor-pointer transition-all rounded-lg border-2 ${
+                                    isChecked ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/30' : (!canSelect || (!isAvailable && !isSelected)) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/30 hover:border-primary/50 hover:shadow-xl'
+                                  } ${viewMode === 'compact' ? 'p-4' : 'p-6'} hover:-translate-y-0.5`}
                                   onClick={() => { if (canSelect) onToggle(opt); }}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -364,8 +364,8 @@ export function EnhancementPanel({
                                     }
                                   }}
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <span className={`${viewMode === 'compact' ? 'text-xs' : 'text-sm'} leading-snug break-words`}>{opt}</span>
+                                  <div className="flex flex-col gap-2">
+                                    <span className={`${viewMode === 'compact' ? 'text-sm' : 'text-base'} font-medium leading-snug`}>{opt}</span>
                                     {isChecked && (
                                       <Badge variant="secondary" className="text-[10px]">Selected</Badge>
                                     )}

@@ -131,7 +131,7 @@ export function OptionSelector<T extends OptionType = OptionType>({
         if (itemLayout === 'cards' && option.options && option.options.length > 0) {
           const selected = (value?.value as string) || '';
           return (
-            <div role="radiogroup" aria-labelledby={headerId} className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ${compact ? 'gap-3' : 'gap-4'}`}>
+            <div role="radiogroup" aria-labelledby={headerId} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
               {option.options.map((opt) => {
                 const isSelected = selected === opt;
                 return (
@@ -141,9 +141,9 @@ export function OptionSelector<T extends OptionType = OptionType>({
                     aria-checked={isSelected}
                     tabIndex={0}
                     aria-disabled={disabled}
-                    className={`cursor-pointer transition-all rounded-lg border ${
-                      isSelected ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30' : 'border-border/60 hover:border-primary/40 hover:shadow-md'
-                    } ${compact ? 'p-3' : 'p-4'} hover:-translate-y-px`}
+                    className={`w-full cursor-pointer transition-all rounded-lg border-2 ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/30' : 'border-border/30 hover:border-primary/50 hover:shadow-xl'
+                    } ${compact ? 'p-4' : 'p-6'} hover:-translate-y-0.5`}
                     onClick={() => !disabled && handleValueChange(opt)}
                     onKeyDown={(e) => {
                       if (disabled) return;
@@ -153,8 +153,8 @@ export function OptionSelector<T extends OptionType = OptionType>({
                       }
                     }}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className={`${compact ? 'text-xs' : 'text-sm'} leading-snug break-words`}>{opt}</span>
+                    <div className="flex flex-col gap-2">
+                      <span className={`${compact ? 'text-sm' : 'text-base'} font-medium leading-snug`}>{opt}</span>
                       {isSelected && (
                         <Badge variant="secondary" className="text-[10px]">Selected</Badge>
                       )}
@@ -202,7 +202,7 @@ export function OptionSelector<T extends OptionType = OptionType>({
                     Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
                   </p>
                 )}
-                <div role="group" aria-labelledby={headerId} className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ${compact ? 'gap-3' : 'gap-4'}`}>
+                <div role="group" aria-labelledby={headerId} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
                   {option.options.map((opt) => {
                     const isSelected = selectedValues.includes(opt);
                     const canSelect = isSelected || !atMax;
@@ -213,9 +213,9 @@ export function OptionSelector<T extends OptionType = OptionType>({
                         aria-checked={isSelected}
                         aria-disabled={disabled || !canSelect}
                         tabIndex={0}
-                        className={`cursor-pointer transition-all rounded-lg border ${
-                          isSelected ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30' : (disabled || !canSelect) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/60 hover:border-primary/40 hover:shadow-md'
-                        } ${compact ? 'p-3' : 'p-4'} hover:-translate-y-px`}
+                        className={`w-full cursor-pointer transition-all rounded-lg border-2 ${
+                          isSelected ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/30' : (disabled || !canSelect) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/30 hover:border-primary/50 hover:shadow-xl'
+                        } ${compact ? 'p-4' : 'p-6'} hover:-translate-y-0.5`}
                         onClick={() => {
                           if (disabled || (!canSelect && !isSelected)) return;
                           if (isSelected) {
@@ -236,8 +236,8 @@ export function OptionSelector<T extends OptionType = OptionType>({
                           }
                         }}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className={`${compact ? 'text-xs' : 'text-sm'} leading-snug break-words`}>{opt}</span>
+                        <div className="flex flex-col gap-2">
+                          <span className={`${compact ? 'text-sm' : 'text-base'} font-medium leading-snug`}>{opt}</span>
                           {isSelected && (
                             <Badge variant="secondary" className="text-[10px]">Selected</Badge>
                           )}
