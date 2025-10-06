@@ -25,7 +25,8 @@ export default defineConfig({
       'src/hooks/__tests__/useSpellSelection.test.ts',
       'src/__tests__/unit/spell-class-restrictions.test.ts',
       'src/__tests__/components/spell-selection-component.test.tsx',
-      'src/components/spells/__tests__/SpellCard.test.tsx'
+      'src/components/spells/__tests__/SpellCard.test.tsx',
+      'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx'
     ],
     exclude: [
       'node_modules/**',
