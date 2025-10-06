@@ -1,9 +1,9 @@
 import express, { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth.js';
 import Stripe from 'stripe';
+import { supabaseService } from '../../lib/supabase.js';
 
-export default function stripeRouter(db: Pool) {
+export default function stripeRouter() {
   const router = Router();
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-06-20' });
 
@@ -29,7 +29,7 @@ export default function stripeRouter(db: Pool) {
   return router;
 }
 
-export function billingWebhookRouter(db: Pool) {
+export function billingWebhookRouter() {
   const router = Router();
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-06-20' });
 
@@ -62,13 +62,15 @@ export function billingWebhookRouter(db: Pool) {
       const email = (subscription as any).customer_email as string | undefined;
       const priceId = subscription.items.data[0]?.price.id;
       const plan = priceId ? priceId : 'unknown';
-      const client = await db.connect();
       try {
         if (email) {
-          await client.query('UPDATE users SET plan=$1 WHERE email=$2', [plan, email]);
+          // Upsert into user_profiles table (user-scoped profile data)
+          await supabaseService
+            .from('user_profiles')
+            .upsert({ email, plan }, { onConflict: 'email' });
         }
-      } finally {
-        client.release();
+      } catch (err) {
+        console.error('Failed to update user profile plan:', err);
       }
     }
 

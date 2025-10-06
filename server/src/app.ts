@@ -2,10 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { Pool } from 'pg';
 import { registerRoutes } from './routes/index.js';
 
-export function createApp(db: Pool) {
+export function createApp() {
   const app = express();
 
   // Dynamic CORS configuration that accepts any localhost port
@@ -43,8 +42,7 @@ export function createApp(db: Pool) {
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
-  app.set('db', db);
-  registerRoutes(app, db);
+  registerRoutes(app);
 
   return app;
 }
