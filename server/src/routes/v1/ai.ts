@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth.js';
 import { OpenAI } from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 
-export default function aiRouter(_db: Pool) {
+export default function aiRouter() {
   const router = Router();
   router.use(requireAuth);
 

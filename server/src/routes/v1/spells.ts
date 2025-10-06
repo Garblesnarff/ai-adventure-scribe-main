@@ -1,6 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { Pool } from 'pg';
-import { requireAuth } from '../../middleware/auth.js';
 import { supabaseService } from '../../lib/supabase.js';
 import {
   getClassSpells,
@@ -11,7 +9,7 @@ import {
   spellcastingClasses
 } from '../../data/spellData.js';
 
-export default function spellRouter(db: Pool) {
+export default function spellRouter() {
   const router = Router();
   // Removed authentication requirement for spell data - spells are public game information
 

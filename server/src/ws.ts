@@ -1,7 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { Pool } from 'pg';
-import { verifyToken } from './lib/jwt.js';
 import url from 'url';
+import { verifySupabaseToken } from './lib/supabase.js';
 
 type RoomId = string;
 
@@ -19,8 +18,8 @@ function leaveRoom(roomId: RoomId, ws: WebSocket) {
   if (set.size === 0) rooms.delete(roomId);
 }
 
-export function registerWebsocketHandlers(wss: WebSocketServer, _db: Pool) {
-  wss.on('connection', (ws, req) => {
+export function registerWebsocketHandlers(wss: WebSocketServer) {
+  wss.on('connection', async (ws, req) => {
     try {
       const parsed = url.parse(req.url || '', true);
       const token = parsed.query.token as string | undefined;
@@ -29,7 +28,15 @@ export function registerWebsocketHandlers(wss: WebSocketServer, _db: Pool) {
         ws.close(4001, 'Missing token');
         return;
       }
-      const user = verifyToken(token);
+      // Verify Supabase JWT
+      // Note: if you need to support legacy tokens, extend this with a fallback
+      // to custom verification.
+      // For unified DB, we accept Supabase tokens only.
+      const user = await verifySupabaseToken(token);
+      if (!user) {
+        ws.close(4000, 'Unauthorized');
+        return;
+      }
       (ws as any).user = user;
       (ws as any).roomId = sessionId;
       joinRoom(sessionId, ws);
