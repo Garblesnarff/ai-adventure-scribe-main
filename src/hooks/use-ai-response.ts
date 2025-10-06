@@ -14,6 +14,7 @@ import { voiceConsistencyService } from '@/services/voice-consistency-service';
 import { AIService } from '@/services/ai-service';
 import { rollStateManager } from '@/services/combat/rollStateManager';
 import { SessionStateService } from '@/services/session-state-service';
+import { RollManager } from '@/services/roll-manager';
 
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
@@ -172,6 +173,20 @@ export const useAIResponse = () => {
         const diceCtx: any = (latestMessage as any).context?.diceRoll;
         if ((latestMessage as any).context?.intent === 'dice_roll' && diceCtx) {
           await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_result', payload: diceCtx });
+          // Optional durable logging (flag-gated)
+          await RollManager.recordRollResult({
+            sessionId,
+            kind: 'check',
+            resultTotal: Number(diceCtx.total) || 0,
+            resultNatural: typeof diceCtx.naturalRoll === 'number' ? diceCtx.naturalRoll : undefined,
+            meta: {
+              formula: diceCtx.formula,
+              advantage: !!diceCtx.advantage,
+              disadvantage: !!diceCtx.disadvantage,
+              kept: diceCtx.keptResults,
+              results: diceCtx.results,
+            },
+          });
         } else if (typeof latestMessage.text === 'string') {
           const m = latestMessage.text.toLowerCase();
           let total: number | null = null;
@@ -187,6 +202,7 @@ export const useAIResponse = () => {
           }
           if (total !== null && !Number.isNaN(total)) {
             await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_result', payload: { total, raw: latestMessage.text } });
+            await RollManager.recordRollResult({ sessionId, kind: 'check', resultTotal: total, meta: { raw: latestMessage.text } });
           }
         }
       } catch (e) {
@@ -367,6 +383,23 @@ export const useAIResponse = () => {
         // Persist roll request events to session state (lightweight logging)
         try {
           await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_requests', payload: rollRequests });
+          // Durable roll request logging (flag-gated)
+          for (const rr of rollRequests) {
+            const kindMap: Record<string, 'check'|'save'|'attack'|'initiative'|'damage'> = {
+              check: 'check', save: 'save', attack: 'attack', initiative: 'initiative', damage: 'damage'
+            };
+            const kind = kindMap[rr.type] || 'check';
+            await RollManager.recordRollRequest({
+              sessionId,
+              kind,
+              purpose: rr.purpose,
+              formula: rr.formula,
+              dc: typeof rr.dc === 'number' ? rr.dc : undefined,
+              ac: typeof rr.ac === 'number' ? rr.ac : undefined,
+              advantage: !!rr.advantage,
+              disadvantage: !!rr.disadvantage,
+            });
+          }
         } catch (e) {
           console.warn('Non-fatal: failed to append roll request log', e);
         }

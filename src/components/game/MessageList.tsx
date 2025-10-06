@@ -24,6 +24,8 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(null);
+  const optionsTimerRef = useRef<number | null>(null);
 
   // Auto-scroll behavior: scroll to bottom when new messages arrive unless user scrolled up
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
@@ -47,6 +49,76 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
     }
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, isUserScrolledUp]);
+
+  // Dynamic options fetch: trigger 10s after the latest DM message if it lacks options and no roll is pending
+  useEffect(() => {
+    const enabled = String((import.meta as any)?.env?.VITE_DYNAMIC_OPTIONS ?? 'true').toLowerCase();
+    const isEnabled = ['1', 'true', 'yes', 'on'].includes(enabled);
+    if (!isEnabled) {
+      return;
+    }
+
+    if (optionsTimerRef.current) {
+      window.clearTimeout(optionsTimerRef.current);
+      optionsTimerRef.current = null;
+    }
+
+    const reversed = [...messages].map((m, idx) => ({ m, idx })).reverse();
+    const lastDmEntry = reversed.find(e => e.m.sender === 'dm');
+    const lastDm = lastDmEntry?.m;
+    if (!lastDm) {
+      setDynamicOptions(null);
+      return;
+    }
+
+    const parsed = parseMessageOptions(lastDm.text || '');
+    const hasInlineOptions = parsed?.hasOptions;
+    const pendingRoll = !!getCurrentDiceRoll();
+
+    if (hasInlineOptions || pendingRoll) {
+      setDynamicOptions(null);
+      return;
+    }
+
+    // Delay 10s then fetch options
+    optionsTimerRef.current = window.setTimeout(async () => {
+      try {
+        const baseUrl = (import.meta as any)?.env?.VITE_CREWAI_BASE_URL || 'http://127.0.0.1:8000';
+        const lastPlayer = [...messages].reverse().find(m => m.sender === 'player');
+        const history = messages.slice(Math.max(0, messages.length - 8)).map(m => ({
+          role: m.sender === 'player' ? 'user' : (m.sender === 'dm' ? 'assistant' : 'system'),
+          content: m.text,
+        }));
+        const res = await fetch(`${baseUrl}/dm/options`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: null,
+            last_dm_text: lastDm.text,
+            player_message: lastPlayer?.text || '',
+            history,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const opts: string[] = Array.isArray(data?.options) ? data.options.slice(0, 3) : [];
+        if (opts.length) {
+          const dmIdx = lastDmEntry?.idx ?? messages.length - 1;
+          const key = lastDm.id || lastDm.timestamp || `idx-${dmIdx}`;
+          setDynamicOptions({ key, lines: opts });
+        }
+      } catch (e) {
+        console.warn('[MessageList] dynamic options fetch failed:', e);
+      }
+    }, 10000);
+
+    return () => {
+      if (optionsTimerRef.current) {
+        window.clearTimeout(optionsTimerRef.current);
+        optionsTimerRef.current = null;
+      }
+    };
+  }, [messages, getCurrentDiceRoll]);
 
   // Group consecutive messages from the same sender
   const groupedMessages = useMemo(() => {
@@ -246,8 +318,14 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                 const isDM = message.sender === 'dm';
                 const messageId = message.id || message.timestamp || `${groupIndex}-${msgIndex}`;
 
-                // Parse for this message
-                const parsedMessage = isDM ? parseMessageOptions(message.text) : null;
+                // Compose display text with dynamic options overlay (DM last-in-group only)
+                const shouldOverlay = isDM && isLastInGroup && dynamicOptions?.key === messageId;
+                const messageWithOverlay = shouldOverlay && dynamicOptions?.lines?.length
+                  ? `${message.text}\n${dynamicOptions.lines.join('\n')}`
+                  : message.text;
+
+                // Parse for this message (using overlay text when present)
+                const parsedMessage = isDM ? parseMessageOptions(messageWithOverlay) : null;
                 const structuredRollRequests = isDM && (message as any).rollRequests ? (message as any).rollRequests as any[] : [];
                 const parsedRollRequests = isDM && structuredRollRequests.length === 0 ? parseRollRequests(message.text) : [];
                 const rollRequests = structuredRollRequests.length > 0 ? 
@@ -256,11 +334,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                 const hasRollRequests = Array.isArray(rollRequests) && rollRequests.length > 0;
 
                 // Truncation logic
-                const isLongMessage = message.text.length > 200;
+                const baseText = parsedMessage ? (parsedMessage.content || messageWithOverlay) : messageWithOverlay;
+                const isLongMessage = baseText.length > 200;
                 const isExpanded = expandedMessages.has(messageId);
                 const displayText = isLongMessage && !isExpanded 
-                  ? `${message.text.substring(0, 200)}... ` 
-                  : message.text;
+                  ? `${baseText.substring(0, 200)}... ` 
+                  : baseText;
 
                 const toggleExpanded = () => {
                   setExpandedMessages(prev => {
@@ -322,7 +401,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                         {/* Message content */}
                         <div className="text-sm leading-relaxed whitespace-pre-wrap">
                           {(() => {
-                            let content = parsedMessage ? parsedMessage.content || message.text : message.text;
+                            let content = parsedMessage ? parsedMessage.content || messageWithOverlay : messageWithOverlay;
                             if (hasRollRequests) {
                               content = removeRollRequestsFromMessage(content);
                             }
@@ -380,7 +459,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                             <ActionOptions
                               options={parsedMessage.options}
                               onOptionSelect={(option) => handleOptionSelect(createPlayerMessageFromOption(option))}
-                              delay={10000}
+                              delay={dynamicOptions?.key === messageId ? 0 : 10000}
                             />
                           </div>
                         )}
