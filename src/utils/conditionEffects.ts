@@ -441,7 +441,7 @@ export function getConditionModifiers(
   target?: CombatParticipant
 ): ConditionModifiers {
   const allConditions = participant.conditions;
-  let cumulativeModifiers: ConditionModifiers = {
+  const cumulativeModifiers: ConditionModifiers = {
     advantage: false,
     disadvantage: false,
     bonus: 0,

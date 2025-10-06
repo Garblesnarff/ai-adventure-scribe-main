@@ -28,10 +28,10 @@ import { supabase } from '@/integrations/supabase/client';
 // Project Services & Generators (assuming kebab-case filenames)
 // ============================
 import { CampaignContextLoader } from './campaign/campaign-context-loader';
-import { CharacterInteractionGenerator } from './response/character-interaction-generator';
+import { CharacterInteractionGenerator } from './response/CharacterInteractionGenerator';
 import { EnvironmentGenerator } from './response/environment-generator';
 import { MechanicsGenerator } from './response/mechanics-generator';
-import { MemoryManager } from './memory/memory-manager';
+import { MemoryManager } from './memory/MemoryManager';
 import { OpportunityGenerator } from './response/opportunity-generator';
 
 // ============================

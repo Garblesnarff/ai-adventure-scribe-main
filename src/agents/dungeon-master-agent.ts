@@ -24,14 +24,14 @@
 // Agent Core & Types
 import { Agent, AgentResult, AgentTask } from './types';
 import { ErrorCategory, ErrorSeverity } from './error/types';
-import { GameState } from '../types/gameState'; // Path needs to be @/types for consistency or checked
-import { MessagePriority, MessageType } from './crewai/types/communication';
+import { GameState } from '@/types/gameState';
+import { MessagePriority, MessageType } from './messaging/types';
 
 // Services
 import { AgentMessagingService } from './messaging/agent-messaging-service';
-import { ErrorHandlingService } from './error/services/error-handling-service'; // Assuming kebab-case
-import { EnhancedMemoryManager } from './services/memory/enhanced-memory-manager'; // Assuming kebab-case
-import { ResponseCoordinator } from './services/response/response-coordinator'; // Assuming kebab-case
+import { ErrorHandlingService } from './error/services/error-handling-service';
+import { EnhancedMemoryManager } from './services/memory/EnhancedMemoryManager';
+import { ResponseCoordinator } from './services/response/ResponseCoordinator';
 
 
 export class DungeonMasterAgent implements Agent {

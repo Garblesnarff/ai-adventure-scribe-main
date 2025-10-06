@@ -21,6 +21,7 @@ import {
 import CharacterSelectionModal from './character-selection-modal';
 import { useCampaignImageHotLoading } from '@/hooks/use-image-hot-loading';
 import { Skeleton } from '@/components/ui/skeleton';
+import logger from '@/lib/logger';
 
 interface CampaignCardProps {
   campaign: {
@@ -84,7 +85,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
       // Invalidate campaigns query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
     } catch (error) {
-      console.error('Error deleting campaign:', error);
+      logger.error('Error deleting campaign:', error);
       toast({
         title: "Error",
         description: "Failed to delete campaign. Please try again.",
@@ -161,7 +162,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
               <Skeleton className="h-4 w-full" />
             ) : (
               <>
-                {console.log('Campaign description:', campaign.description)}
+                {logger.debug('Campaign description:', campaign.description)}
                 <div className="description-section min-h-[3rem] max-h-[200px] overflow-y-auto text-sm text-foreground leading-relaxed mb-3 break-words hyphens-auto p-2 pr-3 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
                   {campaign.description ? (
                     campaign.description

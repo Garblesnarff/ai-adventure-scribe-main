@@ -2,6 +2,7 @@ import { getGeminiApiManager } from '../gemini-api-manager-singleton';
 import type { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
 import { getAveragePartyLevel } from '@/utils/character-level-utils';
+import logger from '@/lib/logger';
 
 export interface LocationRequest {
   type: 'settlement' | 'dungeon' | 'wilderness' | 'landmark' | 'building' | 'room';
@@ -99,16 +100,16 @@ export class LocationGenerator {
           return location;
           
         } catch (parseError) {
-          console.error('Failed to parse location JSON:', parseError);
+          logger.error('Failed to parse location JSON:', parseError);
           throw new Error('Failed to generate location: Invalid response format');
         }
       });
 
-      console.log(`🏰 Generated location: ${result.name}`);
+      logger.info(`🏰 Generated location: ${result.name}`);
       return result;
 
     } catch (error) {
-      console.error('Location generation failed:', error);
+      logger.error('Location generation failed:', error);
       throw new Error(`Failed to generate location: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -174,12 +175,15 @@ GUIDELINES:
   /**
    * Calculate narrative importance of location
    */
-  private static calculateNarrativeWeight(location: any, request: LocationRequest): number {
+  private static calculateNarrativeWeight(
+    location: { type?: string; narrativeHooks?: string[]; secrets?: string[] },
+    request: LocationRequest
+  ): number {
     let weight = 5; // Base weight
     
     // Increase weight for story-critical locations
-    if (request.context.currentStory && location.narrativeHooks?.length > 2) weight += 2;
-    if (location.secrets?.length > 2) weight += 1;
+    if (request.context.currentStory && (location.narrativeHooks?.length || 0) > 2) weight += 2;
+    if ((location.secrets?.length || 0) > 2) weight += 1;
     if (location.type === 'dungeon' || location.type === 'landmark') weight += 1;
     if (request.atmosphere === 'dangerous' || request.atmosphere === 'sacred') weight += 1;
     
@@ -211,15 +215,15 @@ GUIDELINES:
         .single();
 
       if (error) {
-        console.error('Error saving location:', error);
+        logger.error('Error saving location:', error);
         throw new Error('Failed to save location to database');
       }
 
-      console.log(`💾 Saved location "${location.name}" with ID: ${data.id}`);
+      logger.info(`💾 Saved location "${location.name}" with ID: ${data.id}`);
       return data.id;
 
     } catch (error) {
-      console.error('Error saving location:', error);
+      logger.error('Error saving location:', error);
       throw error;
     }
   }
@@ -234,11 +238,11 @@ GUIDELINES:
       const locationId = await this.saveLocation(location);
       location.id = locationId;
       
-      console.log(`✅ Created location "${location.name}" successfully`);
+      logger.info(`✅ Created location "${location.name}" successfully`);
       return location;
       
     } catch (saveError) {
-      console.warn('Location generated but failed to save:', saveError);
+      logger.warn('Location generated but failed to save:', saveError);
       // Return the generated location even if save failed
       return location;
     }
@@ -288,7 +292,7 @@ GUIDELINES:
       return await this.createLocation(request);
 
     } catch (error) {
-      console.error('Failed to generate contextual location:', error);
+      logger.error('Failed to generate contextual location:', error);
       throw error;
     }
   }

@@ -56,6 +56,7 @@ describe('Spell Validation System', () => {
   let mockWizard: CharacterClass;
   let mockCleric: CharacterClass;
   let mockBard: CharacterClass;
+  let mockWarlock: CharacterClass;
   let mockFighter: CharacterClass;
   let mockRace: CharacterRace;
   let mockHighElfSubrace: Subrace;
@@ -116,6 +117,26 @@ describe('Spell Validation System', () => {
         ability: 'charisma',
         cantripsKnown: 2,
         spellsKnown: 4
+      },
+      classFeatures: [],
+      armorProficiencies: [],
+      weaponProficiencies: []
+    };
+
+    mockWarlock = {
+      id: 'warlock',
+      name: 'Warlock',
+      description: 'Pact magic caster',
+      hitDie: 8,
+      primaryAbility: 'charisma',
+      savingThrowProficiencies: ['wisdom', 'charisma'],
+      skillChoices: ['Arcana', 'Deception', 'History', 'Intimidation', 'Investigation', 'Nature', 'Religion'],
+      numSkillChoices: 2,
+      spellcasting: {
+        ability: 'charisma',
+        cantripsKnown: 2,
+        spellsKnown: 2,
+        ritualCasting: false
       },
       classFeatures: [],
       armorProficiencies: [],
@@ -212,6 +233,19 @@ describe('Spell Validation System', () => {
       const info = getSpellcastingInfo(mockFighter, 1);
       expect(info).toBeNull();
     });
+
+    it('should return correct info for Warlock at level 1', () => {
+      const info = getSpellcastingInfo(mockWarlock, 1);
+      expect(info).toEqual({
+        cantripsKnown: 2,
+        spellsKnown: 2,
+        spellsPrepared: undefined,
+        hasSpellbook: false,
+        isPactMagic: true,
+        ritualCasting: false,
+        spellcastingAbility: 'charisma'
+      });
+    });
   });
 
   describe('getRacialSpells', () => {
@@ -249,6 +283,18 @@ describe('Spell Validation System', () => {
       const racialSpells = getRacialSpells('High Elf');
       expect(racialSpells.bonusCantrips).toBe(1);
       expect(racialSpells.bonusCantripSource).toBe('wizard');
+    });
+
+    it('should fallback to subrace mapping when provided (Drow)', () => {
+      const drowSubrace: Subrace = {
+        id: 'drow',
+        name: 'Drow',
+        description: 'Dark elf',
+        abilityScoreIncrease: {},
+        traits: []
+      };
+      const racialSpells = getRacialSpells('Elf', drowSubrace);
+      expect(racialSpells.cantrips).toContain('dancing-lights');
     });
   });
 
@@ -372,6 +418,45 @@ describe('Spell Validation System', () => {
           })
         );
       });
+
+      it('should reject invalid 1st-level spells for class', () => {
+        const result = validateSpellSelection(
+          wizardCharacter,
+          ['mage-hand', 'prestidigitation', 'light'],
+          ['magic-missile', 'cure-wounds', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+        );
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContainEqual(
+          expect.objectContaining({ type: 'INVALID_SPELL', spellId: 'cure-wounds' })
+        );
+      });
+
+      it('should include pact magic warning for valid Warlock selection', () => {
+        const warlockCharacter: Character = {
+          id: 'wl-1',
+          name: 'Test Warlock',
+          level: 1,
+          class: mockWarlock,
+          race: mockRace,
+          abilityScores: {
+            strength: { score: 10, modifier: 0, savingThrow: false },
+            dexterity: { score: 14, modifier: 2, savingThrow: false },
+            constitution: { score: 13, modifier: 1, savingThrow: false },
+            intelligence: { score: 12, modifier: 1, savingThrow: false },
+            wisdom: { score: 10, modifier: 0, savingThrow: false },
+            charisma: { score: 16, modifier: 3, savingThrow: true }
+          }
+        };
+
+        const result = validateSpellSelection(
+          warlockCharacter,
+          ['eldritch-blast', 'prestidigitation'],
+          ['unseen-servant', 'illusory-script']
+        );
+        expect(result.valid).toBe(true);
+        expect(result.warnings).toContain('As a Warlock, you use Pact Magic. Your spell slots recharge on a short rest.');
+        expect(result.warnings).not.toContain('Your class can cast spells as rituals if they have the ritual tag, without expending a spell slot.');
+      });
     });
 
     describe('Racial Spell Validation', () => {
@@ -466,6 +551,21 @@ describe('Spell Validation System', () => {
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
       });
+
+      it('should reject incorrect number of racial cantrips for non-spellcaster', () => {
+        const tieflingFighter = {
+          ...fighterCharacter,
+          subrace: mockTieflingSubrace
+        };
+
+        const tooMany = validateSpellSelection(tieflingFighter, ['thaumaturgy', 'guidance'], []);
+        expect(tooMany.valid).toBe(false);
+        expect(tooMany.errors).toContainEqual(expect.objectContaining({ type: 'COUNT_MISMATCH' }));
+
+        const tooFew = validateSpellSelection(tieflingFighter, [], []);
+        expect(tooFew.valid).toBe(false);
+        expect(tooFew.errors).toContainEqual(expect.objectContaining({ type: 'COUNT_MISMATCH' }));
+      });
     });
 
     describe('Edge Cases', () => {
@@ -541,6 +641,11 @@ describe('Spell Validation System', () => {
           spells: 0
         });
       });
+
+      it('should return prepared spell count for Cleric', () => {
+        const counts = getMaxSpellCounts(mockCleric, 1);
+        expect(counts).toEqual({ cantrips: 3, spells: 1 });
+      });
     });
 
     describe('isSpellValidForClass', () => {
@@ -552,6 +657,12 @@ describe('Spell Validation System', () => {
       it('should validate wizard spells correctly', () => {
         expect(isSpellValidForClass('magic-missile', mockWizard, false)).toBe(true);
         expect(isSpellValidForClass('cure-wounds', mockWizard, false)).toBe(false);
+      });
+
+      it('should check both lists when isCantrip is unspecified', () => {
+        expect(isSpellValidForClass('mage-hand', mockWizard)).toBe(true);
+        expect(isSpellValidForClass('magic-missile', mockWizard)).toBe(true);
+        expect(isSpellValidForClass('cure-wounds', mockWizard)).toBe(false);
       });
     });
 
@@ -576,6 +687,13 @@ describe('Spell Validation System', () => {
       it('should return non-spellcaster message', () => {
         const rules = getSpellValidationRules(mockFighter);
         expect(rules).toContain('Fighter is not a spellcasting class at 1st level.');
+      });
+
+      it('should include pact magic info for Warlock and omit ritual casting', () => {
+        const rules = getSpellValidationRules(mockWarlock);
+        expect(rules).toContain('Uses Pact Magic. Spell slots recharge on short rest.');
+        expect(rules).not.toContain('Can cast ritual spells without expending spell slots.');
+        expect(rules).toContain('Spellcasting ability: Charisma.');
       });
     });
 

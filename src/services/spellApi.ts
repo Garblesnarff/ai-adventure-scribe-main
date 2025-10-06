@@ -1,6 +1,7 @@
 import { Spell } from '@/types/character';
 import { supabase } from '@/integrations/supabase/client';
 import { localSpellService } from './localSpellService';
+import logger from '@/lib/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 
@@ -68,8 +69,28 @@ interface MulticlassCalculation {
   pactMagicSlots: { level: number; slots: number } | null;
 }
 
+interface ServerSpell {
+  id: string;
+  name: string;
+  level: number;
+  school: string;
+  castingTime: string;
+  range: string;
+  duration: string;
+  description: string;
+  verbal: boolean;
+  somatic: boolean;
+  material: boolean;
+  materialComponents?: string;
+  concentration: boolean;
+  ritual: boolean;
+  damage?: boolean;
+  attackSave?: string;
+  damageEffect?: string;
+}
+
 // Convert API spell to frontend Spell type
-function convertApiSpellToSpell(apiSpell: any): Spell {
+function convertApiSpellToSpell(apiSpell: ServerSpell): Spell {
   // The server returns spell objects directly from spellData.ts, not in API format
   // So the properties are: castingTime (not casting_time), verbal (not components_verbal), etc.
   return {
@@ -123,7 +144,7 @@ class SpellApiService {
     } catch (error) {
       // Check if this is a connection error (backend not running)
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.log('API unavailable, switching to local spell data');
+        logger.warn('API unavailable, switching to local spell data');
         this.useLocalFallback = true;
       }
       throw error;
@@ -137,7 +158,7 @@ class SpellApiService {
     try {
       return await apiCall();
     } catch (error) {
-      console.log('API call failed, using local fallback:', error);
+      logger.info('API call failed, using local fallback:', error);
       return await fallbackCall();
     }
   }
@@ -162,7 +183,7 @@ class SpellApiService {
 
         const url = `/v1/spells${params.toString() ? `?${params.toString()}` : ''}`;
         const response = await this.fetchWithAuth(url);
-        const apiSpells: any[] = await response.json();
+        const apiSpells: ServerSpell[] = await response.json();
 
         return apiSpells.map(convertApiSpellToSpell);
       },
@@ -175,7 +196,7 @@ class SpellApiService {
     return this.tryApiWithFallback(
       async () => {
         const response = await this.fetchWithAuth(`/v1/spells/class/${encodeURIComponent(className)}/level/${level}`);
-        const apiSpells: any[] = await response.json();
+        const apiSpells: ServerSpell[] = await response.json();
 
         const allSpells = apiSpells.map(convertApiSpellToSpell);
 
@@ -240,7 +261,7 @@ class SpellApiService {
     return this.tryApiWithFallback(
       async () => {
         const response = await this.fetchWithAuth(`/v1/spells/${spellId}`);
-        const apiSpell: any = await response.json();
+        const apiSpell: ServerSpell = await response.json();
         return convertApiSpellToSpell(apiSpell);
       },
       () => localSpellService.getSpellById(spellId)

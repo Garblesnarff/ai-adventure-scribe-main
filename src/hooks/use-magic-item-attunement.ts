@@ -7,6 +7,7 @@
 import { useState, useCallback } from 'react';
 import { Character } from '@/types/character';
 import { validateAttunementRequirements, getAttunedItemCount } from '@/utils/magicItemEffects';
+import logger from '@/lib/logger';
 
 interface AttunementResult {
   success: boolean;
@@ -55,7 +56,7 @@ export const useMagicItemAttunement = (character: Character, onCharacterUpdate: 
       
       return { success: true, message: `Successfully attuned to ${item.itemId}` };
     } catch (error) {
-      console.error('Error attuning to item:', error);
+      logger.error('Error attuning to item:', error);
       return { success: false, message: 'Failed to attune to item' };
     } finally {
       setIsAttuning(false);
@@ -93,7 +94,7 @@ export const useMagicItemAttunement = (character: Character, onCharacterUpdate: 
       
       return { success: true, message: `Successfully removed attunement from ${item.itemId}` };
     } catch (error) {
-      console.error('Error removing attunement:', error);
+      logger.error('Error removing attunement:', error);
       return { success: false, message: 'Failed to remove attunement' };
     }
   }, [character, onCharacterUpdate]);

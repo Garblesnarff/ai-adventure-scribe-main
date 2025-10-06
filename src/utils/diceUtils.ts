@@ -28,7 +28,7 @@ export function rollDice(
   const hasAdvantage = advantage && !disadvantage;
   const hasDisadvantage = disadvantage && !advantage;
   
-  let results: number[] = [];
+  const results: number[] = [];
   let keptResults: number[] = [];
   
   // Roll base dice

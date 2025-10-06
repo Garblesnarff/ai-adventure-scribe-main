@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
  // Project types
  // ============================
 import { GameSession } from '@/types/game';
+import logger from '@/lib/logger';
 
 const SESSION_EXPIRY_TIME = 1000 * 60 * 60 * 24; // 24 hours (was 1 hour)
 const CLEANUP_INTERVAL = 1000 * 60 * 15; // Check every 15 minutes (was 5 minutes)
@@ -87,7 +88,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       .single();
 
     if (error) {
-      console.error('Error creating game session:', error);
+      logger.error('Error creating game session:', error);
       setSessionState('error');
       toast({ title: "Error", description: "Failed to create game session", variant: "destructive" });
       return null;
@@ -112,7 +113,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         .order('timestamp', { ascending: true });
 
       if (error) {
-        console.error('Error fetching dialogue history:', error);
+        logger.error('Error fetching dialogue history:', error);
         return "No activity recorded in this session";
       }
 
@@ -125,7 +126,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
       return `Session completed with ${messageCount} total interactions: ${playerActions} player actions and ${dmResponses} DM responses.`;
     } catch (err) {
-      console.error('Error generating session summary:', err);
+      logger.error('Error generating session summary:', err);
       return "No activity recorded in this session";
     }
   };
@@ -143,7 +144,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     const isExpired = elapsed > SESSION_EXPIRY_TIME;
     
     if (isExpired) {
-      console.log(`⏰ Session ${session.id} expired:`, {
+      logger.info(`⏰ Session ${session.id} expired:`, {
         sessionId: session.id,
         startTime: new Date(startTime).toISOString(),
         currentTime: new Date(currentTime).toISOString(),
@@ -151,7 +152,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         expiryHours: SESSION_EXPIRY_TIME / (1000 * 60 * 60)
       });
     } else {
-      console.log(`✅ Session ${session.id} still active:`, {
+      logger.info(`✅ Session ${session.id} still active:`, {
         sessionId: session.id,
         elapsedHours: Math.round(elapsed / (1000 * 60 * 60) * 100) / 100,
         remainingHours: Math.round((SESSION_EXPIRY_TIME - elapsed) / (1000 * 60 * 60) * 100) / 100
@@ -181,7 +182,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       .eq('id', sessionIdToClean);
 
     if (error) {
-      console.error('Error cleaning up session:', error);
+      logger.error('Error cleaning up session:', error);
       toast({ title: "Error", description: "Failed to cleanup session properly", variant: "destructive" });
     } else {
       setSessionState('expired');
@@ -207,7 +208,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       .single();
 
     if (error) {
-      console.error('Error updating game session state:', error);
+      logger.error('Error updating game session state:', error);
       toast({ title: "Error", description: "Failed to save game state. Changes may be lost.", variant: "destructive" });
       // Potentially revert optimistic update here or refetch
     } else if (data) {
@@ -240,7 +241,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
           .limit(5); // Get last 5 sessions to find the best one to resume
 
         if (existingSessionError) {
-          console.error("Error fetching existing sessions:", existingSessionError);
+          logger.error("Error fetching existing sessions:", existingSessionError);
           // If we can't fetch sessions, create a new one
           await createGameSession();
           return;
@@ -252,11 +253,11 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         // If we have an active session, check if it's expired
         if (sessionToResume) {
           if (isSessionExpired(sessionToResume)) {
-            console.log('Found active session but it has expired, cleaning up...');
+            logger.info('Found active session but it has expired, cleaning up...');
             await cleanupSession(sessionToResume.id);
             sessionToResume = undefined;
           } else {
-            console.log('Resuming active session:', sessionToResume.id);
+            logger.info('Resuming active session:', sessionToResume.id);
             setSessionData(sessionToResume);
             setSessionState('active');
             return;
@@ -268,7 +269,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         const lastCompletedSession = existingSessions?.find(s => s.status === 'completed');
         
         if (lastCompletedSession) {
-          console.log('Creating new session continuing from previous session:', lastCompletedSession.id);
+          logger.info('Creating new session continuing from previous session:', lastCompletedSession.id);
           // Create a new session but maintain continuity from the last one
           const sessionNumber = Math.max(
             ...(existingSessions?.map(s => s.session_number || 1) || [1])
@@ -289,7 +290,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
             .single();
 
           if (error) {
-            console.error('Error creating continuation session:', error);
+            logger.error('Error creating continuation session:', error);
             setSessionState('error');
             toast({ title: "Error", description: "Failed to create game session", variant: "destructive" });
             return;
@@ -301,11 +302,11 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         }
         
         // No existing sessions found, create the first one
-        console.log('No existing sessions found, creating first session');
+        logger.info('No existing sessions found, creating first session');
         await createGameSession();
         
       } catch (error) {
-        console.error('Error in session initialization:', error);
+        logger.error('Error in session initialization:', error);
         setSessionState('error');
         toast({ title: "Error", description: "Failed to initialize game session", variant: "destructive" });
       }

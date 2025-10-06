@@ -17,6 +17,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
+    ,"forceConsistentCasingInFileNames": true
   },
   "include": ["vite.config.ts"]
 }

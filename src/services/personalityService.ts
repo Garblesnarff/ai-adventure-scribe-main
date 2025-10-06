@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 
@@ -49,7 +50,7 @@ export class PersonalityService {
     } catch (error) {
       // Check if this is a connection error (backend not running)
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.log('API unavailable, switching to local personality data');
+        logger.warn('API unavailable, switching to local personality data');
         this.useLocalFallback = true;
       }
       throw error;

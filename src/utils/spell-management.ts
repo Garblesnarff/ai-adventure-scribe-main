@@ -81,7 +81,7 @@ export function calculateSpellSlots(character: Character): Record<SpellSlotLevel
     return { 1: { max: 0, current: 0 }, 2: { max: 0, current: 0 }, 3: { max: 0, current: 0 }, 4: { max: 0, current: 0 }, 5: { max: 0, current: 0 }, 6: { max: 0, current: 0 }, 7: { max: 0, current: 0 }, 8: { max: 0, current: 0 }, 9: { max: 0, current: 0 } };
   }
 
-  let totalSlots: Partial<Record<SpellSlotLevel, number>> = {};
+  const totalSlots: Partial<Record<SpellSlotLevel, number>> = {};
 
   // Determine caster levels using classOptions
   let fullCasterLevels = 0;
@@ -193,7 +193,18 @@ export async function castSpell(
         ritualCasting: false, // Placeholder
       }
     }
-  } as any; // Type assertion to bypass strict typing for placeholder
+  } as unknown as {
+    preparedSpells: string[];
+    spellSlots?: Record<SpellSlotLevel, SpellSlotConfig>;
+    activeConcentration: string | null;
+    conditions?: unknown[];
+    abilityScores: {
+      intelligence: { score: number; modifier: number };
+      wisdom: { score: number; modifier: number };
+      charisma: { score: number; modifier: number };
+    };
+    class: { spellcasting: { ability: string; ritualCasting: boolean } };
+  }; // Minimal shape for validation context
 
   // Mock validation for now - in real implementation, implement validateSpellCast
   const validation = { canCast: true, reasons: [] };
@@ -281,7 +292,10 @@ export function checkConcentration(participant: CombatParticipant, damageTaken: 
 
   // A proper implementation would also check for proficiency in Constitution saving throws.
   // For now, we'll just use the ability modifier.
-  const conMod = (participant.abilityScores as any)?.constitution?.modifier || 0;
+  const conMod = typeof (participant as unknown as { abilityScores?: { constitution?: { modifier?: number } } })
+    .abilityScores?.constitution?.modifier === 'number'
+    ? ((participant as unknown as { abilityScores?: { constitution?: { modifier?: number } } }).abilityScores!.constitution!.modifier as number)
+    : 0;
   const roll = Math.floor(Math.random() * 20) + 1 + conMod;
 
   const maintained = roll >= dc;

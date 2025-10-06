@@ -129,7 +129,7 @@ export function interactWithHazard(character: Character, hazard: EnvironmentalHa
   const damage = hazard.damage ? calculateHazardDamage(hazard, saved) : 0;
   
   // Check for condition application
-  const conditionsApplied: string[] = [];
+  const conditionsApplied: import('@/types/combat').ConditionName[] = [];
   if (hazard.conditions && !saved) {
     conditionsApplied.push(...hazard.conditions.map(c => c.name));
   }
@@ -142,7 +142,7 @@ export function interactWithHazard(character: Character, hazard: EnvironmentalHa
     rollResult: rollResult.total,
     dc: hazard.saveDC,
     damageTaken: damage,
-    conditionsApplied: conditionsApplied as any,
+    conditionsApplied,
     exhaustionApplied,
     description: saved 
       ? `You avoid the worst of the ${hazard.name}!` 

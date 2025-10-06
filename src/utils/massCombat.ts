@@ -7,6 +7,7 @@
 import { 
   Army, 
   ArmyUnit, 
+  ArmyAttack,
   Battlefield, 
   CombatRound, 
   MassCombatResult,
@@ -14,7 +15,8 @@ import {
   ArmyStatus,
   CombatEvent,
   TacticalManeuver,
-  ArmyCommander
+  ArmyCommander,
+  ControlZone
 } from '@/types/massCombat';
 import { rollDice } from '@/utils/diceUtils';
 
@@ -30,7 +32,7 @@ export function calculateArmyStrength(army: Army): number {
 /**
  * Calculate damage for an army attack
  */
-export function calculateArmyDamage(attack: any, targetUnit: ArmyUnit): number {
+export function calculateArmyDamage(attack: ArmyAttack, targetUnit: ArmyUnit): number {
   // Parse dice notation
   const diceParts = attack.damage.split('d');
   const diceCount = parseInt(diceParts[0]) || 0;
@@ -63,7 +65,7 @@ export function calculateArmyDamage(attack: any, targetUnit: ArmyUnit): number {
 export function resolveArmyAttack(
   attacker: ArmyUnit,
   defender: ArmyUnit,
-  attack: any
+  attack: ArmyAttack
 ): { damage: number; casualties: number; description: string } {
   // Roll to hit
   const toHitRoll = rollDice(20, 1, attack.attackBonus);
@@ -337,7 +339,7 @@ export function resupplyArmy(army: Army, supplies: number): Army {
 /**
  * Calculate strategic points from controlling zones
  */
-export function calculateStrategicPoints(army: Army, controlZones: any[]): number {
+export function calculateStrategicPoints(army: Army, controlZones: ControlZone[]): number {
   const controlledZones = controlZones.filter(zone => zone.controllingArmyId === army.id);
   return controlledZones.reduce((sum, zone) => sum + zone.strategicValue, 0);
 }

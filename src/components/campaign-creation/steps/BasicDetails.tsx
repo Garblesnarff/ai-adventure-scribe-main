@@ -9,6 +9,7 @@ import { WizardStepProps } from '../wizard/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 /**
  * Basic campaign details component
@@ -74,7 +75,7 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
         description: "Campaign description generated successfully!",
       });
     } catch (error) {
-      console.error('Error generating description:', error);
+      logger.error('Error generating description:', error);
       toast({
         title: "Error",
         description: "Failed to generate campaign description. Please try again.",

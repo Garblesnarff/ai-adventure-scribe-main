@@ -20,11 +20,18 @@
     "noUnusedParameters": false,
     "noImplicitAny": true,
     "noFallthroughCasesInSwitch": false,
+    "forceConsistentCasingInFileNames": true,
 
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "archive/**",
+    "src/archive/**",
+    "unify-graphql/**",
+    "unify-service-layer/**"
+  ]
 }

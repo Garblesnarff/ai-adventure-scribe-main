@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AIService } from '@/services/ai-service';
+import logger from '@/lib/logger';
 
 /**
  * Check if we should use local AI services instead of edge functions
@@ -18,10 +19,15 @@ function shouldUseLocalServices(): boolean {
 /**
  * Local fallback implementation for dm-agent-execute
  */
-async function callDMAgentLocal(payload: any): Promise<any> {
-  console.log(`[LocalAI] Using local AIService for DM agent`);
-  
-  const { task, agentContext, voiceContext, isFirstMessage, combatContext } = payload;
+async function callDMAgentLocal(payload: unknown): Promise<{
+  response: string;
+  narrationSegments?: unknown;
+  context?: unknown;
+  raw: Record<string, never>;
+}> {
+  logger.info(`[LocalAI] Using local AIService for DM agent`);
+  const p = (payload && typeof payload === 'object') ? (payload as Record<string, any>) : {};
+  const { task, agentContext } = p;
   
   // Extract context from the payload
   const context = {
@@ -46,10 +52,10 @@ async function callDMAgentLocal(payload: any): Promise<any> {
       response: result.text,
       narrationSegments: result.narrationSegments,
       context: agentContext,
-      raw: {} // Edge function includes additional data we don't need for local calls
+      raw: {}
     };
   } catch (error) {
-    console.error('[LocalAI] DM Agent local fallback failed:', error);
+    logger.error('[LocalAI] DM Agent local fallback failed:', error);
     throw error;
   }
 }
@@ -57,10 +63,14 @@ async function callDMAgentLocal(payload: any): Promise<any> {
 /**
  * Local fallback implementation for rules-interpreter-execute
  */
-async function callRulesInterpreterLocal(payload: any): Promise<any> {
-  console.log(`[LocalAI] Using simplified rules validation for local mode`);
-  
-  const { task } = payload;
+async function callRulesInterpreterLocal(payload: unknown): Promise<{
+  isValid: boolean;
+  suggestions: string[];
+  errors: string[];
+  explanation: string;
+}> {
+  logger.info(`[LocalAI] Using simplified rules validation for local mode`);
+  // const p = (payload && typeof payload === 'object') ? (payload as Record<string, any>) : {};
   
   // For now, return a simple validation response
   // In a full implementation, this could use local rule validation logic
@@ -72,13 +82,13 @@ async function callRulesInterpreterLocal(payload: any): Promise<any> {
   };
 }
 
-export async function callEdgeFunction<T = any>(
+export async function callEdgeFunction<T = unknown>(
   functionName: string,
-  payload?: any
+  payload?: Record<string, unknown>
 ): Promise<T | null> {
   // Check if we should use local services
   if (shouldUseLocalServices()) {
-    console.log(`[EdgeFunction] Using local fallback for ${functionName}`);
+    logger.info(`[EdgeFunction] Using local fallback for ${functionName}`);
     
     try {
       switch (functionName) {
@@ -89,18 +99,18 @@ export async function callEdgeFunction<T = any>(
           return await callRulesInterpreterLocal(payload) as T;
           
         default:
-          console.warn(`[EdgeFunction] No local fallback available for ${functionName}, trying edge function`);
+          logger.warn(`[EdgeFunction] No local fallback available for ${functionName}, trying edge function`);
           break;
       }
     } catch (localError) {
-      console.error(`[EdgeFunction] Local fallback failed for ${functionName}:`, localError);
+      logger.error(`[EdgeFunction] Local fallback failed for ${functionName}:`, localError);
       // Fall through to try edge function
     }
   }
 
   // Original edge function logic
   try {
-    console.log(`[EdgeFunction] Calling ${functionName}:`, payload);
+    logger.debug(`[EdgeFunction] Calling ${functionName}:`, payload);
     
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
@@ -110,11 +120,11 @@ export async function callEdgeFunction<T = any>(
     });
 
     if (error) {
-      console.error(`[EdgeFunction] ${functionName} error:`, error);
+      logger.error(`[EdgeFunction] ${functionName} error:`, error);
       
       // If edge function fails and we haven't tried local fallback, try it now
       if (!shouldUseLocalServices()) {
-        console.log(`[EdgeFunction] Attempting local fallback after edge function failure`);
+        logger.info(`[EdgeFunction] Attempting local fallback after edge function failure`);
         try {
           switch (functionName) {
             case 'dm-agent-execute':
@@ -127,7 +137,7 @@ export async function callEdgeFunction<T = any>(
               break;
           }
         } catch (fallbackError) {
-          console.error(`[EdgeFunction] Local fallback also failed:`, fallbackError);
+          logger.error(`[EdgeFunction] Local fallback also failed:`, fallbackError);
         }
       }
       
@@ -139,10 +149,10 @@ export async function callEdgeFunction<T = any>(
       throw error;
     }
 
-    console.log(`[EdgeFunction] ${functionName} response:`, data);
+    logger.debug(`[EdgeFunction] ${functionName} response:`, data);
     return data;
   } catch (error) {
-    console.error(`[EdgeFunction] Failed to call ${functionName}:`, error);
+    logger.error(`[EdgeFunction] Failed to call ${functionName}:`, error);
     toast({
       title: "Error",
       description: "Failed to connect to server. Please try again.",

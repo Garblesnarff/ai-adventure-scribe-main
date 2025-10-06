@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { NarrationSegment } from '@/hooks/use-ai-response';
 import { AISegment } from '@/services/voice-director';
+import logger from '@/lib/logger';
 
 interface ProgressiveVoicePlayerProps {
   text: string;
@@ -81,7 +82,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
   React.useEffect(() => {
     if (text && text !== lastText && text.trim()) {
       setLastText(text);
-      console.log('📝 New text received for progressive voice (auto-play disabled):', {
+      logger.debug('📝 New text received for progressive voice (auto-play disabled):', {
         textLength: text.length,
         hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
         narrationSegmentsLength: narrationSegments?.length || 0,
@@ -105,8 +106,8 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     if (isPlaying) {
       stopPlayback();
     } else if (!isProcessing) {
-      console.log('🎵 Manual play initiated');
-      console.log('🔍 Debugging narration segments for manual play:', {
+      logger.info('🎵 Manual play initiated');
+      logger.debug('🔍 Debugging narration segments for manual play:', {
         hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
         narrationSegmentsLength: narrationSegments?.length || 0,
         narrationSegmentsType: typeof narrationSegments,
@@ -114,12 +115,12 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
       });
       
       if (narrationSegments && narrationSegments.length > 0) {
-        console.log('🎭 Manual play with AI segments');
+        logger.debug('🎭 Manual play with AI segments');
         const aiSegments = convertNarrationToAISegments(narrationSegments);
-        console.log('🔄 Converted AI segments:', aiSegments);
+        logger.debug('🔄 Converted AI segments:', aiSegments);
         speakAISegments(aiSegments);
       } else {
-        console.log('📝 Manual play with plain text fallback');
+        logger.debug('📝 Manual play with plain text fallback');
         speakPlainText(text);
       }
     }
@@ -134,18 +135,18 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
   const handleRetry = React.useCallback(() => {
     if (text && isVoiceEnabled && !isProcessing) {
       if (narrationSegments && narrationSegments.length > 0) {
-        console.log('🔄 Retrying with AI segments');
+        logger.debug('🔄 Retrying with AI segments');
         const aiSegments = convertNarrationToAISegments(narrationSegments);
         speakAISegments(aiSegments);
       } else {
-        console.log('🔄 Retrying with plain text');
+        logger.debug('🔄 Retrying with plain text');
         speakPlainText(text);
       }
     }
   }, [text, narrationSegments, isVoiceEnabled, isProcessing, speakAISegments, speakPlainText]);
 
   const handleTestAudio = React.useCallback(async () => {
-    console.log('🧪 Testing audio with simple text...');
+    logger.info('🧪 Testing audio with simple text...');
     
     // Mark user interaction
     if (!hasUserInteracted) {
@@ -165,7 +166,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
   }, [speakAISegments, hasUserInteracted]);
 
   const handleClearVoiceMappings = React.useCallback(() => {
-    console.log('🔧 Clearing voice mappings...');
+    logger.info('🔧 Clearing voice mappings...');
     clearCharacterVoiceMappings();
   }, [clearCharacterVoiceMappings]);
 

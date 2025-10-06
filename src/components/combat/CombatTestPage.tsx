@@ -16,6 +16,7 @@ import InitiativeTracker from './InitiativeTracker';
 import CombatActionPanel from './CombatActionPanel';
 import HPTracker from './HPTracker';
 import { CombatParticipant } from '@/types/combat';
+import logger from '@/lib/logger';
 
 // ===========================
 // Test Component
@@ -132,7 +133,7 @@ const CombatTestPageContent: React.FC = () => {
       // we'll need to implement the start combat logic here or use a mock
       setTestCombatStarted(true);
     } catch (error) {
-      console.error('Failed to start test combat:', error);
+      logger.error('Failed to start test combat:', error);
     }
   };
 
@@ -141,7 +142,7 @@ const CombatTestPageContent: React.FC = () => {
   };
 
   const handleActionSubmit = (actionType: string, description: string) => {
-    console.log(`Action submitted: ${actionType} - ${description}`);
+    logger.info(`Action submitted: ${actionType} - ${description}`);
     // This would normally integrate with the AI DM system
   };
 

@@ -20,4 +20,24 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-router-dom') || id.includes('react-dom') || /node_modules\/(?:react|@?react\b)/.test(id)) return 'react-vendor';
+            if (id.includes('@supabase')) return 'supabase';
+            if (id.includes('@radix-ui')) return 'radix-ui';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('three') || id.includes('@react-three')) return 'three';
+            if (id.includes('howler')) return 'audio';
+            if (id.includes('@tanstack')) return 'query';
+            return 'vendor';
+          }
+          return undefined;
+        },
+      },
+    },
+    chunkSizeWarningLimit: 2000,
+  },
 }));

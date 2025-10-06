@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Settings, Zap, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import logger from '@/lib/logger';
 
 export const VoiceHandler: React.FC = () => {
   const { messages } = useMessageContext();
@@ -22,7 +23,7 @@ export const VoiceHandler: React.FC = () => {
   // Debug logging
   React.useEffect(() => {
     if (shouldRenderPlayer) {
-      console.log('🎭 VoiceHandler: Processing message:', {
+      logger.debug('🎭 VoiceHandler: Processing message:', {
         hasLastMessage: !!lastMessage,
         messageType: lastMessage?.sender,
         textLength: lastMessage?.text?.length || 0,

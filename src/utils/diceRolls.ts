@@ -4,6 +4,7 @@
  * @returns Random number between 1 and sides
  */
 export const rollDie = (sides: number): number => {
+  if (sides <= 1) return 1;
   return Math.floor(Math.random() * sides) + 1;
 };
 

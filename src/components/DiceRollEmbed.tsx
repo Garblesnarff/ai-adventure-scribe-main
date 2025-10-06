@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Play, Volume2 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface DiceRollEmbedProps {
   expression: string;
@@ -101,7 +102,7 @@ const createDiceSound = () => new Howl({
   volume: 0.5,
   onloaderror: () => {
     // Fallback - use a simple beep or no sound
-    console.log('Dice roll sound not found, playing silently');
+    logger.debug('Dice roll sound not found, playing silently');
   }
 });
 
@@ -158,7 +159,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
         diceSound.current.play();
       } catch (error) {
         // Silently continue if sound fails to play
-        console.debug('Dice sound playback failed, continuing silently');
+        logger.debug('Dice sound playback failed, continuing silently');
       }
     }
 

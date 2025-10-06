@@ -3,6 +3,8 @@ import type { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
 import { MemoryManager } from '../memory-manager';
 import { getAveragePartyLevel } from '@/utils/character-level-utils';
+import logger from '@/lib/logger';
+import type { Memory } from '@/types/memory';
 
 export interface QuestRequest {
   type: 'main' | 'side' | 'personal' | 'fetch' | 'kill' | 'escort' | 'investigation' | 'social' | 'exploration';
@@ -18,7 +20,7 @@ export interface QuestRequest {
     genre: string;
     playerLevel?: number;
     currentStory?: string;
-    recentMemories?: any[];
+    recentMemories?: Memory[];
     partySize?: number;
   };
 }
@@ -164,16 +166,16 @@ export class QuestGenerator {
           return quest;
           
         } catch (parseError) {
-          console.error('Failed to parse quest JSON:', parseError);
+          logger.error('Failed to parse quest JSON:', parseError);
           throw new Error('Failed to generate quest: Invalid response format');
         }
       });
 
-      console.log(`⚔️ Generated quest: ${result.title} (${result.type})`);
+      logger.info(`⚔️ Generated quest: ${result.title} (${result.type})`);
       return result;
 
     } catch (error) {
-      console.error('Quest generation failed:', error);
+      logger.error('Quest generation failed:', error);
       throw new Error(`Failed to generate quest: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -297,7 +299,10 @@ GUIDELINES:
   /**
    * Calculate narrative importance of quest
    */
-  private static calculateNarrativeWeight(quest: any, request: QuestRequest): number {
+  private static calculateNarrativeWeight(
+    quest: { stages?: unknown[]; connections?: { npcs?: unknown[] }; hooks?: { twists?: unknown[] } },
+    request: QuestRequest
+  ): number {
     let weight = 5; // Base weight
     
     // Adjust based on quest type and scope
@@ -309,9 +314,9 @@ GUIDELINES:
     else if (request.scope === 'multi-session') weight += 1;
     
     // Increase weight for complex quests
-    if (quest.stages?.length > 3) weight += 1;
-    if (quest.connections?.npcs?.length > 2) weight += 1;
-    if (quest.hooks?.twists?.length > 1) weight += 1;
+    if ((quest.stages?.length || 0) > 3) weight += 1;
+    if ((quest.connections?.npcs?.length || 0) > 2) weight += 1;
+    if ((quest.hooks?.twists?.length || 0) > 1) weight += 1;
     
     return Math.min(weight, 10);
   }
@@ -344,15 +349,15 @@ GUIDELINES:
         .single();
 
       if (error) {
-        console.error('Error saving quest:', error);
+        logger.error('Error saving quest:', error);
         throw new Error('Failed to save quest to database');
       }
 
-      console.log(`💾 Saved quest "${quest.title}" with ID: ${data.id}`);
+      logger.info(`💾 Saved quest "${quest.title}" with ID: ${data.id}`);
       return data.id;
 
     } catch (error) {
-      console.error('Error saving quest:', error);
+      logger.error('Error saving quest:', error);
       throw error;
     }
   }
@@ -367,11 +372,11 @@ GUIDELINES:
       const questId = await this.saveQuest(quest);
       quest.id = questId;
       
-      console.log(`✅ Created quest "${quest.title}" successfully`);
+      logger.info(`✅ Created quest "${quest.title}" successfully`);
       return quest;
       
     } catch (saveError) {
-      console.warn('Quest generated but failed to save:', saveError);
+      logger.warn('Quest generated but failed to save:', saveError);
       // Return the generated quest even if save failed
       return quest;
     }
@@ -423,7 +428,7 @@ GUIDELINES:
       return await this.createQuest(request);
 
     } catch (error) {
-      console.error('Failed to generate memory-based quest:', error);
+      logger.error('Failed to generate memory-based quest:', error);
       throw error;
     }
   }
@@ -473,7 +478,7 @@ Make it immediately actionable and intriguing.`;
       return result;
 
     } catch (error) {
-      console.error('Failed to generate quest hook:', error);
+      logger.error('Failed to generate quest hook:', error);
       return {
         title: "Adventure Awaits",
         hook: "A new opportunity presents itself...",

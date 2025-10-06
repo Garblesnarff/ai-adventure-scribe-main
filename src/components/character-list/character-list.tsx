@@ -9,6 +9,7 @@ import { baseRaces } from '@/data/raceOptions';
 import { classes } from '@/data/classOptions';
 import { MemoizedCharacterCard } from './character-card';
 import EmptyState from './empty-state';
+import logger from '@/lib/logger';
 
 /**
  * CharacterList component displays all characters for the current user
@@ -75,7 +76,7 @@ const CharacterList: React.FC = () => {
       const transformedData = transformCharacterData(data || []);
       setCharacters(transformedData);
     } catch (error) {
-      console.error('Error fetching characters:', error);
+      logger.error('Error fetching characters:', error);
       toast({
         title: "Error",
         description: "Failed to load characters",

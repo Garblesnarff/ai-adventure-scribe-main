@@ -14,6 +14,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { VoiceMapper, VoiceConfig } from './voice-mapper';
+import logger from '@/lib/logger';
 
 export interface CharacterVoiceMapping {
   id: string;
@@ -22,7 +23,7 @@ export interface CharacterVoiceMapping {
   character_type: string;
   voice_id: string;
   voice_provider: string;
-  voice_settings: Record<string, any>;
+  voice_settings: Record<string, unknown>;
   voice_description?: string;
   gender?: string;
   age_range?: string;
@@ -55,12 +56,12 @@ export class VoiceConsistencyService {
    * Get voice context for a session to include in AI prompts
    */
   async getSessionVoiceContext(sessionId: string): Promise<SessionVoiceContext> {
-    console.log('🎭 Getting voice context for session:', sessionId);
+    logger.info('🎭 Getting voice context for session:', sessionId);
 
     try {
       const mappings = await this.getSessionMappings(sessionId);
       
-      const knownCharacters: Record<string, any> = {};
+      const knownCharacters: SessionVoiceContext['knownCharacters'] = {} as SessionVoiceContext['knownCharacters'];
       mappings.forEach(mapping => {
         knownCharacters[mapping.characterName] = {
           voiceCategory: mapping.voiceCategory,
@@ -73,7 +74,7 @@ export class VoiceConsistencyService {
       const allVoices = VoiceMapper.getAllVoices();
       const availableVoiceCategories = Object.keys(allVoices).filter(key => key !== 'default');
 
-      console.log('📋 Voice context:', {
+      logger.debug('📋 Voice context:', {
         knownCharacters: Object.keys(knownCharacters),
         availableCategories: availableVoiceCategories.length
       });
@@ -83,7 +84,7 @@ export class VoiceConsistencyService {
         availableVoiceCategories
       };
     } catch (error) {
-      console.error('Error getting session voice context:', error);
+      logger.error('Error getting session voice context:', error);
       
       // Return minimal context on error
       const allVoices = VoiceMapper.getAllVoices();
@@ -106,7 +107,7 @@ export class VoiceConsistencyService {
       voice_category?: string;
     }>
   ): Promise<VoiceAssignment[]> {
-    console.log('🎪 Processing voice assignments for', segments.length, 'segments');
+    logger.info('🎪 Processing voice assignments for', segments.length, 'segments');
 
     const assignments: VoiceAssignment[] = [];
     const existingMappings = await this.getSessionMappings(sessionId);
@@ -131,7 +132,7 @@ export class VoiceConsistencyService {
 
       if (existingMapping) {
         // Use existing voice assignment
-        console.log(`♻️ Using existing voice for "${cleanCharacter}": ${existingMapping.voiceCategory}`);
+        logger.debug(`♻️ Using existing voice for "${cleanCharacter}": ${existingMapping.voiceCategory}`);
         
         assignments.push({
           character: cleanCharacter,
@@ -147,7 +148,7 @@ export class VoiceConsistencyService {
         const voiceCategory = segment.voice_category || this.inferVoiceCategory(cleanCharacter);
         const voiceConfig = VoiceMapper.getAllVoices()[voiceCategory] || VoiceMapper.getAllVoices().default;
 
-        console.log(`✨ New character "${cleanCharacter}" assigned voice: ${voiceCategory}`);
+        logger.info(`✨ New character "${cleanCharacter}" assigned voice: ${voiceCategory}`);
 
         assignments.push({
           character: cleanCharacter,
@@ -174,7 +175,7 @@ export class VoiceConsistencyService {
       }
     }
 
-    console.log('🎯 Voice assignments completed:', assignments.map(a => 
+    logger.info('🎯 Voice assignments completed:', assignments.map(a => 
       `${a.character}(${a.voiceCategory})`
     ).join(', '));
 
@@ -192,13 +193,13 @@ export class VoiceConsistencyService {
         .eq('campaign_id', campaignId);
 
       if (error) {
-        console.error('Error fetching voice mappings:', error);
+        logger.error('Error fetching voice mappings:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error accessing voice mappings database:', error);
+      logger.error('Error accessing voice mappings database:', error);
       return [];
     }
   }
@@ -227,9 +228,9 @@ export class VoiceConsistencyService {
 
       if (error) throw error;
 
-      console.log(`💾 Saved voice mapping: ${characterName} -> ${voiceId}`);
+      logger.info(`💾 Saved voice mapping: ${characterName} -> ${voiceId}`);
     } catch (error) {
-      console.error('Error saving character voice mapping:', error);
+      logger.error('Error saving character voice mapping:', error);
     }
   }
 
@@ -247,9 +248,9 @@ export class VoiceConsistencyService {
 
       if (error) throw error;
 
-      console.log(`📊 Updated character usage for mapping: ${mappingId}`);
+      logger.debug(`📊 Updated character usage for mapping: ${mappingId}`);
     } catch (error) {
-      console.error('Error updating character usage:', error);
+      logger.error('Error updating character usage:', error);
     }
   }
 
@@ -304,7 +305,7 @@ export class VoiceConsistencyService {
    */
   clearSessionCache(sessionId: string): void {
     this.sessionCache.delete(sessionId);
-    console.log(`🗑️ Cleared voice cache for session: ${sessionId}`);
+    logger.info(`🗑️ Cleared voice cache for session: ${sessionId}`);
   }
 
   /**

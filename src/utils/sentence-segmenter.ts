@@ -74,8 +74,8 @@ export class SentenceSegmenter {
         if (this.isSentenceEnd(currentSentence, nextChar, followingChar)) {
           // Look ahead to include any closing quotes or parentheses
           let endIndex = i + 1;
-          while (endIndex < text.length && /[\s"')\]}\-]/.test(text.charAt(endIndex))) {
-            if (text.charAt(endIndex).match(/["')\]}\-]/)) {
+          while (endIndex < text.length && /[\s"')\]}-]/.test(text.charAt(endIndex))) {
+            if (text.charAt(endIndex).match(/["')\]}-]/)) {
               currentSentence += text.charAt(endIndex);
               endIndex++;
             } else {
@@ -181,7 +181,7 @@ export class SentenceSegmenter {
     
     const firstChar = text.charAt(0);
     // Should start with whitespace, letter, number, quote, or punctuation
-    return /[\s\w"'([\-]/u.test(firstChar) || /^[A-Z]/u.test(firstChar);
+    return /[\s\w"'([-]/u.test(firstChar) || /^[A-Z]/u.test(firstChar);
   }
 
   /**
@@ -192,7 +192,7 @@ export class SentenceSegmenter {
     
     const lastChar = text.charAt(text.length - 1);
     // Should end with letter, number, punctuation, quote, or closing symbols
-    return /[\s\w.!?)"'\]\-]/u.test(lastChar);
+    return /[\s\w.!?)"'\]-]/u.test(lastChar);
   }
 
   /**

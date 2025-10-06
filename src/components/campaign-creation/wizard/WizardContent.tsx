@@ -17,6 +17,7 @@ import {
   validateCampaignEnhancements,
   validateCompleteCampaign
 } from './validation';
+import logger from '@/lib/logger';
 
 /**
  * Main content component for the campaign creation wizard
@@ -76,7 +77,7 @@ const WizardContent: React.FC = () => {
         });
         navigate(`/app/campaign/${campaignId}`);
       } catch (error) {
-        console.error('Error saving campaign:', error);
+        logger.error('Error saving campaign:', error);
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Failed to create campaign. Please try again.",

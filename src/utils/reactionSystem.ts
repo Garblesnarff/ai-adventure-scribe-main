@@ -496,7 +496,10 @@ export function clearExpiredReactions(
  * Check for all reaction triggers based on combat action
  */
 export function checkReactionTriggers(
-  action: any,
+  action: Partial<CombatAction> & {
+    movement?: { fromPosition?: string; toPosition?: string };
+    isRangedWeaponAttack?: boolean;
+  },
   encounter: CombatEncounter
 ): ReactionOpportunity[] {
   const opportunities: ReactionOpportunity[] = [];
@@ -552,7 +555,7 @@ export function checkReactionTriggers(
       }
       break;
       
-    case 'cast_spell':
+    case 'cast_spell': {
       // Check for counterspell opportunities
       const caster = encounter.participants.find(p => p.id === action.participantId);
       if (caster) {
@@ -563,8 +566,9 @@ export function checkReactionTriggers(
         ));
       }
       break;
+    }
       
-    case 'damage_dealt':
+    case 'damage_dealt': {
       // Check for uncanny dodge when damage is taken
       const attacker = encounter.participants.find(p => p.id === action.participantId);
       const target = encounter.participants.find(p => p.id === action.targetParticipantId);
@@ -588,8 +592,9 @@ export function checkReactionTriggers(
         }
       }
       break;
+    }
       
-    case 'move':
+    case 'move': {
       // Check for polearm master reaction when creature enters reach
       if (action.fromPosition && action.toPosition) {
         const movingParticipant = encounter.participants.find(p => p.id === action.participantId);
@@ -617,6 +622,7 @@ export function checkReactionTriggers(
         }
       }
       break;
+    }
   }
   
   return opportunities;

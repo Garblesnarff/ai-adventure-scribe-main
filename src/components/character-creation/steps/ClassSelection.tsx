@@ -5,6 +5,7 @@ import { classes } from '@/data/classOptions';
 import { CharacterClass } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import logger from '@/lib/logger';
 
 const ClassSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -12,21 +13,21 @@ const ClassSelection: React.FC = () => {
   const { scrollToNavigation } = useAutoScroll();
 
   const handleClassSelect = (characterClass: CharacterClass) => {
-    console.log('🎯 handleClassSelect called with:', characterClass);
-    console.log('🎯 Current character state before dispatch:', state.character);
-    console.log('🎯 Character class before update:', state.character?.class);
+    logger.info('🎯 handleClassSelect called with:', characterClass);
+    logger.debug('🎯 Current character state before dispatch:', state.character);
+    logger.debug('🎯 Character class before update:', state.character?.class);
 
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: { class: characterClass }
     });
 
-    console.log('🎯 Dispatched UPDATE_CHARACTER with payload:', { class: characterClass });
+    logger.debug('🎯 Dispatched UPDATE_CHARACTER with payload:', { class: characterClass });
 
     // Add a small delay to check if state updated
     setTimeout(() => {
-      console.log('🎯 Character state after dispatch (with delay):', state.character);
-      console.log('🎯 Character class after update:', state.character?.class);
+      logger.debug('🎯 Character state after dispatch (with delay):', state.character);
+      logger.debug('🎯 Character class after update:', state.character?.class);
     }, 100);
 
     toast({
@@ -45,7 +46,7 @@ const ClassSelection: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {classes.map((characterClass) => {
           const isSelected = state.character?.class?.id === characterClass.id;
-          console.log(`Class ${characterClass.id} selected:`, isSelected);
+          logger.debug(`Class ${characterClass.id} selected:`, isSelected);
           
           return (
             <Card 

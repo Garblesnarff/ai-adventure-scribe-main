@@ -4,6 +4,7 @@ import { Campaign, ThematicElements } from '@/types/campaign';
 import { Character } from '@/types/character';
 import { Memory, MemoryContext } from '@/types/memory';
 import { createDefaultContext } from './contextDefaults';
+import logger from '@/lib/logger';
 
 interface ContextParams {
   campaignId: string;
@@ -44,9 +45,9 @@ class GameContextBuilder {
   }
 
   private compose(
-    campaignResult: PromiseSettledResult<any>,
-    characterResult: PromiseSettledResult<any>,
-    memoryResult: PromiseSettledResult<any>
+    campaignResult: PromiseSettledResult<CampaignRow | null>,
+    characterResult: PromiseSettledResult<CharacterRow | null>,
+    memoryResult: PromiseSettledResult<Memory[] | null>
   ): GameContext {
     const context = createDefaultContext();
 
@@ -71,7 +72,7 @@ class GameContextBuilder {
 
     if (characterResult.status === 'fulfilled' && characterResult.value) {
       const character = characterResult.value;
-      const stats = character.character_stats?.[0] || {};
+      const stats = character.character_stats?.[0] || {} as CharacterStatsRow;
       context.character = {
         basic: {
           name: character.name,
@@ -91,7 +92,7 @@ class GameContextBuilder {
             charisma: stats.charisma || 10,
           },
         },
-        equipment: (character.character_equipment || []).map((item: any) => ({
+        equipment: (character.character_equipment || []).map((item: CharacterEquipmentRow) => ({
           name: item.item_name,
           type: item.item_type,
           equipped: item.equipped || false,
@@ -122,10 +123,51 @@ class GameContextBuilder {
 
       return this.compose(campaign, character, memories);
     } catch (error) {
-      console.error('[GameContextBuilder] Error building context:', error);
+      logger.error('[GameContextBuilder] Error building context:', error);
       return createDefaultContext();
     }
   }
 }
 
 export const gameContextBuilder = new GameContextBuilder();
+
+// Minimal row shapes used internally for type safety
+interface CampaignRow {
+  id: string;
+  name: string;
+  description?: string | null;
+  genre?: string | null;
+  status?: string | null;
+  era?: string | null;
+  location?: string | null;
+  atmosphere?: string | null;
+  thematic_elements?: Partial<ThematicElements> | null;
+}
+
+interface CharacterStatsRow {
+  strength?: number;
+  dexterity?: number;
+  constitution?: number;
+  intelligence?: number;
+  wisdom?: number;
+  charisma?: number;
+  current_hit_points?: number;
+  max_hit_points?: number;
+  armor_class?: number;
+}
+
+interface CharacterEquipmentRow {
+  item_name: string;
+  item_type?: string;
+  equipped?: boolean;
+}
+
+interface CharacterRow {
+  id: string;
+  name: string;
+  race?: string | null;
+  class?: string | null;
+  level?: number | null;
+  character_stats?: CharacterStatsRow[] | null;
+  character_equipment?: CharacterEquipmentRow[] | null;
+}

@@ -43,6 +43,8 @@ const npcPatterns: ClassificationPattern = {
   patterns: [
     // Named NPCs and specific individuals
     'npc', 'character', 'person', 'individual', 'figure',
+    // Common fantasy titles
+    'king', 'queen', 'lord', 'lady',
     // Roles and titles
     'elder', 'chief', 'leader', 'merchant', 'guard', 'innkeeper',
     // Fantasy beings
@@ -52,7 +54,7 @@ const npcPatterns: ClassificationPattern = {
   ],
   contextPatterns: [
     // Matches "the X" where X is likely a character title
-    /the (?:elder|chief|king|queen|lord|lady|wizard|innkeeper|merchant)/i,
+    /the\s+(?:\w+\s+)?(?:elder|chief|king|queen|lord|lady|wizard|innkeeper|merchant)/i,
     // Matches character descriptions
     /(?:wise|old|young|mysterious|brave|dark) (?:wizard|warrior|sage|master|stranger)/i,
     // Matches character names with titles

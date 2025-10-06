@@ -8,9 +8,10 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { Character } from '@/types/character';
+import { Character, CharacterRace, CharacterClass, CharacterBackground } from '@/types/character';
 import { characterSpellService } from './characterSpellApi';
 import { convertSpellIdsToFrontend } from '@/utils/spell-id-mapping';
+import logger from '@/lib/logger';
 
 export class CharacterLoaderService {
   /**
@@ -20,7 +21,7 @@ export class CharacterLoaderService {
    */
   async loadCharacterWithSpells(characterId: string): Promise<Character | null> {
     try {
-      console.log(`🔄 [CharacterLoader] Loading character ${characterId} with spells`);
+      logger.info(`🔄 [CharacterLoader] Loading character ${characterId} with spells`);
 
       // Fetch Character Data from database
       const { data: characterData, error: characterError } = await supabase
@@ -33,12 +34,12 @@ export class CharacterLoaderService {
         .single();
 
       if (characterError) {
-        console.error('[CharacterLoader] Database error:', characterError);
+        logger.error('[CharacterLoader] Database error:', characterError);
         throw new Error(`Failed to load character: ${characterError.message}`);
       }
 
       if (!characterData) {
-        console.error('[CharacterLoader] Character not found');
+        logger.error('[CharacterLoader] Character not found');
         return null;
       }
 
@@ -47,9 +48,9 @@ export class CharacterLoaderService {
         ? characterData.character_stats[0]
         : characterData.character_stats;
 
-      const characterRace = characterData.race ? { name: characterData.race } : null;
-      const characterClass = characterData.class ? { name: characterData.class } : null;
-      const characterBackground = characterData.background ? { name: characterData.background } : null;
+      const characterRace = characterData.race ? ({ name: characterData.race } as Partial<CharacterRace>) : null;
+      const characterClass = characterData.class ? ({ name: characterData.class } as Partial<CharacterClass>) : null;
+      const characterBackground = characterData.background ? ({ name: characterData.background } as Partial<CharacterBackground>) : null;
 
       // Parse spell data from the characters table first (primary source)
       let cantrips: string[] = [];
@@ -63,13 +64,13 @@ export class CharacterLoaderService {
         return spellString.split(',').map(spell => spell.trim()).filter(spell => spell.length > 0);
       };
 
-      console.log(`📖 [CharacterLoader] Loading spells from characters table for ${characterId}`);
+      logger.info(`📖 [CharacterLoader] Loading spells from characters table for ${characterId}`);
       cantrips = parseSpellString(characterData.cantrips);
       knownSpells = parseSpellString(characterData.known_spells);
       preparedSpells = parseSpellString(characterData.prepared_spells); // Now exists in database
       ritualSpells = parseSpellString(characterData.ritual_spells); // Now exists in database
 
-      console.log(`📊 [CharacterLoader] Parsed spells from characters table:`, {
+      logger.debug(`📊 [CharacterLoader] Parsed spells from characters table:`, {
         cantrips: cantrips.length,
         knownSpells: knownSpells.length,
         preparedSpells: preparedSpells.length,
@@ -80,11 +81,11 @@ export class CharacterLoaderService {
 
       // Optional enhancement: Try to load additional spell data from API
       try {
-        console.log(`🔍 [CharacterLoader] Attempting to enhance with API data...`);
+        logger.info(`🔍 [CharacterLoader] Attempting to enhance with API data...`);
         const spellData = await characterSpellService.getCharacterSpells(characterId);
 
         if (spellData && (spellData.cantrips.length > 0 || spellData.spells.length > 0)) {
-          console.log(`🎯 [CharacterLoader] Found API spell data:`, {
+          logger.info(`🎯 [CharacterLoader] Found API spell data:`, {
             apiCantrips: spellData.cantrips.length,
             apiSpells: spellData.spells.length
           });
@@ -98,11 +99,11 @@ export class CharacterLoaderService {
 
           // Merge API data with database data (prefer API data if available)
           if (apiCantrips.length > 0) {
-            console.log(`🔄 [CharacterLoader] Using API cantrips instead of database cantrips`);
+            logger.info(`🔄 [CharacterLoader] Using API cantrips instead of database cantrips`);
             cantrips = apiCantrips;
           }
           if (apiKnownSpells.length > 0) {
-            console.log(`🔄 [CharacterLoader] Using API spells instead of database spells`);
+            logger.info(`🔄 [CharacterLoader] Using API spells instead of database spells`);
             knownSpells = apiKnownSpells;
             // Update prepared spells if we got new known spells
             if (preparedSpells.length === 0) {
@@ -110,16 +111,16 @@ export class CharacterLoaderService {
             }
           }
 
-          console.log(`✅ [CharacterLoader] Enhanced with API data:`, {
+          logger.info(`✅ [CharacterLoader] Enhanced with API data:`, {
             finalCantrips: cantrips.length,
             finalKnownSpells: knownSpells.length,
             finalPreparedSpells: preparedSpells.length
           });
         } else {
-          console.log(`📝 [CharacterLoader] No API spell data found, using database data`);
+          logger.info(`📝 [CharacterLoader] No API spell data found, using database data`);
         }
       } catch (spellError) {
-        console.warn(`⚠️ [CharacterLoader] API enhancement failed, using database data:`, spellError);
+        logger.warn(`⚠️ [CharacterLoader] API enhancement failed, using database data:`, spellError);
         // Continue with database spell data - this is not a fatal error
       }
 
@@ -128,10 +129,10 @@ export class CharacterLoaderService {
         id: characterData.id,
         user_id: characterData.user_id || '',
         name: characterData.name,
-        race: characterRace as any,
-        class: characterClass as any,
+        race: characterRace as CharacterRace | null,
+        class: characterClass as CharacterClass | null,
         level: characterData.level || 1,
-        background: characterBackground as any,
+        background: characterBackground as CharacterBackground | null,
         abilityScores: {
           strength: {
             score: stats?.strength || 10,
@@ -183,7 +184,7 @@ export class CharacterLoaderService {
         ritualSpells
       };
 
-      console.log(`🎯 [CharacterLoader] Successfully loaded character with spells:`, {
+      logger.info(`🎯 [CharacterLoader] Successfully loaded character with spells:`, {
         name: loadedCharacter.name,
         id: loadedCharacter.id,
         cantrips: loadedCharacter.cantrips?.length || 0,
@@ -193,7 +194,7 @@ export class CharacterLoaderService {
       return loadedCharacter;
 
     } catch (error) {
-      console.error('[CharacterLoader] Error loading character with spells:', error);
+      logger.error('[CharacterLoader] Error loading character with spells:', error);
       return null;
     }
   }

@@ -24,19 +24,9 @@ const HitPointsSelection: React.FC = () => {
   const [rollResults, setRollResults] = useState<number[]>([]);
   const [isRolling, setIsRolling] = useState(false);
 
-  if (!characterClass) {
-    return (
-      <div className="text-center space-y-4">
-        <Heart className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Class Required</h2>
-        <p className="text-muted-foreground">
-          Please select a class first to determine hit points.
-        </p>
-      </div>
-    );
-  }
+  // Note: No early returns before hooks to satisfy rules-of-hooks
 
-  const hitDie = characterClass.hitDie;
+  const hitDie = characterClass?.hitDie ?? 0;
   const averagePerLevel = Math.floor(hitDie / 2) + 1;
 
   /**
@@ -144,6 +134,15 @@ const HitPointsSelection: React.FC = () => {
   const hasRolls = rollResults.length >= Math.max(0, level - 1);
 
   return (
+    !characterClass ? (
+      <div className="text-center space-y-4">
+        <Heart className="w-16 h-16 mx-auto text-muted-foreground" />
+        <h2 className="text-2xl font-bold">Class Required</h2>
+        <p className="text-muted-foreground">
+          Please select a class first to determine hit points.
+        </p>
+      </div>
+    ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Hit Points</h2>
@@ -372,6 +371,7 @@ const HitPointsSelection: React.FC = () => {
         </Button>
       </div>
     </div>
+    )
   );
 };
 

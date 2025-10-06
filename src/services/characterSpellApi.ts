@@ -1,5 +1,6 @@
 import { Spell } from '../types/character';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 export interface CharacterSpellData extends Spell {
   is_prepared: boolean;
@@ -60,7 +61,7 @@ class CharacterSpellService {
       const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`);
       return response.json();
     } catch (error) {
-      console.warn(`[CharacterSpellService] Failed to fetch spells for character ${characterId}:`, error);
+      logger.warn(`[CharacterSpellService] Failed to fetch spells for character ${characterId}:`, error);
 
       if (error instanceof Error && error.message.includes('Character not found')) {
         return {

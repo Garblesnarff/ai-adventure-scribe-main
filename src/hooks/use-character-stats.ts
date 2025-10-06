@@ -4,6 +4,7 @@ import {
   calculateAllCharacterStats, 
   CharacterStats 
 } from '@/utils/character-calculations';
+import logger from '@/lib/logger';
 
 /**
  * Hook for calculating and memoizing character statistics
@@ -16,7 +17,7 @@ export const useCharacterStats = (character: Character | null): CharacterStats |
     try {
       return calculateAllCharacterStats(character);
     } catch (error) {
-      console.error('Error calculating character stats:', error);
+      logger.error('Error calculating character stats:', error);
       return null;
     }
   }, [
@@ -110,7 +111,7 @@ export const useEffectiveAbilityScores = (character: Character | null) => {
     if (!character?.abilityScores) return null;
     
     const baseScores = character.abilityScores;
-    const racialBonuses = { ...character.race?.abilityScoreIncrease, ...character.subrace?.abilityScoreIncrease } || {};
+    const racialBonuses = { ...character.race?.abilityScoreIncrease, ...character.subrace?.abilityScoreIncrease };
     
     const effectiveScores = (Object.entries(baseScores) as [keyof AbilityScores, Ability][]).reduce((acc, [ability, data]) => {
       const racialBonus = racialBonuses[ability] || 0;

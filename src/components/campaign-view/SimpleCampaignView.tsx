@@ -12,6 +12,7 @@ import { useCharacterStats } from '@/hooks/use-character-stats';
 import { Character } from '@/types/character';
 import { SimpleGameChatWithVoice } from '@/components/game/SimpleGameChatWithVoice';
 import { toast } from 'sonner';
+import logger from '@/lib/logger';
 
 interface Campaign {
   id: string;
@@ -89,7 +90,7 @@ export const SimpleCampaignView: React.FC = () => {
       if (error) throw error;
       setCampaign(data);
     } catch (error) {
-      console.error('Error loading campaign:', error);
+      logger.error('Error loading campaign:', error);
       toast.error('Failed to load campaign data');
     }
   };
@@ -118,7 +119,7 @@ export const SimpleCampaignView: React.FC = () => {
         character_stats: Array.isArray(char.character_stats) ? char.character_stats[0] : char.character_stats
       })) as CharacterListItem[]);
     } catch (error) {
-      console.error('Error loading characters:', error);
+      logger.error('Error loading characters:', error);
       toast.error('Failed to load characters');
     } finally {
       setLoading(false);
@@ -147,10 +148,10 @@ export const SimpleCampaignView: React.FC = () => {
         id: characterData.id,
         user_id: characterData.user_id || undefined,
         name: characterData.name,
-        race: characterData.race ? { name: characterData.race } as any : null,
-        class: characterData.class ? { name: characterData.class } as any : null,
+        race: characterData.race ? ({ name: characterData.race } as unknown as Character['race']) : null,
+        class: characterData.class ? ({ name: characterData.class } as unknown as Character['class']) : null,
         level: characterData.level || 1,
-        background: characterData.background ? { name: characterData.background } as any : null,
+        background: characterData.background ? ({ name: characterData.background } as unknown as Character['background']) : null,
         abilityScores: stats ? {
           strength: { score: stats.strength, modifier: Math.floor((stats.strength - 10) / 2), savingThrow: false },
           dexterity: { score: stats.dexterity, modifier: Math.floor((stats.dexterity - 10) / 2), savingThrow: false },
@@ -171,7 +172,7 @@ export const SimpleCampaignView: React.FC = () => {
       setFullSelectedCharacter(fullCharacter);
       return fullCharacter;
     } catch (error) {
-      console.error('Error loading full character data:', error);
+      logger.error('Error loading full character data:', error);
       toast.error('Failed to load character details');
       return null;
     }

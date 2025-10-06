@@ -13,10 +13,17 @@ import { selectRelevantMemories } from '@/utils/memory/selection';
 import { voiceConsistencyService } from '@/services/voice-consistency-service';
 import { AIService } from '@/services/ai-service';
 import { rollStateManager } from '@/services/combat/rollStateManager';
+import logger from '@/lib/logger';
 
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
 import { ChatMessage } from '@/types/game';
+import type { Campaign } from '@/types/campaign';
+import type { Character } from '@/types/character';
+import type { DetectedEnemy, DetectedCombatAction } from '@/utils/combatDetection';
+import { detectCombatFromText } from '@/utils/combatDetection';
+import { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } from '@/utils/rollRequestParser';
+import { DiceEngine } from '@/services/dice/DiceEngine';
 
 // Voice narration types
 export interface NarrationSegment {
@@ -65,8 +72,8 @@ export interface EnhancedChatMessage extends ChatMessage {
     combatType?: string;
     shouldStartCombat: boolean;
     shouldEndCombat: boolean;
-    enemies: any[];
-    combatActions: any[];
+    enemies: DetectedEnemy[];
+    combatActions: DetectedCombatAction[];
   };
 }
 
@@ -114,11 +121,11 @@ export const useAIResponse = () => {
    * Fetches campaign and character details for the DM Agent context.
    * 
    * @param {string} sessionId - The session ID
-   * @returns {Promise<{campaign: any, character: any} | null>} The game context or null if failed
+   * @returns {Promise<{campaign: Campaign, character: Character} | null>} The game context or null if failed
    */
-  const fetchGameContext = async (sessionId: string): Promise<{campaign: any, character: any} | null> => {
+  const fetchGameContext = async (sessionId: string): Promise<{campaign: Campaign, character: Character} | null> => {
     try {
-      console.log('Fetching game session details for:', sessionId);
+      logger.info('Fetching game session details for:', sessionId);
       
       // Get game session with campaign and character details using JOIN
       const { data: sessionData, error: sessionError } = await supabase
@@ -132,12 +139,12 @@ export const useAIResponse = () => {
         .single();
 
       if (sessionError) {
-        console.error('Error fetching session:', sessionError);
+        logger.error('Error fetching session:', sessionError);
         return null;
       }
 
       if (!sessionData?.campaign_id || !sessionData?.character_id) {
-        console.error('No campaign or character IDs found in session');
+        logger.error('No campaign or character IDs found in session');
         return null;
       }
 
@@ -146,7 +153,7 @@ export const useAIResponse = () => {
         character: sessionData.characters
       };
     } catch (error) {
-      console.error('Error in fetchGameContext:', error);
+      logger.error('Error in fetchGameContext:', error);
       return null;
     }
   };
@@ -162,7 +169,7 @@ export const useAIResponse = () => {
    */
   const getAIResponse = async (messages: ChatMessage[], sessionId: string): Promise<EnhancedChatMessage> => {
     try {
-      console.log('Getting AI response for session:', sessionId);
+      logger.info('Getting AI response for session:', sessionId);
 
       // Get latest message context
       const latestMessage = messages[messages.length - 1];
@@ -191,7 +198,7 @@ export const useAIResponse = () => {
         .filter(memory => memory.created_at && memory.updated_at) // Filter out incomplete records
         .map((memory): Memory => {
           if (!isValidMemoryType(memory.type)) {
-            console.warn(`[Memory] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
+            logger.warn(`[Memory] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
             memory.type = 'general';
           }
           
@@ -220,11 +227,10 @@ export const useAIResponse = () => {
 
       const selectedMemories = selectRelevantMemories(memories, latestMessage.context);
 
-      // Import combat detection to analyze player message
-      const { detectCombatFromText } = await import('@/utils/combatDetection');
+      // Analyze player message for combat context
       const combatDetection = detectCombatFromText(latestMessage.text);
 
-      console.log('Calling DM Agent with context:', {
+      logger.debug('Calling DM Agent with context:', {
         gameContext,
         selectedMemories: selectedMemories.length,
         knownCharacters: Object.keys(voiceContext.knownCharacters).length,
@@ -257,7 +263,7 @@ export const useAIResponse = () => {
         }
       };
 
-      console.log('🎮 AI Context with combat awareness:', {
+      logger.debug('🎮 AI Context with combat awareness:', {
         phase: gameState.currentPhase,
         inCombat: combatState.isInCombat,
         pendingRolls: gameState.diceRollQueue.pendingRolls.length,
@@ -272,14 +278,13 @@ export const useAIResponse = () => {
       });
 
       // Extract response data
-      let responseText = result.text;
-      let narrationSegments = result.narrationSegments;
+      const responseText = result.text;
+      const narrationSegments = result.narrationSegments;
 
       // Parse roll requests from the response and process through GameContext
       let rollRequests: RollRequest[] = result.roll_requests || [];
       if (rollRequests.length === 0) {
-        // Import roll request parser and check for roll requests in the text
-        const { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } = await import('@/utils/rollRequestParser');
+        // Check for roll requests in the text
         const parsedRequests = parseRollRequests(responseText);
         rollRequests = parsedRequests.map(req => ({
           type: req.type,
@@ -293,7 +298,7 @@ export const useAIResponse = () => {
 
         // Check for context-dependent roll requests (like damage after successful attacks)
         if (detectsSuccessfulAttack(responseText)) {
-          console.log('🎯 Detected successful attack, checking for damage roll requirement');
+          logger.info('🎯 Detected successful attack, checking for damage roll requirement');
           const isCritical = detectsCriticalHit(responseText);
 
           // Check if we're already waiting for damage and this confirms the hit
@@ -305,7 +310,6 @@ export const useAIResponse = () => {
               const weaponName = weaponMatch ? weaponMatch[1] : 'weapon';
 
               // Create damage roll request based on hit confirmation
-              const { DiceEngine } = await import('@/services/dice/DiceEngine');
               const damageRequest = DiceEngine.createDamageRollRequest(weaponName, isCritical);
 
               rollRequests.push({
@@ -314,7 +318,7 @@ export const useAIResponse = () => {
                 purpose: damageRequest.purpose
               });
 
-              console.log('🗡️ Added automatic damage roll request:', damageRequest);
+              logger.info('🗡️ Added automatic damage roll request:', damageRequest);
             }
           }
         }
@@ -329,38 +333,38 @@ export const useAIResponse = () => {
             context: request.purpose || 'Attack roll',
             actorId: gameContext.character?.id || 'player'
           });
-          console.log('⚔️ Tracking attack roll:', rollId);
+          logger.info('⚔️ Tracking attack roll:', rollId);
         }
       });
 
       // Process roll requests through GameContext for deduplication and proper queue management
       if (rollRequests.length > 0) {
-        console.log('🎲 Processing', rollRequests.length, 'roll requests through GameContext');
+        logger.info('🎲 Processing', rollRequests.length, 'roll requests through GameContext');
         processAiResponse(rollRequests);
       }
 
       // Update game phase based on combat detection
       if (result.combatDetection?.isCombat && !gameState.isInCombat) {
-        console.log('⚔️ Combat detected, updating game phase');
+        logger.info('⚔️ Combat detected, updating game phase');
         setGamePhase('combat');
       } else if (!result.combatDetection?.isCombat && gameState.currentPhase === 'combat' && !combatState.isInCombat) {
-        console.log('🕊️ Combat ended, returning to exploration');
+        logger.info('🕊️ Combat ended, returning to exploration');
         setGamePhase('exploration');
       }
 
       // Process voice assignments if we have narration segments
       if (narrationSegments && narrationSegments.length > 0) {
-        console.log('🎭 Received structured response with', narrationSegments.length, 'narration segments');
+        logger.info('🎭 Received structured response with', narrationSegments.length, 'narration segments');
         
         try {
           await voiceConsistencyService.processVoiceAssignments(sessionId, narrationSegments);
-          console.log('✅ Processed voice assignments successfully');
+          logger.info('✅ Processed voice assignments successfully');
         } catch (voiceError) {
-          console.warn('Warning: Failed to process voice assignments:', voiceError);
+          logger.warn('Warning: Failed to process voice assignments:', voiceError);
           // Don't fail the entire response for voice processing errors
         }
       } else {
-        console.log('📝 Received text-only response');
+        logger.info('📝 Received text-only response');
       }
 
       // Format the response as an EnhancedChatMessage
@@ -386,7 +390,7 @@ export const useAIResponse = () => {
         }
       };
     } catch (error) {
-      console.error('Error in getAIResponse:', error);
+      logger.error('Error in getAIResponse:', error);
       throw error;
     }
   };

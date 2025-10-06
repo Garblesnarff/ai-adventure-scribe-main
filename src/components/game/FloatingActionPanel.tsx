@@ -4,6 +4,7 @@ import { Card } from '../ui/card';
 import { Dice6, Heart, Shield, Zap, Plus, X } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
+import logger from '@/lib/logger';
 
 interface FloatingActionPanelProps {
   isVisible: boolean;
@@ -39,7 +40,7 @@ export const FloatingActionPanel: React.FC<FloatingActionPanelProps> = ({
 
   const handleQuickRoll = (type: string) => {
     // This would integrate with your dice rolling system
-    console.log(`Quick rolling ${type}`);
+    logger.info(`Quick rolling ${type}`);
     // You could dispatch a dice roll event or call a dice service here
   };
 

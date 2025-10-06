@@ -6,10 +6,11 @@ import { ChatMessage } from '@/types/game';
 import { Character } from '@/types/character';
 import { Campaign } from '@/types/campaign';
 import { Memory, MemoryType } from '@/components/game/memory/types';
+import logger from '@/lib/logger';
 
 interface InitialGreetingProps {
   sessionId: string | null;
-  sessionData: any;
+  sessionData: { turn_count?: number } | null;
   characterId: string | null;
   campaignId: string | null;
   messages: ChatMessage[];
@@ -76,7 +77,7 @@ export const useInitialGreeting = ({
     setState(prev => ({ ...prev, isGenerating: true, error: null }));
 
     try {
-      console.log('[Initial Greeting] Starting generation for session:', sessionId);
+      logger.info('[Initial Greeting] Starting generation for session:', sessionId);
 
       // Fetch character data
       const { data: characterData, error: characterError } = await supabase
@@ -106,7 +107,7 @@ export const useInitialGreeting = ({
       // Build initial greeting prompt
       const greetingPrompt = buildGreetingPrompt(characterData, campaignData);
 
-      console.log('[Initial Greeting] Generated prompt for AI service');
+      logger.info('[Initial Greeting] Generated prompt for AI service');
 
       // Generate AI response using AIService
       const aiResponse = await AIService.generateOpeningMessage({
@@ -130,7 +131,7 @@ export const useInitialGreeting = ({
         narrationSegments: aiResponse.narration_segments,
       };
 
-      console.log('[Initial Greeting] Generated initial greeting:', greetingMessage.text?.substring(0, 100) + '...');
+      logger.info('[Initial Greeting] Generated initial greeting:', greetingMessage.text?.substring(0, 100) + '...');
 
       // Call the callback to add the message to the conversation
       await onGreetingGenerated(greetingMessage);
@@ -147,7 +148,7 @@ export const useInitialGreeting = ({
       }));
 
     } catch (error) {
-      console.error('[Initial Greeting] Error generating greeting:', error);
+      logger.error('[Initial Greeting] Error generating greeting:', error);
 
       setState(prev => ({
         ...prev,
@@ -157,7 +158,7 @@ export const useInitialGreeting = ({
 
       // Provide a fallback greeting to prevent empty state
       try {
-        console.log('[Initial Greeting] Providing fallback greeting');
+        logger.info('[Initial Greeting] Providing fallback greeting');
         const fallbackMessage: ChatMessage = {
           text: "You find yourself standing at the threshold of adventure. The world stretches before you, full of mysteries waiting to be uncovered. What do you do?",
           sender: 'dm',
@@ -174,7 +175,7 @@ export const useInitialGreeting = ({
           hasGenerated: true
         }));
       } catch (fallbackError) {
-        console.error('[Initial Greeting] Fallback greeting also failed:', fallbackError);
+        logger.error('[Initial Greeting] Fallback greeting also failed:', fallbackError);
 
         toast({
           title: "Adventure Setup",
@@ -215,7 +216,7 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
     onMemoryCreated: (memory: Omit<Memory, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
   ) => {
     try {
-      console.log('[Initial Greeting] Creating foundational memories');
+      logger.info('[Initial Greeting] Creating foundational memories');
 
       // Create character introduction memory
       await onMemoryCreated({
@@ -276,9 +277,9 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
         });
       }
 
-      console.log('[Initial Greeting] Successfully created all foundational memories');
+      logger.info('[Initial Greeting] Successfully created all foundational memories');
     } catch (error) {
-      console.error('[Initial Greeting] Error creating initial memories:', error);
+      logger.error('[Initial Greeting] Error creating initial memories:', error);
       // Don't throw here - memory creation failure shouldn't break the greeting flow
     }
   };

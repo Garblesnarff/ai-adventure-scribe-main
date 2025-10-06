@@ -3,6 +3,7 @@ import { useCharacter } from '@/contexts/CharacterContext';
 import { Heart, Shield, Zap } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
+import logger from '@/lib/logger';
 
 /**
  * CompactCharacterHeader - Quick view of character essentials for game sidebar
@@ -21,7 +22,7 @@ export const CompactCharacterHeader: React.FC = () => {
 
   // Debug logging
   useEffect(() => {
-    console.log('[CompactCharacterHeader] Character data:', {
+    logger.debug('[CompactCharacterHeader] Character data:', {
       name: character?.name,
       avatar_url: character?.avatar_url,
       image_url: character?.image_url,
@@ -45,7 +46,7 @@ export const CompactCharacterHeader: React.FC = () => {
 
   // Calculate AC with unarmored defense support
   const armorClass = (() => {
-  let dexMod = character?.abilityScores?.dexterity?.modifier ?? 0;
+  const dexMod = character?.abilityScores?.dexterity?.modifier ?? 0;
   let ac = 10 + dexMod;
     const className = (character.class?.name ?? '').toString().toLowerCase();
     const hasUnarmoredDefense = className === 'barbarian' || className === 'monk';
@@ -68,11 +69,11 @@ export const CompactCharacterHeader: React.FC = () => {
   const proficiency = Math.floor((lvl - 1) / 4) + 2;
 
   const handleShortRest = () => {
-    console.log('Short rest initiated');
+    logger.info('Short rest initiated');
   };
 
   const handleLongRest = () => {
-    console.log('Long rest initiated');
+    logger.info('Long rest initiated');
   };
 
   // Resolve background image

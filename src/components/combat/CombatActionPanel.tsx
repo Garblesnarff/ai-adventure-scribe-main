@@ -37,7 +37,8 @@ import { ActionType, ConditionName, Condition } from '@/types/combat';
 import { Equipment, allEquipment } from '@/data/equipmentOptions';
 import { performAttack, canUseSneakAttack } from '@/utils/attackUtils';
 import SpellSlotPanel from '@/components/spellcasting/SpellSlotPanel';
-import AttackRollVisualization from './AttackRollVisualization';
+import AttackRollVisualization, { type AttackResult } from './AttackRollVisualization';
+import logger from '@/lib/logger';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ===========================
@@ -452,7 +453,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
   // Attack-specific state
   const [selectedWeapon, setSelectedWeapon] = useState<Equipment | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
-  const [attackResult, setAttackResult] = useState<any>(null);
+  const [attackResult, setAttackResult] = useState<AttackResult | null>(null);
 
   // Handle management panel selection
   const handleManagementSelect = (managementType: string) => {
@@ -491,7 +492,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
       // For spell casting, include spell details
       if (selectedAction.type === 'cast_spell') {
         if (!selectedSpell) {
-          console.error('No spell selected');
+          logger.error('No spell selected');
           return;
         }
         await onActionSubmit(selectedAction.type, actionDetails, { spellName: selectedSpell, spellLevel: selectedSpellLevel });
@@ -696,91 +697,6 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
                   {isSubmitting ? 'Submitting...' : `Take ${selectedAction.name}`}
                 </Button>
 
-                <Button
-                  variant="outline"
-                  onClick={handleCancelAction}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </div>
-        ) :
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <selectedAction.icon className="w-5 h-5" />
-              <h4 className="font-semibold">{selectedAction.name}</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCancelAction}
-                disabled={isSubmitting}
-              >
-                <RotateCcw className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <p className="text-sm text-gray-600">
-              {selectedAction.description}
-            </p>
-            
-            {selectedAction.type === 'cast_spell' ? (
-              <SpellSlotPanel
-                onSpellSelect={(spellName, level) => {
-                  setSelectedSpell(spellName);
-                  setSelectedSpellLevel(level);
-                  setActionDetails(`Cast ${spellName} at level ${level}`);
-                }}
-                availableSpells={['Fire Bolt', 'Magic Missile', 'Cure Wounds', 'Healing Word']} // From character data
-              />
-            ) : selectedAction.type === 'short_rest' || selectedAction.type === 'long_rest' ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Hit dice to roll:</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={hitDiceToRoll}
-                    onChange={(e) => setHitDiceToRoll(Number(e.target.value))}
-                    className="mt-1"
-                    placeholder="Number of hit dice"
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => {
-                      setActionDetails(`${selectedAction.name}: Rolling ${hitDiceToRoll} hit dice`);
-                      handleDetailedAction();
-                    }}
-                    disabled={isSubmitting}
-                    className="flex-1"
-                  >
-                    Take {selectedAction.name}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Textarea
-                placeholder={`Describe your ${selectedAction.name.toLowerCase()}...`}
-                value={actionDetails}
-                onChange={(e) => setActionDetails(e.target.value)}
-                className="min-h-[100px]"
-                disabled={isSubmitting}
-              />
-            )}
-            
-            {selectedAction.type !== 'cast_spell' && selectedAction.type !== 'short_rest' && selectedAction.type !== 'long_rest' && (
-              <div className="flex space-x-2">
-                <Button
-                  onClick={handleDetailedAction}
-                  disabled={!actionDetails.trim() || isSubmitting}
-                  className="flex-1"
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  {isSubmitting ? 'Submitting...' : `Take ${selectedAction.name}`}
-                </Button>
-                
                 <Button
                   variant="outline"
                   onClick={handleCancelAction}

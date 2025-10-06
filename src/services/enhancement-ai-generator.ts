@@ -8,6 +8,7 @@
 import { EnhancementOption, OptionSelection } from '@/types/enhancement-options';
 import { Character } from '@/types/character';
 import { Campaign } from '@/types/campaign';
+import logger from '@/lib/logger';
 
 interface AIGenerationContext {
   character?: Character;
@@ -63,7 +64,7 @@ export class EnhancementAIGenerator {
 
       return this.postProcessResponse(response, request.optionId);
     } catch (error) {
-      console.error('AI generation failed:', error);
+      logger.error('AI generation failed:', error);
       throw new Error('Failed to generate AI content. Please try again.');
     }
   }
@@ -85,7 +86,7 @@ export class EnhancementAIGenerator {
         });
         suggestions.push(suggestion);
       } catch (error) {
-        console.warn(`Failed to generate suggestion ${i + 1}:`, error);
+        logger.warn(`Failed to generate suggestion ${i + 1}:`, error);
       }
     }
 
@@ -114,7 +115,7 @@ export class EnhancementAIGenerator {
         .map(line => line.replace(/^\d+\.\s*/, '').trim())
         .slice(0, 5);
     } catch (error) {
-      console.error('Failed to generate recommendations:', error);
+      logger.error('Failed to generate recommendations:', error);
       return [];
     }
   }

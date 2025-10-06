@@ -9,8 +9,8 @@ export interface ImportanceFactors {
   type: string;
   ageInHours?: number;
   category?: string;
-  metadata?: Record<string, any>;
-  error?: any;
+  metadata?: Record<string, unknown>;
+  error?: unknown;
   priority?: 'high' | 'medium' | 'low';
 }
 
@@ -77,10 +77,8 @@ export const calculateImportance = (factors: ImportanceFactors): number => {
   }
 
   // Metadata-based factors
-  if (factors.metadata) {
-    if (typeof factors.metadata.significance === 'number') {
-      score += factors.metadata.significance;
-    }
+  if (factors.metadata && typeof (factors.metadata as Record<string, unknown>).significance === 'number') {
+    score += (factors.metadata as Record<string, number>).significance;
   }
 
   // Task-specific factors

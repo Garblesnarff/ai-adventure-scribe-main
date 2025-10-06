@@ -11,6 +11,7 @@ import {
 import CampaignCard from './campaign-card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import logger from '@/lib/logger';
 
 interface CampaignSelectionModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
    */
   const handleStartSession = async (campaignId: string) => {
     try {
-      console.log('Starting session with character:', characterId);
+      logger.info('Starting session with character:', characterId);
       
       // Create new game session
       const { data: session, error } = await supabase
@@ -75,7 +76,7 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
       // Navigate to campaign view with both session and character IDs
       navigate(`/campaign/${campaignId}?session=${session.id}&character=${characterId}`);
     } catch (error) {
-      console.error('Error starting session:', error);
+      logger.error('Error starting session:', error);
       toast({
         title: "Error",
         description: "Failed to start game session",

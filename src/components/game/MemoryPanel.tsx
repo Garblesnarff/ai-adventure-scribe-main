@@ -10,7 +10,7 @@ import { useCombat } from '@/contexts/CombatContext';
 import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lucide-react';
 import { MemoryCard } from './memory/MemoryCard';
 import { MemoryFilter } from './memory/MemoryFilter';
-import { useMemoryFiltering } from './memory/useMemoryFiltering';
+import { useMemoryFiltering } from '@/hooks/memory/useMemoryFiltering';
 import { Textarea } from '../ui/textarea';
 import { CompactCharacterHeader } from './CompactCharacterHeader';
 import { CombatSummary } from './CombatSummary';
@@ -129,6 +129,14 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const isMobile = window.innerWidth < 1024; // lg breakpoint
 
+  // Get filtered and sorted memories using custom hook (must be called unconditionally)
+  const sortedMemories = useMemoryFiltering(memories, selectedType);
+
+  // Sync local notes from session state (unconditional hook)
+  useEffect(() => {
+    setLocalSessionNotes(sessionData?.session_notes || '');
+  }, [sessionData?.session_notes]);
+
   // Toggle mobile drawer
   const toggleMobileDrawer = () => setIsMobileDrawerOpen(!isMobileDrawerOpen);
 
@@ -170,7 +178,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                 localSessionNotes={localSessionNotes}
                 setLocalSessionNotes={setLocalSessionNotes}
                 memoriesLoading={memoriesLoading}
-                sortedMemories={useMemoryFiltering(memories, selectedType)}
+                sortedMemories={sortedMemories}
                 characterState={characterState}
                 isInCombat={isInCombat}
                 panelWidth={panelWidth}
@@ -226,14 +234,6 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
       </div>
     );
   }
-
-  // Get filtered and sorted memories using custom hook
-  const sortedMemories = useMemoryFiltering(memories, selectedType);
-
-  useEffect(() => {
-    // Update local notes if sessionData changes from elsewhere (e.g., initial load)
-    setLocalSessionNotes(sessionData?.session_notes || '');
-  }, [sessionData?.session_notes]);
 
   const handleSaveNotes = () => {
     if (sessionData) {

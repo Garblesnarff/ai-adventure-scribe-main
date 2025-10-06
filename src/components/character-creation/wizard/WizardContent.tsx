@@ -11,6 +11,7 @@ import CharacterPreview from '../shared/CharacterPreview';
 import { WizardStep } from './types';
 import { wizardSteps } from './constants';
 import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
+import logger from '@/lib/logger';
 
 /**
  * Main content component for the character creation wizard
@@ -143,29 +144,29 @@ const WizardContent: React.FC = () => {
 
       // Spells - Validate spell selection for spellcasters
       case 'Spells': {
-        console.log('🔮 Validating Spells step for character:', character.name, character.class?.name);
+        logger.info('🔮 Validating Spells step for character:', character.name, character.class?.name);
 
         if (character.class?.spellcasting) {
-          console.log('📚 Character is a spellcaster, checking spell requirements...');
+          logger.debug('📚 Character is a spellcaster, checking spell requirements...');
           const spellcastingInfo = getSpellcastingInfo(character.class, character.level || 1);
-          console.log('📊 Spellcasting info:', spellcastingInfo);
+          logger.debug('📊 Spellcasting info:', spellcastingInfo);
 
           if (spellcastingInfo) {
             // Get racial spell bonuses
             const racialSpells = getRacialSpells(character.race?.name || '', character.subrace);
-            console.log('🧬 Racial spells:', racialSpells);
+            logger.debug('🧬 Racial spells:', racialSpells);
 
             // Check cantrips if class learns them (relaxed validation)
             if (spellcastingInfo.cantripsKnown > 0) {
               const expectedCantrips = spellcastingInfo.cantripsKnown + racialSpells.cantrips.length + racialSpells.bonusCantrips;
               const cantripCount = character.cantrips?.length || 0;
-              console.log(`✨ Cantrips - Expected: ${expectedCantrips}, Current: ${cantripCount}`);
-              console.log('✨ Current cantrips:', character.cantrips);
+              logger.debug(`✨ Cantrips - Expected: ${expectedCantrips}, Current: ${cantripCount}`);
+              logger.debug('✨ Current cantrips:', character.cantrips);
 
               // Relaxed validation: Allow proceeding with partial spell selection
               // Users can complete spell selection later or during gameplay
               if (cantripCount < expectedCantrips) {
-                console.log('⚠️ Not all cantrips selected, but allowing continuation');
+                logger.warn('⚠️ Not all cantrips selected, but allowing continuation');
                 // Could show a warning toast here instead of blocking
               }
             }
@@ -173,22 +174,22 @@ const WizardContent: React.FC = () => {
             // Check spells if class learns them (relaxed validation)
             if (spellcastingInfo.spellsKnown && spellcastingInfo.spellsKnown > 0) {
               const spellCount = character.knownSpells?.length || 0;
-              console.log(`🪄 Spells - Expected: ${spellcastingInfo.spellsKnown}, Current: ${spellCount}`);
-              console.log('🪄 Current spells:', character.knownSpells);
+              logger.debug(`🪄 Spells - Expected: ${spellcastingInfo.spellsKnown}, Current: ${spellCount}`);
+              logger.debug('🪄 Current spells:', character.knownSpells);
 
               // Relaxed validation: Allow proceeding with partial spell selection
               if (spellCount < spellcastingInfo.spellsKnown) {
-                console.log('⚠️ Not all spells selected, but allowing continuation');
+                logger.warn('⚠️ Not all spells selected, but allowing continuation');
                 // Could show a warning toast here instead of blocking
               }
             }
 
-            console.log('✅ All spell requirements met');
+            logger.info('✅ All spell requirements met');
           } else {
-            console.log('⚠️ No spellcasting info found for class');
+            logger.warn('⚠️ No spellcasting info found for class');
           }
         } else {
-          console.log('🚫 Character is not a spellcaster, skipping spell validation');
+          logger.info('🚫 Character is not a spellcaster, skipping spell validation');
         }
         break;
       }
@@ -301,15 +302,15 @@ const WizardContent: React.FC = () => {
    * @returns {Promise<void>}
    */
   const handleNext = async () => {
-    console.log('handleNext called at step:', currentStep);
-    console.log('Current step info:', filteredSteps[currentStep]);
+    logger.debug('handleNext called at step:', currentStep);
+    logger.debug('Current step info:', filteredSteps[currentStep]);
 
     // Enhanced error boundary for navigation
     try {
       if (currentStep < filteredSteps.length - 1) {
         // Validate current step before proceeding
         const validation = validateCurrentStep(currentStep);
-        console.log('Step validation result:', validation);
+        logger.debug('Step validation result:', validation);
 
         if (!validation.isValid) {
           // Show a gentler warning for spell-related validation
@@ -333,13 +334,13 @@ const WizardContent: React.FC = () => {
 
         // Find the next valid step (accounting for filtered steps)
         const nextStepIndex = currentStep + 1;
-        console.log('Navigating to next step:', nextStepIndex);
+        logger.info('Navigating to next step:', nextStepIndex);
 
         // Enhanced safety check: ensure the next step exists in filtered steps
         if (nextStepIndex < filteredSteps.length && filteredSteps[nextStepIndex]) {
           setCurrentStep(nextStepIndex);
         } else {
-          console.error('Next step does not exist in filtered steps:', nextStepIndex, filteredSteps.length);
+          logger.error('Next step does not exist in filtered steps:', nextStepIndex, filteredSteps.length);
           toast({
             title: "Navigation Error",
             description: "Unable to navigate to the next step. The wizard may need to be restarted.",
@@ -352,11 +353,11 @@ const WizardContent: React.FC = () => {
           }
         }
       } else {
-        console.log('Final step - attempting to save character');
+        logger.info('Final step - attempting to save character');
 
         // Enhanced character existence check
         if (!state.character) {
-          console.error('No character data to save');
+          logger.error('No character data to save');
           toast({
             title: "No Character Data",
             description: "Character data appears to be missing. Please restart the character creation process.",
@@ -366,9 +367,9 @@ const WizardContent: React.FC = () => {
         }
 
         // Enhanced validation with detailed feedback
-        console.log('Character data for save:', state.character);
+        logger.debug('Character data for save:', state.character);
         const isValid = validateCharacter();
-        console.log('Character validation result:', isValid);
+        logger.debug('Character validation result:', isValid);
 
         if (!isValid) {
           // Check for critical missing fields
@@ -397,19 +398,19 @@ const WizardContent: React.FC = () => {
 
         // Enhanced save with better error handling
         try {
-          console.log('Calling saveCharacter...');
+          logger.info('Calling saveCharacter...');
           const savedCharacter = await saveCharacter(state.character);
-          console.log('Save result:', savedCharacter);
+          logger.debug('Save result:', savedCharacter);
 
           if (savedCharacter?.id) {
-            console.log('Character saved successfully, navigating to /characters');
+            logger.info('Character saved successfully, navigating to /characters');
             toast({
               title: "Success!",
               description: "Character created successfully! Background image generation may continue in the background.",
             });
             navigate('/app/characters');
           } else {
-            console.error('Save succeeded but no ID returned');
+            logger.error('Save succeeded but no ID returned');
             toast({
               title: "Partial Save Success",
               description: "Character was saved but some data may be incomplete. Please check your characters list and edit if needed.",
@@ -419,7 +420,7 @@ const WizardContent: React.FC = () => {
             navigate('/characters');
           }
         } catch (error) {
-          console.error('Error saving character:', error);
+          logger.error('Error saving character:', error);
 
           // Enhanced error message with recovery suggestions
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -438,7 +439,7 @@ const WizardContent: React.FC = () => {
       }
     } catch (unexpectedError) {
       // Catch-all error handler for any unexpected errors in navigation
-      console.error('Unexpected error in handleNext:', unexpectedError);
+      logger.error('Unexpected error in handleNext:', unexpectedError);
       toast({
         title: "Unexpected Error",
         description: "An unexpected error occurred during navigation. Please refresh the page and try again.",

@@ -5,6 +5,7 @@
  * This is needed because the frontend uses local spell data with kebab-case IDs,
  * but the database uses UUIDs for spell references.
  */
+import logger from '@/lib/logger';
 
 // Mapping from kebab-case IDs (frontend) to database UUIDs
 export const SPELL_ID_MAPPING: Record<string, string> = {
@@ -89,7 +90,7 @@ export function convertSpellIdsToDatabase(spellIds: string[]): string[] {
     .map(kebabId => {
       const uuid = SPELL_ID_MAPPING[kebabId];
       if (!uuid) {
-        console.warn(`No database mapping found for spell ID: ${kebabId}`);
+        logger.warn(`No database mapping found for spell ID: ${kebabId}`);
         return null;
       }
       return uuid;
@@ -107,7 +108,7 @@ export function convertSpellIdsToFrontend(uuids: string[]): string[] {
     .map(uuid => {
       const kebabId = REVERSE_SPELL_ID_MAPPING[uuid];
       if (!kebabId) {
-        console.warn(`No frontend mapping found for spell UUID: ${uuid}`);
+        logger.warn(`No frontend mapping found for spell UUID: ${uuid}`);
         return null;
       }
       return kebabId;

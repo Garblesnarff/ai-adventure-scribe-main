@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -32,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Error getting session:', error);
+        logger.error('Error getting session:', error);
       } else {
         setSession(session);
         setUser(session?.user ?? null);
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session);
+        logger.info('Auth state changed:', { event, hasSession: !!session });
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -76,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
     }
   };
 

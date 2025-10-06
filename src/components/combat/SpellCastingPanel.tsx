@@ -30,6 +30,7 @@ import {
 import { Spell } from '@/types/character';
 import { spellApi } from '@/services/spellApi';
 import { consumeMaterialComponents } from '@/utils/spellComponents';
+import logger from '@/lib/logger';
 
 // ===========================
 // Props Interface
@@ -60,7 +61,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
       spellApi.getSpellByName(selectedSpellName)
         .then(spell => setSelectedSpell(spell))
         .catch(error => {
-          console.error('Failed to fetch spell:', error);
+          logger.error('Failed to fetch spell:', error);
           setSelectedSpell(null);
         })
         .finally(() => setIsLoadingSpell(false));

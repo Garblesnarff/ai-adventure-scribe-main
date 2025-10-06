@@ -7,9 +7,10 @@
  * @author AI Dungeon Master Team
  */
 
-import { Spell } from '@/types/character';
+import { Spell, Character } from '@/types/character';
 import { allSpells } from '@/data/spellOptions';
 import { REVERSE_SPELL_ID_MAPPING } from './spell-id-mapping';
+import logger from '@/lib/logger';
 
 /**
  * Interface for character spell data
@@ -41,7 +42,7 @@ export function getSpellById(spellId: string, createFallback: boolean = true): S
     }
 
     // Log missing spells for debugging
-    console.warn(`[SpellLookup] Spell not found: ${spellId}`, {
+    logger.warn(`[SpellLookup] Spell not found: ${spellId}`, {
       directLookup: !!spell,
       uuidMapping: kebabId,
       availableSpellCount: allSpells?.length || 0,
@@ -55,7 +56,7 @@ export function getSpellById(spellId: string, createFallback: boolean = true): S
 
     return null;
   } catch (error) {
-    console.error(`[SpellLookup] Error looking up spell ${spellId}:`, error);
+    logger.error(`[SpellLookup] Error looking up spell ${spellId}:`, error);
 
     // Return fallback spell on error if requested
     if (createFallback) {
@@ -74,7 +75,7 @@ export function getSpellById(spellId: string, createFallback: boolean = true): S
  */
 export function getSpellsByIds(spellIds: string[], createFallback: boolean = true): Spell[] {
   if (!Array.isArray(spellIds) || spellIds.length === 0) {
-    console.warn('[SpellLookup] Invalid or empty spellIds array provided');
+    logger.warn('[SpellLookup] Invalid or empty spellIds array provided');
     return [];
   }
 
@@ -92,19 +93,19 @@ export function getSpellsByIds(spellIds: string[], createFallback: boolean = tru
       const foundIds = spells.map(s => s.id);
       const missingIds = spellIds.filter(id => id && typeof id === 'string' && !foundIds.includes(id));
 
-      console.log(`[SpellLookup] Found ${foundCount}/${validIdCount} spells`, {
+      logger.info(`[SpellLookup] Found ${foundCount}/${validIdCount} spells`, {
         requested: spellIds,
         found: foundIds,
         missing: missingIds,
         createFallback
       });
     } else {
-      console.log(`[SpellLookup] Successfully found all ${foundCount} spells`);
+      logger.info(`[SpellLookup] Successfully found all ${foundCount} spells`);
     }
 
     return spells;
   } catch (error) {
-    console.error('[SpellLookup] Error in getSpellsByIds:', error);
+    logger.error('[SpellLookup] Error in getSpellsByIds:', error);
     return [];
   }
 }
@@ -121,9 +122,11 @@ export function getCharacterSpells(character: any): {
   ritualSpells: CharacterSpellDisplay[];
   allSpells: CharacterSpellDisplay[];
 } {
+  type CharacterWithSpells = Pick<Character, 'name' | 'cantrips' | 'knownSpells' | 'preparedSpells' | 'ritualSpells'>;
+  const c = character as CharacterWithSpells | null;
   // Validate character input
-  if (!character || typeof character !== 'object') {
-    console.warn('[SpellLookup] Invalid character object provided');
+  if (!c || typeof c !== 'object') {
+    logger.warn('[SpellLookup] Invalid character object provided');
     return {
       cantrips: [],
       knownSpells: [],
@@ -134,32 +137,32 @@ export function getCharacterSpells(character: any): {
   }
 
   try {
-    console.log('🔍 [SpellLookup] Processing character spells:', {
-      cantrips: character?.cantrips?.length || 0,
-      knownSpells: character?.knownSpells?.length || 0,
-      preparedSpells: character?.preparedSpells?.length || 0,
-      ritualSpells: character?.ritualSpells?.length || 0,
-      characterName: character?.name || 'Unknown'
+    logger.info('[SpellLookup] Processing character spells:', {
+      cantrips: c?.cantrips?.length || 0,
+      knownSpells: c?.knownSpells?.length || 0,
+      preparedSpells: c?.preparedSpells?.length || 0,
+      ritualSpells: c?.ritualSpells?.length || 0,
+      characterName: c?.name || 'Unknown'
     });
 
     // Get spells from each category with error handling
-    const cantrips = getSpellsByIds(character?.cantrips || [], true).map(spell => ({
+    const cantrips = getSpellsByIds(c?.cantrips || [], true).map(spell => ({
       ...spell,
       source_feature: 'Class Cantrips'
     }));
 
-    const knownSpells = getSpellsByIds(character?.knownSpells || [], true).map(spell => ({
+    const knownSpells = getSpellsByIds(c?.knownSpells || [], true).map(spell => ({
       ...spell,
       source_feature: 'Known Spells'
     }));
 
-    const preparedSpells = getSpellsByIds(character?.preparedSpells || [], true).map(spell => ({
+    const preparedSpells = getSpellsByIds(c?.preparedSpells || [], true).map(spell => ({
       ...spell,
       is_prepared: true,
       source_feature: 'Prepared Spells'
     }));
 
-    const ritualSpells = getSpellsByIds(character?.ritualSpells || [], true).map(spell => ({
+    const ritualSpells = getSpellsByIds(c?.ritualSpells || [], true).map(spell => ({
       ...spell,
       source_feature: 'Ritual Spells'
     }));
@@ -169,7 +172,7 @@ export function getCharacterSpells(character: any): {
 
     [...cantrips, ...knownSpells, ...preparedSpells, ...ritualSpells].forEach(spell => {
       if (!spell?.id) {
-        console.warn('[SpellLookup] Skipping spell without valid ID:', spell);
+        logger.warn('[SpellLookup] Skipping spell without valid ID:', spell);
         return;
       }
 
@@ -192,7 +195,7 @@ export function getCharacterSpells(character: any): {
 
     const allSpells = Array.from(allSpellsMap.values());
 
-    console.log('✨ [SpellLookup] Character spells processed:', {
+    logger.info('[SpellLookup] Character spells processed:', {
       cantripsFound: cantrips.length,
       knownSpellsFound: knownSpells.length,
       preparedSpellsFound: preparedSpells.length,
@@ -209,7 +212,7 @@ export function getCharacterSpells(character: any): {
       allSpells
     };
   } catch (error) {
-    console.error('[SpellLookup] Error processing character spells:', error);
+    logger.error('[SpellLookup] Error processing character spells:', error);
 
     // Return empty arrays on error
     return {

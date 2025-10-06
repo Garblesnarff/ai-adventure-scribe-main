@@ -34,21 +34,7 @@ const FeatSelection: React.FC = () => {
   const currentLevel = character?.level || 1;
   const canChooseFeat = [4, 8, 12, 16, 19].includes(currentLevel);
 
-  // If not at a feat-eligible level, don't show this step
-  if (!canChooseFeat) {
-    return (
-      <div className="text-center space-y-4">
-        <Award className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">No Feat Selection</h2>
-        <p className="text-muted-foreground">
-          Feats become available at levels 4, 8, 12, 16, and 19.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Your character is currently level {currentLevel}.
-        </p>
-      </div>
-    );
-  }
+  // Note: No early returns before hooks to satisfy rules-of-hooks
 
   /**
    * Handle ASI (Ability Score Improvement) selection
@@ -226,6 +212,18 @@ const FeatSelection: React.FC = () => {
   );
 
   return (
+    !canChooseFeat ? (
+      <div className="text-center space-y-4">
+        <Award className="w-16 h-16 mx-auto text-muted-foreground" />
+        <h2 className="text-2xl font-bold">No Feat Selection</h2>
+        <p className="text-muted-foreground">
+          Feats become available at levels 4, 8, 12, 16, and 19.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Your character is currently level {currentLevel}.
+        </p>
+      </div>
+    ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Ability Score Improvement</h2>
@@ -375,6 +373,7 @@ const FeatSelection: React.FC = () => {
         </Button>
       </div>
     </div>
+    )
   );
 };
 

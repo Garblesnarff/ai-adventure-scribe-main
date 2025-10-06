@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage, MessageContext } from '@/types/game';
+import logger from '@/lib/logger';
 
 /**
  * Custom hook for fetching and managing game messages
@@ -22,7 +23,7 @@ export const useMessages = (sessionId: string | null) => {
         .order('timestamp', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        logger.error('Error fetching messages:', error);
         return [];
       }
 
@@ -78,14 +79,14 @@ export const useMessages = (sessionId: string | null) => {
         });
 
       if (error) {
-        console.error('Error adding message:', error);
+        logger.error('Error adding message:', error);
         throw error;
       }
 
       // Invalidate and refetch messages
       await queryClient.invalidateQueries({ queryKey: ['messages', sessionId] });
     } catch (error) {
-      console.error('Failed to add message:', error);
+      logger.error('Failed to add message:', error);
       throw error;
     }
   };

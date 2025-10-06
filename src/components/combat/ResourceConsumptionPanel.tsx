@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useCombat } from '@/contexts/CombatContext';
 import { CombatParticipant } from '@/types/combat';
 import { Zap, Heart, Shield } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface ResourceConsumptionPanelProps {
   participant: CombatParticipant;
@@ -39,7 +40,7 @@ const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({ par
 
     let actionType = 'use_class_feature';
     let description = `${participant.name} uses ${selectedResource}`;
-    let resourceCost = parseInt(resourceAmount) || 1;
+    const resourceCost = parseInt(resourceAmount) || 1;
 
     switch (selectedResource) {
       case 'spell-slot':
@@ -88,7 +89,7 @@ const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({ par
       await takeAction(action);
       onClose();
     } catch (error) {
-      console.error('Error consuming resource:', error);
+      logger.error('Error consuming resource:', error);
     }
   };
 

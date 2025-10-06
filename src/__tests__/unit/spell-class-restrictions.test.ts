@@ -187,17 +187,18 @@ describe('Spell Class Restriction Enforcement', () => {
     it('should prevent bards from selecting class-specific spells they cannot learn', async () => {
       const bardCharacter = createMockCharacter('Test Bard', mockBard, mockHuman);
 
-      // Bards have access to many spells but not class-specific ones like Magic Missile or Cure Wounds
+      // Bards cannot learn certain arcane/divine spells like Magic Missile or Shield at 1st level
       vi.mocked(spellApi.validateSpellForClass).mockImplementation(async (spellId, className) => {
-        const restrictedSpells = ['magic-missile', 'cure-wounds', 'eldritch-blast'];
+        const restrictedSpells = ['magic-missile', 'shield', 'guiding-bolt', 'inflict-wounds'];
         if (className === 'Bard' && restrictedSpells.includes(spellId)) {
           return { valid: false, error: `${className} cannot learn ${spellId}` };
         }
         return { valid: true };
       });
 
-      const cantrips = ['prestidigitation', 'minor-illusion'];
-      const invalidSpells = ['charm-person', 'thunderwave', 'cure-wounds', 'healing-word']; // cure-wounds not on bard list
+      // Use bard cantrips that are actually on the bard list
+      const cantrips = ['friends', 'vicious-mockery'];
+      const invalidSpells = ['magic-missile', 'shield', 'guiding-bolt', 'inflict-wounds'];
 
       const result = validateSpellSelection(bardCharacter, cantrips, invalidSpells);
 
@@ -205,7 +206,7 @@ describe('Spell Class Restriction Enforcement', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'INVALID_SPELL',
-          spellId: 'cure-wounds'
+          spellId: 'magic-missile'
         })
       );
     });
@@ -326,20 +327,19 @@ describe('Spell Class Restriction Enforcement', () => {
       }
     });
 
-    it('should maintain validation even with network failures', async () => {
+    it('should maintain local validation even with network failures', async () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       // Mock API to throw network error
       vi.mocked(spellApi.validateSpellForClass).mockRejectedValue(new Error('Network error'));
 
+      // Provide fully valid wizard selections; network failure must not affect local validation
       const cantrips = ['mage-hand', 'prestidigitation', 'light'];
-      const spells = ['magic-missile', 'shield', 'cure-wounds'];
+      const spells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
 
       const result = validateSpellSelection(wizardCharacter, cantrips, spells);
 
-      // Should still validate basic requirements
-      expect(result.valid).toBe(true); // Basic validation passes (API placeholder)
-      // Note: In production, this would need proper error handling
+      expect(result.valid).toBe(true);
     });
 
     it('should prevent empty or null spell selections from bypassing validation', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSpellSelection } from '../useSpellSelection';
 import { Character, CharacterClass, CharacterRace, Subrace } from '@/types/character';
 import { spellApi } from '@/services/spellApi';
@@ -36,33 +36,40 @@ vi.mock('@/services/spellApi', () => ({
   }
 }));
 
+// Mock character spell service to avoid real network/auth
+vi.mock('@/services/characterSpellApi', () => ({
+  characterSpellService: {
+    saveCharacterSpells: vi.fn().mockResolvedValue({ success: true, message: 'Saved' })
+  }
+}));
+
 // Mock spell data
 const mockSpellData = {
   Wizard: {
     cantrips: [
-      { id: 'mage-hand', name: 'Mage Hand', level: 0, school: 'Conjuration', verbal: true, somatic: true },
-      { id: 'prestidigitation', name: 'Prestidigitation', level: 0, school: 'Transmutation', verbal: true, somatic: true },
-      { id: 'light', name: 'Light', level: 0, school: 'Evocation', verbal: true, material: true },
-      { id: 'minor-illusion', name: 'Minor Illusion', level: 0, school: 'Illusion', somatic: true, material: true }
+      { id: 'mage-hand', name: 'Mage Hand', level: 0, school: 'Conjuration', description: 'A spectral hand.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+      { id: 'prestidigitation', name: 'Prestidigitation', level: 0, school: 'Transmutation', description: 'Minor magical tricks.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+      { id: 'light', name: 'Light', level: 0, school: 'Evocation', description: 'Create light.', verbal: true, somatic: false, material: true, components_verbal: true, components_somatic: false, components_material: true, ritual: false, concentration: false },
+      { id: 'minor-illusion', name: 'Minor Illusion', level: 0, school: 'Illusion', description: 'Create a sound or visual effect.', verbal: false, somatic: true, material: true, components_verbal: false, components_somatic: true, components_material: true, ritual: false, concentration: false }
     ],
     spells: [
-      { id: 'magic-missile', name: 'Magic Missile', level: 1, school: 'Evocation', verbal: true, somatic: true },
-      { id: 'shield', name: 'Shield', level: 1, school: 'Abjuration', verbal: true, somatic: true },
-      { id: 'detect-magic', name: 'Detect Magic', level: 1, school: 'Divination', verbal: true, somatic: true, ritual: true },
-      { id: 'burning-hands', name: 'Burning Hands', level: 1, school: 'Evocation', verbal: true, somatic: true, damage: '3d6' },
-      { id: 'sleep', name: 'Sleep', level: 1, school: 'Enchantment', verbal: true, somatic: true, material: true },
-      { id: 'color-spray', name: 'Color Spray', level: 1, school: 'Illusion', verbal: true, somatic: true, material: true }
+      { id: 'magic-missile', name: 'Magic Missile', level: 1, school: 'Evocation', description: 'Force darts.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+      { id: 'shield', name: 'Shield', level: 1, school: 'Abjuration', description: 'Magical barrier.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+      { id: 'detect-magic', name: 'Detect Magic', level: 1, school: 'Divination', description: 'Sense magic.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: true, concentration: false },
+      { id: 'burning-hands', name: 'Burning Hands', level: 1, school: 'Evocation', description: 'Cone of fire.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false, damage: '3d6' },
+      { id: 'sleep', name: 'Sleep', level: 1, school: 'Enchantment', description: 'Put creatures to sleep.', verbal: true, somatic: true, material: true, components_verbal: true, components_somatic: true, components_material: true, ritual: false, concentration: false },
+      { id: 'color-spray', name: 'Color Spray', level: 1, school: 'Illusion', description: 'Dazzling colors.', verbal: true, somatic: true, material: true, components_verbal: true, components_somatic: true, components_material: true, ritual: false, concentration: false }
     ]
   },
       Cleric: {
         cantrips: [
-          { id: 'guidance', name: 'Guidance', level: 0, school: 'Divination', verbal: true, somatic: true },
-          { id: 'sacred-flame', name: 'Sacred Flame', level: 0, school: 'Evocation', verbal: true, somatic: true },
-          { id: 'thaumaturgy', name: 'Thaumaturgy', level: 0, school: 'Transmutation', verbal: true }
+          { id: 'guidance', name: 'Guidance', level: 0, school: 'Divination', description: 'Add d4.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+          { id: 'sacred-flame', name: 'Sacred Flame', level: 0, school: 'Evocation', description: 'Radiant fire.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+          { id: 'thaumaturgy', name: 'Thaumaturgy', level: 0, school: 'Transmutation', description: 'Minor wonder.', verbal: true, somatic: false, material: false, components_verbal: true, components_somatic: false, components_material: false, ritual: false, concentration: false }
         ],
         spells: [
-          { id: 'cure-wounds', name: 'Cure Wounds', level: 1, school: 'Evocation', verbal: true, somatic: true },
-          { id: 'bless', name: 'Bless', level: 1, school: 'Enchantment', verbal: true, somatic: true, material: true }
+          { id: 'cure-wounds', name: 'Cure Wounds', level: 1, school: 'Evocation', description: 'Healing touch.', verbal: true, somatic: true, material: false, components_verbal: true, components_somatic: true, components_material: false, ritual: false, concentration: false },
+          { id: 'bless', name: 'Bless', level: 1, school: 'Enchantment', description: 'Buff allies.', verbal: true, somatic: true, material: true, components_verbal: true, components_somatic: true, components_material: true, ritual: false, concentration: false }
         ]
       },
       Fighter: {
@@ -192,7 +199,7 @@ describe('useSpellSelection Hook', () => {
       expect(result.current.availableSpells).toEqual([]);
     });
 
-    it('should initialize with wizard character', () => {
+    it('should initialize with wizard character', async () => {
       const wizardCharacter: Character = {
         id: '1',
         name: 'Test Wizard',
@@ -224,8 +231,8 @@ describe('useSpellSelection Hook', () => {
         ritualCasting: true,
         spellcastingAbility: 'intelligence'
       });
-      expect(result.current.availableCantrips).toHaveLength(4);
-      expect(result.current.availableSpells).toHaveLength(6);
+      await waitFor(() => expect(result.current.availableCantrips).toHaveLength(4));
+      await waitFor(() => expect(result.current.availableSpells).toHaveLength(6));
     });
 
     it('should initialize with existing spell selections', () => {
@@ -455,25 +462,27 @@ describe('useSpellSelection Hook', () => {
       };
     });
 
-    it('should filter spells by search term', () => {
+    it('should filter spells by search term', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
 
+      await waitFor(() => expect(result.current.availableCantrips.length + result.current.availableSpells.length).toBeGreaterThan(0));
       act(() => {
         result.current.setSearchTerm('mage');
       });
 
       expect(result.current.searchTerm).toBe('mage');
-      expect(result.current.filteredCantrips).toHaveLength(1);
+      await waitFor(() => expect(result.current.filteredCantrips).toHaveLength(1));
       expect(result.current.filteredCantrips[0].id).toBe('mage-hand');
     });
 
-    it('should filter spells by school', () => {
+    it('should filter spells by school', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
 
+      await waitFor(() => expect(result.current.availableCantrips.length + result.current.availableSpells.length).toBeGreaterThan(0));
       act(() => {
         result.current.setFilters({
           schools: ['Evocation'],
@@ -497,11 +506,12 @@ describe('useSpellSelection Hook', () => {
       expect(evocationSpells.length).toBeGreaterThan(0);
     });
 
-    it('should filter spells by components', () => {
+    it('should filter spells by components', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
 
+      await waitFor(() => expect(result.current.availableCantrips.length + result.current.availableSpells.length).toBeGreaterThan(0));
       act(() => {
         result.current.setFilters({
           schools: [],
@@ -527,11 +537,12 @@ describe('useSpellSelection Hook', () => {
       });
     });
 
-    it('should filter spells by properties', () => {
+    it('should filter spells by properties', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
 
+      await waitFor(() => expect(result.current.availableSpells.length).toBeGreaterThan(0));
       act(() => {
         result.current.setFilters({
           schools: [],
@@ -553,11 +564,12 @@ describe('useSpellSelection Hook', () => {
       });
     });
 
-    it('should combine multiple filters', () => {
+    it('should combine multiple filters', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
 
+      await waitFor(() => expect(result.current.availableSpells.length).toBeGreaterThan(0));
       act(() => {
         result.current.setSearchTerm('magic');
         result.current.setFilters({
@@ -606,11 +618,12 @@ describe('useSpellSelection Hook', () => {
       };
     });
 
-    it('should validate complete spell selection', () => {
+    it('should validate complete spell selection', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
 
+      await waitFor(() => expect(result.current.availableSpells.length).toBeGreaterThan(0));
       // Select correct number of cantrips and spells
       act(() => {
         result.current.toggleCantrip('mage-hand');
@@ -625,12 +638,12 @@ describe('useSpellSelection Hook', () => {
         result.current.toggleSpell('color-spray');
       });
 
-      expect(result.current.validation.valid).toBe(true);
+      await waitFor(() => expect(result.current.validation.valid).toBe(true));
       expect(result.current.canProceed).toBe(true);
       expect(result.current.validation.errors).toHaveLength(0);
     });
 
-    it('should invalidate incomplete spell selection', () => {
+    it('should invalidate incomplete spell selection', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
@@ -641,12 +654,12 @@ describe('useSpellSelection Hook', () => {
         result.current.toggleSpell('magic-missile');
       });
 
+      await waitFor(() => expect(result.current.canProceed).toBe(false));
       expect(result.current.validation.valid).toBe(false);
-      expect(result.current.canProceed).toBe(false);
       expect(result.current.validation.errors.length).toBeGreaterThan(0);
     });
 
-    it('should provide helpful warnings', () => {
+    it('should provide helpful warnings', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
@@ -665,7 +678,7 @@ describe('useSpellSelection Hook', () => {
         result.current.toggleSpell('color-spray');
       });
 
-      expect(result.current.validation.warnings.length).toBeGreaterThan(0);
+      await waitFor(() => expect(result.current.validation.warnings.length).toBeGreaterThan(0));
       expect(result.current.validation.warnings.some(warning =>
         warning.includes('spellbook')
       )).toBe(true);
@@ -693,7 +706,7 @@ describe('useSpellSelection Hook', () => {
       };
     });
 
-    it('should update character with valid spell selection', () => {
+    it('should update character with valid spell selection', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
@@ -712,9 +725,9 @@ describe('useSpellSelection Hook', () => {
         result.current.toggleSpell('color-spray');
       });
 
-      act(() => {
-        result.current.updateCharacterSpells();
-      });
+      await waitFor(() => expect(result.current.validation.valid).toBe(true));
+      mockCharacterContext.dispatch.mockClear();
+      await result.current.updateCharacterSpells();
 
       expect(mockCharacterContext.dispatch).toHaveBeenCalledWith({
         type: 'UPDATE_CHARACTER',
@@ -725,7 +738,7 @@ describe('useSpellSelection Hook', () => {
       });
     });
 
-    it('should not update character with invalid spell selection', () => {
+    it('should not update character with invalid spell selection', async () => {
       const { result } = renderHook(() => useSpellSelection(), {
         wrapper: createWrapper(wizardCharacter)
       });
@@ -735,9 +748,9 @@ describe('useSpellSelection Hook', () => {
         result.current.toggleCantrip('mage-hand');
       });
 
-      act(() => {
-        result.current.updateCharacterSpells();
-      });
+      await waitFor(() => expect(result.current.validation.valid).toBe(false));
+      mockCharacterContext.dispatch.mockClear();
+      await result.current.updateCharacterSpells();
 
       expect(mockCharacterContext.dispatch).not.toHaveBeenCalled();
     });

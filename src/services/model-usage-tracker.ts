@@ -7,6 +7,8 @@
  * @author AI Dungeon Master Team
  */
 
+import logger from '@/lib/logger';
+
 interface ModelUsage {
   modelId: string;
   dailyLimit: number;
@@ -56,7 +58,7 @@ export class ModelUsageTracker {
     usage.usageCount++;
     this.saveUsageData();
     
-    console.log(`Model usage recorded for ${modelId}: ${usage.usageCount}/${usage.dailyLimit}`);
+    logger.info(`Model usage recorded for ${modelId}: ${usage.usageCount}/${usage.dailyLimit}`);
     return usage.usageCount;
   }
 
@@ -99,7 +101,7 @@ export class ModelUsageTracker {
       this.usageData[modelId].usageCount = 0;
       this.usageData[modelId].lastResetDate = this.getTodayString();
       this.saveUsageData();
-      console.log(`Usage reset for model: ${modelId}`);
+      logger.info(`Usage reset for model: ${modelId}`);
     }
   }
 
@@ -142,7 +144,7 @@ export class ModelUsageTracker {
         this.usageData = JSON.parse(stored);
       }
     } catch (error) {
-      console.warn('Failed to load usage data from localStorage:', error);
+      logger.warn('Failed to load usage data from localStorage:', error);
       this.usageData = {};
     }
   }
@@ -154,7 +156,7 @@ export class ModelUsageTracker {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.usageData));
     } catch (error) {
-      console.error('Failed to save usage data to localStorage:', error);
+      logger.error('Failed to save usage data to localStorage:', error);
     }
   }
 
@@ -171,7 +173,7 @@ export class ModelUsageTracker {
         usage.usageCount = 0;
         usage.lastResetDate = today;
         hasChanges = true;
-        console.log(`Daily usage reset for model: ${modelId}`);
+        logger.info(`Daily usage reset for model: ${modelId}`);
       }
     }
 

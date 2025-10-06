@@ -15,6 +15,7 @@
  */
 
 import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
+import logger from '@/lib/logger';
 import { DiceRollRequest, DiceRollQueue, DiceRollRequestType } from '@/types/combat';
 import { useCombat } from '@/contexts/CombatContext';
 import { v4 as uuidv4 } from 'uuid';
@@ -108,7 +109,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentPhase: action.payload
       };
 
-    case 'ADD_DICE_ROLL_REQUEST':
+    case 'ADD_DICE_ROLL_REQUEST': {
       // Check for duplicates based on type, purpose, and participant
       const isDuplicate = state.diceRollQueue.pendingRolls.some(roll =>
         roll.requestType === action.payload.requestType &&
@@ -118,7 +119,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       );
 
       if (isDuplicate) {
-        console.log('🎲 Duplicate dice roll request detected, ignoring:', action.payload);
+        logger.info('🎲 Duplicate dice roll request detected, ignoring:', action.payload);
         return state;
       }
 
@@ -130,8 +131,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           currentRollId: state.diceRollQueue.currentRollId || action.payload.id
         }
       };
+    }
 
-    case 'COMPLETE_DICE_ROLL':
+    case 'COMPLETE_DICE_ROLL': {
       const completedRolls = state.diceRollQueue.pendingRolls.map(roll =>
         roll.id === action.payload.id
           ? { ...roll, status: 'completed' as const, result: action.payload.result }
@@ -151,8 +153,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           isProcessingRoll: false
         }
       };
+    }
 
-    case 'CANCEL_DICE_ROLL':
+    case 'CANCEL_DICE_ROLL': {
       const cancelledRolls = state.diceRollQueue.pendingRolls.map(roll =>
         roll.id === action.payload
           ? { ...roll, status: 'cancelled' as const }
@@ -171,6 +174,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           isProcessingRoll: false
         }
       };
+    }
 
     case 'CLEAR_DICE_ROLL_QUEUE':
       return {
@@ -265,7 +269,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       status: 'pending'
     };
 
-    console.log('🎲 Requesting dice roll:', rollRequest);
+    logger.info('🎲 Requesting dice roll:', rollRequest);
     dispatch({ type: 'ADD_DICE_ROLL_REQUEST', payload: rollRequest });
 
     return rollRequest.id;
@@ -275,7 +279,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Complete a dice roll with the result
    */
   const completeDiceRoll = useCallback((rollId: string, result: any) => {
-    console.log('🎯 Completing dice roll:', rollId, result);
+    logger.info('🎯 Completing dice roll:', rollId, result);
     dispatch({ type: 'COMPLETE_DICE_ROLL', payload: { id: rollId, result } });
   }, []);
 
@@ -283,7 +287,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Cancel a pending dice roll
    */
   const cancelDiceRoll = useCallback((rollId: string) => {
-    console.log('❌ Cancelling dice roll:', rollId);
+    logger.info('❌ Cancelling dice roll:', rollId);
     dispatch({ type: 'CANCEL_DICE_ROLL', payload: rollId });
   }, []);
 
@@ -302,7 +306,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Set the current game phase
    */
   const setGamePhase = useCallback((phase: GamePhase) => {
-    console.log('🎮 Setting game phase:', phase);
+    logger.info('🎮 Setting game phase:', phase);
     dispatch({ type: 'SET_PHASE', payload: phase });
   }, []);
 
@@ -310,7 +314,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Process AI response and extract dice roll requests with deduplication
    */
   const processAiResponse = useCallback((rollRequests: any[]) => {
-    console.log('🤖 Processing AI response with roll requests:', rollRequests);
+    logger.info('🤖 Processing AI response with roll requests:', rollRequests);
 
     if (!rollRequests || !Array.isArray(rollRequests)) return;
 
@@ -342,7 +346,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           status: 'pending'
         });
       } catch (error) {
-        console.warn('Failed to process roll request:', request, error);
+        logger.warn('Failed to process roll request:', request, error);
       }
     });
 
@@ -405,7 +409,7 @@ function parseRollFormula(formula?: string): Partial<DiceRollRequest['rollConfig
       modifier: modifierStr ? parseInt(modifierStr) : 0
     };
   } catch (error) {
-    console.warn('Failed to parse roll formula:', formula, error);
+    logger.warn('Failed to parse roll formula:', formula, error);
     return {};
   }
 }

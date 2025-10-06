@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import logger from '@/lib/logger';
 import { ChatMessage } from '@/types/game';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useGame } from '@/contexts/GameContext';
@@ -72,46 +73,46 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
 
   // Handle option selection
   const handleOptionSelect = React.useCallback(async (optionText: string) => {
-    console.log('[MessageList] Handling option selection:', optionText);
+    logger.info('[MessageList] Handling option selection:', optionText);
 
     try {
       if (onSendFullMessage) {
         // Use the full message flow (includes AI response)
-        console.log('[MessageList] Using full message flow for option selection');
+        logger.info('[MessageList] Using full message flow for option selection');
         await onSendFullMessage(optionText);
       } else {
         // Fallback to basic message sending (no AI response)
-        console.log('[MessageList] Using fallback message flow for option selection');
+        logger.info('[MessageList] Using fallback message flow for option selection');
         const playerMessage: ChatMessage = {
           text: optionText,
           sender: 'player',
           timestamp: new Date().toISOString()
         };
 
-        console.log('[MessageList] Created player message:', playerMessage);
+        logger.info('[MessageList] Created player message:', playerMessage);
         await sendMessage(playerMessage);
       }
-      console.log('[MessageList] Successfully sent option message');
+      logger.info('[MessageList] Successfully sent option message');
     } catch (error) {
-      console.error('[MessageList] Failed to send option selection:', error);
+      logger.error('[MessageList] Failed to send option selection:', error);
     }
   }, [onSendFullMessage, sendMessage]);
 
   // Handle dice roll requests from GameContext queue
   const handleDiceRoll = React.useCallback(async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
-    console.log('[MessageList] Handling dice roll from queue:', { formula, advantage, disadvantage });
+    logger.info('[MessageList] Handling dice roll from queue:', { formula, advantage, disadvantage });
 
     const currentRoll = getCurrentDiceRoll();
     if (!currentRoll) {
-      console.warn('[MessageList] No current dice roll in queue');
+      logger.warn('[MessageList] No current dice roll in queue');
       return;
     }
 
     try {
       // Parse the formula to extract die type, count, and modifier
-      const diceMatch = formula.match(/(\d+)d(\d+)([+\-]\d+)?/);
+      const diceMatch = formula.match(/(\d+)d(\d+)([+-]\d+)?/);
       if (!diceMatch) {
-        console.error('[MessageList] Invalid dice formula:', formula);
+        logger.error('[MessageList] Invalid dice formula:', formula);
         return;
       }
 
@@ -126,7 +127,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
         disadvantage: disadvantage || false
       });
 
-      console.log('[MessageList] Roll result:', rollResult);
+      logger.info('[MessageList] Roll result:', rollResult);
 
       // Complete the dice roll in GameContext
       completeDiceRoll(currentRoll.id, rollResult);
@@ -161,7 +162,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
       // NOTE: DM will get information from the dice roll message context above
       // Don't send a second text message to avoid duplicates
     } catch (error) {
-      console.error('[MessageList] Failed to handle dice roll:', error);
+      logger.error('[MessageList] Failed to handle dice roll:', error);
     }
   }, [sendMessage, getCurrentDiceRoll, completeDiceRoll]);
 
@@ -169,7 +170,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
   const handleManualResult = React.useCallback(async (result: number) => {
     const currentRoll = getCurrentDiceRoll();
     if (!currentRoll) {
-      console.warn('[MessageList] No current dice roll in queue');
+      logger.warn('[MessageList] No current dice roll in queue');
       return;
     }
 
@@ -180,9 +181,9 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
         numericResult = result;
       } else if (typeof result === 'object' && result && 'total' in result) {
         numericResult = (result as any).total;
-        console.warn('[MessageList] Received object in handleManualResult, extracting total:', numericResult);
+        logger.warn('[MessageList] Received object in handleManualResult, extracting total:', numericResult);
       } else {
-        console.error('[MessageList] Invalid result type in handleManualResult:', result);
+        logger.error('[MessageList] Invalid result type in handleManualResult:', result);
         return;
       }
 
@@ -202,7 +203,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
         await sendMessage(playerMessage);
       }
     } catch (error) {
-      console.error('[MessageList] Failed to handle manual dice result:', error);
+      logger.error('[MessageList] Failed to handle manual dice result:', error);
     }
   }, [sendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]);
 

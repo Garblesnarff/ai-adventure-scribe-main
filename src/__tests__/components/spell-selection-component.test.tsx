@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import {
   mockWizard,
@@ -46,7 +46,7 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
   const [availableCantrips, setAvailableCantrips] = React.useState<any[]>([]);
   const [availableSpells, setAvailableSpells] = React.useState<any[]>([]);
   const [errors, setErrors] = React.useState<string[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     if (!character?.class) return;
@@ -56,36 +56,38 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
       setErrors([]);
 
       try {
-        // Mock spell data based on class
-        if (character.class.name === 'Wizard') {
-          setAvailableCantrips([
-            { id: 'mage-hand', name: 'Mage Hand', school: 'Conjuration' },
-            { id: 'prestidigitation', name: 'Prestidigitation', school: 'Transmutation' },
-            { id: 'light', name: 'Light', school: 'Evocation' },
-            { id: 'minor-illusion', name: 'Minor Illusion', school: 'Illusion' }
-          ]);
-          setAvailableSpells([
-            { id: 'magic-missile', name: 'Magic Missile', school: 'Evocation' },
-            { id: 'shield', name: 'Shield', school: 'Abjuration' },
-            { id: 'detect-magic', name: 'Detect Magic', school: 'Divination' },
-            { id: 'burning-hands', name: 'Burning Hands', school: 'Evocation' }
-          ]);
-        } else if (character.class.name === 'Cleric') {
-          setAvailableCantrips([
-            { id: 'guidance', name: 'Guidance', school: 'Divination' },
-            { id: 'thaumaturgy', name: 'Thaumaturgy', school: 'Transmutation' },
-            { id: 'sacred-flame', name: 'Sacred Flame', school: 'Evocation' }
-          ]);
-          setAvailableSpells([
-            { id: 'cure-wounds', name: 'Cure Wounds', school: 'Evocation' },
-            { id: 'healing-word', name: 'Healing Word', school: 'Evocation' },
-            { id: 'bless', name: 'Bless', school: 'Enchantment' },
-            { id: 'guiding-bolt', name: 'Guiding Bolt', school: 'Evocation' }
-          ]);
-        }
+        // Defer setting data to next tick so loading is visible in tests
+        setTimeout(() => {
+          if (character.class.name === 'Wizard') {
+            setAvailableCantrips([
+              { id: 'mage-hand', name: 'Mage Hand', school: 'Conjuration' },
+              { id: 'prestidigitation', name: 'Prestidigitation', school: 'Transmutation' },
+              { id: 'light', name: 'Light', school: 'Evocation' },
+              { id: 'minor-illusion', name: 'Minor Illusion', school: 'Illusion' }
+            ]);
+            setAvailableSpells([
+              { id: 'magic-missile', name: 'Magic Missile', school: 'Evocation' },
+              { id: 'shield', name: 'Shield', school: 'Abjuration' },
+              { id: 'detect-magic', name: 'Detect Magic', school: 'Divination' },
+              { id: 'burning-hands', name: 'Burning Hands', school: 'Evocation' }
+            ]);
+          } else if (character.class.name === 'Cleric') {
+            setAvailableCantrips([
+              { id: 'guidance', name: 'Guidance', school: 'Divination' },
+              { id: 'thaumaturgy', name: 'Thaumaturgy', school: 'Transmutation' },
+              { id: 'sacred-flame', name: 'Sacred Flame', school: 'Evocation' }
+            ]);
+            setAvailableSpells([
+              { id: 'cure-wounds', name: 'Cure Wounds', school: 'Evocation' },
+              { id: 'healing-word', name: 'Healing Word', school: 'Evocation' },
+              { id: 'bless', name: 'Bless', school: 'Enchantment' },
+              { id: 'guiding-bolt', name: 'Guiding Bolt', school: 'Evocation' }
+            ]);
+          }
+          setIsLoading(false);
+        }, 0);
       } catch (error) {
         setErrors(['Failed to load spells']);
-      } finally {
         setIsLoading(false);
       }
     };

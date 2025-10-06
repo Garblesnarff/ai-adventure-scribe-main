@@ -7,6 +7,19 @@
 import { Character } from '@/types/character';
 import { CombatParticipant } from '@/types/combat';
 
+type MagicItemRequirements = {
+  attunementRequirements?: string;
+  requiresAttunement?: boolean;
+};
+
+type SpellEffect = {
+  spellName: string;
+  spellLevel?: number;
+  charges?: number;
+  maxCharges?: number;
+  rechargeRate?: 'daily' | 'dawn' | 'dusk' | 'weekly' | 'monthly';
+};
+
 /**
  * Calculate the total magical bonus to attack rolls from equipped magic weapons
  */
@@ -89,10 +102,10 @@ export function getMagicSpecialProperties(character: Character): string[] {
 /**
  * Get spell effects from magic items
  */
-export function getMagicSpellEffects(character: Character): any[] {
+export function getMagicSpellEffects(character: Character): SpellEffect[] {
   if (!character.inventory) return [];
   
-  const spellEffects: any[] = [];
+  const spellEffects: SpellEffect[] = [];
   
   character.inventory
     .filter(item => item.equipped && item.isMagic && item.magicEffects?.spellEffects)
@@ -117,7 +130,7 @@ export function hasEquippedMagicItem(character: Character, itemName: string): bo
 /**
  * Check if character meets attunement requirements for a magic item
  */
-export function canAttuneToItem(character: Character, item: any): boolean {
+export function canAttuneToItem(character: Character, item: MagicItemRequirements): boolean {
   // If no attunement requirements, character can attune
   if (!item.attunementRequirements) return true;
   
@@ -233,7 +246,10 @@ export function getAttunedItems(character: Character) {
 /**
  * Validate attunement requirements for a magic item
  */
-export function validateAttunementRequirements(character: Character, item: any): { canAttune: boolean; reason: string } {
+export function validateAttunementRequirements(
+  character: Character,
+  item: MagicItemRequirements
+): { canAttune: boolean; reason: string } {
   // Check if item requires attunement
   if (!item.requiresAttunement) {
     return { canAttune: true, reason: 'Item does not require attunement' };

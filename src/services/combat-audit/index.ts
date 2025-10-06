@@ -1,6 +1,7 @@
 import { CombatAction, RuleViolation, AuditReport } from './types';
 import { validateAction } from './rules';
 import { generateAuditReport } from './reporter';
+import logger from '@/lib/logger';
 
 /**
  * The main class for the Combat Audit System.
@@ -28,7 +29,7 @@ export class CombatAuditSystem {
     this.activeCombatAudits.add(combatId);
     this.auditTrail.set(combatId, []);
     this.violations.set(combatId, []);
-    console.log(`📋 Combat audit started for ${combatId}`);
+    logger.info(`📋 Combat audit started for ${combatId}`);
   }
 
   /**
@@ -54,7 +55,7 @@ export class CombatAuditSystem {
       this.violations.set(action.combatId, allViolations);
     }
 
-    console.log(`📝 Action recorded: ${actionWithId.actionType} by ${actionWithId.actorName}`);
+    logger.info(`📝 Action recorded: ${actionWithId.actionType} by ${actionWithId.actorName}`);
     return actionWithId.id;
   }
 
@@ -78,7 +79,7 @@ export class CombatAuditSystem {
   public endCombatAudit(combatId: string): AuditReport {
     this.activeCombatAudits.delete(combatId);
     const report = this.generateAuditReport(combatId);
-    console.log(`📋 Combat audit completed for ${combatId}. Score: ${report.complianceScore}%`);
+    logger.info(`📋 Combat audit completed for ${combatId}. Score: ${report.complianceScore}%`);
     return report;
   }
 

@@ -5,6 +5,7 @@
  */
 
 import { combatAuditSystem } from './CombatAuditSystem';
+import logger from '@/lib/logger';
 
 export interface CombatPhase {
   phase: 'pre-combat' | 'initiative' | 'attack' | 'damage' | 'resolution';
@@ -69,7 +70,7 @@ export class CombatSequenceValidator {
     this.activeCombats.add(combatId);
     this.combatPhases.set(combatId, []);
     this.initiativeRolled.delete(combatId);
-    console.log(`🗡️ Combat ${combatId} started - initiative required`);
+    logger.info(`🗡️ Combat ${combatId} started - initiative required`);
   }
 
   /**
@@ -123,7 +124,7 @@ export class CombatSequenceValidator {
       }
     });
 
-    console.log(`🎲 Initiative recorded for ${actorName}: ${initiative}`);
+    logger.info(`🎲 Initiative recorded for ${actorName}: ${initiative}`);
   }
 
   /**
@@ -153,7 +154,7 @@ export class CombatSequenceValidator {
 
     this.turnOrders.set(combatId, turnOrder);
     this.initiativeRolled.add(combatId);
-    console.log(`⚔️ Turn order established for combat ${combatId}`);
+    logger.info(`⚔️ Turn order established for combat ${combatId}`);
 
     return turnOrder;
   }
@@ -200,11 +201,11 @@ export class CombatSequenceValidator {
       // Reset hasActed for new round
       turnOrder.entries.forEach(entry => entry.hasActed = false);
 
-      console.log(`🔄 Round ${turnOrder.round} begins`);
+      logger.info(`🔄 Round ${turnOrder.round} begins`);
     }
 
     const currentActor = turnOrder.entries[turnOrder.currentTurnIndex];
-    console.log(`👤 ${currentActor.actorName}'s turn (Round ${turnOrder.round})`);
+    logger.info(`👤 ${currentActor.actorName}'s turn (Round ${turnOrder.round})`);
 
     return currentActor;
   }
@@ -234,7 +235,7 @@ export class CombatSequenceValidator {
     const attackId = `${combatId}_${actorId}_${Date.now()}`;
     this.pendingAttacks.set(attackId, { weaponName, targetAC, timestamp: Date.now() });
     this.addPhase(combatId, 'attack', actorId, `Attack with ${weaponName}`);
-    console.log(`⚔️ Attack request recorded: ${attackId}`);
+    logger.info(`⚔️ Attack request recorded: ${attackId}`);
     return attackId;
   }
 
@@ -280,7 +281,7 @@ export class CombatSequenceValidator {
     }
 
     this.pendingAttacks.delete(attackId);
-    console.log(`🎯 Attack result: ${result} vs AC ${actualAC} = ${isHit ? 'HIT' : 'MISS'}`);
+    logger.info(`🎯 Attack result: ${result} vs AC ${actualAC} = ${isHit ? 'HIT' : 'MISS'}`);
     return isHit;
   }
 
@@ -309,7 +310,7 @@ export class CombatSequenceValidator {
     }
 
     this.awaitingDamage.delete(attackId);
-    console.log(`💥 Damage recorded: ${damage} for attack ${attackId}`);
+    logger.info(`💥 Damage recorded: ${damage} for attack ${attackId}`);
   }
 
   /**
@@ -574,14 +575,14 @@ export class CombatSequenceValidator {
       }
     }
 
-    console.log(`⚔️ Combat ${combatId} ended`);
-    console.log(`📊 Final compliance score: ${auditReport.complianceScore}%`);
+    logger.info(`⚔️ Combat ${combatId} ended`);
+    logger.info(`📊 Final compliance score: ${auditReport.complianceScore}%`);
 
     if (auditReport.violations.length > 0) {
-      console.log(`⚠️ Rule violations detected: ${auditReport.violations.length}`);
+      logger.warn(`⚠️ Rule violations detected: ${auditReport.violations.length}`);
       const criticalViolations = auditReport.violations.filter(v => v.severity === 'critical');
       if (criticalViolations.length > 0) {
-        console.log(`🚨 Critical violations: ${criticalViolations.length}`);
+        logger.error(`🚨 Critical violations: ${criticalViolations.length}`);
       }
     }
   }

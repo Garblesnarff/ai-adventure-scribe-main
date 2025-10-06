@@ -9,6 +9,7 @@ import { ActionOptions } from '@/components/game/ActionOptions';
 import { parseMessageOptions, extractNarrativeContent, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
 import { DiceRollEmbed } from '@/components/DiceRollEmbed';
 import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
+import logger from '@/lib/logger';
 
 interface DMChatBubbleProps {
   message: ChatMessage;
@@ -75,7 +76,7 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
           autoRoll={true}
           showAnimation={true}
           onRoll={(result: DiceRollResult) => {
-            console.log('Dice rolled:', result);
+            logger.info('Dice rolled:', result);
           }}
         />
       );
@@ -150,14 +151,14 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
     if (isThisMessagePlaying) {
       stopPlayback();
     } else if (!isProcessing) {
-      console.log('🎵 Playing message:', message.id);
+      logger.info('🎵 Playing message:', message.id);
       
       if (narrationSegments && narrationSegments.length > 0) {
-        console.log('🎭 Using AI segments for message playback');
+        logger.debug('🎭 Using AI segments for message playback');
         const aiSegments = convertNarrationToAISegments(narrationSegments);
         speakAISegments(aiSegments);
       } else {
-        console.log('📝 Using plain text fallback for message playback');
+        logger.debug('📝 Using plain text fallback for message playback');
         // Use only narrative content for TTS (exclude options)
         const narrativeContent = extractNarrativeContent(message.content);
         speakPlainText(narrativeContent);

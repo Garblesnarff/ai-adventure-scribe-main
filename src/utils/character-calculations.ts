@@ -77,13 +77,14 @@ export const calculateArmorClass = (character: Character): number => {
     const baseAC = 10;
     
     switch (character.class.name.toLowerCase()) {
-      case 'barbarian':
+      case 'barbarian': {
         const conMod = character.abilityScores.constitution?.modifier || 0;
         return baseAC + dexMod + conMod;
-        
-      case 'monk':
+      }
+      case 'monk': {
         const wisMod = character.abilityScores.wisdom?.modifier || 0;
         return baseAC + dexMod + wisMod;
+      }
     }
   }
   

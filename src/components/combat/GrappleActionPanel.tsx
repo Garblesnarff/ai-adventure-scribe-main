@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Users, Zap } from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
 import { rollGrappleCheck, createGrappledCondition, getGrappleActionDescription } from '@/utils/grappleUtils';
+import logger from '@/lib/logger';
 
 interface GrappleActionPanelProps {
   participantId: string;
@@ -74,7 +75,7 @@ const GrappleActionPanel: React.FC<GrappleActionPanelProps> = ({
         setGrappleResult(null);
       }, 3000);
     } catch (error) {
-      console.error('Error processing grapple action:', error);
+      logger.error('Error processing grapple action:', error);
     }
   };
   

@@ -12,6 +12,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { GameSession } from '@/types/game';
+import logger from '@/lib/logger';
 
 /**
  * Creates a new game session in Supabase.
@@ -29,7 +30,7 @@ export async function createGameSession(): Promise<string | null> {
     .single();
 
   if (error) {
-    console.error('Error creating game session:', error);
+    logger.error('Error creating game session:', error);
     return null;
   }
 
@@ -77,7 +78,7 @@ export async function cleanupSession(sessionId: string): Promise<string> {
     .eq('id', sessionId);
 
   if (error) {
-    console.error('Error cleaning up session:', error);
+    logger.error('Error cleaning up session:', error);
   }
 
   return summary;

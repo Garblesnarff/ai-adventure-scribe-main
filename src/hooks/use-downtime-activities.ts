@@ -15,6 +15,7 @@ import {
   checkDowntimePrerequisites,
   getAvailableDowntimeActivities
 } from '@/utils/downtimeActivities';
+import logger from '@/lib/logger';
 
 interface UseDowntimeActivitiesProps {
   character: Character;
@@ -77,7 +78,7 @@ export const useDowntimeActivities = ({
       
       return result;
     } catch (error) {
-      console.error('Error performing downtime activity:', error);
+      logger.error('Error performing downtime activity:', error);
       const errorResult: DowntimeResult = {
         success: false,
         activityCompleted: false,

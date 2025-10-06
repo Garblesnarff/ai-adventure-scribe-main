@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import logger from '@/lib/logger';
 
 interface SubscriptionCallback {
   id: string;
@@ -94,7 +95,7 @@ class SupabaseSubscriptionManager {
 
     // Skip if max retries exceeded
     if (subscription.retryCount >= this.maxRetries) {
-      console.warn(`Max retries reached for ${tableName} subscription, skipping`);
+      logger.warn(`Max retries reached for ${tableName} subscription, skipping`);
       return;
     }
 
@@ -113,7 +114,7 @@ class SupabaseSubscriptionManager {
       supabase.removeChannel(subscription.channel);
     }
 
-    console.log(`Setting up shared channel for ${tableName}`);
+    logger.info(`Setting up shared channel for ${tableName}`);
     subscription.lastRetry = Date.now();
 
     const channel = supabase
@@ -138,7 +139,7 @@ class SupabaseSubscriptionManager {
     // Set connection timeout
     setTimeout(() => {
       if (!subscription.isConnected) {
-        console.warn(`Connection timeout for ${tableName} subscription`);
+        logger.warn(`Connection timeout for ${tableName} subscription`);
         this.handleConnectionFailure(tableName);
       }
     }, this.connectionTimeout);
@@ -147,22 +148,25 @@ class SupabaseSubscriptionManager {
   /**
    * Handle table update events
    */
-  private handleTableUpdate(tableName: string, payload: any): void {
+  private handleTableUpdate(
+    tableName: string,
+    payload: RealtimePostgresChangesPayload<{ id: string | number } & Record<string, unknown>>
+  ): void {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
 
-    const recordId = payload.new?.id;
+    const recordId = payload.new?.id as string | number | undefined;
     if (!recordId) return;
 
     // Notify relevant callbacks
     subscription.callbacks.forEach((callbackData) => {
       if (callbackData.recordId === recordId) {
-        const newImageUrl = payload.new?.[callbackData.imageField];
-        const oldImageUrl = payload.old?.[callbackData.imageField];
+        const newImageUrl = (payload.new as Record<string, unknown>)?.[callbackData.imageField] as string | null | undefined;
+        const oldImageUrl = (payload.old as Record<string, unknown>)?.[callbackData.imageField] as string | null | undefined;
 
         // Only trigger if image field actually changed
         if (newImageUrl !== oldImageUrl) {
-          console.log(`Image updated for ${tableName} ${recordId}:`, newImageUrl);
+          logger.info(`Image updated for ${tableName} ${recordId}: ${newImageUrl}`);
           callbackData.callback(newImageUrl || null);
         }
       }
@@ -176,7 +180,7 @@ class SupabaseSubscriptionManager {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
 
-    console.log(`Subscription status for ${tableName}:`, status);
+    logger.info(`Subscription status for ${tableName}: ${status}`);
 
     switch (status) {
       case 'SUBSCRIBED':
@@ -208,13 +212,13 @@ class SupabaseSubscriptionManager {
 
     if (subscription.retryCount < this.maxRetries) {
       const delay = this.retryDelay * Math.pow(2, subscription.retryCount - 1);
-      console.log(`Retrying ${tableName} subscription in ${delay}ms (${subscription.retryCount}/${this.maxRetries})`);
+      logger.info(`Retrying ${tableName} subscription in ${delay}ms (${subscription.retryCount}/${this.maxRetries})`);
 
       setTimeout(() => {
         this.setupChannel(tableName);
       }, delay);
     } else {
-      console.warn(`Max retries exceeded for ${tableName} subscription`);
+      logger.warn(`Max retries exceeded for ${tableName} subscription`);
     }
   }
 
@@ -225,7 +229,7 @@ class SupabaseSubscriptionManager {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
 
-    console.log(`Cleaning up ${tableName} subscription`);
+    logger.info(`Cleaning up ${tableName} subscription`);
 
     if (subscription.channel) {
       supabase.removeChannel(subscription.channel);
@@ -238,7 +242,7 @@ class SupabaseSubscriptionManager {
    * Clean up all subscriptions (for app shutdown)
    */
   cleanup(): void {
-    console.log('Cleaning up all Supabase subscriptions');
+    logger.info('Cleaning up all Supabase subscriptions');
 
     this.subscriptions.forEach((subscription, tableName) => {
       if (subscription.channel) {

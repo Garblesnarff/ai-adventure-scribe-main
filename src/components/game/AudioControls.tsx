@@ -6,6 +6,7 @@ import { SpeakingIndicator } from './audio/SpeakingIndicator';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Mic, MicOff } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface AudioControlsProps {
   isSpeaking: boolean;
@@ -32,8 +33,8 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
 }) => {
   // Add debug logs
   React.useEffect(() => {
-    console.log('AudioControls mounted');
-    console.log('Initial state:', {
+    logger.debug('AudioControls mounted');
+    logger.debug('Initial state:', {
       isSpeaking,
       volume,
       isMuted,
@@ -42,7 +43,7 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
   }, []);
 
   React.useEffect(() => {
-    console.log('Audio state changed:', {
+    logger.debug('Audio state changed:', {
       isSpeaking,
       volume,
       isMuted,

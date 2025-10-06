@@ -2,6 +2,8 @@ import { LocationGenerator, LocationRequest, GeneratedLocation } from './locatio
 import { NPCGenerator, NPCRequest, GeneratedNPC } from './npc-generator';
 import { QuestGenerator, QuestRequest, GeneratedQuest } from './quest-generator';
 import { MemoryManager } from '../memory-manager';
+import type { Memory } from '@/types/memory';
+import logger from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface WorldBuildingContext {
@@ -10,7 +12,7 @@ export interface WorldBuildingContext {
   characterId: string;
   playerAction: string;
   currentLocation?: string;
-  recentMemories?: any[];
+  recentMemories?: Memory[];
   genre?: string;
   playerLevel?: number;
 }
@@ -47,7 +49,7 @@ export class WorldBuilderService {
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
-        console.warn('No authenticated user for world building, allowing for MVP');
+        logger.warn('No authenticated user for world building, allowing for MVP');
         return true; // Allow for MVP - might be running in demo mode
       }
       
@@ -59,24 +61,24 @@ export class WorldBuilderService {
         .single();
         
       if (campaignError) {
-        console.warn('Campaign query error (allowing for MVP):', campaignError);
+        logger.warn('Campaign query error (allowing for MVP):', campaignError);
         return true; // Allow for MVP - might be schema issues
       }
       
       if (!campaign) {
-        console.warn('Campaign not found (allowing for MVP):', campaignId);
+        logger.warn('Campaign not found (allowing for MVP):', campaignId);
         return true; // Allow for MVP - might be test data
       }
       
       if (campaign.user_id !== user.id) {
-        console.warn('User does not own campaign, allowing for MVP:', campaignId);
+        logger.warn('User does not own campaign, allowing for MVP:', campaignId);
         return true; // Allow for MVP - might be shared campaigns
       }
       
       return true;
       
     } catch (error) {
-      console.warn('Error validating campaign access, allowing for MVP:', error);
+      logger.warn('Error validating campaign access, allowing for MVP:', error);
       return true; // Always allow for MVP
     }
   }
@@ -147,12 +149,12 @@ export class WorldBuilderService {
    * Expand the world based on current context
    */
   static async expandWorld(context: WorldBuildingContext): Promise<WorldExpansionResult> {
-    console.log(`🌍 Expanding world for: "${context.playerAction}"`);
+    logger.info(`🌍 Expanding world for: "${context.playerAction}"`);
     
     // Security check: Validate user owns this campaign
     const hasAccess = await this.validateUserCampaignAccess(context.campaignId);
     if (!hasAccess) {
-      console.warn('🚨 Unauthorized world building attempt blocked');
+      logger.warn('🚨 Unauthorized world building attempt blocked');
       return {
         locations: [],
         npcs: [],
@@ -177,7 +179,7 @@ export class WorldBuilderService {
       const buildingNeeds = await this.analyzeBuildingNeeds(context);
       
       if (buildingNeeds.confidence < 0.3) {
-        console.log('🤏 Low confidence for world building, skipping');
+        logger.info('🤏 Low confidence for world building, skipping');
         return result;
       }
       
@@ -202,7 +204,7 @@ export class WorldBuilderService {
           result.locations.push(location);
           result.narrativeElements.hooks.push(`The ${location.name} holds secrets waiting to be discovered.`);
         } catch (error) {
-          console.warn('Failed to generate location:', error);
+          logger.warn('Failed to generate location:', error);
         }
       }
       
@@ -218,7 +220,7 @@ export class WorldBuilderService {
           result.npcs.push(npc);
           result.narrativeElements.hooks.push(...npc.questHooks.slice(0, 2));
         } catch (error) {
-          console.warn('Failed to generate NPC:', error);
+          logger.warn('Failed to generate NPC:', error);
         }
       }
       
@@ -234,7 +236,7 @@ export class WorldBuilderService {
           result.quests.push(quest);
           result.narrativeElements.opportunities.push(...quest.hooks.initial);
         } catch (error) {
-          console.warn('Failed to generate quest:', error);
+          logger.warn('Failed to generate quest:', error);
         }
       }
       
@@ -244,10 +246,10 @@ export class WorldBuilderService {
         'The world responds to your presence...'
       );
       
-      console.log(`✅ World expansion complete: ${result.locations.length} locations, ${result.npcs.length} NPCs, ${result.quests.length} quests`);
+      logger.info(`✅ World expansion complete: ${result.locations.length} locations, ${result.npcs.length} NPCs, ${result.quests.length} quests`);
       
     } catch (error) {
-      console.error('World expansion failed:', error);
+      logger.error('World expansion failed:', error);
     }
     
     return result;
@@ -268,7 +270,7 @@ export class WorldBuilderService {
       // Security check: Validate user owns this campaign
       const hasAccess = await this.validateUserCampaignAccess(campaignId);
       if (!hasAccess) {
-        console.warn('🚨 Unauthorized world building attempt blocked');
+        logger.warn('🚨 Unauthorized world building attempt blocked');
         return null;
       }
       // Get recent memories for context
@@ -286,21 +288,21 @@ export class WorldBuilderService {
       const needs = await this.analyzeBuildingNeeds(context);
       
       if (needs.confidence > 0.6) {
-        console.log(`🎯 High confidence (${needs.confidence}) world building triggered`);
+        logger.info(`🎯 High confidence (${needs.confidence}) world building triggered`);
         return await this.expandWorld(context);
       } else if (needs.confidence > 0.3) {
-        console.log(`🎲 Medium confidence (${needs.confidence}) world building - rolling for random expansion`);
+        logger.info(`🎲 Medium confidence (${needs.confidence}) world building - rolling for random expansion`);
         // 50% chance of expansion for medium confidence
         if (Math.random() > 0.5) {
           return await this.expandWorld(context);
         }
       }
       
-      console.log(`📝 No world building needed (confidence: ${needs.confidence})`);
+      logger.info(`📝 No world building needed (confidence: ${needs.confidence})`);
       return null;
       
     } catch (error) {
-      console.error('Failed to respond to player action:', error);
+      logger.error('Failed to respond to player action:', error);
       return null;
     }
   }
@@ -314,7 +316,18 @@ export class WorldBuilderService {
       campaignId: string;
       sessionId: string;
       characterId: string;
-      specifications?: any;
+      specifications?: Partial<{
+        locationType: string;
+        size: string;
+        atmosphere: string;
+        genre: string;
+        role: NPCRequest['role'];
+        importance: NPCRequest['importance'];
+        questType: QuestRequest['type'];
+        difficulty: QuestRequest['difficulty'];
+        urgency: QuestRequest['urgency'];
+        scope: QuestRequest['scope'];
+      }>;
     }
   ) {
     const { type, campaignId, sessionId, characterId, specifications = {} } = request;
@@ -369,7 +382,7 @@ export class WorldBuilderService {
       }
       
     } catch (error) {
-      console.error(`Failed to generate ${type}:`, error);
+      logger.error(`Failed to generate ${type}:`, error);
       throw error;
     }
   }
@@ -421,7 +434,7 @@ export class WorldBuilderService {
       };
       
     } catch (error) {
-      console.error('Failed to get world stats:', error);
+      logger.error('Failed to get world stats:', error);
       return { locations: 0, npcs: 0, quests: 0, totalElements: 0 };
     }
   }

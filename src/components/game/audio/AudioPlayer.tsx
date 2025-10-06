@@ -1,5 +1,6 @@
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
+import logger from '@/lib/logger';
 
 interface VoiceSettings {
   stability: number;
@@ -56,7 +57,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('ElevenLabs API error:', errorText);
+        logger.error('ElevenLabs API error:', errorText);
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
@@ -75,7 +76,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           audioRef.current = audio;
         }
       } catch (playError) {
-        console.error('Error playing audio:', playError);
+        logger.error('Error playing audio:', playError);
         throw new Error('Failed to play audio');
       }
 
@@ -88,7 +89,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       };
 
     } catch (error) {
-      console.error('Voice error:', error);
+      logger.error('Voice error:', error);
       setIsSpeaking(false);
       toast({
         title: "Voice Error",

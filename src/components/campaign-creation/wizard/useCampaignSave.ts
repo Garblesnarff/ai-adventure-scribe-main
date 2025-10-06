@@ -3,6 +3,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { campaignImageGenerator } from '@/services/campaign-image-generator';
+import logger from '@/lib/logger';
 
 /**
  * Custom hook for handling campaign saving functionality
@@ -21,7 +22,7 @@ export const useCampaignSave = () => {
   const saveCampaign = async (campaignData: any) => {
     setIsSaving(true);
     try {
-      console.log('Creating campaign and generating background image...');
+      logger.info('Creating campaign and generating background image...');
       
       // First, save the campaign without the background image
       // Extract background_image and map camelCase to snake_case fields
@@ -40,7 +41,7 @@ export const useCampaignSave = () => {
         .single();
 
       if (error) {
-        console.error('Error saving campaign:', error);
+        logger.error('Error saving campaign:', error);
         throw new Error(error.message);
       }
 
@@ -56,7 +57,7 @@ export const useCampaignSave = () => {
 
       return campaignId;
     } catch (error) {
-      console.error('Error in saveCampaign:', error);
+      logger.error('Error in saveCampaign:', error);
       throw error;
     } finally {
       setIsSaving(false);
@@ -69,7 +70,7 @@ export const useCampaignSave = () => {
    */
   const generateBackgroundImage = async (campaignId: string, campaignData: any) => {
     try {
-      console.log(`Generating background image for campaign ${campaignId}`);
+      logger.info(`Generating background image for campaign ${campaignId}`);
       
       // Generate the image
       const imageUrl = await campaignImageGenerator.generateCampaignImage(campaignData);
@@ -81,10 +82,10 @@ export const useCampaignSave = () => {
         .eq('id', campaignId);
 
       if (error) {
-        console.error('Error updating campaign with background image:', error);
+        logger.error('Error updating campaign with background image:', error);
         // Don't throw error - campaign creation should still succeed
       } else {
-        console.log(`Successfully generated and saved background image for campaign ${campaignId}`);
+        logger.info(`Successfully generated and saved background image for campaign ${campaignId}`);
         
         // Invalidate campaigns query to refresh the list with the new image
         queryClient.invalidateQueries({ queryKey: ['campaigns'] });
@@ -96,7 +97,7 @@ export const useCampaignSave = () => {
         });
       }
     } catch (error) {
-      console.error(`Failed to generate background image for campaign ${campaignId}:`, error);
+      logger.error(`Failed to generate background image for campaign ${campaignId}:`, error);
       
       // Show user-friendly error notification
       toast({

@@ -23,7 +23,7 @@
 // Agent Core & Types
 import { Agent, AgentResult, AgentTask } from './types';
 import { ErrorCategory, ErrorSeverity } from './error/types';
-import { MessagePriority, MessageType } from './crewai/types/communication';
+import { MessagePriority, MessageType } from './messaging/types';
 
 // Services
 import { AgentMessagingService } from './messaging/agent-messaging-service';
@@ -32,7 +32,7 @@ import { ValidationResultsProcessor } from './rules/services/validation-results-
 import { ValidationService } from './rules/services/validation-service'; // Assuming kebab-case
 
 // Utilities
-import { callEdgeFunction } from '@/utils/edge-function-handler'; // Assuming kebab-case for the util file itself
+import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
 
 export class RulesInterpreterAgent implements Agent {
   id: string;

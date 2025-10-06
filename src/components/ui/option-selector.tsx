@@ -22,6 +22,7 @@ import {
   OptionType,
   validateOptionSelection
 } from '@/types/enhancement-options';
+import logger from '@/lib/logger';
 
 interface OptionSelectorProps<T extends OptionType = OptionType> {
   option: EnhancementOption<T>;
@@ -49,7 +50,7 @@ export function OptionSelector<T extends OptionType = OptionType>({
   const [customValue, setCustomValue] = React.useState(value?.customValue || '');
   const headerId = React.useId();
 
-  const handleValueChange = (newValue: any) => {
+  const handleValueChange = (newValue: OptionSelection<T>['value']) => {
     const selection: OptionSelection<T> = {
       optionId: option.id,
       value: newValue,
@@ -78,13 +79,13 @@ export function OptionSelector<T extends OptionType = OptionType>({
         const generated = await onAIGenerate(option.id);
         const selection: OptionSelection<T> = {
           optionId: option.id,
-          value: generated as any,
+          value: generated as unknown as OptionSelection<T>['value'],
           aiGenerated: true,
           timestamp: new Date().toISOString()
         };
         onChange(selection);
       } catch (error) {
-        console.error('Failed to generate AI content:', error);
+        logger.error('Failed to generate AI content:', error);
       }
     }
   };

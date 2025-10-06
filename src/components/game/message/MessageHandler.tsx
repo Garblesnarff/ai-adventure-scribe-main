@@ -8,6 +8,7 @@ import { useSessionValidator } from '../session/SessionValidator';
 import { parseDiceCommand } from '@/utils/diceCommandParser';
 import { rollDice } from '@/utils/diceUtils';
 import { useCharacter } from '@/contexts/CharacterContext';
+import logger from '@/lib/logger';
 
 interface MessageHandlerProps {
   sessionId: string; // Should be non-null if we reach here
@@ -40,7 +41,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   
   // Debug logging
   React.useEffect(() => {
-    console.log('[MessageHandler] Character data:', {
+    logger.debug('[MessageHandler] Character data:', {
       name: character?.name,
       avatar_url: character?.avatar_url,
       hasCharacter: !!character
@@ -54,7 +55,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
     if (queueStatus === 'processing') return; // Or if isProcessing from its own state
 
     try {
-      console.log('[Memory Flow] Starting message handling for:', playerInput);
+      logger.info('[Memory Flow] Starting message handling for:', playerInput);
 
       // Validate session before proceeding (if still needed)
       const isValid = await validateSession();
@@ -126,13 +127,13 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
             try {
               await onAIResponse(aiResponseMessage);
             } catch (combatError) {
-              console.error('Error processing AI response for combat after dice roll:', combatError);
+              logger.error('Error processing AI response for combat after dice roll:', combatError);
             }
           }
 
           return; // Exit early for dice commands
         } catch (rollError) {
-          console.error('Error executing dice roll:', rollError);
+          logger.error('Error executing dice roll:', rollError);
           const errorMessage: ChatMessage = {
             text: 'Failed to execute dice roll. Please try again.',
             sender: 'system',
@@ -162,14 +163,14 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Update turn count immediately after player message is sent
       await updateGameSessionState({ turn_count: newTurnCount });
 
-      console.log('[Memory Flow] Extracting memories from player input');
+      logger.info('[Memory Flow] Extracting memories from player input');
       await extractMemories(playerInput); // Assuming this is non-critical path for state update
       
       // Optional: System acknowledgment (can be removed if AI response is fast)
       // const systemMessage: ChatMessage = { text: "Processing...", sender: 'system', context: { intent: 'acknowledgment' } };
       // await sendMessage(systemMessage);
       
-      console.log('[Memory Flow] Getting AI response for session:', sessionId);
+      logger.info('[Memory Flow] Getting AI response for session:', sessionId);
       // Pass necessary context to getAIResponse. It fetches its own campaign/char details if needed.
       const aiResponseMessage = await getAIResponse([...messages, playerMessage], sessionId); 
       
@@ -178,17 +179,17 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Process AI response for combat detection and other features
       if (onAIResponse) {
         try {
-          console.log('[Combat Flow] Processing AI response for combat detection');
+          logger.info('[Combat Flow] Processing AI response for combat detection');
           await onAIResponse(aiResponseMessage);
         } catch (combatError) {
-          console.error('Error processing AI response for combat:', combatError);
+          logger.error('Error processing AI response for combat:', combatError);
           // Don't throw here - combat processing should not break the message flow
         }
       }
       
       // Check if we have narration segments for voice synthesis
       if (aiResponseMessage.narrationSegments && aiResponseMessage.narrationSegments.length > 0) {
-        console.log('[Voice Flow] AI response contains', aiResponseMessage.narrationSegments.length, 'narration segments');
+        logger.info('[Voice Flow] AI response contains', aiResponseMessage.narrationSegments.length, 'narration segments');
         // Note: Voice playback will be handled by MultiVoicePlayer component
         // when it detects the narrationSegments in the message
       }
@@ -196,12 +197,12 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Update current_scene_description with AI response
       if (aiResponseMessage.text) {
         await updateGameSessionState({ current_scene_description: aiResponseMessage.text });
-        console.log('[Memory Flow] Extracting memories from AI response:', aiResponseMessage.text);
+        logger.info('[Memory Flow] Extracting memories from AI response:', aiResponseMessage.text);
         await extractMemories(aiResponseMessage.text); // Non-critical path
       }
 
     } catch (error) {
-      console.error('Error in message flow:', error);
+      logger.error('Error in message flow:', error);
 
       // Provide user feedback and recovery options
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -218,14 +219,14 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         };
         await sendMessage(systemErrorMessage);
       } catch (systemMessageError) {
-        console.error('Failed to send system error message:', systemMessageError);
+        logger.error('Failed to send system error message:', systemMessageError);
       }
 
       // Revert turn count if AI response failed
       try {
         await updateGameSessionState({ turn_count: turnCount });
       } catch (revertError) {
-        console.error('Failed to revert turn count:', revertError);
+        logger.error('Failed to revert turn count:', revertError);
       }
 
       toast({

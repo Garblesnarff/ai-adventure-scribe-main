@@ -1,4 +1,4 @@
-import { Memory, MemoryType } from '@/components/game/memory/types';
+import { MemoryType } from '@/components/game/memory/types';
 import { CLASSIFICATION_PATTERNS } from './patterns';
 import { splitIntoSegments } from './segmentation';
 import { calculateImportance } from './importance';
@@ -68,9 +68,40 @@ export const processContent = (content: string): MemorySegment[] => {
     preserveQuotes: true
   });
   
-  return segments.map(segment => {
+  if (!content || content.trim().length === 0) return [];
+  
+  // Fallback: if nothing met minLength, keep the whole content as a single segment
+  const effectiveSegments = segments.length === 0 ? [content] : segments;
+  
+  const mapToImportanceType = (type: MemoryType): string => {
+    switch (type) {
+      case 'npc':
+      case 'character_moment':
+        return 'character';
+      case 'story_beat':
+      case 'plot_point':
+      case 'foreshadowing':
+        return 'plot';
+      case 'dialogue_gem':
+        return 'dialogue';
+      case 'world_detail':
+      case 'atmosphere':
+        return 'description';
+      case 'quest':
+        return 'event';
+      default:
+        return type;
+    }
+  };
+
+  return effectiveSegments.map(segment => {
     const type = classifySegment(segment);
-    const importance = calculateImportance(segment, 0, type);
+    let importance = calculateImportance({
+      content: segment,
+      type: mapToImportanceType(type)
+    });
+    const baseImportance = CLASSIFICATION_PATTERNS[type]?.importance ?? 3;
+    importance = Math.max(importance, baseImportance);
     
     return {
       content: segment.trim(),
