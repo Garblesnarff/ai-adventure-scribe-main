@@ -1,27 +1,31 @@
 import { GameContext } from '@/types/game';
 import { Campaign } from '@/types/campaign';
 import { Memory } from '@/types/memory';
+import logger from '@/lib/logger';
 
 /**
  * Validates campaign setting data
  */
-export const validateCampaignSetting = (setting: any) => {
+export const validateCampaignSetting = (setting: unknown) => {
+  const s = (setting && typeof setting === 'object') ? (setting as Record<string, unknown>) : {};
   return {
-    era: setting?.era || 'unspecified',
-    location: setting?.location || 'unknown',
-    atmosphere: setting?.atmosphere || 'neutral'
+    era: typeof s.era === 'string' ? s.era : 'unspecified',
+    location: typeof s.location === 'string' ? s.location : 'unknown',
+    atmosphere: typeof s.atmosphere === 'string' ? s.atmosphere : 'neutral'
   };
 };
 
 /**
  * Validates thematic elements data
  */
-export const validateThematicElements = (elements: any) => {
+export const validateThematicElements = (elements: unknown) => {
+  const e = (elements && typeof elements === 'object') ? (elements as Record<string, unknown>) : {};
+  const toStringArray = (v: unknown): string[] => Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
   return {
-    mainThemes: Array.isArray(elements?.mainThemes) ? elements.mainThemes : [],
-    recurringMotifs: Array.isArray(elements?.recurringMotifs) ? elements.recurringMotifs : [],
-    keyLocations: Array.isArray(elements?.keyLocations) ? elements.keyLocations : [],
-    importantNPCs: Array.isArray(elements?.importantNPCs) ? elements.importantNPCs : []
+    mainThemes: toStringArray(e.mainThemes),
+    recurringMotifs: toStringArray(e.recurringMotifs),
+    keyLocations: toStringArray(e.keyLocations),
+    importantNPCs: toStringArray(e.importantNPCs)
   };
 };
 
@@ -37,17 +41,17 @@ export const sortMemoriesByRelevance = (memories: Memory[]): Memory[] => {
  */
 export const validateGameContext = (context: GameContext): boolean => {
   if (!context.campaign?.basic?.name) {
-    console.error('[Context] Missing campaign name');
+    logger.error('[Context] Missing campaign name');
     return false;
   }
 
   if (!context.campaign?.setting) {
-    console.error('[Context] Missing campaign setting');
+    logger.error('[Context] Missing campaign setting');
     return false;
   }
 
   if (!context.campaign?.thematicElements) {
-    console.error('[Context] Missing thematic elements');
+    logger.error('[Context] Missing thematic elements');
     return false;
   }
 
@@ -56,20 +60,20 @@ export const validateGameContext = (context: GameContext): boolean => {
     if (!context.character.basic?.name || 
         !context.character.basic?.class || 
         !context.character.basic?.race) {
-      console.error('[Context] Incomplete character data');
+      logger.error('[Context] Incomplete character data');
       return false;
     }
 
     if (!context.character.stats?.health || 
         context.character.stats.armorClass === undefined) {
-      console.error('[Context] Missing character stats');
+      logger.error('[Context] Missing character stats');
       return false;
     }
   }
 
   // Memories array should always exist even if empty
   if (!Array.isArray(context.memories?.recent)) {
-    console.error('[Context] Missing memories array');
+    logger.error('[Context] Missing memories array');
     return false;
   }
 

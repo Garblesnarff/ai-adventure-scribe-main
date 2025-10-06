@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import logger from '@/lib/logger';
 
 interface VolumeSliderProps {
   volume: number;
@@ -28,7 +29,7 @@ export const VolumeSlider: React.FC<VolumeSliderProps> = ({
             max={100}
             step={1}
             onValueChange={(values) => {
-              console.log('Volume changed:', values[0] / 100);
+              logger.debug('Volume changed:', values[0] / 100);
               onVolumeChange(values[0] / 100);
             }}
             className="cursor-pointer"

@@ -10,7 +10,7 @@ import { useEffect, useRef, useCallback, useContext } from 'react';
 import { useCombat } from '@/contexts/CombatContext';
 import { useMessages } from '@/hooks/use-messages';
 import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
-import { detectCombatFromText, createCombatParticipantsFromDetection, DetectedCombatAction } from '@/utils/combatDetection';
+import { detectCombatFromText, createCombatParticipantsFromDetection, DetectedCombatAction, PlayerCharacterLike } from '@/utils/combatDetection';
 import { rollDice, DiceRoll } from '@/utils/diceUtils';
 import { 
   CombatEvent, 
@@ -68,7 +68,7 @@ export const useCombatAIIntegration = ({
   // Process DM response for combat content
   const processDMResponse = useCallback(async (
     dmMessage: ChatMessage,
-    playerCharacter?: any
+    playerCharacter?: PlayerCharacterLike
   ): Promise<{
     combatDetected: boolean;
     shouldStartCombat: boolean;
@@ -427,7 +427,7 @@ export const useCombatAIIntegration = ({
 };
 
 // Helper functions
-function shouldTriggerDMNarration(event: CombatEvent, encounter: any): boolean {
+function shouldTriggerDMNarration(event: CombatEvent, encounter: unknown): boolean {
   const narrativeEvents = [
     'COMBAT_START',
     'COMBAT_END',
@@ -491,4 +491,4 @@ function formatCombatEventForDM(event: CombatEvent): string {
     use_racial_trait: "Use a racial trait ability",
     use_class_feature: "Use a class feature ability",
     divine_smite: "Use Divine Smite with a spell slot"
-  } as any;
+  };

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast'; // Assuming kebab-case
 
 // Project Types
 import { ChatMessage } from '@/types/game';
+import logger from '@/lib/logger';
 
 
 const MAX_RETRIES = 3;
@@ -66,7 +67,7 @@ export const useMessageQueue = (sessionId: string | null) => {
           setQueueStatus('idle');
           return;
         } catch (error) {
-          console.error(`Attempt ${retries + 1} failed:`, error);
+          logger.error(`Attempt ${retries + 1} failed:`, error);
           retries++;
           
           if (retries === MAX_RETRIES) {
@@ -83,7 +84,7 @@ export const useMessageQueue = (sessionId: string | null) => {
       }
     },
     onError: (error) => {
-      console.error('Error saving message:', error);
+      logger.error('Error saving message:', error);
       toast({
         title: "Error",
         description: "Message will be retried automatically",
@@ -132,7 +133,7 @@ export const useMessageQueue = (sessionId: string | null) => {
           setTimeout(retryQueuedMessages, INITIAL_RETRY_DELAY);
         }
       } catch (error) {
-        console.error('Error processing message batch:', error);
+        logger.error('Error processing message batch:', error);
         toast({
           title: "Error",
           description: "Failed to process message batch. Will retry later.",

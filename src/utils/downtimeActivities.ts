@@ -98,7 +98,7 @@ export function performDowntimeActivity(
   }
 
   // Spend resources
-  let updatedCharacter = { ...character };
+  const updatedCharacter = { ...character };
   
   // Deduct gold
   if (activity.goldCost && updatedCharacter.gold) {

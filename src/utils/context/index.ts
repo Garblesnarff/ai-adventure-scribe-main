@@ -2,6 +2,7 @@ import { buildCampaignContext } from './campaignContext';
 import { buildCharacterContext } from './characterContext';
 import { buildMemoryContext } from './memoryContext';
 import { Campaign } from '@/types/campaign';
+import logger from '@/lib/logger';
 
 export { buildCampaignContext } from './campaignContext';
 export { buildCharacterContext } from './characterContext';
@@ -20,7 +21,7 @@ export const buildGameContext = async (
   sessionId: string
 ) => {
   try {
-    console.log('[Context] Building complete game context');
+    logger.info('[Context] Building complete game context');
     
     const [campaignContext, characterContext, memoryContext] = await Promise.all([
       buildCampaignContext(campaignId),
@@ -29,7 +30,7 @@ export const buildGameContext = async (
     ]);
 
     if (!campaignContext || !characterContext || !memoryContext) {
-      console.error('[Context] One or more contexts failed to build');
+      logger.error('[Context] One or more contexts failed to build');
       return null;
     }
 
@@ -53,7 +54,7 @@ export const buildGameContext = async (
       activeQuests: characterContext.activeQuests,
     };
   } catch (error) {
-    console.error('[Context] Error building game context:', error);
+    logger.error('[Context] Error building game context:', error);
     return null;
   }
 };

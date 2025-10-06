@@ -23,14 +23,14 @@
  */
 
 // Project Services (assuming kebab-case filenames)
-import { CampaignContextProvider } from '../campaign/campaign-context-provider';
-import { ConversationStateManager } from '../conversation/conversation-state-manager';
+import { CampaignContextProvider } from '../campaign/CampaignContextProvider';
+import { ConversationStateManager } from '../conversation/ConversationStateManager';
 import { DMResponseGenerator } from '../dm-response-generator';
 import { ErrorHandlingService } from '../../error/services/error-handling-service';
-import { PlayerIntentDetector } from '../intent/player-intent-detector';
+import { PlayerIntentDetector } from '../intent/PlayerIntentDetector';
 
 // Project Utilities (assuming kebab-case filenames)
-import { callEdgeFunction } from '@/utils/edge-function-handler';
+import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
 
 // Project Types
 import { AgentResult, AgentTask } from '../../types';

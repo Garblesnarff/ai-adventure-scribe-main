@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import logger from '@/lib/logger';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Spell, Character } from '@/types/character';
 import { spellApi } from '@/services/spellApi';
@@ -7,7 +8,8 @@ import {
   validateSpellSelection,
   getSpellcastingInfo,
   getRacialSpells,
-  SpellValidationResult
+  SpellValidationResult,
+  validateSpellSelectionAsync
 } from '@/utils/spell-validation';
 import { SpellFilters } from '@/components/spells/SpellFilterPanel';
 
@@ -99,7 +101,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Initialize from character data
   useEffect(() => {
     if (character) {
-      console.log('🎯 [useSpellSelection] Initializing spell selection from character:', {
+      logger.debug('🎯 [useSpellSelection] Initializing spell selection from character:', {
         characterId: character.id,
         cantrips: character.cantrips,
         knownSpells: character.knownSpells
@@ -132,7 +134,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       setAvailableCantrips(cantrips);
       setAvailableSpells(spells);
     } catch (error) {
-      console.error('Failed to fetch spells:', error);
+      logger.error('Failed to fetch spells:', error);
       setSpellsError(error instanceof Error ? error.message : 'Failed to load spells');
       setAvailableCantrips([]);
       setAvailableSpells([]);
@@ -214,7 +216,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   };
 
   const toggleSpell = (spellId: string) => {
-    console.log('🪄 [useSpellSelection] toggleSpell called:', spellId);
+    logger.debug('🪄 [useSpellSelection] toggleSpell called:', spellId);
     setSelectedSpells(prev => {
       const isRemoving = prev.includes(spellId);
       const maxSpells = spellcastingInfo?.spellsKnown || 0;
@@ -225,13 +227,13 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       } else {
         // Check if we've reached the limit
         if (prev.length >= maxSpells) {
-          console.log('🚫 [useSpellSelection] Spell limit reached, cannot add more spells');
+          logger.warn('🚫 [useSpellSelection] Spell limit reached, cannot add more spells');
           return prev; // Don't add if at limit
         }
         newSelection = [...prev, spellId];
       }
 
-      console.log('🪄 [useSpellSelection] selectedSpells updated:', {
+      logger.debug('🪄 [useSpellSelection] selectedSpells updated:', {
         action: isRemoving ? 'removed' : 'added',
         spellId,
         previousCount: prev.length,
@@ -268,15 +270,24 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       const availableSpellIds = availableSpells.map(s => s.id);
 
       try {
-        // Dynamically import the async validator to avoid circular deps in some setups
-        const { validateSpellSelectionAsync } = await import('@/utils/spell-validation');
-        const result = await validateSpellSelectionAsync(character, selectedCantrips, selectedSpells, availableCantripIds, availableSpellIds);
+        const result = await validateSpellSelectionAsync(
+          character,
+          selectedCantrips,
+          selectedSpells,
+          availableCantripIds,
+          availableSpellIds
+        );
         if (mounted) setValidation(result);
       } catch (error) {
-        console.error('Async spell validation failed:', error);
+        logger.error('Async spell validation failed:', error);
         // Fall back to synchronous validation
-        const { validateSpellSelection } = await import('@/utils/spell-validation');
-        const result = validateSpellSelection(character, selectedCantrips, selectedSpells, availableCantripIds, availableSpellIds);
+        const result = validateSpellSelection(
+          character,
+          selectedCantrips,
+          selectedSpells,
+          availableCantripIds,
+          availableSpellIds
+        );
         if (mounted) setValidation(result);
       } finally {
         if (mounted) setIsValidating(false);
@@ -293,6 +304,11 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Save to character and database
   const updateCharacterSpells = async () => {
     if (!character || !character.id) {
+      return;
+    }
+
+    // Do not save or dispatch if current selection is invalid
+    if (!validation.valid) {
       return;
     }
 
@@ -316,7 +332,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
         },
       });
     } catch (error) {
-      console.error('Failed to save character spells:', error);
+      logger.error('Failed to save character spells:', error);
       setSpellsError(error instanceof Error ? error.message : 'Failed to save spells');
       throw error; // Re-throw so calling components can handle
     } finally {
@@ -330,11 +346,11 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       // Only log when there are actual changes to reduce noise
       const currentCantrips = character.cantrips || [];
       const currentSpells = character.knownSpells || [];
-      const cantripsChanged = JSON.stringify(selectedCantrips.sort()) !== JSON.stringify(currentCantrips.sort());
-      const spellsChanged = JSON.stringify(selectedSpells.sort()) !== JSON.stringify(currentSpells.sort());
+      const cantripsChanged = JSON.stringify([...selectedCantrips].sort()) !== JSON.stringify([...currentCantrips].sort());
+      const spellsChanged = JSON.stringify([...selectedSpells].sort()) !== JSON.stringify([...currentSpells].sort());
 
       if (cantripsChanged || spellsChanged) {
-        console.log('🔄 [useSpellSelection] Auto-saving spell selections to character context:', {
+        logger.debug('🔄 [useSpellSelection] Auto-saving spell selections to character context:', {
           characterId: character.id,
           cantrips: selectedCantrips,
           knownSpells: selectedSpells,

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import logger from '@/lib/logger';
 
 /**
  * MemoryTester Component
@@ -21,7 +22,7 @@ export const MemoryTester: React.FC = () => {
    * Logs test results and shows toast notification
    */
   const logTest = (message: string, success: boolean) => {
-    console.log(`Test ${success ? 'PASSED' : 'FAILED'}: ${message}`);
+    logger.info(`Test ${success ? 'PASSED' : 'FAILED'}: ${message}`);
     setTestResults(prev => [...prev, `${success ? '✅' : '❌'} ${message}`]);
     toast({
       title: success ? 'Test Passed' : 'Test Failed',
@@ -38,22 +39,22 @@ export const MemoryTester: React.FC = () => {
     const testMessage = "This is a test message for memory creation";
     
     try {
-      console.log('[MemoryTest] Starting memory creation test');
+      logger.debug('[MemoryTest] Starting memory creation test');
       
       // Store initial memory count
       const initialMemoryCount = memories.length;
-      console.log('[MemoryTest] Initial memory count:', initialMemoryCount);
+      logger.debug('[MemoryTest] Initial memory count:', initialMemoryCount);
       
       // Extract memories
       await extractMemories(testMessage, 'general');
       
       // Wait for memory creation and retrieval
-      console.log('[MemoryTest] Waiting for memory creation and retrieval...');
+      logger.debug('[MemoryTest] Waiting for memory creation and retrieval...');
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Verify memory creation
       const newMemoryCount = memories.length;
-      console.log('[MemoryTest] New memory count:', newMemoryCount);
+      logger.debug('[MemoryTest] New memory count:', newMemoryCount);
       
       if (newMemoryCount <= initialMemoryCount) {
         throw new Error('No new memories were created');
@@ -62,18 +63,18 @@ export const MemoryTester: React.FC = () => {
       // Check for the specific test message
       const found = memories.some(m => {
         const matches = m.content.includes(testMessage);
-        console.log('[MemoryTest] Checking memory:', m, 'Matches:', matches);
+        logger.debug('[MemoryTest] Checking memory:', m, 'Matches:', matches);
         return matches;
       });
 
       if (!found) {
-        console.error('[MemoryTest] Memory not found after creation. Current memories:', memories);
+        logger.error('[MemoryTest] Memory not found after creation. Current memories:', memories);
         throw new Error('Memory creation verification failed - content not found');
       }
       
       logTest('Memory Creation Test', true);
     } catch (error) {
-      console.error('[MemoryTest] Memory Creation Test Failed:', error);
+      logger.error('[MemoryTest] Memory Creation Test Failed:', error);
       logTest(`Memory Creation Test Failed: ${error.message}`, false);
     } finally {
       setIsTestingMemory(false);
@@ -84,11 +85,11 @@ export const MemoryTester: React.FC = () => {
    * Tests memory retrieval and scoring
    */
   const testMemoryRetrieval = () => {
-    console.log('Testing memory retrieval with memories:', memories);
+    logger.debug('Testing memory retrieval with memories:', memories);
     const hasMemories = memories.length > 0;
     const hasScoring = memories.every(m => {
       const hasImportance = typeof m.importance === 'number';
-      console.log('Checking memory scoring:', m, 'Has importance:', hasImportance);
+      logger.debug('Checking memory scoring:', m, 'Has importance:', hasImportance);
       return hasImportance;
     });
     logTest('Memory Retrieval Test', hasMemories && hasScoring);
@@ -98,7 +99,7 @@ export const MemoryTester: React.FC = () => {
    * Tests memory context window management
    */
   const testMemoryWindow = () => {
-    console.log('Testing memory window size with count:', memories.length);
+    logger.debug('Testing memory window size with count:', memories.length);
     const isWithinLimit = memories.length <= 10;
     logTest('Memory Window Size Test', isWithinLimit);
   };
@@ -107,15 +108,15 @@ export const MemoryTester: React.FC = () => {
    * Tests memory metadata and embedding
    */
   const testMemoryMetadata = () => {
-    console.log('Testing memory metadata and embeddings');
+    logger.debug('Testing memory metadata and embeddings');
     const hasMetadata = memories.every(m => {
       const valid = m.metadata !== null;
-      console.log('Checking memory metadata:', m, 'Is valid:', valid);
+      logger.debug('Checking memory metadata:', m, 'Is valid:', valid);
       return valid;
     });
     const hasEmbedding = memories.every(m => {
       const valid = m.embedding !== null;
-      console.log('Checking memory embedding:', m, 'Is valid:', valid);
+      logger.debug('Checking memory embedding:', m, 'Is valid:', valid);
       return valid;
     });
     logTest('Memory Metadata Test', hasMetadata);

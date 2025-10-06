@@ -26,33 +26,7 @@ const ClassFeatureSelection: React.FC = () => {
   // Get class features that require choices
   const featuresWithChoices = currentClass?.classFeatures.filter(feature => feature.choices) || [];
 
-  // If no features require choices, show info
-  if (featuresWithChoices.length === 0) {
-    return (
-      <div className="text-center space-y-4">
-        <Crown className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Class Features Acquired</h2>
-        <p className="text-muted-foreground">
-          Your {currentClass?.name} class features have been automatically applied.
-        </p>
-        {currentClass?.classFeatures && currentClass.classFeatures.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Level 1 Features</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {currentClass.classFeatures.map((feature, index) => (
-                <div key={index} className="border-l-4 border-primary pl-4">
-                  <h4 className="font-semibold">{feature.name}</h4>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
+  // Note: No early returns before hooks to satisfy rules-of-hooks
 
   /**
    * Updates character class features in context
@@ -143,6 +117,30 @@ const ClassFeatureSelection: React.FC = () => {
   };
 
   return (
+    featuresWithChoices.length === 0 ? (
+      <div className="text-center space-y-4">
+        <Crown className="w-16 h-16 mx-auto text-muted-foreground" />
+        <h2 className="text-2xl font-bold">Class Features Acquired</h2>
+        <p className="text-muted-foreground">
+          Your {currentClass?.name} class features have been automatically applied.
+        </p>
+        {currentClass?.classFeatures && currentClass.classFeatures.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Level 1 Features</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {currentClass.classFeatures.map((feature, index) => (
+                <div key={index} className="border-l-4 border-primary pl-4">
+                  <h4 className="font-semibold">{feature.name}</h4>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Choose Class Features</h2>
@@ -241,6 +239,7 @@ const ClassFeatureSelection: React.FC = () => {
         </div>
       )}
     </div>
+    )
   );
 };
 

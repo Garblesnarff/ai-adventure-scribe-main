@@ -9,6 +9,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { modelUsageTracker } from './model-usage-tracker';
+import logger from '@/lib/logger';
 
 interface OpenRouterImageResponse {
   id: string;
@@ -122,7 +123,7 @@ export class OpenRouterService {
       const data = await response.json();
       return data.data;
     } catch (error) {
-      console.error('Error checking API key status:', error);
+      logger.error('Error checking API key status:', error);
       throw error;
     }
   }
@@ -137,12 +138,12 @@ export class OpenRouterService {
       const hasBalance = status.limit_remaining > 0;
 
       if (!hasBalance) {
-        console.warn(`OpenRouter API key has insufficient balance. Remaining: ${status.limit_remaining}`);
+        logger.warn(`OpenRouter API key has insufficient balance. Remaining: ${status.limit_remaining}`);
       }
 
       return hasBalance;
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       // Assume we can try if we can't check
       return true;
     }
@@ -162,23 +163,23 @@ export class OpenRouterService {
       for (const model of availableModels.filter(m => m.isFree)) {
         if (model.dailyLimit && modelUsageTracker.canUseModel(model.id, model.dailyLimit)) {
           const remaining = modelUsageTracker.getRemainingUsage(model.id, model.dailyLimit);
-          console.log(`Using free ${modelType} model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
+          logger.info(`Using free ${modelType} model: ${model.id} (${remaining}/${model.dailyLimit} free requests remaining today)`);
           return model;
         }
       }
     } else {
-      console.warn('Skipping free models due to insufficient balance');
+      logger.warn('Skipping free models due to insufficient balance');
     }
 
     // Fall back to paid models
     const paidModel = availableModels.find(m => !m.isFree);
     if (paidModel) {
-      console.log(`${hasBalance ? 'Free tier exhausted' : 'Insufficient balance'}, using paid ${modelType} model: ${paidModel.id}`);
+      logger.info(`${hasBalance ? 'Free tier exhausted' : 'Insufficient balance'}, using paid ${modelType} model: ${paidModel.id}`);
       return paidModel;
     }
 
     // Fallback to first model if none available
-    console.warn(`No suitable ${modelType} model found, using first available model`);
+    logger.warn(`No suitable ${modelType} model found, using first available model`);
     return availableModels[0];
   }
 
@@ -244,7 +245,7 @@ export class OpenRouterService {
         temperature: 0.7,
       };
 
-      console.log('OpenRouter request:', JSON.stringify(requestBody, null, 2));
+      logger.debug('OpenRouter request:', JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -262,7 +263,7 @@ export class OpenRouterService {
 
         // Check if it's a 403 error (insufficient balance or key limit exceeded)
         if (response.status === 403) {
-          console.error(`OpenRouter API 403 error: ${errorText}`);
+          logger.error(`OpenRouter API 403 error: ${errorText}`);
 
           // If we were trying a free model, suggest increasing key limit
           if (selectedModel.isFree) {
@@ -278,7 +279,7 @@ export class OpenRouterService {
 
           // Try with paid Gemini model if we were using free
           if (selectedModel.isFree) {
-            console.warn(`Free model blocked (403), trying paid Gemini model`);
+            logger.warn(`Free model blocked (403), trying paid Gemini model`);
             const paidGeminiModel = this.models.find(m =>
               m.id === 'google/gemini-2.5-flash-image-preview' && !m.isFree
             );
@@ -290,7 +291,7 @@ export class OpenRouterService {
 
         // Check if it's a rate limit error for free tier
         if (response.status === 429 && selectedModel.isFree) {
-          console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid Gemini model`);
+          logger.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid Gemini model`);
 
           // Try with paid Gemini model specifically
           const paidGeminiModel = this.models.find(m =>
@@ -303,7 +304,7 @@ export class OpenRouterService {
 
         // Check if it's a 404 error (model not found) - try paid Gemini model
         if (response.status === 404) {
-          console.warn(`Model ${selectedModel.id} not found (404), trying paid Gemini model`);
+          logger.warn(`Model ${selectedModel.id} not found (404), trying paid Gemini model`);
 
           // Try the paid version of the same model
           const paidGeminiModel = this.models.find(m =>
@@ -311,7 +312,7 @@ export class OpenRouterService {
           );
 
           if (paidGeminiModel && paidGeminiModel.id !== selectedModel.id) {
-            console.log(`Trying paid Gemini model: ${paidGeminiModel.id}`);
+            logger.info(`Trying paid Gemini model: ${paidGeminiModel.id}`);
             return await this.generateImageWithModel(prompt, paidGeminiModel, referenceImage);
           }
         }
@@ -322,47 +323,47 @@ export class OpenRouterService {
       const data: OpenRouterImageResponse = await response.json();
       
       // Debug: Log the full response structure
-      console.log('Full OpenRouter API response:', JSON.stringify(data, null, 2));
+      logger.debug('Full OpenRouter API response:', JSON.stringify(data, null, 2));
 
       if (!data.choices || data.choices.length === 0) {
-        console.error('No choices in response:', data);
+        logger.error('No choices in response:', data);
         throw new Error('No image generated in API response');
       }
 
       const choice = data.choices[0];
-      console.log('Choice structure:', JSON.stringify(choice, null, 2));
+      logger.debug('Choice structure:', JSON.stringify(choice, null, 2));
       
       if (!choice.message) {
-        console.error('No message in choice:', choice);
+        logger.error('No message in choice:', choice);
         throw new Error('Invalid response format from OpenRouter API - no message');
       }
 
       // Check for image in different possible locations
       let imageData = null;
 
-      console.log('Looking for image data in response...');
+      logger.debug('Looking for image data in response...');
       
       // Method 1: Check if message has an images array (Gemini format)
       if (choice.message.images && choice.message.images.length > 0) {
-        console.log('Found images array:', choice.message.images);
+        logger.debug('Found images array:', choice.message.images);
         const imageObj = choice.message.images[0];
         if (imageObj.image_url?.url) {
           imageData = imageObj.image_url.url;
-          console.log('Found image in image_url.url:', imageData.substring(0, 50) + '...');
+          logger.debug('Found image in image_url.url:', imageData.substring(0, 50) + '...');
         } else if (imageObj.url) {
           imageData = imageObj.url;
-          console.log('Found image in url:', imageData.substring(0, 50) + '...');
+          logger.debug('Found image in url:', imageData.substring(0, 50) + '...');
         }
       }
       
       // Method 2: Check if message.content is array with image content
       else if (Array.isArray(choice.message.content)) {
-        console.log('message.content is array:', choice.message.content);
+        logger.debug('message.content is array:', choice.message.content);
         const imageContent = choice.message.content.find(
           (content) => content.type === 'image'
         );
         if (imageContent) {
-          console.log('Found image content:', imageContent);
+          logger.debug('Found image content:', imageContent);
           if (imageContent.image) {
             imageData = imageContent.image;
           } else if (imageContent.image_url) {
@@ -375,31 +376,31 @@ export class OpenRouterService {
       
       // Method 3: Check if message.content is a string with image data
       else if (typeof choice.message.content === 'string') {
-        console.log('message.content is string, checking if it contains image data...');
+        logger.debug('message.content is string, checking if it contains image data...');
         if (choice.message.content.startsWith('data:image/')) {
           imageData = choice.message.content;
-          console.log('Found image data in content string');
+          logger.debug('Found image data in content string');
         }
       }
       
       // Method 4: Check direct message properties
       if (!imageData && choice.message.image) {
-        console.log('Found image in message.image');
+        logger.debug('Found image in message.image');
         imageData = choice.message.image;
       }
       
       if (!imageData && choice.message.image_url) {
-        console.log('Found image in message.image_url');
+        logger.debug('Found image in message.image_url');
         imageData = choice.message.image_url;
       }
 
       if (!imageData) {
-        console.error('No image data found in any expected location');
-        console.error('Available message properties:', Object.keys(choice.message));
+        logger.error('No image data found in any expected location');
+        logger.error('Available message properties:', Object.keys(choice.message));
         throw new Error('No image data found in API response');
       }
       
-      console.log('Successfully found image data, type:', typeof imageData);
+      logger.debug('Successfully found image data, type:', typeof imageData);
 
       // Extract base64 data if it's a data URL
       if (imageData.startsWith('data:image/')) {
@@ -416,7 +417,7 @@ export class OpenRouterService {
 
       return imageData;
     } catch (error) {
-      console.error('Error generating image with OpenRouter:', error);
+      logger.error('Error generating image with OpenRouter:', error);
       throw new Error(`Image generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -446,7 +447,7 @@ export class OpenRouterService {
         temperature: temperature,
       };
 
-      console.log('OpenRouter text generation request:', JSON.stringify(requestBody, null, 2));
+      logger.debug('OpenRouter text generation request:', JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -464,11 +465,11 @@ export class OpenRouterService {
 
         // Check if it's a 403 error (insufficient balance or key limit exceeded)
         if (response.status === 403) {
-          console.error(`OpenRouter API 403 error: ${errorText}`);
+          logger.error(`OpenRouter API 403 error: ${errorText}`);
 
           // If we were trying a free model, try paid models
           if (selectedModel.isFree) {
-            console.warn(`Free model blocked (403), trying paid text model`);
+            logger.warn(`Free model blocked (403), trying paid text model`);
             const paidTextModel = this.textModels.find(m => !m.isFree);
             if (paidTextModel) {
               return this.generateTextWithModel(prompt, paidTextModel, maxTokens, temperature);
@@ -478,7 +479,7 @@ export class OpenRouterService {
 
         // Check if it's a rate limit error for free tier
         if (response.status === 429 && selectedModel.isFree) {
-          console.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid text model`);
+          logger.warn(`Free tier rate limit exceeded for ${selectedModel.id}, trying paid text model`);
           const paidTextModel = this.textModels.find(m => !m.isFree);
           if (paidTextModel) {
             return this.generateTextWithModel(prompt, paidTextModel, maxTokens, temperature);
@@ -490,7 +491,7 @@ export class OpenRouterService {
 
       const data = await response.json();
 
-      console.log('OpenRouter text response:', JSON.stringify(data, null, 2));
+      logger.debug('OpenRouter text response:', JSON.stringify(data, null, 2));
 
       if (!data.choices || data.choices.length === 0) {
         throw new Error('No text generated in API response');
@@ -508,7 +509,7 @@ export class OpenRouterService {
 
       return choice.message.content.trim();
     } catch (error) {
-      console.error('Error generating text with OpenRouter:', error);
+      logger.error('Error generating text with OpenRouter:', error);
       throw new Error(`Text generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -567,7 +568,7 @@ export class OpenRouterService {
 
       return choice.message.content.trim();
     } catch (error) {
-      console.error('Error generating text with specific model:', error);
+      logger.error('Error generating text with specific model:', error);
       throw error;
     }
   }
@@ -633,47 +634,47 @@ export class OpenRouterService {
       const data: OpenRouterImageResponse = await response.json();
       
       // Debug: Log the full response structure
-      console.log('Full OpenRouter API response:', JSON.stringify(data, null, 2));
+      logger.debug('Full OpenRouter API response:', JSON.stringify(data, null, 2));
 
       if (!data.choices || data.choices.length === 0) {
-        console.error('No choices in response:', data);
+        logger.error('No choices in response:', data);
         throw new Error('No image generated in API response');
       }
 
       const choice = data.choices[0];
-      console.log('Choice structure:', JSON.stringify(choice, null, 2));
+      logger.debug('Choice structure:', JSON.stringify(choice, null, 2));
       
       if (!choice.message) {
-        console.error('No message in choice:', choice);
+        logger.error('No message in choice:', choice);
         throw new Error('Invalid response format from OpenRouter API - no message');
       }
 
       // Check for image in different possible locations
       let imageData = null;
 
-      console.log('Looking for image data in response...');
+      logger.debug('Looking for image data in response...');
       
       // Method 1: Check if message has an images array (Gemini format)
       if (choice.message.images && choice.message.images.length > 0) {
-        console.log('Found images array:', choice.message.images);
+        logger.debug('Found images array:', choice.message.images);
         const imageObj = choice.message.images[0];
         if (imageObj.image_url?.url) {
           imageData = imageObj.image_url.url;
-          console.log('Found image in image_url.url:', imageData.substring(0, 50) + '...');
+          logger.debug('Found image in image_url.url:', imageData.substring(0, 50) + '...');
         } else if (imageObj.url) {
           imageData = imageObj.url;
-          console.log('Found image in url:', imageData.substring(0, 50) + '...');
+          logger.debug('Found image in url:', imageData.substring(0, 50) + '...');
         }
       }
       
       // Method 2: Check if message.content is array with image content
       else if (Array.isArray(choice.message.content)) {
-        console.log('message.content is array:', choice.message.content);
+        logger.debug('message.content is array:', choice.message.content);
         const imageContent = choice.message.content.find(
           (content) => content.type === 'image'
         );
         if (imageContent) {
-          console.log('Found image content:', imageContent);
+          logger.debug('Found image content:', imageContent);
           if (imageContent.image) {
             imageData = imageContent.image;
           } else if (imageContent.image_url) {
@@ -686,31 +687,31 @@ export class OpenRouterService {
       
       // Method 3: Check if message.content is a string with image data
       else if (typeof choice.message.content === 'string') {
-        console.log('message.content is string, checking if it contains image data...');
+        logger.debug('message.content is string, checking if it contains image data...');
         if (choice.message.content.startsWith('data:image/')) {
           imageData = choice.message.content;
-          console.log('Found image data in content string');
+          logger.debug('Found image data in content string');
         }
       }
       
       // Method 4: Check direct message properties
       if (!imageData && choice.message.image) {
-        console.log('Found image in message.image');
+        logger.debug('Found image in message.image');
         imageData = choice.message.image;
       }
       
       if (!imageData && choice.message.image_url) {
-        console.log('Found image in message.image_url');
+        logger.debug('Found image in message.image_url');
         imageData = choice.message.image_url;
       }
 
       if (!imageData) {
-        console.error('No image data found in any expected location');
-        console.error('Available message properties:', Object.keys(choice.message));
+        logger.error('No image data found in any expected location');
+        logger.error('Available message properties:', Object.keys(choice.message));
         throw new Error('No image data found in API response');
       }
       
-      console.log('Successfully found image data, type:', typeof imageData);
+      logger.debug('Successfully found image data, type:', typeof imageData);
 
       // Extract base64 data if it's a data URL
       if (imageData.startsWith('data:image/')) {
@@ -727,7 +728,7 @@ export class OpenRouterService {
 
       return imageData;
     } catch (error) {
-      console.error('Error generating image with specific model:', error);
+      logger.error('Error generating image with specific model:', error);
       throw error;
     }
   }
@@ -783,8 +784,8 @@ export class OpenRouterService {
         });
       
       if (error) {
-        console.error('Error uploading to Supabase storage:', error);
-        console.log('Falling back to data URL due to storage upload failure');
+        logger.error('Error uploading to Supabase storage:', error);
+        logger.warn('Falling back to data URL due to storage upload failure');
         // Fallback to data URL if upload fails
         return `data:image/png;base64,${cleanBase64}`;
       }
@@ -794,10 +795,10 @@ export class OpenRouterService {
         .from('campaign-images')
         .getPublicUrl(data.path);
       
-      console.log('Successfully uploaded image to Supabase storage:', publicUrlData.publicUrl);
+      logger.info('Successfully uploaded image to Supabase storage:', publicUrlData.publicUrl);
       return publicUrlData.publicUrl;
     } catch (error) {
-      console.error('Error in uploadImage:', error);
+      logger.error('Error in uploadImage:', error);
       // Fallback to data URL if anything fails
       const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
       return `data:image/png;base64,${cleanBase64}`;

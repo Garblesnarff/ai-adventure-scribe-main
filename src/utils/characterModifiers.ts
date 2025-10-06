@@ -9,6 +9,7 @@
 
 import { Character } from '@/types/character';
 import { Equipment } from '@/data/equipmentOptions';
+import logger from '@/lib/logger';
 
 // D&D 5e ability names
 export type AbilityName = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
@@ -128,7 +129,7 @@ export function calculateSkillModifier(character: Character, skillName: string):
   // Get the ability associated with this skill
   const ability = SKILL_ABILITIES[actualSkill];
   if (!ability) {
-    console.warn(`Unknown skill: ${skillName}`);
+    logger.warn(`Unknown skill: ${skillName}`);
     return 0;
   }
 
@@ -263,7 +264,7 @@ export function calculateRollWithBreakdown(
       breakdown.push(`${ability.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`);
       break;
 
-    case 'skill':
+    case 'skill': {
       if (!skillName) throw new Error('Skill name required for skill check');
       const skillAbility = SKILL_ABILITIES[skillName.toLowerCase()] ||
                           SKILL_ALIASES[SKILL_ALIASES[skillName.toLowerCase()]];
@@ -276,6 +277,7 @@ export function calculateRollWithBreakdown(
       breakdown.push(`${skillAbility.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`);
       if (isProficient) breakdown.push(`Prof +${proficiencyBonus}`);
       break;
+    }
 
     case 'initiative':
       usedAbility = 'dexterity';

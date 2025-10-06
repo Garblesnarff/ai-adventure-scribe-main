@@ -50,6 +50,7 @@ import { FIGHTING_STYLES } from '@/utils/fightingStyles';
 // ===========================
 
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 // ===========================
 // Initial State
@@ -132,13 +133,11 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         },
       };
 
-    case 'ADD_PARTICIPANT':
+    case 'ADD_PARTICIPANT': {
       if (!state.activeEncounter) return state;
-      
       // Insert participant in initiative order
       const newParticipants = [...state.activeEncounter.participants, action.participant]
         .sort((a, b) => b.initiative - a.initiative);
-      
       return {
         ...state,
         activeEncounter: {
@@ -146,6 +145,7 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
           participants: newParticipants,
         },
       };
+    }
 
     case 'REMOVE_PARTICIPANT':
       if (!state.activeEncounter) return state;
@@ -160,22 +160,18 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         },
       };
 
-    case 'NEXT_TURN':
+    case 'NEXT_TURN': {
       if (!state.activeEncounter) return state;
-      
       const currentIndex = state.activeEncounter.participants.findIndex(p => 
         p.id === state.activeEncounter?.currentTurnParticipantId
       );
-      
       let nextIndex = currentIndex + 1;
       let newRound = state.activeEncounter.currentRound;
-      
       // If we've gone through all participants, start new round
       if (nextIndex >= state.activeEncounter.participants.length) {
         nextIndex = 0;
         newRound += 1;
       }
-      
       // Skip unconscious/dead participants
       while (nextIndex < state.activeEncounter.participants.length) {
         const participant = state.activeEncounter.participants[nextIndex];
@@ -184,9 +180,7 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         }
         nextIndex++;
       }
-      
       const nextParticipant = state.activeEncounter.participants[nextIndex];
-      
       return {
         ...state,
         activeEncounter: {
@@ -211,6 +205,7 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         // Clear global reaction opportunities at end of turn
         activeReactionOpportunities: [],
       };
+    }
 
     case 'ADD_ACTION':
       if (!state.activeEncounter) return state;
@@ -291,9 +286,8 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         },
       };
 
-    case 'UPDATE_INITIATIVE_ORDER':
+    case 'UPDATE_INITIATIVE_ORDER': {
       if (!state.activeEncounter) return state;
-
       const reorderedParticipants = [...state.activeEncounter.participants].sort((a, b) => {
         const aIndex = action.newOrder.indexOf(a.id);
         const bIndex = action.newOrder.indexOf(b.id);
@@ -301,7 +295,6 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
         if (bIndex === -1) return -1;
         return aIndex - bIndex;
       });
-
       return {
         ...state,
         activeEncounter: {
@@ -309,6 +302,7 @@ function combatReducer(state: CombatState, action: ReducerAction): CombatState {
           participants: reorderedParticipants,
         },
       };
+    }
 
     case 'SET_GROUP_ID':
       if (!state.activeEncounter) return state;
@@ -406,7 +400,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
           });
       }
     } catch (error) {
-      console.error('Error saving encounter to database:', error);
+      logger.error('Error saving encounter to database:', error);
     }
   }, []);
 
@@ -422,7 +416,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     
     // Roll initiative for all participants
     const participantsWithInitiative = initialParticipants.map(p => {
-      let participant: CombatParticipant = {
+      const participant: CombatParticipant = {
         id: p.id || crypto.randomUUID(),
         participantType: p.participantType || 'monster',
         name: p.name || 'Unknown',
@@ -582,8 +576,8 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     // Handle spell casting
     if (action.actionType === 'cast_spell' && participant.participantType === 'player') {
       try {
-        const spellLevel = (action as any).spellLevel as SpellSlotLevel || 1;
-        const spellName = (action as any).spellName || 'Unknown Spell';
+        const spellLevel = (action.spellLevel as SpellSlotLevel) || 1;
+        const spellName = action.spellName || 'Unknown Spell';
         const { updatedParticipant, updatedAction } = castSpell(action, participant, spellName, spellLevel);
         
         // Update participant in combat
@@ -599,7 +593,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
 
         fullAction = { ...fullAction, ...updatedAction };
       } catch (error) {
-        console.error('Spell casting failed:', error);
+        logger.error('Spell casting failed:', error);
         // Still add the action but mark as failed
         fullAction.description += ` (Failed: ${(error as Error).message})`;
       }
@@ -644,7 +638,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
         
         fullAction.description = `${participant.name} uses Divine Smite with a level ${spellSlotLevel} spell slot`;
       } catch (error) {
-        console.error('Divine Smite failed:', error);
+        logger.error('Divine Smite failed:', error);
         fullAction.description += ` (Failed: ${(error as Error).message})`;
       }
     }
@@ -670,7 +664,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
         
         fullAction.description = `${participant.name} enters a rage, gaining resistance to bludgeoning, piercing, and slashing damage and +${rageDamageBonus} damage to melee attacks`;
       } catch (error) {
-        console.error('Rage activation failed:', error);
+        logger.error('Rage activation failed:', error);
         fullAction.description += ` (Failed: ${(error as Error).message})`;
       }
     }
@@ -691,7 +685,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
         
         fullAction.description = `${participant.name} stops raging`;
       } catch (error) {
-        console.error('Rage deactivation failed:', error);
+        logger.error('Rage deactivation failed:', error);
         fullAction.description += ` (Failed: ${(error as Error).message})`;
       }
     }
@@ -752,7 +746,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
         fullAction.description = hideResult.description;
         fullAction.attackRoll = hideResult.roll;
       } catch (error) {
-        console.error('Hide action failed:', error);
+        logger.error('Hide action failed:', error);
         fullAction.description += ` (Failed: ${(error as Error).message})`;
       }
     } else {
@@ -804,7 +798,7 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
     }
     
     // Apply temporary HP first
-    let tempHPDamage = Math.min(participant.temporaryHitPoints, actualDamage);
+    const tempHPDamage = Math.min(participant.temporaryHitPoints, actualDamage);
     actualDamage -= tempHPDamage;
     
     const newTempHP = participant.temporaryHitPoints - tempHPDamage;

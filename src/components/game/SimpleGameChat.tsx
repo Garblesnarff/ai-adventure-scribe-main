@@ -8,6 +8,7 @@ import { Send, Loader2, LogOut } from 'lucide-react';
 import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
 import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { toast } from 'sonner';
+import logger from '@/lib/logger';
 
 interface SimpleGameChatProps {
   campaignId: string;
@@ -76,9 +77,9 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       // Add to UI
       setMessages([dmMessage]);
       
-      console.log('Opening message generated and saved');
+      logger.info('Opening message generated and saved');
     } catch (error) {
-      console.error('Failed to generate opening message:', error);
+      logger.error('Failed to generate opening message:', error);
       toast.error('Failed to generate opening message');
     }
   }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
@@ -96,7 +97,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
         await generateOpeningMessage();
       }
     } catch (error) {
-      console.error('Failed to load conversation history:', error);
+      logger.error('Failed to load conversation history:', error);
       toast.error('Failed to load conversation history');
     } finally {
       setIsLoadingHistory(false);
@@ -131,12 +132,12 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       // Navigate back to campaign page
       navigate(`/campaign/${campaignId}`);
     } catch (error) {
-      console.error('Error ending session:', error);
+      logger.error('Error ending session:', error);
       toast.error('Failed to end session properly');
     }
   };
 
-  const sendMessage = async (e: React.FormEvent) => {
+  const sendMessage = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     
     if (!currentMessage.trim() || !session?.id || isSending) return;
@@ -200,7 +201,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       setMessages(prev => [...prev, assistantMessage]);
       
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
@@ -240,7 +241,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(e as any);
+      sendMessage(e);
     }
   };
 
@@ -275,7 +276,7 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
               variant="outline"
               onClick={() => {
                 const stats = AIService.getApiStats();
-                console.log('API Stats:', stats);
+                logger.info('API Stats:', stats);
                 
                 const rateLimits = stats.rateLimits;
                 if (rateLimits) {

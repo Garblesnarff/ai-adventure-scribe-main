@@ -1,6 +1,7 @@
 import { Character, Spell } from '@/types/character';
 import { spellApi } from '@/services/spellApi';
 import { getSpellcastingInfo } from './spell-validation';
+import logger from '@/lib/logger';
 
 /**
  * D&D 5E Spell Preparation Utilities
@@ -196,7 +197,7 @@ export async function validateSpellPreparation(
     }
 
   } catch (error) {
-    console.error('Failed to validate spell preparation:', error);
+    logger.error('Failed to validate spell preparation:', error);
     errors.push('Failed to validate spell preparation - could not fetch spell data');
   }
 
@@ -226,7 +227,7 @@ export async function getAvailableRitualSpells(character: Character): Promise<Sp
     );
 
   } catch (error) {
-    console.error('Failed to fetch ritual spells:', error);
+    logger.error('Failed to fetch ritual spells:', error);
     return [];
   }
 }

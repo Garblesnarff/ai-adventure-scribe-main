@@ -17,6 +17,7 @@ import {
   BookOpen,
   RotateCcw
 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface SpellCardProps {
   spell: Spell;
@@ -112,7 +113,7 @@ const SpellCard: React.FC<SpellCardProps> = ({
           ${className}
         `}
         onClick={() => {
-          console.log(`🪄 [SpellCard] Click on ${spell.name}:`, {
+          logger.info(`🪄 [SpellCard] Click on ${spell.name}:`, {
             spellId: spell.id,
             isSelected,
             isDisabled,

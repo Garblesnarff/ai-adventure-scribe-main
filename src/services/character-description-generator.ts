@@ -9,6 +9,7 @@
 
 import { geminiService } from './gemini-service';
 import { openRouterService } from './openrouter-service';
+import logger from '@/lib/logger';
 
 interface CharacterData {
   name: string;
@@ -18,7 +19,7 @@ interface CharacterData {
   class?: string | null;
   background?: string | null;
   level?: number | null;
-  ability_scores?: any;
+  ability_scores?: Record<string, number>;
   alignment?: string | null;
   personalityTraits?: string[];
   ideals?: string[];
@@ -79,7 +80,7 @@ export class CharacterDescriptionGenerator {
 
     try {
       const prompt = this.createDescriptionPrompt(characterData, options);
-      console.log('Generating character description with Gemini...');
+      logger.info('Generating character description with Gemini...');
 
       const response = await geminiService.generateText({
         prompt,
@@ -88,26 +89,26 @@ export class CharacterDescriptionGenerator {
         temperature: 0.8,
       });
 
-      console.log('Raw Gemini response:', response);
-      console.log('Response type:', typeof response);
-      console.log('Response length:', response.length);
+      logger.debug('Raw Gemini response:', response);
+      logger.debug('Response type:', typeof response);
+      logger.debug('Response length:', response.length);
 
       if (!response || response.trim() === '') {
-        console.warn('Empty or null response from Gemini API');
+        logger.warn('Empty or null response from Gemini API');
         throw new Error('Received empty response from AI service');
       }
 
       const enhancedDescription = this.parseDescriptionResponse(response, characterData);
 
-      console.log('Successfully generated character description');
+      logger.info('Successfully generated character description');
       return enhancedDescription;
 
     } catch (error) {
-      console.error('Failed to generate character description with Gemini:', error);
+      logger.error('Failed to generate character description with Gemini:', error);
 
       // Try OpenRouter as fallback
       try {
-        console.log('Attempting to generate character description with OpenRouter fallback...');
+        logger.info('Attempting to generate character description with OpenRouter fallback...');
         const prompt = this.createDescriptionPrompt(characterData, options);
 
         const response = await openRouterService.generateText({
@@ -117,18 +118,18 @@ export class CharacterDescriptionGenerator {
           temperature: 0.8
         });
 
-        console.log('Raw OpenRouter response:', response);
+        logger.debug('Raw OpenRouter response:', response);
 
         if (!response || response.trim() === '') {
           throw new Error('Received empty response from OpenRouter');
         }
 
         const enhancedDescription = this.parseDescriptionResponse(response, characterData);
-        console.log('Successfully generated character description with OpenRouter fallback');
+        logger.info('Successfully generated character description with OpenRouter fallback');
         return enhancedDescription;
 
       } catch (fallbackError) {
-        console.error('OpenRouter fallback also failed:', fallbackError);
+        logger.error('OpenRouter fallback also failed:', fallbackError);
 
         // Return static fallback description
         return {
@@ -312,7 +313,7 @@ export class CharacterDescriptionGenerator {
   private parseDescriptionResponse(response: string, characterData: CharacterData): EnhancedDescription {
     try {
       const sections = this.extractSections(response);
-      console.log('Extracted sections:', sections);
+      logger.debug('Extracted sections:', sections);
       
       const result = {
         description: sections.DESCRIPTION || sections.description || 
@@ -324,10 +325,10 @@ export class CharacterDescriptionGenerator {
         backstory_elements: sections.BACKSTORY || sections.backstory || 
                            `${characterData.name || 'This character'} has chosen the adventuring life to fulfill their destiny.`
       };
-      console.log('Parsed description result:', result);
+      logger.debug('Parsed description result:', result);
       return result;
     } catch (error) {
-      console.error('Error parsing description response:', error);
+      logger.error('Error parsing description response:', error);
       
       // If parsing fails, use the entire response as description
       const cleanResponse = response.replace(/[A-Z]+:/g, '').trim();
@@ -350,9 +351,9 @@ export class CharacterDescriptionGenerator {
   private extractSections(text: string): Record<string, string> {
     const sections: Record<string, string> = {};
 
-    console.log('=== PARSING DEBUG ===');
-    console.log('Full text to parse:', text);
-    console.log('Text length:', text.length);
+    logger.debug('=== PARSING DEBUG ===');
+    logger.debug('Full text to parse:', text);
+    logger.debug('Text length:', text.length);
 
     // First, let's try a more reliable approach by splitting the text by section headers
     const sectionHeaders = ['**DESCRIPTION:**', '**APPEARANCE:**', '**PERSONALITY:**', '**BACKSTORY:**'];
@@ -366,7 +367,7 @@ export class CharacterDescriptionGenerator {
       }
     });
 
-    console.log('Found section positions:', sectionPositions);
+    logger.debug('Found section positions:', sectionPositions);
 
     // Sort by position
     sectionPositions.sort((a, b) => a.start - b.start);
@@ -380,19 +381,19 @@ export class CharacterDescriptionGenerator {
       const header = currentPos.header.replace(/^\*\*(.*):\*\*$/, '$1').toUpperCase();
 
       // Extract the content
-      let contentStart = currentPos.start + currentPos.header.length;
-      let contentEnd = nextPos ? nextPos.start : text.length;
-      let content = text.substring(contentStart, contentEnd).trim();
+      const contentStart = currentPos.start + currentPos.header.length;
+      const contentEnd = nextPos ? nextPos.start : text.length;
+      const content = text.substring(contentStart, contentEnd).trim();
 
       if (content) {
         sections[header] = content;
-        console.log(`✅ Extracted ${header}:`, content.substring(0, 100) + '...');
+        logger.debug(`✅ Extracted ${header}:`, content.substring(0, 100) + '...');
       }
     }
 
     // If no sections were found with the position-based approach, try the original regex as fallback
     if (Object.keys(sections).length === 0) {
-      console.log('Position-based approach failed, trying regex fallback...');
+      logger.debug('Position-based approach failed, trying regex fallback...');
 
       // Try bold markdown headers with colon (**SECTION:**)
       const boldMarkdownRegex = /\*\*(DESCRIPTION|APPEARANCE|PERSONALITY|BACKSTORY)\*\*:\s*([\s\S]*?)(?=\*\*[A-Z]+:\*\*|$)/g;
@@ -403,17 +404,17 @@ export class CharacterDescriptionGenerator {
         const cleanedValue = value.trim();
         if (cleanedValue) {
           sections[sectionKey] = cleanedValue;
-          console.log(`Extracted ${sectionKey} (regex fallback):`, cleanedValue.substring(0, 100) + '...');
+          logger.debug(`Extracted ${sectionKey} (regex fallback):`, cleanedValue.substring(0, 100) + '...');
         }
       }
     }
 
     // Log final extraction results
-    console.log('=== PARSING RESULTS ===');
-    console.log('Final extracted sections:', Object.keys(sections));
-    console.log('Section count:', Object.keys(sections).length);
+    logger.debug('=== PARSING RESULTS ===');
+    logger.debug('Final extracted sections:', Object.keys(sections));
+    logger.debug('Section count:', Object.keys(sections).length);
     Object.entries(sections).forEach(([key, value]) => {
-      console.log(`${key}: ${value.substring(0, 150)}...`);
+      logger.debug(`${key}: ${value.substring(0, 150)}...`);
     });
 
     return sections;
@@ -447,11 +448,11 @@ export class CharacterDescriptionGenerator {
 
       return response.trim();
     } catch (error) {
-      console.error('Failed to generate quick description with Gemini:', error);
+      logger.error('Failed to generate quick description with Gemini:', error);
 
       // Try OpenRouter as fallback
       try {
-        console.log('Attempting to generate quick description with OpenRouter fallback...');
+        logger.info('Attempting to generate quick description with OpenRouter fallback...');
 
         const response = await openRouterService.generateText({
           prompt,
@@ -460,10 +461,10 @@ export class CharacterDescriptionGenerator {
           temperature: 0.7
         });
 
-        console.log('Successfully generated quick description with OpenRouter fallback');
+        logger.info('Successfully generated quick description with OpenRouter fallback');
         return response.trim();
       } catch (fallbackError) {
-        console.error('OpenRouter fallback also failed for quick description:', fallbackError);
+        logger.error('OpenRouter fallback also failed for quick description:', fallbackError);
         return `${characterData.name || 'This character'} is a ${characterData.race || 'heroic'} ${characterData.class || 'adventurer'} ready for adventure.`;
       }
     }

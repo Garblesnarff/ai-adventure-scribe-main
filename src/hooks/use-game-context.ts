@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 
 // Project Utilities (assuming kebab-case for gameContextBuilder)
 import { buildGameContext, validateGameContext, createDefaultContext } from '@/utils/context/game-context-builder';
+import logger from '@/lib/logger';
 
 
 /**
@@ -36,7 +37,7 @@ export const useGameContext = (
     queryKey: ['gameContext', campaignId, characterId, sessionId],
     queryFn: async () => {
       if (!campaignId || !sessionId) {
-        console.error('[Context] Missing required IDs');
+        logger.error('[Context] Missing required IDs');
         return createDefaultContext();
       }
 
@@ -47,7 +48,7 @@ export const useGameContext = (
       );
 
       if (!context || !validateGameContext(context)) {
-        console.error('[Context] Invalid context, using defaults');
+        logger.error('[Context] Invalid context, using defaults');
         return createDefaultContext();
       }
 

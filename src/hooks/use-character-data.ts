@@ -34,16 +34,66 @@ import { useToast } from '@/hooks/use-toast'; // Assuming kebab-case from previo
 import { isValidUUID } from '@/utils/validation'; // Assuming kebab-case
 
 // Project Types
-import { Character } from '@/types/character';
+import { Character, AbilityScores } from '@/types/character';
 
 
 // Helper Functions (defined in-file)
+interface CharacterStatsRow {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+}
+
+interface CharacterEquipmentRow {
+  id: string;
+  item_name: string;
+  quantity?: number;
+  equipped?: boolean;
+  is_magic?: boolean;
+  magic_bonus?: number;
+  magic_properties?: string | null;
+  requires_attunement?: boolean;
+  is_attuned?: boolean;
+  attunement_requirements?: string | null;
+  magic_item_type?: string;
+  magic_item_rarity?: string;
+  magic_effects?: string | null;
+}
+
+interface CharacterRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string | null;
+  race: string;
+  class: string;
+  level: number;
+  background?: string | null;
+  experience_points?: number | null;
+  alignment?: string | null;
+  avatar_url?: string | null;
+  image_url?: string | null;
+  appearance?: string | null;
+  personality_traits?: string | null;
+  backstory_elements?: string | null;
+  vision_types?: string | null;
+  obscurement?: string | null;
+  is_hidden?: boolean | null;
+  stealth_check_bonus?: number | null;
+  cantrips?: string | null;
+  known_spells?: string | null;
+  prepared_spells?: string | null;
+  ritual_spells?: string | null;
+}
 /**
  * Transforms database stats into Character ability scores format
  * @param statsData - Raw stats data from database
  * @returns Formatted ability scores object
  */
-const transformAbilityScores = (statsData: any) => {
+const transformAbilityScores = (statsData: CharacterStatsRow | null | undefined): AbilityScores | null => {
   if (!statsData) return null;
   
   return {
@@ -88,9 +138,9 @@ const transformAbilityScores = (statsData: any) => {
  * @returns Transformed Character object
  */
 const transformCharacterData = (
-  characterData: any, 
-  statsData: any, 
-  equipmentData: any
+  characterData: CharacterRow,
+  statsData: CharacterStatsRow | null,
+  equipmentData: CharacterEquipmentRow[] | null
 ): Character => ({
   id: characterData.id,
   user_id: characterData.user_id,
@@ -140,7 +190,7 @@ const transformCharacterData = (
     wisdom: { score: 10, modifier: 0, savingThrow: false },
     charisma: { score: 10, modifier: 0, savingThrow: false },
   },
-  equipment: equipmentData?.map((item: any) => item.item_name) || [],
+  equipment: equipmentData?.map((item) => item.item_name) || [],
   experience: characterData.experience_points || 0,
   alignment: characterData.alignment || '',
   // Vision and Stealth
@@ -149,7 +199,7 @@ const transformCharacterData = (
   isHidden: characterData.is_hidden || false,
   stealthCheckBonus: characterData.stealth_check_bonus || 0,
   // Magic Items
-  inventory: equipmentData?.map((item: any) => ({
+  inventory: equipmentData?.map((item) => ({
     itemId: item.id,
     quantity: item.quantity || 1,
     equipped: item.equipped || false,
@@ -273,9 +323,9 @@ export const useCharacterData = (characterId: string | undefined) => {
 
       // Transform and set character data
       const transformedCharacter = transformCharacterData(
-        characterRecord,
-        statsData,
-        equipmentData
+        characterRecord as CharacterRow,
+        (statsData as CharacterStatsRow | null),
+        (equipmentData as CharacterEquipmentRow[] | null)
       );
       
       setCharacter(transformedCharacter);

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 interface DescriptionGeneratorButtonProps {
   isDisabled: boolean;
@@ -59,7 +60,7 @@ const DescriptionGeneratorButton: React.FC<DescriptionGeneratorButtonProps> = ({
         description: "Campaign description generated successfully!",
       });
     } catch (error) {
-      console.error('Error generating description:', error);
+      logger.error('Error generating description:', error);
       toast({
         title: "Error",
         description: "Failed to generate campaign description. Please try again.",

@@ -11,6 +11,7 @@ import {
   HazardSaveResult 
 } from '@/types/environmentalHazards';
 import { Character } from '@/types/character';
+import logger from '@/lib/logger';
 import { 
   detectHazard, 
   interactWithHazard, 
@@ -95,7 +96,7 @@ export const useEnvironmentalHazards = (character: Character) => {
       
       return result;
     } catch (error) {
-      console.error('Error detecting hazard:', error);
+      logger.error('Error detecting hazard:', error);
       return {
         detected: false,
         description: 'Error detecting hazard.'
@@ -147,7 +148,7 @@ export const useEnvironmentalHazards = (character: Character) => {
       
       return result;
     } catch (error) {
-      console.error('Error triggering hazard:', error);
+      logger.error('Error triggering hazard:', error);
       return {
         saved: false,
         description: 'Error triggering hazard.'

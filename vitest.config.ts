@@ -58,6 +58,7 @@ export default defineConfig({
         'src/utils/diceRolls.ts',
         'src/utils/abilityScoreUtils.ts',
         'src/utils/sentence-segmenter.ts',
+        'src/utils/spell-validation.ts',
         'src/components/spells/SpellCard.tsx',
         'src/agents/services/intent/PlayerIntentDetector.ts',
         'src/hooks/useSpellSelection.ts',
@@ -77,7 +78,6 @@ export default defineConfig({
         'tailwind.config.ts',
         // Temporarily exclude low-covered utils until tests are added
         'src/utils/spell-preparation.ts',
-        'src/utils/spell-validation.ts',
       ],
       thresholds: {
         statements: 80,

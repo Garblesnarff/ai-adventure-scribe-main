@@ -2,9 +2,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { getGeminiApiManager } from './gemini-api-manager-singleton';
 import type { GeminiApiManager } from './gemini-api-manager';
 import { MemoryManager, MemoryContext } from './memory-manager';
+import type { Memory } from './memory-manager';
 import { WorldBuilderService } from './world-builders/world-builder-service';
 import { voiceConsistencyService } from './voice-consistency-service';
-import { detectCombatFromText } from '@/utils/combatDetection';
+import type { SessionVoiceContext } from './voice-consistency-service';
+import { detectCombatFromText, type CombatDetectionResult, type DetectedEnemy, type DetectedCombatAction } from '@/utils/combatDetection';
+import logger from '@/lib/logger';
 
 export interface ChatMessage {
   id: string;
@@ -19,12 +22,19 @@ export interface ChatMessage {
   }>;
 }
 
+type NarrationSegment = {
+  type: 'dm' | 'character' | 'transition';
+  text: string;
+  character?: string;
+  voice_category?: string;
+};
+
 export interface GameContext {
   campaignId: string;
   characterId: string;
   sessionId?: string;
-  campaignDetails?: any;
-  characterDetails?: any;
+  campaignDetails?: Record<string, unknown>;
+  characterDetails?: Record<string, unknown>;
 }
 
 export class AIService {
@@ -44,7 +54,7 @@ export class AIService {
     tone: string;
   }): Promise<string> {
     // Skip Edge Function - use local Gemini API directly
-    console.log('Using local Gemini API for campaign description...');
+    logger.info('Using local Gemini API for campaign description...');
     
     try {
       // Use local Gemini API
@@ -88,11 +98,11 @@ Create a campaign description that makes players say "I want to play in this wor
         return result.text();
       });
       
-      console.log('Successfully generated campaign description using local Gemini API');
+      logger.info('Successfully generated campaign description using local Gemini API');
       return result;
       
     } catch (geminiError) {
-      console.error('Local Gemini API failed:', geminiError);
+      logger.error('Local Gemini API failed:', geminiError);
       throw new Error('Failed to generate campaign description - AI service unavailable');
     }
   }
@@ -100,7 +110,7 @@ Create a campaign description that makes players say "I want to play in this wor
   /**
    * Format combat detection context for the prompt
    */
-  private static formatCombatContext(combatDetection: any): string {
+  private static formatCombatContext(combatDetection: CombatDetectionResult): string {
     if (!combatDetection.isCombat) return '';
 
     let combatText = `\n\nCOMBAT CONTEXT DETECTED:
@@ -112,7 +122,7 @@ Should End Combat: ${combatDetection.shouldEndCombat ? 'YES' : 'NO'}`;
     // Add detected enemies
     if (combatDetection.enemies && combatDetection.enemies.length > 0) {
       combatText += `\n\nDETECTED ENEMIES:`;
-      combatDetection.enemies.forEach((enemy: any) => {
+      combatDetection.enemies.forEach((enemy: DetectedEnemy) => {
         combatText += `\n- ${enemy.name} (${enemy.type}, CR ${enemy.estimatedCR})
   HP: ${enemy.suggestedHP}, AC: ${enemy.suggestedAC}
   Description: ${enemy.description}`;
@@ -122,7 +132,7 @@ Should End Combat: ${combatDetection.shouldEndCombat ? 'YES' : 'NO'}`;
     // Add detected combat actions
     if (combatDetection.combatActions && combatDetection.combatActions.length > 0) {
       combatText += `\n\nDETECTED COMBAT ACTIONS:`;
-      combatDetection.combatActions.forEach((action: any) => {
+      combatDetection.combatActions.forEach((action: DetectedCombatAction) => {
         combatText += `\n- ${action.actor} performs ${action.action}${action.target ? ` against ${action.target}` : ''}${action.weapon ? ` with ${action.weapon}` : ''}
   Roll Type: ${action.rollType}, Needs Roll: ${action.rollNeeded ? 'YES' : 'NO'}`;
       });
@@ -151,13 +161,13 @@ When combat is detected, you MUST:
     context: GameContext;
     conversationHistory?: ChatMessage[];
     onStream?: (chunk: string) => void;
-  }): Promise<{ text: string; narrationSegments?: any[] }> {
+  }): Promise<{ text: string; narrationSegments?: NarrationSegment[]; roll_requests?: import('@/components/game/DiceRollRequest').RollRequest[]; dice_rolls?: unknown[]; combatDetection?: CombatDetectionResult }> {
     // Skip Edge Function - use local Gemini API directly
-    console.log('Using local Gemini API for chat...');
+    logger.info('Using local Gemini API for chat...');
     
     try {
       // Retrieve relevant memories to enhance context
-      let relevantMemories: any[] = [];
+      let relevantMemories: Memory[] = [];
       if (params.context.sessionId) {
         try {
           relevantMemories = await MemoryManager.getRelevantMemories(
@@ -165,15 +175,15 @@ When combat is detected, you MUST:
             params.message,
             8 // Get top 8 relevant memories
           );
-          console.log(`📚 Retrieved ${relevantMemories.length} relevant memories`);
+          logger.info(`📚 Retrieved ${relevantMemories.length} relevant memories`);
         } catch (memoryError) {
-          console.warn('Failed to retrieve memories:', memoryError);
+          logger.warn('Failed to retrieve memories:', memoryError);
         }
       }
 
       // Get voice context for multi-voice narration
       // TEMPORARILY DISABLED for option button testing
-      let voiceContext = null;
+      const voiceContext: SessionVoiceContext | null = null;
       // if (params.context.sessionId) {
       //   try {
       //     voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
@@ -185,10 +195,10 @@ When combat is detected, you MUST:
 
       // Detect combat from player message
       const combatDetection = detectCombatFromText(params.message);
-      console.log(`⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`);
+      logger.info(`⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`);
       
       if (combatDetection.isCombat) {
-        console.log(`🎯 Combat details:`, {
+        logger.info(`🎯 Combat details:`, {
           type: combatDetection.combatType,
           shouldStart: combatDetection.shouldStartCombat,
           shouldEnd: combatDetection.shouldEndCombat,
@@ -335,7 +345,8 @@ Based on the detected combat scenario, you MUST include these dice rolls in your
             // Known characters and their assigned voices
             if (Object.keys(voiceContext.knownCharacters).length > 0) {
               contextPrompt += `\n\nKNOWN CHARACTERS (maintain voice consistency):`;
-              Object.entries(voiceContext.knownCharacters).forEach(([character, info]: [string, any]) => {
+              type KnownCharacterInfo = SessionVoiceContext['knownCharacters'][string];
+              Object.entries(voiceContext.knownCharacters).forEach(([character, info]: [string, KnownCharacterInfo]) => {
                 contextPrompt += `\n- "${character}": ${info.voiceCategory} voice (appeared ${info.appearances} times)`;
               });
             }
@@ -586,15 +597,15 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
                 
                 // Parse the cleaned JSON
                 const structuredResponse = JSON.parse(cleanedResponse);
-                console.log('🎭 Successfully parsed structured voice response');
+                logger.debug('🎭 Successfully parsed structured voice response');
                 
                 // 🔍 DEBUG: Log the raw AI response structure
-                console.log('📥 RAW AI RESPONSE:', JSON.stringify(structuredResponse, null, 2));
+                logger.debug('📥 RAW AI RESPONSE:', JSON.stringify(structuredResponse, null, 2));
                 
                 if (structuredResponse.narration_segments) {
-                  console.log('📊 AI SEGMENTS ANALYSIS:');
-                  structuredResponse.narration_segments.forEach((segment: any, idx: number) => {
-                    console.log(`  Segment ${idx + 1}:`, {
+                  logger.debug('📊 AI SEGMENTS ANALYSIS:');
+                  structuredResponse.narration_segments.forEach((segment: NarrationSegment, idx: number) => {
+                    logger.debug(`  Segment ${idx + 1}:`, {
                       type: segment.type,
                       character: segment.character,
                       voice_category: segment.voice_category,
@@ -606,7 +617,7 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
                 
                 return structuredResponse;
               } catch (parseError) {
-                console.warn('Failed to parse structured response, attempting to extract text:', parseError);
+                logger.warn('Failed to parse structured response, attempting to extract text:', parseError);
                 
                 // Try to extract text from malformed JSON
                 try {
@@ -614,11 +625,11 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
                   const textMatch = rawResponse.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*[,}])/);
                   if (textMatch) {
                     const extractedText = textMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
-                    console.log('🔧 Extracted text from malformed JSON');
+                    logger.debug('🔧 Extracted text from malformed JSON');
                     return { text: extractedText };
                   }
                 } catch (extractError) {
-                  console.warn('Could not extract text from malformed JSON:', extractError);
+                  logger.warn('Could not extract text from malformed JSON:', extractError);
                 }
                 
                 // Final fallback - return raw response with minimal cleaning
@@ -655,24 +666,25 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
           }
         });
         
-        console.log('Successfully generated DM response using local Gemini API');
+        logger.info('Successfully generated DM response using local Gemini API');
 
         // Process voice assignments if we have structured data
         if (result.narration_segments && params.context.sessionId && voiceContext) {
           try {
             // Normalize segment types for compatibility
-            const normalizedSegments = result.narration_segments.map((segment: any) => ({
+            type VoiceSegment = { type: string; text: string; character?: string; voice_category?: string };
+            const normalizedSegments: VoiceSegment[] = result.narration_segments.map((segment: NarrationSegment) => ({
               ...segment,
-              type: segment.type === 'dm' ? 'narration' : segment.type === 'character' ? 'dialogue' : segment.type
+              type: segment.type === 'dm' ? 'narration' : segment.type === 'character' ? 'dialogue' : (segment.type as string)
             }));
             
             await voiceConsistencyService.processVoiceAssignments(
               params.context.sessionId,
               normalizedSegments
             );
-            console.log('🎪 Processed voice assignments for character consistency');
+            logger.info('🎪 Processed voice assignments for character consistency');
           } catch (voiceError) {
-            console.warn('Voice assignment processing failed (non-fatal):', voiceError);
+            logger.warn('Voice assignment processing failed (non-fatal):', voiceError);
           }
         }
         
@@ -695,10 +707,10 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
             
             if (extractionResult.memories.length > 0) {
               await MemoryManager.saveMemories(extractionResult.memories);
-              console.log(`🧠 Extracted and saved ${extractionResult.memories.length} memories`);
+              logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories`);
             }
           } catch (memoryError) {
-            console.warn('Memory extraction failed (non-fatal):', memoryError);
+            logger.warn('Memory extraction failed (non-fatal):', memoryError);
           }
           
           // Expand world based on player action and AI response
@@ -712,10 +724,10 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
             );
             
             if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
-              console.log(`🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+              logger.info(`🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
             }
           } catch (worldError) {
-            console.warn('World building failed (non-fatal):', worldError);
+            logger.warn('World building failed (non-fatal):', worldError);
           }
         }
         
@@ -736,7 +748,7 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
         return enhancedResult;
         
     } catch (geminiError) {
-      console.error('Local Gemini API failed:', geminiError);
+      logger.error('Local Gemini API failed:', geminiError);
       throw new Error('Failed to get DM response - AI service unavailable');
     }
   }
@@ -761,11 +773,11 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
         });
 
       if (error) {
-        console.error('Error saving chat message:', error);
+        logger.error('Error saving chat message:', error);
         throw new Error('Failed to save chat message');
       }
     } catch (error) {
-      console.error('Error saving chat message:', error);
+      logger.error('Error saving chat message:', error);
       throw error;
     }
   }
@@ -782,7 +794,7 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error getting conversation history:', error);
+        logger.error('Error getting conversation history:', error);
         throw new Error('Failed to get conversation history');
       }
 
@@ -793,7 +805,7 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
         timestamp: msg.created_at ? new Date(msg.created_at) : new Date(),
       }));
     } catch (error) {
-      console.error('Error getting conversation history:', error);
+      logger.error('Error getting conversation history:', error);
       throw error;
     }
   }
@@ -805,7 +817,7 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
   static async generateOpeningMessage(params: {
     context: GameContext;
   }): Promise<string> {
-    console.log('Generating opening message for new session...');
+    logger.info('Generating opening message for new session...');
     
     try {
       // Use local Gemini API
@@ -886,11 +898,11 @@ Remember: You're not just describing a scene - you're launching an epic story wh
         return result.text();
       });
       
-      console.log('Successfully generated opening message');
+      logger.info('Successfully generated opening message');
       return result;
       
     } catch (error) {
-      console.error('Failed to generate opening message:', error);
+      logger.error('Failed to generate opening message:', error);
       // Fallback generic opening
       return `Welcome to your adventure! You find yourself at the beginning of an epic journey. Your character stands ready to face whatever challenges lie ahead. What would you like to do?`;
     }
@@ -987,7 +999,11 @@ Remember: You're not just describing a scene - you're launching an epic story wh
   /**
    * Get Gemini API manager statistics (for debugging)
    */
-  static getApiStats(): any {
+  static getApiStats(): {
+    currentKey: ReturnType<GeminiApiManager['getCurrentKeyInfo']>;
+    allKeyStats: ReturnType<GeminiApiManager['getStats']>;
+    rateLimits: ReturnType<GeminiApiManager['getRateLimitStats']>;
+  } {
     try {
       const manager = this.getGeminiManager();
       return {
@@ -996,7 +1012,11 @@ Remember: You're not just describing a scene - you're launching an epic story wh
         rateLimits: manager.getRateLimitStats(),
       };
     } catch (error) {
-      return { error: 'Gemini API manager not available' };
+      return { error: 'Gemini API manager not available' } as unknown as {
+        currentKey: ReturnType<GeminiApiManager['getCurrentKeyInfo']>;
+        allKeyStats: ReturnType<GeminiApiManager['getStats']>;
+        rateLimits: ReturnType<GeminiApiManager['getRateLimitStats']>;
+      };
     }
   }
 }

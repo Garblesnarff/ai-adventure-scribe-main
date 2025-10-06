@@ -273,7 +273,7 @@ export function recoverExhaustion(character: Character, hadFoodAndWater: boolean
 export function processShortRest(character: Character, hitDiceToRoll: number = 0): RestResult {
   let updatedCharacter = { ...character };
   let hitPointsRecovered = 0;
-  let hitDiceRecovered = 0;
+  const hitDiceRecovered = 0;
   let spellSlotsRecovered = 0;
   const classFeaturesRestored: string[] = [];
   

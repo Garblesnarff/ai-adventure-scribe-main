@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dice6, Zap, ArrowUp, ArrowDown, Target, AlertCircle, Info } from 'lucide-react';
+import logger from '@/lib/logger';
 import { DiceRollEmbed } from '@/components/DiceRollEmbed';
 import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
 import { cn } from '@/lib/utils';
@@ -74,7 +75,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
     }
 
     // If formula already has numbers (like "1d20+5"), use it as-is - no modifier calculations
-    if (/\d+d\d+[+\-]\d+/.test(request.formula)) {
+    if (/\d+d\d+[+-]\d+/.test(request.formula)) {
       return {
         formula: request.formula,
         breakdown: [request.formula],
@@ -151,7 +152,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
 
       return calculateRollWithBreakdown(character, rollType, ability, skillName);
     } catch (error) {
-      console.warn('Error calculating roll with character modifiers:', error);
+      logger.warn('Error calculating roll with character modifiers:', error);
       return {
         formula: request.formula,
         breakdown: [request.formula],
@@ -211,7 +212,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
     } else if (result && typeof result === 'object' && 'total' in result) {
       totalResult = result.total;
     } else {
-      console.warn('Unexpected result type in handleDiceRollComplete:', result);
+      logger.warn('Unexpected result type in handleDiceRollComplete:', result);
       totalResult = 0;
     }
 

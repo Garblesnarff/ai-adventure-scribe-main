@@ -10,6 +10,7 @@
 
 import { openRouterService } from './openrouter-service';
 import { Character } from '@/types/character';
+import logger from '@/lib/logger';
 
 interface ImageGenerationOptions {
   retryAttempts?: number;
@@ -38,10 +39,10 @@ export class CharacterBackgroundGenerator {
     const { retryAttempts = this.maxRetries, fallbackToDefault = true, referenceImageUrl } = options;
 
     try {
-      console.log('Generating character card background with reference image:', referenceImageUrl ? 'yes' : 'no');
+      logger.info('Generating character card background with reference image:', referenceImageUrl ? 'yes' : 'no');
       
       const prompt = this.createImagePrompt(character, !!referenceImageUrl);
-      console.log('Background generation prompt:', prompt);
+      logger.debug('Background generation prompt:', prompt);
 
       let referenceImageBase64: string | undefined;
 
@@ -49,23 +50,23 @@ export class CharacterBackgroundGenerator {
       if (referenceImageUrl) {
         try {
           referenceImageBase64 = await this.convertImageUrlToBase64(referenceImageUrl);
-          console.log('Successfully converted reference character sheet to base64');
+          logger.info('Successfully converted reference character sheet to base64');
         } catch (error) {
-          console.warn('Failed to convert reference image to base64, proceeding without vision input:', error);
+          logger.warn('Failed to convert reference image to base64, proceeding without vision input:', error);
         }
       }
 
       const base64Image = await this.generateWithRetry(prompt, retryAttempts, referenceImageBase64);
       const imageUrl = await openRouterService.uploadImage(base64Image);
 
-      console.log('Successfully generated character card background');
+      logger.info('Successfully generated character card background');
       return imageUrl;
 
     } catch (error) {
-      console.error('Failed to generate character background:', error);
+      logger.error('Failed to generate character background:', error);
 
       if (fallbackToDefault) {
-        console.log('Using fallback image due to generation failure');
+        logger.warn('Using fallback image due to generation failure');
         return this.defaultFallbackImage;
       }
 
@@ -145,7 +146,7 @@ export class CharacterBackgroundGenerator {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`Card background generation attempt ${attempt}/${maxAttempts}`);
+        logger.info(`Card background generation attempt ${attempt}/${maxAttempts}`);
 
         // Use Gemini model for vision + text capability
         const base64Image = await openRouterService.generateImage({
@@ -156,7 +157,7 @@ export class CharacterBackgroundGenerator {
         return base64Image;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        console.warn(`Attempt ${attempt} failed:`, lastError.message);
+        logger.warn(`Attempt ${attempt} failed:`, lastError.message);
 
         if (attempt < maxAttempts) {
           const waitTime = Math.pow(2, attempt - 1) * 1000;
@@ -194,7 +195,7 @@ export class CharacterBackgroundGenerator {
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error('Error converting image URL to base64:', error);
+      logger.error('Error converting image URL to base64:', error);
       throw error;
     }
   }

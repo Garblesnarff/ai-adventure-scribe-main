@@ -31,7 +31,7 @@ interface Campaign {
   difficulty_level?: string;
   campaign_length?: 'one-shot' | 'short' | 'full';
   tone?: 'serious' | 'humorous' | 'gritty';
-  setting_details?: Record<string, any>;
+  setting_details?: Record<string, unknown>;
   enhancementSelections?: import('../types/enhancement-options').OptionSelection[];
   enhancementEffects?: {
     atmosphere?: string[];

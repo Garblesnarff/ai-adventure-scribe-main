@@ -10,6 +10,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getGeminiApiManager } from './gemini-api-manager-singleton';
 import type { GeminiApiManager } from './gemini-api-manager';
+import logger from '@/lib/logger';
 
 interface GeminiImageGenerationRequest {
   prompt: string;
@@ -128,7 +129,7 @@ export class GeminiImageService {
           content = prompt;
         }
 
-        console.log('Generating image with Gemini direct API:', prompt);
+        logger.info('Generating image with Gemini direct API:', prompt);
 
         const response = await model.generateContent({
           contents: [{
@@ -166,14 +167,14 @@ export class GeminiImageService {
         // Record successful usage
         this.recordUsage();
 
-        console.log(`Successfully generated image with Gemini direct API. Remaining free requests today: ${this.getRemainingFreeRequests()}`);
+        logger.info(`Successfully generated image with Gemini direct API. Remaining free requests today: ${this.getRemainingFreeRequests()}`);
 
         return imageData;
       });
 
       return result;
     } catch (error) {
-      console.error('Error generating image with Gemini direct API:', error);
+      logger.error('Error generating image with Gemini direct API:', error);
 
       // Provide more specific error messages for common issues
       if (error instanceof Error) {

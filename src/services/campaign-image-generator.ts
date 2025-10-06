@@ -8,6 +8,7 @@
  */
 
 import { openRouterService } from './openrouter-service';
+import logger from '@/lib/logger';
 
 interface CampaignData {
   name: string;
@@ -19,8 +20,8 @@ interface CampaignData {
   era?: string | null;
   location?: string | null;
   atmosphere?: string | null;
-  setting_details?: any;
-  thematic_elements?: any;
+  setting_details?: unknown;
+  thematic_elements?: unknown;
 }
 
 interface ImageGenerationOptions {
@@ -49,19 +50,19 @@ export class CampaignImageGenerator {
 
     try {
       const prompt = this.createImagePrompt(campaignData);
-      console.log('Generating campaign image with prompt:', prompt);
+      logger.info('Generating campaign image with prompt:', prompt);
 
       const base64Image = await this.generateWithRetry(prompt, retryAttempts);
       const imageUrl = await openRouterService.uploadImage(base64Image);
 
-      console.log('Successfully generated campaign image');
+      logger.info('Successfully generated campaign image');
       return imageUrl;
 
     } catch (error) {
-      console.error('Failed to generate campaign image:', error);
+      logger.error('Failed to generate campaign image:', error);
       
       if (fallbackToDefault) {
-        console.log('Using fallback image due to generation failure');
+        logger.warn('Using fallback image due to generation failure');
         return this.defaultFallbackImage;
       }
       
@@ -222,7 +223,7 @@ export class CampaignImageGenerator {
   /**
    * Get thematic elements prompt
    */
-  private getThematicPrompt(thematicElements: any): string {
+  private getThematicPrompt(thematicElements: unknown): string {
     if (typeof thematicElements === 'string') {
       return `Incorporate thematic elements: ${thematicElements}.`;
     }
@@ -249,11 +250,11 @@ export class CampaignImageGenerator {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`Image generation attempt ${attempt}/${maxAttempts}`);
+        logger.info(`Image generation attempt ${attempt}/${maxAttempts}`);
         return await openRouterService.generateImage({ prompt });
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        console.warn(`Attempt ${attempt} failed:`, lastError.message);
+        logger.warn(`Attempt ${attempt} failed:`, lastError.message);
         
         if (attempt < maxAttempts) {
           // Wait before retry with exponential backoff

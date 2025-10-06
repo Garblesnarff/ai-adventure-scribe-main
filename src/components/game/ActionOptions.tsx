@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sword, MessageCircle, Eye, Zap, User } from 'lucide-react';
 import { ActionOption, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
+import logger from '@/lib/logger';
 
 interface ActionOptionsProps {
   options: ActionOption[];
@@ -73,8 +74,7 @@ export const ActionOptions: React.FC<ActionOptionsProps> = ({
   // Handle option selection
   const handleOptionClick = (option: ActionOption) => {
     if (disabled || selectedOption) return;
-
-    console.log('[ActionOptions] Option clicked:', option.text);
+    logger.info('[ActionOptions] Option clicked:', option.text);
     setSelectedOption(option.id);
     onOptionSelect(option);
   };

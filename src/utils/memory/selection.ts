@@ -1,5 +1,6 @@
 import { Memory } from '@/types/memory';
 import { MessageContext } from '@/types/game';
+import logger from '@/lib/logger';
 
 /**
  * Constants for memory selection configuration
@@ -65,7 +66,7 @@ export const calculateMemoryScore = (
       const similarity = cosineSimilarity(queryEmbedding, embeddingArray);
       relevanceScore += similarity * 0.7; // Weight semantic similarity higher
     } catch (error) {
-      console.error('Error calculating embedding similarity:', error);
+      logger.error('Error calculating embedding similarity:', error);
     }
   }
 

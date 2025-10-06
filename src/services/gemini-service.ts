@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getGeminiApiManager } from './gemini-api-manager-singleton';
+import logger from '@/lib/logger';
 
 /**
  * Gemini Service Wrapper
@@ -39,7 +40,7 @@ export const geminiService = {
       });
       return result;
     } catch (error) {
-      console.error('Gemini service generation failed:', error);
+      logger.error('Gemini service generation failed:', error);
       throw error;
     }
   }

@@ -309,7 +309,7 @@ export const backgrounds: CharacterBackground[] = [
       description: 'You have an excellent memory for maps and geography, and you can always recall the general layout of terrain, settlements, and other features around you.'
     },
     suggestedPersonalityTraits: [
-      "I\'ve watched so many people come and go that I\'ve learned not to get too attached.",
+      "I've watched so many people come and go that I've learned not to get too attached.",
       "I feel far more comfortable around animals than people."
     ],
     suggestedIdeals: [
@@ -351,7 +351,7 @@ export const backgrounds: CharacterBackground[] = [
       "I'm loyal to my captain first, everything else second."
     ],
     suggestedFlaws: [
-      "I can\'t help but pocket loose coins and other trinkets I come across."
+      "I can't help but pocket loose coins and other trinkets I come across."
     ]
   },
   {

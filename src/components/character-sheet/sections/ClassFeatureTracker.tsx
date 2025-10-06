@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Character } from '@/types/character';
 import { Star, Zap, RotateCcw } from 'lucide-react';
 import { getClassFeatures, getCharacterResources } from '@/utils/classFeatures';
+import logger from '@/lib/logger';
 
 interface ClassFeatureTrackerProps {
   character: Character;
@@ -33,7 +34,7 @@ const ClassFeatureTracker: React.FC<ClassFeatureTrackerProps> = ({ character, on
     
     // In a real implementation, this would update the character's resources
     // For now, we'll just show a message
-    console.log(`Restoring ${restType} rest resources`);
+    logger.info(`Restoring ${restType} rest resources`);
     
     // This would be implemented with actual resource restoration logic
     // For example:
@@ -44,7 +45,7 @@ const ClassFeatureTracker: React.FC<ClassFeatureTrackerProps> = ({ character, on
   // Handle using a resource
   const handleUseResource = (resourceName: string) => {
     // In a real implementation, this would update the character's resources
-    console.log(`Using resource: ${resourceName}`);
+    logger.info(`Using resource: ${resourceName}`);
     
     // This would be implemented with actual resource usage logic
     // For example:

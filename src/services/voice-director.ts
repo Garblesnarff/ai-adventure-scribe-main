@@ -12,6 +12,7 @@
  * 
  * @author AI Dungeon Master Team
  */
+import logger from '@/lib/logger';
 
 // Core types for voice management
 export interface VoiceSegment {
@@ -62,6 +63,10 @@ export interface AISegment {
 }
 
 export class VoiceDirector {
+  
+  // Logger
+  // Centralized logging utility for level-based filtering
+  
   private static readonly ELEVENLABS_MODEL = 'eleven_turbo_v2_5'; // Revert to working model
 
   // Persistent storage key for character-voice mappings
@@ -242,7 +247,7 @@ export class VoiceDirector {
         VoiceDirector.audioCache.delete(key);
       });
       
-      console.log(`🧹 Cleaned up ${toRemove.length} old audio cache entries`);
+      logger.info(`🧹 Cleaned up ${toRemove.length} old audio cache entries`);
     }
   }
   
@@ -261,7 +266,7 @@ export class VoiceDirector {
    * This is the main entry point - replaces the complex parsing chain
    */
   static processAISegments(aiSegments: AISegment[], sessionId?: string): VoiceSegment[] {
-    console.log('🎭 VoiceDirector: Processing', aiSegments.length, 'AI segments');
+    logger.info('🎭 VoiceDirector: Processing', aiSegments.length, 'AI segments');
     
     const voiceSegments: VoiceSegment[] = [];
     
@@ -272,7 +277,7 @@ export class VoiceDirector {
         // Clean and validate text
         const cleanText = VoiceDirector.cleanSegmentText(segment.text);
         if (!cleanText) {
-          console.warn(`⚠️ Skipping empty segment ${i + 1}`);
+          logger.warn(`⚠️ Skipping empty segment ${i + 1}`);
           continue;
         }
         
@@ -293,15 +298,15 @@ export class VoiceDirector {
         
         voiceSegments.push(voiceSegment);
         
-        console.log(`✅ Segment ${i + 1}: "${voiceSegment.character}" -> ${voiceSegment.voiceName} (${cleanText.substring(0, 50)}...)`);
+        logger.info(`✅ Segment ${i + 1}: "${voiceSegment.character}" -> ${voiceSegment.voiceName} (${cleanText.substring(0, 50)}...)`);
         
       } catch (error) {
-        console.error(`❌ Error processing segment ${i + 1}:`, error);
+        logger.error(`❌ Error processing segment ${i + 1}:`, error);
         // Continue processing other segments
       }
     }
     
-    console.log(`🎵 VoiceDirector: Created ${voiceSegments.length} voice segments`);
+    logger.info(`🎵 VoiceDirector: Created ${voiceSegments.length} voice segments`);
     return voiceSegments;
   }
   
@@ -309,7 +314,7 @@ export class VoiceDirector {
    * Fallback: Process plain text when AI segments aren't available
    */
   static processPlainText(text: string): VoiceSegment[] {
-    console.log('📝 VoiceDirector: Processing plain text as single DM segment');
+    logger.info('📝 VoiceDirector: Processing plain text as single DM segment');
     
     const cleanText = VoiceDirector.cleanSegmentText(text);
     if (!cleanText) {
@@ -342,7 +347,7 @@ export class VoiceDirector {
     const cachedAudio = VoiceDirector.audioCache.get(cacheKey);
     
     if (cachedAudio) {
-      console.log(`🔄 Using cached audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
+      logger.debug(`🔄 Using cached audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
       const audioUrl = URL.createObjectURL(cachedAudio.audioBlob);
       return {
         ...segment,
@@ -352,7 +357,7 @@ export class VoiceDirector {
       };
     }
     
-    console.log(`🎵 Generating NEW audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
+    logger.info(`🎵 Generating NEW audio for ${segment.character}: "${segment.text.substring(0, 50)}..."`);
     
     try {
       const response = await fetch(
@@ -389,7 +394,7 @@ export class VoiceDirector {
       // Manage cache size
       VoiceDirector.manageCacheSize();
       
-      console.log(`💾 Cached audio for key: ${cacheKey}`);
+      logger.debug(`💾 Cached audio for key: ${cacheKey}`);
 
       return {
         ...segment,
@@ -398,7 +403,7 @@ export class VoiceDirector {
         isGenerating: false
       };
     } catch (error) {
-      console.error(`❌ Failed to generate audio for ${segment.character}:`, error);
+      logger.error(`❌ Failed to generate audio for ${segment.character}:`, error);
       return {
         ...segment,
         error: error instanceof Error ? error.message : 'Audio generation failed',
@@ -442,7 +447,7 @@ export class VoiceDirector {
       // Remember this assignment
       voiceMap.set(character, selectedVoice);
       
-      console.log(`🎯 New voice assignment: "${character}" -> ${selectedVoice.name} (${segment.voice_category || 'auto'})`);
+      logger.info(`🎯 New voice assignment: "${character}" -> ${selectedVoice.name} (${segment.voice_category || 'auto'})`);
       return selectedVoice;
     }
     
@@ -560,7 +565,7 @@ export class VoiceDirector {
   static clearAudioCache(): void {
     const cacheSize = VoiceDirector.audioCache.size;
     VoiceDirector.audioCache.clear();
-    console.log(`🧹 Cleared ${cacheSize} cached audio segments`);
+    logger.info(`🧹 Cleared ${cacheSize} cached audio segments`);
   }
   
   /**
@@ -571,7 +576,7 @@ export class VoiceDirector {
       size: VoiceDirector.audioCache.size,
       keys: Array.from(VoiceDirector.audioCache.keys())
     };
-    console.log('📊 Audio Cache Stats:', stats);
+    logger.debug('📊 Audio Cache Stats:', stats);
     return stats;
   }
   
@@ -591,7 +596,7 @@ export class VoiceDirector {
    * Clear character voice mappings (for debugging)
    */
   static clearCharacterVoiceMappings(): void {
-    console.log('🗑️ VoiceDirector: Clearing all character voice mappings');
+    logger.info('🗑️ VoiceDirector: Clearing all character voice mappings');
     const voiceMap = VoiceDirector.ensureMapInitialized();
     voiceMap.clear();
   }
@@ -599,22 +604,22 @@ export class VoiceDirector {
   /**
    * Validate segments before processing
    */
-  static validateAISegments(segments: any[]): AISegment[] {
+  static validateAISegments(segments: Array<Partial<AISegment>>): AISegment[] {
     const validSegments: AISegment[] = [];
     
     segments.forEach((segment, index) => {
-      if (!segment.text || !segment.text.trim()) {
-        console.warn(`⚠️ Skipping empty segment ${index + 1}`);
+      if (!segment?.text || !segment.text.trim()) {
+        logger.warn(`⚠️ Skipping empty segment ${index + 1}`);
         return;
       }
       
-      if (!['dm', 'character'].includes(segment.type)) {
-        console.warn(`⚠️ Converting segment ${index + 1} type "${segment.type}" to "dm"`);
-        segment.type = 'dm';
+      const segType = segment.type === 'dm' || segment.type === 'character' ? segment.type : 'dm';
+      if (segType === 'dm' && segment.type !== 'dm') {
+        logger.warn(`⚠️ Converting segment ${index + 1} type "${String(segment.type)}" to "dm"`);
       }
-      
+
       validSegments.push({
-        type: segment.type as 'dm' | 'character',
+        type: segType,
         text: segment.text,
         character: segment.character || undefined,
         voice_category: segment.voice_category || undefined

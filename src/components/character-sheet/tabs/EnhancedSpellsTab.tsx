@@ -22,6 +22,7 @@ import {
   Circle,
   Target
 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface EnhancedSpellsTabProps {
   character: Character;
@@ -48,7 +49,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
         const spells = await spellApi.getAllSpells();
         setAllSpells(spells);
       } catch (error) {
-        console.error('Failed to fetch spells:', error);
+        logger.error('Failed to fetch spells:', error);
       } finally {
         setIsLoadingSpells(false);
       }

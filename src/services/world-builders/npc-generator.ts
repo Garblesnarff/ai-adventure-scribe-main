@@ -2,6 +2,7 @@ import { getGeminiApiManager } from '../gemini-api-manager-singleton';
 import type { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
 import { getAveragePartyLevel } from '@/utils/character-level-utils';
+import logger from '@/lib/logger';
 
 export interface NPCRequest {
   role: 'shopkeeper' | 'guard' | 'noble' | 'commoner' | 'villain' | 'ally' | 'mentor' | 'mysterious' | 'authority';
@@ -138,16 +139,16 @@ export class NPCGenerator {
           return npc;
           
         } catch (parseError) {
-          console.error('Failed to parse NPC JSON:', parseError);
+          logger.error('Failed to parse NPC JSON:', parseError);
           throw new Error('Failed to generate NPC: Invalid response format');
         }
       });
 
-      console.log(`👤 Generated NPC: ${result.name} (${result.role})`);
+      logger.info(`👤 Generated NPC: ${result.name} (${result.role})`);
       return result;
 
     } catch (error) {
-      console.error('NPC generation failed:', error);
+      logger.error('NPC generation failed:', error);
       throw new Error(`Failed to generate NPC: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -240,7 +241,10 @@ GUIDELINES:
   /**
    * Calculate narrative importance of NPC
    */
-  private static calculateNarrativeWeight(npc: any, request: NPCRequest): number {
+  private static calculateNarrativeWeight(
+    npc: { secrets?: string[]; questHooks?: string[]; goals?: { secret?: string[] } },
+    request: NPCRequest
+  ): number {
     let weight = 5; // Base weight
     
     // Adjust based on importance
@@ -249,9 +253,9 @@ GUIDELINES:
     else if (request.importance === 'minor') weight += 0;
     
     // Increase weight for story-rich NPCs
-    if (npc.secrets?.length > 1) weight += 1;
-    if (npc.questHooks?.length > 2) weight += 1;
-    if (npc.goals?.secret?.length > 0) weight += 1;
+    if ((npc.secrets?.length || 0) > 1) weight += 1;
+    if ((npc.questHooks?.length || 0) > 2) weight += 1;
+    if ((npc.goals?.secret?.length || 0) > 0) weight += 1;
     if (['villain', 'mentor', 'ally'].includes(request.role)) weight += 1;
     
     return Math.min(weight, 10);
@@ -286,15 +290,15 @@ GUIDELINES:
         .single();
 
       if (error) {
-        console.error('Error saving NPC:', error);
+        logger.error('Error saving NPC:', error);
         throw new Error('Failed to save NPC to database');
       }
 
-      console.log(`💾 Saved NPC "${npc.name}" with ID: ${data.id}`);
+      logger.info(`💾 Saved NPC "${npc.name}" with ID: ${data.id}`);
       return data.id;
 
     } catch (error) {
-      console.error('Error saving NPC:', error);
+      logger.error('Error saving NPC:', error);
       throw error;
     }
   }
@@ -309,11 +313,11 @@ GUIDELINES:
       const npcId = await this.saveNPC(npc);
       npc.id = npcId;
       
-      console.log(`✅ Created NPC "${npc.name}" successfully`);
+      logger.info(`✅ Created NPC "${npc.name}" successfully`);
       return npc;
       
     } catch (saveError) {
-      console.warn('NPC generated but failed to save:', saveError);
+      logger.warn('NPC generated but failed to save:', saveError);
       // Return the generated NPC even if save failed
       return npc;
     }
@@ -364,7 +368,7 @@ GUIDELINES:
       return await this.createNPC(request);
 
     } catch (error) {
-      console.error('Failed to generate contextual NPC:', error);
+      logger.error('Failed to generate contextual NPC:', error);
       throw error;
     }
   }

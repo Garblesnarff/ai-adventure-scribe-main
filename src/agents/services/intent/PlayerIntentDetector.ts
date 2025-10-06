@@ -20,14 +20,24 @@ export class PlayerIntentDetector {
   private explorationKeywords = ['explore', 'look', 'search', 'investigate', 'examine'];
 
   public detectIntent(message: string): PlayerIntent {
-    message = message.toLowerCase();
-    
-    if (this.dialogueKeywords.some(keyword => message.includes(keyword))) {
-      return 'dialogue';
-    }
-    if (this.explorationKeywords.some(keyword => message.includes(keyword))) {
-      return 'exploration';
-    }
-    return 'other';
+    const msg = (message || '').toLowerCase().trim();
+    if (!msg) return 'other';
+
+    const firstIndex = (keywords: string[]) => {
+      let idx = -1;
+      for (const kw of keywords) {
+        const i = msg.indexOf(kw);
+        if (i !== -1 && (idx === -1 || i < idx)) idx = i;
+      }
+      return idx;
+    };
+
+    const dialogueIdx = firstIndex(this.dialogueKeywords);
+    const explorationIdx = firstIndex(this.explorationKeywords);
+
+    if (dialogueIdx === -1 && explorationIdx === -1) return 'other';
+    if (dialogueIdx === -1) return 'exploration';
+    if (explorationIdx === -1) return 'dialogue';
+    return dialogueIdx <= explorationIdx ? 'dialogue' : 'exploration';
   }
 }

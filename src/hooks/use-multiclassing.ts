@@ -16,6 +16,7 @@ import {
   levelUpClass
 } from '@/utils/multiclassing';
 import { MulticlassValidationResult } from '@/utils/multiclassing';
+import logger from '@/lib/logger';
 
 interface MulticlassingResult {
   success: boolean;
@@ -38,7 +39,7 @@ export const useMulticlassing = (character: Character, onCharacterUpdate: (updat
       setValidationResult(result);
       return result;
     } catch (error) {
-      console.error('Error validating multiclass:', error);
+      logger.error('Error validating multiclass:', error);
       const errorResult: MulticlassValidationResult = {
         canMulticlass: false,
         requirements: ['Error validating multiclass requirements'],
@@ -82,7 +83,7 @@ export const useMulticlassing = (character: Character, onCharacterUpdate: (updat
         character: updatedCharacter
       };
     } catch (error) {
-      console.error('Error adding new class:', error);
+      logger.error('Error adding new class:', error);
       return {
         success: false,
         message: 'Failed to add new class'
@@ -112,7 +113,7 @@ export const useMulticlassing = (character: Character, onCharacterUpdate: (updat
         character: updatedCharacter
       };
     } catch (error) {
-      console.error('Error leveling up class:', error);
+      logger.error('Error leveling up class:', error);
       return {
         success: false,
         message: 'Failed to level up class'

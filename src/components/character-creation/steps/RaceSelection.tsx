@@ -12,6 +12,7 @@ import { Check, Users, Zap, Globe, Search, Filter, Grid, List, Heart, Star, Eye 
 import { HalfElfAbilityChoice } from '../modals/HalfElfAbilityChoice';
 import { VariantHumanChoice } from '../modals/VariantHumanChoice';
 import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
+import logger from '@/lib/logger';
 
 const RaceSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -91,7 +92,7 @@ const RaceSelection: React.FC = () => {
   };
 
   const handleBaseRaceSelect = (baseRace: CharacterRace) => {
-    console.log('Selecting base race:', baseRace);
+    logger.info('Selecting base race:', baseRace);
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: { race: baseRace, subrace: null }
@@ -124,7 +125,7 @@ const RaceSelection: React.FC = () => {
   };
 
   const handleSubraceSelect = (subrace: Subrace) => {
-    console.log('Selecting subrace:', subrace);
+    logger.info('Selecting subrace:', subrace);
 
     // Check if this is Variant Human - requires ability + feat choice
     if (subrace.id === 'variant-human') {

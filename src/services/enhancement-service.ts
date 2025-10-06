@@ -16,17 +16,61 @@ import {
 import { enhancementAI } from './enhancement-ai-generator';
 import { Character } from '@/types/character';
 import { Campaign } from '@/types/campaign';
+import logger from '@/lib/logger';
+import { AbilityScore } from '@/types/enhancement-options';
+
+// Value allowed for an option selection persisted in DB
+type OptionSelectionValue = string | string[] | number;
+
+// Context shape stored for AI-generated selections
+interface GenerationContext {
+  character?: Character;
+  campaign?: Campaign;
+  existingSelections?: OptionSelection[];
+  userPreferences?: {
+    tone?: 'serious' | 'humorous' | 'dramatic';
+    complexity?: 'simple' | 'moderate' | 'complex';
+    focus?: 'combat' | 'roleplay' | 'exploration' | 'social';
+  };
+}
+
+// Database record for enhancement options
+interface EnhancementOptionRecord {
+  option_id: string;
+  name: string;
+  description: string;
+  category: 'character' | 'campaign';
+  type: 'single' | 'multiple' | 'number' | 'text';
+  icon?: string | null;
+  tags?: string[] | null;
+  options?: string[] | null;
+  min_value?: number | null;
+  max_value?: number | null;
+  mechanical_effects?: EnhancementOption['mechanicalEffects'] | null;
+  campaign_effects?: EnhancementOption['campaignEffects'] | null;
+  requires_race?: string[] | null;
+  requires_class?: string[] | null;
+  requires_background?: string[] | null;
+  requires_level?: number | null;
+  requires_ability_score?: { ability: AbilityScore; minimum: number }[] | null;
+  excludes_with?: string[] | null;
+  unlocks?: string[] | null;
+  mutually_exclusive_with?: string[] | null;
+  ai_generated?: boolean | null;
+  ai_generation_prompt?: string | null;
+  ai_context?: EnhancementOption['aiContext'] | null;
+}
 
 export interface EnhancementSelectionRecord {
   id: string;
   character_id?: string;
   campaign_id?: string;
   option_id: string;
-  selection_value: any;
+  selection_value: OptionSelectionValue;
   custom_value?: string;
   ai_generated: boolean;
   ai_prompt_used?: string;
-  generation_context?: any;
+  generation_context?: GenerationContext | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,7 +107,7 @@ export class EnhancementService {
 
       return data?.map(this.mapDatabaseOptionToType) || [];
     } catch (error) {
-      console.error('Failed to fetch enhancement options:', error);
+      logger.error('Failed to fetch enhancement options:', error);
       throw new Error('Failed to load enhancement options');
     }
   }
@@ -88,7 +132,7 @@ export class EnhancementService {
 
       return data?.map(this.mapDatabaseSelectionToType) || [];
     } catch (error) {
-      console.error('Failed to fetch selections:', error);
+      logger.error('Failed to fetch selections:', error);
       throw new Error('Failed to load enhancement selections');
     }
   }
@@ -129,7 +173,7 @@ export class EnhancementService {
         if (error) throw error;
       }
     } catch (error) {
-      console.error('Failed to save selections:', error);
+      logger.error('Failed to save selections:', error);
       throw new Error('Failed to save enhancement selections');
     }
   }
@@ -161,7 +205,7 @@ export class EnhancementService {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Failed to add selection:', error);
+      logger.error('Failed to add selection:', error);
       throw new Error('Failed to add enhancement selection');
     }
   }
@@ -185,7 +229,7 @@ export class EnhancementService {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Failed to remove selection:', error);
+      logger.error('Failed to remove selection:', error);
       throw new Error('Failed to remove enhancement selection');
     }
   }
@@ -221,7 +265,7 @@ export class EnhancementService {
 
       return result;
     } catch (error) {
-      console.error('AI generation failed:', error);
+      logger.error('AI generation failed:', error);
       throw new Error('Failed to generate AI enhancement');
     }
   }
@@ -241,7 +285,7 @@ export class EnhancementService {
         category
       );
     } catch (error) {
-      console.error('Failed to get recommendations:', error);
+      logger.error('Failed to get recommendations:', error);
       return [];
     }
   }
@@ -296,8 +340,16 @@ export class EnhancementService {
     selections: OptionSelection[],
     options: EnhancementOption[],
     target: Character | Campaign
-  ): any {
-    const effects = {
+  ): {
+    mechanical: Partial<NonNullable<EnhancementOption['mechanicalEffects']>>;
+    campaign: Partial<NonNullable<EnhancementOption['campaignEffects']>>;
+    narrative: Array<{ option: string; value: OptionSelectionValue; custom?: string }>;
+  } {
+    const effects: {
+      mechanical: Partial<NonNullable<EnhancementOption['mechanicalEffects']>>;
+      campaign: Partial<NonNullable<EnhancementOption['campaignEffects']>>;
+      narrative: Array<{ option: string; value: OptionSelectionValue; custom?: string }>;
+    } = {
       mechanical: {},
       campaign: {},
       narrative: []
@@ -331,31 +383,31 @@ export class EnhancementService {
   /**
    * Map database option record to TypeScript interface
    */
-  private mapDatabaseOptionToType(record: any): EnhancementOption {
+  private mapDatabaseOptionToType(record: EnhancementOptionRecord): EnhancementOption {
     return {
       id: record.option_id,
       name: record.name,
       description: record.description,
       category: record.category,
       type: record.type,
-      icon: record.icon,
-      tags: record.tags || [],
-      options: record.options || [],
-      min: record.min_value,
-      max: record.max_value,
-      mechanicalEffects: record.mechanical_effects,
-      campaignEffects: record.campaign_effects,
-      requiresRace: record.requires_race,
-      requiresClass: record.requires_class,
-      requiresBackground: record.requires_background,
-      requiresLevel: record.requires_level,
-      requiresAbilityScore: record.requires_ability_score,
-      excludesWith: record.excludes_with,
-      unlocks: record.unlocks,
-      mutuallyExclusiveWith: record.mutually_exclusive_with,
-      aiGenerated: record.ai_generated,
-      aiGenerationPrompt: record.ai_generation_prompt,
-      aiContext: record.ai_context
+      icon: record.icon ?? undefined,
+      tags: record.tags ?? [],
+      options: record.options ?? [],
+      min: record.min_value ?? undefined,
+      max: record.max_value ?? undefined,
+      mechanicalEffects: record.mechanical_effects ?? undefined,
+      campaignEffects: record.campaign_effects ?? undefined,
+      requiresRace: record.requires_race ?? undefined,
+      requiresClass: record.requires_class ?? undefined,
+      requiresBackground: record.requires_background ?? undefined,
+      requiresLevel: record.requires_level ?? undefined,
+      requiresAbilityScore: record.requires_ability_score ?? undefined,
+      excludesWith: record.excludes_with ?? undefined,
+      unlocks: record.unlocks ?? undefined,
+      mutuallyExclusiveWith: record.mutually_exclusive_with ?? undefined,
+      aiGenerated: record.ai_generated ?? undefined,
+      aiGenerationPrompt: record.ai_generation_prompt ?? undefined,
+      aiContext: record.ai_context ?? undefined
     };
   }
 

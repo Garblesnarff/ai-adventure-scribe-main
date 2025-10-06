@@ -32,6 +32,7 @@ import {
   Crown,
   Shield
 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 /**
  * AdvancedSpellcastingSelection component for advanced spellcasting features
@@ -95,7 +96,7 @@ const AdvancedSpellcastingSelection: React.FC = () => {
         const allClassSpells = [...cantrips, ...spells];
         setAllSpells(allClassSpells);
       } catch (error) {
-        console.error('Failed to fetch class spells:', error);
+        logger.error('Failed to fetch class spells:', error);
         setAllSpells([]);
       } finally {
         setIsLoadingSpells(false);

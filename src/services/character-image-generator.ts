@@ -10,6 +10,7 @@
 
 import { openRouterService } from './openrouter-service';
 import { geminiImageService } from './gemini-image-service';
+import logger from '@/lib/logger';
 
 enum ImageGenerationProvider {
   GEMINI_DIRECT = 'gemini-direct',
@@ -24,7 +25,7 @@ interface CharacterData {
   class?: string | null;
   background?: string | null;
   level?: number | null;
-  ability_scores?: any;
+  ability_scores?: Record<string, number>;
   appearance?: string | null;
   personality_traits?: string | null;
   personality_notes?: string | null;
@@ -78,22 +79,22 @@ export class CharacterImageGenerator {
       preferredProvider
     } = options;
 
-    console.log(`Generating avatar portrait with theme: ${theme}, artStyle: ${artStyle}`);
+    logger.info(`Generating avatar portrait with theme: ${theme}, artStyle: ${artStyle}`);
 
     const prompt = this.createImagePrompt(characterData, 'portrait', artStyle, theme);
-    console.log('Generated avatar prompt:', prompt);
+    logger.debug('Generated avatar prompt:', prompt);
 
     const providerOrder = this.getProviderOrder(preferredProvider, 'portrait');
     let lastError: Error | null = null;
 
     for (const provider of providerOrder) {
       try {
-        console.log(`Attempting avatar generation with provider: ${provider}`);
+        logger.info(`Attempting avatar generation with provider: ${provider}`);
         const base64Image = await this.generateWithProvider(prompt, provider, retryAttempts);
-        console.log(`Successfully generated avatar with provider: ${provider}`);
+        logger.info(`Successfully generated avatar with provider: ${provider}`);
         return base64Image;
       } catch (error) {
-        console.warn(`Provider ${provider} failed:`, error);
+        logger.warn(`Provider ${provider} failed:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
         continue;
       }
@@ -123,10 +124,10 @@ export class CharacterImageGenerator {
       preferredProvider
     } = options;
 
-    console.log(`Generating ${style} with theme: ${theme}, artStyle: ${artStyle}`);
+    logger.info(`Generating ${style} with theme: ${theme}, artStyle: ${artStyle}`);
 
     const prompt = this.createImagePrompt(characterData, style, artStyle, theme);
-    console.log('Generated prompt:', prompt);
+    logger.debug('Generated prompt:', prompt);
 
     // Determine the provider order based on preference and availability
     const providerOrder = this.getProviderOrder(preferredProvider, style);
@@ -136,7 +137,7 @@ export class CharacterImageGenerator {
     // Try each provider in order
     for (const provider of providerOrder) {
       try {
-        console.log(`Attempting image generation with provider: ${provider}`);
+        logger.info(`Attempting image generation with provider: ${provider}`);
         const base64Image = await this.generateWithProvider(
           prompt,
           provider,
@@ -145,11 +146,11 @@ export class CharacterImageGenerator {
         );
         const imageUrl = await openRouterService.uploadImage(base64Image);
 
-        console.log(`Successfully generated character image with provider: ${provider}`);
+        logger.info(`Successfully generated character image with provider: ${provider}`);
         return imageUrl;
 
       } catch (error) {
-        console.warn(`Provider ${provider} failed:`, error);
+        logger.warn(`Provider ${provider} failed:`, error);
         lastError = error instanceof Error ? error : new Error(String(error));
 
         // Continue to next provider
@@ -158,10 +159,10 @@ export class CharacterImageGenerator {
     }
 
     // All providers failed
-    console.error('All image generation providers failed. Last error:', lastError);
+    logger.error('All image generation providers failed. Last error:', lastError);
 
     if (fallbackToDefault) {
-      console.log('Using fallback image due to all providers failing');
+      logger.warn('Using fallback image due to all providers failing');
       return this.defaultFallbackImage;
     }
 
@@ -254,7 +255,7 @@ export class CharacterImageGenerator {
         });
         return base64Image;
       } catch (error) {
-        console.warn(`Gemini direct attempt ${attempt}/${retryAttempts} failed:`, error);
+        logger.warn(`Gemini direct attempt ${attempt}/${retryAttempts} failed:`, error);
 
         if (attempt === retryAttempts) {
           throw error;
@@ -290,7 +291,7 @@ export class CharacterImageGenerator {
         });
         return base64Image;
       } catch (error) {
-        console.warn(`OpenRouter paid attempt ${attempt}/${retryAttempts} failed:`, error);
+        logger.warn(`OpenRouter paid attempt ${attempt}/${retryAttempts} failed:`, error);
 
         if (attempt === retryAttempts) {
           throw error;
@@ -333,8 +334,8 @@ export class CharacterImageGenerator {
         const characterConcept = this.buildCharacterConcept(characterData, extractedDetails);
         const designSheetPrompt = `Character design sheet for ${characterConcept}, detailed with front, back, and side views, including close-up sketches of facial features and accessories, annotated with design notes and labeled components, drawn in blueprint style with glowing trim in ${theme}. Detailed line work on the face and hands, detailed anatomy of the character, detailed lines around the edges. Detailed character sketches with flat color and detailed line art illustration. Professional concept art style.`;
         promptParts.push(designSheetPrompt);
-        console.log('Generated design sheet concept:', characterConcept);
-        console.log('Full design sheet prompt:', designSheetPrompt);
+        logger.debug('Generated design sheet concept:', characterConcept);
+        logger.debug('Full design sheet prompt:', designSheetPrompt);
         break;
       }
       case 'expression-sheet':
@@ -422,7 +423,10 @@ export class CharacterImageGenerator {
   /**
    * Build comprehensive character description from all available data for non-sheet styles
    */
-  private buildCharacterDescription(characterData: CharacterData, extractedDetails: any): string {
+  private buildCharacterDescription(
+    characterData: CharacterData,
+    extractedDetails: { physicalFeatures: string[]; equipment: string[]; distinguishingMarks: string[] }
+  ): string {
     const descParts: string[] = [];
 
     // Add race/subrace and class
@@ -497,7 +501,10 @@ export class CharacterImageGenerator {
    * Build detailed character concept for design sheet prompts
    * Combines race, class, appearance, outfit, weapons, and personality traits into a cohesive description
    */
-  private buildCharacterConcept(characterData: CharacterData, extractedDetails: any): string {
+  private buildCharacterConcept(
+    characterData: CharacterData,
+    extractedDetails: { physicalFeatures: string[]; equipment: string[]; distinguishingMarks: string[] }
+  ): string {
     const conceptParts: string[] = [];
 
     // Core identity: race + class
@@ -579,7 +586,7 @@ export class CharacterImageGenerator {
 
     // Join all parts into a cohesive concept description
     const fullConcept = conceptParts.join(', ');
-    console.log('Built character concept:', fullConcept);
+    logger.debug('Built character concept:', fullConcept);
     return fullConcept;
   }
 

@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 export interface PartyLevelInfo {
   averageLevel: number;
@@ -33,13 +34,13 @@ export async function getSessionPartyLevel(sessionId: string): Promise<PartyLeve
       .single();
 
     if (sessionError || !session) {
-      console.warn('Could not find session, using default party level');
+      logger.warn('Could not find session, using default party level');
       return getDefaultPartyLevel();
     }
 
     return await getCampaignPartyLevel(session.campaign_id);
   } catch (error) {
-    console.error('Error getting session party level:', error);
+    logger.error('Error getting session party level:', error);
     return getDefaultPartyLevel();
   }
 }
@@ -64,7 +65,7 @@ export async function getCampaignPartyLevel(campaignId: string): Promise<PartyLe
       .eq('campaign_id', campaignId);
 
     if (error || !characters || characters.length === 0) {
-      console.warn('No characters found for campaign, using default party level');
+      logger.warn('No characters found for campaign, using default party level');
       return getDefaultPartyLevel();
     }
 
@@ -96,7 +97,7 @@ export async function getCampaignPartyLevel(campaignId: string): Promise<PartyLe
       characters: validCharacters
     };
   } catch (error) {
-    console.error('Error getting campaign party level:', error);
+    logger.error('Error getting campaign party level:', error);
     return getDefaultPartyLevel();
   }
 }
@@ -173,7 +174,7 @@ export async function getAveragePartyLevel(campaignId?: string, sessionId?: stri
       return 3; // Default level
     }
   } catch (error) {
-    console.error('Error getting average party level:', error);
+    logger.error('Error getting average party level:', error);
     return 3; // Default level
   }
 }

@@ -33,21 +33,7 @@ const VariantHumanSelection: React.FC = () => {
   const isVariantHuman = subrace?.id === 'variant-human';
   const isCustomLineage = subrace?.id === 'custom-lineage';
 
-  // If not variant human or custom lineage, don't show this step
-  if (!isVariantHuman && !isCustomLineage) {
-    return (
-      <div className="text-center space-y-4">
-        <Users className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Standard Human</h2>
-        <p className="text-muted-foreground">
-          Your standard human receives +1 to all ability scores.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          No additional customization needed.
-        </p>
-      </div>
-    );
-  }
+  // Note: No early returns before hooks to satisfy rules-of-hooks
 
   const availableAbilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
   const availableSkills = [
@@ -229,6 +215,18 @@ const VariantHumanSelection: React.FC = () => {
   );
 
   return (
+    (!isVariantHuman && !isCustomLineage) ? (
+      <div className="text-center space-y-4">
+        <Users className="w-16 h-16 mx-auto text-muted-foreground" />
+        <h2 className="text-2xl font-bold">Standard Human</h2>
+        <p className="text-muted-foreground">
+          Your standard human receives +1 to all ability scores.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          No additional customization needed.
+        </p>
+      </div>
+    ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">
@@ -454,6 +452,7 @@ const VariantHumanSelection: React.FC = () => {
         </Button>
       </div>
     </div>
+    )
   );
 };
 

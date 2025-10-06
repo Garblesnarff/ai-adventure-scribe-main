@@ -5,6 +5,7 @@ import { backgrounds } from '@/data/backgroundOptions';
 import { CharacterBackground } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import logger from '@/lib/logger';
 
 /**
  * Component for selecting character background during character creation
@@ -20,7 +21,7 @@ const BackgroundSelection: React.FC = () => {
    * Updates character state and shows confirmation toast
    */
   const handleBackgroundSelect = (background: CharacterBackground) => {
-    console.log('Selecting background:', background);
+    logger.info('Selecting background:', background);
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: { background }

@@ -54,6 +54,7 @@ import { calculateAttackDamage } from '@/utils/attackUtils';
 import { createDefaultLightWeapons, equipMainHandWeapon, equipOffHandWeapon } from '@/utils/equipmentUtils';
 import { checkConcentration } from '@/utils/spell-management';
 import { rollDeathSave, needsDeathSaves } from '@/utils/combat/deathSaves';
+import logger from '@/lib/logger';
 
 const CombatInterface: React.FC = () => {
   const { 
@@ -185,7 +186,7 @@ const CombatInterface: React.FC = () => {
 
       if (!validation.isValid) {
         // Show validation errors to user
-        console.warn('Invalid combat action:', validation.errors);
+        logger.warn('Invalid combat action:', validation.errors);
         return;
       }
 
@@ -194,7 +195,7 @@ const CombatInterface: React.FC = () => {
       setActionValidation(null);
 
     } catch (error) {
-      console.error('Error validating combat action:', error);
+      logger.error('Error validating combat action:', error);
       // Proceed with action if validation fails
       await takeAction(action);
     }
@@ -441,11 +442,12 @@ const CombatInterface: React.FC = () => {
         description = `${participant.name} uses Action Surge for an additional action`;
         actionType = 'action_surge' as ActionType;
         break;
-      case 'second_wind':
+      case 'second_wind': {
         const healing = rollDice(10, 1, participant.level || 1);
         description = `${participant.name} uses Second Wind to heal ${healing.total} hit points`;
         actionType = 'second_wind' as ActionType;
         break;
+      }
       default:
         description = `${participant.name} uses ${feature.name}`;
     }
@@ -477,7 +479,7 @@ const CombatInterface: React.FC = () => {
       // Remove the opportunity after use
       setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunity.id));
     } catch (error) {
-      console.error('Error processing reaction:', error);
+      logger.error('Error processing reaction:', error);
     }
   };
 
@@ -570,7 +572,7 @@ const CombatInterface: React.FC = () => {
     }
 
     if (!canUseTwoWeaponFighting(updatedParticipant)) {
-      console.warn('Cannot use two-weapon fighting');
+      logger.warn('Cannot use two-weapon fighting');
       return;
     }
 

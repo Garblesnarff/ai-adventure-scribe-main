@@ -22,6 +22,7 @@ import {
   Plus,
   ArrowUp
 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface MulticlassManagerProps {
   character: Character;
@@ -99,7 +100,7 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
     const result = await addNewClass(newClass, 1);
     if (!result.success) {
       // In a real implementation, you would show an error message to the user
-      console.error(result.message);
+      logger.error(result.message);
     }
   };
 
@@ -110,7 +111,7 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
     const result = await levelUpSpecificClass(classId);
     if (!result.success) {
       // In a real implementation, you would show an error message to the user
-      console.error(result.message);
+      logger.error(result.message);
     }
   };
 

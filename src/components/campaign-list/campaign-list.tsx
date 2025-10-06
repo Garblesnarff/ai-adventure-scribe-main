@@ -37,6 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MemoizedCampaignCard } from './campaign-card';
 import CampaignSkeleton from './campaign-skeleton';
 import EmptyState from './empty-state';
+import logger from '@/lib/logger';
 
 /**
  * Props for CampaignList component
@@ -92,7 +93,7 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
         
         return data;
       } catch (err) {
-        console.error('Error fetching campaigns:', err);
+        logger.error('Error fetching campaigns:', err);
         toast({
           title: "Error loading campaigns",
           description: "There was a problem loading your campaigns. Please try again.",

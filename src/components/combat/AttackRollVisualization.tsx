@@ -27,32 +27,34 @@ import { Equipment } from '@/data/equipmentOptions';
 // Component Props
 // ===========================
 
+export interface AttackResult {
+  resolution: {
+    hit: boolean;
+    roll: DiceRoll;
+    acHit: number;
+    criticalHit?: boolean;
+    criticalFail?: boolean;
+    advantage: boolean;
+    disadvantage: boolean;
+  };
+  damage: {
+    rolls: DiceRoll[];
+    totalBeforeResistance: number;
+    totalAfterResistance: number;
+    damageType: DamageType;
+    resistances: DamageType[];
+    vulnerabilities: DamageType[];
+    immunities: DamageType[];
+  } | null;
+  targetReducedHp?: number;
+  totalDamageDealt?: number;
+}
+
 interface AttackRollVisualizationProps {
   attackerName: string;
   targetName: string;
   weapon: Equipment | null; // Enhanced to use full Equipment object
-  attackResult: {
-    resolution: {
-      hit: boolean;
-      roll: DiceRoll;
-      acHit: number;
-      criticalHit?: boolean;
-      criticalFail?: boolean;
-      advantage: boolean;
-      disadvantage: boolean;
-    };
-    damage: {
-      rolls: DiceRoll[];
-      totalBeforeResistance: number;
-      totalAfterResistance: number;
-      damageType: DamageType;
-      resistances: DamageType[];
-      vulnerabilities: DamageType[];
-      immunities: DamageType[];
-    } | null;
-    targetReducedHp?: number;
-    totalDamageDealt?: number;
-  };
+  attackResult: AttackResult;
 }
 
 // ===========================
@@ -77,7 +79,7 @@ const DamageDisplay: React.FC<DamageDisplayProps> = ({
   immunities = []
 }) => {
   const getDamageColor = (type: DamageType) => {
-    const colorMap: Partial<Record<DamageType, string>> = {
+    const colorMap: Record<string, string> = {
       force: 'text-blue-600',
       fire: 'text-red-600',
       cold: 'text-blue-500',
@@ -260,7 +262,7 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
             ) : (
               <Badge variant="secondary" className="text-lg py-2 px-4">
                 <ShieldAlert className="w-5 h-5 mr-2" />
-                MISS! ({roll.total} < {acHit})
+                MISS! ({roll.total} &lt; {acHit})
               </Badge>
             )}
           </div>
@@ -270,7 +272,9 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
             <div className="text-center p-2 bg-blue-50 rounded">
               <div className="text-sm font-medium text-blue-900">
                 Target HP reduced to {targetReducedHp}
-                {totalDamageDealt > 0 && ` (${totalDamageDealt} damage dealt)`}
+                {totalDamageDealt > 0 ? (
+                  <> ({totalDamageDealt} damage dealt)</>
+                ) : null}
               </div>
             </div>
           )}

@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { characterDescriptionGenerator } from '@/services/character-description-generator';
 import { characterImageGenerator } from '@/services/character-image-generator';
+import { openRouterService } from '@/services/openrouter-service';
 import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react';
+import logger from '@/lib/logger';
 
 /**
  * CharacterFinalization component for character creation
@@ -94,7 +96,7 @@ const CharacterFinalization: React.FC = () => {
       });
 
     } catch (error) {
-      console.error('Failed to generate description:', error);
+      logger.error('Failed to generate description:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate character description. Please try again.",
@@ -137,7 +139,7 @@ const CharacterFinalization: React.FC = () => {
         theme: selectedTheme,
       };
 
-      console.log('Generating avatar with theme:', selectedTheme);
+      logger.info('Generating avatar with theme:', selectedTheme);
 
       const avatarBase64 = await characterImageGenerator.generateAvatarImage(
         characterData,
@@ -145,7 +147,6 @@ const CharacterFinalization: React.FC = () => {
       );
 
       // Upload avatar to get URL
-      const { openRouterService } = await import('@/services/openrouter-service');
       const avatarUrl = await openRouterService.uploadImage(avatarBase64);
 
       dispatch({
@@ -163,7 +164,7 @@ const CharacterFinalization: React.FC = () => {
 
       setGenerationStep('idle');
     } catch (error) {
-      console.error('Failed to generate avatar:', error);
+      logger.error('Failed to generate avatar:', error);
       toast({
         title: "Avatar Generation Failed",
         description: "Failed to generate character avatar. Please try again.",
@@ -207,8 +208,8 @@ const CharacterFinalization: React.FC = () => {
         theme: selectedTheme,
       };
 
-      console.log('Generating design sheet with theme:', selectedTheme);
-      console.log('Character data for generation:', characterData);
+      logger.info('Generating design sheet with theme:', selectedTheme);
+      logger.info('Character data for generation:', characterData);
 
       // Get avatar base64 if it exists for reference
       let avatarReference: string | undefined;
@@ -225,7 +226,7 @@ const CharacterFinalization: React.FC = () => {
             reader.readAsDataURL(blob);
           });
         } catch (error) {
-          console.warn('Could not fetch avatar for reference:', error);
+          logger.warn('Could not fetch avatar for reference:', error);
         }
       }
 
@@ -251,7 +252,7 @@ const CharacterFinalization: React.FC = () => {
       setGenerationStep('idle');
 
     } catch (error) {
-      console.error('Failed to generate character design sheet:', error);
+      logger.error('Failed to generate character design sheet:', error);
       toast({
         title: "Design Sheet Generation Failed",
         description: "Failed to generate character design sheet. Please try again.",

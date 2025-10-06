@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { subscriptionManager } from '@/services/supabase-subscription-manager';
+import logger from '@/lib/logger';
 
 interface UseImageHotLoadingOptions {
   tableName: 'campaigns' | 'characters';
@@ -61,7 +62,7 @@ export const useImageHotLoading = ({
           .single();
 
         if (error) {
-          console.error(`Error fetching initial ${imageField}:`, error);
+          logger.error(`Error fetching initial ${imageField}:`, error);
           if (isMounted) {
             setState(prev => ({
               ...prev,
@@ -83,7 +84,7 @@ export const useImageHotLoading = ({
           }));
         }
       } catch (err) {
-        console.error('Failed to fetch initial image:', err);
+        logger.error('Failed to fetch initial image:', err);
         if (isMounted) {
           setState(prev => ({
             ...prev,

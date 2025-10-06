@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import logger from '@/lib/logger';
 
 interface KeyUsageStats {
   key: string;
@@ -12,6 +13,16 @@ interface KeyUsageStats {
 interface GeminiError extends Error {
   status?: number;
   code?: string;
+}
+
+export interface RateLimitStats {
+  dailyUsage: number;
+  dailyLimit: number;
+  recentRequests: number;
+  minutelyLimit: number;
+  remainingDaily: number;
+  remainingMinutely: number;
+  resetTime: number; // ms until daily reset
 }
 
 export class GeminiApiManager {
@@ -63,7 +74,7 @@ export class GeminiApiManager {
     });
 
     if (this.isDevelopment()) {
-      console.log(`🔑 Gemini API Manager initialized with ${this.apiKeys.length} key(s)`);
+      logger.info(`🔑 Gemini API Manager initialized with ${this.apiKeys.length} key(s)`);
     }
   }
 
@@ -162,7 +173,7 @@ export class GeminiApiManager {
 
         this.lastRotation = new Date();
         if (this.isDevelopment()) {
-          console.log(`Rotated to next API key`);
+          logger.info(`Rotated to next API key`);
         }
         return true;
       }
@@ -170,7 +181,7 @@ export class GeminiApiManager {
     } while (this.currentKeyIndex !== startIndex && attempts < this.apiKeys.length);
 
     // If we've tried all keys and none are available
-    console.warn('All API keys are disabled, using current key anyway');
+    logger.warn('All API keys are disabled, using current key anyway');
     return false;
   }
 
@@ -192,7 +203,7 @@ export class GeminiApiManager {
       stats.isDisabled = false;
       stats.lastError = undefined;
       if (this.isDevelopment()) {
-        console.log(`Reset errors for API key`);
+        logger.info(`Reset errors for API key`);
       }
     }
   }
@@ -211,11 +222,11 @@ export class GeminiApiManager {
     // Disable key if it has too many errors
     if (stats.errors >= this.maxErrorsBeforeDisable) {
       stats.isDisabled = true;
-      console.warn(`API key disabled due to ${stats.errors} errors`);
+      logger.warn(`API key disabled due to ${stats.errors} errors`);
     }
 
     if (this.isDevelopment()) {
-      console.error(`API key error (${stats.errors}/${this.maxErrorsBeforeDisable}):`, error.message);
+      logger.error(`API key error (${stats.errors}/${this.maxErrorsBeforeDisable}):`, error.message);
     }
   }
 
@@ -235,8 +246,10 @@ export class GeminiApiManager {
    */
   private shouldRotateOnError(error: GeminiError): boolean {
     // Check various error formats from Google's API
-    const errorStatus = error.status || (error as any).response?.status;
-    const errorCode = error.code || (error as any).response?.code;
+    type HttpLikeError = { status?: number; code?: string; message?: string; response?: { status?: number; code?: string } };
+    const e = error as HttpLikeError;
+    const errorStatus = e.status ?? e.response?.status;
+    const errorCode = e.code ?? e.response?.code;
     const errorMessage = error.message || '';
     
     // Rotate on authentication errors, rate limits, or quota exceeded
@@ -285,7 +298,7 @@ export class GeminiApiManager {
       const keyStats = this.keyStats.get(currentKey);
 
       if (this.isDevelopment()) {
-        console.log(`🔑 Attempt ${attempts + 1}: Using API key (index: ${this.currentKeyIndex})`);
+        logger.debug(`🔑 Attempt ${attempts + 1}: Using API key (index: ${this.currentKeyIndex})`);
       }
 
       // Track which keys we've tried
@@ -305,10 +318,15 @@ export class GeminiApiManager {
 
         // Log full error for debugging in development only
         if (this.isDevelopment()) {
-          console.error(`Error details:`, {
-            status: (error as any).status,
-            code: (error as any).code,
-            message: (error as any).message
+          const e: Partial<{ status?: number; code?: string; message?: string }> = error as Partial<{
+            status?: number;
+            code?: string;
+            message?: string;
+          }>;
+          logger.error(`Error details:`, {
+            status: e.status,
+            code: e.code,
+            message: e.message
           });
         }
 
@@ -317,15 +335,15 @@ export class GeminiApiManager {
         // Always try to rotate to next key if we have more attempts
         if (attempts < maxRetries) {
           if (this.isDevelopment()) {
-            console.log(`🔄 Rotating to next key after error...`);
+            logger.info(`🔄 Rotating to next key after error...`);
           }
           const rotated = this.rotateToNextAvailableKey();
           if (!rotated) {
-            console.warn('No more API keys available for rotation');
+            logger.warn('No more API keys available for rotation');
             // If all keys have been tried, break
             if (triedKeys.size >= this.apiKeys.length) {
               if (this.isDevelopment()) {
-                console.warn('All keys have been tried');
+                logger.warn('All keys have been tried');
               }
               break;
             }
@@ -353,7 +371,7 @@ export class GeminiApiManager {
   /**
    * Get rate limiting statistics
    */
-  getRateLimitStats(): any {
+  getRateLimitStats(): RateLimitStats {
     const now = new Date();
     const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
     const recentRequests = this.requestTimestamps.filter(t => t > oneMinuteAgo).length;

@@ -137,7 +137,7 @@ export function resolveAttack(
   });
 
   // Determine if attack hits
-  let targetAC = target.armorClass;
+  const targetAC = target.armorClass;
   let hit = roll.total >= targetAC;
 
   // Critical hit/fail rules
@@ -311,7 +311,11 @@ export function performAttack(
 /**
  * Get number of attacks for multi-attack feature
  */
-export function getNumberOfAttacks(cfg: number, characterClass: string, level: number): number {
+export function getNumberOfAttacks(
+  cfg: { specific?: Record<string, unknown> } | null | undefined,
+  characterClass: string,
+  level: number
+): number {
   // Martial classes with Extra Attack
   if (['fighter', 'paladin', 'ranger', 'barbarian'].includes(characterClass.toLowerCase())) {
     if (level >= 11) return 3;      // Level 11: Three attacks
@@ -325,7 +329,7 @@ export function getNumberOfAttacks(cfg: number, characterClass: string, level: n
 
   // Eldritch Knight and Arcane Trickster
   if (characterClass.toLowerCase() === 'fighter') {
-    if ((cfg as any)?.specific?.['eldritch_knight'] && level >= 5) {
+    if (cfg?.specific && typeof cfg.specific['eldritch_knight'] !== 'undefined' && level >= 5) {
       return 2;
     }
   }
@@ -457,7 +461,10 @@ export function createCombatActionFromAttack(
   weapon: Equipment | null,
   result: FullAttackResult
 ): CombatAction {
-  const isSpellAttack = (weapon as any)?.isSpell || false;
+  const isSpellAttack = !!(
+    weapon && typeof weapon === 'object' && 'isSpell' in (weapon as Record<string, unknown>) &&
+    (weapon as Record<string, unknown>).isSpell === true
+  );
   const attackType = isSpellAttack ? 'cast_spell' : 'attack';
 
   return {

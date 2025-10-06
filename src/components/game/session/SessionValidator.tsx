@@ -1,5 +1,6 @@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 interface SessionValidatorProps {
   sessionId: string | null;
@@ -23,7 +24,7 @@ export const useSessionValidator = ({
 
   const validateSession = async () => {
     if (!sessionId || !campaignId || !characterId) {
-      console.error('Missing required IDs:', { sessionId, campaignId, characterId });
+      logger.error('Missing required IDs:', { sessionId, campaignId, characterId });
       toast({
         title: "Session Error",
         description: "Missing required session information",
@@ -42,7 +43,7 @@ export const useSessionValidator = ({
       .single();
 
     if (error || !session) {
-      console.error('Session validation failed:', error || 'Session not found');
+      logger.error('Session validation failed:', error || 'Session not found');
       toast({
         title: "Session Error",
         description: "Invalid game session. Please try starting a new game.",

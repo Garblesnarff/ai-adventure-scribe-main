@@ -97,7 +97,7 @@ const ENEMY_TEMPLATES = {
 /**
  * Detect combat scenarios from DM text
  */
-export function detectCombatFromText(text: string, context?: any): CombatDetectionResult {
+export function detectCombatFromText(text: string, context?: unknown): CombatDetectionResult {
   const lowerText = text.toLowerCase();
   let combatScore = 0;
   let combatType: CombatDetectionResult['combatType'] = 'none';
@@ -307,7 +307,7 @@ export function detectPlayerCombatAction(playerInput: string): DetectedCombatAct
  */
 export function createCombatParticipantsFromDetection(
   enemies: DetectedEnemy[],
-  playerCharacter: any
+  playerCharacter: PlayerCharacterLike | null
 ): Partial<CombatParticipant>[] {
   const participants: Partial<CombatParticipant>[] = [];
   
@@ -364,6 +364,13 @@ export function createCombatParticipantsFromDetection(
   }
   
   return participants;
+}
+
+export interface PlayerCharacterLike {
+  id: string;
+  name: string;
+  armor_class?: number;
+  hit_points?: number;
 }
 
 /**

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Spell } from '@/types/character';
 import SpellCard from './SpellCard';
 import { Sparkles, Wand2, Users, Info } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface SpellCategorySectionProps {
   title: string;
@@ -48,7 +49,7 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
   const isOverLimit = selectedCount > maxSpells;
 
   // Debug logging for spell categories
-  console.log(`🎯 [SpellCategorySection] ${title} - Render:`, {
+  logger.debug(`🎯 [SpellCategorySection] ${title} - Render:`, {
     spellCount: spells.length,
     selectedCount,
     maxSpells,

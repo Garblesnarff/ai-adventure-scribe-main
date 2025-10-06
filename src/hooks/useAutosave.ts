@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import logger from '@/lib/logger';
 
 export type AutosaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -16,8 +17,7 @@ export function useAutosave<T>(storageKey: string, value: T, opts?: { delay?: nu
         setStatus('saved');
         window.setTimeout(() => setStatus('idle'), 1200);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Autosave error', err);
+        logger.error('Autosave error', err);
         setStatus('error');
       }
     }, delay);
@@ -32,8 +32,7 @@ export function useAutosave<T>(storageKey: string, value: T, opts?: { delay?: nu
       const raw = localStorage.getItem(storageKey);
       return raw ? (JSON.parse(raw) as T) : null;
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Autosave restore failed', err);
+      logger.error('Autosave restore failed', err);
       return null;
     }
   }
@@ -43,8 +42,7 @@ export function useAutosave<T>(storageKey: string, value: T, opts?: { delay?: nu
       localStorage.removeItem(storageKey);
       setStatus('idle');
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Autosave clear failed', err);
+      logger.error('Autosave clear failed', err);
     }
   }
 

@@ -19,6 +19,7 @@ import { DMChatBubble } from './chat/DMChatBubble';
 import { NarrationSegment } from '@/hooks/use-ai-response';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 interface SimpleGameChatWithVoiceProps {
   campaignId: string;
@@ -67,7 +68,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         characterDetails,
       };
 
-      console.log('🎭 Generating opening message for new session...');
+      logger.info('🎭 Generating opening message for new session...');
       const response = await AIService.chatWithDM({
         message: '',
         context,
@@ -92,7 +93,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         // Fallback if no valid text found
         if (!displayText.trim()) {
           displayText = 'The DM begins your adventure...';
-          console.warn('⚠️ Empty response text, using fallback');
+          logger.warn('⚠️ Empty response text, using fallback');
         }
         
         const dmMessage: ChatMessage = {
@@ -109,7 +110,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
-      console.error('Failed to generate opening message:', error);
+      logger.error('Failed to generate opening message:', error);
       toast.error('Failed to start adventure. Please try again.');
     }
   }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
@@ -122,7 +123,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
 
     setIsLoadingHistory(true);
     try {
-      console.log('📚 Loading conversation history for session:', session.id);
+      logger.info('📚 Loading conversation history for session:', session.id);
       
       // Load message history from dialogue_history table
       const { data: historyData, error: historyError } = await supabase
@@ -132,12 +133,12 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         .order('timestamp', { ascending: true });
 
       if (historyError) {
-        console.error('Error loading history:', historyError);
+        logger.error('Error loading history:', historyError);
         throw historyError;
       }
 
       if (historyData && historyData.length > 0) {
-        console.log(`📚 Loaded ${historyData.length} messages from history`);
+        logger.info(`📚 Loaded ${historyData.length} messages from history`);
         
         // Convert database messages to ChatMessage format
         const loadedMessages: ChatMessage[] = historyData.map((msg: any) => ({
@@ -152,13 +153,13 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         setMessages(loadedMessages);
         setHasLoadedHistory(true);
       } else {
-        console.log('📚 No message history found, generating opening message');
+        logger.info('📚 No message history found, generating opening message');
         // If no messages exist, generate an opening message
         await generateOpeningMessage();
         setHasLoadedHistory(true);
       }
     } catch (error) {
-      console.error('Failed to load history:', error);
+      logger.error('Failed to load history:', error);
       // Fallback to generating opening message if history loading fails
       await generateOpeningMessage();
       setHasLoadedHistory(true);
@@ -189,11 +190,11 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         });
 
       if (error) {
-        console.error('Error saving message to database:', error);
+        logger.error('Error saving message to database:', error);
         throw error;
       }
     } catch (error) {
-      console.error('Failed to save message:', error);
+      logger.error('Failed to save message:', error);
       // Don't throw here to avoid breaking the UI flow
     }
   }, []);
@@ -233,7 +234,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         characterDetails,
       };
 
-      console.log('🎭 Sending message to DM:', messageContent);
+      logger.info('🎭 Sending message to DM:', messageContent);
       const response = await AIService.chatWithDM({
         message: messageContent,
         context,
@@ -258,7 +259,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         // Fallback if no valid text found
         if (!displayText.trim()) {
           displayText = 'The DM responds to your action...';
-          console.warn('⚠️ Empty response text, using fallback');
+          logger.warn('⚠️ Empty response text, using fallback');
         }
         
         const dmMessage: ChatMessage = {
@@ -275,7 +276,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
       toast.error('Failed to send message. Please try again.');
       
       // Remove user message on failure
@@ -308,7 +309,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
    */
   const handleEndSession = useCallback(async () => {
     if (!session) {
-      console.warn('No session to end');
+      logger.warn('No session to end');
       navigate('/');
       return;
     }
@@ -319,7 +320,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         toast.success('Adventure ended. Your progress has been saved.');
         navigate('/');
       } catch (error) {
-        console.error('Failed to end session:', error);
+        logger.error('Failed to end session:', error);
         toast.error('Failed to end session properly, but navigating home.');
         navigate('/');
       }

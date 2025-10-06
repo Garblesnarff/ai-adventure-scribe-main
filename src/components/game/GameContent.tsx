@@ -29,6 +29,7 @@ import { useMemoryContext } from '@/contexts/MemoryContext';
 import { usePendingRolls } from '@/hooks/use-pending-rolls';
 import { FloatingActionPanel } from './FloatingActionPanel';
 import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
+import logger from '@/lib/logger';
 
 /**
  * GameContent Component
@@ -75,7 +76,7 @@ const GameContent: React.FC = () => {
       try {
         // Load character with all spell data populated
         setLoadingPhase('data');
-        console.log(`🔄 [GameContent] Loading character ${characterIdFromParams} with spells`);
+        logger.info(`🔄 [GameContent] Loading character ${characterIdFromParams} with spells`);
 
         const loadedCharacter = await characterLoaderService.loadCharacterWithSpells(characterIdFromParams);
 
@@ -83,7 +84,7 @@ const GameContent: React.FC = () => {
           throw new Error('Character not found or failed to load.');
         }
 
-        console.log(`✅ [GameContent] Successfully loaded character with spells:`, {
+        logger.info(`✅ [GameContent] Successfully loaded character with spells:`, {
           name: loadedCharacter.name,
           id: loadedCharacter.id,
           cantrips: loadedCharacter.cantrips?.length || 0,
@@ -113,7 +114,7 @@ const GameContent: React.FC = () => {
         campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as unknown as Partial<CampaignType> });
 
       } catch (err: any) {
-        console.error("Error loading game data:", err);
+        logger.error("Error loading game data:", err);
         setError(err.message);
       } finally {
         setIsLoading(false);
@@ -138,7 +139,7 @@ const GameContent: React.FC = () => {
   // Handle AI response for combat detection - moved to inner component
   const handleAIResponse = React.useCallback(async (message: any) => {
     // Basic logging for now, actual combat detection handled in inner component
-    console.log('🎯 AI response received in outer component:', message.text?.substring(0, 100) + '...');
+    logger.info('🎯 AI response received in outer component:', message.text?.substring(0, 100) + '...');
   }, []);
 
   // Combine loading states: initial data load and session loading
@@ -313,7 +314,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
       try {
         await createMemory(memory as any);
       } catch (e) {
-        console.error('Failed to create memory from greeting:', e);
+        logger.error('Failed to create memory from greeting:', e);
       }
     },
   });
@@ -322,13 +323,13 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   React.useEffect(() => {
     if (combatAI.isInCombat && !combatMode) {
       setCombatMode(true);
-      console.log('🗡️ Combat detected! Automatically switching to combat mode.');
+      logger.info('🗡️ Combat detected! Automatically switching to combat mode.');
     } else if (!combatAI.isInCombat && combatMode) {
       // Allow manual override - only auto-switch off if user hasn't manually toggled
       const shouldAutoExit = sessionStorage.getItem('manualCombatToggle') !== 'true';
       if (shouldAutoExit) {
         setCombatMode(false);
-        console.log('✅ Combat ended! Automatically returning to conversation mode.');
+        logger.info('✅ Combat ended! Automatically returning to conversation mode.');
       }
     }
   }, [combatAI.isInCombat, combatMode, setCombatMode]);
@@ -336,11 +337,11 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   // Handle AI response for combat detection in inner component
   const innerHandleAIResponse = React.useCallback(async (message: any) => {
     try {
-      console.log('🎯 Processing AI response for combat detection:', message.text?.substring(0, 100) + '...');
+      logger.info('🎯 Processing AI response for combat detection:', message.text?.substring(0, 100) + '...');
       
       // Check if the message has combat detection data
       if (message.combatDetection) {
-        console.log('⚔️ Combat detection data found in AI response:', {
+        logger.info('⚔️ Combat detection data found in AI response:', {
           isCombat: message.combatDetection.isCombat,
           confidence: message.combatDetection.confidence,
           shouldStartCombat: message.combatDetection.shouldStartCombat,
@@ -352,21 +353,21 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
         // Use the combat AI integration to process the DM response
         const result = await combatAI.processDMResponse(message, characterState.character);
         
-        console.log('⚔️ Combat processing result:', {
+        logger.info('⚔️ Combat processing result:', {
           combatDetected: result.combatDetected,
           shouldStartCombat: result.shouldStartCombat,
           shouldEndCombat: result.shouldEndCombat,
           combatMessages: result.combatMessages.length
         });
       } else {
-        console.log('📝 No combat detection data in AI response');
+        logger.info('📝 No combat detection data in AI response');
       }
       
       // Also call the outer handleAIResponse if needed
       await handleAIResponse(message);
       
     } catch (error) {
-      console.error('Error processing AI response for combat:', error);
+      logger.error('Error processing AI response for combat:', error);
     }
   }, [combatAI, characterState, handleAIResponse]);
 

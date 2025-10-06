@@ -9,6 +9,7 @@ import DiceRoller from '@/components/ui/dice-roller';
 import { Wand2, Circle, Dot, Book, Target, Loader2 } from 'lucide-react';
 import { characterSpellService, CharacterSpellData } from '@/services/characterSpellApi';
 import { getCharacterSpells, CharacterSpellDisplay } from '@/utils/spell-lookup';
+import logger from '@/lib/logger';
 
 interface SpellsTabProps {
   character: Character;
@@ -42,22 +43,22 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
   // Load character spells from character data with optional API enhancement
   useEffect(() => {
     const loadSpells = async () => {
-      console.log('🎯 [SpellsTab] Loading spells for character:', character?.name || 'Unknown');
-      console.log('🔍 [SpellsTab] Character object structure:');
-      console.log('   hasCantrips:', !!character?.cantrips);
-      console.log('   cantripCount:', character?.cantrips?.length || 0);
-      console.log('   cantrips:', character?.cantrips);
-      console.log('   hasKnownSpells:', !!character?.knownSpells);
-      console.log('   knownSpellCount:', character?.knownSpells?.length || 0);
-      console.log('   knownSpells:', character?.knownSpells);
-      console.log('   hasPreparedSpells:', !!character?.preparedSpells);
-      console.log('   preparedSpellCount:', character?.preparedSpells?.length || 0);
-      console.log('   preparedSpells:', character?.preparedSpells);
-      console.log('   hasRitualSpells:', !!character?.ritualSpells);
-      console.log('   ritualSpellCount:', character?.ritualSpells?.length || 0);
-      console.log('   ritualSpells:', character?.ritualSpells);
-      console.log('🗝️ [SpellsTab] ALL CHARACTER KEYS:', Object.keys(character || {}));
-      console.log('🎭 [SpellsTab] FULL CHARACTER OBJECT:', character);
+      logger.debug('🎯 [SpellsTab] Loading spells for character:', character?.name || 'Unknown');
+      logger.debug('🔍 [SpellsTab] Character object structure:');
+      logger.debug('   hasCantrips:', !!character?.cantrips);
+      logger.debug('   cantripCount:', character?.cantrips?.length || 0);
+      logger.debug('   cantrips:', character?.cantrips);
+      logger.debug('   hasKnownSpells:', !!character?.knownSpells);
+      logger.debug('   knownSpellCount:', character?.knownSpells?.length || 0);
+      logger.debug('   knownSpells:', character?.knownSpells);
+      logger.debug('   hasPreparedSpells:', !!character?.preparedSpells);
+      logger.debug('   preparedSpellCount:', character?.preparedSpells?.length || 0);
+      logger.debug('   preparedSpells:', character?.preparedSpells);
+      logger.debug('   hasRitualSpells:', !!character?.ritualSpells);
+      logger.debug('   ritualSpellCount:', character?.ritualSpells?.length || 0);
+      logger.debug('   ritualSpells:', character?.ritualSpells);
+      logger.debug('🗝️ [SpellsTab] ALL CHARACTER KEYS:', Object.keys(character || {}));
+      logger.debug('🎭 [SpellsTab] FULL CHARACTER OBJECT:', character);
 
       setError(null);
 
@@ -65,7 +66,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
       const characterSpellData = getCharacterSpells(character);
       const primarySpells = characterSpellData.allSpells;
 
-      console.log('✨ [SpellsTab] Loaded spells from character data:', {
+      logger.debug('✨ [SpellsTab] Loaded spells from character data:', {
         totalSpells: primarySpells.length,
         cantrips: characterSpellData.cantrips.length,
         knownSpells: characterSpellData.knownSpells.length,
@@ -84,7 +85,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
           const apiSpells = [...apiSpellData.cantrips, ...apiSpellData.spells];
 
           if (apiSpells.length > 0) {
-            console.log('🔮 [SpellsTab] Enhanced with API data:', {
+            logger.info('🔮 [SpellsTab] Enhanced with API data:', {
               apiSpellCount: apiSpells.length,
               primarySpellCount: primarySpells.length
             });
@@ -104,7 +105,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
             setSpells(enhancedSpells);
           }
         } catch (err) {
-          console.warn('🚫 [SpellsTab] API enhancement failed, using character data:', err);
+          logger.warn('🚫 [SpellsTab] API enhancement failed, using character data:', err);
           // Keep using character data, don't show error for API failure
         } finally {
           setLoading(false);
@@ -170,7 +171,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
       if (spell.material || spell.components_material) components.push('M');
       return components.join(', ');
     } catch (error) {
-      console.warn('[SpellsTab] Error formatting components for spell:', spell?.name, error);
+      logger.warn('[SpellsTab] Error formatting components for spell:', spell?.name, error);
       return 'V, S, M'; // Safe fallback
     }
   };
@@ -275,7 +276,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
                     cantrips.map((spell) => {
                       try {
                         if (!spell || !spell.id) {
-                          console.warn('[SpellsTab] Invalid cantrip data:', spell);
+                          logger.warn('[SpellsTab] Invalid cantrip data:', spell);
                           return null;
                         }
 
@@ -298,7 +299,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
                           </div>
                         );
                       } catch (error) {
-                        console.error('[SpellsTab] Error rendering cantrip:', spell, error);
+                        logger.error('[SpellsTab] Error rendering cantrip:', spell, error);
                         return (
                           <div key={spell?.id || Math.random()} className="flex items-center justify-between p-3 border rounded-lg border-red-200">
                             <div className="flex-1">
@@ -335,7 +336,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
                     leveledSpells.map((spell) => {
                       try {
                         if (!spell || !spell.id) {
-                          console.warn('[SpellsTab] Invalid leveled spell data:', spell);
+                          logger.warn('[SpellsTab] Invalid leveled spell data:', spell);
                           return null;
                         }
 
@@ -380,7 +381,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
                           </div>
                         );
                       } catch (error) {
-                        console.error('[SpellsTab] Error rendering leveled spell:', spell, error);
+                        logger.error('[SpellsTab] Error rendering leveled spell:', spell, error);
                         return (
                           <div key={spell?.id || Math.random()} className="flex items-center justify-between p-3 border rounded-lg border-red-200">
                             <div className="flex-1">

@@ -165,8 +165,8 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
     let damage = 0;
     let damageType: any = 'bludgeoning';
     let damageDescription = '';
-    let sneakAttackDamage = 0;
-    let sneakAttackDescription = '';
+    const sneakAttackDamage = 0;
+    const sneakAttackDescription = '';
     
     if (hitResult.hit) {
       const damageResult = calculateAttackDamage(

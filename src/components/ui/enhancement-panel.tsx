@@ -329,7 +329,7 @@ export function EnhancementPanel({
                             handleSelectionChange({ optionId: option.id, value: [...selectedValues, opt], timestamp: new Date().toISOString() });
                           }
                         } else {
-                          handleSelectionChange({ optionId: option.id, value: opt as any, timestamp: new Date().toISOString() });
+                          handleSelectionChange({ optionId: option.id, value: opt as unknown as OptionSelection['value'], timestamp: new Date().toISOString() });
                         }
                       };
 

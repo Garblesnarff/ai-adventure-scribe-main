@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCombat } from '@/contexts/CombatContext';
 import { ArrowRight } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface MovementActionPanelProps {
   participantId: string;
@@ -40,7 +41,7 @@ const MovementActionPanel: React.FC<MovementActionPanelProps> = ({
     try {
       await moveParticipant(participantId, currentPosition, targetPosition);
     } catch (error) {
-      console.error('Error moving participant:', error);
+      logger.error('Error moving participant:', error);
     }
   };
   

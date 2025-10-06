@@ -37,8 +37,10 @@ import {
   calculateSpellPreparationLimits,
   validateSpellPreparation,
   getSpellPreparationType,
-  getSpellPreparationInfo
+  getSpellPreparationInfo,
+  type SpellPreparationLimits
 } from '@/utils/spell-preparation';
+import logger from '@/lib/logger';
 
 // ===========================
 // Props Interface
@@ -60,7 +62,7 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
   const [knownSpells, setKnownSpells] = useState<Spell[]>([]);
   const [availableSpells, setAvailableSpells] = useState<Spell[]>([]);
   const [isLoadingSpells, setIsLoadingSpells] = useState(false);
-  const [preparationLimits, setPreparationLimits] = useState<any>(null);
+  const [preparationLimits, setPreparationLimits] = useState<SpellPreparationLimits | null>(null);
 
   // Get spell preparation info and limits
   const preparationInfo = character ? getSpellPreparationInfo(character) : null;
@@ -96,7 +98,7 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
           }
         })
         .catch(error => {
-          console.error('Failed to fetch class spells:', error);
+          logger.error('Failed to fetch class spells:', error);
           setAvailableSpells([]);
           setKnownSpells([]);
         })
@@ -158,7 +160,7 @@ const SpellPreparationPanel: React.FC<SpellPreparationPanelProps> = ({
         }
       });
     } catch (error) {
-      console.error('Error preparing/unpreparing spell:', error);
+      logger.error('Error preparing/unpreparing spell:', error);
       alert('Failed to update spell preparation. Please try again.');
     }
   };

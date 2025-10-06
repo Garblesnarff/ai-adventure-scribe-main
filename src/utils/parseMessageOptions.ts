@@ -18,6 +18,7 @@ export interface ParsedMessage {
   options: ActionOption[];
   hasOptions: boolean;
 }
+import logger from '@/lib/logger';
 
 /**
  * Parses DM message content to extract numbered or lettered options
@@ -252,11 +253,11 @@ function convertToFirstPerson(text: string): string {
 export function createPlayerMessageFromOption(option: ActionOption): string {
   // Remove numbering and formatting for the player's choice
   let cleaned = option.text.replace(/^\d+\.\s*/, '').trim();
-  console.log('[parseMessageOptions] Original option text:', cleaned);
+  logger.debug('[parseMessageOptions] Original option text:', cleaned);
 
   // Convert from second person to first person
   cleaned = convertToFirstPerson(cleaned);
-  console.log('[parseMessageOptions] Converted to first person:', cleaned);
+  logger.debug('[parseMessageOptions] Converted to first person:', cleaned);
 
   return cleaned;
 }

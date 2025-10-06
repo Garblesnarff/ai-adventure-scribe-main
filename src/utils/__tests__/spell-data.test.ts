@@ -232,8 +232,8 @@ describe('Spell Data Integrity', () => {
 
       allSpells.forEach(spell => {
         expectedKeys.forEach(key => {
-          if (spell.hasOwnProperty(key)) {
-            expect(typeof spell[key]).toBe(typeof firstSpell[key]);
+          if (Object.prototype.hasOwnProperty.call(spell, key)) {
+            expect(typeof (spell as any)[key]).toBe(typeof (firstSpell as any)[key]);
           }
         });
       });

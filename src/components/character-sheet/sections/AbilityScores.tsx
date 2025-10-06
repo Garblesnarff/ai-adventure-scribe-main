@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Save, Loader2 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 interface AbilityScoresProps {
   characterId: string;
@@ -81,7 +82,7 @@ const AbilityScores: React.FC<AbilityScoresProps> = ({ characterId, stats, onSta
       });
       onStatsUpdate();
     } catch (error) {
-      console.error('Error updating stats:', error);
+      logger.error('Error updating stats:', error);
       toast({
         title: "Error",
         description: "Failed to update ability scores",

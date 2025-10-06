@@ -6,6 +6,7 @@ import { CharacterRace, Subrace } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Check, Users, Zap, ArrowRight } from 'lucide-react';
+import logger from '@/lib/logger';
 
 /**
  * SubraceSelection component for choosing subraces when available
@@ -38,7 +39,7 @@ const SubraceSelection: React.FC = () => {
   }
 
   const handleSubraceSelect = (subrace: Subrace) => {
-    console.log('Selecting subrace:', subrace);
+    logger.info('Selecting subrace:', subrace);
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: { subrace }

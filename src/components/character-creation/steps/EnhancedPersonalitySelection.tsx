@@ -75,7 +75,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
   /**
    * Use a suggested element
    */
-  const useSuggestion = (type: 'traits' | 'ideals' | 'bonds' | 'flaws', suggestion: string, index?: number) => {
+  const applySuggestion = (type: 'traits' | 'ideals' | 'bonds' | 'flaws', suggestion: string, index?: number) => {
     switch (type) {
       case 'traits':
         if (index !== undefined) {
@@ -165,7 +165,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
               <div
                 key={index}
                 className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors group"
-                onClick={() => useSuggestion(type, suggestion, type === 'traits' ? 0 : undefined)}
+                onClick={() => applySuggestion(type, suggestion, type === 'traits' ? 0 : undefined)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-xs flex-1">{suggestion}</p>

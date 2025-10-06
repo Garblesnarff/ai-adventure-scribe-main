@@ -116,23 +116,45 @@ export const enhanceMemoryContext = (memories: Memory[]) => {
  */
 export const buildEnhancedGameContext = (
   campaignContext: Campaign,
-  characterContext?: any,
+  characterContext?: unknown,
   memories: Memory[] = [],
-  quests?: any[]
+  quests?: unknown[]
 ): EnhancedGameContext => {
+  const c = characterContext && typeof characterContext === 'object' ? (characterContext as Record<string, unknown>) : null;
+  const character = c ? {
+    basic: {
+      name: typeof c.name === 'string' ? c.name : 'Unknown',
+      race: typeof c.race === 'string' ? c.race : 'Unknown',
+      class: typeof c.class === 'string' ? c.class : 'Unknown',
+      level: typeof c.level === 'number' ? c.level : 1
+    },
+    stats: (c.stats && typeof c.stats === 'object') ? (c.stats as Record<string, number>) : {},
+    equipment: Array.isArray(c.equipment)
+      ? (c.equipment as unknown[])
+          .filter((e): e is { name: string; type: string; equipped: boolean } => {
+            const o = e as Record<string, unknown>;
+            return typeof o?.name === 'string' && typeof o?.type === 'string' && typeof o?.equipped === 'boolean';
+          })
+      : []
+  } : undefined;
+
+  const activeQuests = Array.isArray(quests)
+    ? quests
+        .map(q => (q && typeof q === 'object' ? (q as Record<string, unknown>) : null))
+        .filter((q): q is Record<string, unknown> => !!q && typeof q.status === 'string')
+        .filter(q => q.status === 'active')
+        .map(q => ({
+          title: typeof q.title === 'string' ? q.title : 'Untitled Quest',
+          description: typeof q.description === 'string' ? q.description : undefined,
+          status: q.status as string,
+          progress: typeof q.progress === 'number' ? q.progress : undefined
+        }))
+    : undefined;
+
   return {
     campaign: enhanceCampaignContext(campaignContext),
-    character: characterContext ? {
-      basic: {
-        name: characterContext.name,
-        race: characterContext.race,
-        class: characterContext.class,
-        level: characterContext.level || 1
-      },
-      stats: characterContext.stats || {},
-      equipment: characterContext.equipment || []
-    } : undefined,
+    character,
     memories: enhanceMemoryContext(memories),
-    activeQuests: quests?.filter(q => q.status === 'active')
+    activeQuests
   };
 };

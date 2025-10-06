@@ -44,8 +44,29 @@ interface MulticlassCalculation {
   pactMagicSlots: { level: number; slots: number } | null;
 }
 
+interface ApiSpell {
+  id: string;
+  name: string;
+  level: number;
+  school: string;
+  ritual: boolean;
+  concentration: boolean;
+  casting_time: string;
+  range_text: string;
+  duration: string;
+  description: string;
+  components_verbal: boolean;
+  components_somatic: boolean;
+  components_material: boolean;
+  material_components?: string;
+  attack_save?: string;
+  damage_effect?: string;
+  available_classes?: string[];
+  source_feature?: string;
+}
+
 // Convert frontend Spell to API-compatible format
-function convertSpellToApiFormat(spell: Spell): any {
+function convertSpellToApiFormat(spell: Spell): ApiSpell {
   return {
     id: spell.id,
     name: spell.name,
@@ -63,8 +84,7 @@ function convertSpellToApiFormat(spell: Spell): any {
     material_components: spell.materialComponents || spell.materialDescription || '',
     attack_save: spell.attackSave || '',
     damage_effect: spell.damageEffect || spell.damage || '',
-    available_classes: [], // Could be populated if needed
-    source_feature: undefined
+    available_classes: [] // Could be populated if needed
   };
 }
 

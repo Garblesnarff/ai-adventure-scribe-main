@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Shuffle, Heart, Crown, Shield, Zap } from 'lucide-react';
 import { personalityService } from '@/services/personalityService';
+import logger from '@/lib/logger';
 
 /**
  * PersonalitySelection component for character creation
@@ -121,7 +122,7 @@ const PersonalitySelection: React.FC = () => {
         duration: 1500,
       });
     } catch (error) {
-      console.error('Error randomizing personality element:', error);
+      logger.error('Error randomizing personality element:', error);
       toast({
         title: "Error",
         description: "Failed to randomize. Please try again.",
@@ -169,7 +170,7 @@ const PersonalitySelection: React.FC = () => {
         duration: 2000,
       });
     } catch (error) {
-      console.error('Error randomizing all personality elements:', error);
+      logger.error('Error randomizing all personality elements:', error);
       toast({
         title: "Error",
         description: "Failed to randomize all fields. Please try again.",

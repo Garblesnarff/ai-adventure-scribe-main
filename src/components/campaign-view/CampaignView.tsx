@@ -7,6 +7,7 @@ import { isValidUUID } from '@/utils/validation';
 import { CampaignHeader } from './sections/CampaignHeader';
 import { CampaignCollapsible } from './sections/CampaignCollapsible';
 import { GameSession } from './sections/GameSession';
+import logger from '@/lib/logger';
 
 /**
  * CampaignView component displays campaign details and handles game sessions
@@ -14,7 +15,7 @@ import { GameSession } from './sections/GameSession';
 const CampaignView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [campaign, setCampaign] = React.useState<any>(null);
+  const [campaign, setCampaign] = React.useState<import('@/types/game').Campaign | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = React.useState(true);
@@ -63,7 +64,7 @@ const CampaignView: React.FC = () => {
         
         setCampaign(data);
       } catch (error) {
-        console.error('Error fetching campaign:', error);
+        logger.error('Error fetching campaign:', error);
         toast({
           title: "Error",
           description: "Failed to load campaign data. Please try again.",
@@ -99,7 +100,7 @@ const CampaignView: React.FC = () => {
       });
       navigate('/');
     } catch (error) {
-      console.error('Error deleting campaign:', error);
+      logger.error('Error deleting campaign:', error);
       toast({
         title: "Error",
         description: "Failed to delete campaign",

@@ -179,7 +179,7 @@ export const useCharacterSave = () => {
       console.log(`Generating background image for character ${characterId}`);
 
       // Generate the image with character portrait as reference if available
-      const options: any = {};
+      const options: { referenceImageUrl?: string; retryAttempts?: number; fallbackToDefault?: boolean; useSimplifiedPrompt?: boolean } = {};
       if (character.image_url) {
         options.referenceImageUrl = character.image_url;
         console.log(`Using character image as reference: ${character.image_url}`);

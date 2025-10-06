@@ -27,6 +27,7 @@ import {
   CheckCircle,
   Search
 } from 'lucide-react';
+import logger from '@/lib/logger';
 
 /**
  * Enhanced SpellSelection component for spellcasting classes during character creation
@@ -83,7 +84,7 @@ const SpellSelection: React.FC = () => {
 
   // Auto-save when valid selection is made
   useEffect(() => {
-    console.log('🎯 [SpellSelection] Auto-save check:', {
+    logger.debug('🎯 [SpellSelection] Auto-save check:', {
       canProceed,
       validationValid: validation.valid,
       selectedCantrips: selectedCantrips,
@@ -93,7 +94,7 @@ const SpellSelection: React.FC = () => {
     });
 
     if (canProceed && validation.valid) {
-      console.log('✅ [SpellSelection] Triggering updateCharacterSpells');
+      logger.info('✅ [SpellSelection] Triggering updateCharacterSpells');
       updateCharacterSpells();
     }
   }, [canProceed, validation.valid, updateCharacterSpells]);
@@ -426,7 +427,7 @@ const SpellSelection: React.FC = () => {
         <TabsContent value="spells" className="space-y-4">
           {(() => {
             const spellsKnown = spellcastingInfo?.spellsKnown || 0;
-            console.log(`🎯 [SpellSelection] 1st Level Tab Render:`, {
+            logger.debug('🎯 [SpellSelection] 1st Level Tab Render:', {
               spellsKnown,
               filteredSpellsCount: filteredSpells.length,
               availableSpellsCount: availableSpells.length,

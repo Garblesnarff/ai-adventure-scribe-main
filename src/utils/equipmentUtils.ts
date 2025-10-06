@@ -2,87 +2,113 @@
  * Equipment utility functions for combat and inventory management
  */
 
-import { Participant } from '@/types/combat';
+import { CombatParticipant } from '@/types/combat';
+import type { Equipment } from '@/data/equipmentOptions';
+
+type WeaponLike = {
+  name: string;
+  damage?: string;
+  damageType?: string;
+  properties?: string[];
+  weight?: number;
+  value?: number;
+};
 
 /**
  * Creates default light weapons for two-weapon fighting
  */
 export function createDefaultLightWeapons() {
-  return {
-    scimitar: {
-      name: 'Scimitar',
-      damage: '1d6',
-      damageType: 'slashing',
-      properties: ['light', 'finesse'],
-      weight: 3,
-      value: 25
-    },
-    shortsword: {
-      name: 'Shortsword',
-      damage: '1d6',
-      damageType: 'piercing',
-      properties: ['light', 'finesse'],
-      weight: 2,
-      value: 10
-    },
-    handaxe: {
-      name: 'Handaxe',
-      damage: '1d6',
-      damageType: 'slashing',
-      properties: ['light', 'thrown'],
-      weight: 1,
-      value: 5
-    },
-    dagger: {
-      name: 'Dagger',
-      damage: '1d4',
-      damageType: 'piercing',
-      properties: ['light', 'finesse', 'thrown'],
-      weight: 1,
-      value: 2
-    }
+  const scimitar: Equipment = {
+    id: 'scimitar-temp',
+    name: 'Scimitar',
+    category: 'weapon',
+    subcategory: 'martial melee',
+    weaponType: 'martial',
+    cost: { amount: 25, currency: 'gp' },
+    weight: 3,
+    description: 'A curved, single-edged blade.',
+    damage: { dice: '1d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: { finesse: true, light: true }
   };
+
+  const shortsword: Equipment = {
+    id: 'shortsword-temp',
+    name: 'Shortsword',
+    category: 'weapon',
+    subcategory: 'martial melee',
+    weaponType: 'martial',
+    cost: { amount: 10, currency: 'gp' },
+    weight: 2,
+    description: 'A short, versatile piercing blade.',
+    damage: { dice: '1d6', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { finesse: true, light: true }
+  };
+
+  const handaxe: Equipment = {
+    id: 'handaxe-temp',
+    name: 'Handaxe',
+    category: 'weapon',
+    subcategory: 'simple melee',
+    weaponType: 'simple',
+    cost: { amount: 5, currency: 'gp' },
+    weight: 2,
+    description: 'A small axe for one-handed use.',
+    damage: { dice: '1d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: { light: true, thrown: true }
+  };
+
+  const dagger: Equipment = {
+    id: 'dagger-temp',
+    name: 'Dagger',
+    category: 'weapon',
+    subcategory: 'simple melee',
+    weaponType: 'simple',
+    cost: { amount: 2, currency: 'gp' },
+    weight: 1,
+    description: 'A sharp, lightweight blade.',
+    damage: { dice: '1d4', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { finesse: true, light: true, thrown: true },
+    range: { normal: 20, long: 60 }
+  };
+
+  return { scimitar, shortsword, handaxe, dagger };
 }
 
 /**
  * Equips a weapon to the main hand slot
  */
-export function equipMainHandWeapon(participant: Participant, weapon: any) {
+export function equipMainHandWeapon(participant: CombatParticipant, weapon: Equipment): CombatParticipant {
   return {
     ...participant,
     mainHandWeapon: weapon,
-    equipment: {
-      ...participant.equipment,
-      mainHand: weapon
-    }
   };
 }
 
 /**
  * Equips a weapon to the off-hand slot
  */
-export function equipOffHandWeapon(participant: Participant, weapon: any) {
+export function equipOffHandWeapon(participant: CombatParticipant, weapon: Equipment): CombatParticipant {
   return {
     ...participant,
     offHandWeapon: weapon,
-    equipment: {
-      ...participant.equipment,
-      offHand: weapon
-    }
   };
 }
 
 /**
  * Checks if a participant can dual wield based on equipped weapons
  */
-export function canDualWield(participant: Participant) {
-  const mainWeapon = participant.mainHandWeapon || participant.equipment?.mainHand;
-  const offWeapon = participant.offHandWeapon || participant.equipment?.offHand;
+export function canDualWield(participant: CombatParticipant) {
+  const mainWeapon = participant.mainHandWeapon;
+  const offWeapon = participant.offHandWeapon;
   
   if (!mainWeapon || !offWeapon) return false;
   
-  const mainIsLight = mainWeapon.properties?.includes('light');
-  const offIsLight = offWeapon.properties?.includes('light');
+  const mainIsLight = mainWeapon.weaponProperties?.light;
+  const offIsLight = offWeapon.weaponProperties?.light;
   
   return mainIsLight && offIsLight;
 }
@@ -90,13 +116,13 @@ export function canDualWield(participant: Participant) {
 /**
  * Gets the equipped weapons for a participant
  */
-export function getEquippedWeapons(participant: Participant) {
+export function getEquippedWeapons(participant: CombatParticipant) {
   return {
-    mainHand: participant.mainHandWeapon || participant.equipment?.mainHand,
-    offHand: participant.offHandWeapon || participant.equipment?.offHand,
+    mainHand: participant.mainHandWeapon,
+    offHand: participant.offHandWeapon,
     allWeapons: [
-      ...(participant.mainHandWeapon || participant.equipment?.mainHand ? [participant.mainHandWeapon || participant.equipment?.mainHand] : []),
-      ...(participant.offHandWeapon || participant.equipment?.offHand ? [participant.offHandWeapon || participant.equipment?.offHand] : [])
+      ...(participant.mainHandWeapon ? [participant.mainHandWeapon] : []),
+      ...(participant.offHandWeapon ? [participant.offHandWeapon] : [])
     ].filter(Boolean)
   };
 }
@@ -104,11 +130,11 @@ export function getEquippedWeapons(participant: Participant) {
 /**
  * Calculates weapon proficiency bonus
  */
-export function getWeaponProficiencyBonus(participant: Participant, weapon: any) {
+export function getWeaponProficiencyBonus(participant: CombatParticipant, weapon: Equipment) {
   const proficiencyBonus = Math.floor((participant.level || 1) / 4) + 2;
-  const isProficient = participant.proficiencies?.weapons?.includes(weapon.name) || 
-                      participant.characterClass === 'fighter' || // Fighters are proficient with all weapons
-                      weapon.properties?.includes('simple');
-  
+  const cls = (participant.characterClass || '').toLowerCase();
+  const martialByClass = ['fighter', 'paladin', 'ranger', 'barbarian'];
+  const martialProficient = martialByClass.includes(cls);
+  const isProficient = weapon.weaponType === 'martial' ? martialProficient : true;
   return isProficient ? proficiencyBonus : 0;
 }

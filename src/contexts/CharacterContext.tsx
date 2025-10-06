@@ -31,6 +31,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client'; // Imported but not directly used in the provided snippet
 import { Character, transformCharacterForStorage } from '@/types/character';
+import logger from '@/lib/logger';
 
 
 // Interfaces and Types (defined in-file, specific to this context)
@@ -127,8 +128,8 @@ const CharacterContext = createContext<{
  */
 function characterReducer(state: CharacterState, action: CharacterAction): CharacterState {
   // Debug logging to track state changes
-  console.log('Reducer action:', action.type, 'payload' in action ? action.payload : 'No payload');
-  console.log('Current state:', state);
+  logger.debug('Reducer action:', action.type, 'payload' in action ? action.payload : 'No payload');
+  logger.debug('Current state:', state);
 
   // Enhanced error boundary for reducer operations
   try {
@@ -136,7 +137,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       case 'SET_CHARACTER': {
         // Validate character data before setting
         if (!action.payload || typeof action.payload !== 'object') {
-          console.error('Invalid character payload:', action.payload);
+          logger.error('Invalid character payload:', action.payload);
           return {
             ...state,
             error: 'Invalid character data provided'
@@ -163,13 +164,13 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           });
 
         if (hasChanges) {
-          console.log('🔄 UPDATE_CHARACTER reducer called');
-          console.log('🔄 Current state.character:', state.character);
-          console.log('🔄 Action payload:', payload);
+          logger.debug('UPDATE_CHARACTER reducer called');
+          logger.debug('Current state.character:', state.character);
+          logger.debug('Action payload:', payload);
 
           // Special logging for spell-related updates
           if (payload.cantrips || payload.knownSpells || payload.preparedSpells || payload.ritualSpells) {
-            console.log('🎯 [CharacterContext] Spell update detected:', {
+            logger.debug('[CharacterContext] Spell update detected:', {
               incomingCantrips: payload.cantrips,
               incomingKnownSpells: payload.knownSpells,
               incomingPreparedSpells: payload.preparedSpells,
@@ -184,7 +185,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
 
         // Validate current character state
         if (!state.character || typeof state.character !== 'object') {
-          console.error('No character to update or invalid character state');
+          logger.error('No character to update or invalid character state');
           return {
             ...state,
             error: 'No character data to update'
@@ -193,7 +194,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
 
         // Validate payload
         if (!action.payload || typeof action.payload !== 'object') {
-          console.error('Invalid update payload:', action.payload);
+          logger.error('Invalid update payload:', action.payload);
           return {
             ...state,
             error: 'Invalid character update data'
@@ -208,7 +209,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
 
         // Additional logging for spell updates - include both property naming conventions
         if (hasChanges && (payload.cantrips || payload.knownSpells || payload.preparedSpells || payload.ritualSpells)) {
-          console.log('🎯 [CharacterContext] Final spell state after update:', {
+          logger.debug('[CharacterContext] Final spell state after update:', {
             finalCantrips: updatedCharacter.cantrips,
             finalKnownSpells: updatedCharacter.knownSpells,
             finalPreparedSpells: updatedCharacter.preparedSpells,
@@ -238,7 +239,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         // Validate step number
         const step = action.payload;
         if (typeof step !== 'number' || step < 0 || step > 20) {
-          console.error('Invalid step number:', step);
+          logger.error('Invalid step number:', step);
           return {
             ...state,
             error: 'Invalid character creation step'
@@ -256,7 +257,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         // Validate loading boolean
         const loading = action.payload;
         if (typeof loading !== 'boolean') {
-          console.error('Invalid loading value:', loading);
+          logger.error('Invalid loading value:', loading);
           return {
             ...state,
             error: 'Invalid loading state'
@@ -274,7 +275,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         // Validate error message
         const error = action.payload;
         if (error !== null && typeof error !== 'string') {
-          console.error('Invalid error value:', error);
+          logger.error('Invalid error value:', error);
           return {
             ...state,
             error: 'Invalid error message format'
@@ -291,7 +292,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         // Validate spell slots payload
         const spellSlots = action.payload;
         if (!spellSlots || typeof spellSlots !== 'object') {
-          console.error('Invalid spell slots payload:', spellSlots);
+          logger.error('Invalid spell slots payload:', spellSlots);
           return {
             ...state,
             error: 'Invalid spell slot data'
@@ -302,7 +303,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         for (const [level, slots] of Object.entries(spellSlots)) {
           const levelNum = parseInt(level, 10);
           if (isNaN(levelNum) || levelNum < 0 || levelNum > 9) {
-            console.error('Invalid spell slot level:', level);
+            logger.error('Invalid spell slot level:', level);
             return {
               ...state,
               error: 'Invalid spell slot level'
@@ -312,7 +313,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           if (!slots || typeof slots !== 'object' ||
               typeof slots.max !== 'number' || typeof slots.current !== 'number' ||
               slots.max < 0 || slots.current < 0 || slots.current > slots.max) {
-            console.error('Invalid spell slot data for level', level, ':', slots);
+            logger.error('Invalid spell slot data for level', level, ':', slots);
             return {
               ...state,
               error: 'Invalid spell slot structure'
@@ -322,7 +323,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
 
         // Validate character exists before updating
         if (!state.character) {
-          console.error('No character to update spell slots for');
+          logger.error('No character to update spell slots for');
           return {
             ...state,
             error: 'No character data to update'
@@ -344,7 +345,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         // Validate concentration payload
         const concentration = action.payload;
         if (concentration !== null && typeof concentration !== 'string') {
-          console.error('Invalid concentration payload:', concentration);
+          logger.error('Invalid concentration payload:', concentration);
           return {
             ...state,
             error: 'Invalid concentration spell data'
@@ -353,7 +354,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
 
         // Validate character exists before updating
         if (!state.character) {
-          console.error('No character to update concentration for');
+          logger.error('No character to update concentration for');
           return {
             ...state,
             error: 'No character data to update'
@@ -372,17 +373,17 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'RESET': {
-        console.log('Resetting character state to initial state');
+        logger.info('Resetting character state to initial state');
         return initialState;
       }
 
       default: {
-        console.warn('Unknown action type dispatched:', action);
+        logger.warn('Unknown action type dispatched:', action);
         return state;
       }
     }
   } catch (error) {
-    console.error('Unexpected error in character reducer:', error);
+    logger.error('Unexpected error in character reducer:', error);
     return {
       ...state,
       error: 'An unexpected error occurred while updating character data'

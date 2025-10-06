@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import logger from '@/lib/logger';
 
 export interface GameSession {
   id: string;
@@ -82,16 +83,16 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
         .limit(5); // Get last 5 sessions to find the best one to resume
 
       if (error) {
-        console.error('Error fetching existing sessions:', error);
+        logger.error('Error fetching existing sessions:', error);
         // If we can't fetch sessions, create a new one
         return await createGameSession(campaignId, characterId);
       }
 
       // Look for an active session first
-      let sessionToResume = existingSessions?.find(s => s.status === 'active');
+      const sessionToResume = existingSessions?.find(s => s.status === 'active');
 
       if (sessionToResume) {
-        console.log('📚 Resuming existing active session:', sessionToResume.id);
+        logger.info('📚 Resuming existing active session:', sessionToResume.id);
         setSession(sessionToResume as GameSession);
         return sessionToResume as GameSession;
       }
@@ -101,7 +102,7 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
       const lastCompletedSession = existingSessions?.find(s => s.status === 'completed');
 
       if (lastCompletedSession) {
-        console.log('📚 Creating new session continuing from previous session:', lastCompletedSession.id);
+        logger.info('📚 Creating new session continuing from previous session:', lastCompletedSession.id);
         // Create a new session but maintain continuity from the last one
         const sessionNumber = Math.max(
           ...(existingSessions?.map(s => s.session_number || 1) || [1])
@@ -127,7 +128,7 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
       }
 
       // No existing sessions found, create the first one
-      console.log('📚 No existing sessions found, creating first session');
+      logger.info('📚 No existing sessions found, creating first session');
       return await createGameSession(campaignId, characterId);
 
     } catch (err) {
@@ -165,7 +166,7 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
   // Auto-load session when campaign and character are available
   useEffect(() => {
     if (campaignId && characterId && user) {
-      getActiveSession(campaignId, characterId).catch(console.error);
+      getActiveSession(campaignId, characterId).catch((err) => logger.error(err));
     }
   }, [campaignId, characterId, user]);
 

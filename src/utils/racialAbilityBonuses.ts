@@ -24,7 +24,7 @@ export interface RacialBonus {
  */
 export function calculateRacialBonuses(
   race: CharacterRace | null,
-  subrace: any | null,
+  subrace: import('@/types/character').Subrace | null,
   racialAbilityChoices?: {
     halfElf?: [string, string];
     variantHuman?: [string, string];

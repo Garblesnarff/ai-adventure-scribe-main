@@ -410,14 +410,14 @@ export function calculateUnarmoredDefenseAC(
   
   // Different calculation based on class
   switch (characterClass.toLowerCase()) {
-    case 'barbarian':
+    case 'barbarian': {
       const conMod = abilityScores.constitution?.modifier || 0;
       return baseAC + dexMod + conMod;
-      
-    case 'monk':
+    }
+    case 'monk': {
       const wisMod = abilityScores.wisdom?.modifier || 0;
       return baseAC + dexMod + wisMod;
-      
+    }
     default:
       // For other classes, just return base + dex
       return baseAC + dexMod;
@@ -510,8 +510,8 @@ export function restoreClassFeatures(
   // Restore resources
   if (restType === 'short' || restType === 'long') {
     Object.keys(updatedResources).forEach(key => {
-      const resource = updatedResources[key as keyof CharacterResources] as any;
-      if (resource && typeof resource === 'object' && 'max' in resource) {
+      const resource = updatedResources[key as keyof CharacterResources] as { max: number; current: number } | undefined;
+      if (resource && typeof resource === 'object' && 'max' in resource && 'current' in resource) {
         resource.current = resource.max;
       }
     });

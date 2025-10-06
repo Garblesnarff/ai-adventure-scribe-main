@@ -20,7 +20,7 @@ function findRecentAttackRoll(actions: CombatAction[], actorId: string): CombatA
  */
 function isValidDiceFormula(formula: string): boolean {
   const dicePattern = /^(\d+d\d+)([+-]\d+)?$/i;
-  const multipleDicePattern = /^(\d+d\d+([+-]\d+)?)([\s]*[\+][\s]*\d+d\d+([+-]\d+)?)*$/i;
+  const multipleDicePattern = /^(\d+d\d+([+-]\d+)?)(\s*\+\s*\d+d\d+([+-]\d+)?)*$/i;
   return dicePattern.test(formula.trim()) || multipleDicePattern.test(formula.trim());
 }
 

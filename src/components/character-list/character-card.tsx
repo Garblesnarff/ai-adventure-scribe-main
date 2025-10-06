@@ -22,6 +22,7 @@ import CampaignSelectionModal from './campaign-selection-modal';
 import { Character } from '@/types/character';
 import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
 import { Skeleton } from '@/components/ui/skeleton';
+import logger from '@/lib/logger';
 
 /**
  * Props interface for CharacterCard component
@@ -87,7 +88,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
         onDelete();
       }
     } catch (error) {
-      console.error('Error deleting character:', error);
+      logger.error('Error deleting character:', error);
       toast({
         title: "Error",
         description: "Failed to delete character. Please try again.",
