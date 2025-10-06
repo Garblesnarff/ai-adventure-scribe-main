@@ -19,6 +19,8 @@ export default defineConfig({
       'src/utils/diceRolls.test.ts',
       'src/utils/abilityScoreUtils.test.ts',
       'src/utils/__tests__/spell-validation.test.ts',
+      'src/utils/__tests__/sentence-segmenter.test.ts',
+      'src/utils/__tests__/spell-preparation.test.ts',
       'src/utils/__tests__/spell-data.test.ts',
       'src/utils/memoryClassification.test.ts',
       'src/agents/services/intent/PlayerIntentDetector.test.ts',
@@ -54,6 +56,7 @@ export default defineConfig({
       include: [
         'src/utils/diceRolls.ts',
         'src/utils/abilityScoreUtils.ts',
+        'src/utils/sentence-segmenter.ts',
         'src/components/spells/SpellCard.tsx',
         'src/agents/services/intent/PlayerIntentDetector.ts',
         'src/hooks/useSpellSelection.ts',
@@ -72,7 +75,6 @@ export default defineConfig({
         'vite.config.ts',
         'tailwind.config.ts',
         // Temporarily exclude low-covered utils until tests are added
-        'src/utils/sentence-segmenter.ts',
         'src/utils/spell-preparation.ts',
         'src/utils/spell-validation.ts',
       ],
