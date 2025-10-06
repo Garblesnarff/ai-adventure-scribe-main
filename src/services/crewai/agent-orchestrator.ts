@@ -1,7 +1,7 @@
 import type { ChatMessage, GameContext } from '@/services/ai-service';
 import type { SessionStatePayload } from '@/types/session-state';
 import { CrewAIClient, type CrewAIResponse } from './crewai-client';
-import { PromptComposer } from './prompt-composer';
+import { StateAdapter } from './state-adapter';
 import { z } from 'zod';
 
 export interface OrchestratorParams {
@@ -16,18 +16,12 @@ export class AgentOrchestrator {
     const { message, context, conversationHistory = [], sessionState } = params;
     if (!context.sessionId) throw new Error('sessionId is required for CrewAI');
 
-    const stateSection = PromptComposer.buildStateSection(sessionState || null);
-
-    const payload = {
-      context: {
-        campaignId: context.campaignId,
-        characterId: context.characterId,
-        sessionId: context.sessionId,
-      },
+    const payload = StateAdapter.buildRespondPayload({
       message,
-      state_section: stateSection,
-      history: conversationHistory.map(m => ({ role: m.role, content: m.content })).slice(-10),
-    };
+      context,
+      conversationHistory,
+      sessionState: sessionState || null,
+    });
 
     // Delegate to CrewAI service via HTTP bridge
     const raw = await CrewAIClient.respond(context.sessionId!, payload);
