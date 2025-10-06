@@ -288,6 +288,55 @@ describe('SpellCard Component', () => {
       const card = container.firstChild as HTMLElement;
       expect(card).toHaveClass('border-infinite-purple', 'bg-infinite-purple/10');
     });
+
+    it('should apply gold theme styling when selected', () => {
+      const { container } = render(
+        <SpellCard
+          spell={mockSpell}
+          isSelected={true}
+          isDisabled={false}
+          onToggle={mockOnToggle}
+          colorTheme="gold"
+        />
+      );
+
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('border-infinite-gold');
+      expect(card.className).toContain('bg-infinite-gold/10');
+    });
+
+    it('should apply teal theme styling when selected', () => {
+      const { container } = render(
+        <SpellCard
+          spell={mockSpell}
+          isSelected={true}
+          isDisabled={false}
+          onToggle={mockOnToggle}
+          colorTheme="teal"
+        />
+      );
+
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('border-infinite-teal');
+      expect(card.className).toContain('bg-infinite-teal/10');
+    });
+
+    it('should fall back to default theme for unexpected colorTheme', () => {
+      const { container } = render(
+        <SpellCard
+          spell={mockSpell}
+          isSelected={true}
+          isDisabled={false}
+          onToggle={mockOnToggle}
+          // @ts-expect-error intentionally passing unexpected value to exercise default branch
+          colorTheme={"unknown" as any}
+        />
+      );
+
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('border-primary');
+      expect(card.className).toContain('bg-primary/5');
+    });
   });
 
   describe('Disabled State', () => {
