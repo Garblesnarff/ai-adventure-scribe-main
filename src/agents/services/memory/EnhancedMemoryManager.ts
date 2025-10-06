@@ -35,6 +35,18 @@ export class EnhancedMemoryManager {
     this.sessionId = sessionId;
   }
 
+  // Feature flag helpers (opt-in to avoid console noise when RPC/functions are absent)
+  private flagTrue(val: any): boolean {
+    if (val == null) return false;
+    const s = String(val).toLowerCase().trim();
+    return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+  }
+
+  private useSemanticMemory(): boolean {
+    const env = (import.meta as any)?.env || {};
+    return this.flagTrue(env.VITE_ENABLE_MATCH_MEMORIES || env.VITE_USE_MATCH_MEMORIES);
+  }
+
   async storeMemory(
     content: string,
     type: EnhancedMemory['type'],
@@ -43,8 +55,8 @@ export class EnhancedMemoryManager {
   ): Promise<void> {
     const importance = calculateImportance({ content, type, category });
 
-    // Generate embedding for semantic search
-    const embedding = await this.generateEmbedding(content);
+    // Generate embedding for semantic search (opt-in)
+    const embedding = this.useSemanticMemory() ? await this.generateEmbedding(content) : null;
 
     // Serialize the context and metadata for Supabase storage
     const metadata = {
@@ -181,6 +193,7 @@ export class EnhancedMemoryManager {
    * Generate embedding for content using OpenAI API
    */
   private async generateEmbedding(content: string): Promise<string | null> {
+    if (!this.useSemanticMemory()) return null;
     try {
       const { data, error } = await supabase.functions.invoke('generate-embedding', {
         body: { text: content }
@@ -205,6 +218,9 @@ export class EnhancedMemoryManager {
     query: string,
     options: MemoryQueryOptions
   ): Promise<EnhancedMemory[]> {
+    if (!this.useSemanticMemory()) {
+      return this.retrieveMemories({ ...options, semanticSearch: false });
+    }
     try {
       const queryEmbedding = await this.generateEmbedding(query);
 

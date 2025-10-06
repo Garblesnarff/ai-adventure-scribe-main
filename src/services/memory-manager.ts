@@ -139,6 +139,8 @@ GUIDELINES:
    * Generate embedding for memory content
    */
   static async generateEmbedding(content: string): Promise<string | null> {
+    // Only attempt when semantic memory is enabled to avoid 404s if function isn't deployed
+    if (!this.useMatchMemoriesRPC()) return null;
     try {
       const { data, error } = await supabase.functions.invoke('generate-embedding', {
         body: { text: content }
