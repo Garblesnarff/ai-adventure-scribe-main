@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import SpellCard from '../SpellCard';
 import { Spell } from '@/types/character';
 
@@ -34,8 +34,8 @@ describe('SpellCard Component', () => {
     name: 'Magic Missile',
     level: 1,
     school: 'Evocation',
-    castingTime: '1 action',
-    range: '120 feet',
+    casting_time: '1 action',
+    range_text: '120 feet',
     components: 'V, S',
     verbal: true,
     somatic: true,
@@ -50,8 +50,8 @@ describe('SpellCard Component', () => {
     name: 'Mage Hand',
     level: 0,
     school: 'Conjuration',
-    castingTime: '1 action',
-    range: '30 feet',
+    casting_time: '1 action',
+    range_text: '30 feet',
     components: 'V, S',
     verbal: true,
     somatic: true,
@@ -66,8 +66,8 @@ describe('SpellCard Component', () => {
     name: 'Detect Magic',
     level: 1,
     school: 'Divination',
-    castingTime: '1 action',
-    range: 'Self',
+    casting_time: '1 action',
+    range_text: 'Self',
     components: 'V, S',
     verbal: true,
     somatic: true,
@@ -83,8 +83,8 @@ describe('SpellCard Component', () => {
     name: 'Fireball',
     level: 3,
     school: 'Evocation',
-    castingTime: '1 action',
-    range: '150 feet',
+    casting_time: '1 action',
+    range_text: '150 feet',
     components: 'V, S, M (a tiny ball of bat guano and sulfur)',
     verbal: true,
     somatic: true,
@@ -286,7 +286,7 @@ describe('SpellCard Component', () => {
       );
 
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('border-primary', 'bg-primary/5');
+      expect(card).toHaveClass('border-infinite-purple', 'bg-infinite-purple/10');
     });
   });
 
@@ -577,7 +577,7 @@ describe('SpellCard Component', () => {
         />
       );
 
-      expect(screen.getByText(longDescSpell.description)).toBeInTheDocument();
+      expect(screen.getByText((text) => text.startsWith('This is a very long description'))).toBeInTheDocument();
     });
   });
 });
