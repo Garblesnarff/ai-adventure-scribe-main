@@ -3,6 +3,9 @@ dist
 server/dist
 .env
 server/.env
+server/.env.local
+*.env.local
+*.env.*.local
 *.log
 **/.DS_Store
 CLAUDE.md
@@ -30,3 +33,24 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python / CrewAI service artifacts
+crewai-service/.venv/
+crewai-service/.venv/**
+**/__pycache__/
+**/*.pyc
+crewai-service/.pytest_cache/
+crewai-service/.mypy_cache/
+crewai-service/.ruff_cache/
+.python-version
+
+# Coverage & build artifacts
+coverage/
+.coverage
+
+# Local logs (if previously tracked)
+frontend.log
+server.log
+
+# Vercel local project settings
+.vercel
