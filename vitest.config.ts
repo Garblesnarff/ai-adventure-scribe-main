@@ -19,6 +19,7 @@ export default defineConfig({
       'src/utils/diceRolls.test.ts',
       'src/utils/abilityScoreUtils.test.ts',
       'src/utils/__tests__/spell-validation.test.ts',
+      'src/utils/__tests__/spell-validation-async.test.ts',
       'src/utils/__tests__/sentence-segmenter.test.ts',
       'src/utils/__tests__/spell-preparation.test.ts',
       'src/utils/__tests__/spell-data.test.ts',
