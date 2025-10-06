@@ -104,40 +104,41 @@ export function detectCombatFromText(text: string, context?: unknown): CombatDet
   const enemies: DetectedEnemy[] = [];
   let combatActions: DetectedCombatAction[] = [];
   let shouldStartCombat = false;
+  let hasDirectCombatCue = false;
   let shouldEndCombat = false;
 
   // Check for initiative keywords
   if (COMBAT_KEYWORDS.initiative.some(keyword => lowerText.includes(keyword))) {
     combatScore += 0.9;
     combatType = 'initiative';
-    shouldStartCombat = true;
+    hasDirectCombatCue = true;
   }
 
   // Check for attack keywords
   if (COMBAT_KEYWORDS.attacks.some(keyword => lowerText.includes(keyword))) {
     combatScore += 0.7;
     if (combatType === 'none') combatType = 'attack';
-    shouldStartCombat = true;
+    hasDirectCombatCue = true;
   }
 
   // Check for spellcasting
   if (COMBAT_KEYWORDS.spellcasting.some(keyword => lowerText.includes(keyword))) {
     combatScore += 0.6;
     if (combatType === 'none') combatType = 'spell_cast';
-    shouldStartCombat = true;
+    hasDirectCombatCue = true;
   }
 
   // Check for damage
   if (COMBAT_KEYWORDS.damage.some(keyword => lowerText.includes(keyword))) {
     combatScore += 0.5;
     if (combatType === 'none') combatType = 'damage_taken';
+    hasDirectCombatCue = true;
   }
 
   // Check for enemies
   for (const enemy of COMBAT_KEYWORDS.enemies) {
     if (lowerText.includes(enemy)) {
-      combatScore += 0.4;
-      shouldStartCombat = true;
+      combatScore += 0.2; // Mentioning enemies alone shouldn't trigger combat
       
       // Extract enemy information
       const enemyType = enemy as keyof typeof ENEMY_TEMPLATES;
@@ -165,11 +166,22 @@ export function detectCombatFromText(text: string, context?: unknown): CombatDet
   combatActions = detectCombatActions(text);
   if (combatActions.length > 0) {
     combatScore += 0.3 * combatActions.length;
+    hasDirectCombatCue = true;
+  }
+
+  // Stealth/avoidance override: if text is clearly about stealth and no direct combat cue, don't start combat
+  const stealthCues = ['stealth', 'sneak', 'hide', 'hidden', 'unseen', 'shadows', 'quietly', 'listen', 'avoid'];
+  const hasStealthCue = stealthCues.some(k => lowerText.includes(k));
+  if (hasStealthCue && !hasDirectCombatCue) {
+    combatScore = Math.min(combatScore, 0.2);
   }
 
   // Final scoring
   const confidence = Math.min(combatScore, 1.0);
-  const isCombat = confidence >= 0.4;
+  const isCombat = confidence >= 0.5;
+
+  // Decide if combat should start: requires direct cues (attacks/initiative/spell/damage) or very strong signal
+  shouldStartCombat = (hasDirectCombatCue && isCombat);
 
   return {
     isCombat,
@@ -177,7 +189,7 @@ export function detectCombatFromText(text: string, context?: unknown): CombatDet
     confidence,
     enemies: enemies.length > 0 ? enemies : undefined,
     combatActions: combatActions.length > 0 ? combatActions : undefined,
-    shouldStartCombat: shouldStartCombat && isCombat,
+    shouldStartCombat,
     shouldEndCombat
   };
 }

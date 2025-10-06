@@ -14,6 +14,8 @@ import { voiceConsistencyService } from '@/services/voice-consistency-service';
 import { AIService } from '@/services/ai-service';
 import { rollStateManager } from '@/services/combat/rollStateManager';
 import logger from '@/lib/logger';
+import { SessionStateService } from '@/services/session-state-service';
+import { RollManager } from '@/services/roll-manager';
 
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
@@ -173,6 +175,46 @@ export const useAIResponse = () => {
 
       // Get latest message context
       const latestMessage = messages[messages.length - 1];
+      // Log dice roll results into session_state for analytics/history
+      try {
+        const diceCtx: any = (latestMessage as any).context?.diceRoll;
+        if ((latestMessage as any).context?.intent === 'dice_roll' && diceCtx) {
+          await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_result', payload: diceCtx });
+          // Optional durable logging (flag-gated)
+          await RollManager.recordRollResult({
+            sessionId,
+            kind: 'check',
+            resultTotal: Number(diceCtx.total) || 0,
+            resultNatural: typeof diceCtx.naturalRoll === 'number' ? diceCtx.naturalRoll : undefined,
+            meta: {
+              formula: diceCtx.formula,
+              advantage: !!diceCtx.advantage,
+              disadvantage: !!diceCtx.disadvantage,
+              kept: diceCtx.keptResults,
+              results: diceCtx.results,
+            },
+          });
+        } else if (typeof latestMessage.text === 'string') {
+          const m = latestMessage.text.toLowerCase();
+          let total: number | null = null;
+          const patterns = [
+            /\bi\s*rolled\s*(\d+)\b/,
+            /rolled[^\d]*(\d+)\b/,
+            /\btotal\s*[:=]\s*(\d+)\b/,
+            /=\s*(\d+)\b/
+          ];
+          for (const p of patterns) {
+            const mm = m.match(p);
+            if (mm && mm[1]) { total = parseInt(mm[1], 10); break; }
+          }
+          if (total !== null && !Number.isNaN(total)) {
+            await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_result', payload: { total, raw: latestMessage.text } });
+            await RollManager.recordRollResult({ sessionId, kind: 'check', resultTotal: total, meta: { raw: latestMessage.text } });
+          }
+        }
+      } catch (e) {
+        console.warn('Non-fatal: failed to append roll result log', e);
+      }
       
       // Detect if this is the first player message in the session
       const isFirstMessage = messages.filter(m => m.sender === 'player').length <= 1;
@@ -279,7 +321,7 @@ export const useAIResponse = () => {
 
       // Extract response data
       const responseText = result.text;
-      const narrationSegments = result.narrationSegments;
+      const narrationSegments = (result as any).narration_segments || (result as any).narrationSegments;
 
       // Parse roll requests from the response and process through GameContext
       let rollRequests: RollRequest[] = result.roll_requests || [];
@@ -341,6 +383,30 @@ export const useAIResponse = () => {
       if (rollRequests.length > 0) {
         logger.info('🎲 Processing', rollRequests.length, 'roll requests through GameContext');
         processAiResponse(rollRequests);
+
+        // Persist roll request events to session state (lightweight logging)
+        try {
+          await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_requests', payload: rollRequests });
+          // Durable roll request logging (flag-gated)
+          for (const rr of rollRequests) {
+            const kindMap: Record<string, 'check'|'save'|'attack'|'initiative'|'damage'> = {
+              check: 'check', save: 'save', attack: 'attack', initiative: 'initiative', damage: 'damage'
+            };
+            const kind = kindMap[rr.type] || 'check';
+            await RollManager.recordRollRequest({
+              sessionId,
+              kind,
+              purpose: rr.purpose,
+              formula: rr.formula,
+              dc: typeof rr.dc === 'number' ? rr.dc : undefined,
+              ac: typeof rr.ac === 'number' ? rr.ac : undefined,
+              advantage: !!rr.advantage,
+              disadvantage: !!rr.disadvantage,
+            });
+          }
+        } catch (e) {
+          console.warn('Non-fatal: failed to append roll request log', e);
+        }
       }
 
       // Update game phase based on combat detection
@@ -377,7 +443,7 @@ export const useAIResponse = () => {
           intent: 'response',
         },
         narrationSegments: narrationSegments,
-        diceRolls: result.dice_rolls || [],
+        diceRolls: (result as any).dice_rolls || [],
         rollRequests: rollRequests,
         combatDetection: {
           isCombat: combatDetection.isCombat,
