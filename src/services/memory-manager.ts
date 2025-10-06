@@ -41,6 +41,20 @@ export class MemoryManager {
     return getGeminiApiManager();
   }
 
+  private static flagTrue(val: any): boolean {
+    if (val == null) return false;
+    const s = String(val).toLowerCase().trim();
+    return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+  }
+
+  private static useMatchMemoriesRPC(): boolean {
+    // Opt-in only to avoid 404 spam when RPC isn't installed
+    // Set VITE_ENABLE_MATCH_MEMORIES=true to enable
+    // Also allow legacy name VITE_USE_MATCH_MEMORIES
+    const env = (import.meta as any)?.env || {};
+    return this.flagTrue(env.VITE_ENABLE_MATCH_MEMORIES || env.VITE_USE_MATCH_MEMORIES);
+  }
+
   /**
    * Extract memories from a conversation exchange
    */
@@ -186,22 +200,22 @@ GUIDELINES:
     limit: number = 10
   ): Promise<Memory[]> {
     try {
-      // Generate embedding for the query
-      const queryEmbedding = await this.generateEmbedding(query);
+      if (this.useMatchMemoriesRPC()) {
+        // Generate embedding for the query and try RPC if enabled
+        const queryEmbedding = await this.generateEmbedding(query);
+        if (queryEmbedding) {
+          const { data, error } = await supabase
+            .rpc('match_memories', {
+              query_embedding: queryEmbedding,
+              session_id: sessionId,
+              match_threshold: 0.7,
+              match_count: limit
+            });
 
-      if (queryEmbedding) {
-        // Use semantic search if embedding is available
-        const { data, error } = await supabase
-          .rpc('match_memories', {
-            query_embedding: queryEmbedding,
-            session_id: sessionId,
-            match_threshold: 0.7,
-            match_count: limit
-          });
-
-        if (!error && data && data.length > 0) {
-          console.log(`🔍 Found ${data.length} semantically relevant memories`);
-          return data as Memory[];
+          if (!error && data && data.length > 0) {
+            console.log(`🔍 Found ${data.length} semantically relevant memories`);
+            return data as Memory[];
+          }
         }
       }
 
