@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:crewai\"",
     "dev:frontend": "vite",
     "dev:backend": "npm run server:dev",
+    "dev:crewai": "uvicorn main:app --reload --port 8000 --app-dir crewai-service",
     "dev:full": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:database\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",
