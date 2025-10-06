@@ -5,6 +5,7 @@ from typing import List, Optional
 import os
 import httpx
 import re
+from textwrap import shorten
 
 app = FastAPI(title="CrewAI DM Orchestrator", version="0.1.0")
 
@@ -51,6 +52,19 @@ class DMResponse(BaseModel):
     text: str
     narration_segments: Optional[List[NarrationSegment]] = None
     roll_requests: Optional[List[RollRequest]] = None
+
+
+class OptionsRequest(BaseModel):
+    session_id: Optional[str] = None
+    last_dm_text: str
+    player_message: Optional[str] = None
+    state_section: Optional[str] = None
+    history: Optional[List[dict]] = None
+    last_roll: Optional[dict] = None
+
+
+class OptionsResponse(BaseModel):
+    options: List[str]
 
 
 @app.get("/health")
@@ -337,7 +351,7 @@ def respond(req: DMRequest):
         if "save" in m:
             roll_requests.append(RollRequest(type="save", formula="1d20+2", purpose="Saving throw", dc=parsed_dc))
 
-        # Build a concise text: if a roll is requested, prompt for the roll; otherwise provide a brief narrative nudge with options
+        # Build a concise text: if a roll is requested, prompt for the roll; otherwise provide a brief narrative nudge
         if len(roll_requests) > 0:
             rr = roll_requests[0]
             type_label = {
@@ -352,7 +366,13 @@ def respond(req: DMRequest):
             text = f"Please roll {purpose}{target}."
         else:
             base = "The scene awaits your action. Describe what you do next—I'll respond with clear consequences and options."
-            text = base + build_lettered_options(None, None, None)
+            # Inline options are disabled by default; enable via INLINE_OPTIONS=true
+            def _truthy(v: Optional[str]) -> bool:
+                return str(v or '').strip().lower() in ("1", "true", "yes", "on")
+            if _truthy(os.getenv("INLINE_OPTIONS")) and "A." not in base:
+                text = base + build_lettered_options(None, None, None)
+            else:
+                text = base
 
         seg = [NarrationSegment(type="dm", text=text)]
         return DMResponse(text=text, narration_segments=seg, roll_requests=roll_requests)
@@ -463,6 +483,12 @@ def respond(req: DMRequest):
                             if "save" in m:
                                 roll_requests.append(RollRequest(type="save", formula="1d20+2", purpose="Saving throw", dc=parsed_dc))
 
+                            # Inline options only if explicitly enabled
+                            def _truthy(v: Optional[str]) -> bool:
+                                return str(v or '').strip().lower() in ("1", "true", "yes", "on")
+                            if _truthy(os.getenv("INLINE_OPTIONS")) and len(roll_requests) == 0 and "A." not in text:
+                                text = (text or "").rstrip() + " " + "What do you do next?" + build_lettered_options(None, None, None)
+
                             seg = [NarrationSegment(type="dm", text=text)]
                             return DMResponse(text=text, narration_segments=seg, roll_requests=roll_requests)
                         else:
@@ -514,6 +540,113 @@ def respond(req: DMRequest):
 
     # No API key or disabled: use heuristic
     return heuristic_response()
+
+
+@app.post("/dm/options", response_model=OptionsResponse, response_model_exclude_none=True)
+def generate_options(req: OptionsRequest):
+    def normalize_options(raw: str) -> List[str]:
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        picked: List[str] = []
+        for ln in lines:
+            m = re.match(r"^([A-C])\.\s*(.*)$", ln)
+            if m:
+                body = m.group(2).strip()
+                # ensure bold action before comma
+                if "," in body:
+                    head, tail = body.split(",", 1)
+                    formatted = f"{m.group(1)}. **{head.strip()}**, {tail.strip()}"
+                else:
+                    formatted = f"{m.group(1)}. **{body}**"
+                picked.append(formatted)
+        # If less than 3 extracted, pad with generic
+        while len(picked) < 3:
+            idx = len(picked)
+            label = ["A", "B", "C"][idx]
+            picked.append(f"{label}. **Explore another angle**, adapt your approach to the situation.")
+        return picked[:3]
+
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    base_headers = {
+        "Authorization": f"Bearer {api_key}" if api_key else "",
+        "Content-Type": "application/json",
+        "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:3000"),
+        "X-Title": os.getenv("OPENROUTER_TITLE", "Infinite Realms (local)"),
+    }
+
+    # Build prompts
+    system = (
+        "You craft exactly three concise, story-appropriate action options for a D&D scene. "
+        "Output must be ONLY three lines, each starting with a capital letter and period (A./B./C.), "
+        "formatted as: A. **Action Name**, brief description. Avoid dice prompts; avoid meta. "
+        "Vary approaches (social/stealth/combat/investigation) and ground in provided context."
+    )
+
+    ctx_bits: List[str] = []
+    if req.state_section:
+        ctx_bits.append(shorten(f"STATE\n{req.state_section}", width=1200, placeholder="…"))
+    if req.last_roll:
+        # minimal summary if present
+        try:
+            kind = req.last_roll.get("kind")
+            skill = req.last_roll.get("skill")
+            dc = req.last_roll.get("dc")
+            ac = req.last_roll.get("ac")
+            result = req.last_roll.get("result")
+            summary = f"Last roll: {kind or ''} {skill or ''} {result or ''} vs DC {dc or ''}{' vs AC ' + str(ac) if ac else ''}"
+            ctx_bits.append(summary)
+        except Exception:
+            pass
+    if req.history:
+        try:
+            last_history = req.history[-5:]
+            hist = "\n".join([f"{h.get('role')}: {h.get('content')}" for h in last_history])
+            ctx_bits.append("RECENT:\n" + shorten(hist, width=1200, placeholder="…"))
+        except Exception:
+            pass
+    ctx_bits.append("LAST_DM:\n" + shorten(req.last_dm_text or "", width=1400, placeholder="…"))
+    if req.player_message:
+        ctx_bits.append("PLAYER:\n" + shorten(req.player_message, width=400, placeholder="…"))
+
+    user = "\n\n".join([b for b in ctx_bits if b]) + "\n\nReturn only the three lettered lines."
+
+    # If no key, fallback to heuristic generic options
+    if not api_key:
+        generic = [
+            "A. **Approach cautiously**, gather information before acting.",
+            "B. **Create a distraction**, shift attention in your favor.",
+            "C. **Withdraw and reassess**, plan a better approach.",
+        ]
+        return OptionsResponse(options=generic)
+
+    try:
+        with httpx.Client(timeout=20.0) as client:
+            payload = {
+                "model": "z-ai/glm-4.5-air:free",
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "max_tokens": 220,
+                "reasoning": {"enabled": False},
+            }
+            r = client.post("https://openrouter.ai/api/v1/chat/completions", headers=base_headers, json=payload)
+            if r.status_code != 200:
+                print("/dm/options non-200:", r.status_code, r.text[:200])
+                raise HTTPException(status_code=502, detail="OpenRouter error")
+            data = r.json()
+            text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            return OptionsResponse(options=normalize_options(text))
+    except Exception as e:
+        print("/dm/options error:", repr(e))
+        # Fallback generic options
+        fallback = [
+            "A. **Approach cautiously**, gather information before acting.",
+            "B. **Create a distraction**, shift attention in your favor.",
+            "C. **Withdraw and reassess**, plan a better approach.",
+        ]
+        return OptionsResponse(options=fallback)
 
 
 if __name__ == "__main__":
