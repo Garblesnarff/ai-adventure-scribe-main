@@ -5,6 +5,8 @@ import { MemoryManager, MemoryContext } from './memory-manager';
 import { WorldBuilderService } from './world-builders/world-builder-service';
 import { voiceConsistencyService } from './voice-consistency-service';
 import { detectCombatFromText } from '@/utils/combatDetection';
+import { SessionStateService } from './session-state-service';
+import { AgentOrchestrator } from './crewai/agent-orchestrator';
 
 export interface ChatMessage {
   id: string;
@@ -33,6 +35,16 @@ export class AIService {
    */
   private static getGeminiManager(): GeminiApiManager {
     return getGeminiApiManager();
+  }
+  
+  /** Feature flag to enable CrewAI orchestrator integration. */
+  private static useCrewAI(): boolean {
+    try {
+      const raw = String((import.meta as any).env?.VITE_USE_CREWAI_DM ?? '').toLowerCase().trim();
+      return raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on';
+    } catch {
+      return false;
+    }
   }
   /**
    * Generate a campaign description using AI with fallback
@@ -152,8 +164,7 @@ When combat is detected, you MUST:
     conversationHistory?: ChatMessage[];
     onStream?: (chunk: string) => void;
   }): Promise<{ text: string; narrationSegments?: any[] }> {
-    // Skip Edge Function - use local Gemini API directly
-    console.log('Using local Gemini API for chat...');
+    // Decision about path (CrewAI vs Gemini) happens below
     
     try {
       // Retrieve relevant memories to enhance context
@@ -197,7 +208,111 @@ When combat is detected, you MUST:
         });
       }
       
+      // Optional path: delegate to CrewAI orchestrator behind feature flag
+      if (this.useCrewAI() && params.context.sessionId) {
+        try {
+          console.log('Using CrewAI microservice for chat...');
+          const sessionState = await SessionStateService.getState(params.context.sessionId);
+          const crewResult = await AgentOrchestrator.generateResponse({
+            message: params.message,
+            context: params.context,
+            conversationHistory: params.conversationHistory || [],
+            sessionState
+          });
+
+          // If CrewAI returned placeholder text, generate final prose via Gemini but keep CrewAI roll_requests
+          let finalText = crewResult.text || '';
+          const isPlaceholder = finalText.trim().startsWith('[CrewAI placeholder]');
+          const rollRequests = (crewResult as any).roll_requests || [];
+          if (isPlaceholder) {
+            // If a roll is requested, prompt the user to roll first instead of narrating outcomes
+            if (Array.isArray(rollRequests) && rollRequests.length > 0) {
+              const rr = rollRequests[0];
+              const typeLabel = rr.type === 'check' ? 'Check' : rr.type === 'save' ? 'Saving Throw' : rr.type === 'attack' ? 'Attack' : rr.type === 'damage' ? 'Damage' : 'Initiative';
+              const purpose = rr.purpose || (rr.type === 'check' ? 'Ability/Skill Check' : typeLabel);
+              const target = rr.dc ? ` (DC ${rr.dc})` : rr.ac ? ` (AC ${rr.ac})` : '';
+              const advantage = rr.advantage ? ' with advantage' : rr.disadvantage ? ' with disadvantage' : '';
+              finalText = `Please roll ${purpose}${target}${advantage}.`;
+            } else {
+              console.log('CrewAI returned placeholder text; generating narration via local Gemini.');
+              try {
+                const geminiManager = this.getGeminiManager();
+                const genAIResult = await geminiManager.executeWithRotation(async (genAI) => {
+                  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+                  const prompt = `Respond to the player succinctly (2-3 short paragraphs) and end with 2-3 lettered options. Player said: "${params.message}"`;
+                  const response = await model.generateContent(prompt);
+                  const res = await response.response;
+                  return res.text();
+                });
+                finalText = genAIResult || finalText;
+              } catch (e) {
+                console.warn('Gemini fallback for placeholder failed, using placeholder text:', e);
+              }
+            }
+          }
+
+          // Post-processing parity: memory extraction and world expansion
+          if (params.context.sessionId) {
+            try {
+              const memoryContext = {
+                sessionId: params.context.sessionId,
+                campaignId: params.context.campaignId,
+                characterId: params.context.characterId,
+                currentMessage: params.message,
+                recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
+              };
+              const extractionResult = await MemoryManager.extractMemories(
+                memoryContext,
+                params.message,
+                finalText
+              );
+              if (extractionResult.memories.length > 0) {
+                await MemoryManager.saveMemories(extractionResult.memories);
+                console.log(`🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`);
+              }
+            } catch (memoryError) {
+              console.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
+            }
+
+            try {
+              const worldExpansion = await WorldBuilderService.respondToPlayerAction(
+                params.context.campaignId,
+                params.context.sessionId!,
+                params.context.characterId,
+                params.message,
+                finalText
+              );
+              if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
+                console.log(`🌍 World expanded (CrewAI): +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+              }
+            } catch (worldError) {
+              console.warn('World building (CrewAI path) failed (non-fatal):', worldError);
+            }
+          }
+
+          const enhancedCrewResult = {
+            ...crewResult,
+            text: finalText,
+            combatDetection: {
+              isCombat: combatDetection.isCombat,
+              confidence: combatDetection.confidence,
+              combatType: combatDetection.combatType,
+              shouldStartCombat: combatDetection.shouldStartCombat,
+              shouldEndCombat: combatDetection.shouldEndCombat,
+              enemies: combatDetection.enemies || [],
+              combatActions: combatDetection.combatActions || []
+            }
+          } as any;
+
+          return enhancedCrewResult;
+        } catch (crewError) {
+          console.warn('CrewAI orchestrator failed, falling back to Gemini:', crewError);
+          // Continue to legacy path below
+        }
+      }
+      
       // Use local Gemini API
+      console.log('Using local Gemini API for chat...');
       const geminiManager = this.getGeminiManager();
       
       const result = await geminiManager.executeWithRotation(async (genAI) => {

@@ -366,6 +366,12 @@ export const CombatProvider: React.FC<CombatProviderProps> = ({
 
   const saveEncounterToDatabase = useCallback(async (encounter: CombatEncounter) => {
     try {
+      const env: any = (import.meta as any)?.env || {};
+      const enableCombatDB = ['true','1','yes','on'].includes(String(env.VITE_ENABLE_COMBAT_DB || '').toLowerCase());
+      if (!enableCombatDB) {
+        return; // Skip persistence when feature not enabled to avoid 400 errors on missing tables
+      }
+
       await supabase
         .from('combat_encounters')
         .upsert({

@@ -204,6 +204,20 @@ export class VoiceConsistencyService {
   }
 
   /**
+   * Get voice mappings for a session (placeholder to avoid runtime errors in dev)
+   * TODO: Implement proper lookup once schema and table are finalized
+   */
+  private async getSessionMappings(sessionId: string): Promise<Array<{
+    id: string;
+    characterName: string;
+    voiceCategory: string;
+    lastUsed: Date;
+    appearanceCount: number;
+  }>> {
+    return [];
+  }
+
+  /**
    * Save a new character voice mapping
    */
   private async saveCharacterVoiceMapping(

@@ -91,35 +91,31 @@ export const useCombatAIIntegration = ({
 
     // Handle combat starting
     if (detection.shouldStartCombat && detection.enemies && detection.enemies.length > 0) {
-      // Create combat participants
       const participants = createCombatParticipantsFromDetection(detection.enemies, playerCharacter);
       
-      // Start combat and add participants
-      const newEncounter = await startCombat();
-      if (newEncounter) {
-        for (const participant of participants) {
-          await addParticipant(participant as CombatParticipant);
-        }
-        
-        // Create combat start message
-        const combatStartMessage: ChatMessage = {
-          text: `Combat has begun! Initiative has been rolled.`,
-          sender: 'system',
-          context: {
-            combatData: {
-              type: 'combat_start',
-              participants: participants.map(p => ({
-                name: p.name || 'Unknown',
-                initiative: p.initiative || 0,
-                roll: rollDice(20, 1, 0) // Add roll for initiative
-              }))
-            }
-          },
-          timestamp: new Date().toISOString()
-        };
-        
-        combatMessages.push(combatStartMessage);
+      // Start combat with detected participants (CombatProvider rolls initiative)
+      if (sessionId) {
+        await startCombat(sessionId, participants as Partial<CombatParticipant>[]);
       }
+
+      // Create combat start message for UI log
+      const combatStartMessage: ChatMessage = {
+        text: `Combat has begun! Initiative has been rolled.`,
+        sender: 'system',
+        context: {
+          combatData: {
+            type: 'combat_start',
+            participants: participants.map(p => ({
+              name: p.name || 'Unknown',
+              initiative: p.initiative || 0,
+              roll: rollDice(20, 1, 0)
+            }))
+          }
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      combatMessages.push(combatStartMessage);
     }
 
     // Process detected combat actions for dice rolls
@@ -302,17 +298,18 @@ export const useCombatAIIntegration = ({
           isFirstMessage: false
         });
 
-        // Add DM response to messages
+        // Add DM response to messages (ChatMessage expects `text`)
         if (dmResponse?.response) {
           await addMessage({
-            content: dmResponse.response,
+            text: dmResponse.response,
             sender: 'dm',
-            type: 'narration',
-            sessionId: sessionId,
-            metadata: {
-              combatEvent: event.type,
-              voiceSegments: dmResponse.narrationSegments
-            }
+            context: {
+              combatData: {
+                type: 'combat_narration',
+                description: `Narration for ${event.type}`
+              }
+            },
+            narrationSegments: dmResponse.narrationSegments
           });
         }
       }
