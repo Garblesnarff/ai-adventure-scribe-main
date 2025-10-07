@@ -32,6 +32,9 @@ import { AgentMessagingService } from './messaging/agent-messaging-service';
 import { ErrorHandlingService } from './error/services/error-handling-service';
 import { EnhancedMemoryManager } from './services/memory/EnhancedMemoryManager';
 import { ResponseCoordinator } from './services/response/ResponseCoordinator';
+import { ResponsePipeline } from './services/response/ResponsePipeline';
+import { CachedCampaignContextProvider } from './services/campaign/CachedCampaignContextProvider';
+import { ConversationStateStore } from './services/conversation/ConversationStateStore';
 
 
 export class DungeonMasterAgent implements Agent {
@@ -55,6 +58,7 @@ export class DungeonMasterAgent implements Agent {
   // ====================================
   private messagingService: AgentMessagingService;
   private responseCoordinator: ResponseCoordinator;
+  private responsePipeline: ResponsePipeline;
   private errorHandler: ErrorHandlingService;
   private gameState: Partial<GameState>;
   private memoryManager: EnhancedMemoryManager | null = null;
@@ -75,6 +79,11 @@ export class DungeonMasterAgent implements Agent {
     
     this.messagingService = AgentMessagingService.getInstance();
     this.responseCoordinator = new ResponseCoordinator();
+    this.responsePipeline = new ResponsePipeline({
+      responseCoordinator: this.responseCoordinator,
+      campaignProvider: new CachedCampaignContextProvider(),
+      conversationStore: new ConversationStateStore()
+    });
     this.errorHandler = ErrorHandlingService.getInstance();
     this.gameState = this.initializeGameState();
   }
@@ -118,16 +127,18 @@ export class DungeonMasterAgent implements Agent {
       // See: src/agents/services/memory/EnhancedMemoryManager.ts
       // See: src/agents/services/response/ResponseCoordinator.ts
       await this.initializeMemoryManager(task);
-      await this.initializeResponseCoordinator(task);
-
       // Store the player's action for future context
       await this.storePlayerActionMemory(task);
 
       // Enhance the task with game state and recent memories
       const enhancedTask = await this.enhanceTaskContext(task);
 
-      // Generate the DM response using the response coordinator
-      const response = await this.responseCoordinator.generateResponse(enhancedTask);
+      // Generate the DM response using the response pipeline
+      const { result: response } = await this.responsePipeline.execute(enhancedTask);
+
+      if (!response.success) {
+        return response;
+      }
 
       // Store the generated response in memory for future context
       await this.storeResponseMemories(response);
@@ -157,21 +168,6 @@ export class DungeonMasterAgent implements Agent {
   private async initializeMemoryManager(task: AgentTask): Promise<void> {
     if (task.context?.sessionId && !this.memoryManager) {
       this.memoryManager = new EnhancedMemoryManager(task.context.sessionId);
-    }
-  }
-
-  /**
-   * Initializes the response coordinator.
-   * 
-   * @private
-   * @param {AgentTask} task - The task to execute
-   */
-  private async initializeResponseCoordinator(task: AgentTask): Promise<void> {
-    if (task.context?.campaignId && task.context?.sessionId) {
-      await this.responseCoordinator.initialize(
-        task.context.campaignId,
-        task.context.sessionId
-      );
     }
   }
 
