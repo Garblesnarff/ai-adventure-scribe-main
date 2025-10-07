@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
+import { addNetworkListener, isOffline } from '@/utils/network';
 
 interface SubscriptionCallback {
   id: string;
@@ -26,6 +27,19 @@ class SupabaseSubscriptionManager {
   private readonly maxRetries = 2;
   private readonly retryDelay = 5000; // 5 seconds
   private readonly connectionTimeout = 15000; // 15 seconds
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      addNetworkListener('online', () => {
+        logger.info('Network restored, reinitializing Supabase subscriptions');
+        this.reconnectAll();
+      });
+      addNetworkListener('offline', () => {
+        logger.info('Network lost, suspending Supabase subscriptions');
+        this.suspendAll();
+      });
+    }
+  }
 
   /**
    * Subscribe to image updates for a specific record
@@ -87,6 +101,12 @@ class SupabaseSubscriptionManager {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
 
+    if (isOffline()) {
+      logger.info(`Skipping ${tableName} subscription setup while offline`);
+      subscription.isConnected = false;
+      return;
+    }
+
     // Skip if already connected or recently retried
     if (subscription.isConnected ||
         (Date.now() - subscription.lastRetry < this.retryDelay)) {
@@ -108,6 +128,12 @@ class SupabaseSubscriptionManager {
   private setupChannel(tableName: string): void {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
+
+    if (isOffline()) {
+      logger.info(`Deferring ${tableName} channel setup until back online`);
+      subscription.isConnected = false;
+      return;
+    }
 
     // Clean up existing channel
     if (subscription.channel) {
@@ -220,6 +246,34 @@ class SupabaseSubscriptionManager {
     } else {
       logger.warn(`Max retries exceeded for ${tableName} subscription`);
     }
+  }
+
+  private reconnectAll(): void {
+    this.subscriptions.forEach((_subscription, tableName) => {
+      const subscription = this.subscriptions.get(tableName);
+      if (!subscription) return;
+
+      if (subscription.channel) {
+        supabase.removeChannel(subscription.channel);
+        subscription.channel = null;
+      }
+
+      subscription.isConnected = false;
+      subscription.retryCount = 0;
+      this.ensureChannelConnected(tableName);
+    });
+  }
+
+  private suspendAll(): void {
+    this.subscriptions.forEach((subscription, tableName) => {
+      if (subscription.channel) {
+        supabase.removeChannel(subscription.channel);
+        subscription.channel = null;
+      }
+      subscription.isConnected = false;
+      subscription.lastRetry = Date.now();
+      logger.info(`Suspended ${tableName} subscription due to offline status`);
+    });
   }
 
   /**

@@ -57,7 +57,7 @@ export class GeminiApiManager {
   }
 
   private createGenAIStub() {
-    const manager = this;
+    const buildPrompt = (input: any) => this.buildPromptFromInput(input);
     return {
       getGenerativeModel({ model, generationConfig }: { model: string; generationConfig?: any }) {
         const defaultMax = generationConfig?.maxOutputTokens ?? generationConfig?.maxTokens ?? 1000;
@@ -74,7 +74,7 @@ export class GeminiApiManager {
 
         return {
           async generateContent(input: any) {
-            const { prompt, history } = manager.buildPromptFromInput(input);
+            const { prompt, history } = buildPrompt(input);
             const text = await callText({ prompt, history });
             return { response: { text: () => text } } as any;
           },
