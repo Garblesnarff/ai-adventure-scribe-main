@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { addNetworkListener, isOffline } from '@/utils/network';
 
 interface AuthContextType {
   user: User | null;
@@ -12,7 +13,30 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
+const SESSION_STORAGE_KEY = 'aas_supabase_cached_session';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const loadCachedSession = (): Session | null => {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as Session;
+  } catch (error) {
+    logger.warn('Failed to parse cached session', error);
+    return null;
+  }
+};
+
+const persistSession = (session: Session | null) => {
+  if (typeof window === 'undefined') return;
+  if (session) {
+    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  } else {
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  }
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -26,35 +50,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasBootstrapped = useRef(false);
+
+  const setAuthState = useMemo(
+    () =>
+      (nextSession: Session | null) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        persistSession(nextSession);
+      },
+    []
+  );
 
   useEffect(() => {
     // Get initial session
-    const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
+    const bootstrapSession = async () => {
+      if (hasBootstrapped.current) return;
+      hasBootstrapped.current = true;
+
+      if (isOffline()) {
+        const cached = loadCachedSession();
+        if (cached) {
+          setAuthState(cached);
+        }
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.getSession();
+
       if (error) {
         logger.error('Error getting session:', error);
+        const cached = loadCachedSession();
+        if (cached) {
+          setAuthState(cached);
+        }
       } else {
-        setSession(session);
-        setUser(session?.user ?? null);
+        setAuthState(data.session ?? null);
       }
       setLoading(false);
     };
 
-    getSession();
+    bootstrapSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         logger.info('Auth state changed:', { event, hasSession: !!session });
-        setSession(session);
-        setUser(session?.user ?? null);
+        setAuthState(session ?? null);
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []);
+    const disposers: Array<() => void> = [() => subscription.unsubscribe()];
+
+    const handleOnline = async () => {
+      logger.info('Network status: online - syncing Supabase session');
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        logger.error('Error refreshing session after reconnect:', error);
+        return;
+      }
+      setAuthState(data.session ?? null);
+    };
+
+    const handleOffline = () => {
+      logger.info('Network status: offline - using cached session');
+      const cached = loadCachedSession();
+      if (cached) {
+        setAuthState(cached);
+      }
+    };
+
+    disposers.push(addNetworkListener('online', handleOnline));
+    disposers.push(addNetworkListener('offline', handleOffline));
+
+    return () => {
+      disposers.forEach((dispose) => dispose());
+    };
+  }, [setAuthState]);
 
   const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
@@ -79,6 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) {
       logger.error('Error signing out:', error);
     }
+    setAuthState(null);
+    setLoading(false);
   };
 
   const value = {

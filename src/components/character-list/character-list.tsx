@@ -10,6 +10,31 @@ import { classes } from '@/data/classOptions';
 import { MemoizedCharacterCard } from './character-card';
 import EmptyState from './empty-state';
 import logger from '@/lib/logger';
+import { addNetworkListener, isOffline } from '@/utils/network';
+
+const CHARACTER_CACHE_KEY = 'aas_cached_characters';
+
+const loadCachedCharacters = (): Partial<Character>[] => {
+  if (typeof window === 'undefined') return [];
+  const raw = window.localStorage.getItem(CHARACTER_CACHE_KEY);
+  if (!raw) return [];
+  try {
+    const data = JSON.parse(raw) as Partial<Character>[];
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    logger.warn('Failed to parse cached characters', error);
+    return [];
+  }
+};
+
+const persistCharacters = (characters: Partial<Character>[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CHARACTER_CACHE_KEY, JSON.stringify(characters));
+  } catch (error) {
+    logger.warn('Failed to persist characters cache', error);
+  }
+};
 
 /**
  * CharacterList component displays all characters for the current user
@@ -20,8 +45,10 @@ const CharacterList: React.FC = () => {
   const [filteredCharacters, setFilteredCharacters] = React.useState<Partial<Character>[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [offlineMode, setOfflineMode] = React.useState(isOffline());
   const navigate = useNavigate();
   const { toast } = useToast();
+  const offlineNoticeShown = React.useRef(false);
 
   /**
    * Transforms raw database character data into Character type
@@ -47,6 +74,25 @@ const CharacterList: React.FC = () => {
   const fetchCharacters = React.useCallback(async () => {
     try {
       setLoading(true);
+
+      if (isOffline()) {
+        setOfflineMode(true);
+        const cached = loadCachedCharacters();
+        if (!offlineNoticeShown.current) {
+          toast({
+            title: 'Offline mode',
+            description: cached.length > 0
+              ? 'You are viewing cached characters. Changes will sync when you reconnect.'
+              : 'You appear to be offline. Reconnect to load your characters.',
+          });
+          offlineNoticeShown.current = true;
+        }
+        setCharacters(cached);
+        return;
+      }
+
+      setOfflineMode(false);
+      offlineNoticeShown.current = false;
 
       // Get the current user session for ownership filtering
       const { data: { session } } = await supabase.auth.getSession();
@@ -75,6 +121,7 @@ const CharacterList: React.FC = () => {
       if (error) throw error;
       const transformedData = transformCharacterData(data || []);
       setCharacters(transformedData);
+      persistCharacters(transformedData);
     } catch (error) {
       logger.error('Error fetching characters:', error);
       toast({
@@ -89,6 +136,22 @@ const CharacterList: React.FC = () => {
 
   React.useEffect(() => {
     fetchCharacters();
+  }, [fetchCharacters]);
+
+  React.useEffect(() => {
+    const disposers: Array<() => void> = [];
+    disposers.push(addNetworkListener('online', () => {
+      setOfflineMode(false);
+      fetchCharacters();
+    }));
+    disposers.push(addNetworkListener('offline', () => {
+      setOfflineMode(true);
+      setCharacters(loadCachedCharacters());
+    }));
+
+    return () => {
+      disposers.forEach((dispose) => dispose());
+    };
   }, [fetchCharacters]);
 
   // Filter characters based on search term
@@ -167,6 +230,11 @@ const CharacterList: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {offlineMode && (
+        <div className="bg-yellow-100 border-b border-yellow-300 text-yellow-900 text-center py-2 text-sm">
+          You are currently offline. Showing the most recently cached characters.
+        </div>
+      )}
       {/* Hero Header */}
       <div className="relative bg-cover py-24 px-4" style={{ backgroundImage: "url('/character_page_hero_header.png')", backgroundPosition: "center top -600px" }}>
         <div className="absolute inset-0 bg-black/20"></div>
