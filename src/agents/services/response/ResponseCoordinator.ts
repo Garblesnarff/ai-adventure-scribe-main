@@ -24,7 +24,7 @@
 
 // Project Services (assuming kebab-case filenames)
 import { CampaignContextProvider } from '../campaign/CampaignContextProvider';
-import { ConversationStateManager } from '../conversation/ConversationStateManager';
+import { ConversationStateManager, ConversationState } from '../conversation/ConversationStateManager';
 import { DMResponseGenerator } from '../dm-response-generator';
 import { ErrorHandlingService } from '../../error/services/error-handling-service';
 import { PlayerIntentDetector } from '../intent/PlayerIntentDetector';
@@ -44,11 +44,16 @@ export class ResponseCoordinator {
   private campaignProvider: CampaignContextProvider;
   private errorHandler: ErrorHandlingService;
 
-  constructor() {
-    this.conversationManager = new ConversationStateManager();
-    this.intentDetector = new PlayerIntentDetector();
-    this.campaignProvider = new CampaignContextProvider();
-    this.errorHandler = ErrorHandlingService.getInstance();
+  constructor(options: {
+    conversationManager?: ConversationStateManager;
+    intentDetector?: PlayerIntentDetector;
+    campaignProvider?: CampaignContextProvider;
+    errorHandler?: ErrorHandlingService;
+  } = {}) {
+    this.conversationManager = options.conversationManager ?? new ConversationStateManager();
+    this.intentDetector = options.intentDetector ?? new PlayerIntentDetector();
+    this.campaignProvider = options.campaignProvider ?? new CampaignContextProvider();
+    this.errorHandler = options.errorHandler ?? ErrorHandlingService.getInstance();
   }
 
   public async initialize(campaignId: string, sessionId: string): Promise<void> {
@@ -56,14 +61,26 @@ export class ResponseCoordinator {
     await this.responseGenerator.initialize();
   }
 
-  public async generateResponse(task: AgentTask): Promise<AgentResult> {
+  public hydrateConversation(state: ConversationState): void {
+    this.conversationManager.hydrate(state);
+  }
+
+  public getConversationSnapshot(): ConversationState {
+    return this.conversationManager.getSnapshot();
+  }
+
+  public async generateResponse(
+    task: AgentTask,
+    context: { campaignDetails?: any; campaignId?: string; sessionId?: string } = {}
+  ): Promise<AgentResult> {
     try {
       if (!this.responseGenerator) {
         throw new Error('Response generator not initialized');
       }
 
-      const campaignDetails = task.context?.campaignId ? 
-        await this.campaignProvider.fetchCampaignDetails(task.context.campaignId) : null;
+      const campaignDetails = context.campaignDetails ?? (task.context?.campaignId
+        ? await this.campaignProvider.fetchCampaignDetails(task.context.campaignId)
+        : null);
 
       const playerIntent = this.intentDetector.detectIntent(task.description);
       console.log('Detected player intent:', playerIntent);
@@ -81,7 +98,7 @@ export class ResponseCoordinator {
         this.conversationManager.updateState(task.description, narrativeResponse);
       }
 
-      const data = await this.callDMAgentExecute(task, campaignDetails, narrativeResponse);
+      const data = await this.callDMAgentExecute(task, campaignDetails, narrativeResponse, context);
 
       if (!data) throw new Error('Failed to execute task');
 
@@ -102,7 +119,12 @@ export class ResponseCoordinator {
     }
   }
 
-  private async callDMAgentExecute(task: AgentTask, campaignDetails: any, narrativeResponse: any) {
+  private async callDMAgentExecute(
+    task: AgentTask,
+    campaignDetails: any,
+    narrativeResponse: any,
+    context: { sessionId?: string; campaignId?: string }
+  ) {
     return await this.errorHandler.handleOperation(
       async () => {
         console.log('Calling dm-agent-execute with payload:', {
@@ -110,7 +132,9 @@ export class ResponseCoordinator {
           agentContext: {
             campaignDetails,
             narrativeResponse,
-            conversationState: this.conversationManager.getState()
+            conversationState: this.conversationManager.getState(),
+            sessionId: context.sessionId,
+            campaignId: context.campaignId
           }
         });
         
@@ -119,7 +143,9 @@ export class ResponseCoordinator {
           agentContext: {
             campaignDetails,
             narrativeResponse,
-            conversationState: this.conversationManager.getState()
+            conversationState: this.conversationManager.getState(),
+            sessionId: context.sessionId,
+            campaignId: context.campaignId
           }
         });
       },

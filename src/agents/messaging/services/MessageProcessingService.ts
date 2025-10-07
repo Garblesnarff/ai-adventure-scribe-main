@@ -22,9 +22,7 @@
 import { MessageDeliveryService } from './message-delivery-service';
 import { MessagePersistenceService } from './storage/message-persistence-service';
 import { MessageQueueService } from './message-queue-service';
-
-// Project Hooks
-import { useToast } from '@/hooks/use-toast'; // Note: useToast usage in a class is unconventional.
+import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsService';
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../types';
@@ -35,11 +33,13 @@ export class MessageProcessingService {
   private queueService: MessageQueueService;
   private deliveryService: MessageDeliveryService;
   private persistenceService: MessagePersistenceService;
+  private diagnostics: MessageDiagnosticsService;
 
   private constructor() {
     this.queueService = MessageQueueService.getInstance();
     this.deliveryService = MessageDeliveryService.getInstance();
     this.persistenceService = MessagePersistenceService.getInstance();
+    this.diagnostics = MessageDiagnosticsService.getInstance();
   }
 
   public static getInstance(): MessageProcessingService {
@@ -56,19 +56,23 @@ export class MessageProcessingService {
       if (delivered) {
         await this.persistenceService.updateMessageStatus(message.id, 'sent');
         await this.deliveryService.confirmDelivery(message.id);
+        this.diagnostics.recordDelivery();
         return true;
       } else if (message.retryCount >= message.maxRetries) {
         await this.deliveryService.handleFailedDelivery(message);
         await this.persistenceService.updateMessageStatus(message.id, 'failed');
+        this.diagnostics.recordFailure('Max retries exceeded');
         return false;
       } else {
         message.retryCount++;
         this.queueService.enqueue(message);
         await this.persistenceService.updateMessageStatus(message.id, 'pending');
+        this.diagnostics.recordRetry();
         return false;
       }
     } catch (error) {
       console.error('[MessageProcessingService] Error processing message:', error);
+      this.diagnostics.recordFailure(error instanceof Error ? error.message : 'Unknown error');
       return false;
     }
   }

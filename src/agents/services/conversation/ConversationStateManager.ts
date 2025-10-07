@@ -23,18 +23,27 @@ export interface ConversationState {
   currentNPC: string | null;
   dialogueHistory: DialogueHistory[];
   playerChoices: string[];
-  lastResponse: string | null;
+  lastResponse: any | null;
 }
 
 export class ConversationStateManager {
   private state: ConversationState;
 
-  constructor() {
+  constructor(initialState?: ConversationState) {
+    this.state = initialState
+      ? { ...initialState, dialogueHistory: [...initialState.dialogueHistory] }
+      : {
+          currentNPC: null,
+          dialogueHistory: [],
+          playerChoices: [],
+          lastResponse: null
+        };
+  }
+
+  public hydrate(state: ConversationState): void {
     this.state = {
-      currentNPC: null,
-      dialogueHistory: [],
-      playerChoices: [],
-      lastResponse: null
+      ...state,
+      dialogueHistory: [...state.dialogueHistory]
     };
   }
 
@@ -63,7 +72,14 @@ export class ConversationStateManager {
   }
 
   public getState(): ConversationState {
-    return { ...this.state };
+    return {
+      ...this.state,
+      dialogueHistory: [...this.state.dialogueHistory]
+    };
+  }
+
+  public getSnapshot(): ConversationState {
+    return this.getState();
   }
 
   public getCurrentNPC(): string | null {

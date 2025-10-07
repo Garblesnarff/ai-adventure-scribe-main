@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CircuitBreakerService } from '../../error/services/circuit-breaker-service';
 import { ErrorHandlingService } from '../../error/services/error-handling-service';
 import { MessageAcknowledgmentService } from './message-acknowledgment-service';
+import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsService';
 
 // Project Types
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
@@ -37,11 +38,13 @@ export class MessageDeliveryService {
   private acknowledgmentService: MessageAcknowledgmentService;
   private errorHandler: ErrorHandlingService;
   private circuitBreaker: CircuitBreakerService;
+  private diagnostics: MessageDiagnosticsService;
 
   private constructor() {
     this.acknowledgmentService = MessageAcknowledgmentService.getInstance();
     this.errorHandler = ErrorHandlingService.getInstance();
     this.circuitBreaker = CircuitBreakerService.getInstance();
+    this.diagnostics = MessageDiagnosticsService.getInstance();
   }
 
   public static getInstance(): MessageDeliveryService {
@@ -94,6 +97,7 @@ export class MessageDeliveryService {
     } catch (error) {
       console.error('[MessageDeliveryService] Delivery error:', error);
       this.circuitBreaker.recordError(context);
+      this.diagnostics.recordFailure(error instanceof Error ? error.message : 'Delivery error');
       
       message.deliveryStatus = {
         delivered: false,
@@ -134,6 +138,8 @@ export class MessageDeliveryService {
         'failed',
         'Maximum retry attempts exceeded'
       );
+
+      this.diagnostics.recordDeadLetter(message);
     } catch (error) {
       console.error('[MessageDeliveryService] Failed delivery handling error:', error);
     }

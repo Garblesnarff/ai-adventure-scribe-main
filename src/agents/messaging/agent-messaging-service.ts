@@ -33,8 +33,8 @@ import { MessageRecoveryService } from './services/recovery/message-recovery-ser
 import { MessageSynchronizationService } from './services/sync/message-synchronization-service';
 import { OfflineStateService } from './services/offline/offline-state-service';
 
-// Hooks
-import { useToast } from '@/hooks/use-toast'; // Note: useToast is a hook, direct usage in a class might be unconventional. Consider if this is intended or if notifications should be handled differently.
+import { AgentNotificationService } from './services/notifications/AgentNotificationService';
+import { MessageDiagnosticsService } from './services/diagnostics/MessageDiagnosticsService';
 
 export class AgentMessagingService {
   private static instance: AgentMessagingService;
@@ -46,6 +46,8 @@ export class AgentMessagingService {
   private connectionService: ConnectionStateService;
   private synchronizationService: MessageSynchronizationService;
   private processingInterval: NodeJS.Timeout | null = null;
+  private notifier: AgentNotificationService;
+  private diagnostics: MessageDiagnosticsService;
 
   private constructor() {
     this.queueService = MessageQueueService.getInstance();
@@ -55,6 +57,8 @@ export class AgentMessagingService {
     this.offlineService = OfflineStateService.getInstance();
     this.connectionService = ConnectionStateService.getInstance();
     this.synchronizationService = MessageSynchronizationService.getInstance();
+    this.notifier = new AgentNotificationService();
+    this.diagnostics = MessageDiagnosticsService.getInstance();
     this.initializeService();
   }
 
@@ -146,9 +150,22 @@ export class AgentMessagingService {
         await this.synchronizationService.synchronizeMessage(message);
       }
       
+      if (!enqueued) {
+        this.notifier.notify({
+          level: 'warning',
+          title: 'Message queue is full',
+          description: 'Unable to enqueue message due to capacity limits.'
+        });
+      }
+
       return enqueued;
     } catch (error) {
       console.error('[AgentMessagingService] Send message error:', error);
+      this.notifier.notify({
+        level: 'error',
+        title: 'Message dispatch failed',
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
       return false;
     }
   }
@@ -159,13 +176,21 @@ export class AgentMessagingService {
     isOnline: boolean;
     metrics: any;
     offlineState?: OfflineState;
+    telemetry: ReturnType<MessageDiagnosticsService['getSnapshot']>;
+    deadLetter: QueuedMessage[];
   } {
     return {
       queueLength: this.queueService.getQueueLength(),
       processingMessage: this.queueService.peek(),
       isOnline: this.offlineService.isOnline(),
       metrics: this.queueService.getMetrics(),
-      offlineState: this.offlineService.getState()
+      offlineState: this.offlineService.getState(),
+      telemetry: this.diagnostics.getSnapshot(),
+      deadLetter: this.diagnostics.getDeadLetterQueue()
     };
+  }
+
+  public getNotifier(): AgentNotificationService {
+    return this.notifier;
   }
 }
