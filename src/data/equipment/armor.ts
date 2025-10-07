@@ -1,0 +1,139 @@
+import type { Equipment } from './types';
+
+export const armor: Equipment[] = [
+  // Light Armor
+  {
+    id: 'padded-armor',
+    name: 'Padded Armor',
+    category: 'armor',
+    armorType: 'light',
+    cost: { amount: 5, currency: 'gp' },
+    weight: 8,
+    armorClass: { base: 11, dexModifier: true },
+    stealthDisadvantage: true,
+    description: 'Quilted layers of cloth and batting.'
+  },
+  {
+    id: 'leather-armor',
+    name: 'Leather Armor',
+    category: 'armor',
+    armorType: 'light',
+    cost: { amount: 10, currency: 'gp' },
+    weight: 10,
+    armorClass: { base: 11, dexModifier: true },
+    description: 'Soft and flexible leather armor.'
+  },
+  {
+    id: 'studded-leather',
+    name: 'Studded Leather',
+    category: 'armor',
+    armorType: 'light',
+    cost: { amount: 45, currency: 'gp' },
+    weight: 13,
+    armorClass: { base: 12, dexModifier: true },
+    description: 'Leather armor reinforced with metal studs.'
+  },
+
+  // Medium Armor
+  {
+    id: 'hide-armor',
+    name: 'Hide Armor',
+    category: 'armor',
+    armorType: 'medium',
+    cost: { amount: 10, currency: 'gp' },
+    weight: 12,
+    armorClass: { base: 12, dexModifier: true, maxDexModifier: 2 },
+    description: 'Crude armor made from thick furs and pelts.'
+  },
+  {
+    id: 'chain-shirt',
+    name: 'Chain Shirt',
+    category: 'armor',
+    armorType: 'medium',
+    cost: { amount: 50, currency: 'gp' },
+    weight: 20,
+    armorClass: { base: 13, dexModifier: true, maxDexModifier: 2 },
+    description: 'A shirt made of interlocking metal rings.'
+  },
+  {
+    id: 'scale-mail',
+    name: 'Scale Mail',
+    category: 'armor',
+    armorType: 'medium',
+    cost: { amount: 50, currency: 'gp' },
+    weight: 45,
+    armorClass: { base: 14, dexModifier: true, maxDexModifier: 2 },
+    stealthDisadvantage: true,
+    description: 'Armor consisting of a coat of leather covered with overlapping pieces of metal.'
+  },
+  {
+    id: 'breastplate',
+    name: 'Breastplate',
+    category: 'armor',
+    armorType: 'medium',
+    cost: { amount: 400, currency: 'gp' },
+    weight: 20,
+    armorClass: { base: 14, dexModifier: true, maxDexModifier: 2 },
+    description: 'A fitted metal chest piece worn with supple leather.'
+  },
+  {
+    id: 'half-plate',
+    name: 'Half Plate',
+    category: 'armor',
+    armorType: 'medium',
+    cost: { amount: 750, currency: 'gp' },
+    weight: 40,
+    armorClass: { base: 15, dexModifier: true, maxDexModifier: 2 },
+    stealthDisadvantage: true,
+    description: 'Partial plate armor covering the most vital areas.'
+  },
+
+  // Heavy Armor
+  {
+    id: 'ring-mail',
+    name: 'Ring Mail',
+    category: 'armor',
+    armorType: 'heavy',
+    cost: { amount: 30, currency: 'gp' },
+    weight: 40,
+    armorClass: { base: 14, dexModifier: false },
+    stealthDisadvantage: true,
+    description: 'Leather armor with heavy rings sewn into it.'
+  },
+  {
+    id: 'chain-mail',
+    name: 'Chain Mail',
+    category: 'armor',
+    armorType: 'heavy',
+    cost: { amount: 75, currency: 'gp' },
+    weight: 55,
+    armorClass: { base: 16, dexModifier: false },
+    strengthRequirement: 13,
+    stealthDisadvantage: true,
+    description: 'A complete suit of interlocking metal rings.'
+  },
+  {
+    id: 'splint-armor',
+    name: 'Splint Armor',
+    category: 'armor',
+    armorType: 'heavy',
+    cost: { amount: 200, currency: 'gp' },
+    weight: 60,
+    armorClass: { base: 17, dexModifier: false },
+    strengthRequirement: 15,
+    stealthDisadvantage: true,
+    description: 'Armor made of narrow vertical strips of metal.'
+  },
+  {
+    id: 'plate-armor',
+    name: 'Plate Armor',
+    category: 'armor',
+    armorType: 'heavy',
+    cost: { amount: 1500, currency: 'gp' },
+    weight: 65,
+    armorClass: { base: 18, dexModifier: false },
+    strengthRequirement: 15,
+    stealthDisadvantage: true,
+    description: 'The finest and most protective armor, consisting of shaped, interlocking metal plates.'
+  }
+];

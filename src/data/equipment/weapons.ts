@@ -1,0 +1,185 @@
+import type { Equipment } from './types';
+
+export const weapons: Equipment[] = [
+  // Simple Melee Weapons
+  {
+    id: 'club',
+    name: 'Club',
+    category: 'weapon',
+    subcategory: 'simple melee',
+    weaponType: 'simple',
+    cost: { amount: 1, currency: 'sp' },
+    weight: 2,
+    damage: { dice: '1d4', type: 'bludgeoning' },
+    attackBonus: 0,
+    weaponProperties: { light: true },
+    properties: ['Light'],
+    description: 'A simple wooden club.'
+  },
+  {
+    id: 'dagger',
+    name: 'Dagger',
+    category: 'weapon',
+    subcategory: 'simple melee',
+    weaponType: 'simple',
+    cost: { amount: 2, currency: 'gp' },
+    weight: 1,
+    damage: { dice: '1d4', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { finesse: true, light: true, thrown: true },
+    range: { normal: 20, long: 60 },
+    properties: ['Finesse', 'Light', 'Thrown (20/60)'],
+    description: 'A sharp, lightweight blade.'
+  },
+  {
+    id: 'handaxe',
+    name: 'Handaxe',
+    category: 'weapon',
+    subcategory: 'simple melee',
+    weaponType: 'simple',
+    cost: { amount: 5, currency: 'gp' },
+    weight: 2,
+    damage: { dice: '1d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: { light: true, thrown: true },
+    range: { normal: 20, long: 60 },
+    properties: ['Light', 'Thrown (20/60)'],
+    description: 'A small axe for one-handed use.'
+  },
+  {
+    id: 'mace',
+    name: 'Mace',
+    category: 'weapon',
+    subcategory: 'simple melee',
+    weaponType: 'simple',
+    cost: { amount: 5, currency: 'gp' },
+    weight: 4,
+    damage: { dice: '1d6', type: 'bludgeoning' },
+    attackBonus: 0,
+    weaponProperties: {},
+    properties: [],
+    description: 'A simple wooden club.'
+  },
+
+  // Simple Ranged Weapons
+  {
+    id: 'light-crossbow',
+    name: 'Light Crossbow',
+    category: 'weapon',
+    subcategory: 'simple ranged',
+    weaponType: 'simple',
+    cost: { amount: 25, currency: 'gp' },
+    weight: 5,
+    damage: { dice: '1d8', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { ammunition: true, loading: true, twoHanded: true },
+    range: { normal: 80, long: 320 },
+    properties: ['Ammunition (80/320)', 'Loading', 'Two-handed'],
+    description: 'A mechanical bow that fires bolts.'
+  },
+  {
+    id: 'shortbow',
+    name: 'Shortbow',
+    category: 'weapon',
+    subcategory: 'simple ranged',
+    weaponType: 'simple',
+    cost: { amount: 25, currency: 'gp' },
+    weight: 2,
+    damage: { dice: '1d6', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { ammunition: true, twoHanded: true },
+    range: { normal: 80, long: 320 },
+    properties: ['Ammunition (80/320)', 'Two-handed'],
+    description: 'A smaller bow for easier handling.'
+  },
+
+  // Martial Melee Weapons
+  {
+    id: 'longsword',
+    name: 'Longsword',
+    category: 'weapon',
+    subcategory: 'martial melee',
+    weaponType: 'martial',
+    cost: { amount: 15, currency: 'gp' },
+    weight: 3,
+    damage: { dice: '1d8', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: { versatile: true },
+    properties: ['Versatile (1d10)'],
+    description: 'A classic knightly sword.'
+  },
+  {
+    id: 'rapier',
+    name: 'Rapier',
+    category: 'weapon',
+    subcategory: 'martial melee',
+    weaponType: 'martial',
+    cost: { amount: 25, currency: 'gp' },
+    weight: 2,
+    damage: { dice: '1d8', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { finesse: true },
+    properties: ['Finesse'],
+    description: 'A slender, sharply pointed sword.'
+  },
+  {
+    id: 'scimitar',
+    name: 'Scimitar',
+    category: 'weapon',
+    subcategory: 'martial melee',
+    weaponType: 'martial',
+    cost: { amount: 25, currency: 'gp' },
+    weight: 3,
+    damage: { dice: '1d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: { finesse: true, light: true },
+    properties: ['Finesse', 'Light'],
+    description: 'A curved, single-edged blade.'
+  },
+  {
+    id: 'greatsword',
+    name: 'Greatsword',
+    category: 'weapon',
+    subcategory: 'martial melee',
+    weaponType: 'martial',
+    cost: { amount: 50, currency: 'gp' },
+    weight: 6,
+    damage: { dice: '2d6', type: 'slashing' },
+    attackBonus: 0,
+    weaponProperties: { heavy: true, twoHanded: true },
+    properties: ['Heavy', 'Two-handed'],
+    description: 'A massive two-handed sword.'
+  },
+
+  // Martial Ranged Weapons
+  {
+    id: 'longbow',
+    name: 'Longbow',
+    category: 'weapon',
+    subcategory: 'martial ranged',
+    weaponType: 'martial',
+    cost: { amount: 50, currency: 'gp' },
+    weight: 2,
+    damage: { dice: '1d8', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { ammunition: true, heavy: true, twoHanded: true },
+    range: { normal: 150, long: 600 },
+    properties: ['Ammunition (150/600)', 'Heavy', 'Two-handed'],
+    description: 'A tall bow with great range and power.'
+  },
+  {
+    id: 'heavy-crossbow',
+    name: 'Heavy Crossbow',
+    category: 'weapon',
+    subcategory: 'martial ranged',
+    weaponType: 'martial',
+    cost: { amount: 50, currency: 'gp' },
+    weight: 18,
+    damage: { dice: '1d10', type: 'piercing' },
+    attackBonus: 0,
+    weaponProperties: { ammunition: true, heavy: true, loading: true, twoHanded: true },
+    range: { normal: 100, long: 400 },
+    properties: ['Ammunition (100/400)', 'Heavy', 'Loading', 'Two-handed'],
+    description: 'A powerful crossbow requiring significant strength.'
+  }
+];

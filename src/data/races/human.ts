@@ -1,0 +1,48 @@
+import type { CharacterRace } from '@/types/character';
+
+export const human: CharacterRace = {
+  id: 'human',
+  name: 'Human',
+  description: 'Humans are the most adaptable and ambitious people among the common races.',
+  traits: ['Versatile'],
+  abilityScoreIncrease: {},
+  speed: 30,
+  languages: ['Common'],
+  backgroundImage: '/human-class-card-background.png',
+  subraces: [
+    {
+      id: 'standard-human',
+      name: 'Standard Human',
+      description: 'The most adaptable and ambitious people among the common races.',
+      abilityScoreIncrease: {
+        strength: 1,
+        dexterity: 1,
+        constitution: 1,
+        intelligence: 1,
+        wisdom: 1,
+        charisma: 1
+      },
+      traits: ['Versatile'],
+      languages: ['Choice of One']
+    },
+    {
+      id: 'variant-human',
+      name: 'Variant Human',
+      description: 'A more customizable version of human with a free feat at 1st level.',
+      abilityScoreIncrease: {},
+      traits: ['Skills', 'Feat', 'Extra Language or Tool Proficiency'],
+      languages: ['Choice of One or Tool Proficiency'],
+      weaponProficiencies: [],
+      armorProficiencies: []
+    },
+    {
+      id: 'custom-lineage',
+      name: 'Custom Lineage',
+      description: 'A customizable lineage representing non-human ancestry or unique background.',
+      abilityScoreIncrease: {},
+      traits: ['Variable Size', 'Feat', 'Darkvision or Skill Proficiency'],
+      languages: ['Common', 'Choice of One'],
+      speed: 30
+    }
+  ]
+};
