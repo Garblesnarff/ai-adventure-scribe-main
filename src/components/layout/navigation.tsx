@@ -47,7 +47,7 @@ const Navigation: React.FC = () => {
               <Link
                 to="/app"
                 className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                  ${isActive('/app') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/70 hover:text-infinite-gold hover:bg-infinite-purple/10'}`}
+                  ${isActive('/app') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/90 hover:text-infinite-gold hover:bg-infinite-purple/10'}`}
               >
                 <Home className="h-4 w-4" />
                 <span>Home</span>
@@ -55,7 +55,7 @@ const Navigation: React.FC = () => {
               <Link
                 to="/app/characters"
                 className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
-                  ${isActive('/app/characters') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/70 hover:text-infinite-gold hover:bg-infinite-purple/10'}`}
+                  ${isActive('/app/characters') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/90 hover:text-infinite-gold hover:bg-infinite-purple/10'}`}
               >
                 <Users className="h-4 w-4" />
                 <span>Characters</span>

@@ -158,6 +158,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
         tabIndex={0}
         aria-label={`Open campaign ${campaign.name}`}
         onClick={() => navigate(`/app/campaign/${campaign.id}`)}
+        onFocus={() => setIsHovered(true)}
+        onBlur={() => setIsHovered(false)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
