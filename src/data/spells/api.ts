@@ -8,10 +8,40 @@ export const allSpells: Spell[] = [...cantrips, ...firstLevelSpells];
 export const getClassSpells = (className: string): { cantrips: Spell[]; spells: Spell[] } => {
   const normalizedClassName = className.charAt(0).toUpperCase() + className.slice(1).toLowerCase();
   const mapping = (classSpellMappings as any)[normalizedClassName];
-  if (!mapping) return { cantrips: [], spells: [] };
+  
+  // Debug logging for troubleshooting spell loading issues
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`🔍 [getClassSpells] Looking up spells for: ${className} -> ${normalizedClassName}`);
+    console.debug(`📊 [getClassSpells] Available mappings:`, Object.keys(classSpellMappings));
+    console.debug(`📋 [getClassSpells] Mapping found:`, !!mapping);
+    if (mapping) {
+      console.debug(`🎯 [getClassSpells] Expected cantrips: ${mapping.cantrips.length}, spells: ${mapping.spells.length}`);
+    }
+  }
+  
+  if (!mapping) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`⚠️ [getClassSpells] No mapping found for class: ${normalizedClassName}`);
+    }
+    return { cantrips: [], spells: [] };
+  }
+  
+  const resultCantrips = cantrips.filter(spell => mapping.cantrips.includes(spell.id));
+  const resultSpells = firstLevelSpells.filter(spell => mapping.spells.includes(spell.id));
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`✅ [getClassSpells] ${normalizedClassName} results:`, {
+      cantrips: resultCantrips.length,
+      spells: resultSpells.length,
+      totalAvailable: `cantrips: ${cantrips.length}, spells: ${firstLevelSpells.length}`,
+      missingCantrips: mapping.cantrips.filter(id => !cantrips.some(spell => spell.id === id)),
+      missingSpells: mapping.spells.filter(id => !firstLevelSpells.some(spell => spell.id === id))
+    });
+  }
+  
   return {
-    cantrips: cantrips.filter(spell => mapping.cantrips.includes(spell.id)),
-    spells: firstLevelSpells.filter(spell => mapping.spells.includes(spell.id))
+    cantrips: resultCantrips,
+    spells: resultSpells
   };
 };
 

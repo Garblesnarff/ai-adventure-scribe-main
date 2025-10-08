@@ -121,6 +121,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Spell fetching function
   const fetchSpells = async () => {
     if (!isSpellcaster || !currentClass?.name) {
+      logger.debug('🚫 [useSpellSelection] Not a spellcaster or no class name, skipping spell fetch');
       setAvailableCantrips([]);
       setAvailableSpells([]);
       return;
@@ -129,8 +130,24 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     setIsLoadingSpells(true);
     setSpellsError(null);
 
+    logger.debug('🔍 [useSpellSelection] Fetching spells for class:', {
+      className: currentClass.name,
+      characterLevel: character?.level || 1,
+      isSpellcaster,
+      spellcastingInfo
+    });
+
     try {
       const { cantrips, spells } = await spellApi.getClassSpells(currentClass.name, character?.level || 1);
+      
+      logger.debug('✅ [useSpellSelection] Spells fetched successfully:', {
+        className: currentClass.name,
+        cantripsFound: cantrips.length,
+        spellsFound: spells.length,
+        cantripNames: cantrips.slice(0, 3).map(c => c.name),
+        spellNames: spells.slice(0, 3).map(s => s.name)
+      });
+      
       setAvailableCantrips(cantrips);
       setAvailableSpells(spells);
     } catch (error) {
