@@ -1,8 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import Index from './pages/Index';
 import Landing from './pages/Landing';
+import LaunchPage from './pages/LaunchPage';
 import DiceTest from './pages/DiceTest';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
@@ -36,48 +38,53 @@ const queryClient = new QueryClient({
  */
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CharacterProvider>
-          <CampaignProvider>
-            <Router
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true
-              }}
-            >
-              <div className="min-h-screen">
-                <Routes>
-                  {/* Public landing page - main entry point */}
-                  <Route path="/" element={<Landing />} />
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CharacterProvider>
+            <CampaignProvider>
+              <Router
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true
+                }}
+              >
+                <div className="min-h-screen">
+                  <Routes>
+                    {/* Beta Launch Page - new main entry point */}
+                    <Route path="/" element={<LaunchPage />} />
 
-                  {/* Protected app routes */}
-                  <Route path="/app/*" element={
-                    <ProtectedRoute>
-                      <Navigation />
-                      <Breadcrumbs />
-                      <main>
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/dice-test" element={<DiceTest />} />
-                          <Route path="/characters" element={<CharacterList />} />
-                          <Route path="/characters/create" element={<CharacterWizard />} />
-                          <Route path="/character/:id" element={<CharacterSheet />} />
-                          <Route path="/campaigns/create" element={<CampaignWizard />} />
-                          <Route path="/campaign/:id" element={<SimpleCampaignView />} />
-                          <Route path="/game/:id" element={<GameContent />} />
-                        </Routes>
-                      </main>
-                    </ProtectedRoute>
-                  } />
-                </Routes>
-                <Toaster />
-              </div>
-            </Router>
-          </CampaignProvider>
-        </CharacterProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                    {/* Original landing page - keep as backup */}
+                    <Route path="/original-landing" element={<Landing />} />
+
+                    {/* Protected app routes */}
+                    <Route path="/app/*" element={
+                      <ProtectedRoute>
+                        <Navigation />
+                        <Breadcrumbs />
+                        <main>
+                          <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/dice-test" element={<DiceTest />} />
+                            <Route path="/characters" element={<CharacterList />} />
+                            <Route path="/characters/create" element={<CharacterWizard />} />
+                            <Route path="/character/:id" element={<CharacterSheet />} />
+                            <Route path="/campaigns/create" element={<CampaignWizard />} />
+                            <Route path="/campaign/:id" element={<SimpleCampaignView />} />
+                            <Route path="/game/:id" element={<GameContent />} />
+                          </Routes>
+                        </main>
+                      </ProtectedRoute>
+                    } />
+                  </Routes>
+                  <Toaster />
+                </div>
+              </Router>
+            </CampaignProvider>
+          </CharacterProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

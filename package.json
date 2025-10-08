@@ -19,9 +19,7 @@
     "server:dev": "npm run server:build && npm run server:start",
     "server:build": "tsc -p server/tsconfig.json",
     "server:start": "DOTENV_CONFIG_PATH=server/.env PORT=8888 node server/dist/index.js",
-    
     "server:seed-bard-spells-supabase": "ts-node --project server/tsconfig.json server/src/scripts/seed-bard-spells-supabase.ts",
-    
     "server:test": "vitest run --dir server",
     "seed:test-data": "node scripts/seed-test-data.js",
     "install:all": "npm install && cd server && npm install",
@@ -99,6 +97,7 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.53.0",
     "react-resizable-panels": "^2.1.3",
     "react-router-dom": "^6.26.2",
