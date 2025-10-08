@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:crewai\"",
     "dev:frontend": "vite",
+    "predev:frontend": "bash scripts/predev-frontend.sh",
     "dev:backend": "npm run server:dev",
+    "predev:backend": "bash scripts/predev-backend.sh",
+    "predev:crewai": "bash scripts/predev-crewai.sh",
     "dev:crewai": "crewai-service/.venv/bin/uvicorn main:app --reload --port 8000 --app-dir crewai-service",
     "dev:full": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:database\"",
     "build": "vite build",
@@ -15,7 +18,7 @@
     "preview": "vite preview",
     "server:dev": "npm run server:build && npm run server:start",
     "server:build": "tsc -p server/tsconfig.json",
-    "server:start": "PORT=8888 node server/dist/index.js",
+    "server:start": "DOTENV_CONFIG_PATH=server/.env PORT=8888 node server/dist/index.js",
     
     "server:seed-bard-spells-supabase": "ts-node --project server/tsconfig.json server/src/scripts/seed-bard-spells-supabase.ts",
     

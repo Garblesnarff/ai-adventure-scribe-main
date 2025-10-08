@@ -77,8 +77,10 @@ export default function llmRouter() {
         return res.status(status).json({ error: 'LLM request failed', details: errText });
       }
 
-      const data = await response.json();
-      const text: string = data?.choices?.[0]?.message?.content || '';
+      // OpenRouter chat completion response (minimal shape)
+      type ORChatResp = { choices?: { message?: { content?: string } }[] };
+      const data = (await response.json()) as ORChatResp;
+      const text: string = data.choices?.[0]?.message?.content ?? '';
       return res.json({ text });
     } catch (e) {
       console.error('[LLM] Error', e);
