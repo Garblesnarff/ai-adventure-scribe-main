@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-type EntityType = 'campaign' | 'character';
+type EntityType = 'campaign' | 'character' | 'session';
 
 const cache = new Map<string, string>();
 
@@ -43,6 +43,14 @@ export function useEntityLabel(type: EntityType, id: string | null) {
           if (!cancelled && !error) {
             const value = data?.name || null;
             if (value) cache.set(key, value);
+            setLabel(value);
+          }
+        } else if (type === 'session') {
+          const { data, error } = await supabase.from('game_sessions').select('session_number').eq('id', id).single();
+          if (!cancelled && !error) {
+            const n = data?.session_number as number | null | undefined;
+            const value = n ? `Session ${n}` : 'Game';
+            cache.set(key, value);
             setLabel(value);
           }
         }
