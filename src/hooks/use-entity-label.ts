@@ -1,0 +1,61 @@
+import * as React from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+type EntityType = 'campaign' | 'character';
+
+const cache = new Map<string, string>();
+
+/**
+ * Resolves a human-readable label for an entity id with simple in-memory caching.
+ */
+export function useEntityLabel(type: EntityType, id: string | null) {
+  const [label, setLabel] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(Boolean(id));
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const key = id ? `${type}:${id}` : '';
+    if (!id) {
+      setLabel(null);
+      setLoading(false);
+      return;
+    }
+
+    const inCache = cache.get(key);
+    if (inCache) {
+      setLabel(inCache);
+      setLoading(false);
+      return;
+    }
+
+    async function fetchLabel() {
+      try {
+        setLoading(true);
+        if (type === 'campaign') {
+          const { data, error } = await supabase.from('campaigns').select('name').eq('id', id).single();
+          if (!cancelled && !error) {
+            const value = data?.name || null;
+            if (value) cache.set(key, value);
+            setLabel(value);
+          }
+        } else if (type === 'character') {
+          const { data, error } = await supabase.from('characters').select('name').eq('id', id).single();
+          if (!cancelled && !error) {
+            const value = data?.name || null;
+            if (value) cache.set(key, value);
+            setLabel(value);
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchLabel();
+    return () => {
+      cancelled = true;
+    };
+  }, [type, id]);
+
+  return { label, loading } as const;
+}
