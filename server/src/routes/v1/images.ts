@@ -58,35 +58,49 @@ export default function imagesRouter() {
         return res.status(status).json({ error: 'Image request failed', details: errText });
       }
 
-      const data = await response.json();
+      // OpenRouter image-capable chat completion response (minimal shapes)
+      type ORImageMsg = {
+        content?: unknown;
+        images?: any[];
+        image?: string;
+        image_url?: string | { url: string };
+      };
+      type ORImageResp = { choices?: { message?: ORImageMsg }[] };
+      const data = (await response.json()) as ORImageResp;
 
       // Try to extract image data from various possible locations
-      const choice = data?.choices?.[0];
+      const choice = data.choices?.[0];
       let imageData: string | null = null;
+      const toUrl = (val: any): string | null => {
+        if (!val) return null;
+        if (typeof val === 'string') return val;
+        if (typeof val === 'object' && typeof val.url === 'string') return val.url;
+        return null;
+      };
 
       if (choice?.message?.images?.length) {
         const img = choice.message.images[0];
-        imageData = img?.image_url?.url || img?.url || null;
+        imageData = toUrl(img?.image_url) || toUrl(img?.url);
       }
 
       if (!imageData && Array.isArray(choice?.message?.content)) {
         const imgPart = choice.message.content.find((p: any) => p.type === 'image');
-        imageData = imgPart?.image || imgPart?.image_url || imgPart?.data || null;
+        imageData = toUrl(imgPart?.image) || toUrl(imgPart?.image_url) || toUrl(imgPart?.data);
       }
 
       if (!imageData && typeof choice?.message?.content === 'string' && choice.message.content.startsWith('data:image/')) {
         imageData = choice.message.content;
       }
 
-      if (!imageData && choice?.message?.image) imageData = choice.message.image;
-      if (!imageData && choice?.message?.image_url) imageData = choice.message.image_url;
+      if (!imageData) imageData = toUrl(choice?.message?.image);
+      if (!imageData) imageData = toUrl(choice?.message?.image_url);
 
       if (!imageData) {
         return res.status(502).json({ error: 'No image data in provider response' });
       }
 
       // Strip data URL prefix if present
-      if (imageData.startsWith('data:image/')) {
+      if (imageData && imageData.startsWith('data:image/')) {
         const idx = imageData.indexOf('base64,');
         if (idx !== -1) imageData = imageData.substring(idx + 7);
       }
