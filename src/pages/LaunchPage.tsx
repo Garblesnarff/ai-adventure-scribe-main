@@ -38,7 +38,7 @@ const LaunchPage: React.FC = () => {
     // Track page view
     if (window.gtag) {
       window.gtag('event', 'page_view', {
-        page_title: 'AI Dungeon Master - Beta Launch',
+        page_title: 'Infinite Realms - Beta Launch',
         page_location: window.location.href
       });
     }
@@ -48,29 +48,29 @@ const LaunchPage: React.FC = () => {
     <>
       {/* SEO and Meta Tags */}
       <Helmet>
-        <title>AI Dungeon Master - Beta Launch | Join the Future of Tabletop RPGs</title>
+        <title>Infinite Realms - Beta Launch | Step into Boundless Worlds of Adventure</title>
         <meta
           name="description"
-          content="Be among the first to experience the legendary AI Dungeon Master. Join our closed beta and shape the future of tabletop RPGs with cinematic adventures that adapt to your every decision."
+          content="Be among the first to experience Infinite Realms, where every choice shapes destiny and legends are forged in the fires of imagination. Join our closed beta and shape the future of tabletop RPGs."
         />
-        <meta name="keywords" content="AI Dungeon Master, D&D AI, tabletop RPG, beta launch, fantasy gaming" />
+        <meta name="keywords" content="Infinite Realms, AI Dungeon Master, D&D AI, tabletop RPG, beta launch, fantasy gaming" />
         <meta name="robots" content="index, follow" />
 
         {/* OpenGraph Tags */}
-        <meta property="og:title" content="AI Dungeon Master - Beta Launch | Join the Future of Tabletop RPGs" />
-        <meta property="og:description" content="Be among the first to experience the legendary AI Dungeon Master. Join our closed beta and shape the future of tabletop RPGs." />
+        <meta property="og:title" content="Infinite Realms - Beta Launch | Step into Boundless Worlds of Adventure" />
+        <meta property="og:description" content="Be among the first to experience Infinite Realms, where every choice shapes destiny and legends are forged in the fires of imagination." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ai-dungeon-master.com/launch" />
-        <meta property="og:image" content="https://ai-dungeon-master.com/og-launch-image.jpg" />
+        <meta property="og:url" content="https://infinite-realms.com/launch" />
+        <meta property="og:image" content="https://infinite-realms.com/og-launch-image.jpg" />
 
         {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="AI Dungeon Master - Beta Launch" />
-        <meta name="twitter:description" content="Join the closed beta for the legendary AI Dungeon Master. Shape the future of tabletop RPGs." />
-        <meta name="twitter:image" content="https://ai-dungeon-master.com/twitter-launch-card.jpg" />
+        <meta name="twitter:title" content="Infinite Realms - Beta Launch" />
+        <meta name="twitter:description" content="Join the closed beta for Infinite Realms. Step into boundless worlds where every choice shapes destiny." />
+        <meta name="twitter:image" content="https://infinite-realms.com/twitter-launch-card.jpg" />
 
         {/* Canonical URL */}
-        <link rel="canonical" href="https://ai-dungeon-master.com/launch" />
+        <link rel="canonical" href="https://infinite-realms.com/launch" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 overflow-x-hidden">

@@ -49,8 +49,8 @@ export const launchPageContent = {
   hero: {
     badge: "Closed Beta - Request Early Access",
     headline: "The Legendary AI Dungeon Master is Almost Here",
-    subtitle: "Be Among the First to Wield Its Power",
-    description: "Your epic adventures are about to become truly cinematic. Sign up for exclusive beta access and shape the future of tabletop RPGs.",
+    subtitle: "Step into Boundless Worlds of Adventure",
+    description: "Where every choice shapes destiny and legends are forged in the fires of imagination. Sign up for exclusive beta access and shape the future of tabletop RPGs.",
     primaryCTA: "Request Early Access",
     secondaryCTA: "Learn More"
   },
@@ -275,15 +275,15 @@ This isn't about replacing human Dungeon Masters. It's about giving every advent
 
   // Footer
   footer: {
-    description: "Building the future of tabletop RPGs, one adventure at a time.",
+    description: "Building Infinite Realms - where every choice shapes destiny and legends are forged in the fires of imagination.",
     links: {
       privacy: "/privacy",
       terms: "/terms",
       contact: "/contact",
-      discord: "https://discord.gg/ai-dungeon-master"
+      discord: "https://discord.gg/infinite-realms"
     },
     legal: {
-      ipDisclaimer: "AI Dungeon Master is not affiliated with Wizards of the Coast. D&D content uses SRD/OGL licensed material where applicable.",
+      ipDisclaimer: "Infinite Realms is not affiliated with Wizards of the Coast. D&D content uses SRD/OGL licensed material where applicable.",
       company: "AI Adventure Scribe"
     }
   }

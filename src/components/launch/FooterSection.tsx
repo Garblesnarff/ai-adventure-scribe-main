@@ -21,7 +21,7 @@ export const FooterSection: React.FC = () => {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <h3 className="text-2xl font-bold text-white mb-4">
-              AI Dungeon Master
+              Infinite Realms
             </h3>
             <p className="text-gray-400 leading-relaxed mb-6 max-w-md">
               {footer.description}
@@ -154,7 +154,7 @@ export const FooterSection: React.FC = () => {
               </a>
 
               <a
-                href="https://discord.gg/ai-dungeon-master"
+                href="https://discord.gg/infinite-realms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-purple-400 transition-colors duration-200"
