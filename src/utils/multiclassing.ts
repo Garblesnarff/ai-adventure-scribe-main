@@ -299,18 +299,16 @@ export function calculateMulticlassSpellcasting(character: Character): Multiclas
         casterType = 'half';
         break;
         
-      // Third casters (subclass features)
+      // Third casters (subclass features - NOTE: Only SRD subclasses supported)
       case 'fighter':
-        // Eldritch Knight archetype
-        if (classLevel.level >= 3) {
-          casterType = 'third';
-        }
+        // Only Champion subclass is SRD-compliant (no spellcasting)
+        // Eldritch Knight archetype is NOT available in SRD
+        // No spellcasting for fighter in SRD
         break;
       case 'rogue':
-        // Arcane Trickster archetype
-        if (classLevel.level >= 3) {
-          casterType = 'third';
-        }
+        // Only Thief subclass is SRD-compliant (no spellcasting)
+        // Arcane Trickster archetype is NOT available in SRD
+        // No spellcasting for rogue in SRD
         break;
         
       // Pact casters

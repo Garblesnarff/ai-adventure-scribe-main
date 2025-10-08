@@ -23,7 +23,7 @@ export const gnome: CharacterRace = {
       name: 'Rock Gnome',
       description: 'Natural tinkerers and inventors with expertise in clockwork devices.',
       abilityScoreIncrease: { constitution: 1 },
-      traits: ["Artificer's Lore", 'Tinker']
+      traits: ["Tinker's Lore", 'Tinker']
     },
     {
       id: 'deep-gnome',
