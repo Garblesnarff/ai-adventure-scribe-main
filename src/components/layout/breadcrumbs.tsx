@@ -24,6 +24,11 @@ const Breadcrumbs: React.FC = () => {
     if (idx !== -1 && pathSegments[idx + 1]) return pathSegments[idx + 1];
     return null;
   }, [pathSegments]);
+  const sessionId = React.useMemo(() => {
+    const idx = pathSegments.findIndex((s) => s === 'game');
+    if (idx !== -1 && pathSegments[idx + 1]) return pathSegments[idx + 1];
+    return null;
+  }, [pathSegments]);
 
   // Try context first, then fallback to lightweight fetch
   const { state: campaignState } = useCampaign();
@@ -33,6 +38,7 @@ const Breadcrumbs: React.FC = () => {
 
   const { label: campaignNameFetched, loading: campaignLoading } = useEntityLabel('campaign', campaignId);
   const { label: characterNameFetched, loading: characterLoading } = useEntityLabel('character', characterId);
+  const { label: sessionLabel, loading: sessionLoading } = useEntityLabel('session', sessionId);
 
   /**
    * Generates a human-readable label from a URL segment
@@ -53,6 +59,10 @@ const Breadcrumbs: React.FC = () => {
       if (characterNameFromContext) return characterNameFromContext;
       if (characterLoading) return 'Loading…';
       return characterNameFetched || 'Character';
+    }
+    if (prev === 'game' && sessionId && segment === sessionId) {
+      if (sessionLoading) return 'Loading…';
+      return sessionLabel || 'Game';
     }
 
     // Remove any URL parameters

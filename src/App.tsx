@@ -47,6 +47,13 @@ function App() {
               }}
             >
               <div className="min-h-screen">
+                {/* Skip to content for keyboard users */}
+                <a
+                  href="#main-content"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-primary focus:text-primary-foreground focus:px-3 focus:py-2 focus:rounded"
+                >
+                  Skip to content
+                </a>
                 <Routes>
                   {/* Public landing page - main entry point */}
                   <Route path="/" element={<Landing />} />
@@ -56,7 +63,7 @@ function App() {
                     <ProtectedRoute>
                       <Navigation />
                       <Breadcrumbs />
-                      <main>
+                      <main id="main-content" tabIndex={-1}>
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/dice-test" element={<DiceTest />} />
