@@ -261,11 +261,14 @@ const CharacterList: React.FC = () => {
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative max-w-md">
+            <label htmlFor="character-search" className="sr-only">Search characters</label>
             <input
               type="text"
               placeholder="Search characters by name, race, or class..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              id="character-search"
+              aria-label="Search characters"
               className="w-full px-4 py-3 pl-10 pr-4 rounded-xl border-2 border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-infinite-purple focus:border-transparent transition-all duration-200"
             />
             <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />

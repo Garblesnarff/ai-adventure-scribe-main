@@ -36,6 +36,7 @@ const Index = () => {
               variant="outline"
               size="lg"
               className="px-8 py-4 text-lg border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
+              onClick={() => navigate('/app')}
             >
               Explore Gallery
             </Button>
@@ -48,11 +49,14 @@ const Index = () => {
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-8 bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border/30 shadow-lg">
           <div className="flex-1 max-w-md">
             <div className="relative">
+              <label htmlFor="campaign-search" className="sr-only">Search campaigns</label>
               <input
                 type="text"
                 placeholder="Search your campaigns by name or genre..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                id="campaign-search"
+                aria-label="Search campaigns"
                 className="w-full px-4 py-3 pl-12 pr-4 rounded-xl border-2 border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-infinite-purple focus:border-transparent transition-all duration-200"
               />
               <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />

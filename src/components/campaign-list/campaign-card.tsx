@@ -154,7 +154,16 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
       {/* Hero / thumbnail area */}
       <div
         className="campaign-hero featured flex items-end p-4 cursor-pointer h-full w-full bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative bg-gray-500 overflow-hidden transition-all duration-700 ease-out group-hover:scale-[1.02] group-hover:brightness-110 rounded-sm"
+        role="link"
+        tabIndex={0}
+        aria-label={`Open campaign ${campaign.name}`}
         onClick={() => navigate(`/app/campaign/${campaign.id}`)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            navigate(`/app/campaign/${campaign.id}`);
+          }
+        }}
         style={resolvedImage ? {
           backgroundImage: `url(${resolvedImage})`,
           backgroundSize: 'cover',
@@ -213,12 +222,29 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
                 variant="ghost"
                 size="sm"
                 className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-infinite-dark/20"
+                aria-label="Delete campaign"
+                title="Delete campaign"
                 onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Mobile actions (visible on touch / small screens) */}
+        <div className="absolute bottom-3 left-3 z-20 flex gap-2 md:hidden">
+          <Button size="sm" className="bg-infinite-gold text-infinite-dark hover:bg-infinite-purple"
+            aria-label="Play campaign"
+            onClick={(e) => { e.stopPropagation(); setShowCharacterModal(true); }}>
+            <Play className="w-4 h-4" />
+            Play
+          </Button>
+          <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark"
+            aria-label="Enter campaign"
+            onClick={(e) => { e.stopPropagation(); navigate(`/app/campaign/${campaign.id}`); }}>
+            Enter
+          </Button>
         </div>
 
       </div>
