@@ -105,6 +105,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
               size="sm"
               className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
               disabled={isDisabled}
+              aria-label="Attach file"
+              title="Attach file"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -113,6 +115,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
               size="sm"
               className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
               disabled={isDisabled}
+              aria-label="Insert emoji"
+              title="Insert emoji"
             >
               <Smile className="h-4 w-4" />
             </Button>
@@ -123,6 +127,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
               className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
               disabled={isDisabled}
               title="Quick dice roll (1d20)"
+              aria-label="Quick dice roll (1d20)"
             >
               <Dice6 className="h-4 w-4" />
             </Button>
