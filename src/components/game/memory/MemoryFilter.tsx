@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { MEMORY_CATEGORIES } from './memoryConstants';
+import { MemoryType, isValidMemoryType } from './types';
 
 interface MemoryFilterProps {
   selectedType: string | null;
@@ -15,10 +16,12 @@ interface MemoryFilterProps {
  * @param {Function} onTypeSelect - Callback for when a type is selected
  */
 export const MemoryFilter: React.FC<MemoryFilterProps> = ({ selectedType, onTypeSelect }) => {
+  // Validate that the selected type is a valid MemoryType
+  const isValidSelectedType = selectedType && isValidMemoryType(selectedType);
   return (
     <div className="p-4 border-b flex gap-2 overflow-x-auto">
       <Button
-        variant={selectedType === null ? "default" : "outline"}
+        variant={!selectedType ? "default" : "outline"}
         size="sm"
         onClick={() => onTypeSelect(null)}
         className="flex items-center gap-2"

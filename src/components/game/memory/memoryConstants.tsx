@@ -13,7 +13,7 @@ export const MEMORY_CATEGORIES: MemoryCategory[] = [
     subcategories: ['current_location', 'previous_location']
   },
   {
-    type: 'character',
+    type: 'npc',
     label: 'Characters',
     icon: <User className="h-4 w-4" />,
     subcategories: ['npc', 'player']
@@ -35,6 +35,30 @@ export const MEMORY_CATEGORIES: MemoryCategory[] = [
     label: 'General',
     icon: <FileText className="h-4 w-4" />,
     subcategories: ['general']
+  },
+  {
+    type: 'story_beat',
+    label: 'Story Beats',
+    icon: <Star className="h-4 w-4" />,
+    subcategories: ['general']
+  },
+  {
+    type: 'character_moment',
+    label: 'Character Moments',
+    icon: <Activity className="h-4 w-4" />,
+    subcategories: ['dialogue']
+  },
+  {
+    type: 'dialogue_gem',
+    label: 'Dialogue Gems',
+    icon: <MessageSquare className="h-4 w-4" />,
+    subcategories: ['dialogue']
+  },
+  {
+    type: 'atmosphere',
+    label: 'Atmosphere',
+    icon: <Cloud className="h-4 w-4" />,
+    subcategories: ['environment', 'description']
   }
 ];
 

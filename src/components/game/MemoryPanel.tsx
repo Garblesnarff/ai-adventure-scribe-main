@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
+import { MemoryType } from './memory/types';
 import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lucide-react';
 import { MemoryCard } from './memory/MemoryCard';
 import { MemoryFilter } from './memory/MemoryFilter';
@@ -130,7 +131,9 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const isMobile = window.innerWidth < 1024; // lg breakpoint
 
   // Get filtered and sorted memories using custom hook (must be called unconditionally)
-  const sortedMemories = useMemoryFiltering(memories, selectedType);
+  const sortedMemories = useMemoryFiltering(memories, { 
+    types: selectedType ? [selectedType as MemoryType] : undefined 
+  });
 
   // Sync local notes from session state (unconditional hook)
   useEffect(() => {

@@ -5,46 +5,46 @@ describe('Safety Commands', () => {
 
   describe('checkSafetyCommands', () => {
     describe('Explicit Commands', () => {
-      it('detects /x command', () => {
-        const result = checkSafetyCommands('/x', sessionId);
+      it('detects /x command', async () => {
+        const result = await checkSafetyCommands('/x', sessionId);
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('x_card');
         expect(result.command?.triggeredBy).toBe('explicit_command');
         expect(result.response).toBeDefined();
       });
 
-      it('detects /x command with context', () => {
-        const result = checkSafetyCommands('/x this is too graphic', sessionId);
+      it('detects /x command with context', async () => {
+        const result = await checkSafetyCommands('/x this is too graphic', sessionId);
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('x_card');
         expect(result.command?.context).toBe('/x this is too graphic');
       });
 
-      it('detects /veil command', () => {
-        const result = checkSafetyCommands('/veil', sessionId);
+      it('detects /veil command', async () => {
+        const result = await checkSafetyCommands('/veil', sessionId);
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('veil');
         expect(result.command?.triggeredBy).toBe('explicit_command');
         expect(result.response).toBeDefined();
       });
 
-      it('detects /pause command', () => {
-        const result = checkSafetyCommands('/pause', sessionId);
+      it('detects /pause command', async () => {
+        const result = await checkSafetyCommands('/pause', sessionId);
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('pause');
         expect(result.shouldPause).toBe(true);
       });
 
-      it('detects /resume command', () => {
-        const result = checkSafetyCommands('/resume', sessionId);
+      it('detects /resume command', async () => {
+        const result = await checkSafetyCommands('/resume', sessionId);
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('resume');
         expect(result.shouldResume).toBe(true);
       });
 
-      it('handles case sensitivity in commands', () => {
-        const result1 = checkSafetyCommands('/X', sessionId);
-        const result2 = checkSafetyCommands('/PAUSE', sessionId);
+      it('handles case sensitivity in commands', async () => {
+        const result1 = await checkSafetyCommands('/X', sessionId);
+        const result2 = await checkSafetyCommands('/PAUSE', sessionId);
         
         // Should work with toLowerCase conversion
         expect(result1.isSafetyCommand).toBe(true);
@@ -53,9 +53,9 @@ describe('Safety Commands', () => {
     });
 
     describe('Auto-triggered Commands', () => {
-      it('detects x-card trigger words', () => {
+      it('detects x-card trigger words', async () => {
         const aiResponse = 'The scene contains graphic violence and blood.';
-        const result = checkSafetyCommands('This is uncomfortable', sessionId, aiResponse);
+        const result = await checkSafetyCommands('This is uncomfortable', sessionId, aiResponse);
         
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('x_card');
@@ -65,9 +65,9 @@ describe('Safety Commands', () => {
         expect(result.shouldPause).toBe(true);
       });
 
-      it('detects veil trigger words', () => {
+      it('detects veil trigger words', async () => {
         const aiResponse = 'They engage in suggestive behavior.';
-        const result = checkSafetyCommands('This feels inappropriate', sessionId, aiResponse);
+        const result = await checkSafetyCommands('This feels inappropriate', sessionId, aiResponse);
         
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('veil');
@@ -75,9 +75,9 @@ describe('Safety Commands', () => {
         expect(result.command?.triggerWord).toBeDefined();
       });
 
-      it('detects pause trigger words', () => {
+      it('detects pause trigger words', async () => {
         const aiResponse = 'Everything is overwhelming.';
-        const result = checkSafetyCommands('This is too much', sessionId, aiResponse);
+        const result = await checkSafetyCommands('This is too much', sessionId, aiResponse);
         
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('pause');
@@ -87,21 +87,21 @@ describe('Safety Commands', () => {
     });
 
     describe('Non-safety messages', () => {
-      it('allows normal messages through', () => {
-        const result = checkSafetyCommands('I attack the goblin', sessionId);
+      it('allows normal messages through', async () => {
+        const result = await checkSafetyCommands('I attack the goblin', sessionId);
         expect(result.isSafetyCommand).toBe(false);
         expect(result.shouldProcessNormal).toBe(true);
       });
 
-      it('allows dice commands through', () => {
-        const result = checkSafetyCommands('/roll d20+5 for attack', sessionId);
+      it('allows dice commands through', async () => {
+        const result = await checkSafetyCommands('/roll d20+5 for attack', sessionId);
         expect(result.isSafetyCommand).toBe(false);
         expect(result.shouldProcessNormal).toBe(true);
       });
 
-      it('allows normal AI responses through', () => {
+      it('allows normal AI responses through', async () => {
         const aiResponse = 'You see a beautiful forest and a clear stream.';
-        const result = checkSafetyCommands('This is nice', sessionId, aiResponse);
+        const result = await checkSafetyCommands('This is nice', sessionId, aiResponse);
         expect(result.isSafetyCommand).toBe(false);
         expect(result.shouldProcessNormal).toBe(true);
       });

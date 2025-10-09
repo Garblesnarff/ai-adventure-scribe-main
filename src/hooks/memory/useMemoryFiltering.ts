@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Memory, MemoryType, MemorySubcategory } from '@/components/game/memory/types';
+import { Memory, MemoryType, MemorySubcategory, isValidMemoryType } from '@/components/game/memory/types';
 
 interface FilterOptions {
   types?: MemoryType[];
@@ -10,52 +10,59 @@ interface FilterOptions {
   timeframe?: 'recent' | 'all';
 }
 
+const EMPTY_OPTIONS: Readonly<FilterOptions> = {};
+
 /**
  * Custom hook for advanced memory filtering and sorting
  */
 export const useMemoryFiltering = (
   memories: Memory[] | null | undefined,
-  options: FilterOptions = {}
+  options: FilterOptions | null | undefined = {}
 ) => {
+  const safeOptions = options ?? EMPTY_OPTIONS;
+
   return useMemo(() => {
     // Handle null/undefined memories array
     if (!memories || !Array.isArray(memories)) {
       return [];
     }
     
+    // Validate and filter options
+    const validTypes = safeOptions.types?.filter(type => isValidMemoryType(type)) || [];
+    
     let filtered = [...memories];
 
-    // Filter by types
-    if (options.types?.length) {
-      filtered = filtered.filter(memory => options.types?.includes(memory.type));
+    // Filter by types (only use valid types to prevent errors)
+    if (validTypes.length) {
+      filtered = filtered.filter(memory => validTypes.includes(memory.type));
     }
 
     // Filter by subcategories
-    if (options.subcategories?.length) {
+    if (safeOptions.subcategories?.length) {
       filtered = filtered.filter(memory => 
-        memory.subcategory && options.subcategories?.includes(memory.subcategory)
+        memory.subcategory && safeOptions.subcategories?.includes(memory.subcategory)
       );
     }
 
     // Filter by tags
-    if (options.tags?.length) {
+    if (safeOptions.tags?.length) {
       filtered = filtered.filter(memory => 
-        memory.tags?.some(tag => options.tags?.includes(tag))
+        memory.tags?.some(tag => safeOptions.tags?.includes(tag))
       );
     }
 
     // Filter by context
-    if (options.contextId) {
-      filtered = filtered.filter(memory => memory.context_id === options.contextId);
+    if (safeOptions.contextId) {
+      filtered = filtered.filter(memory => memory.context_id === safeOptions.contextId);
     }
 
     // Filter by importance
-    if (options.minImportance !== undefined) {
-      filtered = filtered.filter(memory => memory.importance >= options.minImportance);
+    if (safeOptions.minImportance !== undefined) {
+      filtered = filtered.filter(memory => memory.importance >= safeOptions.minImportance);
     }
 
     // Filter by timeframe
-    if (options.timeframe === 'recent') {
+    if (safeOptions.timeframe === 'recent') {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       filtered = filtered.filter(memory => memory.created_at >= oneHourAgo);
     }
@@ -69,7 +76,7 @@ export const useMemoryFiltering = (
       // Secondary sort by creation date
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [memories, options]);
+  }, [memories, safeOptions]);
 };
 
 /**
