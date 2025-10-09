@@ -12,6 +12,7 @@ import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
 import { GameSidePanel } from './MemoryPanel';
 import { StatsBar } from './StatsBar';
+import { SafetyBanner } from '../safety/SafetyBanner';
 import { MessageHandler } from './message/MessageHandler';
 import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
@@ -284,6 +285,16 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   // UI state management
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
+  
+  // Safety state management
+  const [lastSafetyCommand, setLastSafetyCommand] = useState<{
+    type: 'x_card' | 'veil' | 'pause' | 'resume';
+    timestamp: string;
+    autoTriggered?: boolean;
+  } | undefined>();
+  const [contentWarnings] = useState<string[]>([]);
+  const [comfortLevel] = useState<'pg' | 'pg13' | 'r' | 'custom'>('pg13');
+  const [showSafetyInfo] = useState(false);
 
   // Get message context for sending initial greeting
   const { messages, sendMessage, queueStatus, isLoading: messagesLoading } = useMessageContext();
@@ -427,6 +438,15 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             </div>
                           </div>
                         </div>
+
+                        {/* Safety Banner */}
+                        <SafetyBanner
+                          isPaused={sessionData?.is_paused || false}
+                          lastSafetyCommand={lastSafetyCommand}
+                          contentWarnings={contentWarnings}
+                          comfortLevel={comfortLevel}
+                          showSafetyInfo={showSafetyInfo}
+                        />
 
                         {/* Enhanced Combat Mode Toggle & Status */}
                         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 md:ml-8 w-full md:w-auto">
