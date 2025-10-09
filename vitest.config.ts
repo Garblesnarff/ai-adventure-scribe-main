@@ -24,6 +24,7 @@ export default defineConfig({
       'src/utils/__tests__/spell-preparation.test.ts',
       'src/utils/__tests__/spell-data.test.ts',
       'src/utils/memoryClassification.test.ts',
+      'src/utils/__tests__/safetyCommands.test.ts',
       'src/agents/services/intent/PlayerIntentDetector.test.ts',
       'src/hooks/__tests__/useSpellSelection.test.ts',
       'src/__tests__/unit/spell-class-restrictions.test.ts',

@@ -8,6 +8,7 @@ import { useSessionValidator } from '../session/SessionValidator';
 import { parseDiceCommand } from '@/utils/diceCommandParser';
 import { rollDice } from '@/utils/diceUtils';
 import { useCharacter } from '@/contexts/CharacterContext';
+import { checkSafetyCommands, processSafetyCommand } from '@/utils/safetyCommands';
 import logger from '@/lib/logger';
 
 interface MessageHandlerProps {
@@ -55,11 +56,41 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
     if (queueStatus === 'processing') return; // Or if isProcessing from its own state
 
     try {
+      // Check if game is paused and this isn't a resume command
+      const trimmedInput = playerInput.trim().toLowerCase();
+      const isResumeCommand = trimmedInput === '/resume' || trimmedInput.startsWith('/resume ');
+      
+      // Note: We'll need to get the current session state to check if paused
+      // For now, we'll assume we can check a property on the session
+      // This would be enhanced to check actual session_state.is_paused
       logger.info('[Memory Flow] Starting message handling for:', playerInput);
 
       // Validate session before proceeding (if still needed)
       const isValid = await validateSession();
       if (!isValid) return;
+
+      // Check if this is a safety command
+      const safetyCheck = checkSafetyCommands(playerInput, sessionId);
+      if (safetyCheck.isSafetyCommand && safetyCheck.command) {
+        logger.info('🛡️ [Safety] Safety command detected:', safetyCheck.command);
+        
+        // Send safety command response
+        if (safetyCheck.response) {
+          await sendMessage(safetyCheck.response);
+        } else {
+          const response = await processSafetyCommand(safetyCheck.command, sessionId);
+          await sendMessage(response);
+        }
+        
+        // Handle pause/resume state changes
+        if (safetyCheck.shouldPause) {
+          await updateGameSessionState({ is_paused: true });
+        } else if (safetyCheck.shouldResume) {
+          await updateGameSessionState({ is_paused: false });
+        }
+        
+        return; // Exit early for safety commands
+      }
 
       // Check if this is a dice roll command
       const diceCommand = parseDiceCommand(playerInput);
@@ -173,6 +204,27 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       logger.info('[Memory Flow] Getting AI response for session:', sessionId);
       // Pass necessary context to getAIResponse. It fetches its own campaign/char details if needed.
       const aiResponseMessage = await getAIResponse([...messages, playerMessage], sessionId); 
+      
+      // Check for auto-triggered safety commands in AI response
+      const autoSafetyCheck = checkSafetyCommands(playerInput, sessionId, aiResponseMessage.text);
+      if (autoSafetyCheck.isSafetyCommand && autoSafetyCheck.command) {
+        logger.info('🛡️ [Safety] Auto-triggered safety command detected:', autoSafetyCheck.command);
+        
+        // Send safety command response instead of AI response
+        if (autoSafetyCheck.response) {
+          await sendMessage(autoSafetyCheck.response);
+        } else {
+          const response = await processSafetyCommand(autoSafetyCheck.command, sessionId);
+          await sendMessage(response);
+        }
+        
+        // Handle pause state
+        if (autoSafetyCheck.shouldPause) {
+          await updateGameSessionState({ is_paused: true });
+        }
+        
+        return; // Exit early for auto-triggered safety commands
+      }
       
       await sendMessage(aiResponseMessage); // Adds AI message to UI and dialogue_history
       
