@@ -14,10 +14,15 @@ interface FilterOptions {
  * Custom hook for advanced memory filtering and sorting
  */
 export const useMemoryFiltering = (
-  memories: Memory[],
+  memories: Memory[] | null | undefined,
   options: FilterOptions = {}
 ) => {
   return useMemo(() => {
+    // Handle null/undefined memories array
+    if (!memories || !Array.isArray(memories)) {
+      return [];
+    }
+    
     let filtered = [...memories];
 
     // Filter by types

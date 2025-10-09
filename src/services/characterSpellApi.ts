@@ -32,7 +32,14 @@ class CharacterSpellService {
   private baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 
   private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-    const { data: { session } } = await supabase.auth.getSession();
+    // Try to get fresh session
+    const { data: { session }, error } = await supabase.auth.refreshSession();
+    
+    if (error) {
+      logger.error('[CharacterSpellService] Error refreshing token:', error);
+      throw new Error('Failed to refresh authentication. Please log in again.');
+    }
+
     const token = session?.access_token;
 
     if (!token) {
@@ -50,6 +57,34 @@ class CharacterSpellService {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      
+      // If 401, try refreshing the session once more
+      if (response.status === 401) {
+        logger.warn('[CharacterSpellService] Got 401, attempting token refresh...');
+        const { data: { session: freshSession }, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !freshSession?.access_token) {
+          throw new Error('Authentication expired. Please log in again.');
+        }
+        
+        // Retry with fresh token
+        const retryResponse = await fetch(`${this.baseUrl}${url}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${freshSession.access_token}`,
+            ...options.headers,
+          },
+        });
+        
+        if (!retryResponse.ok) {
+          const retryError = await retryResponse.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(retryError.error || `Request failed: ${retryResponse.status} ${retryResponse.statusText}`);
+        }
+        
+        return retryResponse;
+      }
+      
       throw new Error(error.error || `Request failed: ${response.status} ${response.statusText}`);
     }
 
