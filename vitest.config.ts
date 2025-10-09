@@ -30,7 +30,8 @@ export default defineConfig({
       'src/__tests__/unit/response-pipeline.test.ts',
       'src/__tests__/components/spell-selection-component.test.tsx',
       'src/components/spells/__tests__/SpellCard.test.tsx',
-      'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx'
+      'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx',
+      'src/engine/**/*.test.ts'
     ],
     exclude: [
       'node_modules/**',
@@ -63,6 +64,7 @@ export default defineConfig({
         'src/components/spells/SpellCard.tsx',
         'src/agents/services/intent/PlayerIntentDetector.ts',
         'src/hooks/useSpellSelection.ts',
+        'src/engine/**/*.ts',
       ],
       exclude: [
         '**/__tests__/**',
@@ -79,6 +81,7 @@ export default defineConfig({
         'tailwind.config.ts',
         // Temporarily exclude low-covered utils until tests are added
         'src/utils/spell-preparation.ts',
+        'src/engine/eval/**/*.ts', // Exclude eval test utilities
       ],
       thresholds: {
         statements: 80,
