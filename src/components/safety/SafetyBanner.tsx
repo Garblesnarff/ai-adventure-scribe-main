@@ -45,18 +45,36 @@ export const SafetyBanner: React.FC<SafetyBannerProps> = ({
 
   if (isPaused) {
     return (
-      <Card className="mb-4 border-2 border-orange-300 bg-orange-50/90 backdrop-blur-sm">
+      <Card 
+        className="mb-4 border-2 border-orange-300 bg-orange-50/90 backdrop-blur-sm"
+        role="alert"
+        aria-live="polite"
+        aria-label="Game is paused for safety"
+        tabIndex={0}
+      >
         <div className="p-4 flex items-center gap-3">
-          <PauseCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
+          <PauseCircle 
+            className="w-6 h-6 text-orange-600 flex-shrink-0"
+            aria-hidden="true"
+          />
           <div className="flex-1">
-            <h3 className="font-semibold text-orange-800">Game Paused</h3>
-            <p className="text-sm text-orange-700">
+            <h3 className="font-semibold text-orange-800" id="paused-title">
+              Game Paused
+            </h3>
+            <p className="text-sm text-orange-700" id="paused-description">
               The game is currently paused. Use /resume when you're ready to continue.
               Your comfort and safety are the priority.
             </p>
+            <div className="mt-2 text-xs text-orange-600">
+              <span aria-hidden="true">⌨️</span> Keyboard shortcut: Press <kbd className="px-1 py-0.5 bg-orange-200 rounded">Ctrl+R</kbd> to resume
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-orange-600">
-            <Shield className="w-4 h-4" />
+          <div 
+            className="flex items-center gap-2 text-xs text-orange-600"
+            role="img"
+            aria-label="Safety tools are active"
+          >
+            <Shield className="w-4 h-4" aria-hidden="true" />
             Safety Tools Active
           </div>
         </div>
@@ -66,36 +84,65 @@ export const SafetyBanner: React.FC<SafetyBannerProps> = ({
 
   if (lastSafetyCommand) {
     const timeSince = getTimeSinceSafetyCommand(lastSafetyCommand.timestamp);
+    const isXCard = lastSafetyCommand.type === 'x_card';
+    const safetyAriaLabel = isXCard 
+      ? 'X-card was activated to stop uncomfortable content'
+      : 'Safety tool was used to manage content';
     
     return (
-      <Card className={`mb-4 ${
-        lastSafetyCommand.type === 'x_card' 
-          ? 'border-2 border-red-300 bg-red-50/90' 
-          : 'border-2 border-blue-300 bg-blue-50/90'
-      } backdrop-blur-sm`}>
+      <Card 
+        className={`mb-4 ${
+          isXCard 
+            ? 'border-2 border-red-300 bg-red-50/90' 
+            : 'border-2 border-blue-300 bg-blue-50/90'
+        } backdrop-blur-sm`}
+        role="alert"
+        aria-live="assertive"
+        aria-label={safetyAriaLabel}
+        tabIndex={0}
+      >
         <div className="p-4 flex items-center gap-3">
-          {lastSafetyCommand.type === 'x_card' ? (
-            <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+          {isXCard ? (
+            <AlertTriangle 
+              className="w-6 h-6 text-red-600 flex-shrink-0" 
+              aria-hidden="true"
+            />
           ) : (
-            <Shield className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            <Shield 
+              className="w-6 h-6 text-blue-600 flex-shrink-0" 
+              aria-hidden="true"
+            />
           )}
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-800">
-              {lastSafetyCommand.type === 'x_card' ? 'X-Card Activated' : 'Safety Tool Used'}
+            <h3 className="font-semibold text-gray-800" id="safety-title">
+              {isXCard ? 'X-Card Activated' : 'Safety Tool Used'}
             </h3>
-            <p className="text-sm text-gray-700">
-              {lastSafetyCommand.type === 'x_card' 
+            <p className="text-sm text-gray-700" id="safety-description">
+              {isXCard 
                 ? 'The scene was stopped and content was rewound for your comfort.'
                 : lastSafetyCommand.type === 'veil'
                 ? 'Sensitive content was faded to maintain comfort.'
                 : 'Safety measures were applied to ensure a comfortable experience.'
               }
               {lastSafetyCommand.autoTriggered && (
-                <span className="ml-2 italic">(Auto-triggered)</span>
+                <span className="ml-2 italic" aria-label="This was automatically triggered">
+                  (Auto-triggered)
+                </span>
               )}
             </p>
+            <div className="mt-1 text-xs text-gray-600">
+              <span aria-hidden="true">⌨️</span> Keyboard shortcuts: 
+              <kbd className="mx-1 px-1 py-0.5 bg-gray-200 rounded" aria-label="X-card shortcut">Ctrl+X</kbd> X-card, 
+              <kbd className="mx-1 px-1 py-0.5 bg-gray-200 rounded" aria-label="Pause shortcut">Ctrl+P</kbd> Pause
+            </div>
           </div>
-          <div className="text-xs text-gray-500">{timeSince}</div>
+          <div 
+            className="text-xs text-gray-500" 
+            role="timer"
+            aria-label={`Safety command activated ${timeSince}`}
+          >
+            {timeSince}
+          </div>
         </div>
       </Card>
     );

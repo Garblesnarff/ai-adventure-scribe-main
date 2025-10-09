@@ -69,18 +69,37 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       const isValid = await validateSession();
       if (!isValid) return;
 
+      // Get current session state for context
+      const currentSessionState = { is_paused: false, turn_count: turnCount }; // Would get actual session state
+      
       // Check if this is a safety command
-      const safetyCheck = checkSafetyCommands(playerInput, sessionId);
+      const safetyCheck = await checkSafetyCommands(playerInput, sessionId);
       if (safetyCheck.isSafetyCommand && safetyCheck.command) {
         logger.info('🛡️ [Safety] Safety command detected:', safetyCheck.command);
         
         // Send safety command response
+        let safetyResponse: ChatMessage;
         if (safetyCheck.response) {
-          await sendMessage(safetyCheck.response);
+          safetyResponse = safetyCheck.response;
+          await sendMessage(safetyResponse);
         } else {
-          const response = await processSafetyCommand(safetyCheck.command, sessionId);
-          await sendMessage(response);
+          safetyResponse = await processSafetyCommand(
+            safetyCheck.command, 
+            sessionId, 
+            playerInput,
+            undefined,
+            currentSessionState
+          );
+          await sendMessage(safetyResponse);
         }
+        
+        // Store safety event in memory with high importance
+        await extractMemories(`Safety command ${safetyCheck.command.type} activated: ${safetyCheck.command.context}`, {
+          importance: 9, // High importance
+          tags: ['safety', safetyCheck.command.type, safetyCheck.command.autoTriggered ? 'auto-triggered' : 'manual'],
+          type: 'game_event',
+          context_id: sessionId
+        });
         
         // Handle pause/resume state changes
         if (safetyCheck.shouldPause) {
@@ -206,17 +225,33 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       const aiResponseMessage = await getAIResponse([...messages, playerMessage], sessionId); 
       
       // Check for auto-triggered safety commands in AI response
-      const autoSafetyCheck = checkSafetyCommands(playerInput, sessionId, aiResponseMessage.text);
+      const autoSafetyCheck = await checkSafetyCommands(playerInput, sessionId, aiResponseMessage.text);
       if (autoSafetyCheck.isSafetyCommand && autoSafetyCheck.command) {
         logger.info('🛡️ [Safety] Auto-triggered safety command detected:', autoSafetyCheck.command);
         
         // Send safety command response instead of AI response
+        let safetyResponse: ChatMessage;
         if (autoSafetyCheck.response) {
-          await sendMessage(autoSafetyCheck.response);
+          safetyResponse = autoSafetyCheck.response;
+          await sendMessage(safetyResponse);
         } else {
-          const response = await processSafetyCommand(autoSafetyCheck.command, sessionId);
-          await sendMessage(response);
+          safetyResponse = await processSafetyCommand(
+            autoSafetyCheck.command,
+            sessionId,
+            playerInput,
+            aiResponseMessage.text,
+            currentSessionState
+          );
+          await sendMessage(safetyResponse);
         }
+        
+        // Store safety event in memory with high importance
+        await extractMemories(`Auto-triggered safety command ${autoSafetyCheck.command.type}: ${autoSafetyCheck.command.context}`, {
+          importance: 8, // High but slightly lower than manual
+          tags: ['safety', autoSafetyCheck.command.type, 'auto-triggered', 'ai-response'],
+          type: 'game_event',
+          context_id: sessionId
+        });
         
         // Handle pause state
         if (autoSafetyCheck.shouldPause) {

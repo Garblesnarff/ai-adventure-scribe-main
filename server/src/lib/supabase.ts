@@ -17,12 +17,29 @@ export const supabaseService = createClient(
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || '';
 
 export async function verifySupabaseToken(token: string): Promise<{ userId: string; email?: string } | null> {
+  if (JWT_SECRET) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      if (decoded?.sub) {
+        return {
+          userId: decoded.sub,
+          email: decoded.email,
+        };
+      }
+    } catch {
+      // Fall through and attempt verification via Supabase service client
+    }
+  }
+
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    if (!decoded || !decoded.sub) return null;
+    const { data, error } = await supabaseService.auth.getUser(token);
+    if (error || !data?.user) {
+      return null;
+    }
+
     return {
-      userId: decoded.sub,
-      email: decoded.email,
+      userId: data.user.id,
+      email: data.user.email ?? undefined,
     };
   } catch {
     return null;

@@ -11,6 +11,12 @@ create table if not exists public.session_config (
   pause_enabled boolean not null default true,
   auto_pause_on_trigger boolean not null default false,
   
+  -- Configurable trigger words
+  custom_x_card_triggers text[] default '{}',
+  custom_veil_triggers text[] default '{}',
+  custom_pause_triggers text[] default '{}',
+  strict_mode_triggers boolean not null default false, -- Use only custom triggers if true
+  
   -- Content filters and boundaries  
   content_warnings text[] default '{}',
   hard_boundaries text[] default '{}',
