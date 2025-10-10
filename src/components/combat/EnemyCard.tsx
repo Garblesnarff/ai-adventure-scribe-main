@@ -69,7 +69,7 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
             modifier={damageModifier}
             label=""
             className="flex-shrink-0"
-            disabled={true}
+            displayOnly
           />
         )}
         {damageType !== 'none' && (
