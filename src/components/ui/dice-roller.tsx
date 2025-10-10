@@ -22,6 +22,7 @@ interface DiceRollerProps {
   advantage?: boolean;
   disadvantage?: boolean;
   disabled?: boolean;
+  displayOnly?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ const DiceRoller: React.FC<DiceRollerProps> = ({
   advantage = false,
   disadvantage = false,
   disabled = false,
+  displayOnly = false,
 }) => {
   const [lastRoll, setLastRoll] = useState<DiceRollResult | null>(null);
   const [isRolling, setIsRolling] = useState(false);
@@ -114,24 +116,36 @@ const DiceRoller: React.FC<DiceRollerProps> = ({
     return '';
   };
 
-  return (
+  const baseContent = (
     <div className={cn('flex items-center gap-2', className)}>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={performRoll}
-        disabled={disabled || isRolling}
-        className="flex items-center gap-1 hover:bg-primary/10"
-      >
-        <Dice6 className={cn('w-3 h-3', isRolling && 'animate-spin')} />
-        {label || dice}
-        {modifier !== 0 && (
-          <span className="text-xs">
-            {modifier > 0 ? '+' : ''}{modifier}
-          </span>
-        )}
-      </Button>
-      
+      {displayOnly ? (
+        <div className="flex items-center gap-1 px-2 py-1 border border-border rounded-sm bg-muted/60">
+          <Dice6 className="w-3 h-3" />
+          <span className="text-xs font-medium">{label || dice}</span>
+          {modifier !== 0 && (
+            <span className="text-xs">
+              {modifier > 0 ? '+' : ''}{modifier}
+            </span>
+          )}
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={performRoll}
+          disabled={disabled || isRolling}
+          className="flex items-center gap-1 hover:bg-primary/10"
+        >
+          <Dice6 className={cn('w-3 h-3', isRolling && 'animate-spin')} />
+          {label || dice}
+          {modifier !== 0 && (
+            <span className="text-xs">
+              {modifier > 0 ? '+' : ''}{modifier}
+            </span>
+          )}
+        </Button>
+      )}
+
       {/* Advantage/Disadvantage indicators */}
       {advantage && (
         <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
@@ -145,7 +159,7 @@ const DiceRoller: React.FC<DiceRollerProps> = ({
           DIS
         </Badge>
       )}
-      
+
       {/* Last roll result */}
       {lastRoll && (
         <Badge variant="outline" className={cn('text-sm font-mono', getResultColor())}>
@@ -154,6 +168,12 @@ const DiceRoller: React.FC<DiceRollerProps> = ({
       )}
     </div>
   );
+
+  if (displayOnly) {
+    return baseContent;
+  }
+
+  return baseContent;
 };
 
 export default DiceRoller;

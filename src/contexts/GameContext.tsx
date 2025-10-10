@@ -321,6 +321,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Track this AI response
     const processedRollRequests: DiceRollRequest[] = [];
 
+    const seenKeys = new Set<string>();
+
     rollRequests.forEach((request: any) => {
       try {
         // Convert AI request format to our internal format
@@ -337,6 +339,24 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             ...parseRollFormula(request.formula)
           }
         };
+
+        const dedupeKey = [
+          rollRequest.requestType,
+          rollRequest.participantId || 'any',
+          rollRequest.description,
+          rollRequest.rollConfig.dieType,
+          rollRequest.rollConfig.count,
+          rollRequest.rollConfig.modifier,
+          rollRequest.rollConfig.advantage ? 'adv' : '',
+          rollRequest.rollConfig.disadvantage ? 'dis' : ''
+        ].join('|');
+
+        if (seenKeys.has(dedupeKey)) {
+          logger.info('🎲 Skipping duplicate AI roll request before queue:', rollRequest);
+          return;
+        }
+
+        seenKeys.add(dedupeKey);
 
         const rollId = requestDiceRoll(rollRequest);
         processedRollRequests.push({
