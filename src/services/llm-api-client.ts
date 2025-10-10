@@ -13,6 +13,7 @@ export interface GenerateTextParams {
   maxTokens?: number;
   temperature?: number;
   history?: LLMHistoryMessage[];
+  provider?: 'openrouter' | 'gemini';
 }
 
 export interface GenerateImageParams {
@@ -55,7 +56,9 @@ class LlmApiClient {
   }
 
   async generateText(params: GenerateTextParams): Promise<string> {
-    const res = await this.fetchWithAuth('/v1/llm/generate', {
+    const preferredProvider = params.provider || (import.meta.env.VITE_LLM_PROVIDER as 'openrouter' | 'gemini' | undefined) || 'openrouter';
+
+    const makeReq = async (provider: 'openrouter' | 'gemini') => this.fetchWithAuth('/v1/llm/generate', {
       method: 'POST',
       body: JSON.stringify({
         prompt: params.prompt,
@@ -63,10 +66,31 @@ class LlmApiClient {
         maxTokens: params.maxTokens,
         temperature: params.temperature,
         history: params.history,
+        provider,
       }),
     });
-    const data = await res.json();
-    return data?.text ?? '';
+
+    try {
+      const res = await makeReq(preferredProvider);
+      const data = await res.json();
+      return data?.text ?? '';
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      const isConfigErr = /Server not configured for OpenRouter/i.test(msg);
+      const isGeminiConfigErr = /Server not configured for Gemini/i.test(msg);
+
+      if (preferredProvider === 'openrouter' && isConfigErr) {
+        const res = await makeReq('gemini');
+        const data = await res.json();
+        return data?.text ?? '';
+      }
+      if (preferredProvider === 'gemini' && isGeminiConfigErr) {
+        const res = await makeReq('openrouter');
+        const data = await res.json();
+        return data?.text ?? '';
+      }
+      throw err;
+    }
   }
 
   async generateImage(params: GenerateImageParams): Promise<string> {
