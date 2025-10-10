@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Memory, MemoryType, MemorySubcategory, isValidMemoryType } from '@/components/game/memory/types';
+import { Memory, MemoryType, MemorySubcategory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
 
 interface FilterOptions {
   types?: MemoryType[];
@@ -12,6 +12,54 @@ interface FilterOptions {
 
 const EMPTY_OPTIONS: Readonly<FilterOptions> = {};
 
+const sanitizeFilterOptions = (options: FilterOptions | null | undefined): FilterOptions => {
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    return EMPTY_OPTIONS;
+  }
+
+  const sanitized: FilterOptions = {};
+
+  if (Array.isArray(options.types)) {
+    const validTypes = options.types.filter(
+      (type): type is MemoryType => typeof type === 'string' && isValidMemoryType(type)
+    );
+    if (validTypes.length) {
+      sanitized.types = validTypes;
+    }
+  }
+
+  if (Array.isArray(options.subcategories)) {
+    const validSubcategories = options.subcategories.filter(
+      (subcategory): subcategory is MemorySubcategory =>
+        typeof subcategory === 'string' && isValidMemorySubcategory(subcategory)
+    );
+    if (validSubcategories.length) {
+      sanitized.subcategories = validSubcategories;
+    }
+  }
+
+  if (Array.isArray(options.tags)) {
+    const validTags = options.tags.filter((tag): tag is string => typeof tag === 'string' && tag.length > 0);
+    if (validTags.length) {
+      sanitized.tags = validTags;
+    }
+  }
+
+  if (typeof options.contextId === 'string' && options.contextId.trim().length) {
+    sanitized.contextId = options.contextId;
+  }
+
+  if (typeof options.minImportance === 'number' && Number.isFinite(options.minImportance)) {
+    sanitized.minImportance = options.minImportance;
+  }
+
+  if (options.timeframe === 'recent' || options.timeframe === 'all') {
+    sanitized.timeframe = options.timeframe;
+  }
+
+  return sanitized;
+};
+
 /**
  * Custom hook for advanced memory filtering and sorting
  */
@@ -19,17 +67,21 @@ export const useMemoryFiltering = (
   memories: Memory[] | null | undefined,
   options: FilterOptions | null | undefined = {}
 ) => {
-  const safeOptions = options ?? EMPTY_OPTIONS;
+  const normalizedOptions = useMemo<FilterOptions>(() => sanitizeFilterOptions(options), [options]);
 
   return useMemo(() => {
     // Handle null/undefined memories array
     if (!memories || !Array.isArray(memories)) {
       return [];
     }
-    
-    // Validate and filter options
-    const validTypes = safeOptions.types?.filter(type => isValidMemoryType(type)) || [];
-    
+
+    const validTypes = normalizedOptions.types ?? [];
+    const selectedSubcategories = normalizedOptions.subcategories ?? [];
+    const selectedTags = normalizedOptions.tags ?? [];
+    const contextId = normalizedOptions.contextId;
+    const minImportance = normalizedOptions.minImportance;
+    const timeframe = normalizedOptions.timeframe;
+
     let filtered = [...memories];
 
     // Filter by types (only use valid types to prevent errors)
@@ -38,31 +90,31 @@ export const useMemoryFiltering = (
     }
 
     // Filter by subcategories
-    if (safeOptions.subcategories?.length) {
+    if (selectedSubcategories.length) {
       filtered = filtered.filter(memory => 
-        memory.subcategory && safeOptions.subcategories?.includes(memory.subcategory)
+        memory.subcategory && selectedSubcategories.includes(memory.subcategory)
       );
     }
 
     // Filter by tags
-    if (safeOptions.tags?.length) {
+    if (selectedTags.length) {
       filtered = filtered.filter(memory => 
-        memory.tags?.some(tag => safeOptions.tags?.includes(tag))
+        memory.tags?.some(tag => selectedTags.includes(tag))
       );
     }
 
     // Filter by context
-    if (safeOptions.contextId) {
-      filtered = filtered.filter(memory => memory.context_id === safeOptions.contextId);
+    if (contextId) {
+      filtered = filtered.filter(memory => memory.context_id === contextId);
     }
 
     // Filter by importance
-    if (safeOptions.minImportance !== undefined) {
-      filtered = filtered.filter(memory => memory.importance >= safeOptions.minImportance);
+    if (typeof minImportance === 'number') {
+      filtered = filtered.filter(memory => memory.importance >= minImportance);
     }
 
     // Filter by timeframe
-    if (safeOptions.timeframe === 'recent') {
+    if (timeframe === 'recent') {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       filtered = filtered.filter(memory => memory.created_at >= oneHourAgo);
     }
@@ -76,7 +128,7 @@ export const useMemoryFiltering = (
       // Secondary sort by creation date
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-  }, [memories, safeOptions]);
+  }, [memories, normalizedOptions]);
 };
 
 /**

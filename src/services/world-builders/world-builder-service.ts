@@ -5,6 +5,7 @@ import { MemoryManager } from '../memory-manager';
 import type { Memory } from '@/types/memory';
 import logger from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
+import { isWorldBuilderEnabled } from '@/config/featureFlags';
 
 export interface WorldBuildingContext {
   campaignId: string;
@@ -149,20 +150,6 @@ export class WorldBuilderService {
    * Expand the world based on current context
    */
   static async expandWorld(context: WorldBuildingContext): Promise<WorldExpansionResult> {
-    logger.info(`🌍 Expanding world for: "${context.playerAction}"`);
-    
-    // Security check: Validate user owns this campaign
-    const hasAccess = await this.validateUserCampaignAccess(context.campaignId);
-    if (!hasAccess) {
-      logger.warn('🚨 Unauthorized world building attempt blocked');
-      return {
-        locations: [],
-        npcs: [],
-        quests: [],
-        narrativeElements: { hooks: [], consequences: [], opportunities: [] }
-      };
-    }
-    
     const result: WorldExpansionResult = {
       locations: [],
       npcs: [],
@@ -173,6 +160,20 @@ export class WorldBuilderService {
         opportunities: []
       }
     };
+
+    if (!isWorldBuilderEnabled()) {
+      logger.debug('World building disabled via feature flag');
+      return result;
+    }
+
+    logger.info(`🌍 Expanding world for: "${context.playerAction}"`);
+
+    // Security check: Validate user owns this campaign
+    const hasAccess = await this.validateUserCampaignAccess(context.campaignId);
+    if (!hasAccess) {
+      logger.warn('🚨 Unauthorized world building attempt blocked');
+      return result;
+    }
     
     try {
       // Analyze what kind of expansion is needed
@@ -265,6 +266,10 @@ export class WorldBuilderService {
     playerMessage: string,
     aiResponse: string
   ): Promise<WorldExpansionResult | null> {
+    if (!isWorldBuilderEnabled()) {
+      logger.debug('World building disabled via feature flag');
+      return null;
+    }
     
     try {
       // Security check: Validate user owns this campaign
@@ -329,7 +334,12 @@ export class WorldBuilderService {
         scope: QuestRequest['scope'];
       }>;
     }
-  ) {
+  ): Promise<GeneratedLocation | GeneratedNPC | GeneratedQuest | null> {
+    if (!isWorldBuilderEnabled()) {
+      logger.debug('World building disabled via feature flag');
+      return null;
+    }
+
     const { type, campaignId, sessionId, characterId, specifications = {} } = request;
     
     try {

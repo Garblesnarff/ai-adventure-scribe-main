@@ -2,6 +2,8 @@ import { ChatMessage } from '@/types/game';
 import logger from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 
+const SAFETY_ENABLED = String(import.meta.env.VITE_ENABLE_SAFETY_GUARDS ?? '').toLowerCase() === 'true';
+
 // Debounce utility function
 const debounce = <T extends (...args: any[]) => void>(
   func: T,
@@ -81,6 +83,9 @@ export class SafetyCommandProcessor {
   }
 
   private async loadSessionConfig(): Promise<SessionConfig | null> {
+    if (!SAFETY_ENABLED) {
+      return null;
+    }
     // Cache config for 5 minutes
     if (this.safetyConfig && Date.now() < this.configCacheExpiry) {
       return this.safetyConfig;
@@ -94,6 +99,12 @@ export class SafetyCommandProcessor {
         .single();
 
       if (error) {
+        const code = (error as { code?: string }).code;
+        const status = (error as { status?: number }).status;
+        if (code === 'PGRST205' || code === 'PGRST103' || code === '42P01' || status === 404) {
+          logger.warn('🛡️ [Safety] session_config table not available, using defaults');
+          return null;
+        }
         logger.warn('🛡️ [Safety] Failed to load session config, using defaults:', error);
         return null;
       }
@@ -108,6 +119,9 @@ export class SafetyCommandProcessor {
   }
 
   private async getTriggerWords(): Promise<TriggerWords> {
+    if (!SAFETY_ENABLED) {
+      return { ...SAFETY_TRIGGER_WORDS };
+    }
     const config = await this.loadSessionConfig();
     
     const defaultTriggers = { ...SAFETY_TRIGGER_WORDS };
@@ -137,6 +151,9 @@ export class SafetyCommandProcessor {
    * Check if message contains explicit safety commands
    */
   checkExplicitSafetyCommands(message: string): SafetyCommandResponse {
+    if (!SAFETY_ENABLED) {
+      return { isSafetyCommand: false, shouldProcessNormal: true };
+    }
     const trimmedMessage = message.trim().toLowerCase();
     
     // Check for explicit /x command
@@ -184,6 +201,9 @@ export class SafetyCommandProcessor {
    * Check for auto-triggered safety commands based on content analysis
    */
   async checkAutoTriggerCommands(message: string, aiResponse?: string): Promise<SafetyCommandResponse> {
+    if (!SAFETY_ENABLED) {
+      return { isSafetyCommand: false, shouldProcessNormal: true };
+    }
     const combinedText = message.toLowerCase() + ' ' + (aiResponse?.toLowerCase() || '');
     const cacheKey = `${combinedText.substring(0, 100)}`; // First 100 chars as cache key
     
@@ -351,6 +371,15 @@ export class SafetyCommandProcessor {
     aiResponse?: string, 
     sessionState?: any
   ): Promise<ChatMessage> {
+    if (!SAFETY_ENABLED) {
+      return {
+        text: 'Safety command ignored (guardrails disabled).',
+        sender: 'system',
+        context: {
+          intent: 'safety_disabled'
+        }
+      };
+    }
     logger.info(`🛡️ [Safety] Processing ${command.type} command:`, {
       type: command.type,
       triggeredBy: command.triggeredBy,
@@ -399,6 +428,9 @@ export class SafetyCommandProcessor {
   }
 
   private async logSafetyEvent(command: SafetyCommand, playerMessage?: string, aiResponse?: string, sessionState?: any): Promise<void> {
+    if (!SAFETY_ENABLED) {
+      return;
+    }
     try {
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -481,6 +513,9 @@ export async function checkSafetyCommands(
   sessionId: string, 
   aiResponse?: string
 ): Promise<SafetyCommandResponse> {
+  if (!SAFETY_ENABLED) {
+    return { isSafetyCommand: false, shouldProcessNormal: true };
+  }
   try {
     const processor = new SafetyCommandProcessor(sessionId);
     
@@ -533,6 +568,15 @@ export async function processSafetyCommand(
   aiResponse?: string,
   sessionState?: any
 ): Promise<ChatMessage> {
+  if (!SAFETY_ENABLED) {
+    return {
+      text: 'Safety command ignored (guardrails disabled).',
+      sender: 'system',
+      context: {
+        intent: 'safety_disabled'
+      }
+    };
+  }
   try {
     const processor = new SafetyCommandProcessor(sessionId);
     return await processor.processSafetyCommand(command, playerMessage, aiResponse, sessionState);
