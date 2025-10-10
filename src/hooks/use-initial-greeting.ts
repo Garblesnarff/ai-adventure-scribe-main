@@ -221,7 +221,7 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
       // Create character introduction memory
       await onMemoryCreated({
         session_id: sessionId!,
-        type: 'character' as MemoryType,
+        type: 'character_moment' as MemoryType,
         subcategory: 'player',
         content: `${character.name}, a ${character.race?.name || character.race} ${character.class?.name || character.class} of level ${character.level || 1}, begins their adventure. Background: ${character.background?.name || character.background || 'Unknown'}.`,
         importance: 5,

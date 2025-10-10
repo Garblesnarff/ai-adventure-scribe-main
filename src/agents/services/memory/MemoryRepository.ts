@@ -1,7 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
+import { isSemanticMemoriesEnabled } from '@/config/featureFlags';
 
 import type { EnhancedMemory, MemoryQueryOptions } from '@/types/memory';
 import type { Memory } from '@/components/game/memory/types';
+
+let hasLoggedSemanticDisabled = false;
 
 export class MemoryRepository {
   async insertMemories(records: Array<Record<string, any>>): Promise<void> {
@@ -71,13 +75,39 @@ export class MemoryRepository {
   }
 
   async matchMemories(sessionId: string, embedding: string, limit: number, threshold: number) {
+    if (!isSemanticMemoriesEnabled()) {
+      if (!hasLoggedSemanticDisabled) {
+        logger.debug('[MemoryRepository] Semantic memories disabled; skipping semantic match.');
+        hasLoggedSemanticDisabled = true;
+      }
+      return [];
+    }
     const { data, error } = await supabase.rpc('match_memories', {
       query_embedding: embedding,
       session_id: sessionId,
       match_threshold: threshold,
       match_count: limit
     });
-    if (error) throw error;
+    if (error) {
+      const code = (error as { code?: string }).code;
+      const status = (error as { status?: number }).status;
+      const message = (error as { message?: string }).message?.toLowerCase() || '';
+      if (
+        code === 'PGRST202' ||
+        code === 'PGRST204' ||
+        code === 'PGRST205' ||
+        code === 'PGRST301' ||
+        code === 'PGRST116' ||
+        code === '42883' ||
+        code === '42P01' ||
+        status === 404 ||
+        message.includes('match_memories') && message.includes('not') && message.includes('exist')
+      ) {
+        // Function missing or table not in cache yet; treat as no results.
+        return [];
+      }
+      throw error;
+    }
     return data || [];
   }
 
@@ -107,6 +137,13 @@ export class MemoryRepository {
   }
 
   async invokeEmbedding(text: string): Promise<string | null> {
+    if (!isSemanticMemoriesEnabled()) {
+      if (!hasLoggedSemanticDisabled) {
+        logger.debug('[MemoryRepository] Semantic memories disabled; skipping embedding generation.');
+        hasLoggedSemanticDisabled = true;
+      }
+      return null;
+    }
     const { data, error } = await supabase.functions.invoke('generate-embedding', {
       body: { text }
     });

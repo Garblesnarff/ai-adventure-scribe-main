@@ -1,6 +1,6 @@
 import { llmApiClient, type GenerateTextParams } from './llm-api-client';
 
-type GoogleGenerativeAI = any;
+type GeminiHistoryEntry = { role: 'user' | 'assistant' | 'system'; content: string };
 
 export interface RateLimitStats {
   dailyUsage: number;
@@ -13,23 +13,41 @@ export interface RateLimitStats {
 }
 
 export class GeminiApiManager {
+  private googleClientCtorPromise: Promise<any | null> | null = null;
+
   private isDevelopment(): boolean {
     return import.meta.env.DEV || import.meta.env.MODE === 'development';
   }
 
   constructor() {
+    const hasKeys = Boolean(import.meta.env.VITE_GEMINI_API_KEYS || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY);
     if (this.isDevelopment()) {
-      console.log('GeminiApiManager initialized (server-proxy mode)');
+      console.log(hasKeys
+        ? 'GeminiApiManager initialized (direct Gemini mode)'
+        : 'GeminiApiManager initialized (server-proxy mode)'
+      );
     }
   }
 
-  private buildPromptFromInput(input: any): { prompt: string; history?: { role: 'user'|'assistant'|'system'; content: string }[] } {
+  private async loadGoogleGenerativeAI(): Promise<any | null> {
+    if (!this.googleClientCtorPromise) {
+      this.googleClientCtorPromise = import('@google/generative-ai')
+        .then(mod => mod?.GoogleGenerativeAI ?? null)
+        .catch(error => {
+          console.warn('[GeminiApiManager] Failed to load @google/generative-ai:', error);
+          return null;
+        });
+    }
+    return this.googleClientCtorPromise;
+  }
+
+  private buildPromptFromInput(input: any): { prompt: string; history?: GeminiHistoryEntry[] } {
     if (typeof input === 'string') return { prompt: input };
 
     if (input && Array.isArray(input.contents)) {
       const parts = input.contents as Array<{ role?: string; parts?: Array<{ text?: string }> }>;
       const texts: string[] = [];
-      const history: { role: 'user'|'assistant'|'system'; content: string }[] = [];
+      const history: GeminiHistoryEntry[] = [];
 
       for (const item of parts) {
         const t = (item.parts || [])
@@ -56,6 +74,147 @@ export class GeminiApiManager {
     }
   }
 
+  private toGeminiContents(prompt: string, history?: GeminiHistoryEntry[]) {
+    const convertRole = (role: GeminiHistoryEntry['role']) => {
+      if (role === 'assistant') return 'model';
+      if (role === 'system') return 'user';
+      return role;
+    };
+
+    const contents = (history || []).map(entry => ({
+      role: convertRole(entry.role),
+      parts: [{ text: entry.content }],
+    }));
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: prompt }],
+    });
+
+    return contents;
+  }
+
+  private createRestGenAI(apiKey: string) {
+    const buildPrompt = (input: any) => this.buildPromptFromInput(input);
+    const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+    const callText = async (
+      model: string,
+      prompt: string,
+      history: GeminiHistoryEntry[] | undefined,
+      config: Record<string, any> = {},
+    ) => {
+      const contents = this.toGeminiContents(prompt, history);
+      const body: Record<string, any> = {
+        contents,
+      };
+      if (config && Object.keys(config).length > 0) {
+        body.generationConfig = config;
+      }
+
+      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini REST error ${response.status}: ${errorText}`);
+      }
+
+      const json = await response.json();
+      const candidates = json?.candidates || [];
+      const firstCandidate = candidates[0];
+      const parts: Array<{ text?: string }> = firstCandidate?.content?.parts || [];
+      const text = parts.map(part => part?.text).filter(Boolean).join('\n');
+      return text || '';
+    };
+
+    return {
+      getGenerativeModel: ({ model, generationConfig }: { model: string; generationConfig?: any }) => {
+        const defaultMax = generationConfig?.maxOutputTokens ?? generationConfig?.maxTokens ?? 1000;
+        const defaultTemp = generationConfig?.temperature ?? 0.7;
+        const defaultTopP = generationConfig?.topP;
+        const defaultTopK = generationConfig?.topK;
+
+        const buildConfig = (overrides?: { maxTokens?: number; temperature?: number; topK?: number; topP?: number }) => {
+          const cfg: Record<string, any> = {};
+          const maxTokens = overrides?.maxTokens ?? defaultMax;
+          const temperature = overrides?.temperature ?? defaultTemp;
+          const topP = overrides?.topP ?? defaultTopP;
+          const topK = overrides?.topK ?? defaultTopK;
+          if (typeof maxTokens === 'number') cfg.maxOutputTokens = maxTokens;
+          if (typeof temperature === 'number') cfg.temperature = temperature;
+          if (typeof topP === 'number') cfg.topP = topP;
+          if (typeof topK === 'number') cfg.topK = topK;
+          return cfg;
+        };
+
+        return {
+          async generateContent(input: any) {
+            const { prompt, history } = buildPrompt(input);
+            const text = await callText(
+              model,
+              prompt,
+              history,
+              buildConfig({
+                maxTokens: generationConfig?.maxOutputTokens ?? generationConfig?.maxTokens,
+                temperature: generationConfig?.temperature,
+                topK: generationConfig?.topK,
+                topP: generationConfig?.topP,
+              })
+            );
+            return { response: { text: () => text } } as any;
+          },
+
+          startChat({ history, generationConfig: chatGen }: { history?: any[]; generationConfig?: any }) {
+            const hist: GeminiHistoryEntry[] = [];
+            if (Array.isArray(history)) {
+              for (const h of history) {
+                const role = h.role === 'model' ? 'assistant' : (h.role || 'user');
+                const content = Array.isArray(h.parts)
+                  ? (h.parts.map((p: any) => p?.text).filter(Boolean).join('\n') || '')
+                  : String(h.content || '');
+                if (content) hist.push({ role, content });
+              }
+            }
+
+            const effConfig = buildConfig({
+              maxTokens: chatGen?.maxOutputTokens ?? chatGen?.maxTokens,
+              temperature: chatGen?.temperature,
+              topK: chatGen?.topK,
+              topP: chatGen?.topP,
+            });
+
+            return {
+              async sendMessage(message: string) {
+                const text = await callText(model, message, hist, effConfig);
+                hist.push({ role: 'user', content: message });
+                hist.push({ role: 'assistant', content: text });
+                return { response: { text: () => text } } as any;
+              },
+
+              async sendMessageStream(message: string) {
+                const text = await callText(model, message, hist, effConfig);
+                hist.push({ role: 'user', content: message });
+                hist.push({ role: 'assistant', content: text });
+                const stream = {
+                  async *[Symbol.asyncIterator]() {
+                    yield { text: () => text } as any;
+                  },
+                } as any;
+                return { stream } as any;
+              },
+            };
+          },
+        };
+      },
+    } as any;
+  }
+
   private createGenAIStub() {
     const buildPrompt = (input: any) => this.buildPromptFromInput(input);
     return {
@@ -80,7 +239,7 @@ export class GeminiApiManager {
           },
 
           startChat({ history, generationConfig: chatGen }: { history?: any[]; generationConfig?: any }) {
-            const hist: { role: 'user'|'assistant'|'system'; content: string }[] = [];
+            const hist: GeminiHistoryEntry[] = [];
             if (Array.isArray(history)) {
               for (const h of history) {
                 const role = h.role === 'model' ? 'assistant' : (h.role || 'user');
@@ -116,7 +275,26 @@ export class GeminiApiManager {
     } as GoogleGenerativeAI;
   }
 
-  async executeWithRotation<T>(operation: (genAI: GoogleGenerativeAI) => Promise<T>, _maxRetries: number = 1): Promise<T> {
+  async executeWithRotation<T>(operation: (genAI: any) => Promise<T>, _maxRetries: number = 1): Promise<T> {
+    const keysRaw = import.meta.env.VITE_GEMINI_API_KEYS || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
+    const keys = String(keysRaw || '')
+      .split(',')
+      .map(key => key.trim())
+      .filter(Boolean);
+
+    if (keys.length > 0) {
+      const primaryKey = keys[0];
+      const GoogleGenerativeAI = await this.loadGoogleGenerativeAI();
+      if (GoogleGenerativeAI) {
+        const genAI = new GoogleGenerativeAI(primaryKey);
+        return operation(genAI);
+      }
+
+      // Fallback to REST adapter if SDK not available
+      const restClient = this.createRestGenAI(primaryKey);
+      return operation(restClient);
+    }
+
     const genAIStub = this.createGenAIStub();
     return operation(genAIStub);
   }

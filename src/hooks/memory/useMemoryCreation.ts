@@ -4,12 +4,21 @@ import { useToast } from '@/hooks/use-toast';
 import { processContent } from '@/utils/memoryClassification';
 import { Memory, MemoryType, isValidMemoryType } from '@/components/game/memory/types';
 import logger from '@/lib/logger';
+import { isSemanticMemoriesEnabled } from '@/config/featureFlags';
+
+const MIN_SEGMENT_LENGTH = 50;
+const MAX_SEGMENTS_PER_MESSAGE = 3;
 
 export const useMemoryCreation = (sessionId: string | null) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const generateEmbedding = async (text: string) => {
+    if (!isSemanticMemoriesEnabled()) {
+      logger.debug('[Memory Creation] Semantic memories disabled; skipping embedding');
+      return null;
+    }
+
     try {
       logger.info('[Memory Creation] Starting embedding generation for text:', text);
       
@@ -77,7 +86,7 @@ export const useMemoryCreation = (sessionId: string | null) => {
         .insert([{ 
           ...validatedMemory,
           session_id: sessionId,
-          embedding,
+          embedding: embedding ?? null,
           metadata: validatedMemory.metadata || {},
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -110,11 +119,34 @@ export const useMemoryCreation = (sessionId: string | null) => {
       logger.info('[Memory Creation] Processing content for memory extraction:', content);
       
       const memorySegments = processContent(content);
-      
-      logger.info('[Memory Creation] Classified segments:', memorySegments);
+      const filteredSegments: typeof memorySegments = [];
+      const seenContent = new Set<string>();
+
+      for (const segment of memorySegments) {
+        const normalizedContent = segment.content.trim();
+        if (normalizedContent.length < MIN_SEGMENT_LENGTH) {
+          logger.debug('[Memory Creation] Skipping short segment:', normalizedContent);
+          continue;
+        }
+
+        const dedupeKey = normalizedContent.toLowerCase();
+        if (seenContent.has(dedupeKey)) {
+          logger.debug('[Memory Creation] Skipping duplicate segment:', normalizedContent);
+          continue;
+        }
+
+        seenContent.add(dedupeKey);
+        filteredSegments.push({ ...segment, content: normalizedContent });
+      }
+
+      const prioritizedSegments = [...filteredSegments]
+        .sort((a, b) => b.importance - a.importance)
+        .slice(0, MAX_SEGMENTS_PER_MESSAGE);
+
+      logger.info('[Memory Creation] Classified segments:', prioritizedSegments);
 
       // Create memories for each classified segment
-      for (const segment of memorySegments) {
+      for (const segment of prioritizedSegments) {
         if (!isValidMemoryType(segment.type)) {
           logger.warn('[Memory Creation] Skipping segment with invalid type:', segment);
           continue;

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 type EntityType = 'campaign' | 'character' | 'session';
 
@@ -32,23 +33,44 @@ export function useEntityLabel(type: EntityType, id: string | null) {
       try {
         setLoading(true);
         if (type === 'campaign') {
-          const { data, error } = await supabase.from('campaigns').select('name').eq('id', id).single();
-          if (!cancelled && !error) {
-            const value = data?.name || null;
+          const { data, error } = await supabase
+            .from('campaigns')
+            .select('name')
+            .eq('id', id)
+            .limit(1);
+          if (cancelled) return;
+          if (error) {
+            logger.warn('[useEntityLabel] Failed to load campaign label', { id, error });
+          } else {
+            const value = data?.[0]?.name ?? null;
             if (value) cache.set(key, value);
             setLabel(value);
           }
         } else if (type === 'character') {
-          const { data, error } = await supabase.from('characters').select('name').eq('id', id).single();
-          if (!cancelled && !error) {
-            const value = data?.name || null;
+          const { data, error } = await supabase
+            .from('characters')
+            .select('name')
+            .eq('id', id)
+            .limit(1);
+          if (cancelled) return;
+          if (error) {
+            logger.warn('[useEntityLabel] Failed to load character label', { id, error });
+          } else {
+            const value = data?.[0]?.name ?? null;
             if (value) cache.set(key, value);
             setLabel(value);
           }
         } else if (type === 'session') {
-          const { data, error } = await supabase.from('game_sessions').select('session_number').eq('id', id).single();
-          if (!cancelled && !error) {
-            const n = data?.session_number as number | null | undefined;
+          const { data, error } = await supabase
+            .from('game_sessions')
+            .select('session_number')
+            .eq('id', id)
+            .limit(1);
+          if (cancelled) return;
+          if (error) {
+            logger.warn('[useEntityLabel] Failed to load session label', { id, error });
+          } else {
+            const n = data?.[0]?.session_number as number | null | undefined;
             const value = n ? `Session ${n}` : 'Game';
             cache.set(key, value);
             setLabel(value);
