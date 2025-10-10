@@ -14,6 +14,7 @@ export interface RateLimitStats {
 
 export class GeminiApiManager {
   private googleClientCtorPromise: Promise<any | null> | null = null;
+  private directModeDisabled = false;
 
   private isDevelopment(): boolean {
     return import.meta.env.DEV || import.meta.env.MODE === 'development';
@@ -27,6 +28,17 @@ export class GeminiApiManager {
         : 'GeminiApiManager initialized (server-proxy mode)'
       );
     }
+  }
+
+  private isAuthenticationError(error: unknown): boolean {
+    if (!error) return false;
+    const message = typeof error === 'string'
+      ? error
+      : (error as Error)?.message || '';
+
+    if (!message) return false;
+
+    return /api\s*key\s*not\s*valid|api_key_invalid|invalid\s*api\s*key|401|403/i.test(message);
   }
 
   private async loadGoogleGenerativeAI(): Promise<any | null> {
@@ -282,17 +294,26 @@ export class GeminiApiManager {
       .map(key => key.trim())
       .filter(Boolean);
 
-    if (keys.length > 0) {
+    if (!this.directModeDisabled && keys.length > 0) {
       const primaryKey = keys[0];
       const GoogleGenerativeAI = await this.loadGoogleGenerativeAI();
-      if (GoogleGenerativeAI) {
-        const genAI = new GoogleGenerativeAI(primaryKey);
-        return operation(genAI);
-      }
+      try {
+        if (GoogleGenerativeAI) {
+          const genAI = new GoogleGenerativeAI(primaryKey);
+          return await operation(genAI);
+        }
 
-      // Fallback to REST adapter if SDK not available
-      const restClient = this.createRestGenAI(primaryKey);
-      return operation(restClient);
+        // Fallback to REST adapter if SDK not available
+        const restClient = this.createRestGenAI(primaryKey);
+        return await operation(restClient);
+      } catch (error) {
+        if (this.isAuthenticationError(error)) {
+          this.directModeDisabled = true;
+          console.warn('[GeminiApiManager] Direct mode disabled after authentication error, falling back to proxy');
+        } else {
+          throw error;
+        }
+      }
     }
 
     const genAIStub = this.createGenAIStub();

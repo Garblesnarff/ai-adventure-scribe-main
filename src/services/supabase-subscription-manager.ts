@@ -15,7 +15,10 @@ interface TableSubscription {
   callbacks: Map<string, SubscriptionCallback>;
   retryCount: number;
   isConnected: boolean;
+  isConnecting: boolean;
   lastRetry: number;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+  disabled: boolean;
 }
 
 /**
@@ -59,7 +62,10 @@ class SupabaseSubscriptionManager {
         callbacks: new Map(),
         retryCount: 0,
         isConnected: false,
-        lastRetry: 0
+        isConnecting: false,
+        lastRetry: 0,
+        timeoutId: null,
+        disabled: false
       });
     }
 
@@ -109,6 +115,7 @@ class SupabaseSubscriptionManager {
 
     // Skip if already connected or recently retried
     if (subscription.isConnected ||
+        subscription.isConnecting ||
         (Date.now() - subscription.lastRetry < this.retryDelay)) {
       return;
     }
@@ -116,6 +123,12 @@ class SupabaseSubscriptionManager {
     // Skip if max retries exceeded
     if (subscription.retryCount >= this.maxRetries) {
       logger.warn(`Max retries reached for ${tableName} subscription, skipping`);
+      subscription.disabled = true;
+      return;
+    }
+
+    if (subscription.disabled) {
+      logger.warn(`Realtime disabled for ${tableName} subscription, skipping`);
       return;
     }
 
@@ -132,6 +145,7 @@ class SupabaseSubscriptionManager {
     if (isOffline()) {
       logger.info(`Deferring ${tableName} channel setup until back online`);
       subscription.isConnected = false;
+      subscription.isConnecting = false;
       return;
     }
 
@@ -142,6 +156,7 @@ class SupabaseSubscriptionManager {
 
     logger.info(`Setting up shared channel for ${tableName}`);
     subscription.lastRetry = Date.now();
+    subscription.isConnecting = true;
 
     const channel = supabase
       .channel(`shared_${tableName}_image_updates`)
@@ -163,8 +178,13 @@ class SupabaseSubscriptionManager {
     subscription.channel = channel;
 
     // Set connection timeout
-    setTimeout(() => {
-      if (!subscription.isConnected) {
+    if (subscription.timeoutId) {
+      clearTimeout(subscription.timeoutId);
+    }
+
+    const expectedChannel = channel;
+    subscription.timeoutId = setTimeout(() => {
+      if (!subscription.isConnected && subscription.channel === expectedChannel && !subscription.disabled) {
         logger.warn(`Connection timeout for ${tableName} subscription`);
         this.handleConnectionFailure(tableName);
       }
@@ -212,16 +232,27 @@ class SupabaseSubscriptionManager {
       case 'SUBSCRIBED':
         subscription.isConnected = true;
         subscription.retryCount = 0;
+        subscription.isConnecting = false;
+        if (subscription.timeoutId) {
+          clearTimeout(subscription.timeoutId);
+          subscription.timeoutId = null;
+        }
         break;
 
       case 'CHANNEL_ERROR':
       case 'TIMED_OUT':
         subscription.isConnected = false;
+        subscription.isConnecting = false;
         this.handleConnectionFailure(tableName);
         break;
 
       case 'CLOSED':
         subscription.isConnected = false;
+        subscription.isConnecting = false;
+        if (subscription.timeoutId) {
+          clearTimeout(subscription.timeoutId);
+          subscription.timeoutId = null;
+        }
         break;
     }
   }
@@ -235,6 +266,7 @@ class SupabaseSubscriptionManager {
 
     subscription.retryCount++;
     subscription.isConnected = false;
+    subscription.isConnecting = false;
 
     if (subscription.retryCount < this.maxRetries) {
       const delay = this.retryDelay * Math.pow(2, subscription.retryCount - 1);
@@ -245,6 +277,11 @@ class SupabaseSubscriptionManager {
       }, delay);
     } else {
       logger.warn(`Max retries exceeded for ${tableName} subscription`);
+      subscription.disabled = true;
+      if (subscription.timeoutId) {
+        clearTimeout(subscription.timeoutId);
+        subscription.timeoutId = null;
+      }
     }
   }
 
@@ -260,6 +297,12 @@ class SupabaseSubscriptionManager {
 
       subscription.isConnected = false;
       subscription.retryCount = 0;
+      subscription.isConnecting = false;
+      subscription.disabled = false;
+      if (subscription.timeoutId) {
+        clearTimeout(subscription.timeoutId);
+        subscription.timeoutId = null;
+      }
       this.ensureChannelConnected(tableName);
     });
   }
@@ -271,7 +314,12 @@ class SupabaseSubscriptionManager {
         subscription.channel = null;
       }
       subscription.isConnected = false;
+      subscription.isConnecting = false;
       subscription.lastRetry = Date.now();
+      if (subscription.timeoutId) {
+        clearTimeout(subscription.timeoutId);
+        subscription.timeoutId = null;
+      }
       logger.info(`Suspended ${tableName} subscription due to offline status`);
     });
   }
@@ -289,6 +337,10 @@ class SupabaseSubscriptionManager {
       supabase.removeChannel(subscription.channel);
     }
 
+    if (subscription.timeoutId) {
+      clearTimeout(subscription.timeoutId);
+    }
+
     this.subscriptions.delete(tableName);
   }
 
@@ -301,6 +353,9 @@ class SupabaseSubscriptionManager {
     this.subscriptions.forEach((subscription, tableName) => {
       if (subscription.channel) {
         supabase.removeChannel(subscription.channel);
+      }
+      if (subscription.timeoutId) {
+        clearTimeout(subscription.timeoutId);
       }
     });
 
