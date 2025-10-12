@@ -98,6 +98,7 @@ export const useAIResponse = () => {
   const { toast } = useToast();
   const { processAiResponse, setGamePhase, state: gameState } = useGame();
   const { state: combatState } = useCombat();
+  const lastSigRef = useRef<string>('');
 
   /**
    * Formats chat messages into a task object for the DM Agent.
@@ -175,6 +176,20 @@ export const useAIResponse = () => {
 
       // Get latest message context
       const latestMessage = messages[messages.length - 1];
+      
+      // Guard against repeated message processing
+      const sig = `${sessionId}|${latestMessage.text}|${messages.length}`;
+      if (lastSigRef.current === sig) {
+        logger.debug('[useAIResponse] Skipping duplicate message processing for signature:', sig);
+        // Return a minimal valid response to avoid breaking the UI
+        return {
+          text: '',
+          sender: 'dm',
+          timestamp: new Date().toISOString(),
+          context: { emotion: 'neutral', intent: 'response' }
+        };
+      }
+      lastSigRef.current = sig;
       // Log dice roll results into session_state for analytics/history
       try {
         const diceCtx: any = (latestMessage as any).context?.diceRoll;
@@ -409,8 +424,8 @@ export const useAIResponse = () => {
         }
       }
 
-      // Update game phase based on combat detection
-      if (result.combatDetection?.isCombat && !gameState.isInCombat) {
+      // Update game phase based on combat detection (use currentPhase for idempotent transitions)
+      if (result.combatDetection?.isCombat && gameState.currentPhase !== 'combat') {
         logger.info('⚔️ Combat detected, updating game phase');
         setGamePhase('combat');
       } else if (!result.combatDetection?.isCombat && gameState.currentPhase === 'combat' && !combatState.isInCombat) {

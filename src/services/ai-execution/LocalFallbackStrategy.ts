@@ -12,6 +12,10 @@ interface DMRunPayload {
   };
 }
 
+// Per-session cooldown for combat DM narration (5s)
+const lastNarrationAt = new Map<string, number>();
+const NARRATION_COOLDOWN_MS = 5000;
+
 export class LocalFallbackStrategy implements AIExecutionStrategy {
   readonly name = 'local-fallback';
   readonly priority: number;
@@ -32,6 +36,42 @@ export class LocalFallbackStrategy implements AIExecutionStrategy {
   }
 
   private async executeDMAgent(payload: DMRunPayload | undefined) {
+    // Check feature flag for combat DM narration
+    const enableCombatNarration = import.meta.env.VITE_ENABLE_COMBAT_DM_NARRATION === 'true';
+    
+    // For combat events, apply cooldown and feature flag logic
+    const isCombatEvent = payload?.task?.description?.includes('combat') || 
+                          payload?.task?.description?.includes('battle');
+    
+    if (isCombatEvent && !enableCombatNarration) {
+      logger.info('[LocalFallbackStrategy] Combat DM narration disabled by feature flag, returning stub');
+      return {
+        response: '',
+        narrationSegments: [],
+        context: payload?.agentContext,
+        raw: {}
+      };
+    }
+
+    // Apply cooldown for combat events
+    if (isCombatEvent) {
+      const sessionId = 'global'; // Could be enhanced to use actual session ID
+      const now = Date.now();
+      const lastTime = lastNarrationAt.get(sessionId) || 0;
+      
+      if (now - lastTime < NARRATION_COOLDOWN_MS) {
+        logger.info('[LocalFallbackStrategy] Combat DM narration throttled by cooldown, returning stub');
+        return {
+          response: '',
+          narrationSegments: [],
+          context: payload?.agentContext,
+          raw: {}
+        };
+      }
+      
+      lastNarrationAt.set(sessionId, now);
+    }
+
     logger.info('[LocalFallbackStrategy] Using local AIService for DM agent');
     const safePayload = payload ?? {};
     const { task, agentContext } = safePayload;
