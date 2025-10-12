@@ -11,6 +11,14 @@ import logger from '@/lib/logger';
 import { SessionStateService } from './session-state-service';
 import { AgentOrchestrator } from './crewai/agent-orchestrator';
 
+// In-flight request deduplication with 2s TTL
+const inFlight = new Map<string, { ts: number; promise: Promise<any> }>();
+const DEDUPE_MS = 2000;
+
+function keyFor(sessionId: string | undefined, message: string, historyLen: number) {
+  return `${sessionId || 'nosession'}|${message.slice(0, 256)}|${historyLen}`;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -175,6 +183,17 @@ When combat is detected, you MUST:
     onStream?: (chunk: string) => void;
   }): Promise<{ text: string; narrationSegments?: NarrationSegment[]; roll_requests?: import('@/components/game/DiceRollRequest').RollRequest[]; dice_rolls?: unknown[]; combatDetection?: CombatDetectionResult }> {
     // Decision about path (CrewAI vs Gemini) happens below
+
+    // Dedupe in-flight chat calls (2s TTL)
+    const key = keyFor(params.context?.sessionId, params.message, (params.conversationHistory || []).length);
+    const now = Date.now();
+    for (const [k, v] of inFlight) if (now - v.ts > DEDUPE_MS) inFlight.delete(k);
+    if (inFlight.has(key)) {
+      logger.debug('[AIService] Deduping in-flight chat call:', key);
+      return inFlight.get(key)!.promise;
+    }
+
+    const p = (async () => {
     
     try {
       // Retrieve relevant memories to enhance context
@@ -866,6 +885,11 @@ ${voiceContext ? '**REMEMBER: Always respond in the JSON format with narration_s
       logger.error('Local Gemini API failed:', geminiError);
       throw new Error('Failed to get DM response - AI service unavailable');
     }
+    })(); // End of the async promise wrapper
+
+    // Store promise in in-flight map and return it
+    inFlight.set(key, { ts: now, promise: p });
+    return p;
   }
 
   /**

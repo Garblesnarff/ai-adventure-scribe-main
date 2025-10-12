@@ -103,10 +103,14 @@ export const processContent = (content: string): MemorySegment[] => {
     const baseImportance = CLASSIFICATION_PATTERNS[type]?.importance ?? 3;
     importance = Math.max(importance, baseImportance);
     
+    // Normalize importance score from 1-10 range to 1-5 range
+    // calculateImportance returns 1-10 for internal weighting, but the database expects 1-5
+    const normalizedImportance = Math.min(5, Math.max(1, Math.round(importance / 2)));
+    
     return {
       content: segment.trim(),
       type,
-      importance
+      importance: normalizedImportance
     };
   });
 };

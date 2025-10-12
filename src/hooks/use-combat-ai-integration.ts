@@ -48,6 +48,7 @@ export const useCombatAIIntegration = ({
   const { addMessage } = useMessages(sessionId);
   const lastProcessedAction = useRef<string | null>(null);
   const lastProcessedRound = useRef<number>(0);
+  const isStartingCombatRef = useRef(false);
 
   if (!combatContext) {
     throw new Error('useCombatAIIntegration must be used within CombatProvider');
@@ -89,33 +90,40 @@ export const useCombatAIIntegration = ({
       };
     }
 
-    // Handle combat starting
-    if (detection.shouldStartCombat && detection.enemies && detection.enemies.length > 0) {
-      const participants = createCombatParticipantsFromDetection(detection.enemies, playerCharacter);
+    // Handle combat starting with guard to prevent duplicates
+    if (detection.shouldStartCombat && detection.enemies && detection.enemies.length > 0 && !isStartingCombatRef.current) {
+      isStartingCombatRef.current = true;
       
-      // Start combat with detected participants (CombatProvider rolls initiative)
-      if (sessionId) {
-        await startCombat(sessionId, participants as Partial<CombatParticipant>[]);
+      try {
+        const participants = createCombatParticipantsFromDetection(detection.enemies, playerCharacter);
+        
+        // Start combat with detected participants (CombatProvider rolls initiative)
+        if (sessionId) {
+          await startCombat(sessionId, participants as Partial<CombatParticipant>[]);
+
+          // Create combat start message for UI log
+          const combatStartMessage: ChatMessage = {
+            text: `Combat has begun! Initiative has been rolled.`,
+            sender: 'system',
+            context: {
+              combatData: {
+                type: 'combat_start',
+                participants: participants.map(p => ({
+                  name: p.name || 'Unknown',
+                  initiative: p.initiative || 0,
+                  roll: rollDice(20, 1, 0)
+                }))
+              }
+            },
+            timestamp: new Date().toISOString()
+          };
+
+          combatMessages.push(combatStartMessage);
+        }
+      } finally {
+        isStartingCombatRef.current = false;
       }
-
-      // Create combat start message for UI log
-      const combatStartMessage: ChatMessage = {
-        text: `Combat has begun! Initiative has been rolled.`,
-        sender: 'system',
-        context: {
-          combatData: {
-            type: 'combat_start',
-            participants: participants.map(p => ({
-              name: p.name || 'Unknown',
-              initiative: p.initiative || 0,
-              roll: rollDice(20, 1, 0)
-            }))
-          }
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      combatMessages.push(combatStartMessage);
+    }
     }
 
     // Process detected combat actions for dice rolls
@@ -255,8 +263,9 @@ export const useCombatAIIntegration = ({
     if (!sessionId) return;
 
     try {
-      // Determine if we should trigger DM narration
-      const shouldNarrate = shouldTriggerDMNarration(event, combatState.activeEncounter);
+      // Limit DM narration to ROUND_START events only to reduce AI call frequency
+      const shouldNarrate = shouldTriggerDMNarration(event, combatState.activeEncounter) && 
+                           event.type === 'ROUND_START';
 
       if (shouldNarrate) {
         // Format the message for DM agent

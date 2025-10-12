@@ -131,7 +131,30 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   const [result, setResult] = useState<DiceRollResult | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [hasRolled, setHasRolled] = useState(false);
+  const [contextLost, setContextLost] = useState(false);
+  const [canvasKey, setCanvasKey] = useState(0);
   const diceSound = useRef<Howl | null>(null);
+
+  // Handle WebGL context loss and restoration
+  const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
+    const canvas = gl.domElement as HTMLCanvasElement;
+    const onLost = (e: Event) => { 
+      e.preventDefault(); 
+      setContextLost(true); 
+    };
+    const onRestored = () => { 
+      setContextLost(false); 
+      setCanvasKey(k => k + 1); 
+    };
+    
+    canvas.addEventListener('webglcontextlost', onLost as any, { passive: false });
+    canvas.addEventListener('webglcontextrestored', onRestored as any);
+    
+    return () => {
+      canvas.removeEventListener('webglcontextlost', onLost as any);
+      canvas.removeEventListener('webglcontextrestored', onRestored as any);
+    };
+  }, []);
 
   useEffect(() => {
     diceSound.current = createDiceSound();
@@ -232,33 +255,44 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
       {/* 3D Dice Animation */}
       {showAnimation && hasRolled && (
         <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200">
-          <Canvas camera={{ position: [0, 0, 5] }}>
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
+          {!contextLost ? (
+            <Canvas
+              key={canvasKey}
+              onCreated={handleCreated}
+              gl={{ powerPreference: 'high-performance', antialias: true, failIfMajorPerformanceCaveat: false }}
+              camera={{ position: [0, 0, 5] }}
+            >
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} />
 
-            <group position={[0, 0, 0]}>
-              {result?.rolls.map((roll, index) => (
-                <Dice3D
-                  key={index}
-                  value={isRolling ? undefined : roll.value}
-                  isRolling={isRolling}
-                  diceType={roll.dice}
-                />
-              )) || (
-                <Dice3D
-                  value={undefined}
-                  isRolling={isRolling}
-                  diceType={20}
-                />
-              )}
-            </group>
+              <group position={[0, 0, 0]}>
+                {result?.rolls.map((roll, index) => (
+                  <Dice3D
+                    key={index}
+                    value={isRolling ? undefined : roll.value}
+                    isRolling={isRolling}
+                    diceType={roll.dice}
+                  />
+                )) || (
+                  <Dice3D
+                    value={undefined}
+                    isRolling={isRolling}
+                    diceType={20}
+                  />
+                )}
+              </group>
 
-            <OrbitControls
-              enableRotate={false}
-              enableZoom={false}
-              enablePan={false}
-            />
-          </Canvas>
+              <OrbitControls
+                enableRotate={false}
+                enableZoom={false}
+                enablePan={false}
+              />
+            </Canvas>
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-xs text-gray-600 bg-gray-50">
+              3D dice paused (graphics context lost). Restoring…
+            </div>
+          )}
         </div>
       )}
 
