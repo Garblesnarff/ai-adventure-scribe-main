@@ -124,7 +124,6 @@ export const useCombatAIIntegration = ({
         isStartingCombatRef.current = false;
       }
     }
-    }
 
     // Process detected combat actions for dice rolls
     if (detection.combatActions && detection.combatActions.length > 0) {
