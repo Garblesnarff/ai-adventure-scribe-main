@@ -7,7 +7,7 @@
  * @author AI Dungeon Master Team
  */
 
-import { openRouterService } from './openrouter-service';
+import { openRouterService, type UploadOptions } from './openrouter-service';
 import logger from '@/lib/logger';
 
 interface CampaignData {
@@ -27,6 +27,7 @@ interface CampaignData {
 interface ImageGenerationOptions {
   retryAttempts?: number;
   fallbackToDefault?: boolean;
+  storage?: UploadOptions;
 }
 
 /**
@@ -43,7 +44,7 @@ export class CampaignImageGenerator {
    * @returns Promise resolving to image URL
    */
   async generateCampaignImage(
-    campaignData: CampaignData, 
+    campaignData: CampaignData,
     options: ImageGenerationOptions = {}
   ): Promise<string> {
     const { retryAttempts = this.maxRetries, fallbackToDefault = true } = options;
@@ -53,7 +54,7 @@ export class CampaignImageGenerator {
       logger.info('Generating campaign image with prompt:', prompt);
 
       const base64Image = await this.generateWithRetry(prompt, retryAttempts);
-      const imageUrl = await openRouterService.uploadImage(base64Image);
+      const imageUrl = await openRouterService.uploadImage(base64Image, options.storage);
 
       logger.info('Successfully generated campaign image');
       return imageUrl;

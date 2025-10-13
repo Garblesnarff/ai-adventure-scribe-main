@@ -147,7 +147,7 @@ const CharacterFinalization: React.FC = () => {
       );
 
       // Upload avatar to get URL
-      const avatarUrl = await openRouterService.uploadImage(avatarBase64);
+      const avatarUrl = await openRouterService.uploadImage(avatarBase64, { label: 'avatar' });
 
       dispatch({
         type: 'UPDATE_CHARACTER',
@@ -232,7 +232,7 @@ const CharacterFinalization: React.FC = () => {
 
       const imageUrl = await characterImageGenerator.generateCharacterImage(
         characterData,
-        { style: 'character-sheet', artStyle: 'fantasy-art', theme: selectedTheme },
+        { style: 'character-sheet', artStyle: 'fantasy-art', theme: selectedTheme, storage: { label: 'design-sheet' } },
         avatarReference
       );
 

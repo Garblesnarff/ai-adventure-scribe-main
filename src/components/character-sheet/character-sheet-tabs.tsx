@@ -12,7 +12,8 @@ import {
   Shield,
   Sword,
   TrendingUp,
-  Users
+  Users,
+  Image as ImageIcon
 } from 'lucide-react';
 
 // Tab Components
@@ -24,6 +25,7 @@ import FeaturesTab from './tabs/FeaturesTab';
 import NotesTab from './tabs/NotesTab';
 import ExperienceManager from './ExperienceManager';
 import MulticlassManager from './MulticlassManager';
+import CharacterGallery from '@/components/gallery/CharacterGallery';
 
 interface CharacterSheetTabsProps {
   character: Character;
@@ -82,6 +84,12 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
       label: 'Notes & Backstory',
       icon: FileText,
       description: 'Character backstory, notes, and roleplay information',
+    },
+    {
+      id: 'gallery',
+      label: 'Gallery',
+      icon: ImageIcon,
+      description: 'All generated images for this character',
     },
   ];
 
@@ -245,6 +253,15 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
 
           <TabsContent value="notes" className="space-y-4">
             <NotesTab character={character} onUpdate={onCharacterUpdate} />
+          </TabsContent>
+
+          <TabsContent value="gallery" className="space-y-4">
+            <CharacterGallery
+              characterId={character.id}
+              avatarUrl={character.avatar_url}
+              designSheetUrl={character.image_url}
+              backgroundUrl={character.background_image}
+            />
           </TabsContent>
         </div>
       </Tabs>

@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useCharacterStats } from '@/hooks/use-character-stats';
 import { Character } from '@/types/character';
 import { SimpleGameChatWithVoice } from '@/components/game/SimpleGameChatWithVoice';
+import CampaignGallery from '@/components/gallery/CampaignGallery';
 import { toast } from 'sonner';
 import logger from '@/lib/logger';
 
@@ -317,6 +318,16 @@ export const SimpleCampaignView: React.FC = () => {
                       </AccordionItem>
                     </Accordion>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Campaign Gallery */}
+              <Card className="bg-background/80 backdrop-blur-sm border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-foreground">Gallery</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CampaignGallery campaignId={campaign.id} backgroundImageUrl={campaign.background_image} />
                 </CardContent>
               </Card>
             </div>
