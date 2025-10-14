@@ -18,6 +18,18 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
 
   let match: RegExpExecArray | null;
 
+  // Normalize message to improve regex robustness (strip basic markdown, collapse spaces)
+  const text = (message || '')
+    .replace(/\*\*/g, '') // bold
+    .replace(/\*/g, '') // italics
+    .replace(/_/g, '') // underscore emphasis
+    .replace(/`/g, '') // inline code
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Common skill regex used across multiple patterns
+  const skillRegex = '(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\\s+of\\s+hand|animal\\s+handling)';
+
   // Enhanced attack roll detection (without explicit dice)
   const attackPatterns = [
     /(?:please\s+)?(?:make\s+an?|roll\s+an?)\s*attack\s*(?:roll)?/gi,
@@ -26,7 +38,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
   ];
 
   attackPatterns.forEach(pattern => {
-    while ((match = pattern.exec(message)) !== null) {
+    while ((match = pattern.exec(text)) !== null) {
       requests.push({
         type: 'attack',
         formula: '1d20+modifier',
@@ -44,7 +56,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
   ];
 
   initiativePatterns.forEach(pattern => {
-    while ((match = pattern.exec(message)) !== null) {
+    while ((match = pattern.exec(text)) !== null) {
       const formula = match[1] ? normalizeFormula(match[1]) : '1d20+dex';
       requests.push({
         type: 'initiative',
@@ -58,7 +70,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
 
   // Skill/Ability checks and saves with explicit dice
   const checkPattern = /make\s+an?\s+(constitution|dexterity|strength|intelligence|wisdom|charisma|[\w\s]+)\s+(check|save|saving\s+throw).*?\(([^)]+)(?:,\s*DC\s+(\d+))?\)/gi;
-  while ((match = checkPattern.exec(message)) !== null) {
+  while ((match = checkPattern.exec(text)) !== null) {
     const ability = match[1].toLowerCase();
     const type = match[2].toLowerCase();
     const formula = match[3].trim();
@@ -79,7 +91,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
 
   // "Roll for <skill> (DC 14)" without explicit dice
   const rollForSkillPattern = /(?:please\s+)?roll\s+for\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)(?:\s*\(?:(?:dc|DC)\s*(\d+)\)?)?/gi;
-  while ((match = rollForSkillPattern.exec(message)) !== null) {
+  while ((match = rollForSkillPattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
     const dc = match[2] ? parseInt(match[2]) : undefined;
     requests.push({
@@ -92,17 +104,92 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     });
   }
 
-  // Skill checks without explicit dice
-  const skillCheckPattern = /make\s+a\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)\s+check/gi;
-  while ((match = skillCheckPattern.exec(message)) !== null) {
+  // Skill checks without explicit dice (article-agnostic: a/an)
+  const skillCheckPattern = new RegExp(`make\\s+an?\\s+${skillRegex}\\s+check`, 'gi');
+  while ((match = skillCheckPattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
+    // Try to capture nearby DC (e.g., "(target DC 14)") in the trailing window
+    const tail = text.slice(match.index, Math.min(match.index + 200, text.length));
+    const dcMatch = /(?:target\s*)?(?:dc|difficulty\s*class)\s*(\d+)/i.exec(tail);
+    const dc = dcMatch ? parseInt(dcMatch[1], 10) : undefined;
 
     requests.push({
       type: 'skill_check',
-      formula: `1d20+${skill}`,
+      formula: '1d20+modifier',
       purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
+      dc,
       originalText: match[0],
       confidence: 0.9
+    });
+  }
+
+  // "Roll an <skill> check" (optional DC)
+  const rollSkillCheckPattern = new RegExp(
+    `(?:please\\s+)?roll\\s+an?\\s+${skillRegex}\\s+check(?:\\s*\\(?\\s*(?:dc|DC)\\s*(\\d+)\\s*\\)?)?`,
+    'gi'
+  );
+  while ((match = rollSkillCheckPattern.exec(text)) !== null) {
+    const skill = match[1].toLowerCase();
+    // Prefer explicit capture; otherwise search nearby for DC phrasing
+    let dc = match[2] ? parseInt(match[2], 10) : undefined;
+    if (typeof dc === 'undefined') {
+      const tail = text.slice(match.index, Math.min(match.index + 200, text.length));
+      const dcMatch = /(?:target\s*)?(?:dc|difficulty\s*class)\s*(\d+)/i.exec(tail);
+      if (dcMatch) dc = parseInt(dcMatch[1], 10);
+    }
+    requests.push({
+      type: 'skill_check',
+      formula: '1d20+modifier',
+      purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
+      dc,
+      originalText: match[0],
+      confidence: 0.95
+    });
+  }
+
+  // Polite/requested forms: "Give me an Investigation check (DC 15)", "Perform a Stealth check"
+  const requestSkillCheckPattern = new RegExp(
+    `(?:please\\s+)?(?:i\\s+need\\s+|give\\s+me\\s+|perform\\s+)?an?\\s*${skillRegex}\\s+check(?:\\s*\\(?\\s*(?:dc|DC)\\s*(\\d+)\\s*\\)?)?`,
+    'gi'
+  );
+  while ((match = requestSkillCheckPattern.exec(text)) !== null) {
+    const skill = match[1].toLowerCase();
+    let dc = match[2] ? parseInt(match[2], 10) : undefined;
+    if (typeof dc === 'undefined') {
+      const tail = text.slice(match.index, Math.min(match.index + 200, text.length));
+      const dcMatch = /(?:target\s*)?(?:dc|difficulty\s*class)\s*(\d+)/i.exec(tail);
+      if (dcMatch) dc = parseInt(dcMatch[1], 10);
+    }
+    requests.push({
+      type: 'skill_check',
+      formula: '1d20+modifier',
+      purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
+      dc,
+      originalText: match[0],
+      confidence: 0.93
+    });
+  }
+
+  // Simple form without the word "check": "Roll Investigation (DC 12)"
+  const rollSkillSimplePattern = new RegExp(
+    `(?:please\\s+)?roll\\s+${skillRegex}(?:\\s*\\(?\\s*(?:dc|DC)\\s*(\\d+)\\s*\\)?)?`,
+    'gi'
+  );
+  while ((match = rollSkillSimplePattern.exec(text)) !== null) {
+    const skill = match[1].toLowerCase();
+    let dc = match[2] ? parseInt(match[2], 10) : undefined;
+    if (typeof dc === 'undefined') {
+      const tail = text.slice(match.index, Math.min(match.index + 200, text.length));
+      const dcMatch = /(?:target\s*)?(?:dc|difficulty\s*class)\s*(\d+)/i.exec(tail);
+      if (dcMatch) dc = parseInt(dcMatch[1], 10);
+    }
+    requests.push({
+      type: 'skill_check',
+      formula: '1d20+modifier',
+      purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
+      dc,
+      originalText: match[0],
+      confidence: 0.92
     });
   }
 
@@ -135,8 +222,8 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
   });
 
   // Generic roll requests with explicit dice
-  const genericPattern = /(?:please\s+)?roll\s+([\dd+\s-]+)(?:\s+for\s+(.+?))?(?:\s+\((?:DC\s+(\d+)|AC\s+(\d+))\))?/gi;
-  while ((match = genericPattern.exec(message)) !== null) {
+  const genericPattern = /(?:please\s+)?roll\s+([\dd+\s-]+)(?:\s+for\s+(.+?))?(?:\s+\((?:[^)]*?\b(?:dc|DC)\s*(\d+)|[^)]*?\bAC\s*(\d+))\))?/gi;
+  while ((match = genericPattern.exec(text)) !== null) {
     if (requests.some(r => r.originalText.includes(match[0]))) continue;
 
     const formula = match[1].trim();

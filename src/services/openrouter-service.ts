@@ -106,7 +106,7 @@ export class OpenRouterService {
       for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
       const blob = new Blob([bytes], { type: 'image/png' });
       const bucket = options?.bucket || 'campaign-images';
-      const label = (options?.label || 'generated').replace(/[^a-z0-9\-]/gi, '-');
+      const label = (options?.label || 'generated').replace(/[^a-z0-9-]/gi, '-');
       const ts = Date.now();
       let path: string;
       if (options?.entityType && options?.entityId) {
