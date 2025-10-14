@@ -3,12 +3,46 @@
  *
  * PURPOSE: Build trust and relatability through authentic founder story
  * Shows: Rural D&D player background, AI-built development, personal passion
+ *
+ * Enhanced with:
+ * - Timeline visualization
+ * - Interactive story elements
+ * - Better mobile layout for "Perfect For" cards
+ * - Animated statistics or milestones
  */
 
-import React from 'react';
-import { Heart, Users, Lightbulb, Code, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, Users, Lightbulb, Code, Clock, MapPin, Gamepad2, Zap } from 'lucide-react';
 
 export const FounderStorySection: React.FC = () => {
+  const [visibleCards, setVisibleCards] = useState<boolean[]>([false, false, false, false]);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              setVisibleCards(prev => {
+                const newVisible = [...prev];
+                newVisible[index] = true;
+                return newVisible;
+              });
+            }, index * 150);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="relative py-24 bg-gray-900">
       <div className="max-w-6xl mx-auto px-6">
@@ -94,42 +128,87 @@ export const FounderStorySection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Perfect For Section */}
+              {/* Enhanced Perfect For Section */}
               <div className="bg-gradient-to-r from-gray-800/40 to-gray-900/40 border border-gray-700/40 rounded-xl p-8">
-                <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                <h3 className="text-2xl font-bold text-white mb-8 text-center">
                   Perfect For...
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-purple-900/20 rounded-lg border border-purple-500/20">
-                    <Users className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                    <h4 className="text-white font-semibold mb-2">Rural Gamers</h4>
-                    <p className="text-gray-400 text-sm">No local gaming stores or D&D groups nearby</p>
-                  </div>
-                  <div className="text-center p-4 bg-amber-900/20 rounded-lg border border-amber-500/20">
-                    <Clock className="w-8 h-8 text-amber-400 mx-auto mb-3" />
-                    <h4 className="text-white font-semibold mb-2">Solo Players</h4>
-                    <p className="text-gray-400 text-sm">Want to play D&D but can't find schedules that work</p>
-                  </div>
-                  <div className="text-center p-4 bg-purple-900/20 rounded-lg border border-purple-500/20">
-                    <Heart className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                    <h4 className="text-white font-semibold mb-2">Lapsed Players</h4>
-                    <p className="text-gray-400 text-sm">Miss D&D but life got in the way of regular games</p>
-                  </div>
-                  <div className="text-center p-4 bg-amber-900/20 rounded-lg border border-amber-500/20">
-                    <Lightbulb className="w-8 h-8 text-amber-400 mx-auto mb-3" />
-                    <h4 className="text-white font-semibold mb-2">DMless Groups</h4>
-                    <p className="text-gray-400 text-sm">Have players but no one wants to run campaigns</p>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[
+                    {
+                      icon: Users,
+                      title: "Rural Gamers",
+                      description: "No local gaming stores or D&D groups nearby",
+                      gradient: "from-purple-900/20 to-purple-800/20",
+                      iconColor: "text-purple-400",
+                      borderColor: "border-purple-500/20"
+                    },
+                    {
+                      icon: Clock,
+                      title: "Solo Players",
+                      description: "Want to play D&D but can't find schedules that work",
+                      gradient: "from-amber-900/20 to-amber-800/20",
+                      iconColor: "text-amber-400",
+                      borderColor: "border-amber-500/20"
+                    },
+                    {
+                      icon: Heart,
+                      title: "Lapsed Players",
+                      description: "Miss D&D but life got in the way of regular games",
+                      gradient: "from-purple-900/20 to-purple-800/20",
+                      iconColor: "text-purple-400",
+                      borderColor: "border-purple-500/20"
+                    },
+                    {
+                      icon: Lightbulb,
+                      title: "DMless Groups",
+                      description: "Have players but no one wants to run campaigns",
+                      gradient: "from-amber-900/20 to-amber-800/20",
+                      iconColor: "text-amber-400",
+                      borderColor: "border-amber-500/20"
+                    }
+                  ].map((item, index) => {
+                    const IconComponent = item.icon;
+                    return (
+                      <div
+                        key={index}
+                        ref={(el) => (cardRefs.current[index] = el)}
+                        className={`group relative transform transition-all duration-700 ${
+                          visibleCards[index]
+                            ? 'translate-y-0 opacity-100 scale-100'
+                            : 'translate-y-8 opacity-0 scale-95'
+                        }`}
+                      >
+                        <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                        <div className={`relative text-center p-6 bg-gray-800/30 rounded-xl border ${item.borderColor} hover:border-purple-400/50 transition-all duration-500 hover:scale-105 hover:shadow-xl`}>
+                          <div className="w-14 h-14 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                            <IconComponent className={`w-7 h-7 ${item.iconColor}`} />
+                          </div>
+                          <h4 className="text-white font-semibold mb-3 text-lg group-hover:text-amber-400 transition-colors duration-300">
+                            {item.title}
+                          </h4>
+                          <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Mobile CTA */}
-                <div className="mt-8 text-center sm:hidden">
-                  <p className="text-gray-300 text-lg mb-4">
-                    Ready to join the first wave of AI D&D adventurers?
-                  </p>
-                  <button className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-900 px-8 py-4 rounded-xl shadow-lg font-bold text-lg transition-all duration-300">
-                    Join the Beta Waitlist
-                  </button>
+                {/* Enhanced Mobile CTA */}
+                <div className="mt-10 text-center sm:hidden">
+                  <div className="p-6 bg-gradient-to-r from-purple-900/20 to-amber-900/20 rounded-xl border border-purple-500/20">
+                    <p className="text-gray-300 text-lg mb-4">
+                      Ready to join the first wave of AI D&D adventurers?
+                    </p>
+                    <button className="group bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-900 px-8 py-4 rounded-xl shadow-lg hover:shadow-xl font-bold text-lg transition-all duration-300 hover:scale-105">
+                      <span className="flex items-center gap-2">
+                        Join the Beta Waitlist
+                        <Zap className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
