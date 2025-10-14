@@ -29,6 +29,19 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(null);
   const optionsTimerRef = useRef<number | null>(null);
+  // Last roll metadata to inform /dm/options (sent once after a roll completes)
+  type LastRollMeta = {
+    kind: 'attack'|'skill_check'|'save'|'damage'|'initiative'|'generic';
+    skill?: string;
+    weapon?: string;
+    label?: string;
+    result: number;
+    nat?: number;
+    dc?: number;
+    ac?: number;
+    success?: boolean;
+  };
+  const lastRollRef = useRef<LastRollMeta | null>(null);
 
   // Auto-scroll behavior: scroll to bottom when new messages arrive unless user scrolled up
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
@@ -93,6 +106,19 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
           role: m.sender === 'player' ? 'user' : (m.sender === 'dm' ? 'assistant' : 'system'),
           content: m.text,
         }));
+        // Prepare last_roll payload if present; enrich DC/AC from last DM text
+        let last_roll: LastRollMeta | null = null;
+        if (lastRollRef.current) {
+          last_roll = { ...lastRollRef.current };
+          const dcMatch = (lastDm.text || '').match(/(?:dc|difficulty\s*class)\s*(\d+)/i);
+          const acMatch = (lastDm.text || '').match(/(?:ac|armor\s*class)\s*[:=]?\s*(\d{1,2})/i);
+          if (dcMatch && !last_roll.dc) last_roll.dc = parseInt(dcMatch[1], 10);
+          if (acMatch && !last_roll.ac) last_roll.ac = parseInt(acMatch[1], 10);
+          if (typeof last_roll.success === 'undefined') {
+            if (typeof last_roll.dc === 'number') last_roll.success = last_roll.result >= last_roll.dc;
+            if (typeof last_roll.ac === 'number') last_roll.success = last_roll.result >= last_roll.ac;
+          }
+        }
         const res = await fetch(`${baseUrl}/dm/options`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -103,10 +129,13 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
             history,
             // Provide a minimal state summary to improve specificity when backend uses it
             state_section: `COMBAT: ${combatState.isInCombat ? 'ACTIVE' : 'NOT_IN_COMBAT'}`,
+            last_roll,
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        // Clear last_roll after a successful fetch to avoid re-sending
+        if (lastRollRef.current) lastRollRef.current = null;
         const opts: string[] = Array.isArray(data?.options) ? data.options.slice(0, 3) : [];
 
         // Heuristic filter: drop bland generic fallback options ONLY if a roll popup is pending
@@ -250,6 +279,47 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
       // Send the dice roll message
       await sendMessage(diceRollMessage);
 
+      // Capture last roll meta for context-aware options
+      const mapKind = (t: string): LastRollMeta['kind'] => {
+        switch (t) {
+          case 'attack': return 'attack';
+          case 'damage': return 'damage';
+          case 'initiative': return 'initiative';
+          case 'saving_throw':
+          case 'death_save':
+          case 'concentration_save':
+            return 'save';
+          case 'ability_check':
+          case 'skill_check':
+            return 'skill_check';
+          default: return 'generic';
+        }
+      };
+      const extractSkill = (label?: string): string | undefined => {
+        if (!label) return undefined;
+        const skills = [
+          'stealth','perception','investigation','insight','persuasion','deception','intimidation','athletics','acrobatics','arcana','history','medicine','nature','religion','survival','performance','sleight of hand','animal handling'
+        ];
+        const lower = label.toLowerCase();
+        return skills.find(s => lower.includes(s)) || undefined;
+      };
+      const extractWeapon = (label?: string): string | undefined => {
+        if (!label) return undefined;
+        const m = label.match(/\b(?:with|using|wielding|firing|shooting|from)\s+(?:your|my|the)?\s*([A-Za-z][\w' -]{2,40})/i);
+        return m ? m[1].trim() : undefined;
+      };
+      const current = getCurrentDiceRoll();
+      if (current) {
+        lastRollRef.current = {
+          kind: mapKind(current.requestType),
+          skill: extractSkill(current.description),
+          weapon: extractWeapon(current.description),
+          label: current.description,
+          result: rollResult.total,
+          nat: rollResult.naturalRoll,
+        };
+      }
+
       // NOTE: DM will get information from the dice roll message context above
       // Don't send a second text message to avoid duplicates
     } catch (error) {
@@ -292,6 +362,38 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
           timestamp: new Date().toISOString()
         };
         await sendMessage(playerMessage);
+      }
+
+      // Capture last roll meta for options (manual entry)
+      const current = getCurrentDiceRoll();
+      if (current) {
+        const mapKind = (t: string): LastRollMeta['kind'] => {
+          switch (t) {
+            case 'attack': return 'attack';
+            case 'damage': return 'damage';
+            case 'initiative': return 'initiative';
+            case 'saving_throw':
+            case 'death_save':
+            case 'concentration_save':
+              return 'save';
+            case 'ability_check':
+            case 'skill_check':
+              return 'skill_check';
+            default: return 'generic';
+          }
+        };
+        lastRollRef.current = {
+          kind: mapKind(current.requestType),
+          label: current.description,
+          skill: ((): string | undefined => {
+            const lower = (current.description || '').toLowerCase();
+            const skills = [
+              'stealth','perception','investigation','insight','persuasion','deception','intimidation','athletics','acrobatics','arcana','history','medicine','nature','religion','survival','performance','sleight of hand','animal handling'
+            ];
+            return skills.find(s => lower.includes(s)) || undefined;
+          })(),
+          result: numericResult,
+        };
       }
     } catch (error) {
       logger.error('[MessageList] Failed to handle manual dice result:', error);

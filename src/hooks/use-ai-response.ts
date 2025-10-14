@@ -450,6 +450,13 @@ export const useAIResponse = () => {
         logger.info('📝 Received text-only response');
       }
 
+      // Clamp combat intent flags to be mutually exclusive for logging/UX clarity
+      let startHint = !!combatDetection.shouldStartCombat;
+      let endHint = !!combatDetection.shouldEndCombat;
+      if (startHint && endHint) {
+        if (combatState.isInCombat) startHint = false; else endHint = false;
+      }
+
       // Format the response as an EnhancedChatMessage
       return {
         text: responseText,
@@ -466,8 +473,8 @@ export const useAIResponse = () => {
           isCombat: combatDetection.isCombat,
           confidence: combatDetection.confidence,
           combatType: combatDetection.combatType,
-          shouldStartCombat: combatDetection.shouldStartCombat,
-          shouldEndCombat: combatDetection.shouldEndCombat,
+          shouldStartCombat: startHint,
+          shouldEndCombat: endHint,
           enemies: combatDetection.enemies || [],
           combatActions: combatDetection.combatActions || []
         }

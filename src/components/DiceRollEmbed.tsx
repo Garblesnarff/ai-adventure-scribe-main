@@ -20,6 +20,11 @@ interface DiceRollEmbedProps {
   disadvantage?: boolean;
 }
 
+// Session-scoped degradation flags for 3D dice. Once WebGL context is lost,
+// we degrade to 2D/text mode for the rest of the session and warn only once.
+let __dice3dDead = false;
+let __dice3dWarned = false;
+
 // 3D Dice Component
 function Dice3D({
   value,
@@ -135,17 +140,25 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   const [canvasKey, setCanvasKey] = useState(0);
   const diceSound = useRef<Howl | null>(null);
   const disable3D = String((import.meta as any)?.env?.VITE_DISABLE_DICE_3D ?? 'false').toLowerCase() === 'true';
+  const threeDEnabled = !disable3D && !__dice3dDead;
 
   // Handle WebGL context loss and restoration
   const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
     const canvas = gl.domElement as HTMLCanvasElement;
-    const onLost = (e: Event) => { 
-      e.preventDefault(); 
-      setContextLost(true); 
+    const onLost = (e: Event) => {
+      // Prevent default to allow us to handle loss; permanently degrade for session
+      e.preventDefault();
+      __dice3dDead = true;
+      setContextLost(true);
+      if (!__dice3dWarned) {
+        __dice3dWarned = true;
+        logger.warn('Dice 3D disabled after WebGL context loss; falling back to 2D/text for this session.');
+      }
     };
-    const onRestored = () => { 
-      setContextLost(false); 
-      setCanvasKey(k => k + 1); 
+    const onRestored = () => {
+      // We intentionally do not restore 3D once degraded for stability.
+      setContextLost(false);
+      setCanvasKey(k => k + 1);
     };
     
     canvas.addEventListener('webglcontextlost', onLost as any, { passive: false });
@@ -254,7 +267,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
       </div>
 
       {/* 3D Dice Animation (feature-flagged) */}
-      {showAnimation && !disable3D && hasRolled && (
+      {showAnimation && threeDEnabled && hasRolled && (
         <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200">
           {!contextLost ? (
             <Canvas
@@ -291,9 +304,15 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
             </Canvas>
           ) : (
             <div className="h-full w-full flex items-center justify-center text-xs text-gray-600 bg-gray-50">
-              3D dice paused (graphics context lost). Restoring…
+              3D dice disabled after graphics context loss. Using fallback.
             </div>
           )}
+        </div>
+      )}
+
+      {showAnimation && !threeDEnabled && hasRolled && (
+        <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200 flex items-center justify-center text-xs text-gray-600 bg-gray-50">
+          3D dice unavailable. Showing results without 3D animation.
         </div>
       )}
 

@@ -176,10 +176,18 @@ export const useCombatAIIntegration = ({
       }
     }
 
+    // Enforce mutual exclusivity between start/end hints to avoid contradictory logs
+    let start = !!detection.shouldStartCombat;
+    let end = !!detection.shouldEndCombat;
+    if (start && end) {
+      if (state.isInCombat) start = false; // already in combat, prefer end
+      else end = false; // out of combat, prefer start
+    }
+
     return {
       combatDetected: detection.isCombat,
-      shouldStartCombat: detection.shouldStartCombat,
-      shouldEndCombat: detection.shouldEndCombat,
+      shouldStartCombat: start,
+      shouldEndCombat: end,
       combatMessages
     };
   }, [state.activeEncounter, startCombat, endCombat, addParticipant]);
