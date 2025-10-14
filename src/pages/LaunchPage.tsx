@@ -15,6 +15,7 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { HeroSection } from '@/components/launch/HeroSection';
 import { VisionSection } from '@/components/launch/VisionSection';
+import { FounderStorySection } from '@/components/launch/FounderStorySection';
 import { FeaturesSection } from '@/components/launch/FeaturesSection';
 import { HowItWorksSection } from '@/components/launch/HowItWorksSection';
 import { TeamSection } from '@/components/launch/TeamSection';
@@ -79,6 +80,9 @@ const LaunchPage: React.FC = () => {
 
         {/* Vision Section - Sell the Dream */}
         <VisionSection />
+
+        {/* Founder Story Section - Personal Connection & Trust Building */}
+        <FounderStorySection />
 
         {/* Features Section - What We're Building */}
         <FeaturesSection />
