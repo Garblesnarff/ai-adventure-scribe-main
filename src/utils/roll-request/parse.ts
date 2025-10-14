@@ -37,12 +37,27 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     /(?:make\s+an?|roll\s+(?:for\s+)?)\s*attack(?:\s+roll)?/gi
   ];
 
+  // Weapon hint and AC patterns used around attack phrases
+  const weaponHint = /\b(?:with|using|wielding|firing|shooting|from)\s+(?:your|my|the)?\s*([A-Za-z][\w' -]{2,40})/i;
+  const acTail = /(ac|armor\s*class)\s*[:=]?\s*(\d{1,2})/i;
+
   attackPatterns.forEach(pattern => {
     while ((match = pattern.exec(text)) !== null) {
+      // Look around the match to extract context (weapon, AC)
+      const start = Math.max(0, match.index - 120);
+      const end = Math.min(text.length, match.index + (match[0]?.length || 0) + 200);
+      const windowText = text.slice(start, end);
+
+      const weaponMatch = weaponHint.exec(windowText);
+      const weaponName = weaponMatch ? weaponMatch[1].trim() : undefined;
+      const acMatch = acTail.exec(windowText);
+      const ac = acMatch ? parseInt(acMatch[2], 10) : undefined;
+
       requests.push({
         type: 'attack',
         formula: '1d20+modifier',
-        purpose: 'Attack roll',
+        purpose: weaponName ? `${weaponName} attack` : 'Attack roll',
+        ac,
         originalText: match[0],
         confidence: 0.95
       });

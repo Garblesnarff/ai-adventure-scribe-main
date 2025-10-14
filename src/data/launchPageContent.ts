@@ -72,38 +72,38 @@ This isn't about replacing human Dungeon Masters. It's about giving every advent
     subtitle: "These features are in active development for our beta launch",
     features: [
       {
-        title: "Dynamic Storytelling Engine",
-        description: "An AI that adapts to your every decision, creating a truly unique narrative that evolves based on your playstyle and choices.",
+        title: "Stories That Remember You",
+        description: "Every choice creates ripples that last forever. Save a village and they'll erect statues in your honor. Betray an ally and face the consequences sessions later.",
         status: "in_development" as const,
         icon: "Brain"
       },
       {
-        title: "Cinematic Visual Generation",
-        description: "Generate breathtaking art for your characters, scenes, and worlds in real-time. Every monster, location, and hero brought to life.",
+        title: "Living Fantasy Worlds",
+        description: "Watch your adventures come alive with cinematic visuals. Every shadowy tavern, ancient ruin, and mythical creature rendered in stunning detail.",
         status: "planned" as const,
         icon: "Image"
       },
       {
-        title: "Living NPC Memory",
-        description: "Characters with their own memories, motivations, and relationships that persist across sessions and evolve based on your interactions.",
+        title: "NPCs With Real Memory",
+        description: "Build relationships that evolve like real friendships. NPCs remember your heroic sacrifices, your betrayals, and your moments of kindness - creating emotional depth that surprises you.",
         status: "beta" as const,
         icon: "Users"
       },
       {
-        title: "Intelligent Rules Engine",
-        description: "A DM that knows D&D 5E rules inside and out, handling complex mechanics while you focus on the story and roleplay.",
+        title: "Seamless D&D Rules",
+        description: "Never worry about complex rules again. Focus on the story and roleplay while the AI handles mechanics, spell interactions, and combat calculations perfectly.",
         status: "in_development" as const,
         icon: "BookOpen"
       },
       {
-        title: "Voice Narration",
-        description: "Cinematic voice acting that brings your adventures to life with professional narration and character voices.",
+        title: "Immersive Voice Acting",
+        description: "Hear your adventures come alive with professional narration. Distinct character voices bring NPCs to life, making every tavern tale and epic battle feel cinematic.",
         status: "planned" as const,
         icon: "Mic"
       },
       {
-        title: "Campaign Export",
-        description: "Export your entire campaign as a beautifully formatted storybook, complete with artwork and narrative summaries.",
+        title: "Your Campaign as a Book",
+        description: "Transform your entire adventure into a beautiful storybook. Share your legend with friends, complete with artwork, maps, and narrative summaries of your greatest moments.",
         status: "coming_soon" as const,
         icon: "Download"
       }
@@ -201,7 +201,7 @@ This isn't about replacing human Dungeon Masters. It's about giving every advent
   earlyAccess: {
     headline: "Be a Founding Adventurer – Shape the Living World",
     subtitle: "Get exclusive perks for helping build the AI DM that ends scheduling hell.",
-    description: "Join our closed beta and secure your place in AI Dungeon Master history with these exclusive founding member benefits:",
+    description: "Join our closed beta and secure your place in AI Dungeon Master history with these exclusive founding member benefits. Cancel anytime during beta - no hard feelings.",
     perks: [
       {
         title: "Personalized NPC in Launch",
