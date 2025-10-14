@@ -31,6 +31,8 @@ import { usePendingRolls } from '@/hooks/use-pending-rolls';
 import { FloatingActionPanel } from './FloatingActionPanel';
 import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
 import logger from '@/lib/logger';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * GameContent Component
@@ -58,8 +60,12 @@ const GameContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingPhase, setLoadingPhase] = useState<'initial' | 'data' | 'session' | 'greeting'>('initial');
   const [error, setError] = useState<string | null>(null);
-  const [combatMode, setCombatMode] = useState(false);
-  const [showCombatInterface, setShowCombatInterface] = useState(false);
+  // Legacy: combatMode previously switched the main view away from chat.
+  // New UX: chat is always primary. We use a sheet to show the tracker.
+  const [combatMode, setCombatMode] = useState(false); // repurposed to control sheet visibility
+  const [showCombatInterface, setShowCombatInterface] = useState(false); // unused after redesign
+  const { user } = useAuth();
+  const [isDM, setIsDM] = useState(false);
 
   useEffect(() => {
     const loadGameData = async () => {
@@ -114,6 +120,16 @@ const GameContent: React.FC = () => {
         // Assuming CampaignContext UPDATE_CAMPAIGN can handle partial updates of CampaignType
         campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as unknown as Partial<CampaignType> });
 
+        // Derive DM role: env override or campaign owner (user_id)
+        try {
+          const envVal = String(((import.meta as any)?.env?.VITE_FORCE_DM) || '');
+          const forceDM = ['true', '1', 'yes', 'on'].includes(envVal.toLowerCase());
+          const ownerId = (campaignData as any)?.user_id;
+          setIsDM(Boolean(forceDM || (user?.id && ownerId && user.id === ownerId)));
+        } catch (e) {
+          setIsDM(false);
+        }
+
       } catch (err: any) {
         logger.error("Error loading game data:", err);
         setError(err.message);
@@ -124,17 +140,14 @@ const GameContent: React.FC = () => {
     };
 
     loadGameData();
-  }, [characterIdFromParams, campaignIdFromParams, characterDispatch, campaignDispatch]);
+  }, [characterIdFromParams, campaignIdFromParams, characterDispatch, campaignDispatch, user?.id]);
 
-  // Handle manual combat mode toggle
+  // Open/close the combat tracker sheet
   const handleCombatToggle = () => {
-    setCombatMode(!combatMode);
-    // Mark that user manually toggled combat mode
+    setCombatMode((v) => !v);
+    // Mark that user manually toggled the tracker so auto-open is avoided
     sessionStorage.setItem('manualCombatToggle', 'true');
-    // Clear the flag after 30 seconds to allow auto-toggle again
-    setTimeout(() => {
-      sessionStorage.removeItem('manualCombatToggle');
-    }, 30000);
+    setTimeout(() => sessionStorage.removeItem('manualCombatToggle'), 30000);
   };
 
   // Handle AI response for combat detection - moved to inner component
@@ -247,6 +260,7 @@ const GameContent: React.FC = () => {
               setCombatMode={setCombatMode}
               handleCombatToggle={handleCombatToggle}
               handleAIResponse={handleAIResponse}
+              isDM={isDM}
             />
           </VoiceProvider>
         </MemoryProvider>
@@ -268,6 +282,7 @@ interface GameContentInnerProps {
   setCombatMode: (mode: boolean) => void;
   handleCombatToggle: () => void;
   handleAIResponse: (message: any) => Promise<void>;
+  isDM: boolean;
 }
 
 const GameContentInner: React.FC<GameContentInnerProps> = ({
@@ -281,10 +296,13 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   setCombatMode,
   handleCombatToggle,
   handleAIResponse,
+  isDM,
 }) => {
   // UI state management
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
+  const [isCombatDetected, setIsCombatDetected] = useState(false);
+  const [showTracker, setShowTracker] = useState(false);
   
   // Safety state management
   const [lastSafetyCommand, setLastSafetyCommand] = useState<{
@@ -311,6 +329,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
     characterId: characterIdForHandler || undefined,
     campaignId: campaignIdForHandler || undefined
   });
+  const { state: combatState } = useCombat();
+  const prevInCombatRef = React.useRef(combatState.isInCombat);
 
   // Auto-generate initial greeting for new sessions
   const { isGenerating: isGeneratingGreeting, hasGenerated, error: greetingError } = useInitialGreeting({
@@ -330,20 +350,11 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
     },
   });
 
-  // Auto-toggle combat mode based on combat detection
+  // Detect combat but do not switch away from chat; only show HUD and let user open tracker.
   React.useEffect(() => {
-    if (combatAI.isInCombat && !combatMode) {
-      setCombatMode(true);
-      logger.info('🗡️ Combat detected! Automatically switching to combat mode.');
-    } else if (!combatAI.isInCombat && combatMode) {
-      // Allow manual override - only auto-switch off if user hasn't manually toggled
-      const shouldAutoExit = sessionStorage.getItem('manualCombatToggle') !== 'true';
-      if (shouldAutoExit) {
-        setCombatMode(false);
-        logger.info('✅ Combat ended! Automatically returning to conversation mode.');
-      }
-    }
-  }, [combatAI.isInCombat, combatMode, setCombatMode]);
+    setIsCombatDetected(!!combatAI.isInCombat);
+    // Do not auto-open the tracker unless a manual override is not set and user wants that behavior (future flag)
+  }, [combatAI.isInCombat]);
 
   // Handle AI response for combat detection in inner component
   const innerHandleAIResponse = React.useCallback(async (message: any) => {
@@ -370,6 +381,17 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
           shouldEndCombat: result.shouldEndCombat,
           combatMessages: result.combatMessages.length
         });
+
+        // Pipe any combat messages (initiative, rolls) into chat so users see them
+        if (result.combatMessages && result.combatMessages.length > 0) {
+          for (const m of result.combatMessages) {
+            try {
+              await sendMessage(m);
+            } catch (e) {
+              logger.warn('Failed to send combat message to chat', e);
+            }
+          }
+        }
       } else {
         logger.info('📝 No combat detection data in AI response');
       }
@@ -381,6 +403,35 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
       logger.error('Error processing AI response for combat:', error);
     }
   }, [combatAI, characterState, handleAIResponse]);
+
+  // When combat ends, emit a simple summary message and close the tracker if open.
+  React.useEffect(() => {
+    if (prevInCombatRef.current && !combatState.isInCombat) {
+      // Combat transitioned from true -> false
+      const enc = combatState.activeEncounter;
+      const rounds = enc?.currentRound || enc?.roundsElapsed || 1;
+      const participants = (enc?.participants || []).map((p: any) => ({
+        name: p.name,
+        damageDealt: (enc?.actions || []).filter((a: any) => a.participantId === p.id && a.damageDealt)
+          .reduce((s: number, a: any) => s + (a.damageDealt || 0), 0),
+        damageTaken: Math.max(0, (p.maxHitPoints || 0) - (p.currentHitPoints || 0)),
+        status: p.isDead ? 'dead' : p.isUnconscious ? 'unconscious' : 'ok'
+      }));
+      const totalDamage = participants.reduce((s, x) => s + x.damageDealt, 0);
+      sendMessage({
+        text: 'Combat has ended.',
+        sender: 'system',
+        context: {
+          combatData: {
+            type: 'summary',
+            summary: { rounds, totalDamage, participants, outcome: 'Combat concluded' }
+          }
+        }
+      });
+      setShowTracker(false);
+    }
+    prevInCombatRef.current = combatState.isInCombat;
+  }, [combatState.isInCombat]);
 
   return (
           <div className="min-h-screen bg-background">
@@ -448,29 +499,29 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                           showSafetyInfo={showSafetyInfo}
                         />
 
-                        {/* Enhanced Combat Mode Toggle & Status */}
+                        {/* Tracker Toggle & Status */}
                         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 md:ml-8 w-full md:w-auto">
                           <Button
-                            variant={combatMode ? "destructive" : "outline"}
+                            variant={showTracker ? "destructive" : "outline"}
                             size="lg"
-                            onClick={handleCombatToggle}
+                            onClick={() => setShowTracker((v) => !v)}
                             className={`relative overflow-hidden transition-all duration-300 border-2 hover-glow focus-glow ${
-                              combatMode
+                              showTracker
                                 ? 'bg-gradient-to-r from-red-600 to-red-700 border-red-500 animate-pulse shadow-2xl'
                                 : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50 hover:from-infinite-purple/30 hover:to-infinite-teal/30'
                             }`}
                           >
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                             <div className="relative flex items-center gap-2">
-                              {combatMode ? (
+                              {showTracker ? (
                                 <>
                                   <X className="w-5 h-5" />
-                                  <span className="font-display font-medium">Exit Combat</span>
+                                  <span className="font-display font-medium">Close Tracker</span>
                                 </>
                               ) : (
                                 <>
                                   <Sword className="w-5 h-5" />
-                                  <span className="font-display font-medium">Enter Combat</span>
+                                  <span className="font-display font-medium">Open Tracker</span>
                                 </>
                               )}
                             </div>
@@ -482,10 +533,10 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                               <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse shadow-lg"></div>
                               <span className="text-xs font-display font-medium text-infinite-teal">Realm Active</span>
                             </div>
-                            {combatMode && (
+                            {showTracker && (
                               <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 rounded-full border border-red-400/40 glass">
                                 <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
-                                <span className="text-xs font-display font-medium text-red-400">Combat Mode</span>
+                                <span className="text-xs font-display font-medium text-red-400">Tracker Open</span>
                               </div>
                             )}
                           </div>
@@ -493,11 +544,16 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                       </div>
                     </div>
 
-                    {/* Content Area - Toggle between Chat and Combat */}
+                    {/* Content Area - Chat is always visible; tracker lives in a sheet */}
                     <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50 transition-all duration-300">
-                      {combatMode ? (
-                        <CombatInterface />
-                      ) : (
+                        {/* HUD Banner when combat is active/detected */}
+                        {isCombatDetected && (
+                          <div className="mx-3 mt-3 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+                            <div className="text-sm text-red-700 font-medium">⚔️ Combat in progress</div>
+                            <Button size="sm" variant="outline" onClick={() => setShowTracker(true)}>Open Tracker</Button>
+                          </div>
+                        )}
+
                         <MessageHandler
                           sessionId={sessionId} // Use sessionId from useGameSession
                           campaignId={campaignIdForHandler || null}
@@ -587,7 +643,6 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             </>
                           )}
                         </MessageHandler>
-                      )}
                     </div>
                   </Card>
                 </div>
@@ -637,6 +692,13 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                   onToggle={() => setIsFloatingPanelVisible(!isFloatingPanelVisible)}
                   combatMode={combatMode}
                 />
+
+                {/* Tracker Sheet */}
+                <Sheet open={showTracker} onOpenChange={setShowTracker}>
+                  <SheetContent side="right" className="w-[420px] sm:max-w-[480px] overflow-y-auto">
+                    <CombatInterface isDM={isDM} />
+                  </SheetContent>
+                </Sheet>
               </div>
             </div>
           </div>

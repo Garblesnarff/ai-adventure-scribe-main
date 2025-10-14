@@ -28,6 +28,7 @@ interface ActionPanelProps {
   onClassFeatureUse: (participantId: string, featureName: string) => void;
   onRacialTraitUse: (participantId: string, traitName: string) => void;
   onDeathSave: (participantId: string) => void;
+  showNextTurnButton?: boolean;
 }
 
 const ActionPanel: React.FC<ActionPanelProps> = ({
@@ -43,6 +44,7 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
   onClassFeatureUse,
   onRacialTraitUse,
   onDeathSave,
+  showNextTurnButton = true,
 }) => {
   const currentParticipant = activeEncounter.participants.find(p => p.id === currentParticipantId);
 
@@ -65,14 +67,16 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
               {currentParticipant.name}'s Turn
             </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onNextTurn}
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Next Turn
-          </Button>
+          {showNextTurnButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNextTurn}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Next Turn
+            </Button>
+          )}
         </div>
 
         <Separator className="my-3" />

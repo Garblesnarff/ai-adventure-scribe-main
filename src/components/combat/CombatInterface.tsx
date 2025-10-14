@@ -56,7 +56,11 @@ import { checkConcentration } from '@/utils/spell-management';
 import { rollDeathSave, needsDeathSaves } from '@/utils/combat/deathSaves';
 import logger from '@/lib/logger';
 
-const CombatInterface: React.FC = () => {
+interface CombatInterfaceProps {
+  isDM?: boolean;
+}
+
+const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const { 
     state, 
     startCombat, 
@@ -101,6 +105,11 @@ const CombatInterface: React.FC = () => {
   // Get player characters and potential enemies
   const playerParticipants = activeEncounter?.participants.filter(p => p.participantType === 'player') || [];
   const enemyParticipants = activeEncounter?.participants.filter(p => (p.participantType as string) === 'monster') || [];
+  const playerCharacterId = characterState.character?.id;
+  const isPlayersTurn = Boolean(
+    activeEncounter?.currentTurnParticipantId &&
+    activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId)?.characterId === playerCharacterId
+  );
   
   // Handle starting combat
   const handleStartCombat = async () => {
@@ -667,7 +676,8 @@ const CombatInterface: React.FC = () => {
     await takeAction(action);
   };
 
-  if (!showCombatMode) {
+  // Show the pre-combat card only if combat hasn't started
+  if (!isInCombat && !showCombatMode) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
@@ -700,30 +710,38 @@ const CombatInterface: React.FC = () => {
             )}
             
             <div className="flex gap-2 justify-center">
-              <Button 
-                onClick={addEnemy}
-                variant="outline"
-                size="sm"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Add Enemy
-              </Button>
-              <Button 
-                onClick={handleStartCombat}
-                disabled={isStartingCombat || playerParticipants.length === 0}
-              >
-                {isStartingCombat ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Starting...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Begin Combat
-                  </>
-                )}
-              </Button>
+              {isDM ? (
+                <>
+                  <Button 
+                    onClick={addEnemy}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Add Enemy
+                  </Button>
+                  <Button 
+                    onClick={handleStartCombat}
+                    disabled={isStartingCombat || playerParticipants.length === 0}
+                  >
+                    {isStartingCombat ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Begin Combat
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  The DM will begin combat when ready.
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -752,14 +770,16 @@ const CombatInterface: React.FC = () => {
             >
               {localShowInitiativeTracker ? 'Hide' : 'Show'} Tracker
             </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleEndCombat}
-            >
-              <X className="w-4 h-4 mr-2" />
-              End Combat
-            </Button>
+            {isDM && (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleEndCombat}
+              >
+                <X className="w-4 h-4 mr-2" />
+                End Combat
+              </Button>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -775,7 +795,7 @@ const CombatInterface: React.FC = () => {
         {/* Main Combat Area */}
         <div className={`lg:col-span-${localShowInitiativeTracker ? '3' : '4'}`}>
           <div className="space-y-6">
-            {activeEncounter?.currentTurnParticipantId && (
+            {activeEncounter?.currentTurnParticipantId && (isDM || isPlayersTurn) && (
               <ActionPanel
                 activeEncounter={activeEncounter}
                 currentParticipantId={activeEncounter.currentTurnParticipantId}
@@ -789,6 +809,7 @@ const CombatInterface: React.FC = () => {
                 onClassFeatureUse={handleClassFeature}
                 onRacialTraitUse={handleRacialTraitUse}
                 onDeathSave={handleDeathSave}
+                showNextTurnButton={isDM}
               />
             )}
 
@@ -815,7 +836,7 @@ const CombatInterface: React.FC = () => {
                     participant={participant}
                     onDamage={handleApplyDamage}
                     onHeal={handleHealing}
-                    isInteractive={true}
+                    isInteractive={Boolean(isDM || (participant.characterId && participant.characterId === playerCharacterId))}
                   />
                 ))}
               </CardContent>
@@ -846,7 +867,7 @@ const CombatInterface: React.FC = () => {
                     >
                       <EnemyCard 
                         enemyId={enemy.id}
-                        onAttack={handleEnemyAttack}
+                        onAttack={isDM ? handleEnemyAttack : undefined}
                       />
                     </div>
                   ))}
@@ -855,14 +876,16 @@ const CombatInterface: React.FC = () => {
                     <div className="text-center py-8 text-muted-foreground">
                       <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                       <p>No enemies in combat</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={addEnemy}
-                        className="mt-2"
-                      >
-                        Add Enemy
-                      </Button>
+                      {isDM && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={addEnemy}
+                          className="mt-2"
+                        >
+                          Add Enemy
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

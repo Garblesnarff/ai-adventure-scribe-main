@@ -159,8 +159,29 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
     return null;
   };
 
+  const getBorderClass = () => {
+    switch (data.type) {
+      case 'attack_roll':
+        return data.critical ? 'border-l-red-500' : data.success ? 'border-l-green-500' : 'border-l-gray-500';
+      case 'damage_roll':
+        return 'border-l-orange-500';
+      case 'saving_throw':
+        return data.success ? 'border-l-blue-500' : 'border-l-red-500';
+      case 'skill_check':
+        return data.success ? 'border-l-purple-500' : 'border-l-gray-500';
+      case 'initiative':
+        return 'border-l-yellow-500';
+      case 'death_save':
+        return data.success ? 'border-l-green-600' : 'border-l-red-600';
+      case 'concentration_save':
+        return data.success ? 'border-l-cyan-500' : 'border-l-red-500';
+      default:
+        return 'border-l-gray-500';
+    }
+  };
+
   return (
-    <Card className="p-3 mb-2 bg-card/80 border-l-4" style={{ borderLeftColor: getTypeColor().replace('bg-', '') }}>
+    <Card className={`p-3 mb-2 bg-card/80 border-l-4 ${getBorderClass()}`}>
       <div className="flex items-start gap-3">
         {/* Icon and Type */}
         <div className={`p-2 rounded-full text-white ${getTypeColor()}`}>
