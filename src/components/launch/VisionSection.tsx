@@ -3,14 +3,48 @@
  *
  * PURPOSE: Paint a vivid picture of the future AI Dungeon Master experience
  * Replaces social proof with visionary messaging about what's possible
+ *
+ * Enhanced with:
+ * - Stagger animations for vision cards
+ * - Enhanced hover effects with scale and glow
+ * - Better visual hierarchy
+ * - Interactive elements
  */
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Heart, BookOpen } from 'lucide-react';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const VisionSection: React.FC = () => {
   const { vision } = launchPageContent;
+  const [visibleCards, setVisibleCards] = useState<boolean[]>([false, false, false]);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            // Stagger the animation of cards
+            setTimeout(() => {
+              setVisibleCards(prev => {
+                const newVisible = [...prev];
+                newVisible[index] = true;
+                return newVisible;
+              });
+            }, index * 200); // 200ms delay between each card
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section id="vision" className="relative py-24 bg-gray-900">
@@ -52,55 +86,66 @@ export const VisionSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Vision Cards - What Makes It Special */}
+          {/* Enhanced Vision Cards - What Makes It Special */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-purple-800/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-to-br from-purple-900/40 to-gray-900/40 border border-purple-500/20 rounded-2xl p-8 backdrop-blur-sm hover:border-purple-500/40 transition-all duration-300">
-                <div className="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Heart className="w-7 h-7 text-purple-400" />
+            {[
+              {
+                icon: Heart,
+                title: "Emotionally Intelligent",
+                description: "Not just smart—emotionally aware. The AI understands the feelings behind your choices, creating moments that surprise, delight, and genuinely move you.",
+                gradient: "from-purple-600/20 to-purple-800/20",
+                iconBg: "bg-purple-500/20",
+                iconColor: "text-purple-400",
+                borderColor: "border-purple-500/20",
+                hoverBorder: "hover:border-purple-500/40"
+              },
+              {
+                icon: BookOpen,
+                title: "Cinematic Storytelling",
+                description: "Every session becomes a living story. Rich descriptions, vivid scenes, and narrative arcs that rival the best fantasy novels you've ever read.",
+                gradient: "from-amber-600/20 to-amber-800/20",
+                iconBg: "bg-amber-500/20",
+                iconColor: "text-amber-400",
+                borderColor: "border-amber-500/20",
+                hoverBorder: "hover:border-amber-500/40"
+              },
+              {
+                icon: Sparkles,
+                title: "Infinitely Adaptable",
+                description: "No two adventures are the same. The AI learns your style, remembers your world, and creates experiences that feel personal and unique to you.",
+                gradient: "from-purple-600/20 to-amber-600/20",
+                iconBg: "bg-purple-500/20",
+                iconColor: "text-purple-400",
+                borderColor: "border-purple-500/20",
+                hoverBorder: "hover:border-purple-500/40"
+              }
+            ].map((card, index) => {
+              const IconComponent = card.icon;
+              return (
+                <div
+                  key={index}
+                  ref={(el) => (cardRefs.current[index] = el)}
+                  className={`relative group transform transition-all duration-700 ${
+                    visibleCards[index]
+                      ? 'translate-y-0 opacity-100'
+                      : 'translate-y-8 opacity-0'
+                  }`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                  <div className={`relative bg-gradient-to-br from-purple-900/40 to-gray-900/40 border ${card.borderColor} rounded-2xl p-8 backdrop-blur-sm ${card.hoverBorder} transition-all duration-500 hover:scale-105 hover:shadow-2xl`}>
+                    <div className={`w-16 h-16 ${card.iconBg} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-300 group-hover:rotate-3`}>
+                      <IconComponent className={`w-8 h-8 ${card.iconColor}`} />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-400 transition-colors duration-300">
+                      {card.title}
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                      {card.description}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  Emotionally Intelligent
-                </h3>
-                <p className="text-gray-400 leading-relaxed">
-                  Not just smart—emotionally aware. The AI understands the feelings behind your choices,
-                  creating moments that surprise, delight, and genuinely move you.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 to-amber-800/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-to-br from-amber-900/40 to-gray-900/40 border border-amber-500/20 rounded-2xl p-8 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300">
-                <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-7 h-7 text-amber-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  Cinematic Storytelling
-                </h3>
-                <p className="text-gray-400 leading-relaxed">
-                  Every session becomes a living story. Rich descriptions, vivid scenes, and narrative
-                  arcs that rival the best fantasy novels you've ever read.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-amber-600/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-to-br from-purple-900/40 to-amber-900/40 border border-purple-500/20 rounded-2xl p-8 backdrop-blur-sm hover:border-purple-500/40 transition-all duration-300">
-                <div className="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-7 h-7 text-purple-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  Infinitely Adaptable
-                </h3>
-                <p className="text-gray-400 leading-relaxed">
-                  No two adventures are the same. The AI learns your style, remembers your world,
-                  and creates experiences that feel personal and unique to you.
-                </p>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
           {/* Call to Action */}

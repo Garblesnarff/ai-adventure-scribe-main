@@ -78,29 +78,56 @@ const LaunchPage: React.FC = () => {
         {/* Hero Section - The Hook */}
         <HeroSection />
 
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>
+
         {/* Vision Section - Sell the Dream */}
         <VisionSection />
+
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent"></div>
 
         {/* Founder Story Section - Personal Connection & Trust Building */}
         <FounderStorySection />
 
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>
+
         {/* Features Section - What We're Building */}
         <FeaturesSection />
+
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent"></div>
 
         {/* How It Works - Beta Journey */}
         <HowItWorksSection />
 
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>
+
         {/* Team Section - Personal Connection */}
         <TeamSection />
+
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent"></div>
 
         {/* Roadmap Section - Clear Beta Phases */}
         <RoadmapSection />
 
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>
+
         {/* Early Access Section - Founding Adventurer Perks */}
         <EarlyAccessSection />
 
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent"></div>
+
         {/* FAQ Section - Launch-Focused Questions */}
         <FAQSection />
+
+        {/* Gradient Transition */}
+        <div className="h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent"></div>
 
         {/* Final CTA Section - Waitlist Urgency */}
         <FinalCTASection />
