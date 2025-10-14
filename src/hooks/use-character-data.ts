@@ -76,6 +76,7 @@ interface CharacterRow {
   alignment?: string | null;
   avatar_url?: string | null;
   image_url?: string | null;
+  background_image?: string | null;
   appearance?: string | null;
   personality_traits?: string | null;
   backstory_elements?: string | null;
@@ -220,6 +221,7 @@ const transformCharacterData = (
   appearance: characterData.appearance,
   personality_traits: characterData.personality_traits,
   backstory_elements: characterData.backstory_elements,
+  background_image: characterData.background_image || undefined,
   // Legacy fields
   personalityTraits: [],
   ideals: [],
