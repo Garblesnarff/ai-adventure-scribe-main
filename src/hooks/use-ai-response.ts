@@ -1,4 +1,5 @@
 // External/SDK Imports
+import { useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Project Hooks

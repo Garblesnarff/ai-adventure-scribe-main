@@ -11,6 +11,7 @@ import { ActionOptions } from '@/components/game/ActionOptions';
 import { parseMessageOptions, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
 import { parseRollRequests, removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
 import { rollDice } from '@/utils/diceUtils';
+import { useCombat } from '@/contexts/CombatContext';
 
 interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
@@ -23,6 +24,7 @@ interface MessageListProps {
 export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) => {
   const { messages = [], sendMessage } = useMessageContext();
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
+  const { state: combatState } = useCombat();
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(null);
@@ -76,6 +78,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
     const hasInlineOptions = parsed?.hasOptions;
     const pendingRoll = !!getCurrentDiceRoll();
 
+    // Suppress when a roll is pending (keep suggestions during combat as requested)
     if (hasInlineOptions || pendingRoll) {
       setDynamicOptions(null);
       return;

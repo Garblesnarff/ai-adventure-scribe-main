@@ -49,6 +49,10 @@ export const useCombatAIIntegration = ({
   const lastProcessedAction = useRef<string | null>(null);
   const lastProcessedRound = useRef<number>(0);
   const isStartingCombatRef = useRef(false);
+  const hasInitiativeEmittedRef = useRef(false);
+  const seenActionHashesRef = useRef<Set<string>>(new Set());
+  const lastCombatEndAtRef = useRef<number>(0);
+  const MIN_COMBAT_CONFIDENCE = Number(((import.meta as any)?.env?.VITE_MIN_COMBAT_CONFIDENCE ?? '0.55'));
 
   if (!combatContext) {
     throw new Error('useCombatAIIntegration must be used within CombatProvider');
@@ -76,12 +80,15 @@ export const useCombatAIIntegration = ({
     shouldEndCombat: boolean;
     combatMessages: ChatMessage[];
   }> => {
-    const detection = detectCombatFromText(dmMessage.text);
+    const detection = detectCombatFromText(dmMessage.text || '');
     const combatMessages: ChatMessage[] = [];
 
     // Handle combat ending
     if (detection.shouldEndCombat && state.activeEncounter) {
       await endCombat();
+      hasInitiativeEmittedRef.current = false;
+      seenActionHashesRef.current.clear();
+      lastCombatEndAtRef.current = Date.now();
       return {
         combatDetected: true,
         shouldStartCombat: false,
@@ -91,7 +98,13 @@ export const useCombatAIIntegration = ({
     }
 
     // Handle combat starting with guard to prevent duplicates
-    if (detection.shouldStartCombat && detection.enemies && detection.enemies.length > 0 && !isStartingCombatRef.current) {
+    const canStartCombat =
+      detection.isCombat &&
+      detection.confidence >= MIN_COMBAT_CONFIDENCE &&
+      !!(detection.enemies && detection.enemies.length > 0) &&
+      !state.isInCombat;
+
+    if (canStartCombat && !isStartingCombatRef.current) {
       isStartingCombatRef.current = true;
       
       try {
@@ -103,11 +116,11 @@ export const useCombatAIIntegration = ({
 
           // Create combat start message for UI log
           const combatStartMessage: ChatMessage = {
-            text: `Combat has begun! Initiative has been rolled.`,
+            text: `Combat has begun! Initiative order established.`,
             sender: 'system',
             context: {
               combatData: {
-                type: 'combat_start',
+                type: 'initiative',
                 participants: participants.map(p => ({
                   name: p.name || 'Unknown',
                   initiative: p.initiative || 0,
@@ -119,16 +132,30 @@ export const useCombatAIIntegration = ({
           };
 
           combatMessages.push(combatStartMessage);
+          hasInitiativeEmittedRef.current = true;
+          seenActionHashesRef.current.clear();
         }
       } finally {
         isStartingCombatRef.current = false;
       }
     }
-    }
 
     // Process detected combat actions for dice rolls
     if (detection.combatActions && detection.combatActions.length > 0) {
+      let emitted = 0;
       for (const action of detection.combatActions) {
+        // Skip low-value or unknown actor actions to reduce spam
+        const actorName = (action.actor || '').trim();
+        if (!actorName || actorName.toLowerCase() === 'unknown') {
+          continue;
+        }
+
+        // De-duplicate similar actions within this encounter
+        const hash = `${action.rollType}|${actorName}|${action.target || ''}|${action.weapon || ''}`;
+        if (seenActionHashesRef.current.has(hash)) {
+          continue;
+        }
+
         const rollResult = await createCombatActionRoll(action);
         if (rollResult) {
           const combatMessage: ChatMessage = {
@@ -141,6 +168,10 @@ export const useCombatAIIntegration = ({
           };
           
           combatMessages.push(combatMessage);
+          seenActionHashesRef.current.add(hash);
+          emitted++;
+          // Throttle per-response emissions
+          if (emitted >= 2) break;
         }
       }
     }

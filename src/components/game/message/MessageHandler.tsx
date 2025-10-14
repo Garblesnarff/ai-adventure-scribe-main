@@ -10,6 +10,7 @@ import { rollDice } from '@/utils/diceUtils';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { checkSafetyCommands, processSafetyCommand } from '@/utils/safetyCommands';
 import logger from '@/lib/logger';
+import { sanitizeDMText } from '@/utils/chatSanitizer';
 
 interface MessageHandlerProps {
   sessionId: string; // Should be non-null if we reach here
@@ -223,9 +224,13 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       logger.info('[Memory Flow] Getting AI response for session:', sessionId);
       // Pass necessary context to getAIResponse. It fetches its own campaign/char details if needed.
       const aiResponseMessage = await getAIResponse([...messages, playerMessage], sessionId); 
+      const sanitizedAiResponseMessage: ChatMessage = {
+        ...aiResponseMessage,
+        text: sanitizeDMText(aiResponseMessage.text)
+      };
       
       // Check for auto-triggered safety commands in AI response
-      const autoSafetyCheck = await checkSafetyCommands(playerInput, sessionId, aiResponseMessage.text);
+      const autoSafetyCheck = await checkSafetyCommands(playerInput, sessionId, sanitizedAiResponseMessage.text);
       if (autoSafetyCheck.isSafetyCommand && autoSafetyCheck.command) {
         logger.info('🛡️ [Safety] Auto-triggered safety command detected:', autoSafetyCheck.command);
         
@@ -239,7 +244,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
             autoSafetyCheck.command,
             sessionId,
             playerInput,
-            aiResponseMessage.text,
+            sanitizedAiResponseMessage.text,
             currentSessionState
           );
           await sendMessage(safetyResponse);
@@ -261,13 +266,13 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         return; // Exit early for auto-triggered safety commands
       }
       
-      await sendMessage(aiResponseMessage); // Adds AI message to UI and dialogue_history
+      await sendMessage(sanitizedAiResponseMessage); // Adds AI message to UI and dialogue_history
       
       // Process AI response for combat detection and other features
       if (onAIResponse) {
         try {
           logger.info('[Combat Flow] Processing AI response for combat detection');
-          await onAIResponse(aiResponseMessage);
+          await onAIResponse(sanitizedAiResponseMessage);
         } catch (combatError) {
           logger.error('Error processing AI response for combat:', combatError);
           // Don't throw here - combat processing should not break the message flow
@@ -275,17 +280,17 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       }
       
       // Check if we have narration segments for voice synthesis
-      if (aiResponseMessage.narrationSegments && aiResponseMessage.narrationSegments.length > 0) {
-        logger.info('[Voice Flow] AI response contains', aiResponseMessage.narrationSegments.length, 'narration segments');
+      if (sanitizedAiResponseMessage.narrationSegments && sanitizedAiResponseMessage.narrationSegments.length > 0) {
+        logger.info('[Voice Flow] AI response contains', sanitizedAiResponseMessage.narrationSegments.length, 'narration segments');
         // Note: Voice playback will be handled by MultiVoicePlayer component
         // when it detects the narrationSegments in the message
       }
       
       // Update current_scene_description with AI response
-      if (aiResponseMessage.text) {
-        await updateGameSessionState({ current_scene_description: aiResponseMessage.text });
-        logger.info('[Memory Flow] Extracting memories from AI response:', aiResponseMessage.text);
-        await extractMemories(aiResponseMessage.text); // Non-critical path
+      if (sanitizedAiResponseMessage.text) {
+        await updateGameSessionState({ current_scene_description: sanitizedAiResponseMessage.text });
+        logger.info('[Memory Flow] Extracting memories from AI response:', sanitizedAiResponseMessage.text);
+        await extractMemories(sanitizedAiResponseMessage.text); // Non-critical path
       }
 
     } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import { Howl } from 'howler';
@@ -134,6 +134,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   const [contextLost, setContextLost] = useState(false);
   const [canvasKey, setCanvasKey] = useState(0);
   const diceSound = useRef<Howl | null>(null);
+  const disable3D = String((import.meta as any)?.env?.VITE_DISABLE_DICE_3D ?? 'false').toLowerCase() === 'true';
 
   // Handle WebGL context loss and restoration
   const handleCreated = useCallback(({ gl }: { gl: THREE.WebGLRenderer }) => {
@@ -252,8 +253,8 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
         )}
       </div>
 
-      {/* 3D Dice Animation */}
-      {showAnimation && hasRolled && (
+      {/* 3D Dice Animation (feature-flagged) */}
+      {showAnimation && !disable3D && hasRolled && (
         <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200">
           {!contextLost ? (
             <Canvas
