@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { modelUsageTracker } from './model-usage-tracker';
 import { llmApiClient } from './llm-api-client';
 
-interface ImageGenerationRequest { prompt: string; model?: string; referenceImage?: string }
+interface ImageGenerationRequest { prompt: string; model?: string; referenceImage?: string; quality?: 'low' | 'medium' | 'high'; }
 interface TextGenerationRequest { prompt: string; model?: string; maxTokens?: number; temperature?: number }
 interface ModelConfig { id: string; dailyLimit?: number; isFree: boolean }
 
@@ -21,6 +21,7 @@ export interface UploadOptions {
 
 export class OpenRouterService {
   private imageModels: ModelConfig[] = [
+    { id: 'gpt-image-1-mini', isFree: false, dailyLimit: 1000 },
     { id: 'google/gemini-2.5-flash-image-preview', isFree: false },
   ];
 
@@ -38,6 +39,15 @@ export class OpenRouterService {
 
   private selectAvailableModel(hasBalance: boolean = true, modelType: 'text' | 'image' = 'image'): ModelConfig {
     const available = modelType === 'text' ? this.textModels : this.imageModels;
+    
+    // Prioritize gpt-image-1-mini for cost efficiency if available
+    if (modelType === 'image' && hasBalance) {
+      const gptImageMini = available.find(m => m.id === 'gpt-image-1-mini');
+      if (gptImageMini && (!gptImageMini.dailyLimit || modelUsageTracker.canUseModel(gptImageMini.id, gptImageMini.dailyLimit))) {
+        return gptImageMini;
+      }
+    }
+    
     if (hasBalance) {
       for (const m of available.filter(m => m.isFree)) {
         if (m.dailyLimit && modelUsageTracker.canUseModel(m.id, m.dailyLimit)) {
@@ -64,6 +74,7 @@ export class OpenRouterService {
       prompt: request.prompt,
       model: modelId,
       referenceImage: request.referenceImage,
+      quality: request.quality,
     });
     const cfg = this.models.find(m => m.id === modelId);
     if (cfg?.isFree && cfg.dailyLimit) {

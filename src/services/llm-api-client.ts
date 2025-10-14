@@ -20,6 +20,7 @@ export interface GenerateImageParams {
   prompt: string;
   model?: string;
   referenceImage?: string; // base64 without data URL prefix
+  quality?: 'low' | 'medium' | 'high';
 }
 
 class LlmApiClient {
@@ -100,6 +101,7 @@ class LlmApiClient {
         prompt: params.prompt,
         model: params.model,
         referenceImage: params.referenceImage,
+        quality: params.quality,
       }),
     });
     const data = await res.json();
