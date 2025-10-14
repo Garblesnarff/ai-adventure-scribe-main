@@ -11,6 +11,14 @@ interface ImageGenerationRequest { prompt: string; model?: string; referenceImag
 interface TextGenerationRequest { prompt: string; model?: string; maxTokens?: number; temperature?: number }
 interface ModelConfig { id: string; dailyLimit?: number; isFree: boolean }
 
+// Upload options to support entity-scoped storage paths
+export interface UploadOptions {
+  bucket?: string; // default: 'campaign-images'
+  entityType?: 'campaign' | 'character';
+  entityId?: string;
+  label?: string; // default: 'generated'
+}
+
 export class OpenRouterService {
   private imageModels: ModelConfig[] = [
     { id: 'google/gemini-2.5-flash-image-preview', isFree: false },
@@ -90,22 +98,33 @@ export class OpenRouterService {
     return URL.createObjectURL(blob);
   }
 
-  async uploadImage(base64Data: string): Promise<string> {
+  async uploadImage(base64Data: string, options?: UploadOptions): Promise<string> {
     try {
       const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
       const binaryString = atob(cleanBase64);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
       const blob = new Blob([bytes], { type: 'image/png' });
-      const fileName = `campaign-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
+      const bucket = options?.bucket || 'campaign-images';
+      const label = (options?.label || 'generated').replace(/[^a-z0-9\-]/gi, '-');
+      const ts = Date.now();
+      let path: string;
+      if (options?.entityType && options?.entityId) {
+        const prefix = options.entityType === 'campaign' ? 'campaigns' : 'characters';
+        path = `${prefix}/${options.entityId}/${ts}-${label}.png`;
+      } else {
+        // Backward compatible default path
+        path = `misc/${ts}-${Math.random().toString(36).substr(2, 9)}.png`;
+      }
+
       const { data, error } = await supabase.storage
-        .from('campaign-images')
-        .upload(fileName, blob, { cacheControl: '3600', upsert: false });
+        .from(bucket)
+        .upload(path, blob, { cacheControl: '3600', upsert: false, contentType: 'image/png' });
       if (error) {
         console.error('Error uploading to Supabase storage:', error);
         return `data:image/png;base64,${cleanBase64}`;
       }
-      const { data: publicUrlData } = supabase.storage.from('campaign-images').getPublicUrl(data.path);
+      const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
       return publicUrlData.publicUrl;
     } catch (e) {
       console.error('Error in uploadImage:', e);

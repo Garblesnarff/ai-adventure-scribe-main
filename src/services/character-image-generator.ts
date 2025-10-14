@@ -8,7 +8,7 @@
  * @version 2.0 - Added dynamic theme support and detailed character sheet generation
  */
 
-import { openRouterService } from './openrouter-service';
+import { openRouterService, type UploadOptions } from './openrouter-service';
 import { geminiImageService } from './gemini-image-service';
 import logger from '@/lib/logger';
 
@@ -53,6 +53,7 @@ interface CharacterImageOptions {
   artStyle?: 'fantasy-art' | 'anime' | 'realistic' | 'comic-book' | 'watercolor' | 'sketch' | 'oil-painting';
   theme?: string; // Theme override for generation
   preferredProvider?: ImageGenerationProvider;
+  storage?: UploadOptions; // optional storage scoping
 }
 
 /**
@@ -144,7 +145,7 @@ export class CharacterImageGenerator {
           retryAttempts,
           referenceImageBase64
         );
-        const imageUrl = await openRouterService.uploadImage(base64Image);
+        const imageUrl = await openRouterService.uploadImage(base64Image, options.storage);
 
         logger.info(`Successfully generated character image with provider: ${provider}`);
         return imageUrl;

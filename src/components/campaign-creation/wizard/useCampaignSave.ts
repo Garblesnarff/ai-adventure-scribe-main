@@ -73,7 +73,13 @@ export const useCampaignSave = () => {
       logger.info(`Generating background image for campaign ${campaignId}`);
       
       // Generate the image
-      const imageUrl = await campaignImageGenerator.generateCampaignImage(campaignData);
+      const imageUrl = await campaignImageGenerator.generateCampaignImage(campaignData, {
+        storage: {
+          entityType: 'campaign',
+          entityId: campaignId,
+          label: 'background'
+        }
+      });
       
       // Update the campaign with the generated image URL
       const { error } = await supabase
