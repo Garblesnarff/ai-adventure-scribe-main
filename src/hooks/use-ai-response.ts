@@ -344,6 +344,7 @@ export const useAIResponse = () => {
       if (rollRequests.length === 0) {
         // Check for roll requests in the text
         const parsedRequests = parseRollRequests(responseText);
+        logger.info(`🎲 Parsed roll requests from DM text: ${parsedRequests.length}`);
         rollRequests = parsedRequests.map(req => ({
           type: req.type,
           formula: req.formula,

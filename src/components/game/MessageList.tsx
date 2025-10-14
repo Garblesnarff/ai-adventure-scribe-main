@@ -101,15 +101,31 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
             last_dm_text: lastDm.text,
             player_message: lastPlayer?.text || '',
             history,
+            // Provide a minimal state summary to improve specificity when backend uses it
+            state_section: `COMBAT: ${combatState.isInCombat ? 'ACTIVE' : 'NOT_IN_COMBAT'}`,
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const opts: string[] = Array.isArray(data?.options) ? data.options.slice(0, 3) : [];
-        if (opts.length) {
+
+        // Heuristic filter: drop bland generic fallback options ONLY if a roll popup is pending
+        const genericPhrases = [
+          'Approach cautiously',
+          'Create a distraction',
+          'Withdraw and reassess',
+          'Explore another angle'
+        ];
+        const isGeneric = opts.length > 0 && opts.filter(o => genericPhrases.some(p => o.includes(p))).length >= 2;
+        const hasPending = !!getCurrentDiceRoll();
+
+        if (opts.length && !(isGeneric && hasPending)) {
           const dmIdx = lastDmEntry?.idx ?? messages.length - 1;
           const key = lastDm.id || lastDm.timestamp || `idx-${dmIdx}`;
           setDynamicOptions({ key, lines: opts });
+        } else {
+          // Suppress showing generic fallbacks to avoid low-value UX
+          setDynamicOptions(null);
         }
       } catch (e) {
         console.warn('[MessageList] dynamic options fetch failed:', e);
