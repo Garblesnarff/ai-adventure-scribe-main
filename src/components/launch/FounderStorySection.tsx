@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Heart, Users, Lightbulb, Code } from 'lucide-react';
+import { Heart, Users, Lightbulb, Code, Clock } from 'lucide-react';
 
 export const FounderStorySection: React.FC = () => {
   return (
@@ -80,7 +80,7 @@ export const FounderStorySection: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-center">
+              <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-4 p-6 bg-gradient-to-r from-purple-900/30 to-amber-900/30 border border-purple-500/30 rounded-xl">
                   <Heart className="w-8 h-8 text-red-400" />
                   <div className="text-left">
@@ -91,6 +91,45 @@ export const FounderStorySection: React.FC = () => {
                       If I can build this, imagine what you can create with Infinite Realms
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Perfect For Section */}
+              <div className="bg-gradient-to-r from-gray-800/40 to-gray-900/40 border border-gray-700/40 rounded-xl p-8">
+                <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                  Perfect For...
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-purple-900/20 rounded-lg border border-purple-500/20">
+                    <Users className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+                    <h4 className="text-white font-semibold mb-2">Rural Gamers</h4>
+                    <p className="text-gray-400 text-sm">No local gaming stores or D&D groups nearby</p>
+                  </div>
+                  <div className="text-center p-4 bg-amber-900/20 rounded-lg border border-amber-500/20">
+                    <Clock className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+                    <h4 className="text-white font-semibold mb-2">Solo Players</h4>
+                    <p className="text-gray-400 text-sm">Want to play D&D but can't find schedules that work</p>
+                  </div>
+                  <div className="text-center p-4 bg-purple-900/20 rounded-lg border border-purple-500/20">
+                    <Heart className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+                    <h4 className="text-white font-semibold mb-2">Lapsed Players</h4>
+                    <p className="text-gray-400 text-sm">Miss D&D but life got in the way of regular games</p>
+                  </div>
+                  <div className="text-center p-4 bg-amber-900/20 rounded-lg border border-amber-500/20">
+                    <Lightbulb className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+                    <h4 className="text-white font-semibold mb-2">DMless Groups</h4>
+                    <p className="text-gray-400 text-sm">Have players but no one wants to run campaigns</p>
+                  </div>
+                </div>
+
+                {/* Mobile CTA */}
+                <div className="mt-8 text-center sm:hidden">
+                  <p className="text-gray-300 text-lg mb-4">
+                    Ready to join the first wave of AI D&D adventurers?
+                  </p>
+                  <button className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-900 px-8 py-4 rounded-xl shadow-lg font-bold text-lg transition-all duration-300">
+                    Join the Beta Waitlist
+                  </button>
                 </div>
               </div>
             </div>

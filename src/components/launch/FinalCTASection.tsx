@@ -60,7 +60,7 @@ export const FinalCTASection: React.FC = () => {
               </Button>
 
               <p className="text-gray-400 text-lg">
-                {finalCTA.urgency}
+                Be among the first pioneers shaping AI D&D
               </p>
             </div>
           ) : (
