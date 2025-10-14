@@ -106,11 +106,11 @@ export const VisionSection: React.FC = () => {
           {/* Call to Action */}
           <div className="mt-16 text-center">
             <p className="text-gray-400 text-lg mb-6">
-              This vision is becoming reality. Be part of it from the beginning.
+              This is the future of solo RPGs. Be first to live it.
             </p>
             <div className="inline-flex items-center gap-2 text-amber-400 text-sm">
               <Sparkles className="w-4 h-4 animate-pulse" />
-              <span>Join the beta waitlist below</span>
+              <span>Join the beta waitlist now</span>
             </div>
           </div>
         </div>

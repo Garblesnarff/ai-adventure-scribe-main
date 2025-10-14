@@ -47,23 +47,23 @@ export interface FAQItem {
 export const launchPageContent = {
   // Hero Section
   hero: {
-    badge: "Closed Beta - Request Early Access",
-    headline: "The Legendary AI Dungeon Master is Almost Here",
-    subtitle: "Step into Boundless Worlds of Adventure",
-    description: "Where every choice shapes destiny and legends are forged in the fires of imagination. Sign up for exclusive beta access and shape the future of tabletop RPGs.",
-    primaryCTA: "Request Early Access",
-    secondaryCTA: "Learn More"
+    badge: "Closed Beta: Q4 2025 – Be Among the First",
+    headline: "No DM? No Schedule? Your Living D&D World Awaits",
+    subtitle: "Play solo or async with an AI Dungeon Master that remembers every choice, evolves NPCs, and crafts cinematic stories tailored to you.",
+    description: "Tired of campaigns fizzling out? Infinite Realms creates persistent worlds where your actions ripple forever—no prep, no waiting, just epic adventures on your time.",
+    primaryCTA: "Claim Your Beta Spot – Be First",
+    secondaryCTA: "Dive into the Vision"
   },
 
   // Vision Section
   vision: {
-    headline: "Imagine a World Where Your Stories Come to Life",
-    content: `Picture this: An AI Dungeon Master that doesn't just follow rules—it creates entire worlds that react to your every decision. NPCs with memories that span across sessions, remembering that time you saved their village or betrayed their trust. Epic narratives that unfold like a living novel, where your choices create ripples that change everything.
+    headline: "A Persistent World That Remembers You – And Evolves With Every Choice",
+    content: `Frustrated by campaigns that die from scheduling hell or forgetful AIs? Infinite Realms is your always-on Dungeon Master: persistent NPCs with memories, cinematic narratives that adapt to your style, and emotional depth that makes every session feel alive.
 
 We're building more than just a tool. We're creating a new way to experience tabletop RPGs—a cinematic adventure that adapts to your playstyle, remembers your story, and pushes the boundaries of what's possible in interactive storytelling.
 
 This isn't about replacing human Dungeon Masters. It's about giving every adventurer the chance to experience the magic of a truly responsive, intelligent storytelling partner that never gets tired, never forgets, and always has another twist ready.`,
-    quote: "The future of RPG gaming isn't coming. It's being built, one adventure at a time."
+    quote: "Build your legend in a world that waits for you – with characters who remember, react, and grow, turning solo play into an epic saga."
   },
 
   // Features Section
@@ -199,18 +199,18 @@ This isn't about replacing human Dungeon Masters. It's about giving every advent
 
   // Early Access Offer
   earlyAccess: {
-    headline: "Become a Founding Adventurer",
-    subtitle: "Exclusive perks for our beta pioneers",
+    headline: "Be a Founding Adventurer – Shape the Living World",
+    subtitle: "Get exclusive perks for helping build the AI DM that ends scheduling hell.",
     description: "Join our closed beta and secure your place in AI Dungeon Master history with these exclusive founding member benefits:",
     perks: [
       {
-        title: "Lifetime Discount",
-        description: "Lock in beta pricing forever - never pay full price for your subscription",
+        title: "Personalized NPC in Launch",
+        description: "Tie to rebuilt campaigns - get a custom NPC that remembers your beta adventures",
         icon: "Crown"
       },
       {
-        title: "Exclusive Badge",
-        description: "Show off your founding member status with a unique in-game badge and profile flair",
+        title: "Early Voice Pack Access",
+        description: "Via ElevenLabs integration - be first to experience cinematic narration",
         icon: "Star"
       },
       {
@@ -224,8 +224,8 @@ This isn't about replacing human Dungeon Masters. It's about giving every advent
         icon: "MessageCircle"
       }
     ] as EarlyAccessPerk[],
-    disclaimer: "Limited spots available. Beta access is granted on a first-come, first-served basis to qualified applicants. Some features may be limited or unavailable during beta testing.",
-    cta: "Join the Beta Waitlist"
+    disclaimer: "Beta focuses on core persistence – bugs mean you influence fixes directly.",
+    cta: "Secure First Access"
   },
 
   // FAQ Section
@@ -234,24 +234,24 @@ This isn't about replacing human Dungeon Masters. It's about giving every advent
     subtitle: "Everything you need to know about our beta launch",
     items: [
       {
-        question: "When will the beta be available?",
-        answer: "We're currently in closed beta with a limited number of testers. Open beta is planned for Q1 2026, with full public launch in Q2 2026."
+        question: "How does it solve scheduling issues?",
+        answer: "Play solo or async – your world persists, so pick up anytime without coordinating groups."
       },
       {
-        question: "How much will it cost after beta?",
-        answer: "Beta testers will receive a lifetime discount on their subscription. Final pricing will be announced closer to public launch, but we're targeting an affordable $15-25/month subscription."
+        question: "Will NPCs really remember?",
+        answer: "Yes, unlike other AIs. Example: Steal from a merchant? He'll spread rumors, affecting future encounters."
+      },
+      {
+        question: "Do I need D&D experience?",
+        answer: "No. AI handles rules; you focus on choices. Great for lapsed players craving immersion without prep."
+      },
+      {
+        question: "What's the beta like?",
+        answer: "Core persistent storytelling. Test and shape features like emotional NPCs."
       },
       {
         question: "What are the system requirements?",
         answer: "The AI Dungeon Master runs in your web browser and works best with modern browsers like Chrome, Firefox, or Safari. A stable internet connection is required for AI processing."
-      },
-      {
-        question: "How can I provide feedback?",
-        answer: "Beta testers will have direct access to our feedback system, community Discord, and regular developer updates. Your input will directly shape the future of the product."
-      },
-      {
-        question: "What platforms will be supported?",
-        answer: "We plan to support web browsers initially, with mobile apps (iOS/Android) and integrations with popular platforms like Roll20 planned for after launch."
       },
       {
         question: "Is my data private and secure?",

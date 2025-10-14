@@ -145,7 +145,7 @@ export const HeroSection: React.FC = () => {
           {/* Waitlist Counter */}
           <div className="mt-16 animate-fade-in-up animation-delay-500">
             <p className="text-gray-400 text-sm">
-              Join <span className="text-purple-400 font-semibold">500+ adventurers</span> already on the waitlist
+              Be the first to experience persistent worlds – spots filling soon.
             </p>
           </div>
         </div>

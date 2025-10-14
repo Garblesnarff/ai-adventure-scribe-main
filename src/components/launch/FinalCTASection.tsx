@@ -80,8 +80,8 @@ export const FinalCTASection: React.FC = () => {
             <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-purple-400" />
             </div>
-            <div className="text-3xl font-bold text-amber-400 mb-2">500+</div>
-            <div className="text-gray-400">Adventurers on Waitlist</div>
+            <div className="text-3xl font-bold text-amber-400 mb-2">First</div>
+            <div className="text-gray-400">Mover Advantage</div>
           </div>
 
           <div className="text-center p-8 bg-gray-800/30 border border-gray-700/50 rounded-xl">
@@ -96,8 +96,8 @@ export const FinalCTASection: React.FC = () => {
             <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Zap className="w-8 h-8 text-purple-400" />
             </div>
-            <div className="text-3xl font-bold text-amber-400 mb-2">Limited</div>
-            <div className="text-gray-400">Beta Spots Available</div>
+            <div className="text-3xl font-bold text-amber-400 mb-2">Exclusive</div>
+            <div className="text-gray-400">Early Access</div>
           </div>
         </div>
 
