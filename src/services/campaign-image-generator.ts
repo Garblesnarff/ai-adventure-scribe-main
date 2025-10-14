@@ -28,6 +28,8 @@ interface ImageGenerationOptions {
   retryAttempts?: number;
   fallbackToDefault?: boolean;
   storage?: UploadOptions;
+  quality?: 'low' | 'medium' | 'high';
+  model?: string;
 }
 
 /**
@@ -47,13 +49,18 @@ export class CampaignImageGenerator {
     campaignData: CampaignData,
     options: ImageGenerationOptions = {}
   ): Promise<string> {
-    const { retryAttempts = this.maxRetries, fallbackToDefault = true } = options;
+    const { 
+      retryAttempts = this.maxRetries, 
+      fallbackToDefault = true,
+      quality = 'medium',
+      model = 'gpt-image-1-mini'
+    } = options;
 
     try {
       const prompt = this.createImagePrompt(campaignData);
       logger.info('Generating campaign image with prompt:', prompt);
 
-      const base64Image = await this.generateWithRetry(prompt, retryAttempts);
+      const base64Image = await this.generateWithRetry(prompt, retryAttempts, quality, model);
       const imageUrl = await openRouterService.uploadImage(base64Image, options.storage);
 
       logger.info('Successfully generated campaign image');
@@ -246,13 +253,22 @@ export class CampaignImageGenerator {
   /**
    * Generate image with retry logic
    */
-  private async generateWithRetry(prompt: string, maxAttempts: number): Promise<string> {
+  private async generateWithRetry(
+    prompt: string, 
+    maxAttempts: number, 
+    quality: 'low' | 'medium' | 'high',
+    model: string
+  ): Promise<string> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        logger.info(`Image generation attempt ${attempt}/${maxAttempts}`);
-        return await openRouterService.generateImage({ prompt });
+        logger.info(`Image generation attempt ${attempt}/${maxAttempts} using ${model}`);
+        return await openRouterService.generateImage({ 
+          prompt, 
+          quality,
+          model
+        });
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
         logger.warn(`Attempt ${attempt} failed:`, lastError.message);

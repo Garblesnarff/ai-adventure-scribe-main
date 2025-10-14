@@ -52,6 +52,8 @@ interface CharacterImageOptions {
   style?: 'portrait' | 'action' | 'full-body' | 'character-sheet' | 'expression-sheet';
   artStyle?: 'fantasy-art' | 'anime' | 'realistic' | 'comic-book' | 'watercolor' | 'sketch' | 'oil-painting';
   theme?: string; // Theme override for generation
+  quality?: 'low' | 'medium' | 'high'; // Image quality setting
+  model?: string; // Model override (defaults to gpt-image-1-mini)
   preferredProvider?: ImageGenerationProvider;
   storage?: UploadOptions; // optional storage scoping
 }
@@ -77,6 +79,8 @@ export class CharacterImageGenerator {
       retryAttempts = this.maxRetries,
       artStyle = 'fantasy-art',
       theme = characterData.theme || 'fantasy',
+      quality = 'medium',
+      model = 'gpt-image-1-mini',
       preferredProvider
     } = options;
 
@@ -84,6 +88,22 @@ export class CharacterImageGenerator {
 
     const prompt = this.createImagePrompt(characterData, 'portrait', artStyle, theme);
     logger.debug('Generated avatar prompt:', prompt);
+
+    // Try gpt-image-1-mini first if specified
+    if (model === 'gpt-image-1-mini') {
+      try {
+        logger.info(`Attempting avatar generation with ${model} at ${quality} quality`);
+        const base64Image = await openRouterService.generateImage({ 
+          prompt, 
+          model,
+          quality
+        });
+        logger.info(`Successfully generated avatar with ${model}`);
+        return base64Image;
+      } catch (error) {
+        logger.warn(`gpt-image-1-mini failed, falling back to other providers:`, error);
+      }
+    }
 
     const providerOrder = this.getProviderOrder(preferredProvider, 'portrait');
     let lastError: Error | null = null;
@@ -122,6 +142,8 @@ export class CharacterImageGenerator {
       style = 'portrait',
       artStyle = 'fantasy-art',
       theme = characterData.theme || options.theme || 'fantasy', // Use character theme, options theme, or default
+      quality = 'medium',
+      model = 'gpt-image-1-mini',
       preferredProvider
     } = options;
 
@@ -129,6 +151,24 @@ export class CharacterImageGenerator {
 
     const prompt = this.createImagePrompt(characterData, style, artStyle, theme);
     logger.debug('Generated prompt:', prompt);
+
+    // Try gpt-image-1-mini first if specified
+    if (model === 'gpt-image-1-mini') {
+      try {
+        logger.info(`Attempting character image generation with ${model} at ${quality} quality`);
+        const base64Image = await openRouterService.generateImage({ 
+          prompt, 
+          model,
+          quality,
+          referenceImage: referenceImageBase64
+        });
+        const imageUrl = await openRouterService.uploadImage(base64Image, options.storage);
+        logger.info(`Successfully generated character image with ${model}`);
+        return imageUrl;
+      } catch (error) {
+        logger.warn(`gpt-image-1-mini failed, falling back to other providers:`, error);
+      }
+    }
 
     // Determine the provider order based on preference and availability
     const providerOrder = this.getProviderOrder(preferredProvider, style);
