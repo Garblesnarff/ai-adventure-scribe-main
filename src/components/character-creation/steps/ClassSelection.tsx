@@ -51,7 +51,7 @@ const ClassSelection: React.FC = () => {
           return (
             <Card 
               key={characterClass.id}
-              className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 ${
+              className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
                 isSelected ? 'border-primary bg-accent/10' : 'border-transparent'
               }`}
               onClick={() => handleClassSelect(characterClass)}
@@ -62,10 +62,18 @@ const ClassSelection: React.FC = () => {
                   handleClassSelect(characterClass);
                 }
               }}
+              style={characterClass.backgroundImage ? {
+                backgroundImage: `url(${characterClass.backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              } : undefined}
             >
-              <h3 className="text-xl font-semibold mb-2">{characterClass.name}</h3>
-              <p className="text-sm text-gray-600 mb-3">{characterClass.description}</p>
-              <div className="text-sm">
+              {characterClass.backgroundImage && (
+                <div className="absolute inset-0 bg-black/50 z-0" />
+              )}
+              <h3 className={`text-xl font-semibold mb-2 relative z-10 ${characterClass.backgroundImage ? 'text-white' : ''}`}>{characterClass.name}</h3>
+              <p className={`text-sm mb-3 relative z-10 ${characterClass.backgroundImage ? 'text-gray-200' : 'text-gray-600'}`}>{characterClass.description}</p>
+              <div className={`text-sm relative z-10 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}>
                 <p><span className="font-medium">Hit Die:</span> d{characterClass.hitDie}</p>
                 <p><span className="font-medium">Primary Ability:</span> {String(characterClass.primaryAbility).charAt(0).toUpperCase() + String(characterClass.primaryAbility).slice(1)}</p>
                 <p className="font-medium mt-2">Saving Throw Proficiencies:</p>
