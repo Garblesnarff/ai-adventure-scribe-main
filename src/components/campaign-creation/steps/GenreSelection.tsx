@@ -29,7 +29,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Heroic', 'Exploration', 'Magic'],
     icon: <Sword className="h-5 w-5" />,
     colorClass: 'text-infinite-gold',
-    backgroundImage: '/campaign-background-placeholder.png',
+    backgroundImage: '/traditional-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'dark-fantasy',
@@ -38,7 +38,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Gritty', 'Horror', 'Moral Dilemmas'],
     icon: <Skull className="h-5 w-5" />,
     colorClass: 'text-destructive',
-    backgroundImage: '/campaign-background-placeholder.png',
+    backgroundImage: '/dark-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'high-fantasy',
@@ -47,7 +47,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Epic', 'Magic', 'Mythic'],
     icon: <Zap className="h-5 w-5" />,
     colorClass: 'text-infinite-purple',
-    backgroundImage: '/campaign-background-placeholder.png',
+    backgroundImage: '/high-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'science-fantasy',
@@ -56,7 +56,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Tech + Magic', 'Exploration', 'Weird'],
     icon: <Gavel className="h-5 w-5" />,
     colorClass: 'text-infinite-teal',
-    backgroundImage: '/campaign-background-placeholder.png',
+    backgroundImage: '/science-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'steampunk',
@@ -65,7 +65,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Invention', 'Intrigue', 'Airships'],
     icon: <Anchor className="h-5 w-5" />,
     colorClass: 'text-amber-600',
-    backgroundImage: '/campaign-background-placeholder.png',
+    backgroundImage: '/steampunk-campaign-style-card-background.png',
   },
   {
     value: 'horror',
@@ -74,7 +74,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Supernatural', 'Mystery', 'Survival'],
     icon: <BookOpen className="h-5 w-5" />,
     colorClass: 'text-gray-600',
-    backgroundImage: '/campaign-background-placeholder.png',
+    backgroundImage: '/horror-campaign-style-card-background.png',
   },
 ];
 
@@ -210,12 +210,12 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                   if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value);
                 }}
                 style={genre.backgroundImage ? {
-                  backgroundImage: `url(${genre.backgroundImage})`,
+                  backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 } : undefined}
               >
-                {genre.backgroundImage && <div className="absolute inset-0 bg-black/60 z-0" />}
+                {genre.backgroundImage && <div className="absolute inset-0 bg-black/70 z-0" />}
                 <div className={`p-4 relative z-10 ${genre.backgroundImage ? 'text-white' : ''}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -236,7 +236,13 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                   <p className={`text-sm mt-2 line-clamp-2 ${genre.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{genre.description}</p>
                   <div className={`flex flex-wrap gap-1 mt-2 ${genre.backgroundImage ? 'text-gray-300' : ''}`}>
                     {genre.themes.map(t => (
-                      <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                      <Badge
+                        key={t}
+                        variant="secondary"
+                        className={`text-xs ${genre.backgroundImage ? 'bg-black/60 text-white border-white/20 backdrop-blur-sm' : ''}`}
+                      >
+                        {t}
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -258,12 +264,12 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                   if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value);
                 }}
                 style={genre.backgroundImage ? {
-                  backgroundImage: `url(${genre.backgroundImage})`,
+                  backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 } : undefined}
               >
-                {genre.backgroundImage && <div className="absolute inset-0 bg-black/60 z-0" />}
+                {genre.backgroundImage && <div className="absolute inset-0 bg-black/70 z-0" />}
                 <div className={`flex items-center justify-between mb-2 relative z-10 ${genre.backgroundImage ? 'text-white' : ''}`}>
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value={genre.value} id={genre.value} className="text-blue-600" />
@@ -282,7 +288,13 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                 </div>
                 <div className="flex flex-wrap gap-1 mb-1 relative z-10">
                   {genre.themes.map(t => (
-                    <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                    <Badge
+                      key={t}
+                      variant="secondary"
+                      className={`text-xs ${genre.backgroundImage ? 'bg-black/60 text-white border-white/20 backdrop-blur-sm' : ''}`}
+                    >
+                      {t}
+                    </Badge>
                   ))}
                 </div>
                 <p className={`text-xs line-clamp-2 relative z-10 ${genre.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{genre.description}</p>
@@ -300,7 +312,7 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
               style={{
                 padding: 0,
                 ...(genre.backgroundImage ? {
-                  backgroundImage: `url(${genre.backgroundImage})`,
+                  backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 } : {})

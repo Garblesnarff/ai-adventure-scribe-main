@@ -319,7 +319,11 @@ const RaceSelection: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
                               {Object.entries(baseRace.abilityScoreIncrease).map(([ability, bonus]) => (
-                                <Badge key={ability} variant="secondary" className="text-xs">
+                                <Badge
+                                  key={ability}
+                                  variant="secondary"
+                                  className={`text-xs ${baseRace.backgroundImage ? 'bg-black/60 text-white border-white/20 backdrop-blur-sm' : ''}`}
+                                >
                                   {ability.substring(0, 3)} +{bonus}
                                 </Badge>
                               ))}
@@ -406,7 +410,11 @@ const RaceSelection: React.FC = () => {
                       </div>
                       <div className="flex flex-wrap gap-1 mb-2 relative z-10">
                         {Object.entries(baseRace.abilityScoreIncrease).map(([ability, bonus]) => (
-                          <Badge key={ability} variant="secondary" className="text-xs">
+                          <Badge
+                            key={ability}
+                            variant="secondary"
+                            className={`text-xs ${baseRace.backgroundImage ? 'bg-black/60 text-white border-white/20 backdrop-blur-sm' : ''}`}
+                          >
                             +{bonus} {ability.substring(0, 3)}
                           </Badge>
                         ))}
@@ -582,7 +590,7 @@ const RaceSelection: React.FC = () => {
                 return (
                   <Card 
                     key={subrace.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative ${
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
                       isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
                     }`}
                     onClick={() => handleSubraceSelect(subrace)}
@@ -593,7 +601,13 @@ const RaceSelection: React.FC = () => {
                         handleSubraceSelect(subrace);
                       }
                     }}
+                    style={subrace.backgroundImage ? {
+                      backgroundImage: `url(${subrace.backgroundImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    } : undefined}
                   >
+                    {subrace.backgroundImage && <div className="absolute inset-0 bg-black/50 z-0" />}
                     {isSelected && (
                       <div className="absolute top-3 right-3">
                         <div className="bg-primary text-primary-foreground rounded-full p-1">
@@ -602,26 +616,30 @@ const RaceSelection: React.FC = () => {
                       </div>
                     )}
                     
-                    <CardHeader>
+                    <CardHeader className="relative z-10">
                       <div className="flex items-center gap-2">
-                        <Users className="w-5 h-5 text-primary" />
-                        <h3 className="text-2xl font-bold">{subrace.name}</h3>
+                        <Users className={`w-5 h-5 ${subrace.backgroundImage ? 'text-yellow-400' : 'text-primary'}`} />
+                        <h3 className={`text-2xl font-bold ${subrace.backgroundImage ? 'text-white' : ''}`}>{subrace.name}</h3>
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="space-y-4">
-                      <p className="text-muted-foreground">{subrace.description}</p>
+                    <CardContent className="space-y-4 relative z-10">
+                      <p className={`${subrace.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{subrace.description}</p>
                       
                       {/* Ability Score Increases */}
                       {Object.keys(subrace.abilityScoreIncrease).length > 0 && (
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <Zap className="w-4 h-4 text-orange-500" />
-                            <h4 className="font-semibold">Subrace Ability Increases</h4>
+                            <Zap className={`w-4 h-4 ${subrace.backgroundImage ? 'text-yellow-400' : 'text-orange-500'}`} />
+                            <h4 className={`font-semibold ${subrace.backgroundImage ? 'text-white drop-shadow' : ''}`}>Subrace Ability Increases</h4>
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {Object.entries(subrace.abilityScoreIncrease).map(([ability, bonus]) => (
-                              <Badge key={ability} variant="secondary" className="capitalize">
+                              <Badge
+                                key={ability}
+                                variant="secondary"
+                                className={`capitalize ${subrace.backgroundImage ? 'bg-black/60 text-white border-white/20 backdrop-blur-sm' : ''}`}
+                              >
                                 {ability.substring(0, 3)} +{bonus}
                               </Badge>
                             ))}
@@ -639,13 +657,13 @@ const RaceSelection: React.FC = () => {
                       )}
                       
                       {/* Subrace Traits */}
-                      <div>
-                        <h4 className="font-semibold mb-2">Subrace Traits</h4>
+                        <div>
+                          <h4 className={`font-semibold mb-2 ${subrace.backgroundImage ? 'text-white drop-shadow' : ''}`}>Subrace Traits</h4>
                         <div className="space-y-1">
                           {subrace.traits.map((trait: string, index: number) => (
-                            <div key={index} className="text-sm p-2 bg-muted/30 rounded">
+                            <div key={index} className={`text-sm p-2 rounded ${subrace.backgroundImage ? 'bg-white/20 text-white' : 'bg-muted/30'}`}>
                               <span className="font-medium">{trait.split(':')[0]}:</span>
-                              <span className="text-muted-foreground ml-1">
+                              <span className={`${subrace.backgroundImage ? 'text-gray-100' : 'text-muted-foreground'} ml-1`}>
                                 {trait.split(':')[1] || trait}
                               </span>
                             </div>

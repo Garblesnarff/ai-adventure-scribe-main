@@ -15,6 +15,7 @@ export const halfling: CharacterRace = {
       id: 'lightfoot-halfling',
       name: 'Lightfoot Halfling',
       description: 'Naturally stealthy and adept at hiding.',
+      backgroundImage: '/lightfoot-halfling-sub-race-card-background.png',
       abilityScoreIncrease: { charisma: 1 },
       traits: ['Naturally Stealthy']
     },
@@ -22,6 +23,7 @@ export const halfling: CharacterRace = {
       id: 'stout-halfling',
       name: 'Stout Halfling',
       description: 'Hardier than other halflings, with a resistance to poison.',
+      backgroundImage: '/stout-halfling-sub-race-card-background.png',
       abilityScoreIncrease: { constitution: 1 },
       traits: ['Stout Resilience']
     }

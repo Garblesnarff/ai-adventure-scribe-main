@@ -63,6 +63,8 @@ export interface Subrace {
   languages?: string[];
   cantrips?: string[];
   spells?: string[]; // Racial spells gained at higher levels
+  // Optional background image for UI cards
+  backgroundImage?: string;
   bonusCantrip?: {
     source: 'any' | 'wizard' | 'cleric' | 'druid' | 'bard' | 'sorcerer' | 'warlock';
     count: number;
@@ -91,6 +93,8 @@ export interface CharacterClass {
   savingThrowProficiencies: (keyof AbilityScores)[];
   skillChoices: string[];
   numSkillChoices: number;
+  // Optional background image for class selection cards
+  backgroundImage?: string;
   spellcasting?: {
     ability: keyof AbilityScores;
     cantripsKnown: number;
