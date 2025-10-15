@@ -23,6 +23,11 @@ export interface GenerateImageParams {
   quality?: 'low' | 'medium' | 'high';
 }
 
+export interface AppendMessageImageParams {
+  messageId: string;
+  image: { url: string; prompt?: string; model?: string; quality?: 'low'|'medium'|'high' };
+}
+
 class LlmApiClient {
   private useOfflineFallback = false;
 
@@ -106,6 +111,19 @@ class LlmApiClient {
     });
     const data = await res.json();
     return data?.image ?? '';
+  }
+
+  async appendMessageImage(params: AppendMessageImageParams): Promise<void> {
+    const res = await this.fetchWithAuth(`/v1/images/message/${encodeURIComponent(params.messageId)}/images`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        url: params.image.url,
+        prompt: params.image.prompt,
+        model: params.image.model,
+        quality: params.image.quality,
+      }),
+    });
+    await res.json().catch(() => ({}));
   }
 }
 

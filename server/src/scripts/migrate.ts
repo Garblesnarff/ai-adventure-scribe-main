@@ -156,10 +156,16 @@ async function run() {
         speaker_id UUID,
         message TEXT NOT NULL,
         context JSONB,
+        images JSONB,
         timestamp TIMESTAMPTZ DEFAULT NOW(),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
+
+    // Ensure images column exists for existing databases
+    await client.query(`
+      ALTER TABLE dialogue_history ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]';
     `);
 
     await client.query('COMMIT');

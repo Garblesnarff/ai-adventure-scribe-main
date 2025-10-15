@@ -69,6 +69,7 @@ export interface EnhancedChatMessage extends ChatMessage {
   narrationSegments?: NarrationSegment[];
   diceRolls?: DiceRoll[];
   rollRequests?: RollRequest[];
+  imageRequests?: Array<{ prompt: string; style?: string; quality?: 'low'|'medium'|'high' }>; 
   combatDetection?: {
     isCombat: boolean;
     confidence: number;
@@ -338,6 +339,7 @@ export const useAIResponse = () => {
       // Extract response data
       const responseText = result.text;
       const narrationSegments = (result as any).narration_segments || (result as any).narrationSegments;
+      const imageRequests = (result as any).image_requests || (result as any).imageRequests || undefined;
 
       // Parse roll requests from the response and process through GameContext
       let rollRequests: RollRequest[] = result.roll_requests || [];
@@ -469,6 +471,7 @@ export const useAIResponse = () => {
         narrationSegments: narrationSegments,
         diceRolls: (result as any).dice_rolls || [],
         rollRequests: rollRequests,
+        imageRequests,
         combatDetection: {
           isCombat: combatDetection.isCombat,
           confidence: combatDetection.confidence,

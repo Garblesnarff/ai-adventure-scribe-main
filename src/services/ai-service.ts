@@ -577,6 +577,14 @@ Response:
 - Track narrative threads and callback to previous events
 - Give NPCs distinct voices and personalities
 
+**OPTIONAL VISUAL PROMPT (for image generation):**
+At the very end of the response, if the scene would benefit from an illustration, include a single concise line starting with:
+VISUAL PROMPT: <short art prompt focusing on key visual elements>
+Examples:
+- VISUAL PROMPT: Moonlit forest clearing with ancient standing stones and swirling mist
+- VISUAL PROMPT: Crumbling obsidian keep under stormy skies with lightning forks
+Keep this to a single line; do not include quotes or extra commentary.
+
 **CRITICAL: NPC DIALOGUE REQUIREMENTS**
 - ALL significant NPC interactions MUST use direct quoted speech
 - Examples: "What brings you to these dark woods?" or "I've been expecting you, adventurer."

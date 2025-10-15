@@ -12,23 +12,51 @@ import { parseMessageOptions, createPlayerMessageFromOption } from '@/utils/pars
 import { parseRollRequests, removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
 import { rollDice } from '@/utils/diceUtils';
 import { useCombat } from '@/contexts/CombatContext';
+import { Button } from '@/components/ui/button';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useCampaign } from '@/contexts/CampaignContext';
+import { generateSceneImage } from '@/services/scene-image-generator';
+import { llmApiClient } from '@/services/llm-api-client';
+import { Image as ImageIcon, RefreshCw, Loader2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 
 interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
+  sessionId?: string;
 }
 
 /**
  * MessageList Component
  * Displays a list of chat messages with styling based on sender type
  */
-export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) => {
+export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, sessionId }) => {
   const { messages = [], sendMessage } = useMessageContext();
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const { state: combatState } = useCombat();
+  const { state: characterState } = useCharacter();
+  const { state: campaignState } = useCampaign();
+  const { id: routeCampaignId } = useParams<{ id: string }>();
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(null);
   const optionsTimerRef = useRef<number | null>(null);
+  const [generatingFor, setGeneratingFor] = useState<Set<string>>(new Set());
+  const [imageByMessage, setImageByMessage] = useState<Record<string, { url: string; prompt: string }>>({});
+  const [genErrorByMessage, setGenErrorByMessage] = useState<Record<string, string>>({});
+  const lastGenRef = useRef<number>(0);
+
+  // Env flags for auto image generation and caps
+  const AUTO = String(((import.meta as any)?.env?.VITE_DM_AUTO_IMAGE ?? 'false')).toLowerCase();
+  const isAuto = ['1','true','yes','on'].includes(AUTO);
+  const MAX = Number.parseInt(String(((import.meta as any)?.env?.VITE_DM_IMAGE_MAX_PER_SESSION ?? '3')));
+
+  // Helpers for per-session caps & per-message trigger markers
+  const capKey = (sid: string) => `dm-img-cap:${sid}`;
+  const trigKey = (sid: string, mid: string) => `dm-img-trig:${sid}:${mid}`;
+  const getCap = (sid?: string) => sid ? Number.parseInt(localStorage.getItem(capKey(sid)) || '0') : 0;
+  const incCap = (sid?: string) => { if (!sid) return; const v = getCap(sid) + 1; localStorage.setItem(capKey(sid), String(v)); };
+  const alreadyTriggered = (sid?: string, mid?: string) => (!!sid && !!mid) ? localStorage.getItem(trigKey(sid, mid)) === '1' : false;
+  const markTriggered = (sid?: string, mid?: string) => { if (!sid || !mid) return; localStorage.setItem(trigKey(sid, mid), '1'); };
   // Last roll metadata to inform /dm/options (sent once after a roll completes)
   type LastRollMeta = {
     kind: 'attack'|'skill_check'|'save'|'damage'|'initiative'|'generic';
@@ -217,6 +245,108 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
       logger.error('[MessageList] Failed to send option selection:', error);
     }
   }, [onSendFullMessage, sendMessage]);
+
+  // Image generation handler per DM message
+  const handleGenerateScene = React.useCallback(async (message: ChatMessage & { id?: string; timestamp?: string }) => {
+    const messageId = message.id || message.timestamp || `${Math.random()}`;
+    try {
+      setGenErrorByMessage(prev => ({ ...prev, [messageId]: '' }));
+      setGeneratingFor(prev => new Set(prev).add(messageId));
+
+      // Derive clean scene text (drop inline roll requests/options)
+      const parsed = parseMessageOptions(message.text || '');
+      const baseText = parsed?.content || message.text || '';
+      let sceneText = removeRollRequestsFromMessage(baseText);
+      // If DM provided a visual prompt marker, append it to guide image gen
+      const vpMatch = (message.text || '').match(/^[\t ]*VISUAL\s+PROMPT:\s*(.+)$/im);
+      if (vpMatch && vpMatch[1]) {
+        sceneText += `\nVisual focus: ${vpMatch[1].trim()}`;
+      }
+
+      const character = characterState.character;
+      const campaign = campaignState.campaign;
+      const t0 = performance.now();
+      const shortId = String(messageId).slice(-8);
+      const label = sessionId ? `scene-${sessionId}-${shortId}` : 'scene';
+      const res = await generateSceneImage({
+        sceneText,
+        campaign: {
+          id: routeCampaignId || undefined,
+          name: campaign?.name,
+          genre: campaign?.genre || undefined,
+          tone: campaign?.tone || undefined,
+          atmosphere: (campaign?.enhancementEffects?.atmosphere?.[0] as string) || undefined,
+        },
+        character: character ? {
+          name: character.name,
+          race: character.race as any,
+          subrace: character.subrace as any,
+          class: character.class as any,
+          appearance: character.appearance || undefined,
+          personality_notes: character.personalityNotes || character.personality_notes || undefined,
+          avatar_url: character.avatar_url || undefined,
+          image_url: character.image_url || undefined,
+          theme: character.theme || undefined,
+        } : null,
+        quality: (import.meta as any)?.env?.VITE_DM_IMAGE_QUALITY || 'low',
+        model: (import.meta as any)?.env?.VITE_DM_IMAGE_MODEL || 'gpt-image-1-mini',
+        storage: routeCampaignId ? { entityType: 'campaign', entityId: routeCampaignId, label } : { label },
+      });
+
+      setImageByMessage(prev => ({ ...prev, [messageId]: { url: res.url, prompt: res.prompt } }));
+      // Persist to dialogue_history if this message has an id
+      if (message.id) {
+        try {
+          await llmApiClient.appendMessageImage({
+            messageId: message.id,
+            image: { url: res.url, prompt: res.prompt, model: res.model, quality: res.quality }
+          });
+        } catch (persistErr) {
+          logger.warn('[MessageList] Failed to persist image to message', persistErr);
+        }
+      }
+      incCap(sessionId);
+      lastGenRef.current = performance.now();
+      logger.info('[MessageList] Scene image generated', { ms: Math.round(lastGenRef.current - t0), model: 'gpt-image-1-mini' });
+    } catch (e: any) {
+      const msg = e?.message || 'Failed to generate image';
+      setGenErrorByMessage(prev => ({ ...prev, [messageId]: msg }));
+      logger.error('[MessageList] Scene image generation failed:', e);
+    } finally {
+      setGeneratingFor(prev => {
+        const next = new Set(prev);
+        next.delete(messageId);
+        return next;
+      });
+    }
+  }, [characterState.character, campaignState.campaign, routeCampaignId]);
+
+  // Auto-generate on DM-suggested imageRequests (flag + caps)
+  useEffect(() => {
+    if (!isAuto || !sessionId) return;
+    if (getCap(sessionId) >= (Number.isFinite(MAX) ? MAX : 3)) return;
+
+    const reversed = [...messages].map((m, idx) => ({ m, idx })).reverse();
+    const lastDmEntry = reversed.find(e => e.m.sender === 'dm');
+    const lastDm = lastDmEntry?.m;
+    if (!lastDm) return;
+
+    const msgId = lastDm.id || lastDm.timestamp || `${lastDmEntry?.idx}`;
+    if (alreadyTriggered(sessionId, String(msgId))) return;
+    if (generatingFor.has(String(msgId))) return;
+
+    // require explicit imageRequests or visual prompt marker to auto-trigger
+    const hasImageRequests = Array.isArray((lastDm as any).imageRequests) && (lastDm as any).imageRequests.length > 0;
+    const hasVisualMarker = /^[\t ]*VISUAL\s+PROMPT:\s*(.+)$/im.test(lastDm.text || '');
+    if (!hasImageRequests && !hasVisualMarker) return;
+
+    // simple cooldown to avoid bursts
+    if (performance.now() - lastGenRef.current < 1000) return;
+
+    // Trigger once
+    markTriggered(sessionId, String(msgId));
+    handleGenerateScene(lastDm as any).catch(() => { /* handled in handler */ });
+  }, [messages, isAuto, sessionId, generatingFor, handleGenerateScene]);
 
   // Handle dice roll requests from GameContext queue
   const handleDiceRoll = React.useCallback(async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
@@ -527,9 +657,54 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage }) =
                             if (hasRollRequests) {
                               content = removeRollRequestsFromMessage(content);
                             }
+                            // Remove optional DM visual prompt marker from display
+                            content = content.replace(/^[\t ]*VISUAL\s+PROMPT:.*$/gim, '').trim();
                             return content;
                           })()}
                         </div>
+
+                        {/* Scene images (persisted first, then ephemeral) */}
+                        {isDM && (Array.isArray((message as any).images) && (message as any).images.length > 0) && (
+                          <div className="mt-2 space-y-2">
+                            {((message as any).images as any[]).map((img, idx) => (
+                              <img key={`${messageId}-img-${idx}`} src={img.url} alt="Scene" className="rounded-md shadow-md max-h-[420px] w-full object-cover border border-white/20" />
+                            ))}
+                          </div>
+                        )}
+                        {isDM && !((message as any).images && (message as any).images.length > 0) && imageByMessage[messageId]?.url && (
+                          <div className="mt-2">
+                            <img
+                              src={imageByMessage[messageId].url}
+                              alt="Scene"
+                              className="rounded-md shadow-md max-h-[420px] w-full object-cover border border-white/20"
+                            />
+                          </div>
+                        )}
+
+                        {/* Generate/Regenerate button for DM messages (last in group) */}
+                        {isDM && isLastInGroup && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleGenerateScene(message as any)}
+                              disabled={generatingFor.has(messageId)}
+                              className="h-8 px-2 py-1"
+                            >
+                              {generatingFor.has(messageId) ? (
+                                <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Generating...</span>
+                              ) : (
+                                <span className="inline-flex items-center gap-2">
+                                  {imageByMessage[messageId]?.url ? <RefreshCw className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
+                                  {imageByMessage[messageId]?.url ? 'Regenerate image' : 'Generate scene image'}
+                                </span>
+                              )}
+                            </Button>
+                            {genErrorByMessage[messageId] && (
+                              <span className="text-xs text-red-300">{genErrorByMessage[messageId]}</span>
+                            )}
+                          </div>
+                        )}
 
                         {/* Truncation expander */}
                         {isLongMessage && (

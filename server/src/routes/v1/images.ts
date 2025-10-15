@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 import OpenAI, { toFile } from 'openai';
 import { requireAuth } from '../../middleware/auth.js';
 import { createRateLimiter } from '../../middleware/rate-limit.js';
+import { supabaseService } from '../../lib/supabase.js';
 
 /**
  * Generate image using OpenAI's gpt-image-1-mini model
@@ -210,57 +211,169 @@ export default function imagesRouter() {
         return res.status(status).json({ error: 'Image request failed', details: errText });
       }
 
-      // OpenRouter image-capable chat completion response (minimal shapes)
-      type ORImageMsg = {
-        content?: unknown;
-        images?: any[];
-        image?: string;
-        image_url?: string | { url: string };
-      };
-      type ORImageResp = { choices?: { message?: ORImageMsg }[] };
+      // OpenRouter image-capable chat completion response (robust extraction)
+      type ORImageMsg = { [k: string]: any };
+      type ORImageResp = { choices?: { message?: ORImageMsg }[]; [k: string]: any };
       const data = (await response.json()) as ORImageResp;
 
-      // Try to extract image data from various possible locations
-      const choice = data.choices?.[0];
-      let imageData: string | null = null;
-      const toUrl = (val: any): string | null => {
+      const firstUrlLike = (val: any): string | null => {
         if (!val) return null;
-        if (typeof val === 'string') return val;
+        if (typeof val === 'string' && /^https?:\/\//i.test(val)) return val;
         if (typeof val === 'object' && typeof val.url === 'string') return val.url;
         return null;
       };
+      const firstDataUriLike = (val: any): string | null => {
+        if (typeof val === 'string' && val.startsWith('data:image/')) return val;
+        return null;
+      };
+      const extractFromMessage = (msg: any): string | null => {
+        if (!msg) return null;
+        // If array, try each
+        if (Array.isArray(msg)) {
+          for (const it of msg) {
+            const nested = extractFromMessage(it);
+            if (nested) return nested;
+          }
+        }
+        // images array
+        if (Array.isArray(msg?.images)) {
+          for (const it of msg.images) {
+            const u = firstUrlLike(it?.image_url) || firstUrlLike(it?.url) || firstDataUriLike(it?.image) || firstDataUriLike(it?.data);
+            if (u) return u;
+          }
+        }
+        // content array
+        if (Array.isArray(msg?.content)) {
+          for (const p of msg.content) {
+            if (p && typeof p === 'object') {
+              if (['image', 'image_url', 'output_image'].includes(String(p.type || '').toLowerCase())) {
+                const u = firstUrlLike(p?.image_url) || firstUrlLike(p?.url) || firstDataUriLike(p?.image) || firstDataUriLike(p?.data);
+                if (u) return u;
+              }
+              const nested = extractFromMessage(p);
+              if (nested) return nested;
+            } else if (typeof p === 'string') {
+              const d = firstDataUriLike(p);
+              if (d) return d;
+              const m = p.match(/https?:\/\/\S+\.(?:png|jpe?g|webp|gif)/i);
+              if (m) return m[0];
+            }
+          }
+        }
+        // string content
+        if (typeof msg?.content === 'string') {
+          const d = firstDataUriLike(msg.content);
+          if (d) return d;
+          const m = msg.content.match(/https?:\/\/\S+\.(?:png|jpe?g|webp|gif)/i);
+          if (m) return m[0];
+        }
+        // simple fields
+        const simple = firstUrlLike(msg?.image_url) || firstDataUriLike(msg?.image) || firstUrlLike(msg?.url);
+        if (simple) return simple;
+        // tool calls / attachments / nested
+        if (Array.isArray(msg?.tool_calls)) {
+          for (const t of msg.tool_calls) {
+            const nested = extractFromMessage(t);
+            if (nested) return nested;
+          }
+        }
+        if (Array.isArray(msg?.attachments)) {
+          for (const a of msg.attachments) {
+            const nested = extractFromMessage(a);
+            if (nested) return nested;
+          }
+        }
+        return null;
+      };
 
-      if (choice?.message?.images?.length) {
-        const img = choice.message.images[0];
-        imageData = toUrl(img?.image_url) || toUrl(img?.url);
-      }
+      const choice = data.choices?.[0];
+      let imageRef = extractFromMessage(choice?.message) || extractFromMessage(data);
 
-      if (!imageData && Array.isArray(choice?.message?.content)) {
-        const imgPart = choice.message.content.find((p: any) => p.type === 'image');
-        imageData = toUrl(imgPart?.image) || toUrl(imgPart?.image_url) || toUrl(imgPart?.data);
-      }
-
-      if (!imageData && typeof choice?.message?.content === 'string' && choice.message.content.startsWith('data:image/')) {
-        imageData = choice.message.content;
-      }
-
-      if (!imageData) imageData = toUrl(choice?.message?.image);
-      if (!imageData) imageData = toUrl(choice?.message?.image_url);
-
-      if (!imageData) {
+      if (!imageRef) {
+        console.warn('[Images] OpenRouter parsing found no image fields; attempting OpenAI fallback if configured');
+        const openaiApiKey = process.env.OPENAI_API_KEY;
+        if (openaiApiKey) {
+          try {
+            const allowedSizes = new Set(['1024x1024', '1536x1024', '1024x1536']);
+            const reqSize = (typeof size === 'string' && allowedSizes.has(size))
+              ? (size as '1024x1024' | '1536x1024' | '1024x1536')
+              : '1024x1024';
+            await generateWithOpenAI(prompt, referenceImage, quality, reqSize, res);
+            return; // response sent
+          } catch (e) {
+            console.warn('[Images] OpenAI fallback failed after OpenRouter parse miss', e);
+          }
+        }
         return res.status(502).json({ error: 'No image data in provider response' });
       }
 
-      // Strip data URL prefix if present
-      if (imageData && imageData.startsWith('data:image/')) {
-        const idx = imageData.indexOf('base64,');
-        if (idx !== -1) imageData = imageData.substring(idx + 7);
+      // Normalize to base64
+      if (imageRef.startsWith('data:image/')) {
+        const idx = imageRef.indexOf('base64,');
+        const base64 = idx !== -1 ? imageRef.substring(idx + 7) : '';
+        return res.json({ image: base64 });
       }
 
-      return res.json({ image: imageData });
+      // Otherwise assume remote URL; fetch and convert
+      try {
+        const r2 = await fetch(imageRef);
+        if (!r2.ok) {
+          console.warn('[Images] Failed to fetch provider image URL', imageRef, r2.status);
+          return res.status(502).json({ error: 'Failed to fetch image from provider' });
+        }
+        const buf = Buffer.from(await r2.arrayBuffer());
+        return res.json({ image: buf.toString('base64') });
+      } catch (fetchErr) {
+        console.error('[Images] Error fetching image URL', imageRef, fetchErr);
+        return res.status(502).json({ error: 'Error retrieving image from provider' });
+      }
     } catch (e) {
       console.error('[Images] Error', e);
       return res.status(500).json({ error: 'Image generation failed' });
+    }
+  });
+
+  // Append a generated image record to a dialogue_history message
+  router.patch('/message/:id/images', async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const body = req.body || {};
+    const image = {
+      url: String(body.url || ''),
+      prompt: typeof body.prompt === 'string' ? body.prompt : undefined,
+      model: typeof body.model === 'string' ? body.model : undefined,
+      quality: typeof body.quality === 'string' ? body.quality : undefined,
+      createdAt: new Date().toISOString(),
+    } as any;
+
+    if (!id || !image.url) {
+      return res.status(400).json({ error: 'Missing id or image url' });
+    }
+
+    try {
+      // Fetch existing images
+      const { data: existing, error: selErr } = await supabaseService
+        .from('dialogue_history')
+        .select('images')
+        .eq('id', id)
+        .single();
+      if (selErr) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+      const images = Array.isArray(existing?.images) ? existing.images : [];
+      // Append with max 5
+      const updated = [...images, image].slice(-5);
+
+      const { error: updErr, data: updData } = await supabaseService
+        .from('dialogue_history')
+        .update({ images: updated, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select('images')
+        .single();
+      if (updErr) throw updErr;
+      return res.json({ images: updData?.images || [] });
+    } catch (e) {
+      console.error('[Images] Failed to append image to message', e);
+      return res.status(500).json({ error: 'Failed to append image' });
     }
   });
 

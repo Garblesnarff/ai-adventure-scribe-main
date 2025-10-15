@@ -564,7 +564,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <>
-                              <MessageList onSendFullMessage={handleSendMessage} />
+                              <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} />
 
                               {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
                               {isGeneratingGreeting && (
