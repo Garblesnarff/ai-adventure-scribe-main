@@ -17,10 +17,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-100">
       {/* Hero Header */}
-      <div className="relative bg-cover py-24 px-4" style={{ backgroundImage: "url('/hero_header.png')", backgroundPosition: "center top -675px" }}>
+      <div className="relative bg-cover bg-no-repeat py-24 px-4" style={{ backgroundImage: "url('/hero_header.png')", backgroundPosition: "50% 40%" }}>
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/20 to-black/30"></div>
         <div className="relative max-w-7xl mx-auto text-center">
-          <div className="mb-6 h-20"></div>
+          <div className="mb-12 md:mb-16 h-50 md:h-28"></div>
           <p className="text-xl text-white/95 mb-12 max-w-3xl mx-auto drop-shadow-lg leading-relaxed">Step into boundless worlds of adventure, where every choice shapes destiny and legends are forged in the fires of imagination</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
             <Button
