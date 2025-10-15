@@ -143,15 +143,17 @@ export class CharacterBackgroundGenerator {
    */
   private async generateWithRetry(prompt: string, maxAttempts: number, referenceImage?: string): Promise<string> {
     let lastError: Error | null = null;
+    let chosenModel = 'google/gemini-2.5-flash-image-preview';
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         logger.info(`Card background generation attempt ${attempt}/${maxAttempts}`);
 
-        // Use Gemini model for vision + text capability
+        // Use vision-capable model first; include reference image when available
         const base64Image = await openRouterService.generateImage({
           prompt,
-          model: 'google/gemini-2.5-flash-preview' // Vision-capable model
+          model: chosenModel,
+          ...(referenceImage ? { referenceImage } : {}),
         });
 
         return base64Image;
@@ -160,6 +162,10 @@ export class CharacterBackgroundGenerator {
         logger.warn(`Attempt ${attempt} failed:`, lastError.message);
 
         if (attempt < maxAttempts) {
+          // If provider reports missing endpoints for Gemini image preview, fallback to OpenAI image mini
+          if (/No endpoints found\s+for\s+google\/gemini-2\.5-flash(-image)?-preview/i.test(lastError.message)) {
+            chosenModel = 'gpt-image-1-mini';
+          }
           const waitTime = Math.pow(2, attempt - 1) * 1000;
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }

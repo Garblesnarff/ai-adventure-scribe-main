@@ -79,7 +79,7 @@ export class CharacterImageGenerator {
       retryAttempts = this.maxRetries,
       artStyle = 'fantasy-art',
       theme = characterData.theme || 'fantasy',
-      quality = 'medium',
+      quality = 'low',
       model = 'gpt-image-1-mini',
       preferredProvider
     } = options;
@@ -142,7 +142,7 @@ export class CharacterImageGenerator {
       style = 'portrait',
       artStyle = 'fantasy-art',
       theme = characterData.theme || options.theme || 'fantasy', // Use character theme, options theme, or default
-      quality = 'medium',
+      quality = 'low',
       model = 'gpt-image-1-mini',
       preferredProvider
     } = options;

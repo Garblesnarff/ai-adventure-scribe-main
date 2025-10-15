@@ -8,9 +8,9 @@ import { createRateLimiter } from '../../middleware/rate-limit.js';
  * Generate image using OpenAI's gpt-image-1-mini model
  */
 async function generateWithOpenAI(
-  prompt: string, 
-  referenceImage?: string, 
-  quality: 'low' | 'medium' | 'high' = 'medium',
+  prompt: string,
+  referenceImage?: string,
+  quality: 'low' | 'medium' | 'high' = 'low',
   size: '1024x1024' | '1536x1024' | '1024x1536' = '1024x1024',
   res?: Response
 ): Promise<void> {
@@ -197,7 +197,7 @@ export default function imagesRouter() {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_ORIGIN || 'http://localhost:5173',
+          'HTTP-Referer': process.env.APP_ORIGIN || 'http://localhost:3000',
           'X-Title': 'AI Adventure Scribe',
         },
         body: JSON.stringify(body),
