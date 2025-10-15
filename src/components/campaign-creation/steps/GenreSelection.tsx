@@ -29,7 +29,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Heroic', 'Exploration', 'Magic'],
     icon: <Sword className="h-5 w-5" />,
     colorClass: 'text-infinite-gold',
-    backgroundImage: '/traditional-fantasy-campaign-style-card-background.png',
+    backgroundImage: '/images/campaign-styles/traditional-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'dark-fantasy',
@@ -38,7 +38,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Gritty', 'Horror', 'Moral Dilemmas'],
     icon: <Skull className="h-5 w-5" />,
     colorClass: 'text-destructive',
-    backgroundImage: '/dark-fantasy-campaign-style-card-background.png',
+    backgroundImage: '/images/campaign-styles/dark-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'high-fantasy',
@@ -47,7 +47,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Epic', 'Magic', 'Mythic'],
     icon: <Zap className="h-5 w-5" />,
     colorClass: 'text-infinite-purple',
-    backgroundImage: '/high-fantasy-campaign-style-card-background.png',
+    backgroundImage: '/images/campaign-styles/high-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'science-fantasy',
@@ -56,7 +56,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Tech + Magic', 'Exploration', 'Weird'],
     icon: <Gavel className="h-5 w-5" />,
     colorClass: 'text-infinite-teal',
-    backgroundImage: '/science-fantasy-campaign-style-card-background.png',
+    backgroundImage: '/images/campaign-styles/science-fantasy-campaign-style-card-background.png',
   },
   {
     value: 'steampunk',
@@ -65,7 +65,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Invention', 'Intrigue', 'Airships'],
     icon: <Anchor className="h-5 w-5" />,
     colorClass: 'text-amber-600',
-    backgroundImage: '/steampunk-campaign-style-card-background.png',
+    backgroundImage: '/images/campaign-styles/steampunk-campaign-style-card-background.png',
   },
   {
     value: 'horror',
@@ -74,7 +74,7 @@ const GENRES: GenreMeta[] = [
     themes: ['Supernatural', 'Mystery', 'Survival'],
     icon: <BookOpen className="h-5 w-5" />,
     colorClass: 'text-gray-600',
-    backgroundImage: '/horror-campaign-style-card-background.png',
+    backgroundImage: '/images/campaign-styles/horror-campaign-style-card-background.png',
   },
 ];
 

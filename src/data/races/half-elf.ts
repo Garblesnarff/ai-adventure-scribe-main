@@ -8,6 +8,6 @@ export const halfElf: CharacterRace = {
   abilityScoreIncrease: { charisma: 2 },
   speed: 30,
   languages: ['Common', 'Elvish', 'One extra language of your choice'],
-  backgroundImage: '/halfelf-class-card-background.png',
+  backgroundImage: '/images/races/base/halfelf-class-card-background.png',
   subraces: []
 };

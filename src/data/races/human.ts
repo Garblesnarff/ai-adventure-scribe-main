@@ -8,13 +8,13 @@ export const human: CharacterRace = {
   abilityScoreIncrease: {},
   speed: 30,
   languages: ['Common'],
-  backgroundImage: '/human-class-card-background.png',
+  backgroundImage: '/images/races/base/human-class-card-background.png',
   subraces: [
     {
       id: 'standard-human',
       name: 'Standard Human',
       description: 'The most adaptable and ambitious people among the common races.',
-      backgroundImage: '/standard-human-human-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/standard-human-human-sub-race-card-background.png',
       abilityScoreIncrease: {
         strength: 1,
         dexterity: 1,
@@ -30,7 +30,7 @@ export const human: CharacterRace = {
       id: 'variant-human',
       name: 'Variant Human',
       description: 'A more customizable version of human with a free feat at 1st level.',
-      backgroundImage: '/variant-human-human-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/variant-human-human-sub-race-card-background.png',
       abilityScoreIncrease: {},
       traits: ['Skills', 'Feat', 'Extra Language or Tool Proficiency'],
       languages: ['Choice of One or Tool Proficiency'],
@@ -41,7 +41,7 @@ export const human: CharacterRace = {
       id: 'custom-lineage',
       name: 'Custom Lineage',
       description: 'A customizable lineage representing non-human ancestry or unique background.',
-      backgroundImage: '/custom-lineage-human-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/custom-lineage-human-sub-race-card-background.png',
       abilityScoreIncrease: {},
       traits: ['Variable Size', 'Feat', 'Darkvision or Skill Proficiency'],
       languages: ['Common', 'Choice of One'],

@@ -8,6 +8,6 @@ export const forestGiant: CharacterRace = {
   abilityScoreIncrease: { wisdom: 2, strength: 1 },
   speed: 30,
   languages: ['Common', 'Elvish', 'Giant'],
-  backgroundImage: '/forestgiant-class-card-background.png',
+  backgroundImage: '/images/races/base/forestgiant-class-card-background.png',
   subraces: []
 };

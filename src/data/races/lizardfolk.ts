@@ -9,6 +9,6 @@ export const lizardfolk: CharacterRace = {
   abilityScoreIncrease: { constitution: 2, wisdom: 1 },
   speed: 30,
   languages: ['Common', 'Draconic'],
-  backgroundImage: '/lizardfolk-class-card-background.png',
+  backgroundImage: '/images/races/base/lizardfolk-class-card-background.png',
   subraces: []
 };
