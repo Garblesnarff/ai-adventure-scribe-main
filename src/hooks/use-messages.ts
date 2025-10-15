@@ -50,6 +50,7 @@ export const useMessages = (sessionId: string | null) => {
         id: msg.id,
         timestamp: msg.timestamp,
         context: msg.context as MessageContext,
+        images: Array.isArray((msg as any).images) ? (msg as any).images : undefined,
         // Add character info to player messages
         characterName: msg.speaker_type === 'player' && characterData ? characterData.name : undefined,
         characterAvatar: msg.speaker_type === 'player' && characterData ? characterData.avatar_url : undefined,

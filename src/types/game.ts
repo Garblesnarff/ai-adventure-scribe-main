@@ -77,6 +77,20 @@ export interface ChatMessage {
   options?: ActionOption[];
   characterName?: string;
   characterAvatar?: string;
+  // Optional inline images associated with this message (not persisted server-side yet)
+  images?: Array<{
+    url: string;
+    prompt?: string;
+    model?: string;
+    quality?: 'low' | 'medium' | 'high';
+    createdAt?: string;
+  }>;
+  // Optional DM-provided visual prompts to suggest generating an image for this scene
+  imageRequests?: Array<{
+    prompt: string;
+    style?: string;
+    quality?: 'low' | 'medium' | 'high';
+  }>;
 }
 
 /**
