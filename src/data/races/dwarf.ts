@@ -8,13 +8,13 @@ export const dwarf: CharacterRace = {
   abilityScoreIncrease: { constitution: 2 },
   speed: 25,
   languages: ['Common', 'Dwarvish'],
-  backgroundImage: '/dwarf-class-card-background.png',
+  backgroundImage: '/images/races/base/dwarf-class-card-background.png',
   subraces: [
     {
       id: 'hill-dwarf',
       name: 'Hill Dwarf',
       description: 'More resilient and intuitive, with extra hit points.',
-      backgroundImage: '/hill-dwarf-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/hill-dwarf-sub-race-card-background.png',
       abilityScoreIncrease: { wisdom: 1 },
       traits: ['Dwarven Toughness']
     },
@@ -22,7 +22,7 @@ export const dwarf: CharacterRace = {
       id: 'mountain-dwarf',
       name: 'Mountain Dwarf',
       description: 'Stronger and more accustomed to rugged life, with armor proficiency.',
-      backgroundImage: '/mountain-dwarf-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/mountain-dwarf-sub-race-card-background.png',
       abilityScoreIncrease: { strength: 2 },
       traits: ['Dwarven Armor Training']
     },
@@ -30,7 +30,7 @@ export const dwarf: CharacterRace = {
       id: 'duergar',
       name: 'Duergar (Gray Dwarf)',
       description: 'A subrace from the Deep Caverns with innate magical abilities, including invisibility.',
-      backgroundImage: '/duergar-dwarf-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/duergar-dwarf-sub-race-card-background.png',
       abilityScoreIncrease: { strength: 1, constitution: 1 },
       traits: ['Duergar Magic', 'Duergar Resilience', 'Sunlight Sensitivity']
     }

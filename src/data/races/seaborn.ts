@@ -9,6 +9,6 @@ export const seaborn: CharacterRace = {
   abilityScoreIncrease: { strength: 1, constitution: 1, charisma: 1 },
   speed: 30,
   languages: ['Common', 'Primordial'],
-  backgroundImage: '/seaborn-class-card-background.png',
+  backgroundImage: '/images/races/base/seaborn-class-card-background.png',
   subraces: []
 };

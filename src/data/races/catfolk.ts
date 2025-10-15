@@ -8,6 +8,6 @@ export const catfolk: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2, charisma: 1 },
   speed: 30,
   languages: ['Common', 'Choice of One'],
-  backgroundImage: '/catfolk-class-card-background.png',
+  backgroundImage: '/images/races/base/catfolk-class-card-background.png',
   subraces: []
 };

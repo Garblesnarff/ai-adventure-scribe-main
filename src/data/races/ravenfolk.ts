@@ -8,6 +8,6 @@ export const ravenfolk: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2, wisdom: 1 },
   speed: 30,
   languages: ['Common', 'Auran'],
-  backgroundImage: '/ravenfolk-class-card-background.png',
+  backgroundImage: '/images/races/base/ravenfolk-class-card-background.png',
   subraces: []
 };

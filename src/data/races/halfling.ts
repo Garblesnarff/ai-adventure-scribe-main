@@ -9,13 +9,13 @@ export const halfling: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2 },
   speed: 25,
   languages: ['Common', 'Halfling'],
-  backgroundImage: '/halfling-class-card-background.png',
+  backgroundImage: '/images/races/base/halfling-class-card-background.png',
   subraces: [
     {
       id: 'lightfoot-halfling',
       name: 'Lightfoot Halfling',
       description: 'Naturally stealthy and adept at hiding.',
-      backgroundImage: '/lightfoot-halfling-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/lightfoot-halfling-sub-race-card-background.png',
       abilityScoreIncrease: { charisma: 1 },
       traits: ['Naturally Stealthy']
     },
@@ -23,7 +23,7 @@ export const halfling: CharacterRace = {
       id: 'stout-halfling',
       name: 'Stout Halfling',
       description: 'Hardier than other halflings, with a resistance to poison.',
-      backgroundImage: '/stout-halfling-sub-race-card-background.png',
+      backgroundImage: '/images/races/subraces/stout-halfling-sub-race-card-background.png',
       abilityScoreIncrease: { constitution: 1 },
       traits: ['Stout Resilience']
     }

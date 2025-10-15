@@ -8,7 +8,7 @@ export const astralborn: CharacterRace = {
   abilityScoreIncrease: { intelligence: 2 },
   speed: 30,
   languages: ['Common', 'Astral'],
-  backgroundImage: '/astralborn-class-card-background.png',
+  backgroundImage: '/images/races/base/astralborn-class-card-background.png',
   subraces: [
     {
       id: 'astral-warrior',

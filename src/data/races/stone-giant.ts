@@ -8,6 +8,6 @@ export const stoneGiant: CharacterRace = {
   abilityScoreIncrease: { strength: 2, constitution: 1 },
   speed: 30,
   languages: ['Common', 'Giant'],
-  backgroundImage: '/stonegiant-class-card-background.png',
+  backgroundImage: '/images/races/base/stonegiant-class-card-background.png',
   subraces: []
 };
