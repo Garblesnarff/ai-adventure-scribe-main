@@ -289,7 +289,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
           theme: character.theme || undefined,
         } : null,
         quality: (import.meta as any)?.env?.VITE_DM_IMAGE_QUALITY || 'low',
-        model: (import.meta as any)?.env?.VITE_DM_IMAGE_MODEL || 'gpt-image-1-mini',
+        model: (import.meta as any)?.env?.VITE_DM_IMAGE_MODEL || 'google/gemini-2.5-flash-image-preview',
         storage: routeCampaignId ? { entityType: 'campaign', entityId: routeCampaignId, label } : { label },
       });
 
@@ -307,7 +307,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
       }
       incCap(sessionId);
       lastGenRef.current = performance.now();
-      logger.info('[MessageList] Scene image generated', { ms: Math.round(lastGenRef.current - t0), model: 'gpt-image-1-mini' });
+      logger.info('[MessageList] Scene image generated', { ms: Math.round(lastGenRef.current - t0), model: res.model });
     } catch (e: any) {
       const msg = e?.message || 'Failed to generate image';
       setGenErrorByMessage(prev => ({ ...prev, [messageId]: msg }));

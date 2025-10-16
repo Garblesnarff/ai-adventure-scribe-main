@@ -36,7 +36,7 @@ export interface SceneImageResult {
  */
 export async function generateSceneImage(req: SceneImageRequest): Promise<SceneImageResult> {
   const quality: Quality = req.quality || (import.meta.env.VITE_DM_IMAGE_QUALITY as Quality) || 'low';
-  const model = req.model || 'gpt-image-1-mini';
+  const model = req.model || 'google/gemini-2.5-flash-image-preview';
 
   const prompt = buildPrompt(req);
 

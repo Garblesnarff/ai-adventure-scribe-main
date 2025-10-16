@@ -21,7 +21,7 @@ export interface UploadOptions {
 
 export class OpenRouterService {
   private imageModels: ModelConfig[] = [
-    { id: 'gpt-image-1-mini', isFree: false, dailyLimit: 1000 },
+    // DEPRECATED: Removed gpt-image-1-mini (requires OpenAI verification)
     { id: 'google/gemini-2.5-flash-image-preview', isFree: false },
   ];
 
@@ -40,14 +40,7 @@ export class OpenRouterService {
   private selectAvailableModel(hasBalance: boolean = true, modelType: 'text' | 'image' = 'image'): ModelConfig {
     const available = modelType === 'text' ? this.textModels : this.imageModels;
     
-    // Prioritize gpt-image-1-mini for cost efficiency if available
-    if (modelType === 'image' && hasBalance) {
-      const gptImageMini = available.find(m => m.id === 'gpt-image-1-mini');
-      if (gptImageMini && (!gptImageMini.dailyLimit || modelUsageTracker.canUseModel(gptImageMini.id, gptImageMini.dailyLimit))) {
-        return gptImageMini;
-      }
-    }
-    
+    // DEPRECATED: Removed gpt-image-1-mini prioritization
     if (hasBalance) {
       for (const m of available.filter(m => m.isFree)) {
         if (m.dailyLimit && modelUsageTracker.canUseModel(m.id, m.dailyLimit)) {
