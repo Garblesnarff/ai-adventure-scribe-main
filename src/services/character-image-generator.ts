@@ -80,7 +80,7 @@ export class CharacterImageGenerator {
       artStyle = 'fantasy-art',
       theme = characterData.theme || 'fantasy',
       quality = 'low',
-      model = 'gpt-image-1-mini',
+      model = 'google/gemini-2.5-flash-image-preview',
       preferredProvider
     } = options;
 
@@ -89,21 +89,7 @@ export class CharacterImageGenerator {
     const prompt = this.createImagePrompt(characterData, 'portrait', artStyle, theme);
     logger.debug('Generated avatar prompt:', prompt);
 
-    // Try gpt-image-1-mini first if specified
-    if (model === 'gpt-image-1-mini') {
-      try {
-        logger.info(`Attempting avatar generation with ${model} at ${quality} quality`);
-        const base64Image = await openRouterService.generateImage({ 
-          prompt, 
-          model,
-          quality
-        });
-        logger.info(`Successfully generated avatar with ${model}`);
-        return base64Image;
-      } catch (error) {
-        logger.warn(`gpt-image-1-mini failed, falling back to other providers:`, error);
-      }
-    }
+    /* DEPRECATED: Removed gpt-image-1-mini attempt (using OpenRouter only) */
 
     const providerOrder = this.getProviderOrder(preferredProvider, 'portrait');
     let lastError: Error | null = null;
@@ -143,7 +129,7 @@ export class CharacterImageGenerator {
       artStyle = 'fantasy-art',
       theme = characterData.theme || options.theme || 'fantasy', // Use character theme, options theme, or default
       quality = 'low',
-      model = 'gpt-image-1-mini',
+      model = 'google/gemini-2.5-flash-image-preview',
       preferredProvider
     } = options;
 
@@ -152,23 +138,7 @@ export class CharacterImageGenerator {
     const prompt = this.createImagePrompt(characterData, style, artStyle, theme);
     logger.debug('Generated prompt:', prompt);
 
-    // Try gpt-image-1-mini first if specified
-    if (model === 'gpt-image-1-mini') {
-      try {
-        logger.info(`Attempting character image generation with ${model} at ${quality} quality`);
-        const base64Image = await openRouterService.generateImage({ 
-          prompt, 
-          model,
-          quality,
-          referenceImage: referenceImageBase64
-        });
-        const imageUrl = await openRouterService.uploadImage(base64Image, options.storage);
-        logger.info(`Successfully generated character image with ${model}`);
-        return imageUrl;
-      } catch (error) {
-        logger.warn(`gpt-image-1-mini failed, falling back to other providers:`, error);
-      }
-    }
+    /* DEPRECATED: Removed gpt-image-1-mini attempt (using OpenRouter only) */
 
     // Determine the provider order based on preference and availability
     const providerOrder = this.getProviderOrder(preferredProvider, style);

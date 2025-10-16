@@ -162,10 +162,7 @@ export class CharacterBackgroundGenerator {
         logger.warn(`Attempt ${attempt} failed:`, lastError.message);
 
         if (attempt < maxAttempts) {
-          // If provider reports missing endpoints for Gemini image preview, fallback to OpenAI image mini
-          if (/No endpoints found\s+for\s+google\/gemini-2\.5-flash(-image)?-preview/i.test(lastError.message)) {
-            chosenModel = 'gpt-image-1-mini';
-          }
+          /* DEPRECATED: Removed fallback to gpt-image-1-mini (using OpenRouter only) */
           const waitTime = Math.pow(2, attempt - 1) * 1000;
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }

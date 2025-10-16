@@ -53,7 +53,7 @@ export class CampaignImageGenerator {
       retryAttempts = this.maxRetries, 
       fallbackToDefault = true,
       quality = 'medium',
-      model = 'gpt-image-1-mini'
+      model = 'google/gemini-2.5-flash-image-preview'
     } = options;
 
     try {

@@ -1,6 +1,7 @@
 // SDK Imports
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { v4 as uuidv4 } from 'uuid';
 
 // Project Imports
 import { supabase } from '@/integrations/supabase/client';
@@ -29,11 +30,16 @@ export const useMessageQueue = (sessionId: string | null) => {
 
   /**
    * Handles message persistence with enhanced retry logic and backoff
+   * Generates message IDs on the frontend to avoid race conditions with database replication
    */
   const messageMutation = useMutation({
     mutationFn: async (message: ChatMessage) => {
       let retries = 0;
       let delay = INITIAL_RETRY_DELAY;
+      
+      // Generate message ID on frontend to avoid database timing issues
+      const messageId = uuidv4();
+      const now = new Date().toISOString();
 
       while (retries < MAX_RETRIES) {
         try {
@@ -49,13 +55,24 @@ export const useMessageQueue = (sessionId: string | null) => {
           const { error } = await supabase
             .from('dialogue_history')
             .insert({
+              id: messageId,
               session_id: sessionId,
               message: message.text,
               speaker_type: message.sender,
-              context: contextData
+              context: contextData,
+              timestamp: now
             });
 
           if (error) throw error;
+          
+          // Return the message with the ID we generated (available immediately, no race condition)
+          const persistedMessage: ChatMessage = {
+            ...message,
+            id: messageId,
+            timestamp: now
+          };
+          
+          logger.info(`[MessageQueue] Message persisted with ID: ${messageId}`);
           
           // Process any queued messages if this one succeeded
           if (messageQueue.length > 0) {
@@ -65,7 +82,7 @@ export const useMessageQueue = (sessionId: string | null) => {
           }
 
           setQueueStatus('idle');
-          return;
+          return persistedMessage;
         } catch (error) {
           logger.error(`Attempt ${retries + 1} failed:`, error);
           retries++;
@@ -91,16 +108,20 @@ export const useMessageQueue = (sessionId: string | null) => {
         variant: "destructive",
       });
     },
-    onSuccess: () => {
+    onSuccess: (persistedMessage) => {
+      // Invalidate and refetch messages to ensure cache is up-to-date
       queryClient.invalidateQueries({ queryKey: ['messages', sessionId] });
     },
   });
 
   /**
    * Process a batch of queued messages
+   * Also generates IDs for each message to ensure they're immediately available
    */
   const processMessageBatch = async (batch: ChatMessage[]) => {
+    const now = new Date().toISOString();
     const formattedBatch = batch.map(message => ({
+      id: message.id || uuidv4(),
       session_id: sessionId,
       message: message.text,
       speaker_type: message.sender,
@@ -108,7 +129,8 @@ export const useMessageQueue = (sessionId: string | null) => {
         location: message.context.location || null,
         emotion: message.context.emotion || null,
         intent: message.context.intent || null
-      } : {}
+      } : {},
+      timestamp: message.timestamp || now
     }));
 
     const { error } = await supabase
