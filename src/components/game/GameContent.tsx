@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -303,6 +303,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   // UI state management
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
+  const [topOffset, setTopOffset] = useState(0);
   const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
   const [isCombatDetected, setIsCombatDetected] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
@@ -318,6 +319,18 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   }, []);
   React.useEffect(() => { localStorage.setItem('ui:leftPanelCollapsed', isLeftCollapsed ? '1' : '0'); }, [isLeftCollapsed]);
   React.useEffect(() => { localStorage.setItem('ui:rightPanelCollapsed', isRightCollapsed ? '1' : '0'); }, [isRightCollapsed]);
+
+  // Measure sticky nav + breadcrumbs height to constrain viewport
+  useLayoutEffect(() => {
+    const calc = () => {
+      const nav = document.getElementById('app-nav')?.offsetHeight || 0;
+      const crumbs = document.getElementById('app-breadcrumbs')?.offsetHeight || 0;
+      setTopOffset(nav + crumbs);
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, []);
   
   // Safety state management
   const [lastSafetyCommand, setLastSafetyCommand] = useState<{
@@ -449,9 +462,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   }, [combatState.isInCombat]);
 
   return (
-          <div className="min-h-screen bg-background">
-            <div className="w-full min-h-screen mobile-bottom-safe">
-              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out min-h-screen gap-2 md:gap-4 items-stretch w-full ` +
+          <div className="bg-background" style={{ ['--top-offset' as any]: `${topOffset}px` }}>
+            <div className="w-full h-[calc(100dvh-var(--top-offset,0px))] mobile-bottom-safe overflow-hidden">
+              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out h-full gap-2 md:gap-4 items-stretch w-full ` +
                 (
                   isLeftCollapsed && isRightCollapsed
                     ? 'grid-cols-1'
@@ -670,7 +683,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                               )}
 
                               {/* Input Area at bottom - sticky */}
-                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-0 sticky bottom-0 left-0 right-0 z-20">
+                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-[env(safe-area-inset-bottom)] sticky bottom-0 left-0 right-0 z-20">
                                 <ChatInput
                                   onSendMessage={handleSendMessage}
                                   isDisabled={isProcessing || hasPendingRolls}

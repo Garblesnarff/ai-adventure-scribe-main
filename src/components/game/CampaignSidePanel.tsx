@@ -19,8 +19,8 @@ export const CampaignSidePanel: React.FC<CampaignSidePanelProps> = ({ isCollapse
   if (isCollapsed) return null;
 
   return (
-    <div className="hidden md:block">
-      <Card className="h-[80vh] glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden">
+    <div className="hidden md:block h-full">
+      <Card className="h-full glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden">
         <div className="p-4 border-b border-border/60 flex items-center justify-between">
           <h3 className="font-display font-semibold truncate">Campaign</h3>
           <button

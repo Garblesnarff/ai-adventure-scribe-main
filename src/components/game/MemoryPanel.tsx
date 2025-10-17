@@ -254,7 +254,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   return (
     <div 
       ref={panelRef} 
-      className="h-[80vh] bg-white shadow-sm border-0 flex flex-col resize-x lg:resize-x-none min-w-[280px] max-w-[400px]"
+      className="h-full bg-white shadow-sm border-0 flex flex-col resize-x lg:resize-x-none min-w-[280px] max-w-[400px]"
       style={{ width: panelWidth, minWidth: '280px', maxWidth: '400px' }}
     >
       {/* Drag Handle for Desktop */}
