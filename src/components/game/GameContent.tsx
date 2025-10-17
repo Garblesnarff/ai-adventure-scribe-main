@@ -68,6 +68,14 @@ const GameContent: React.FC = () => {
   const [showCombatInterface, setShowCombatInterface] = useState(false); // unused after redesign
   const { user } = useAuth();
   const [isDM, setIsDM] = useState(false);
+  const [showSceneBlurb, setShowSceneBlurb] = useState(() => {
+    try {
+      const v = localStorage.getItem('ui:sceneBlurb');
+      return v === null ? true : v === '1';
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     const loadGameData = async () => {
@@ -263,6 +271,8 @@ const GameContent: React.FC = () => {
               handleCombatToggle={handleCombatToggle}
               handleAIResponse={handleAIResponse}
               isDM={isDM}
+              showSceneBlurb={showSceneBlurb}
+              setShowSceneBlurb={setShowSceneBlurb}
             />
           </VoiceProvider>
         </MemoryProvider>
@@ -285,6 +295,8 @@ interface GameContentInnerProps {
   handleCombatToggle: () => void;
   handleAIResponse: (message: any) => Promise<void>;
   isDM: boolean;
+  showSceneBlurb: boolean;
+  setShowSceneBlurb: (v: boolean) => void;
 }
 
 const GameContentInner: React.FC<GameContentInnerProps> = ({
@@ -299,6 +311,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   handleCombatToggle,
   handleAIResponse,
   isDM,
+  showSceneBlurb,
+  setShowSceneBlurb,
 }) => {
   // UI state management
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
@@ -487,12 +501,12 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
               }>
                 {/* Left Campaign Panel */}
                 {!isLeftCollapsed && (
-                  <div className="order-1 md:order-1 w-full md:w-auto">
+                  <div className="order-1 md:order-1 w-full md:w-auto min-h-0">
                     <CampaignSidePanel isCollapsed={false} onToggle={() => setIsLeftCollapsed(true)} />
                   </div>
                 )}
                 {/* Main Content Area - Optimized for Maximum Space */}
-                <div className={`flex-1 min-w-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}>
+                <div className={`flex-1 min-w-0 min-h-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}>
                   <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden transition-all duration-300 hover:shadow-2xl hover-glow mobile-chat h-full">
                     {/* Cinematic Header with Atmospheric Effects */}
                     <div className="relative p-2 md:p-3 border-b border-white/10 bg-cosmic overflow-hidden transition-all duration-500">
@@ -519,11 +533,13 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                                 <span className="font-display text-infinite-gold font-medium text-responsive-sm">Chapter {sessionData.turn_count ?? 0}</span>
                               </div>
                               <div className="hidden md:block h-4 w-px bg-white/20"></div>
-                              <div className="flex-1 hidden xl:block">
-                                <p className="text-narrative text-muted-foreground leading-relaxed text-xs">
-                                  {sessionData.current_scene_description ?? "Your infinite story unfolds across realms of endless possibility..."}
-                                </p>
-                              </div>
+                              {showSceneBlurb && (
+                                <div className="flex-1 hidden xl:block">
+                                  <p className="text-narrative text-muted-foreground leading-relaxed text-xs line-clamp-2">
+                                    {sessionData.current_scene_description ?? "Your infinite story unfolds across realms of endless possibility..."}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -557,6 +573,18 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => setIsRightCollapsed(v=>!v)} title="Toggle character panel">
                               {isRightCollapsed ? 'Show Character' : 'Hide Character'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const next = !showSceneBlurb;
+                                try { localStorage.setItem('ui:sceneBlurb', next ? '1' : '0'); } catch {}
+                                setShowSceneBlurb(next);
+                              }}
+                              title="Toggle scene blurb"
+                            >
+                              {showSceneBlurb ? 'Hide Blurb' : 'Show Blurb'}
                             </Button>
                           </div>
                           <Button
@@ -603,7 +631,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                     </div>
 
                     {/* Content Area - Chat is always visible; tracker lives in a sheet */}
-                    <div className="flex-1 flex flex-col overflow-hidden relative bg-card/50 transition-all duration-300">
+                    <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-card/50 transition-all duration-300">
                         {/* HUD Banner when combat is active/detected */}
                         {isCombatDetected && (
                           <div className="mx-3 mt-3 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
@@ -693,7 +721,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                               )}
 
                               {/* Input Area at bottom - sticky */}
-                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-[env(safe-area-inset-bottom)] sticky bottom-0 left-0 right-0 z-20">
+                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-[env(safe-area-inset-bottom)] sticky bottom-0 left-0 right-0 z-30 shrink-0">
                                 <ChatInput
                                   onSendMessage={handleSendMessage}
                                   isDisabled={isProcessing || hasPendingRolls}
@@ -708,7 +736,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
 
                 {/* Responsive Side Panel */}
                 {!isRightCollapsed && (
-                  <div className={`${isLeftCollapsed ? 'order-2' : 'order-3'} w-full md:w-auto transition-all duration-300`}>
+                  <div className={`${isLeftCollapsed ? 'order-2' : 'order-3'} w-full md:w-auto min-h-0 transition-all duration-300`}>
                     <GameSidePanel
                       sessionData={sessionData}
                       updateGameSessionState={updateGameSessionState}

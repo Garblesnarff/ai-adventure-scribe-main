@@ -40,6 +40,23 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   const { toast } = useToast();
   const { state: characterState } = useCharacter();
   const character = characterState.character;
+  const headerMode = String(((import.meta as any)?.env?.VITE_SCENE_SUMMARY_HEADER ?? 'short')).toLowerCase();
+
+  const toHeaderExcerpt = React.useCallback((raw: string, limit = 220) => {
+    if (!raw) return '';
+    let cleaned = raw
+      .replace(/^VISUAL\s+PROMPT:.*$/gim, '')
+      .replace(/^\s*[A-F]\.\s.*$/gim, '')
+      .replace(/\*\*|__|`/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const sentences = cleaned.split(/(?<=[.!?])\s+/);
+    let out = sentences.slice(0, 2).join(' ');
+    if (out.length > limit) {
+      out = out.slice(0, limit).replace(/[ ,;:]+\S*$/, '') + '…';
+    }
+    return out;
+  }, []);
   
   // Debug logging
   React.useEffect(() => {
@@ -286,9 +303,10 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         // when it detects the narrationSegments in the message
       }
       
-      // Update current_scene_description with AI response
+      // Update current_scene_description with short blurb (not full reply)
       if (sanitizedAiResponseMessage.text) {
-        await updateGameSessionState({ current_scene_description: sanitizedAiResponseMessage.text });
+        const blurb = headerMode === 'off' ? '' : toHeaderExcerpt(sanitizedAiResponseMessage.text);
+        await updateGameSessionState({ current_scene_description: blurb });
         logger.info('[Memory Flow] Extracting memories from AI response:', sanitizedAiResponseMessage.text);
         await extractMemories(sanitizedAiResponseMessage.text); // Non-critical path
       }
