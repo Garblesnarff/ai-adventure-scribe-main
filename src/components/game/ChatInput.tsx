@@ -96,40 +96,40 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
 
   return (
     <div className="px-4 pb-4">
-      <div className="chat-composer transition-all duration-200 focus-within:active-glow">
-  <div className="flex items-end gap-2">
-          {/* Quick action buttons */}
-          <div className="flex items-center gap-2 pb-1">
+      <div className="chat-composer transition-all duration-300 focus-within:ring-2 focus-within:ring-infinite-purple/30 focus-within:ring-offset-2 focus-within:ring-offset-background rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 hover:border-border hover:shadow-lg">
+        <div className="flex items-end gap-3 p-3">
+          {/* Enhanced Quick action buttons with better touch targets */}
+          <div className="flex items-center gap-1 pb-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="h-10 w-10 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation"
               disabled={isDisabled}
               aria-label="Attach file"
               title="Attach file"
             >
-              <Paperclip className="h-4 w-4" />
+              <Paperclip className="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="h-10 w-10 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation"
               disabled={isDisabled}
               aria-label="Insert emoji"
               title="Insert emoji"
             >
-              <Smile className="h-4 w-4" />
+              <Smile className="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleQuickDiceRoll}
-              className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+              className="h-10 w-10 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation"
               disabled={isDisabled}
               title="Quick dice roll (1d20)"
               aria-label="Quick dice roll (1d20)"
             >
-              <Dice6 className="h-4 w-4" />
+              <Dice6 className="h-5 w-5" />
             </Button>
           </div>
 
@@ -176,18 +176,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
             )}
           </div>
 
-          {/* Send button */}
+          {/* Enhanced Send button with better touch targets */}
           <Button
             onClick={handleSubmit}
             disabled={!canSend}
-            className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${
+            className={`h-12 w-12 p-0 rounded-xl transition-all duration-200 min-h-[48px] min-w-[48px] touch-manipulation ${
               canSend
-                ? 'bg-primary text-primary-foreground shadow-sm hover:shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
             aria-label="Send message"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-5 w-5" />
           </Button>
         </div>
 

@@ -507,21 +507,24 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                 )}
                 {/* Main Content Area - Optimized for Maximum Space */}
                 <div className={`flex-1 min-w-0 min-h-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}>
-                  <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden transition-all duration-300 hover:shadow-2xl hover-glow mobile-chat h-full">
-                    {/* Cinematic Header with Atmospheric Effects */}
-                    <div className="relative p-2 md:p-3 border-b border-white/10 bg-cosmic overflow-hidden transition-all duration-500">
-                      {/* Animated Background Particles */}
+                  <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/40 overflow-hidden transition-all duration-300 hover:shadow-3xl hover-glow mobile-chat h-full bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm">
+                    {/* Enhanced Cinematic Header with Improved Visual Hierarchy */}
+                    <div className="relative p-3 md:p-4 border-b border-white/10 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-md overflow-hidden transition-all duration-500">
+                      {/* Enhanced Animated Background Particles */}
                       <div className="absolute inset-0 overflow-hidden">
-                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-60" style={{animationDelay: '0s'}}></div>
-                        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-infinite-teal rounded-full animate-pulse opacity-40" style={{animationDelay: '1s'}}></div>
-                        <div className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-infinite-purple rounded-full animate-pulse opacity-50" style={{animationDelay: '2s'}}></div>
-                        <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-infinite-gold rounded-full animate-pulse opacity-30" style={{animationDelay: '0.5s'}}></div>
+                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-70" style={{animationDelay: '0s'}}></div>
+                        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-infinite-teal rounded-full animate-pulse opacity-50" style={{animationDelay: '1s'}}></div>
+                        <div className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-infinite-purple rounded-full animate-pulse opacity-60" style={{animationDelay: '2s'}}></div>
+                        <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-infinite-gold rounded-full animate-pulse opacity-40" style={{animationDelay: '0.5s'}}></div>
+                        <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-infinite-teal rounded-full animate-pulse opacity-30" style={{animationDelay: '1.5s'}}></div>
+                        <div className="absolute top-1/6 left-2/3 w-1 h-1 bg-infinite-purple rounded-full animate-pulse opacity-50" style={{animationDelay: '2.5s'}}></div>
                       </div>
 
-                      {/* Atmospheric Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-infinite-purple/5 to-transparent opacity-60"></div>
+                      {/* Enhanced Atmospheric Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-infinite-purple/8 to-transparent opacity-80"></div>
+                      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-slate-900/10"></div>
 
-                      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 gap-4">
+                      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 gap-4 md:gap-6">
                         <div className="flex-1">
                           <div className="mb-2">
                             <h1 className="text-xl md:text-2xl font-display mb-1 truncate">
@@ -630,8 +633,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                       </div>
                     </div>
 
-                    {/* Content Area - Chat is always visible; tracker lives in a sheet */}
-                    <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-card/50 transition-all duration-300">
+                    {/* Enhanced Content Area - Chat is always visible; tracker lives in a sheet */}
+                    <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-b from-card/60 via-card/40 to-card/60 transition-all duration-300">
                         {/* HUD Banner when combat is active/detected */}
                         {isCombatDetected && (
                           <div className="mx-3 mt-3 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
@@ -650,8 +653,10 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <>
-                              <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} containerRef={chatScrollRef} />
-                              <TimelineRail rootRef={chatScrollRef} />
+                              <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+                                <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} containerRef={chatScrollRef} />
+                                <TimelineRail rootRef={chatScrollRef} />
+                              </div>
 
                               {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
                               {isGeneratingGreeting && (
@@ -711,7 +716,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                                   <div className="flex items-center gap-2 text-orange-700">
                                     <Dice6 className="w-4 h-4" />
                                     <span className="text-sm font-medium">
-                                      {pendingRequests.length === 1 
+                                      {pendingRequests.length === 1
                                         ? `Please complete the ${pendingRequests[0].type} roll above`
                                         : `Please complete ${pendingRequests.length} pending rolls above`
                                       }
@@ -747,27 +752,27 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                   </div>
                 )}
 
-                {/* Floating Toggle Button when Collapsed */}
+                {/* Enhanced Floating Toggle Button when Collapsed */}
                 {isRightCollapsed && (
-                  <div className="fixed right-4 bottom-4 md:top-1/2 md:bottom-auto md:right-6 z-40 md:transform md:-translate-y-1/2 transition-all duration-300">
+                  <div className="fixed right-3 bottom-3 md:top-1/2 md:bottom-auto md:right-6 z-40 md:transform md:-translate-y-1/2 transition-all duration-300">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setIsRightCollapsed(false)}
-                      className={`rounded-full p-3 h-auto shadow-xl border-2 hover:scale-110 transition-all duration-300 hover-glow focus-glow ${
+                      className={`rounded-full p-4 h-auto shadow-2xl border-2 hover:scale-110 transition-all duration-300 hover-glow focus-glow touch-manipulation min-h-[48px] min-w-[48px] ${
                         combatMode
                           ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50 animate-pulse'
                           : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50'
                       }`}
                     >
-                      <Menu className="h-5 w-5 md:hidden" />
-                      <ChevronDown className="h-4 w-4 hidden md:block rotate-90" />
-                      {/* Context indicators */}
+                      <Menu className="h-6 w-6 md:hidden" />
+                      <ChevronDown className="h-5 w-5 hidden md:block rotate-90" />
+                      {/* Enhanced Context indicators */}
                       <div className="absolute -top-2 -right-2 flex flex-col gap-1">
                         {combatMode && (
-                          <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
+                          <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
                         )}
-                        <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse shadow-lg"></div>
+                        <div className="w-3 h-3 bg-infinite-gold rounded-full animate-pulse shadow-lg"></div>
                       </div>
                     </Button>
                   </div>

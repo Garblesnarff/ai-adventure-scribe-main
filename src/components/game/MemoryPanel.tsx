@@ -264,10 +264,10 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
         onMouseDown={startDrag}
       />
       
-      <Card className={`h-full glass-strong shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-2xl hover-glow ${
+      <Card className={`h-full glass-strong shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-3xl hover-glow bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm ${
         isInCombat
-          ? 'border-red-400/50 bg-gradient-to-b from-red-900/10 to-card/90'
-          : 'border-infinite-purple/30 bg-gradient-to-b from-infinite-purple/5 to-card/90'
+          ? 'border-red-400/60 bg-gradient-to-b from-red-900/15 to-card/95'
+          : 'border-infinite-purple/40 bg-gradient-to-b from-infinite-purple/8 to-card/95'
       }`}>
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
