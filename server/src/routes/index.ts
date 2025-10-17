@@ -1,4 +1,6 @@
 import { Express } from 'express';
+import { blogRouter } from './blog.js';
+import { seoRouter } from './seo.js';
 import authRouter from './v1/auth.js';
 import campaignRouter from './v1/campaigns.js';
 import characterRouter from './v1/characters.js';
@@ -11,6 +13,9 @@ import llmRouter from './v1/llm.js';
 import imagesRouter from './v1/images.js';
 
 export function registerRoutes(app: Express) {
+  app.use('/blog', blogRouter());
+  app.use('/', seoRouter());
+
   app.use('/v1/auth', authRouter());
   app.use('/v1/campaigns', campaignRouter());
   app.use('/v1/characters', characterRouter());
