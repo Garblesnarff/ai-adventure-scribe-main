@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogClose } from '@/components/ui/dialog';
+import { X } from 'lucide-react';
 
 type Props = {
   url: string;
@@ -28,11 +29,19 @@ export const ChatImage: React.FC<Props> = ({ url, alt = 'Scene image', className
         />
       </DialogTrigger>
       <DialogContent className="p-0 bg-transparent border-0 shadow-none w-[96vw] max-w-[96vw] max-h-[96vh]">
-        <img
-          src={url}
-          alt={alt}
-          className="mx-auto max-w-[95vw] max-h-[90vh] object-contain rounded-md"
-        />
+        {/* Centering wrapper to avoid layout shift when close button is present */}
+        <div className="relative mx-auto max-w-[95vw] max-h-[90vh]">
+          <img
+            src={url}
+            alt={alt}
+            className="mx-auto max-w-full max-h-[90vh] object-contain rounded-md"
+          />
+          {/* Prominent close button */}
+          <DialogClose className="absolute -top-3 -right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white shadow-lg hover:bg-black/80 focus:outline-none focus:ring-2 focus:ring-white/60">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+        </div>
       </DialogContent>
     </Dialog>
   );
