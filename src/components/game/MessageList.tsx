@@ -23,13 +23,15 @@ import { useParams } from 'react-router-dom';
 interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
   sessionId?: string;
+  /** Optional ref to the scroll container so parents can attach helpers (e.g., timeline rail) */
+  containerRef?: React.RefObject<HTMLDivElement>;
 }
 
 /**
  * MessageList Component
  * Displays a list of chat messages with styling based on sender type
  */
-export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, sessionId }) => {
+export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, sessionId, containerRef }) => {
   const { messages = [], sendMessage } = useMessageContext();
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const { state: combatState } = useCombat();
@@ -37,7 +39,9 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
   const { state: campaignState } = useCampaign();
   const { id: routeCampaignId } = useParams<{ id: string }>();
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
-  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const internalRef = useRef<HTMLDivElement | null>(null);
+  // Prefer external ref when provided; otherwise use internal
+  const messagesRef = (containerRef as React.RefObject<HTMLDivElement>) || internalRef;
   const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(null);
   const optionsTimerRef = useRef<number | null>(null);
   const [generatingFor, setGeneratingFor] = useState<Set<string>>(new Set());
@@ -606,7 +610,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                 };
 
                 return (
-                  <div key={messageId} className={`w-full ${isFirstInGroup ? '' : 'mt-1'}`}>
+                  <div
+                    key={messageId}
+                    id={`m-${messageId}`}
+                    data-anchor={isDM ? 'true' : 'false'}
+                    className={`w-full ${isFirstInGroup ? '' : 'mt-1'}`}
+                  >
                     {/* Special message types */}
                     {message.context?.diceRoll ? (
                       <div className="w-full">

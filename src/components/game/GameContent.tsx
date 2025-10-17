@@ -33,6 +33,8 @@ import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
 import logger from '@/lib/logger';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
+import { CampaignSidePanel } from './CampaignSidePanel';
+import { TimelineRail } from './TimelineRail';
 
 /**
  * GameContent Component
@@ -299,10 +301,23 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   isDM,
 }) => {
   // UI state management
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
   const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
   const [isCombatDetected, setIsCombatDetected] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
+  const chatScrollRef = React.useRef<HTMLDivElement>(null);
+  const { state: campaignState } = useCampaign();
+
+  // Persist collapsed states
+  React.useEffect(() => {
+    const left = localStorage.getItem('ui:leftPanelCollapsed');
+    const right = localStorage.getItem('ui:rightPanelCollapsed');
+    if (left) setIsLeftCollapsed(left === '1');
+    if (right) setIsRightCollapsed(right === '1');
+  }, []);
+  React.useEffect(() => { localStorage.setItem('ui:leftPanelCollapsed', isLeftCollapsed ? '1' : '0'); }, [isLeftCollapsed]);
+  React.useEffect(() => { localStorage.setItem('ui:rightPanelCollapsed', isRightCollapsed ? '1' : '0'); }, [isRightCollapsed]);
   
   // Safety state management
   const [lastSafetyCommand, setLastSafetyCommand] = useState<{
@@ -436,13 +451,25 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   return (
           <div className="min-h-screen bg-background">
             <div className="w-full min-h-screen mobile-bottom-safe">
-              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out min-h-screen gap-2 md:gap-4 items-stretch w-full ${
-                isPanelCollapsed
-                  ? 'grid-cols-1'
-                  : 'grid-cols-1 md:grid-cols-[1fr_minmax(250px,350px)] lg:grid-cols-[1fr_minmax(260px,360px)] xl:grid-cols-[1fr_minmax(280px,380px)]'
-              }`}>
+              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out min-h-screen gap-2 md:gap-4 items-stretch w-full ` +
+                (
+                  isLeftCollapsed && isRightCollapsed
+                    ? 'grid-cols-1'
+                    : isLeftCollapsed
+                      ? 'grid-cols-1 md:grid-cols-[1fr_minmax(260px,360px)]'
+                      : isRightCollapsed
+                        ? 'grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]'
+                        : 'grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr_minmax(260px,360px)]'
+                )
+              }>
+                {/* Left Campaign Panel */}
+                {!isLeftCollapsed && (
+                  <div className="order-1 md:order-1 w-full md:w-auto">
+                    <CampaignSidePanel isCollapsed={false} onToggle={() => setIsLeftCollapsed(true)} />
+                  </div>
+                )}
                 {/* Main Content Area - Optimized for Maximum Space */}
-                <div className="flex-1 min-w-0 order-1 layout-main flex flex-col h-full">
+                <div className={`flex-1 min-w-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}>
                   <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden transition-all duration-300 hover:shadow-2xl hover-glow mobile-chat h-full">
                     {/* Cinematic Header with Atmospheric Effects */}
                     <div className="relative p-2 md:p-3 border-b border-white/10 bg-cosmic overflow-hidden transition-all duration-500">
@@ -461,7 +488,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         <div className="flex-1">
                           <div className="mb-2">
                             <h1 className="text-xl md:text-2xl font-display mb-1 truncate">
-                              {sessionData.campaign_id ? `Realm of ${sessionData.campaign_id}` : "InfiniteRealms Adventure"}
+                              {campaignState?.campaign?.name || 'InfiniteRealms Adventure'}
                             </h1>
                             <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 text-sm">
                               <div className="flex items-center gap-3 bg-infinite-gold/20 px-4 py-2 rounded-full border border-infinite-gold/30 w-fit">
@@ -499,8 +526,16 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                           showSafetyInfo={showSafetyInfo}
                         />
 
-                        {/* Tracker Toggle & Status */}
+                        {/* Sidebar Toggles + Tracker */}
                         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 md:ml-8 w-full md:w-auto">
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setIsLeftCollapsed(v=>!v)} title="Toggle campaign panel">
+                              {isLeftCollapsed ? 'Show Campaign' : 'Hide Campaign'}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsRightCollapsed(v=>!v)} title="Toggle character panel">
+                              {isRightCollapsed ? 'Show Character' : 'Hide Character'}
+                            </Button>
+                          </div>
                           <Button
                             variant={showTracker ? "destructive" : "outline"}
                             size="lg"
@@ -564,7 +599,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         >
                           {({ handleSendMessage, isProcessing }) => (
                             <>
-                              <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} />
+                              <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} containerRef={chatScrollRef} />
+                              <TimelineRail rootRef={chatScrollRef} />
 
                               {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
                               {isGeneratingGreeting && (
@@ -633,8 +669,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                                 </div>
                               )}
 
-                              {/* Input Area at bottom - mobile safe */}
-                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-0">
+                              {/* Input Area at bottom - sticky */}
+                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-0 sticky bottom-0 left-0 right-0 z-20">
                                 <ChatInput
                                   onSendMessage={handleSendMessage}
                                   isDisabled={isProcessing || hasPendingRolls}
@@ -648,25 +684,25 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                 </div>
 
                 {/* Responsive Side Panel */}
-                {!isPanelCollapsed && (
-                  <div className="order-2 md:order-2 w-full md:w-auto transition-all duration-300">
+                {!isRightCollapsed && (
+                  <div className={`${isLeftCollapsed ? 'order-2' : 'order-3'} w-full md:w-auto transition-all duration-300`}>
                     <GameSidePanel
                       sessionData={sessionData}
                       updateGameSessionState={updateGameSessionState}
                       combatMode={combatMode}
-                      isCollapsed={isPanelCollapsed}
-                      onToggle={() => setIsPanelCollapsed(!isPanelCollapsed)}
+                      isCollapsed={isRightCollapsed}
+                      onToggle={() => setIsRightCollapsed(!isRightCollapsed)}
                     />
                   </div>
                 )}
 
                 {/* Floating Toggle Button when Collapsed */}
-                {isPanelCollapsed && (
+                {isRightCollapsed && (
                   <div className="fixed right-4 bottom-4 md:top-1/2 md:bottom-auto md:right-6 z-40 md:transform md:-translate-y-1/2 transition-all duration-300">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsPanelCollapsed(false)}
+                      onClick={() => setIsRightCollapsed(false)}
                       className={`rounded-full p-3 h-auto shadow-xl border-2 hover:scale-110 transition-all duration-300 hover-glow focus-glow ${
                         combatMode
                           ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50 animate-pulse'
