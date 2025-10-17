@@ -1154,10 +1154,20 @@
     border-left: 3px solid rgba(124, 58, 237, 0.2);
     border-radius: 2px;
     background: linear-gradient(180deg,
-      rgba(124, 58, 237, 0.1) 0%,
+      rgba(124, 58, 237, 0.10) 0%,
       rgba(124, 58, 237, 0.05) 50%,
-      rgba(124, 58, 237, 0.1) 100%);
+      rgba(124, 58, 237, 0.10) 100%);
+    background-size: 100% 200%;
     transition: all 0.3s ease;
+  }
+  /* Animate rail while actively scrolling */
+  .timeline-rail[data-scrolling="true"] .timeline-track {
+    border-left-color: rgba(245, 158, 11, 0.4);
+    animation: railShimmer 0.9s linear infinite;
+  }
+  @keyframes railShimmer {
+    0% { background-position-y: 0%; }
+    100% { background-position-y: 100%; }
   }
   .timeline-rail .timeline-dot {
     position: absolute;
@@ -1200,6 +1210,55 @@
   /* Scroll position indicator for timeline rail */
   .scroll-position-indicator {
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  }
+  /* Pulse the indicator while scrolling */
+  .timeline-rail .scroll-position-indicator { position: relative; }
+  .timeline-rail .scroll-position-indicator::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 9999px;
+    border: 2px solid rgba(245, 158, 11, 0.6);
+    opacity: 0;
+  }
+  .timeline-rail[data-scrolling="true"] .scroll-position-indicator {
+    filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.55));
+  }
+  .timeline-rail[data-scrolling="true"] .scroll-position-indicator::after {
+    animation: indicatorPulse 0.6s ease-out infinite;
+  }
+  @keyframes indicatorPulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  /* Slightly emphasize beads while scrolling */
+  .timeline-rail[data-scrolling="true"] .timeline-dot {
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.35);
+  }
+
+  /* Bead absorb animation when indicator overlaps */
+  .timeline-rail .timeline-dot.absorbing {
+    animation: beadAbsorb 0.45s ease-out;
+  }
+  @keyframes beadAbsorb {
+    0% { transform: scale(1); opacity: 1; }
+    35% { transform: scale(0.8); opacity: 0.85; }
+    70% { transform: scale(0.7); opacity: 0.65; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Indicator ripple when absorbing a bead */
+  .timeline-rail .scroll-position-indicator.absorbing::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 9999px;
+    border: 3px solid rgba(245, 158, 11, 0.65);
+    animation: indicatorRipple 0.45s ease-out;
+  }
+  @keyframes indicatorRipple {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.5); opacity: 0; }
   }
 
   /* DM choice buttons */
