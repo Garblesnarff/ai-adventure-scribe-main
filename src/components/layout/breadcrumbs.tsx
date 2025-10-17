@@ -88,7 +88,7 @@ const Breadcrumbs: React.FC = () => {
   ) return null;
 
   return (
-    <div className="container mx-auto px-4 py-2">
+    <div id="app-breadcrumbs" className="container mx-auto px-4 py-2">
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
         <Link
           to="/app"
