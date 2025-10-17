@@ -9,6 +9,7 @@ import spellRouter from './v1/spells.js';
 import personalityRouter from './v1/personality.js';
 import llmRouter from './v1/llm.js';
 import imagesRouter from './v1/images.js';
+import blogRouter from './v1/blog.js';
 
 export function registerRoutes(app: Express) {
   app.use('/v1/auth', authRouter());
@@ -22,5 +23,6 @@ export function registerRoutes(app: Express) {
   app.use('/v1/billing', billingWebhookRouter());
   app.use('/v1/spells', spellRouter());
   app.use('/v1/personality', personalityRouter);
+  app.use('/v1/blog', blogRouter());
 }
 
