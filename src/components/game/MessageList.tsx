@@ -78,6 +78,8 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
 
   // Auto-scroll behavior: scroll to bottom when new messages arrive unless user scrolled up
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
   useEffect(() => {
     const el = messagesRef.current;
     if (!el) {
@@ -86,8 +88,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
     const onScroll = () => {
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
       setIsUserScrolledUp(!atBottom);
+
+      // Calculate scroll progress for timeline indicator
+      const progress = el.scrollTop / (el.scrollHeight - el.clientHeight);
+      setScrollProgress(Math.max(0, Math.min(1, progress)));
     };
-    el.addEventListener('scroll', onScroll);
+    el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -536,12 +542,20 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
   }, [sendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]);
 
   return (
-    <div
-      className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-4 chat-scroll parchment-panel"
-      role="log"
-      aria-live="polite"
-      ref={messagesRef}
-    >
+    <div className="flex-1 min-h-0">
+      {/* Main Chat Container */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-6 chat-scroll parchment-panel bg-gradient-to-b from-background/50 to-background/30"
+        role="log"
+        aria-live="polite"
+        ref={messagesRef}
+        style={{
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
+          height: '100%',
+          minHeight: '400px',
+        }}
+      >
       {groupedMessages.map((group, groupIndex) => (
         <div key={`group-${groupIndex}`} className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}>
           <div className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>
@@ -654,16 +668,16 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                       /* Regular message bubble - only first/last have full styling */
                       <div
                         className={
-                          `relative px-3 py-2 rounded-xl transition-all duration-200 message-bubble ` +
+                          `relative px-4 py-3 rounded-2xl transition-all duration-300 message-bubble backdrop-blur-sm ` +
                           (isDM
-                            ? 'dm-bubble border-l-4 border-l-primary/20 bg-gradient-to-r from-infinite-purple/80 to-infinite-teal/60 text-white shadow-md '
+                            ? 'dm-bubble border border-infinite-purple/30 bg-gradient-to-br from-slate-800/90 via-purple-900/85 to-slate-800/90 text-white shadow-lg hover:shadow-xl hover:shadow-purple-500/20 '
                             : group.isPlayer
-                              ? 'player-bubble ml-auto bg-card text-card-foreground shadow-sm '
-                              : 'system-bubble bg-muted/20 '
+                              ? 'player-bubble ml-auto bg-gradient-to-br from-card/90 to-card/95 text-card-foreground shadow-md border border-border/50 hover:shadow-lg '
+                              : 'system-bubble bg-gradient-to-br from-muted/30 to-muted/50 border border-border/30 '
                           ) +
-                          (isFirstInGroup ? 'rounded-t-xl pt-3 ' : '') +
-                          (isLastInGroup ? 'rounded-b-xl pb-3 ' : 'border-b border-border/20 ') +
-                          'animate-in fade-in'
+                          (isFirstInGroup ? 'rounded-t-2xl pt-4 ' : '') +
+                          (isLastInGroup ? 'rounded-b-2xl pb-4 ' : 'border-b border-border/20 ') +
+                          'animate-in fade-in slide-in-from-bottom-2 hover:scale-[1.02] group-hover:shadow-lg'
                         }
                       >
                         {/* Message content */}
@@ -839,6 +853,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -24,6 +24,47 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
       .map((x) => `m-${x.id}`);
   }, [messages]);
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[TimelineRail] Messages:', messages.length);
+    console.log('[TimelineRail] Anchors:', anchors);
+    console.log('[TimelineRail] Root ref:', rootRef.current);
+
+    // Check if elements exist
+    if (rootRef.current) {
+      anchors.forEach(anchor => {
+        const element = rootRef.current!.querySelector(`#${CSS.escape(anchor)}`);
+        console.log(`[TimelineRail] Element ${anchor}:`, element);
+      });
+    }
+  }, [messages, anchors, rootRef]);
+
+  // Track scroll position for the indicator
+  React.useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const handleScroll = () => {
+      const scrollTop = root.scrollTop;
+      const scrollHeight = root.scrollHeight - root.clientHeight;
+      const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+
+      // Update the indicator position
+      const indicator = root.parentElement?.querySelector('.scroll-position-indicator') as HTMLElement;
+      if (indicator) {
+        const railHeight = root.clientHeight - 32; // Account for padding
+        const indicatorPosition = Math.max(0, Math.min(railHeight, scrollPercentage * railHeight));
+        indicator.style.transform = `translateY(${indicatorPosition}px)`;
+      }
+    };
+
+    root.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial position
+    handleScroll();
+
+    return () => root.removeEventListener('scroll', handleScroll);
+  }, [rootRef]);
+
   // Observe which DM message is most visible
   React.useEffect(() => {
     const root = rootRef.current;
@@ -53,7 +94,15 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
     if (!root) return;
     const el = root.querySelector(`#${CSS.escape(id)}`) as HTMLElement | null;
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Calculate the element's position relative to the scroll container
+    const elementTop = el.offsetTop - root.offsetTop;
+    const middlePosition = elementTop - (root.clientHeight / 2) + (el.clientHeight / 2);
+
+    root.scrollTo({
+      top: middlePosition,
+      behavior: 'smooth'
+    });
   };
 
   if (anchors.length === 0) return null;
@@ -61,6 +110,16 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
   return (
     <div className="timeline-rail" aria-label="DM message timeline">
       <div className="timeline-track">
+        {/* Scroll Position Indicator */}
+        <div
+          className="scroll-position-indicator absolute left-[-8px] w-[18px] h-[18px] bg-gradient-to-br from-infinite-gold to-infinite-gold-dark border-2 border-white shadow-lg rounded-full transition-all duration-100 ease-out z-20 pointer-events-none"
+          style={{
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)',
+            top: '0px',
+            transform: 'translateY(0px)'
+          }}
+        />
+
         {anchors.map((id, i) => (
           <button
             key={id}

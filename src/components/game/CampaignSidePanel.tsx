@@ -20,12 +20,15 @@ export const CampaignSidePanel: React.FC<CampaignSidePanelProps> = ({ isCollapse
 
   return (
     <div className="hidden md:block h-full">
-      <Card className="h-full glass-strong shadow-2xl border-2 border-infinite-purple/30 overflow-hidden">
-        <div className="p-4 border-b border-border/60 flex items-center justify-between">
-          <h3 className="font-display font-semibold truncate">Campaign</h3>
+      <Card className="h-full glass-strong shadow-2xl border-2 border-infinite-purple/40 overflow-hidden bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm transition-all duration-300 hover:shadow-3xl">
+        <div className="p-4 border-b border-border/60 flex items-center justify-between bg-gradient-to-r from-infinite-purple/10 to-transparent">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
+            <h3 className="font-display font-semibold truncate text-infinite-purple">Campaign</h3>
+          </div>
           <button
             onClick={onToggle}
-            className="text-sm opacity-70 hover:opacity-100"
+            className="text-sm opacity-70 hover:opacity-100 hover:bg-infinite-purple/20 px-2 py-1 rounded-md transition-all duration-200"
             aria-label="Collapse campaign panel"
           >
             Hide
