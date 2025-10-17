@@ -15,6 +15,13 @@ interface TimelineRailProps {
 export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
   const { messages = [] } = useMessageContext();
   const [currentId, setCurrentId] = React.useState<string | null>(null);
+  const railRef = React.useRef<HTMLDivElement>(null);
+  const lastTopRef = React.useRef(0);
+  const rafRef = React.useRef<number | null>(null);
+  const stopTimerRef = React.useRef<number | null>(null);
+  const beadCooldownRef = React.useRef<Set<string>>(new Set());
+  const beadTimersRef = React.useRef<Map<string, number>>(new Map());
+  const indicatorTimerRef = React.useRef<number | null>(null);
 
   // Build anchors from DM messages (assistant)
   const anchors = React.useMemo(() => {
@@ -39,30 +46,84 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
     }
   }, [messages, anchors, rootRef]);
 
-  // Track scroll position for the indicator
+  // Track scroll for indicator + apply transient scrolling state
   React.useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
-    const handleScroll = () => {
-      const scrollTop = root.scrollTop;
-      const scrollHeight = root.scrollHeight - root.clientHeight;
-      const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+    const setScrolling = (scrolling: boolean, direction?: 'up' | 'down') => {
+      const rail = railRef.current;
+      if (!rail) return;
+      if (scrolling) rail.setAttribute('data-scrolling', 'true');
+      else rail.removeAttribute('data-scrolling');
+      if (direction) rail.setAttribute('data-direction', direction);
+    };
 
-      // Update the indicator position
-      const indicator = root.parentElement?.querySelector('.scroll-position-indicator') as HTMLElement;
-      if (indicator) {
-        const railHeight = root.clientHeight - 32; // Account for padding
-        const indicatorPosition = Math.max(0, Math.min(railHeight, scrollPercentage * railHeight));
-        indicator.style.transform = `translateY(${indicatorPosition}px)`;
-      }
+    const handleScroll = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const scrollTop = root.scrollTop;
+        const scrollHeight = root.scrollHeight - root.clientHeight;
+        const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+
+        const indicator = railRef.current?.querySelector('.scroll-position-indicator') as HTMLElement | null;
+        if (indicator) {
+          const railHeight = root.clientHeight - 32;
+          const indicatorPosition = Math.max(0, Math.min(railHeight, scrollPercentage * railHeight));
+          indicator.style.transform = `translateY(${indicatorPosition}px)`;
+
+          // Absorb effect: detect overlap between indicator and beads
+          const dots = Array.from(railRef.current?.querySelectorAll<HTMLButtonElement>('.timeline-dot') || []);
+          const indicatorCenter = indicatorPosition + 9; // indicator height ~18px
+          const threshold = 10; // px threshold for overlap detection
+
+          for (const dot of dots) {
+            const beadId = dot.getAttribute('data-anchor-id') || '';
+            if (!beadId) continue;
+            if (beadCooldownRef.current.has(beadId)) continue;
+
+            const beadCenter = dot.offsetTop + 7; // dot height ~14px
+            if (Math.abs(indicatorCenter - beadCenter) <= threshold) {
+              // Mark cooldown to avoid rapid retriggers
+              beadCooldownRef.current.add(beadId);
+              window.setTimeout(() => beadCooldownRef.current.delete(beadId), 800);
+
+              // Trigger bead absorb animation
+              dot.classList.add('absorbing');
+              const prevTimer = beadTimersRef.current.get(beadId);
+              if (prevTimer) window.clearTimeout(prevTimer);
+              const timer = window.setTimeout(() => {
+                dot.classList.remove('absorbing');
+                beadTimersRef.current.delete(beadId);
+              }, 450);
+              beadTimersRef.current.set(beadId, timer);
+
+              // Trigger indicator ripple animation
+              indicator.classList.add('absorbing');
+              if (indicatorTimerRef.current) window.clearTimeout(indicatorTimerRef.current);
+              indicatorTimerRef.current = window.setTimeout(() => {
+                indicator.classList.remove('absorbing');
+              }, 450);
+            }
+          }
+        }
+
+        const dir: 'up' | 'down' = scrollTop > lastTopRef.current ? 'down' : 'up';
+        lastTopRef.current = scrollTop;
+        setScrolling(true, dir);
+        if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
+        stopTimerRef.current = window.setTimeout(() => setScrolling(false), 180);
+      });
     };
 
     root.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial position
     handleScroll();
 
-    return () => root.removeEventListener('scroll', handleScroll);
+    return () => {
+      root.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
+    };
   }, [rootRef]);
 
   // Observe which DM message is most visible
@@ -108,7 +169,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
   if (anchors.length === 0) return null;
 
   return (
-    <div className="timeline-rail" aria-label="DM message timeline">
+    <div ref={railRef} className="timeline-rail" aria-label="DM message timeline">
       <div className="timeline-track">
         {/* Scroll Position Indicator */}
         <div
@@ -127,6 +188,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
             title={`Jump to DM message ${i + 1}`}
             aria-label={`Jump to DM message ${i + 1}`}
             onClick={() => scrollTo(id)}
+            data-anchor-id={id}
             style={{ top: `${(i + 1) / (anchors.length + 1) * 100}%` }}
           />
         ))}
