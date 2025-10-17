@@ -18,6 +18,7 @@ import { useCampaign } from '@/contexts/CampaignContext';
 import { generateSceneImage } from '@/services/scene-image-generator';
 import { llmApiClient } from '@/services/llm-api-client';
 import { Image as ImageIcon, RefreshCw, Loader2 } from 'lucide-react';
+import ChatImage from '@/components/game/ChatImage';
 import { useParams } from 'react-router-dom';
 
 interface MessageListProps {
@@ -536,7 +537,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
 
   return (
     <div
-      className="flex-1 overflow-y-auto px-6 py-6 space-y-4 chat-scroll parchment-panel"
+      className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-4 chat-scroll parchment-panel"
       role="log"
       aria-live="polite"
       ref={messagesRef}
@@ -609,12 +610,18 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                   });
                 };
 
+                // image presence (persisted or ephemeral) for DM messages
+                const hasMessageImages = isDM && Array.isArray((message as any).images) && (message as any).images.length > 0;
+                const firstMessageImgUrl = hasMessageImages ? (message as any).images[0]?.url : undefined;
+                const ephemeralImgUrl = isDM && !hasMessageImages ? imageByMessage[messageId]?.url : undefined;
+                const hasAnyImage = Boolean(firstMessageImgUrl || ephemeralImgUrl);
+
                 return (
                   <div
                     key={messageId}
                     id={`m-${messageId}`}
                     data-anchor={isDM ? 'true' : 'false'}
-                    className={`w-full ${isFirstInGroup ? '' : 'mt-1'}`}
+                    className={`w-full ${isFirstInGroup ? '' : 'mt-1'} ${isDM && hasAnyImage ? 'relative mb-48 md:mb-60' : ''}`}
                   >
                     {/* Special message types */}
                     {message.context?.diceRoll ? (
@@ -673,20 +680,10 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                         </div>
 
                         {/* Scene images (persisted first, then ephemeral) */}
-                        {isDM && (Array.isArray((message as any).images) && (message as any).images.length > 0) && (
-                          <div className="mt-2 space-y-2">
-                            {((message as any).images as any[]).map((img, idx) => (
-                              <img key={`${messageId}-img-${idx}`} src={img.url} alt="Scene" className="rounded-md shadow-md max-h-[300px] md:max-h-[360px] w-full object-cover border border-white/20" />
-                            ))}
-                          </div>
-                        )}
-                        {isDM && !((message as any).images && (message as any).images.length > 0) && imageByMessage[messageId]?.url && (
-                          <div className="mt-2">
-                            <img
-                              src={imageByMessage[messageId].url}
-                              alt="Scene"
-                              className="rounded-md shadow-md max-h-[300px] md:max-h-[360px] w-full object-cover border border-white/20"
-                            />
+                        {/* Inline (mobile) thumbnail only */}
+                        {isDM && hasAnyImage && (
+                          <div className="mt-2 md:hidden flex justify-center">
+                            <ChatImage url={firstMessageImgUrl || ephemeralImgUrl!} alt="Scene" />
                           </div>
                         )}
 
@@ -712,6 +709,17 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                             {genErrorByMessage[messageId] && (
                               <span className="text-xs text-red-300">{genErrorByMessage[messageId]}</span>
                             )}
+                          </div>
+                        )}
+
+                        {/* Floating thumbnail overlay (desktop/tablet) */}
+                        {isDM && hasAnyImage && (
+                          <div className="absolute hidden md:block bottom-0 left-[75%] -translate-x-1/2 translate-y-20 z-20 pointer-events-auto">
+                            <ChatImage
+                              url={firstMessageImgUrl || ephemeralImgUrl!}
+                              alt="Scene"
+                              className="w-[220px] max-w-[260px] rounded-xl shadow-2xl ring-1 ring-black/10"
+                            />
                           </div>
                         )}
 
