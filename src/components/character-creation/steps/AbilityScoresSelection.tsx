@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { AbilityScores } from '@/types/character';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { generateAbilityScores } from '@/utils/diceRolls';
+import { generateAbilityScores, generateAbilityScoresDetailed, rerollSingleScoreDetailed, type Roll4d6Result, type AbilityScoreRollResult } from '@/utils/diceRolls';
 import { calculateModifier } from '@/utils/abilityScoreUtils';
 import {
   calculateRacialBonuses,
@@ -27,6 +27,7 @@ const AbilityScoresSelection: React.FC = () => {
   const { toast } = useToast();
   const [method, setMethod] = React.useState<'pointBuy' | 'standardArray' | 'roll'>('pointBuy');
   const [rollHistory, setRollHistory] = React.useState<number[][]>([]);
+  const [currentRollDetails, setCurrentRollDetails] = React.useState<AbilityScoreRollResult | null>(null);
   
   // Initialize remaining points from context or default value
   const [remainingPoints, setRemainingPoints] = React.useState(() => {
@@ -107,10 +108,10 @@ const AbilityScoresSelection: React.FC = () => {
   };
 
   /**
-   * Handles rolling new ability scores
+   * Handles rolling new ability scores with detailed results
    */
   const handleRollScores = () => {
-    const rolledScores = generateAbilityScores();
+    const rollResult = generateAbilityScoresDetailed();
     const newScores: AbilityScores = {
       strength: { score: 8, modifier: -1, savingThrow: false },
       dexterity: { score: 8, modifier: -1, savingThrow: false },
@@ -123,13 +124,14 @@ const AbilityScoresSelection: React.FC = () => {
 
     abilities.forEach((ability, index) => {
       newScores[ability] = {
-        score: rolledScores[index],
-        modifier: calculateModifier(rolledScores[index]),
+        score: rollResult.scores[index],
+        modifier: calculateModifier(rollResult.scores[index]),
         savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
       };
     });
 
-    setRollHistory(prev => [...prev, rolledScores]);
+    setRollHistory(prev => [...prev, rollResult.scores]);
+    setCurrentRollDetails(rollResult);
 
     dispatch({
       type: 'UPDATE_CHARACTER',
@@ -139,6 +141,53 @@ const AbilityScoresSelection: React.FC = () => {
     toast({
       title: "Ability Scores Rolled!",
       description: "New scores have been generated using 4d6 drop lowest.",
+    });
+  };
+
+  /**
+   * Handles rerolling a single ability score
+   */
+  const handleRerollSingleScore = (abilityIndex: number) => {
+    if (!currentRollDetails) return;
+
+    const currentScores = abilities.map(ability => state.character?.abilityScores?.[ability]?.score || 8);
+    const updatedResult = rerollSingleScoreDetailed(currentScores, currentRollDetails.details, abilityIndex);
+
+    const newScores: AbilityScores = {
+      strength: { score: 8, modifier: -1, savingThrow: false },
+      dexterity: { score: 8, modifier: -1, savingThrow: false },
+      constitution: { score: 8, modifier: -1, savingThrow: false },
+      intelligence: { score: 8, modifier: -1, savingThrow: false },
+      wisdom: { score: 8, modifier: -1, savingThrow: false },
+      charisma: { score: 8, modifier: -1, savingThrow: false },
+      ...state.character?.abilityScores,
+    };
+
+    abilities.forEach((ability, index) => {
+      newScores[ability] = {
+        score: updatedResult.scores[index],
+        modifier: calculateModifier(updatedResult.scores[index]),
+        savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false
+      };
+    });
+
+    setCurrentRollDetails(updatedResult);
+
+    // Update roll history with the new scores
+    const newHistory = [...rollHistory];
+    if (newHistory.length > 0) {
+      newHistory[newHistory.length - 1] = updatedResult.scores;
+      setRollHistory(newHistory);
+    }
+
+    dispatch({
+      type: 'UPDATE_CHARACTER',
+      payload: { abilityScores: newScores }
+    });
+
+    toast({
+      title: "Score Rerolled!",
+      description: `${abilities[abilityIndex]} has been rerolled.`,
     });
   };
 
@@ -347,6 +396,56 @@ const AbilityScoresSelection: React.FC = () => {
                 Reset
               </Button>
             </div>
+
+            {/* Enhanced Roll Details Display */}
+            {currentRollDetails && (
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">Current Roll Details:</p>
+                  <Badge variant="outline" className="text-xs">
+                    {currentRollDetails.timestamp.toLocaleTimeString()}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+                  {abilities.map((ability, index) => {
+                    const detail = currentRollDetails.details[index];
+                    return (
+                      <div key={ability} className="text-xs p-2 bg-muted/50 rounded border">
+                        <div className="font-medium capitalize mb-1">{ability}</div>
+                        <div className="flex items-center gap-1 mb-1">
+                          <span className="text-muted-foreground">Rolls:</span>
+                          <div className="flex gap-0.5">
+                            {detail.rolls.map((roll, i) => (
+                              <Badge
+                                key={i}
+                                variant={roll === detail.dropped ? "destructive" : "secondary"}
+                                className="text-xs px-1 py-0 min-w-[1.5rem] h-5"
+                              >
+                                {roll}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Total:</span>
+                          <Badge variant="outline">{detail.total}</Badge>
+                        </div>
+                        <Button
+                          onClick={() => handleRerollSingleScore(index)}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full mt-1 h-6 text-xs"
+                        >
+                          Reroll
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {rollHistory.length > 0 && (
               <div className="mt-3 pt-3 border-t">
                 <p className="text-sm font-medium mb-2">Recent Rolls:</p>
