@@ -314,8 +314,18 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   React.useEffect(() => {
     const left = localStorage.getItem('ui:leftPanelCollapsed');
     const right = localStorage.getItem('ui:rightPanelCollapsed');
-    if (left) setIsLeftCollapsed(left === '1');
-    if (right) setIsRightCollapsed(right === '1');
+    if (left !== null) {
+      setIsLeftCollapsed(left === '1');
+    } else {
+      // Default collapse left on narrow screens
+      setIsLeftCollapsed(window.innerWidth < 1200);
+    }
+    if (right !== null) {
+      setIsRightCollapsed(right === '1');
+    } else {
+      // Default collapse right on medium screens
+      setIsRightCollapsed(window.innerWidth < 1440);
+    }
   }, []);
   React.useEffect(() => { localStorage.setItem('ui:leftPanelCollapsed', isLeftCollapsed ? '1' : '0'); }, [isLeftCollapsed]);
   React.useEffect(() => { localStorage.setItem('ui:rightPanelCollapsed', isRightCollapsed ? '1' : '0'); }, [isRightCollapsed]);
@@ -464,15 +474,15 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   return (
           <div className="bg-background" style={{ ['--top-offset' as any]: `${topOffset}px` }}>
             <div className="w-full h-[calc(100dvh-var(--top-offset,0px))] mobile-bottom-safe overflow-hidden">
-              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out h-full gap-2 md:gap-4 items-stretch w-full ` +
+              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out h-full gap-2 md:gap-3 items-stretch w-full ` +
                 (
                   isLeftCollapsed && isRightCollapsed
                     ? 'grid-cols-1'
                     : isLeftCollapsed
-                      ? 'grid-cols-1 md:grid-cols-[1fr_minmax(260px,360px)]'
+                      ? 'grid-cols-1 md:grid-cols-[1fr_minmax(280px,320px)]'
                       : isRightCollapsed
-                        ? 'grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]'
-                        : 'grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr_minmax(260px,360px)]'
+                        ? 'grid-cols-1 md:grid-cols-[minmax(200px,240px)_1fr]'
+                        : 'grid-cols-1 md:grid-cols-[minmax(200px,240px)_1fr_minmax(280px,320px)]'
                 )
               }>
                 {/* Left Campaign Panel */}
@@ -503,14 +513,14 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                             <h1 className="text-xl md:text-2xl font-display mb-1 truncate">
                               {campaignState?.campaign?.name || 'InfiniteRealms Adventure'}
                             </h1>
-                            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 text-sm">
+                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-sm">
                               <div className="flex items-center gap-3 bg-infinite-gold/20 px-4 py-2 rounded-full border border-infinite-gold/30 w-fit">
                                 <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
                                 <span className="font-display text-infinite-gold font-medium text-responsive-sm">Chapter {sessionData.turn_count ?? 0}</span>
                               </div>
                               <div className="hidden md:block h-4 w-px bg-white/20"></div>
-                              <div className="flex-1">
-                                <p className="text-narrative text-muted-foreground leading-relaxed text-responsive-sm">
+                              <div className="flex-1 hidden xl:block">
+                                <p className="text-narrative text-muted-foreground leading-relaxed text-xs">
                                   {sessionData.current_scene_description ?? "Your infinite story unfolds across realms of endless possibility..."}
                                 </p>
                               </div>

@@ -676,7 +676,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                         {isDM && (Array.isArray((message as any).images) && (message as any).images.length > 0) && (
                           <div className="mt-2 space-y-2">
                             {((message as any).images as any[]).map((img, idx) => (
-                              <img key={`${messageId}-img-${idx}`} src={img.url} alt="Scene" className="rounded-md shadow-md max-h-[420px] w-full object-cover border border-white/20" />
+                              <img key={`${messageId}-img-${idx}`} src={img.url} alt="Scene" className="rounded-md shadow-md max-h-[300px] md:max-h-[360px] w-full object-cover border border-white/20" />
                             ))}
                           </div>
                         )}
@@ -685,7 +685,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
                             <img
                               src={imageByMessage[messageId].url}
                               alt="Scene"
-                              className="rounded-md shadow-md max-h-[420px] w-full object-cover border border-white/20"
+                              className="rounded-md shadow-md max-h-[300px] md:max-h-[360px] w-full object-cover border border-white/20"
                             />
                           </div>
                         )}
