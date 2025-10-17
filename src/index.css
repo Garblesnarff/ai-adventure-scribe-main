@@ -1106,6 +1106,40 @@
     border: 2px solid rgba(255,250,240,0.3);
   }
 
+  /* Timeline rail for DM messages */
+  .timeline-rail {
+    position: absolute;
+    right: 8px;
+    top: 12px;
+    bottom: 12px;
+    width: 16px;
+    pointer-events: none;
+  }
+  .timeline-rail .timeline-track {
+    position: sticky;
+    top: 8px;
+    height: calc(100% - 16px);
+    width: 100%;
+    border-left: 2px solid rgba(40,32,24,0.18);
+  }
+  .timeline-rail .timeline-dot {
+    position: absolute;
+    left: -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(107,70,193,0.4);
+    border: 1px solid rgba(107,70,193,0.6);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    pointer-events: auto;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .timeline-rail .timeline-dot:hover { transform: scale(1.15); }
+  .timeline-rail .timeline-dot.active {
+    background: #6B46C1;
+    border-color: #6B46C1;
+  }
+
   /* DM choice buttons */
   .choice-list {
     display: flex;
