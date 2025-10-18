@@ -28,8 +28,10 @@ import { MessagePriority, MessageType } from './messaging/types';
 // Services
 import { AgentMessagingService } from './messaging/agent-messaging-service';
 import { ErrorHandlingService } from './error/services/error-handling-service'; // Assuming kebab-case
-import { ValidationResultsProcessor } from './rules/services/validation-results-processor'; // Assuming kebab-case
-import { ValidationService } from './rules/services/validation-service'; // Assuming kebab-case
+import { ValidationResultsProcessor } from './rules/services/validation-results-processor';
+import { ValidationService } from './rules/services/validation-service';
+import { validateEncounterSpec } from './rules/validators/encounter-validator';
+import { EncounterSpec, MonsterDef } from '@/types/encounters';
 
 // Utilities
 import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
@@ -75,6 +77,24 @@ export class RulesInterpreterAgent implements Agent {
       const ruleValidations = task.context?.ruleType ? 
         await this.validationService.validateRules(task.context) : null;
 
+      // EncounterSpec validation path (internal use)
+      let encounterValidation: any = null;
+      if (task.context?.encounterSpec) {
+        const spec = task.context.encounterSpec as EncounterSpec;
+        // If monsters aren't provided in context, load via SRD loader
+        let monsters: MonsterDef[] = task.context.monsters ?? [];
+        if (!monsters.length) {
+          try {
+            const { loadMonsters } = await import('@/services/encounters/srd-loader');
+            monsters = loadMonsters();
+          } catch (e) {
+            console.warn('Failed to load SRD monsters in RulesInterpreterAgent; using empty list');
+          }
+        }
+        const party = task.context?.party;
+        encounterValidation = validateEncounterSpec(spec, monsters, party);
+      }
+
       const processedResults = await this.resultsProcessor.processResults(ruleValidations);
 
       await errorHandler.handleOperation(
@@ -84,7 +104,8 @@ export class RulesInterpreterAgent implements Agent {
           MessageType.TASK,
           {
             taskDescription: task.description,
-            validationResults: processedResults
+          validationResults: processedResults,
+          encounterValidation
           },
           MessagePriority.HIGH
         ),
@@ -123,7 +144,8 @@ export class RulesInterpreterAgent implements Agent {
         message: 'Rules interpretation completed successfully',
         data: {
           ...data,
-          validationResults: processedResults
+          validationResults: processedResults,
+          encounterValidation
         }
       };
     } catch (error) {
