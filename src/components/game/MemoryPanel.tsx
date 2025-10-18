@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
+import { useCampaign } from '@/contexts/CampaignContext';
 import { MemoryType } from './memory/types';
 import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lucide-react';
 import { MemoryCard } from './memory/MemoryCard';
@@ -16,6 +17,8 @@ import { Textarea } from '../ui/textarea';
 import { CompactCharacterHeader } from './CompactCharacterHeader';
 import { CombatSummary } from './CombatSummary';
 import { ExtendedGameSession } from '@/hooks/use-game-session';
+import { useParams } from 'react-router-dom';
+import { analytics } from '@/services/analytics';
 
 interface MemoryPanelProps {
   sessionData: ExtendedGameSession | null;
@@ -44,6 +47,8 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const { memories = [], isLoading: memoriesLoading } = useMemoryContext();
   const { state: characterState } = useCharacter();
   const { state: combatState } = useCombat();
+  const { state: campaignState } = useCampaign();
+  const { id: routeCampaignId } = useParams<{ id: string }>();
   const isInCombat = combatMode || combatState.isInCombat;
   
   // Refs for resizable functionality
@@ -249,6 +254,11 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
     setActiveTab(value);
     // Auto-expand when switching tabs
     setIsExpanded(true);
+    const artStyle = analytics.detectArtStyle({
+      characterTheme: characterState?.character?.theme,
+      campaignGenre: campaignState?.campaign?.genre,
+    });
+    analytics.campaignTabViewed(value, { campaignId: routeCampaignId, artStyle });
   };
 
   return (
