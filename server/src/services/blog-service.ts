@@ -14,9 +14,12 @@ export interface BlogPost {
   publishedAt: string;
   updatedAt?: string;
   coverImageUrl?: string | null;
+  coverImageAlt?: string | null;
   authorName?: string | null;
   tags: string[];
+  categories: string[];
   readingTimeMinutes: number;
+  estimatedWordCount: number;
 }
 
 interface SupabaseBlogRow {
@@ -34,12 +37,16 @@ interface SupabaseBlogRow {
   updated_at?: string | null;
   modified_at?: string | null;
   cover_image_url?: string | null;
+  cover_image_alt?: string | null;
   hero_image_url?: string | null;
   social_image_url?: string | null;
+  image_alt?: string | null;
   author_name?: string | null;
   author?: string | null;
   byline?: string | null;
   tags?: string[] | string | null;
+  categories?: string[] | string | null;
+  category?: string | null;
   reading_time_minutes?: number | null;
   status?: string | null;
   is_published?: boolean | null;
@@ -121,9 +128,12 @@ function transformRow(row: SupabaseBlogRow): BlogPost | null {
   const summary = pickSummary(row, rendered.text);
   const authorName = row.author_name || row.author || row.byline || null;
   const coverImageUrl = row.cover_image_url || row.hero_image_url || row.social_image_url || null;
+  const coverImageAlt = row.cover_image_alt || row.image_alt || null;
   const tags = normalizeTags(row.tags);
+  const categories = normalizeCategories(row.categories, row.category);
   const updatedAt = pickUpdatedAt(row);
   const readingTimeMinutes = pickReadingTime(row, rendered.text);
+  const estimatedWordCount = estimateWordCount(rendered.text, readingTimeMinutes);
 
   return {
     id: typeof row.id === 'number' ? String(row.id) : row.id || slug,
@@ -136,9 +146,12 @@ function transformRow(row: SupabaseBlogRow): BlogPost | null {
     publishedAt,
     updatedAt,
     coverImageUrl,
+    coverImageAlt,
     authorName,
     tags,
+    categories,
     readingTimeMinutes,
+    estimatedWordCount,
   };
 }
 
@@ -190,6 +203,31 @@ function normalizeTags(tags: SupabaseBlogRow['tags']): string[] {
     return tags.split(',').map((tag) => tag.trim()).filter(Boolean);
   }
   return [];
+}
+
+function normalizeCategories(categories: SupabaseBlogRow['categories'], category: SupabaseBlogRow['category']): string[] {
+  const results: string[] = [];
+  
+  if (Array.isArray(categories)) {
+    results.push(...categories.map((cat) => (typeof cat === 'string' ? cat.trim() : '')).filter(Boolean));
+  } else if (typeof categories === 'string') {
+    results.push(...categories.split(',').map((cat) => cat.trim()).filter(Boolean));
+  }
+  
+  if (typeof category === 'string' && category.trim()) {
+    const trimmed = category.trim();
+    if (!results.includes(trimmed)) {
+      results.push(trimmed);
+    }
+  }
+  
+  return results;
+}
+
+function estimateWordCount(text: string, readingTimeMinutes: number): number {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (words > 0) return words;
+  return readingTimeMinutes * 200;
 }
 
 function isRowPublished(row: SupabaseBlogRow): boolean {
