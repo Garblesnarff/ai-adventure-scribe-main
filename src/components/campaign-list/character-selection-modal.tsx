@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Play, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
 
 interface Character {
   id: string;
@@ -58,9 +59,9 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
 
   // Fetch available characters
   const { data: characters, isLoading } = useQuery({
-    queryKey: ['user-characters'],
+    queryKey: isCampaignCharacterFlowEnabled() ? ['campaign', campaignId, 'characters', 'play'] : ['user-characters'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('characters')
         .select(`
           id, name, race, class, level, avatar_url, background_image,
@@ -72,6 +73,12 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
         `)
         .order('created_at', { ascending: false });
 
+      if (isCampaignCharacterFlowEnabled()) {
+        query = query.eq('campaign_id', campaignId);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       return data as Character[];
     },
@@ -81,7 +88,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
    * Handles starting a game with the selected character
    */
   const startGameWithCharacter = (character: Character) => {
-    navigate(`/app/campaign/${campaignId}?character=${character.id}`);
+    navigate(`/app/campaigns/${campaignId}?character=${character.id}`);
     onClose();
     toast({
       title: "Starting Adventure!",
@@ -93,7 +100,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
    * Handles creating a new character
    */
   const handleCreateCharacter = () => {
-    navigate('/app/characters/create');
+    navigate(`/app/characters/create?campaign=${campaignId}`);
     onClose();
   };
 

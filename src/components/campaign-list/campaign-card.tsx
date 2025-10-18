@@ -157,13 +157,13 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
         role="link"
         tabIndex={0}
         aria-label={`Open campaign ${campaign.name}`}
-        onClick={() => navigate(`/app/campaign/${campaign.id}`)}
+        onClick={() => navigate(`/app/campaigns/${campaign.id}`)}
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            navigate(`/app/campaign/${campaign.id}`);
+            navigate(`/app/campaigns/${campaign.id}`);
           }
         }}
         style={resolvedImage ? {
@@ -217,7 +217,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
                 <Play className="w-4 h-4" />
                 Play
               </Button>
-              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/app/campaign/${campaign.id}`); }}>
+              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => { e.stopPropagation(); navigate(`/app/campaigns/${campaign.id}`); }}>
                 Enter
               </Button>
               <Button

@@ -1,0 +1,32 @@
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import CampaignCharacterList from './CampaignCharacterList';
+import CreateCharacterPanel from './CreateCharacterPanel';
+
+interface Props {
+  mode?: 'list' | 'create';
+}
+
+const CampaignCharacters: React.FC<Props> = ({ mode = 'list' }) => {
+  const { id: campaignId } = useParams();
+  const navigate = useNavigate();
+
+  const openCreate = () => navigate(`/app/campaigns/${campaignId}/characters/new`);
+  const closeCreate = () => navigate(`/app/campaigns/${campaignId}/characters`);
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">Characters</h2>
+        <Button onClick={openCreate}>Create Character</Button>
+      </div>
+      <CampaignCharacterList />
+      {mode === 'create' && (
+        <CreateCharacterPanel open onClose={closeCreate} />
+      )}
+    </div>
+  );
+};
+
+export default CampaignCharacters;

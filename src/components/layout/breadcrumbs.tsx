@@ -15,7 +15,7 @@ const Breadcrumbs: React.FC = () => {
 
   // Detect entity ids from path for label resolution
   const campaignId = React.useMemo(() => {
-    const idx = pathSegments.findIndex((s) => s === 'campaign');
+    const idx = pathSegments.findIndex((s) => s === 'campaign' || s === 'campaigns');
     if (idx !== -1 && pathSegments[idx + 1]) return pathSegments[idx + 1];
     return null;
   }, [pathSegments]);
@@ -50,7 +50,7 @@ const Breadcrumbs: React.FC = () => {
 
     // Entity name resolution for id segments
     const prev = index > 0 ? pathSegments[index - 1] : '';
-    if (prev === 'campaign' && campaignId && segment === campaignId) {
+    if ((prev === 'campaign' || prev === 'campaigns') && campaignId && segment === campaignId) {
       if (campaignNameFromContext) return campaignNameFromContext;
       if (campaignLoading) return 'Loading…';
       return campaignNameFetched || 'Campaign';
