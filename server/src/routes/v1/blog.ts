@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { supabaseService } from '../../lib/supabase.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { requireBlogAdmin } from '../../middleware/blog-admin.js';
+import { requireBlogAuthor, canManagePost, getBlogRole } from '../../middleware/blog-author.js';
 import { mapBlogCategory, mapBlogPost, mapBlogTag } from './blog/mappers.js';
 import type { BlogPostRow, BlogCategoryRow, BlogTagRow, BlogCategory, BlogTag } from './blog/types.js';
 import {
@@ -11,7 +12,9 @@ import {
   blogMediaRequestSchema,
   blogPostInputSchema,
   blogPostPublishSchema,
+  blogPostScheduleSchema,
   blogPostUpdateSchema,
+  blogSlugCheckSchema,
   blogTagSchema,
   blogTagUpdateSchema,
 } from './blog/schemas.js';
@@ -22,13 +25,19 @@ const BLOG_POST_SELECT = `
   title,
   summary,
   content,
-  cover_image,
+  featured_image_url,
+  hero_image_alt,
+  seo_title,
+  seo_description,
+  seo_keywords,
+  canonical_url,
   status,
+  scheduled_for,
   published_at,
+  metadata,
   created_at,
   updated_at,
   author_id,
-  reading_time_minutes,
   categories:blog_post_categories (
     category:blog_categories (
       id,
@@ -47,6 +56,36 @@ const BLOG_POST_SELECT = `
       description,
       created_at,
       updated_at
+    )
+  )
+`;
+
+const BLOG_POST_SUMMARY_SELECT = `
+  id,
+  slug,
+  title,
+  summary,
+  featured_image_url,
+  hero_image_alt,
+  status,
+  scheduled_for,
+  published_at,
+  created_at,
+  updated_at,
+  author_id,
+  categories:blog_post_categories (
+    category:blog_categories (
+      id,
+      slug,
+      name,
+      description
+    )
+  ),
+  tags:blog_post_tags (
+    tag:blog_tags (
+      id,
+      slug,
+      name
     )
   )
 `;
@@ -100,6 +139,101 @@ async function syncPostRelations(postId: string, categoryIds?: string[], tagIds?
 
 const slugNotFoundError = (error: any) => (error && typeof error === 'object' && 'code' in error && (error as any).code === 'PGRST116');
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string | null | undefined): value is string {
+  if (!value) return false;
+  return UUID_REGEX.test(value);
+}
+
+async function fetchAuthorIdForUser(userId: string): Promise<string | null> {
+  const { data, error } = await supabaseService
+    .from('blog_authors')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.id ?? null;
+}
+
+async function ensureAuthorExists(authorId: string): Promise<boolean> {
+  if (!isUuid(authorId)) return false;
+  const { data, error } = await supabaseService
+    .from('blog_authors')
+    .select('id')
+    .eq('id', authorId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return Boolean(data?.id);
+}
+
+async function resolveAuthorIdForRequest(req: Request, explicitAuthorId?: string | null): Promise<string> {
+  const userId = req.user!.userId;
+  const role = req.blogRole ?? 'viewer';
+
+  if (role === 'admin' && explicitAuthorId) {
+    const exists = await ensureAuthorExists(explicitAuthorId);
+    if (!exists) {
+      throw new Error('BLOG_AUTHOR_NOT_FOUND');
+    }
+    return explicitAuthorId;
+  }
+
+  const authorId = await fetchAuthorIdForUser(userId);
+  if (!authorId) {
+    throw new Error('BLOG_AUTHOR_PROFILE_REQUIRED');
+  }
+  return authorId;
+}
+
+function normalizeSeoKeywords(keywords?: string[] | null): string[] {
+  if (!keywords || keywords.length === 0) return [];
+  const normalized = keywords.map((value) => value.trim()).filter(Boolean);
+  return normalized;
+}
+
+function normalizeMetadata(metadata?: Record<string, unknown> | null): Record<string, unknown> {
+  if (metadata && typeof metadata === 'object') {
+    return metadata;
+  }
+  return {};
+}
+
+function normalizeStatusPayload(status: string, scheduledFor?: string | null, publishedAt?: string | null) {
+  const payload: Record<string, unknown> = { status };
+
+  switch (status) {
+    case 'published': {
+      payload.published_at = publishedAt ?? new Date().toISOString();
+      payload.scheduled_for = null;
+      break;
+    }
+    case 'scheduled': {
+      payload.scheduled_for = scheduledFor ?? null;
+      payload.published_at = null;
+      break;
+    }
+    case 'draft':
+    case 'review':
+    case 'archived':
+    default: {
+      payload.scheduled_for = null;
+      payload.published_at = null;
+      break;
+    }
+  }
+
+  return payload;
+}
+
 export default function blogRouter() {
   const router = Router();
 
@@ -108,21 +242,32 @@ export default function blogRouter() {
     if (!parsed.success) {
       return handleValidationError(res, parsed.error);
     }
-    const { page, pageSize, category, tag } = parsed.data;
+    const { page, pageSize, category, tag, search } = parsed.data;
     const rangeStart = (page - 1) * pageSize;
     const rangeEnd = rangeStart + pageSize - 1;
 
     try {
-      const { data, error, count } = await supabaseService
+      let query = supabaseService
         .from('blog_posts')
-        .select(BLOG_POST_SELECT, { count: 'exact' })
+        .select(BLOG_POST_SUMMARY_SELECT, { count: 'exact' })
         .eq('status', 'published')
-        .order('published_at', { ascending: false })
+        .lte('published_at', new Date().toISOString());
+
+      if (search) {
+        const sanitized = search.replace(/[%_]/g, '').trim();
+        if (sanitized.length > 0) {
+          query = query.or(`title.ilike.%${sanitized}%,summary.ilike.%${sanitized}%`);
+        }
+      }
+
+      const { data, error, count } = await query
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
         .range(rangeStart, rangeEnd);
 
       if (error) throw error;
 
-      const mapped = (data ?? []).map((row) => mapBlogPost(row as unknown as BlogPostRow));
+      const mapped = (data ?? []).map((row) => mapBlogPost(row as unknown as BlogPostRow, { includeContent: false }));
       const filtered = mapped.filter((post) => {
         const categoryOk = !category || post.categories.some((c) => c.slug === category || c.id === category);
         const tagOk = !tag || post.tags.some((t) => t.slug === tag || t.id === tag);
@@ -163,7 +308,7 @@ export default function blogRouter() {
         throw error;
       }
 
-      return res.json(mapBlogPost(data as unknown as BlogPostRow));
+      return res.json(mapBlogPost(data as unknown as BlogPostRow, { includeHtml: true }));
     } catch (error) {
       return res.status(500).json({ error: 'Failed to fetch blog post' });
     }
@@ -201,7 +346,7 @@ export default function blogRouter() {
     }
   });
 
-  router.post('/posts', requireAuth, requireBlogAdmin, async (req: Request, res: Response) => {
+  router.post('/posts', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
     const parsed = blogPostInputSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return handleValidationError(res, parsed.error);
@@ -209,9 +354,12 @@ export default function blogRouter() {
 
     const payload = parsed.data;
     const status = payload.status ?? 'draft';
-    const nowIso = new Date().toISOString();
 
     try {
+      const authorId = await resolveAuthorIdForRequest(req, payload.authorId ?? null);
+
+      const statusFields = normalizeStatusPayload(status, payload.scheduledFor, payload.publishedAt);
+
       const { data: inserted, error: insertError } = await supabaseService
         .from('blog_posts')
         .insert({
@@ -219,10 +367,15 @@ export default function blogRouter() {
           slug: payload.slug,
           summary: payload.summary ?? null,
           content: payload.content ?? null,
-          cover_image: payload.coverImage ?? null,
-          status,
-          author_id: req.user!.userId,
-          published_at: status === 'published' ? payload.publishedAt ?? nowIso : null,
+          featured_image_url: payload.featuredImageUrl ?? null,
+          hero_image_alt: payload.heroImageAlt ?? null,
+          seo_title: payload.seoTitle ?? null,
+          seo_description: payload.seoDescription ?? null,
+          seo_keywords: normalizeSeoKeywords(payload.seoKeywords),
+          canonical_url: payload.canonicalUrl ?? null,
+          ...statusFields,
+          metadata: normalizeMetadata(payload.metadata),
+          author_id: authorId,
         })
         .select('id')
         .single();
@@ -230,6 +383,9 @@ export default function blogRouter() {
       if (insertError || !inserted) {
         if ((insertError as any)?.code === '23505') {
           return res.status(409).json({ error: 'Slug already exists' });
+        }
+        if ((insertError as any)?.code === '23503') {
+          return res.status(400).json({ error: 'Invalid author reference' });
         }
         throw insertError;
       }
@@ -247,11 +403,19 @@ export default function blogRouter() {
 
       return res.status(201).json(mapBlogPost(data as unknown as BlogPostRow));
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'BLOG_AUTHOR_NOT_FOUND') {
+          return res.status(400).json({ error: 'Author not found' });
+        }
+        if (error.message === 'BLOG_AUTHOR_PROFILE_REQUIRED') {
+          return res.status(400).json({ error: 'You must create an author profile before creating posts' });
+        }
+      }
       return res.status(500).json({ error: 'Failed to create blog post' });
     }
   });
 
-  router.put('/posts/:id', requireAuth, requireBlogAdmin, async (req: Request, res: Response) => {
+  router.put('/posts/:id', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
     const parsed = blogPostUpdateSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return handleValidationError(res, parsed.error);
@@ -260,27 +424,55 @@ export default function blogRouter() {
     const payload = parsed.data;
     const { id } = req.params;
 
-    const updatePayload: Record<string, unknown> = {};
-
-    if (payload.title !== undefined) updatePayload.title = payload.title;
-    if (payload.slug !== undefined) updatePayload.slug = payload.slug;
-    if (payload.summary !== undefined) updatePayload.summary = payload.summary ?? null;
-    if (payload.content !== undefined) updatePayload.content = payload.content ?? null;
-    if (payload.coverImage !== undefined) updatePayload.cover_image = payload.coverImage ?? null;
-    if (payload.status !== undefined) updatePayload.status = payload.status;
-    if (payload.publishedAt !== undefined) updatePayload.published_at = payload.publishedAt;
-
-    if (payload.status === 'published' && payload.publishedAt === undefined) {
-      updatePayload.published_at = new Date().toISOString();
-    }
-
-    if (payload.status && payload.status !== 'published' && payload.publishedAt === undefined) {
-      updatePayload.published_at = null;
-    }
-
-    const hasUpdates = Object.keys(updatePayload).length > 0;
-
     try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to update this post' });
+      }
+
+      const updatePayload: Record<string, unknown> = {};
+
+      if (payload.title !== undefined) updatePayload.title = payload.title;
+      if (payload.slug !== undefined) updatePayload.slug = payload.slug;
+      if (payload.summary !== undefined) updatePayload.summary = payload.summary ?? null;
+      if (payload.content !== undefined) updatePayload.content = payload.content ?? null;
+      if (payload.featuredImageUrl !== undefined) updatePayload.featured_image_url = payload.featuredImageUrl ?? null;
+      if (payload.heroImageAlt !== undefined) updatePayload.hero_image_alt = payload.heroImageAlt ?? null;
+      if (payload.seoTitle !== undefined) updatePayload.seo_title = payload.seoTitle ?? null;
+      if (payload.seoDescription !== undefined) updatePayload.seo_description = payload.seoDescription ?? null;
+      if (payload.seoKeywords !== undefined) updatePayload.seo_keywords = normalizeSeoKeywords(payload.seoKeywords);
+      if (payload.canonicalUrl !== undefined) updatePayload.canonical_url = payload.canonicalUrl ?? null;
+      if (payload.metadata !== undefined) updatePayload.metadata = normalizeMetadata(payload.metadata);
+
+      if (payload.authorId !== undefined && req.blogRole === 'admin') {
+        if (payload.authorId === null) {
+          return res.status(400).json({ error: 'Author ID cannot be null' });
+        }
+        const exists = await ensureAuthorExists(payload.authorId);
+        if (!exists) {
+          return res.status(400).json({ error: 'Author not found' });
+        }
+        updatePayload.author_id = payload.authorId;
+      }
+
+      if (payload.status !== undefined) {
+        if (payload.status === 'scheduled' && !payload.scheduledFor) {
+          return res.status(400).json({ error: 'scheduledFor is required when scheduling a post' });
+        }
+        const statusFields = normalizeStatusPayload(payload.status, payload.scheduledFor, payload.publishedAt);
+        Object.assign(updatePayload, statusFields);
+      } else {
+        if (payload.scheduledFor !== undefined) {
+          updatePayload.scheduled_for = payload.scheduledFor;
+        }
+        if (payload.publishedAt !== undefined) {
+          updatePayload.published_at = payload.publishedAt;
+        }
+      }
+
+      const hasUpdates = Object.keys(updatePayload).length > 0;
+
       if (hasUpdates) {
         updatePayload.updated_at = new Date().toISOString();
         const { error: updateError } = await supabaseService
@@ -291,11 +483,11 @@ export default function blogRouter() {
           .single();
 
         if (updateError) {
-          if ((updateError as any).code === 'PGRST116') {
-            return res.status(404).json({ error: 'Blog post not found' });
-          }
           if ((updateError as any)?.code === '23505') {
             return res.status(409).json({ error: 'Slug already exists' });
+          }
+          if (slugNotFoundError(updateError)) {
+            return res.status(404).json({ error: 'Blog post not found' });
           }
           throw updateError;
         }
@@ -320,11 +512,14 @@ export default function blogRouter() {
 
       return res.json(mapBlogPost(data as unknown as BlogPostRow));
     } catch (error) {
+      if (error instanceof Error && error.message === 'BLOG_AUTHOR_NOT_FOUND') {
+        return res.status(400).json({ error: 'Author not found' });
+      }
       return res.status(500).json({ error: 'Failed to update blog post' });
     }
   });
 
-  router.post('/posts/:id/publish', requireAuth, requireBlogAdmin, async (req: Request, res: Response) => {
+  router.post('/posts/:id/publish', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
     const parsed = blogPostPublishSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
       return handleValidationError(res, parsed.error);
@@ -334,11 +529,18 @@ export default function blogRouter() {
     const { id } = req.params;
 
     try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to publish this post' });
+      }
+
+      const statusFields = normalizeStatusPayload('published', null, publishTimestamp);
+
       const { data, error } = await supabaseService
         .from('blog_posts')
         .update({
-          status: 'published',
-          published_at: publishTimestamp,
+          ...statusFields,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -358,10 +560,16 @@ export default function blogRouter() {
     }
   });
 
-  router.delete('/posts/:id', requireAuth, requireBlogAdmin, async (req: Request, res: Response) => {
+  router.delete('/posts/:id', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to delete this post' });
+      }
+
       const { error: categoryJoinError } = await supabaseService
         .from('blog_post_categories')
         .delete()
@@ -637,10 +845,16 @@ export default function blogRouter() {
     }
   });
 
-  router.get('/posts/:id/preview', requireAuth, requireBlogAdmin, async (req: Request, res: Response) => {
+  router.get('/posts/:id/preview', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to preview this post' });
+      }
+
       const { data, error } = await supabaseService
         .from('blog_posts')
         .select(BLOG_POST_SELECT)
@@ -654,9 +868,215 @@ export default function blogRouter() {
         throw error;
       }
 
-      return res.json(mapBlogPost(data as unknown as BlogPostRow));
+      return res.json(mapBlogPost(data as unknown as BlogPostRow, { includeHtml: true }));
     } catch (error) {
       return res.status(500).json({ error: 'Failed to fetch blog post preview' });
+    }
+  });
+
+  router.get('/admin/posts', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
+    const parsed = blogListQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return handleValidationError(res, parsed.error);
+    }
+    const { page, pageSize, category, tag, search, status, scheduledOnly } = parsed.data;
+    const rangeStart = (page - 1) * pageSize;
+    const rangeEnd = rangeStart + pageSize - 1;
+
+    try {
+      let query = supabaseService
+        .from('blog_posts')
+        .select(BLOG_POST_SUMMARY_SELECT, { count: 'exact' });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      if (scheduledOnly) {
+        query = query.not('scheduled_for', 'is', null);
+      }
+
+      if (search) {
+        const sanitized = search.replace(/[%_]/g, '').trim();
+        if (sanitized.length > 0) {
+          query = query.or(`title.ilike.%${sanitized}%,summary.ilike.%${sanitized}%`);
+        }
+      }
+
+      if (req.blogRole !== 'admin') {
+        const { data: authorData } = await supabaseService
+          .from('blog_authors')
+          .select('id')
+          .eq('user_id', req.user!.userId)
+          .maybeSingle();
+
+        if (authorData) {
+          query = query.eq('author_id', authorData.id);
+        } else {
+          return res.json({ data: [], meta: { page, pageSize, total: 0 } });
+        }
+      }
+
+      const { data, error, count } = await query
+        .order('updated_at', { ascending: false })
+        .range(rangeStart, rangeEnd);
+
+      if (error) throw error;
+
+      const mapped = (data ?? []).map((row) => mapBlogPost(row as unknown as BlogPostRow, { includeContent: false }));
+      const filtered = mapped.filter((post) => {
+        const categoryOk = !category || post.categories.some((c) => c.slug === category || c.id === category);
+        const tagOk = !tag || post.tags.some((t) => t.slug === tag || t.id === tag);
+        return categoryOk && tagOk;
+      });
+
+      return res.json({
+        data: filtered,
+        meta: {
+          page,
+          pageSize,
+          total: category || tag ? filtered.length : count ?? filtered.length,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to fetch blog posts' });
+    }
+  });
+
+  router.post('/posts/:id/request-review', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to update this post' });
+      }
+
+      const { data, error } = await supabaseService
+        .from('blog_posts')
+        .update({
+          status: 'review',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select(BLOG_POST_SELECT)
+        .single();
+
+      if (error || !data) {
+        if (slugNotFoundError(error)) {
+          return res.status(404).json({ error: 'Blog post not found' });
+        }
+        throw error;
+      }
+
+      return res.json(mapBlogPost(data as unknown as BlogPostRow));
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to request review for blog post' });
+    }
+  });
+
+  router.post('/posts/:id/schedule', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
+    const parsed = blogPostScheduleSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return handleValidationError(res, parsed.error);
+    }
+
+    const { scheduledFor } = parsed.data;
+    const { id } = req.params;
+
+    try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to update this post' });
+      }
+
+      const { data, error } = await supabaseService
+        .from('blog_posts')
+        .update({
+          status: 'scheduled',
+          scheduled_for: scheduledFor,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select(BLOG_POST_SELECT)
+        .single();
+
+      if (error || !data) {
+        if (slugNotFoundError(error)) {
+          return res.status(404).json({ error: 'Blog post not found' });
+        }
+        throw error;
+      }
+
+      return res.json(mapBlogPost(data as unknown as BlogPostRow));
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to schedule blog post' });
+    }
+  });
+
+  router.post('/posts/:id/archive', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+      const userId = req.user!.userId;
+      const canManage = await canManagePost(id, userId);
+      if (!canManage) {
+        return res.status(403).json({ error: 'You do not have permission to update this post' });
+      }
+
+      const { data, error } = await supabaseService
+        .from('blog_posts')
+        .update({
+          status: 'archived',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select(BLOG_POST_SELECT)
+        .single();
+
+      if (error || !data) {
+        if (slugNotFoundError(error)) {
+          return res.status(404).json({ error: 'Blog post not found' });
+        }
+        throw error;
+      }
+
+      return res.json(mapBlogPost(data as unknown as BlogPostRow));
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to archive blog post' });
+    }
+  });
+
+  router.post('/slug/check', requireAuth, requireBlogAuthor, async (req: Request, res: Response) => {
+    const parsed = blogSlugCheckSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return handleValidationError(res, parsed.error);
+    }
+
+    const { slug, excludeId } = parsed.data;
+
+    try {
+      let query = supabaseService
+        .from('blog_posts')
+        .select('id')
+        .eq('slug', slug);
+
+      if (excludeId) {
+        query = query.neq('id', excludeId);
+      }
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error) throw error;
+
+      return res.json({
+        available: !data,
+        slug,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to check slug availability' });
     }
   });
 
