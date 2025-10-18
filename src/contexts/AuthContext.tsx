@@ -89,16 +89,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setBlogRoleLoading(true);
     try {
+      // Dev override: allow admin access in non-production without email setup
+      const devAdminEmail = (import.meta as any)?.env?.VITE_DEV_BLOG_ADMIN_EMAIL as string | undefined;
+      const devOverrideRaw = (import.meta as any)?.env?.VITE_BLOG_ADMIN_DEV_OVERRIDE as string | undefined;
+      const isDev = (import.meta as any)?.env?.MODE !== 'production';
+      const enableDevOverride = devOverrideRaw === 'true' || devOverrideRaw === '1' || (devOverrideRaw === undefined && !devAdminEmail);
+      if (isDev && enableDevOverride) {
+        setBlogRole('admin');
+        return;
+      }
+      // If a specific dev admin email is set, grant admin for that user
+      if (isDev && devAdminEmail && user.email && user.email.toLowerCase() === devAdminEmail.toLowerCase()) {
+        setBlogRole('admin');
+        return;
+      }
+
       const client = supabase as SupabaseClient<any, any, any>;
-      const { data, error } = await client
-        .from('blog_author_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Use RPC that encapsulates role resolution across profiles/authors instead of querying a table directly
+      const { data, error } = await client.rpc('blog_role_for_user', { p_user_id: user.id });
 
       if (error) throw error;
 
-      setBlogRole((data?.role as BlogRole | null) ?? null);
+      setBlogRole((data as BlogRole | null) ?? null);
     } catch (error) {
       logger.warn('Failed to load blog role', error);
       setBlogRole(null);
@@ -141,7 +153,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        logger.info('Auth state changed:', { event, hasSession: !!session });
+        if (event !== 'INITIAL_SESSION') {
+          logger.info('Auth state changed:', { event, hasSession: !!session });
+        }
         setAuthState(session ?? null);
         setLoading(false);
       }
@@ -157,9 +171,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       setAuthState(data.session ?? null);
-      if (data.session?.user) {
-        fetchBlogRole();
-      }
     };
 
     const handleOffline = () => {
@@ -176,14 +187,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       disposers.forEach((dispose) => dispose());
     };
-  }, [fetchBlogRole, setAuthState]);
+  }, []);
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
     fetchBlogRole();
-  }, [fetchBlogRole, user?.id]);
+    // Recompute role only when user.id changes, not when fetchBlogRole reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
