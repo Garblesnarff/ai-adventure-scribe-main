@@ -13,12 +13,12 @@ export function blogRouter() {
     try {
       const [posts, assets] = await Promise.all([
         fetchPublishedBlogPosts(),
-        resolveAssetsForEntries(['index.html', 'src/main.tsx']),
+        resolveAssetsForEntries(['index.html', 'src/blog-client.ts']),
       ]);
       const site = getSiteConfig();
 
       streamReactResponse(res, <BlogIndexPage site={site} assets={assets} posts={posts} />, {
-        headers: createCacheHeaders({ maxAge: 120, staleWhileRevalidate: 600 }),
+        headers: createCacheHeaders({ maxAge: 300, staleWhileRevalidate: 1800 }),
       });
     } catch (error) {
       console.error('Failed to render blog index', error);
@@ -33,7 +33,7 @@ export function blogRouter() {
       const [post, allPosts, assets] = await Promise.all([
         fetchBlogPostBySlug(slug),
         fetchPublishedBlogPosts(),
-        resolveAssetsForEntries(['index.html', 'src/main.tsx']),
+        resolveAssetsForEntries(['index.html', 'src/blog-client.ts']),
       ]);
 
       if (!post) {
@@ -42,10 +42,10 @@ export function blogRouter() {
       }
 
       const site = getSiteConfig();
-      const relatedPosts = allPosts.filter((candidate) => candidate.slug !== slug).slice(0, 6);
+      const relatedPosts = allPosts.filter((candidate) => candidate.slug !== slug).slice(0, 8);
 
       streamReactResponse(res, <BlogPostPage site={site} assets={assets} post={post} relatedPosts={relatedPosts} />, {
-        headers: createCacheHeaders({ maxAge: 300, staleWhileRevalidate: 900 }),
+        headers: createCacheHeaders({ maxAge: 600, staleWhileRevalidate: 3600 }),
       });
     } catch (error) {
       console.error('Failed to render blog post', error);
@@ -57,7 +57,12 @@ export function blogRouter() {
 }
 
 function createCacheHeaders({ maxAge, staleWhileRevalidate }: { maxAge: number; staleWhileRevalidate: number }) {
+  const directive = `public, max-age=${maxAge}, stale-while-revalidate=${staleWhileRevalidate}`;
   return {
-    'Cache-Control': `public, max-age=${maxAge}, stale-while-revalidate=${staleWhileRevalidate}`,
+    'Cache-Control': directive,
+    'CDN-Cache-Control': directive,
+    'Vercel-CDN-Cache-Control': directive,
+    'Surrogate-Control': directive,
+    Vary: 'Accept-Encoding, Accept-Language',
   };
 }
