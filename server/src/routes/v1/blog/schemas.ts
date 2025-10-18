@@ -7,6 +7,9 @@ export const blogListQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
   category: z.string().min(1).optional(),
   tag: z.string().min(1).optional(),
+  search: z.string().min(1).optional(),
+  status: z.enum(['draft', 'review', 'scheduled', 'published', 'archived']).optional(),
+  scheduledOnly: z.coerce.boolean().optional(),
 });
 
 export const blogPostInputSchema = z.object({
@@ -14,19 +17,36 @@ export const blogPostInputSchema = z.object({
   slug: z.string().regex(slugRegex, { message: 'Invalid slug format' }),
   summary: z.string().max(400).optional().nullable(),
   content: z.string().optional().nullable(),
-  coverImage: z.string().min(1).optional().nullable(),
-  status: z.enum(['draft', 'published']).optional(),
+  featuredImageUrl: z.string().min(1).optional().nullable(),
+  heroImageAlt: z.string().max(200).optional().nullable(),
+  seoTitle: z.string().max(200).optional().nullable(),
+  seoDescription: z.string().max(400).optional().nullable(),
+  seoKeywords: z.array(z.string()).max(20).optional().nullable(),
+  canonicalUrl: z.string().url().optional().nullable(),
+  status: z.enum(['draft', 'review', 'scheduled', 'published']).optional(),
+  scheduledFor: z.string().datetime().optional().nullable(),
+  metadata: z.record(z.unknown()).optional().nullable(),
+  authorId: z.string().uuid().optional(),
   categoryIds: z.array(z.string().min(1)).max(10).optional(),
   tagIds: z.array(z.string().min(1)).max(20).optional(),
   publishedAt: z.string().datetime().optional(),
 });
 
 export const blogPostUpdateSchema = blogPostInputSchema.partial().extend({
-  status: z.enum(['draft', 'published', 'archived']).optional(),
+  status: z.enum(['draft', 'review', 'scheduled', 'published', 'archived']).optional(),
 });
 
 export const blogPostPublishSchema = z.object({
   publishedAt: z.string().datetime().optional(),
+});
+
+export const blogPostScheduleSchema = z.object({
+  scheduledFor: z.string().datetime(),
+});
+
+export const blogSlugCheckSchema = z.object({
+  slug: z.string().regex(slugRegex, { message: 'Invalid slug format' }),
+  excludeId: z.string().uuid().optional(),
 });
 
 export const blogCategorySchema = z.object({
@@ -58,4 +78,6 @@ export type BlogCategoryUpdateInput = z.infer<typeof blogCategoryUpdateSchema>;
 export type BlogTagInput = z.infer<typeof blogTagSchema>;
 export type BlogTagUpdateInput = z.infer<typeof blogTagUpdateSchema>;
 export type BlogPublishInput = z.infer<typeof blogPostPublishSchema>;
+export type BlogScheduleInput = z.infer<typeof blogPostScheduleSchema>;
+export type BlogSlugCheckInput = z.infer<typeof blogSlugCheckSchema>;
 export type BlogMediaRequestInput = z.infer<typeof blogMediaRequestSchema>;
