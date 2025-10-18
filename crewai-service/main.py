@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -6,6 +6,9 @@ import os
 import httpx
 import re
 from textwrap import shorten
+import time
+import uuid
+import json
 
 app = FastAPI(title="CrewAI DM Orchestrator", version="0.1.0")
 
@@ -21,6 +24,31 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def request_id_and_logging(request: Request, call_next):
+    rid = request.headers.get("x-request-id") or str(uuid.uuid4())
+    start = time.time()
+    # Log request start
+    print(json.dumps({
+        "level": "info",
+        "msg": "crewai.request.start",
+        "requestId": rid,
+        "method": request.method,
+        "path": request.url.path,
+        "client": request.client.host if request.client else None,
+    }))
+    response = await call_next(request)
+    duration_ms = (time.time() - start) * 1000.0
+    response.headers["x-request-id"] = rid
+    print(json.dumps({
+        "level": "info",
+        "msg": "crewai.request.end",
+        "requestId": rid,
+        "status": response.status_code,
+        "durationMs": round(duration_ms, 3),
+    }))
+    return response
 
 
 class RollRequest(BaseModel):
