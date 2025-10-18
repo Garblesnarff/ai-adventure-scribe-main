@@ -1,0 +1,34 @@
+{
+  "public": {
+    "Tables": {
+      "campaigns": {
+        "Row": {
+          "id": "uuid",
+          "name": "text",
+          "user_id": "uuid",
+          "art_style": "text",
+          "style_config": "jsonb",
+          "rules_config": "jsonb"
+        }
+      },
+      "campaign_members": {
+        "Row": {
+          "campaign_id": "uuid",
+          "user_id": "uuid",
+          "role": "text",
+          "joined_at": "timestamptz"
+        }
+      },
+      "characters": {
+        "Row": {
+          "id": "uuid",
+          "user_id": "uuid",
+          "campaign_id": "uuid",
+          "name": "text",
+          "class": "text",
+          "race": "text"
+        }
+      }
+    }
+  }
+}
