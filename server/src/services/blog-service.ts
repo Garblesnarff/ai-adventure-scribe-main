@@ -2,6 +2,62 @@ import { supabase } from '../lib/supabase.js';
 import { createExcerpt, renderMarkdown } from '../utils/markdown.js';
 
 const BLOG_TABLE = process.env.SUPABASE_BLOG_TABLE || 'blog_posts';
+const BLOG_POST_SELECT = `
+  id,
+  slug,
+  title,
+  summary,
+  content,
+  featured_image_url,
+  hero_image_alt,
+  seo_title,
+  seo_description,
+  seo_keywords,
+  canonical_url,
+  status,
+  published_at,
+  updated_at,
+  metadata,
+  author:blog_authors (
+    id,
+    slug,
+    display_name
+  ),
+  categories:blog_post_categories (
+    category:blog_categories (
+      id,
+      slug,
+      name
+    )
+  ),
+  tags:blog_post_tags (
+    tag:blog_tags (
+      id,
+      slug,
+      name
+    )
+  )
+`;
+
+const WORDS_PER_MINUTE = 200;
+
+export interface BlogPostAuthor {
+  id: string;
+  slug: string | null;
+  displayName: string;
+}
+
+export interface BlogPostCategory {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+export interface BlogPostTag {
+  id: string;
+  slug: string;
+  name: string;
+}
 
 export interface BlogPost {
   id: string;
@@ -10,42 +66,63 @@ export interface BlogPost {
   markdown: string;
   html: string;
   excerpt: string;
-  summary: string;
+  summary: string | null;
+  featuredImageUrl: string | null;
+  heroImageAlt: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoKeywords: string[];
+  canonicalUrl: string | null;
   publishedAt: string;
   updatedAt?: string;
-  coverImageUrl?: string | null;
-  authorName?: string | null;
-  tags: string[];
   readingTimeMinutes: number;
+  metadata: Record<string, unknown>;
+  author: BlogPostAuthor | null;
+  categories: BlogPostCategory[];
+  tags: BlogPostTag[];
+}
+
+interface BlogCategoryRelationRow {
+  category?: {
+    id?: string;
+    slug?: string;
+    name?: string;
+  } | null;
+}
+
+interface BlogTagRelationRow {
+  tag?: {
+    id?: string;
+    slug?: string;
+    name?: string;
+  } | null;
+}
+
+interface BlogAuthorRow {
+  id?: string;
+  slug?: string | null;
+  display_name?: string | null;
 }
 
 interface SupabaseBlogRow {
-  id?: string | number;
+  id?: string;
   slug?: string;
   title?: string;
-  content?: string;
-  body?: string;
-  markdown?: string;
-  excerpt?: string | null;
   summary?: string | null;
+  content?: string | null;
+  featured_image_url?: string | null;
+  hero_image_alt?: string | null;
+  seo_title?: string | null;
   seo_description?: string | null;
-  published_at?: string | null;
-  publish_date?: string | null;
-  updated_at?: string | null;
-  modified_at?: string | null;
-  cover_image_url?: string | null;
-  hero_image_url?: string | null;
-  social_image_url?: string | null;
-  author_name?: string | null;
-  author?: string | null;
-  byline?: string | null;
-  tags?: string[] | string | null;
-  reading_time_minutes?: number | null;
+  seo_keywords?: string[] | null;
+  canonical_url?: string | null;
   status?: string | null;
-  is_published?: boolean | null;
-  published?: boolean | null;
-  unpublished_at?: string | null;
-  [key: string]: unknown;
+  published_at?: string | null;
+  updated_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+  author?: BlogAuthorRow | null;
+  categories?: BlogCategoryRelationRow[] | null;
+  tags?: BlogTagRelationRow[] | null;
 }
 
 export function isSupabaseConfigured(): boolean {
@@ -60,9 +137,13 @@ export async function fetchPublishedBlogPosts(): Promise<BlogPost[]> {
     return [];
   }
 
+  const nowIso = new Date().toISOString();
+
   const { data, error } = await supabase
     .from(BLOG_TABLE)
-    .select('*')
+    .select(BLOG_POST_SELECT)
+    .eq('status', 'published')
+    .lte('published_at', nowIso)
     .order('published_at', { ascending: false });
 
   if (error) {
@@ -71,8 +152,9 @@ export async function fetchPublishedBlogPosts(): Promise<BlogPost[]> {
   }
 
   const rows = (data ?? []) as SupabaseBlogRow[];
-
-  return transformRows(rows).filter((post): post is BlogPost => Boolean(post));
+  return rows
+    .map(mapRowToBlogPost)
+    .filter((post): post is BlogPost => Boolean(post));
 }
 
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
@@ -82,7 +164,7 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
 
   const { data, error } = await supabase
     .from(BLOG_TABLE)
-    .select('*')
+    .select(BLOG_POST_SELECT)
     .eq('slug', slug)
     .limit(1)
     .maybeSingle();
@@ -92,71 +174,92 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
     return null;
   }
 
-  if (!data) return null;
-
-  const row = data as SupabaseBlogRow;
-  const post = transformRow(row);
-  return post ?? null;
-}
-
-function transformRows(rows: SupabaseBlogRow[]): Array<BlogPost | null> {
-  return rows.map(transformRow);
-}
-
-function transformRow(row: SupabaseBlogRow): BlogPost | null {
-  if (!isRowPublished(row)) {
+  if (!data) {
     return null;
   }
 
-  const slug = row.slug?.trim();
-  const title = row.title?.trim();
-  const markdown = pickMarkdown(row);
-  const publishedAt = pickPublishedAt(row);
-
-  if (!slug || !title || !markdown || !publishedAt) {
+  const post = mapRowToBlogPost(data as SupabaseBlogRow);
+  if (!post) {
     return null;
   }
 
+  return post;
+}
+
+function mapRowToBlogPost(row: SupabaseBlogRow): BlogPost | null {
+  if (!isPublishedRow(row)) {
+    return null;
+  }
+
+  const slug = (row.slug ?? '').trim();
+  const title = (row.title ?? '').trim();
+  if (!slug || !title) {
+    return null;
+  }
+
+  const markdown = row.content ?? '';
   const rendered = renderMarkdown(markdown);
-  const summary = pickSummary(row, rendered.text);
-  const authorName = row.author_name || row.author || row.byline || null;
-  const coverImageUrl = row.cover_image_url || row.hero_image_url || row.social_image_url || null;
-  const tags = normalizeTags(row.tags);
-  const updatedAt = pickUpdatedAt(row);
-  const readingTimeMinutes = pickReadingTime(row, rendered.text);
+  const summary = deriveSummary(row.summary, rendered.text);
+  const excerpt = summary ?? createExcerpt(rendered.text);
+  const publishedAt = normalizeDate(row.published_at);
+  if (!publishedAt) {
+    return null;
+  }
+
+  const updatedAt = normalizeDate(row.updated_at) ?? undefined;
+
+  const categories = mapCategories(row.categories);
+  const tags = mapTags(row.tags);
+  const author = mapAuthor(row.author);
+
+  const metadata = normalizeMetadata(row.metadata);
+  const seoKeywords = Array.isArray(row.seo_keywords)
+    ? row.seo_keywords.map((keyword) => keyword.trim()).filter(Boolean)
+    : [];
+
+  const readingTimeMinutes = computeReadingTime(rendered.text);
 
   return {
-    id: typeof row.id === 'number' ? String(row.id) : row.id || slug,
+    id: row.id ?? slug,
     slug,
     title,
     markdown,
     html: rendered.html,
-    excerpt: summary,
+    excerpt,
     summary,
+    featuredImageUrl: row.featured_image_url ?? null,
+    heroImageAlt: row.hero_image_alt ?? null,
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
+    seoKeywords,
+    canonicalUrl: row.canonical_url ?? null,
     publishedAt,
     updatedAt,
-    coverImageUrl,
-    authorName,
-    tags,
     readingTimeMinutes,
+    metadata,
+    author,
+    categories,
+    tags,
   };
 }
 
-function pickMarkdown(row: SupabaseBlogRow): string | null {
-  return row.markdown || row.content || row.body || null;
-}
-
-function pickSummary(row: SupabaseBlogRow, fallbackText: string): string {
-  const raw = row.excerpt || row.summary || row.seo_description;
-  if (typeof raw === 'string' && raw.trim().length > 0) {
-    return raw.trim();
+function isPublishedRow(row: SupabaseBlogRow): boolean {
+  if (!row.status || row.status.toLowerCase() !== 'published') {
+    return false;
   }
-  return createExcerpt(fallbackText);
+
+  const publishedAt = normalizeDate(row.published_at);
+  if (!publishedAt) {
+    return false;
+  }
+
+  return new Date(publishedAt).getTime() <= Date.now();
 }
 
-function pickPublishedAt(row: SupabaseBlogRow): string | null {
-  const value = row.published_at || row.publish_date;
-  if (!value) return null;
+function normalizeDate(value?: string | null): string | null {
+  if (!value) {
+    return null;
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return null;
@@ -164,59 +267,76 @@ function pickPublishedAt(row: SupabaseBlogRow): string | null {
   return date.toISOString();
 }
 
-function pickUpdatedAt(row: SupabaseBlogRow): string | undefined {
-  const value = row.updated_at || row.modified_at;
-  if (!value) return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return undefined;
+function deriveSummary(summary: string | null | undefined, fallback: string): string | null {
+  if (typeof summary === 'string' && summary.trim().length > 0) {
+    return summary.trim();
   }
-  return date.toISOString();
+  if (fallback.length === 0) {
+    return null;
+  }
+  return createExcerpt(fallback);
 }
 
-function pickReadingTime(row: SupabaseBlogRow, text: string): number {
-  if (typeof row.reading_time_minutes === 'number' && row.reading_time_minutes > 0) {
-    return Math.round(row.reading_time_minutes);
+function mapCategories(relations: BlogCategoryRelationRow[] | null | undefined): BlogPostCategory[] {
+  if (!Array.isArray(relations)) {
+    return [];
   }
+  return relations
+    .map((relation) => {
+      const category = relation?.category;
+      if (!category?.id || !category.slug || !category.name) {
+        return null;
+      }
+      return {
+        id: category.id,
+        slug: category.slug,
+        name: category.name,
+      } satisfies BlogPostCategory;
+    })
+    .filter((value): value is BlogPostCategory => Boolean(value));
+}
+
+function mapTags(relations: BlogTagRelationRow[] | null | undefined): BlogPostTag[] {
+  if (!Array.isArray(relations)) {
+    return [];
+  }
+  return relations
+    .map((relation) => {
+      const tag = relation?.tag;
+      if (!tag?.id || !tag.slug || !tag.name) {
+        return null;
+      }
+      return {
+        id: tag.id,
+        slug: tag.slug,
+        name: tag.name,
+      } satisfies BlogPostTag;
+    })
+    .filter((value): value is BlogPostTag => Boolean(value));
+}
+
+function mapAuthor(author: BlogAuthorRow | null | undefined): BlogPostAuthor | null {
+  if (!author?.id || !author.display_name) {
+    return null;
+  }
+  return {
+    id: author.id,
+    slug: author.slug ?? null,
+    displayName: author.display_name,
+  } satisfies BlogPostAuthor;
+}
+
+function normalizeMetadata(metadata: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  if (metadata && typeof metadata === 'object') {
+    return metadata;
+  }
+  return {};
+}
+
+function computeReadingTime(text: string): number {
   const words = text.split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
-}
-
-function normalizeTags(tags: SupabaseBlogRow['tags']): string[] {
-  if (Array.isArray(tags)) {
-    return tags.map((tag) => (typeof tag === 'string' ? tag.trim() : '')).filter(Boolean);
+  if (words === 0) {
+    return 1;
   }
-  if (typeof tags === 'string') {
-    return tags.split(',').map((tag) => tag.trim()).filter(Boolean);
-  }
-  return [];
-}
-
-function isRowPublished(row: SupabaseBlogRow): boolean {
-  if (row.unpublished_at) {
-    const unpublished = new Date(row.unpublished_at);
-    if (!Number.isNaN(unpublished.getTime()) && unpublished.getTime() <= Date.now()) {
-      return false;
-    }
-  }
-
-  if (typeof row.is_published === 'boolean' && !row.is_published) {
-    return false;
-  }
-
-  if (typeof row.published === 'boolean' && !row.published) {
-    return false;
-  }
-
-  if (typeof row.status === 'string') {
-    const status = row.status.toLowerCase();
-    if (status !== 'published' && status !== 'public') {
-      return false;
-    }
-  }
-
-  const publishedAt = pickPublishedAt(row);
-  if (!publishedAt) return false;
-  const published = new Date(publishedAt);
-  return published.getTime() <= Date.now();
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
 }
