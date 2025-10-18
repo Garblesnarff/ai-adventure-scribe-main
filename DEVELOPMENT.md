@@ -134,3 +134,56 @@ Debug AI status with: `console.log(AIService.getApiStats())`
 **Dev mode not showing?**
 - Check `VITE_ENVIRONMENT=development` in `.env.local`
 - Restart dev server after env changes
+
+---
+
+## CI and Security Checks (Run Locally)
+
+This repo includes CI gates for linting, unit/integration tests with coverage thresholds, security scanning, and auth/role end-to-end checks.
+
+- Lint
+  ```bash
+  npm run lint
+  ```
+
+- Server tests (Express)
+  ```bash
+  npm run server:test
+  ```
+
+- Frontend/services tests with coverage (Vitest)
+  ```bash
+  npx vitest run --coverage
+  ```
+  Coverage thresholds are enforced in vitest.config.ts (80% for statements/branches/functions/lines).
+
+- Auth/role E2E (Playwright API)
+  ```bash
+  # Install Playwright browsers (first run)
+  npx playwright install --with-deps
+
+  # Run E2E suite (starts the backend automatically per project)
+  npm run e2e
+  ```
+  Notes:
+  - Tests validate non-admin vs admin access to blog admin endpoints.
+  - Admin path is enabled via BLOG_ADMIN_DEV_OVERRIDE=1 (non-production only) and a local JWT secret.
+
+- Secrets scanning (Gitleaks)
+  ```bash
+  # Scan working tree and full git history
+  npx gitleaks detect --redact --report-format json --report-path gitleaks.json --log-opts=--all
+  ```
+
+- Dependency and secrets scan (Trivy)
+  ```bash
+  # Using Docker (recommended)
+  docker run --rm -v $PWD:/repo aquasec/trivy:latest fs --severity HIGH,CRITICAL --vuln-type os,library --scanners vuln,secret,config --exit-code 1 --format json --output trivy-results.json /repo
+  ```
+
+- npm audit (fail on high severity)
+  ```bash
+  npm audit --audit-level=high
+  ```
+
+Nightly DAST is configured via GitHub Actions (OWASP ZAP) to scan the staging endpoint. Set the STAGING_URL GitHub Secret in your repo settings to enable.
