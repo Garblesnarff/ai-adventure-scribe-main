@@ -68,12 +68,13 @@ function renderSitemapUrl(loc: string, lastMod?: string) {
 function buildRssFeed(siteUrl: string, siteName: string, siteDescription: string, posts: BlogPosts) {
   const items = posts.map((post) => {
     const link = `${siteUrl}/blog/${post.slug}`;
+    const description = post.summary ?? post.excerpt ?? '';
     return `<item>
 <title>${escapeXml(post.title)}</title>
 <link>${escapeXml(link)}</link>
 <guid>${escapeXml(link)}</guid>
 <pubDate>${escapeXml(new Date(post.publishedAt).toUTCString())}</pubDate>
-<description>${escapeCdata(post.excerpt)}</description>
+<description>${escapeCdata(description)}</description>
 <content:encoded><![CDATA[${post.html}]]></content:encoded>
 </item>`;
   });

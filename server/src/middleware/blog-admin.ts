@@ -1,41 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabaseService } from '../lib/supabase.js';
+import { getBlogRole } from './blog-author.js';
 
 declare global {
   namespace Express {
     interface Request {
-      blogAdminRoles?: string[];
+      blogRole?: 'viewer' | 'author' | 'admin';
     }
   }
-}
-
-function extractBlogRoles(meta: Record<string, unknown> | null | undefined): string[] {
-  if (!meta) return [];
-
-  const roleLike = meta.blogRole ?? meta.blog_role ?? null;
-  const rolesLike = meta.blogRoles ?? meta.blog_roles ?? null;
-  const collected: string[] = [];
-
-  if (typeof roleLike === 'string') {
-    collected.push(roleLike.toLowerCase());
-  }
-
-  if (Array.isArray(rolesLike)) {
-    for (const value of rolesLike) {
-      if (typeof value === 'string') {
-        collected.push(value.toLowerCase());
-      }
-    }
-  } else if (typeof rolesLike === 'string') {
-    collected.push(rolesLike.toLowerCase());
-  }
-
-  const booleanFlag = meta.blogAdmin ?? meta.blog_admin;
-  if (booleanFlag === true) {
-    collected.push('admin');
-  }
-
-  return Array.from(new Set(collected));
 }
 
 export async function requireBlogAdmin(req: Request, res: Response, next: NextFunction) {
@@ -45,28 +16,12 @@ export async function requireBlogAdmin(req: Request, res: Response, next: NextFu
   }
 
   try {
-    const { data, error } = await supabaseService.auth.admin.getUserById(userId);
-    if (error || !data?.user) {
+    const role = await getBlogRole(userId);
+    if (role !== 'admin') {
       return res.status(403).json({ error: 'Blog admin access required' });
     }
 
-    const user = data.user as unknown as {
-      id: string;
-      app_metadata?: Record<string, unknown> | null;
-      user_metadata?: Record<string, unknown> | null;
-    };
-
-    const roles = [
-      ...extractBlogRoles(user.app_metadata),
-      ...extractBlogRoles(user.user_metadata),
-    ];
-
-    const hasAdminRole = roles.some((role) => role === 'admin' || role === 'owner');
-    if (!hasAdminRole) {
-      return res.status(403).json({ error: 'Blog admin access required' });
-    }
-
-    req.blogAdminRoles = Array.from(new Set(roles));
+    req.blogRole = role;
     return next();
   } catch (err) {
     return res.status(500).json({ error: 'Failed to verify blog admin access' });
