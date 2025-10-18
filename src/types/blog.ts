@@ -1,94 +1,84 @@
-import type { BlogRole } from '@/contexts/AuthContext';
+export type BlogRole = 'viewer' | 'author' | 'admin';
 
-export type BlogPostStatus = 'draft' | 'scheduled' | 'published';
+export type BlogPostStatus = 'draft' | 'review' | 'scheduled' | 'published' | 'archived';
+
+export interface BlogSeoMetadata {
+  title?: string | null;
+  description?: string | null;
+  keywords?: string[] | null;
+  canonicalUrl?: string | null;
+}
+
+export interface BlogAuthor {
+  id: string;
+  userId: string | null;
+  displayName: string;
+  slug: string;
+  shortBio?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  websiteUrl?: string | null;
+  twitterHandle?: string | null;
+  linkedinUrl?: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface BlogCategory {
   id: string;
-  title: string;
+  name: string;
   slug: string;
-  description: string | null;
+  description?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
-  updatedAt: string | null;
-  createdBy?: string | null;
+  updatedAt: string;
 }
 
 export interface BlogTag {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
+  description?: string | null;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
-  updatedAt: string | null;
-  createdBy?: string | null;
+  updatedAt: string;
 }
 
 export interface BlogPost {
   id: string;
+  authorId: string;
   title: string;
   slug: string;
-  excerpt: string | null;
-  content: string;
-  coverImageUrl: string | null;
+  summary?: string | null;
+  content?: string | null;
+  featuredImageUrl?: string | null;
+  heroImageAlt?: string | null;
   status: BlogPostStatus;
-  seoTitle: string | null;
-  seoDescription: string | null;
-  publishedAt: string | null;
-  scheduledFor: string | null;
+  seo: BlogSeoMetadata;
+  scheduledFor?: string | null;
+  publishedAt?: string | null;
+  metadata: Record<string, unknown> | null;
+  canonicalUrl?: string | null;
   createdAt: string;
   updatedAt: string;
-  authorId: string;
-  authorRole?: BlogRole | null;
-  categoryIds: string[];
-  tagIds: string[];
-  categories?: BlogCategory[];
-  tags?: BlogTag[];
 }
 
-export interface BlogPostFormValues {
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  coverImageUrl: string;
-  status: BlogPostStatus;
-  seoTitle: string;
-  seoDescription: string;
-  publishedAt: string | null;
-  scheduledFor: string | null;
-  categoryIds: string[];
-  tagIds: string[];
-  isDraft: boolean;
-  allowComments: boolean;
+export interface BlogPostCategoryLink {
+  postId: string;
+  categoryId: string;
+  assignedAt: string;
 }
 
-export interface BlogMediaAsset {
-  id: string;
-  path: string;
-  bucket: string;
-  publicUrl: string;
-  name: string;
-  mimeType: string | null;
-  size: number | null;
-  createdAt: string | null;
-  createdBy?: string | null;
+export interface BlogPostTagLink {
+  postId: string;
+  tagId: string;
+  assignedAt: string;
 }
 
-export interface BlogPostListFilters {
-  status?: BlogPostStatus | 'all';
-  search?: string;
-  scheduledOnly?: boolean;
-}
-
-export interface SignedUploadRequest {
-  filename: string;
-  contentType: string;
-  bucket?: string;
-}
-
-export interface SignedUploadResponse {
-  signedUrl: string;
-  path: string;
-  token?: string;
-  bucket: string;
-  expiresAt: string | null;
+export interface BlogUserRole {
+  userId: string;
+  role: BlogRole;
 }
