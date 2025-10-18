@@ -25,6 +25,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
 // Interfaces and Types (defined in-file, specific to this context)
 interface Campaign {
+  id?: string;
   name: string;
   description?: string;
   genre?: string;
@@ -32,6 +33,9 @@ interface Campaign {
   campaign_length?: 'one-shot' | 'short' | 'full';
   tone?: 'serious' | 'humorous' | 'gritty';
   setting_details?: Record<string, unknown>;
+  // Defaults and configuration for scoped flows
+  defaultArtStyle?: string; // e.g., 'fantasy', 'cyberpunk'
+  rules?: Record<string, unknown> | string; // ruleset identifier or config blob
   enhancementSelections?: import('../types/enhancement-options').OptionSelection[];
   enhancementEffects?: {
     atmosphere?: string[];

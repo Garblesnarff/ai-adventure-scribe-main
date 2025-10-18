@@ -8,9 +8,7 @@ import LaunchPage from './pages/LaunchPage';
 import DiceTest from './pages/DiceTest';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
-import CharacterWizard from './components/character-creation/character-wizard';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
-import { SimpleCampaignView } from './components/campaign-view/SimpleCampaignView';
 import GameContent from './components/game/GameContent';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
@@ -19,6 +17,8 @@ import { CampaignProvider } from './contexts/CampaignContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import BlogAdmin from './pages/BlogAdmin';
+import CharacterCreateEntry from './pages/CharacterCreateEntry';
+import CampaignHub from './pages/campaigns/CampaignHub';
 
 /**
  * Create a new QueryClient instance
@@ -75,10 +75,10 @@ function App() {
                             <Route path="/" element={<Index />} />
                             <Route path="/dice-test" element={<DiceTest />} />
                             <Route path="/characters" element={<CharacterList />} />
-                            <Route path="/characters/create" element={<CharacterWizard />} />
+                            <Route path="/characters/create" element={<CharacterCreateEntry />} />
                             <Route path="/character/:id" element={<CharacterSheet />} />
                             <Route path="/campaigns/create" element={<CampaignWizard />} />
-                            <Route path="/campaign/:id" element={<SimpleCampaignView />} />
+                            <Route path="/campaigns/:id/*" element={<CampaignHub />} />
                             <Route path="/game/:id" element={<GameContent />} />
                             <Route path="/blog" element={<BlogAdmin />} />
                           </Routes>

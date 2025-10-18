@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { characterImageGenerator } from '@/services/character-image-generator';
 import { openRouterService } from '@/services/openrouter-service';
 import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react';
 import logger from '@/lib/logger';
+import { useCampaign } from '@/contexts/CampaignContext';
 
 /**
  * CharacterFinalization component for character creation
@@ -17,12 +18,20 @@ import logger from '@/lib/logger';
  */
 const CharacterFinalization: React.FC = () => {
   const { state, dispatch } = useCharacter();
+  const { state: campaignState } = useCampaign();
   const { toast } = useToast();
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('fantasy');
   const [generationStep, setGenerationStep] = useState<'idle' | 'avatar' | 'sheet' | 'background'>('idle');
+
+  // Initialize theme from campaign defaults when available
+  useEffect(() => {
+    if (campaignState.campaign?.defaultArtStyle && !state.character?.theme) {
+      setSelectedTheme(campaignState.campaign.defaultArtStyle);
+    }
+  }, [campaignState.campaign?.defaultArtStyle, state.character?.theme]);
 
   /**
    * Updates character description in context
