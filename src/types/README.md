@@ -29,11 +29,15 @@ Provide **strongly-typed contracts** for:
 - **`dialogue.ts`**  
   Types for dialogue history and message formats.
 
-- **`dm.ts`**  
+- **`dm.ts`**
   Types specific to Dungeon Master agent logic.
 
-- **`game.ts`**  
+- **`blog.ts`**
+  Types for blog authors, posts, categories, tags, and role assignments.
+
+- **`game.ts`**
   Types for overall game state and flow.
+
 
 - **`gameState.ts`**  
   Detailed game state structure, including location, NPCs, and scene status.
