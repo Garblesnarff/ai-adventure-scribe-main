@@ -178,8 +178,7 @@ export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<Blog
       author_role,
       category_ids,
       tag_ids
-    `)
-    .order('updated_at', { ascending: false });
+    `);
 
   if (filters?.status && filters.status !== 'all') {
     query = query.eq('status', filters.status);
@@ -190,6 +189,26 @@ export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<Blog
   if (filters?.search) {
     query = query.ilike('title', `%${filters.search}%`);
   }
+  if (filters?.categoryId) {
+    query = query.contains('category_ids', [filters.categoryId]);
+  }
+  if (filters?.tagId) {
+    query = query.contains('tag_ids', [filters.tagId]);
+  }
+
+  const sortBy = filters?.sortBy || 'updatedAt';
+  const ascending = filters?.sortDirection === 'asc';
+  const columnMap: Record<string, string> = {
+    updatedAt: 'updated_at',
+    createdAt: 'created_at',
+    title: 'title',
+    status: 'status',
+    publishedAt: 'published_at',
+  };
+  query = query.order(columnMap[sortBy] || 'updated_at', {
+    ascending,
+    nullsFirst: ascending,
+  });
 
   const { data, error } = await query;
   if (error) {

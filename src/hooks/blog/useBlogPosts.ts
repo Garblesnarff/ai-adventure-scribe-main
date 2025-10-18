@@ -14,6 +14,10 @@ const buildFiltersKey = (filters?: BlogPostListFilters) => ({
   status: filters?.status ?? 'all',
   search: filters?.search ?? '',
   scheduledOnly: Boolean(filters?.scheduledOnly),
+  categoryId: filters?.categoryId ?? null,
+  tagId: filters?.tagId ?? null,
+  sortBy: filters?.sortBy ?? 'updatedAt',
+  sortDirection: filters?.sortDirection ?? 'desc',
 });
 
 export const BLOG_POSTS_QUERY_KEY = 'blog-posts';
@@ -74,6 +78,19 @@ export function useDeleteBlogPost() {
     mutationFn: (id: string) => deleteBlogPost(id),
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: ['blog-post', 'id', id], exact: true });
+      queryClient.invalidateQueries({ queryKey: [BLOG_POSTS_QUERY_KEY] });
+    },
+  });
+}
+
+export function useUpdateBlogPostById() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<BlogPostMutationInput> }) => {
+      return updateBlogPost(id, input);
+    },
+    onSuccess: (post) => {
+      queryClient.setQueryData(['blog-post', 'id', post.id], post);
       queryClient.invalidateQueries({ queryKey: [BLOG_POSTS_QUERY_KEY] });
     },
   });

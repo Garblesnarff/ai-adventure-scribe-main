@@ -19,6 +19,7 @@ import { CampaignProvider } from './contexts/CampaignContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import BlogAdmin from './pages/BlogAdmin';
+import BlogEditor from './pages/BlogEditor';
 
 /**
  * Create a new QueryClient instance
@@ -81,6 +82,8 @@ function App() {
                             <Route path="/campaign/:id" element={<SimpleCampaignView />} />
                             <Route path="/game/:id" element={<GameContent />} />
                             <Route path="/blog" element={<BlogAdmin />} />
+                            <Route path="/blog/posts/new" element={<BlogEditor />} />
+                            <Route path="/blog/posts/:id" element={<BlogEditor />} />
                           </Routes>
                         </main>
                       </ProtectedRoute>
