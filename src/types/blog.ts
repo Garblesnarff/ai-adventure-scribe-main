@@ -27,7 +27,8 @@ export interface BlogAuthor {
 
 export interface BlogCategory {
   id: string;
-  title: string;
+  name?: string;
+  title?: string;
   slug: string;
   description?: string | null;
   seoTitle?: string | null;
@@ -54,14 +55,21 @@ export interface BlogPost {
   authorId: string;
   title: string;
   slug: string;
+  summary?: string | null;
   excerpt?: string | null;
   content?: string | null;
   coverImageUrl?: string | null;
+  featuredImageUrl?: string | null;
+  heroImageAlt?: string | null;
   status: BlogPostStatus;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  seoKeywords?: string[] | null;
   scheduledFor?: string | null;
   publishedAt?: string | null;
+  metadata?: Record<string, unknown> | null;
+  canonicalUrl?: string | null;
+  allowComments?: boolean;
   createdAt: string;
   updatedAt: string;
   authorRole?: string | null;
@@ -118,5 +126,7 @@ export interface SignedUploadRequest {
 export interface SignedUploadResponse {
   signedUrl: string;
   path: string;
-  publicUrl: string;
+  token?: string;
+  bucket?: string;
+  publicUrl?: string;
 }
