@@ -24,9 +24,12 @@ const basePost: BlogPost = {
   publishedAt: '2024-09-10T12:00:00.000Z',
   updatedAt: '2024-09-12T12:00:00.000Z',
   coverImageUrl: 'https://example.com/images/cover.jpg',
+  coverImageAlt: 'Adventure scene',
   authorName: 'Aurora the Chronicler',
   tags: ['release', 'ai'],
+  categories: ['Updates', 'Features'],
   readingTimeMinutes: 5,
+  estimatedWordCount: 1000,
 };
 
 beforeEach(() => {
@@ -45,10 +48,12 @@ describe('Blog SSR routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('text/html');
-    expect(response.text).toContain('<title>Infinite Realms Blog</title>');
+    expect(response.text).toContain('<title>Infinite Realms Blog - Chronicles from the Infinite Realms</title>');
     expect(response.text).toContain('application/ld+json');
-    expect(response.text).toContain('Chronicles from the Infinite Realms');
+    expect(response.text).toContain('data-blog-posts');
+    expect(response.text).toContain('Show more stories');
     expect(response.text).toContain('__BLOG_DATA__');
+    expect(response.text).toContain('Cinzel');
   });
 
   it('renders an individual blog post with article metadata', async () => {
@@ -60,8 +65,9 @@ describe('Blog SSR routes', () => {
     expect(response.status).toBe(200);
     expect(response.text).toContain('<title>Infinite Realms Update | Infinite Realms</title>');
     expect(response.text).toContain('article:published_time');
+    expect(response.text).toContain('article:section');
     expect(response.text).toContain('SoftwareApplication');
-    expect(response.text).toContain('Infinite Realms Update');
+    expect(response.text).toContain('Continue Your Quest');
   });
 
   it('returns a 404 when the post is missing', async () => {
@@ -86,7 +92,7 @@ describe('SEO feeds', () => {
     expect(response.text).toContain('<loc>https://example.com/blog</loc>');
   });
 
-  it('returns an RSS feed with encoded HTML content', async () => {
+  it('returns an RSS feed with encoded HTML content and categories', async () => {
     mockFetchPublishedBlogPosts.mockResolvedValueOnce([basePost]);
 
     const response = await request(app).get('/rss.xml');
@@ -95,6 +101,9 @@ describe('SEO feeds', () => {
     expect(response.headers['content-type']).toContain('application/rss+xml');
     expect(response.text).toContain('<title>Infinite Realms Update</title>');
     expect(response.text).toContain('<content:encoded><![CDATA[<h1>Infinite Realms</h1>');
+    expect(response.text).toContain('<category>Updates</category>');
+    expect(response.text).toContain('<category>release</category>');
+    expect(response.text).toContain('<language>en-us</language>');
   });
 
   it('exposes a robots.txt that references the sitemap', async () => {

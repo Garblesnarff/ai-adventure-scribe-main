@@ -27,12 +27,34 @@ export function createSoftwareApplicationSchema(site: SiteConfig) {
 }
 
 export function createBlogSchema(site: SiteConfig, canonicalUrl: string, posts: BlogPost[]) {
+  const blogPosts = posts.slice(0, 12).map((post) => {
+    const keywords = [...post.tags, ...post.categories].filter(Boolean);
+
+    return {
+      '@type': 'BlogPosting',
+      headline: post.title,
+      url: `${site.url}/blog/${post.slug}`,
+      datePublished: post.publishedAt,
+      dateModified: post.updatedAt ?? post.publishedAt,
+      image: post.coverImageUrl ? [post.coverImageUrl] : undefined,
+      description: post.excerpt,
+      author: {
+        '@type': 'Person',
+        name: post.authorName || site.name,
+      },
+      keywords: keywords.length ? keywords.join(', ') : undefined,
+    };
+  });
+  const genres = Array.from(new Set(posts.flatMap((post) => post.categories))).filter(Boolean);
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Blog',
     name: `${site.name} Blog`,
     headline: `${site.name} Blog`,
     description: site.description,
+    genre: genres,
+    inLanguage: 'en-US',
     url: canonicalUrl,
     publisher: {
       '@type': 'Organization',
@@ -42,29 +64,27 @@ export function createBlogSchema(site: SiteConfig, canonicalUrl: string, posts: 
         url: site.logoUrl,
       },
     },
-    blogPost: posts.slice(0, 12).map((post) => ({
-      '@type': 'BlogPosting',
-      headline: post.title,
-      url: `${site.url}/blog/${post.slug}`,
-      datePublished: post.publishedAt,
-      dateModified: post.updatedAt ?? post.publishedAt,
-      image: post.coverImageUrl ? [post.coverImageUrl] : undefined,
-      description: post.excerpt,
-    })),
+    blogPost: blogPosts,
   };
 }
 
 export function createArticleSchema(site: SiteConfig, canonicalUrl: string, post: BlogPost) {
+  const allKeywords = [...post.tags, ...post.categories].filter(Boolean);
+  
   return {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': ['Article', 'BlogPosting'],
     headline: post.title,
+    alternativeHeadline: post.excerpt,
     description: post.excerpt,
     url: canonicalUrl,
     image: post.coverImageUrl ? [post.coverImageUrl] : [site.defaultSocialImageUrl],
     datePublished: post.publishedAt,
     dateModified: post.updatedAt ?? post.publishedAt,
-    wordCount: Math.round(post.readingTimeMinutes * 200),
+    wordCount: post.estimatedWordCount,
+    timeRequired: `PT${post.readingTimeMinutes}M`,
+    articleSection: post.categories.length ? post.categories[0] : undefined,
+    articleBody: post.excerpt,
     author: {
       '@type': 'Person',
       name: post.authorName || site.name,
@@ -81,6 +101,10 @@ export function createArticleSchema(site: SiteConfig, canonicalUrl: string, post
       '@type': 'WebPage',
       '@id': canonicalUrl,
     },
-    keywords: post.tags.length ? post.tags : undefined,
+    keywords: allKeywords.length ? allKeywords.join(', ') : undefined,
+    about: post.categories.map((category) => ({
+      '@type': 'Thing',
+      name: category,
+    })),
   };
 }
