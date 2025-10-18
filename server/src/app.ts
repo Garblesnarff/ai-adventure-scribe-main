@@ -6,6 +6,8 @@ import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
 import { registerRoutes } from './routes/index.js';
+import { blogRouter } from './routes/blog.js';
+import { seoRouter } from './routes/seo.js';
 
 export function createApp() {
   const app = express();
@@ -46,6 +48,10 @@ export function createApp() {
   registerStaticAssetMiddleware(app);
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
+
+  // Mount public blog and SEO routers with cache headers
+  app.use('/blog', blogRouter());
+  app.use('/', seoRouter());
 
   registerRoutes(app);
 

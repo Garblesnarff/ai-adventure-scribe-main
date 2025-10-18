@@ -1,9 +1,85 @@
 import { marked } from 'marked';
 import sanitizeHtml, { type Attributes } from 'sanitize-html';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import yaml from 'highlight.js/lib/languages/yaml';
+import sql from 'highlight.js/lib/languages/sql';
+import css from 'highlight.js/lib/languages/css';
+
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('css', css);
+
+const renderer = new marked.Renderer();
+
+renderer.code = function renderCode(code, infostring) {
+  const rawLanguage = typeof infostring === 'string' ? infostring.trim().split(/\s+/)[0] : '';
+  const normalizedLanguage = normalizeLanguage(rawLanguage);
+
+  let highlighted = code;
+  let detectedLanguage = normalizedLanguage;
+
+  try {
+    if (normalizedLanguage && hljs.getLanguage(normalizedLanguage)) {
+      highlighted = hljs.highlight(code, { language: normalizedLanguage, ignoreIllegals: true }).value;
+    } else {
+      const result = hljs.highlightAuto(code);
+      highlighted = result.value;
+      detectedLanguage = result.language ? normalizeLanguage(result.language) : 'plaintext';
+    }
+  } catch (error) {
+    console.warn('Failed to highlight code block', error);
+    highlighted = escapeHtml(code);
+    detectedLanguage = 'plaintext';
+  }
+
+  const languageLabel = detectedLanguage || 'plaintext';
+  const caption = rawLanguage ? `<figcaption class="ir-code-label">${escapeHtml(rawLanguage)}</figcaption>` : '';
+
+  return `<figure class="ir-code-block" data-language="${languageLabel}">
+    ${caption}
+    <pre class="ir-code-block__surface" tabindex="0" role="region" aria-label="Code block in ${languageLabel}">
+      <code class="hljs ir-code-block__code language-${languageLabel}">${highlighted}</code>
+    </pre>
+  </figure>`;
+};
+
+function normalizeLanguage(lang: string): string {
+  if (!lang) return '';
+  const normalized = lang.toLowerCase().trim();
+  const aliases: Record<string, string> = {
+    js: 'javascript',
+    ts: 'typescript',
+    py: 'python',
+    sh: 'bash',
+    shell: 'bash',
+    yml: 'yaml',
+  };
+  return aliases[normalized] || normalized;
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 marked.setOptions({
   gfm: true,
   breaks: true,
+  renderer,
 });
 
 const ALLOWED_TAGS = Array.from(new Set([
@@ -29,6 +105,7 @@ const ALLOWED_TAGS = Array.from(new Set([
   'sup',
   'sub',
   'small',
+  'span',
 ]));
 
 const COMMON_ATTRIBUTES = [
@@ -39,6 +116,7 @@ const COMMON_ATTRIBUTES = [
   'aria-hidden',
   'role',
   'data-language',
+  'tabindex',
 ];
 
 const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
