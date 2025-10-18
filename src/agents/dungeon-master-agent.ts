@@ -35,6 +35,9 @@ import { ResponseCoordinator } from './services/response/ResponseCoordinator';
 import { ResponsePipeline } from './services/response/ResponsePipeline';
 import { CachedCampaignContextProvider } from './services/campaign/CachedCampaignContextProvider';
 import { ConversationStateStore } from './services/conversation/ConversationStateStore';
+import encounterGenerator from '@/services/encounters/encounter-generator';
+import { EncounterGenerationInput, EncounterSpec } from '@/types/encounters';
+import { postEncounterTelemetry } from '@/services/encounters/telemetry-client';
 
 
 export class DungeonMasterAgent implements Agent {
@@ -62,6 +65,8 @@ export class DungeonMasterAgent implements Agent {
   private errorHandler: ErrorHandlingService;
   private gameState: Partial<GameState>;
   private memoryManager: EnhancedMemoryManager | null = null;
+  private lastEncounterAt: number = 0;
+  private readonly encounterCooldownMs = 120000; // 2 minutes
 
   // ====================================
   // Constructor
@@ -146,6 +151,9 @@ export class DungeonMasterAgent implements Agent {
       // Update the internal game state based on the response
       await this.updateGameStateFromResponse(response);
 
+      // Targeted invocation hooks (no player UI)
+      await this.maybeInvokeEncounterHooks(enhancedTask, response);
+
       // Notify other agents (rules interpreter, narrator) with the response
       await this.notifyAgents(enhancedTask, response);
 
@@ -157,6 +165,13 @@ export class DungeonMasterAgent implements Agent {
         message: error instanceof Error ? error.message : 'Failed to execute task'
       };
     }
+  }
+
+  /**
+   * Plans an encounter using the internal orchestrator (players never see this directly).
+   */
+  public planEncounter(input: EncounterGenerationInput): EncounterSpec {
+    return encounterGenerator.generate(input);
   }
 
   /**
@@ -333,5 +348,71 @@ export class DungeonMasterAgent implements Agent {
         severity: ErrorSeverity.MEDIUM
       }
     );
+  }
+
+  /**
+   * Ask Rules Interpreter to validate an encounter spec.
+   */
+  public async validatePlannedEncounter(spec: EncounterSpec): Promise<void> {
+    await this.errorHandler.handleOperation(
+      async () => this.messagingService.sendMessage(
+        this.id,
+        'rules_interpreter_1',
+        MessageType.TASK,
+        {
+          taskDescription: 'Validate planned encounter',
+          ruleType: 'encounter',
+          encounterSpec: spec,
+          monsters: [] // kept empty here; Rules Interpreter can load SRD
+        },
+        MessagePriority.HIGH
+      ),
+      {
+        category: ErrorCategory.AGENT,
+        context: 'DungeonMasterAgent.validatePlannedEncounter',
+        severity: ErrorSeverity.MEDIUM
+      }
+    );
+  }
+
+  /**
+   * Internal targeted hooks to plan/validate encounters based on pacing signals.
+   */
+  private async maybeInvokeEncounterHooks(task: AgentTask, _response: AgentResult): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastEncounterAt < this.encounterCooldownMs) return;
+
+    const threat = this.gameState.sceneStatus?.threatLevel;
+    const justRested = typeof task.description === 'string' && /(short|long)\s+rest/i.test(task.description);
+
+    let trigger: 'none' | 'combat' | 'exploration' = 'none';
+    if (threat === 'high' || threat === 'medium') trigger = 'combat';
+    else if (justRested) trigger = 'exploration';
+
+    if (trigger === 'none') return;
+
+    const sessionId = task.context?.sessionId as string | undefined;
+    const input = {
+      type: trigger,
+      party: { members: [{ level: 3 }] }, // TODO: replace with real party snapshot when available
+      world: { biome: 'forest' },
+      requestedDifficulty: trigger === 'combat' ? 'medium' : 'easy',
+      sessionId,
+    } as EncounterGenerationInput;
+
+    const spec = this.planEncounter(input);
+    await this.validatePlannedEncounter(spec);
+    this.lastEncounterAt = now;
+  }
+
+  /**
+   * Report outcome telemetry for adaptive difficulty. No player UI involved.
+   */
+  public async reportEncounterOutcome(sessionId: string, spec: EncounterSpec, resourcesUsedEst: number): Promise<void> {
+    try {
+      await postEncounterTelemetry({ sessionId, difficulty: spec.difficulty, resourcesUsedEst });
+    } catch (e) {
+      console.warn('Failed to post encounter telemetry', e);
+    }
   }
 }
