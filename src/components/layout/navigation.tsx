@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sword, Users, Map, Home, LogOut } from 'lucide-react';
+import { Sword, Users, Home, LogOut, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
  */
 const Navigation: React.FC = () => {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isBlogAdmin } = useAuth();
   
   /**
    * Helper function to determine if a path is active
@@ -60,6 +60,16 @@ const Navigation: React.FC = () => {
                 <Users className="h-4 w-4" />
                 <span>Characters</span>
               </Link>
+              {isBlogAdmin && (
+                <Link
+                  to="/app/blog"
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                    ${isActive('/app/blog') ? 'bg-infinite-purple/20 text-infinite-gold border border-infinite-purple/40' : 'text-infinite-gold/90 hover:text-infinite-gold hover:bg-infinite-purple/10'} focus-visible:ring-2 focus-visible:ring-infinite-gold focus-visible:ring-offset-2 focus-visible:ring-offset-infinite-dark`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Blog Admin</span>
+                </Link>
+              )}
             </div>
             
             {/* User Info and Sign Out */}
