@@ -47,18 +47,6 @@ export interface BlogPostAuthor {
   displayName: string;
 }
 
-export interface BlogPostCategory {
-  id: string;
-  slug: string;
-  name: string;
-}
-
-export interface BlogPostTag {
-  id: string;
-  slug: string;
-  name: string;
-}
-
 export interface BlogPost {
   id: string;
   slug: string;
@@ -75,11 +63,17 @@ export interface BlogPost {
   canonicalUrl: string | null;
   publishedAt: string;
   updatedAt?: string;
+  // Fields consumed by SSR views and SEO helpers
+  coverImageUrl?: string | null;
+  coverImageAlt?: string | null;
+  authorName?: string | null;
+  tags: string[];
+  categories: string[];
   readingTimeMinutes: number;
+  estimatedWordCount?: number;
+  // Additional structured metadata (not directly used by SSR views)
   metadata: Record<string, unknown>;
   author: BlogPostAuthor | null;
-  categories: BlogPostCategory[];
-  tags: BlogPostTag[];
 }
 
 interface BlogCategoryRelationRow {
@@ -116,13 +110,25 @@ interface SupabaseBlogRow {
   seo_description?: string | null;
   seo_keywords?: string[] | null;
   canonical_url?: string | null;
+  // extended optional fields (from SSR PR)
+  publish_date?: string | null;
+  updated_at?: string | null;
+  modified_at?: string | null;
+  cover_image_url?: string | null;
+  cover_image_alt?: string | null;
+  hero_image_url?: string | null;
+  social_image_url?: string | null;
+  image_alt?: string | null;
+  author_name?: string | null;
+  byline?: string | null;
+  tags?: string[] | string | BlogTagRelationRow[] | null;
+  categories?: string[] | string | BlogCategoryRelationRow[] | null;
+  category?: string | null;
+  reading_time_minutes?: number | null;
   status?: string | null;
   published_at?: string | null;
-  updated_at?: string | null;
   metadata?: Record<string, unknown> | null;
   author?: BlogAuthorRow | null;
-  categories?: BlogCategoryRelationRow[] | null;
-  tags?: BlogTagRelationRow[] | null;
 }
 
 export function isSupabaseConfigured(): boolean {
@@ -151,7 +157,7 @@ export async function fetchPublishedBlogPosts(): Promise<BlogPost[]> {
     return [];
   }
 
-  const rows = (data ?? []) as SupabaseBlogRow[];
+  const rows = (data ?? []) as unknown as SupabaseBlogRow[];
   return rows
     .map(mapRowToBlogPost)
     .filter((post): post is BlogPost => Boolean(post));
@@ -178,7 +184,7 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
     return null;
   }
 
-  const post = mapRowToBlogPost(data as SupabaseBlogRow);
+  const post = mapRowToBlogPost(data as unknown as SupabaseBlogRow);
   if (!post) {
     return null;
   }
@@ -201,23 +207,40 @@ function mapRowToBlogPost(row: SupabaseBlogRow): BlogPost | null {
   const rendered = renderMarkdown(markdown);
   const summary = deriveSummary(row.summary, rendered.text);
   const excerpt = summary ?? createExcerpt(rendered.text);
-  const publishedAt = normalizeDate(row.published_at);
+  const publishedAt = normalizeDate(row.published_at || row.publish_date);
   if (!publishedAt) {
     return null;
   }
 
-  const updatedAt = normalizeDate(row.updated_at) ?? undefined;
+  const updatedAt = normalizeDate(row.updated_at || row.modified_at) ?? undefined;
 
-  const categories = mapCategories(row.categories);
-  const tags = mapTags(row.tags);
-  const author = mapAuthor(row.author);
+  // derive flat tags/categories for SSR views
+  const tags: string[] = Array.isArray(row.tags)
+    ? (row.tags as any[]).map((t) => typeof t === 'string' ? t.trim() : (t?.tag?.name ?? '')).filter(Boolean)
+    : typeof row.tags === 'string'
+      ? row.tags.split(',').map((t) => t.trim()).filter(Boolean)
+      : [];
+
+  const categories: string[] = Array.isArray(row.categories)
+    ? (row.categories as any[]).map((c) => typeof c === 'string' ? c.trim() : (c?.category?.name ?? '')).filter(Boolean)
+    : typeof row.categories === 'string'
+      ? row.categories.split(',').map((c) => c.trim()).filter(Boolean)
+      : (row.category && row.category.trim()) ? [row.category.trim()] : [];
+
+  const author = mapAuthor((row.author as BlogAuthorRow | null | undefined) ?? null);
 
   const metadata = normalizeMetadata(row.metadata);
   const seoKeywords = Array.isArray(row.seo_keywords)
     ? row.seo_keywords.map((keyword) => keyword.trim()).filter(Boolean)
     : [];
 
-  const readingTimeMinutes = computeReadingTime(rendered.text);
+  const coverImageUrl = row.cover_image_url || row.hero_image_url || row.social_image_url || row.featured_image_url || null;
+  const coverImageAlt = row.cover_image_alt || row.image_alt || null;
+  const authorName = row.author_name || ((row.author as any)?.display_name ?? null) || row.byline || null;
+  const readingTimeMinutes = typeof row.reading_time_minutes === 'number' && row.reading_time_minutes > 0
+    ? Math.round(row.reading_time_minutes)
+    : computeReadingTime(rendered.text);
+  const estimatedWordCount = Math.max(1, Math.round(readingTimeMinutes * 200));
 
   return {
     id: row.id ?? slug,
@@ -235,11 +258,15 @@ function mapRowToBlogPost(row: SupabaseBlogRow): BlogPost | null {
     canonicalUrl: row.canonical_url ?? null,
     publishedAt,
     updatedAt,
+    coverImageUrl,
+    coverImageAlt,
+    authorName,
+    tags,
+    categories,
     readingTimeMinutes,
+    estimatedWordCount,
     metadata,
     author,
-    categories,
-    tags,
   };
 }
 
@@ -277,43 +304,7 @@ function deriveSummary(summary: string | null | undefined, fallback: string): st
   return createExcerpt(fallback);
 }
 
-function mapCategories(relations: BlogCategoryRelationRow[] | null | undefined): BlogPostCategory[] {
-  if (!Array.isArray(relations)) {
-    return [];
-  }
-  return relations
-    .map((relation) => {
-      const category = relation?.category;
-      if (!category?.id || !category.slug || !category.name) {
-        return null;
-      }
-      return {
-        id: category.id,
-        slug: category.slug,
-        name: category.name,
-      } satisfies BlogPostCategory;
-    })
-    .filter((value): value is BlogPostCategory => Boolean(value));
-}
-
-function mapTags(relations: BlogTagRelationRow[] | null | undefined): BlogPostTag[] {
-  if (!Array.isArray(relations)) {
-    return [];
-  }
-  return relations
-    .map((relation) => {
-      const tag = relation?.tag;
-      if (!tag?.id || !tag.slug || !tag.name) {
-        return null;
-      }
-      return {
-        id: tag.id,
-        slug: tag.slug,
-        name: tag.name,
-      } satisfies BlogPostTag;
-    })
-    .filter((value): value is BlogPostTag => Boolean(value));
-}
+// Note: category/tag relation mappers removed; SSR views use flattened string arrays above.
 
 function mapAuthor(author: BlogAuthorRow | null | undefined): BlogPostAuthor | null {
   if (!author?.id || !author.display_name) {

@@ -21,8 +21,10 @@ hljs.registerLanguage('css', css);
 
 const renderer = new marked.Renderer();
 
-renderer.code = function renderCode(code, infostring) {
-  const rawLanguage = typeof infostring === 'string' ? infostring.trim().split(/\s+/)[0] : '';
+// Adapt to marked's current Code renderer signature
+renderer.code = function renderCode({ text, lang }: any) {
+  const code: string = typeof text === 'string' ? text : '';
+  const rawLanguage = typeof lang === 'string' ? lang.trim().split(/\s+/)[0] : '';
   const normalizedLanguage = normalizeLanguage(rawLanguage);
 
   let highlighted = code;

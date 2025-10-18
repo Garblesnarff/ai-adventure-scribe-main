@@ -28,7 +28,7 @@ export function createSoftwareApplicationSchema(site: SiteConfig) {
 
 export function createBlogSchema(site: SiteConfig, canonicalUrl: string, posts: BlogPost[]) {
   const blogPosts = posts.slice(0, 12).map((post) => {
-    const keywords = [...post.tags, ...post.categories].filter(Boolean);
+    const keywords = [...(post.tags as any[]), ...(post.categories as any[])].map(String).filter(Boolean);
 
     return {
       '@type': 'BlogPosting',
@@ -45,7 +45,7 @@ export function createBlogSchema(site: SiteConfig, canonicalUrl: string, posts: 
       keywords: keywords.length ? keywords.join(', ') : undefined,
     };
   });
-  const genres = Array.from(new Set(posts.flatMap((post) => post.categories))).filter(Boolean);
+  const genres = Array.from(new Set(posts.flatMap((post) => (post.categories as any[]).map(String)))).filter(Boolean);
 
   return {
     '@context': 'https://schema.org',
@@ -69,7 +69,7 @@ export function createBlogSchema(site: SiteConfig, canonicalUrl: string, posts: 
 }
 
 export function createArticleSchema(site: SiteConfig, canonicalUrl: string, post: BlogPost) {
-  const allKeywords = [...post.tags, ...post.categories].filter(Boolean);
+  const allKeywords = [...(post.tags as any[]), ...(post.categories as any[])].map(String).filter(Boolean);
   
   return {
     '@context': 'https://schema.org',

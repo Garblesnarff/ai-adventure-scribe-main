@@ -13,12 +13,12 @@ interface BlogPostPageProps {
 
 export function BlogPostPage({ site, assets, post, relatedPosts }: BlogPostPageProps) {
   const canonicalUrl = `${site.url}/blog/${post.slug}`;
-  const allKeywords = [...post.categories, ...post.tags].filter(Boolean);
+  const allKeywords = [...(post.categories as any[]), ...(post.tags as any[])].map(String).filter(Boolean);
   const meta: BaseMeta = {
     title: `${post.title} | ${site.name}`,
     description: post.excerpt,
     canonicalUrl,
-    imageUrl: post.coverImageUrl ?? site.defaultSocialImageUrl,
+    imageUrl: (post as any).coverImageUrl ?? site.defaultSocialImageUrl,
     type: 'article',
     publishedTime: post.publishedAt,
     modifiedTime: post.updatedAt ?? post.publishedAt,
@@ -95,12 +95,12 @@ export function BlogPostPage({ site, assets, post, relatedPosts }: BlogPostPageP
               </h1>
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
-                {post.authorName ? (
+                {(post as any).authorName ? (
                   <div className="flex items-center gap-2">
                     <svg className="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                       <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                     </svg>
-                    <span>{post.authorName}</span>
+                    <span>{(post as any).authorName}</span>
                   </div>
                 ) : null}
                 <span className="h-1 w-1 rounded-full bg-slate-600" aria-hidden="true" />
@@ -133,14 +133,14 @@ export function BlogPostPage({ site, assets, post, relatedPosts }: BlogPostPageP
             />
           </article>
 
-          {(post.tags.length > 0 || post.categories.length > 0) ? (
+          {((post.tags as any[]).length > 0 || (post.categories as any[]).length > 0) ? (
             <footer className="mt-12 border-t border-slate-800/60 pt-8">
               <div className="flex flex-col gap-4">
-                {post.categories.length > 0 ? (
+                {(post.categories as any[]).length > 0 ? (
                   <div>
                     <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-amber-300">Categories</h2>
                     <div className="flex flex-wrap gap-2">
-                      {post.categories.map((category) => (
+                      {(post.categories as any[]).map((category: any) => (
                         <span
                           key={category}
                           className="inline-flex items-center rounded-full border border-amber-600/40 bg-amber-950/40 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-200"
@@ -151,11 +151,11 @@ export function BlogPostPage({ site, assets, post, relatedPosts }: BlogPostPageP
                     </div>
                   </div>
                 ) : null}
-                {post.tags.length > 0 ? (
+                {(post.tags as any[]).length > 0 ? (
                   <div>
                     <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-amber-300">Tags</h2>
                     <div className="flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
+                      {(post.tags as any[]).map((tag: any) => (
                         <span
                           key={tag}
                           className="inline-flex items-center rounded-md border border-slate-700/60 bg-slate-900/40 px-3 py-1.5 text-xs font-medium text-slate-300"
@@ -174,7 +174,7 @@ export function BlogPostPage({ site, assets, post, relatedPosts }: BlogPostPageP
             <aside className="mt-16 border-t border-slate-800/60 pt-12">
               <h2 className="mb-8 font-heading text-2xl font-bold text-amber-50">Continue Your Quest</h2>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
-                {relatedPosts.slice(0, 4).map((other) => (
+                {relatedPosts.slice(0, 4).map((other: any) => (
                   <article
                     key={other.id}
                     className="group flex flex-col gap-4 overflow-hidden rounded-xl border border-slate-800/80 bg-gradient-to-br from-slate-900/80 to-slate-900/60 p-5 transition-all duration-300 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-900/20"
