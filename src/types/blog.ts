@@ -27,14 +27,15 @@ export interface BlogAuthor {
 
 export interface BlogCategory {
   id: string;
-  name: string;
+  title: string;
   slug: string;
   description?: string | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
+  createdBy?: string | null;
 }
 
 export interface BlogTag {
@@ -42,9 +43,10 @@ export interface BlogTag {
   name: string;
   slug: string;
   description?: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
+  createdBy?: string | null;
 }
 
 export interface BlogPost {
@@ -52,18 +54,21 @@ export interface BlogPost {
   authorId: string;
   title: string;
   slug: string;
-  summary?: string | null;
+  excerpt?: string | null;
   content?: string | null;
-  featuredImageUrl?: string | null;
-  heroImageAlt?: string | null;
+  coverImageUrl?: string | null;
   status: BlogPostStatus;
-  seo: BlogSeoMetadata;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   scheduledFor?: string | null;
   publishedAt?: string | null;
-  metadata: Record<string, unknown> | null;
-  canonicalUrl?: string | null;
   createdAt: string;
   updatedAt: string;
+  authorRole?: string | null;
+  categoryIds?: string[];
+  tagIds?: string[];
+  categories?: BlogCategory[];
+  tags?: BlogTag[];
 }
 
 export interface BlogPostCategoryLink {
@@ -81,4 +86,37 @@ export interface BlogPostTagLink {
 export interface BlogUserRole {
   userId: string;
   role: BlogRole;
+}
+
+export interface BlogPostListFilters {
+  status?: BlogPostStatus | 'all';
+  search?: string;
+  scheduledOnly?: boolean;
+  categoryId?: string;
+  tagId?: string;
+  sortBy?: 'updatedAt' | 'createdAt' | 'title' | 'status' | 'publishedAt';
+  sortDirection?: 'asc' | 'desc';
+}
+
+export interface BlogMediaAsset {
+  id: string;
+  path: string;
+  bucket: string;
+  publicUrl: string;
+  name: string;
+  mimeType: string | null;
+  size: number | null;
+  createdAt: string | null;
+}
+
+export interface SignedUploadRequest {
+  filename: string;
+  contentType: string;
+  bucket?: string;
+}
+
+export interface SignedUploadResponse {
+  signedUrl: string;
+  path: string;
+  publicUrl: string;
 }
