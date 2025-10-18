@@ -81,6 +81,7 @@ const Breadcrumbs: React.FC = () => {
   const buildPath = (index: number): string => '/' + pathSegments.slice(0, index + 1).join('/');
 
   // Hide breadcrumbs on home page and characters page
+  // TODO [legacy-character-deprecation]: '/app/characters' is legacy. When removing legacy entry, remove this special case per docs/cleanup/campaign-character-migration.md
   if (
     pathSegments.length === 0 ||
     (pathSegments.length === 1 && pathSegments[0] === 'app') ||
