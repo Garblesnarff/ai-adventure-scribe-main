@@ -1,14 +1,17 @@
 import { Router, Request, Response } from 'express';
 import fetch from 'node-fetch';
 import { requireAuth } from '../../middleware/auth.js';
-import { createRateLimiter } from '../../middleware/rate-limit.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
+import { checkQuotaAndConsume } from '../../services/ai-usage-service.js';
+import { getCircuitBreaker, CircuitOpenError } from '../../utils/circuit-breaker.js';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
 
 export default function llmRouter() {
   const router = Router();
   router.use(requireAuth);
-  router.use(createRateLimiter({ windowMs: 60_000, max: 30, key: 'llm' })); // 30 req/min per IP
+  // Plan-aware per-IP and per-user limiter
+  router.use(planRateLimit('llm'));
 
   router.post('/generate', async (req: Request, res: Response) => {
     const {
@@ -31,8 +34,28 @@ export default function llmRouter() {
       return res.status(400).json({ error: 'Missing prompt' });
     }
 
+    // Quota check (per user/org per day)
+    const userId = (req as any).user?.userId as string;
+    const plan = (req as any).user?.plan as string || 'free';
+    const quota = await checkQuotaAndConsume({ userId, plan, type: 'llm', units: 1 });
+    if (!quota.allowed) {
+      res.setHeader('Retry-After', String(Math.max(1, Math.ceil((new Date(quota.resetAt).getTime() - Date.now()) / 1000))));
+      return res.status(402).json({ error: 'AI quota exceeded', remaining: quota.remaining, resetAt: quota.resetAt });
+    }
+
     try {
       if (provider === 'openrouter') {
+        const breaker = getCircuitBreaker('llm:openrouter');
+        try {
+          breaker.allowOrThrow();
+        } catch (e) {
+          if (e instanceof CircuitOpenError) {
+            res.setHeader('Retry-After', String(Math.max(1, e.retryAfterSec)));
+            return res.status(503).json({ error: 'Provider temporarily unavailable' });
+          }
+          throw e;
+        }
+
         const apiKey = process.env.OPENROUTER_API_KEY;
         if (!apiKey) {
           return res.status(500).json({ error: 'Server not configured for OpenRouter' });
@@ -70,9 +93,11 @@ export default function llmRouter() {
           const errText = await response.text();
           const status = response.status;
           console.error('[LLM] OpenRouter error', status, errText);
+          breaker.onFailure();
           return res.status(status).json({ error: 'LLM request failed', details: errText });
         }
 
+        breaker.onSuccess();
         type ORChatResp = { choices?: { message?: { content?: string } }[] };
         const data = (await response.json()) as ORChatResp;
         const text: string = data.choices?.[0]?.message?.content ?? '';
@@ -80,6 +105,17 @@ export default function llmRouter() {
       }
 
       if (provider === 'gemini') {
+        const breaker = getCircuitBreaker('llm:gemini');
+        try {
+          breaker.allowOrThrow();
+        } catch (e) {
+          if (e instanceof CircuitOpenError) {
+            res.setHeader('Retry-After', String(Math.max(1, e.retryAfterSec)));
+            return res.status(503).json({ error: 'Provider temporarily unavailable' });
+          }
+          throw e;
+        }
+
         const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
         if (!apiKey) {
           return res.status(500).json({ error: 'Server not configured for Gemini' });
@@ -122,9 +158,11 @@ export default function llmRouter() {
           const errText = await response.text();
           const status = response.status;
           console.error('[LLM] Gemini error', status, errText);
+          breaker.onFailure();
           return res.status(status).json({ error: 'LLM request failed', details: errText });
         }
 
+        breaker.onSuccess();
         const data = await response.json() as any;
         const candidates = data?.candidates || [];
         const first = candidates[0];
@@ -136,6 +174,10 @@ export default function llmRouter() {
       return res.status(400).json({ error: 'Unsupported provider' });
     } catch (e) {
       console.error('[LLM] Error', e);
+      if (e instanceof CircuitOpenError) {
+        res.setHeader('Retry-After', String(Math.max(1, e.retryAfterSec)));
+        return res.status(503).json({ error: 'Provider temporarily unavailable' });
+      }
       return res.status(500).json({ error: 'LLM request failed' });
     }
   });
