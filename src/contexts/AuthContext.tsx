@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { User, Session, AuthError, SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
+
+export type BlogRole = 'admin' | 'editor' | 'author' | 'contributor' | 'viewer';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  blogRole: BlogRole | null;
+  blogRoleLoading: boolean;
+  isBlogAdmin: boolean;
+  refreshBlogRole: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -50,6 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [blogRole, setBlogRole] = useState<BlogRole | null>(null);
+  const [blogRoleLoading, setBlogRoleLoading] = useState(false);
   const hasBootstrapped = useRef(false);
 
   const setAuthState = useMemo(
@@ -58,9 +66,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
         persistSession(nextSession);
+
+        if (!nextSession?.user) {
+          setBlogRole(null);
+          setBlogRoleLoading(false);
+        }
       },
     []
   );
+
+  const fetchBlogRole = useCallback(async () => {
+    if (!user) {
+      setBlogRole(null);
+      setBlogRoleLoading(false);
+      return;
+    }
+
+    if (isOffline()) {
+      setBlogRoleLoading(false);
+      return;
+    }
+
+    setBlogRoleLoading(true);
+    try {
+      const client = supabase as SupabaseClient<any, any, any>;
+      const { data, error } = await client
+        .from('blog_author_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      setBlogRole((data?.role as BlogRole | null) ?? null);
+    } catch (error) {
+      logger.warn('Failed to load blog role', error);
+      setBlogRole(null);
+    } finally {
+      setBlogRoleLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     // Get initial session
@@ -112,6 +157,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       setAuthState(data.session ?? null);
+      if (data.session?.user) {
+        fetchBlogRole();
+      }
     };
 
     const handleOffline = () => {
@@ -128,7 +176,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       disposers.forEach((dispose) => dispose());
     };
-  }, [setAuthState]);
+  }, [fetchBlogRole, setAuthState]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    fetchBlogRole();
+  }, [fetchBlogRole, user?.id]);
 
   const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
@@ -161,6 +216,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    blogRole,
+    blogRoleLoading,
+    isBlogAdmin: blogRole === 'admin',
+    refreshBlogRole: fetchBlogRole,
     signUp,
     signIn,
     signOut,
