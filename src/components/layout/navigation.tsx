@@ -52,6 +52,7 @@ const Navigation: React.FC = () => {
                 <Home className="h-4 w-4" />
                 <span>Home</span>
               </Link>
+              {/* TODO [legacy-character-deprecation]: Legacy Characters nav item. Remove (or gate behind VITE_FEATURE_ENABLE_LEGACY_CHARACTER_ENTRY) per docs/cleanup/campaign-character-migration.md */}
               <Link
                 to="/app/characters"
                 className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors

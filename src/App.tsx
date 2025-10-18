@@ -20,6 +20,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import BlogAdmin from './pages/BlogAdmin';
 
+// TODO [legacy-character-deprecation]: Feature flag for legacy character entry. When disabling legacy character creation, set to false and then remove this flag following docs/cleanup/campaign-character-migration.md
+const ENABLE_LEGACY_CHARACTER_ENTRY = true;
+
 /**
  * Create a new QueryClient instance
  * This will be used to manage and cache all React Query operations
@@ -74,8 +77,9 @@ function App() {
                           <Routes>
                             <Route path="/" element={<Index />} />
                             <Route path="/dice-test" element={<DiceTest />} />
-                            <Route path="/characters" element={<CharacterList />} />
-                            <Route path="/characters/create" element={<CharacterWizard />} />
+                            {/* TODO [legacy-character-deprecation]: Legacy character list and creation routes. Gate behind ENABLE_LEGACY_CHARACTER_ENTRY and remove per docs/cleanup/campaign-character-migration.md */}
+                            {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters" element={<CharacterList />} />}
+                            {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters/create" element={<CharacterWizard />} />}
                             <Route path="/character/:id" element={<CharacterSheet />} />
                             <Route path="/campaigns/create" element={<CampaignWizard />} />
                             <Route path="/campaign/:id" element={<SimpleCampaignView />} />
