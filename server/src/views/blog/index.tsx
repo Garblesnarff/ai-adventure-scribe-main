@@ -12,7 +12,7 @@ interface BlogIndexPageProps {
 
 export function BlogIndexPage({ site, assets, posts }: BlogIndexPageProps) {
   const canonicalUrl = `${site.url}/blog`;
-  const heroImage = posts.find((post) => Boolean(post.coverImageUrl))?.coverImageUrl ?? site.defaultSocialImageUrl;
+  const heroImage = posts.find((post) => Boolean((post as any).coverImageUrl))?.coverImageUrl ?? site.defaultSocialImageUrl;
 
   const allCategories = extractCategories(posts);
   const allTags = extractTags(posts);
@@ -118,11 +118,11 @@ export function BlogIndexPage({ site, assets, posts }: BlogIndexPageProps) {
                   data-post-tags={post.tags.join(',')}
                   data-post-categories={post.categories.join(',')}
                 >
-                  {post.coverImageUrl ? (
+                  {(post as any).coverImageUrl ? (
                     <div className="relative aspect-video overflow-hidden">
                       <img
-                        src={post.coverImageUrl}
-                        alt={post.coverImageAlt || ''}
+                        src={(post as any).coverImageUrl}
+                        alt={(post as any).coverImageAlt || ''}
                         loading="lazy"
                         decoding="async"
                         width="600"
