@@ -2,8 +2,10 @@ import { Router, Request, Response } from 'express';
 import fetch from 'node-fetch';
 /* DEPRECATED: Removed OpenAI imports - using OpenRouter only */
 import { requireAuth } from '../../middleware/auth.js';
-import { createRateLimiter } from '../../middleware/rate-limit.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabaseService } from '../../lib/supabase.js';
+import { checkQuotaAndConsume } from '../../services/ai-usage-service.js';
+import { getCircuitBreaker, CircuitOpenError } from '../../utils/circuit-breaker.js';
 
 /*
  * DEPRECATED: OpenAI gpt-image-1-mini code removed. Using OpenRouter only.
@@ -15,7 +17,7 @@ import { supabaseService } from '../../lib/supabase.js';
 export default function imagesRouter() {
   const router = Router();
   router.use(requireAuth);
-  router.use(createRateLimiter({ windowMs: 60_000, max: 15, key: 'images' })); // 15 req/min per IP
+  router.use(planRateLimit('images'));
 
   router.post('/generate', async (req: Request, res: Response) => {
     const { prompt, referenceImage, model, quality, size }: { prompt: string; referenceImage?: string; model?: string; quality?: 'low' | 'medium' | 'high'; size?: string } = req.body || {};
@@ -24,9 +26,28 @@ export default function imagesRouter() {
       return res.status(400).json({ error: 'Missing prompt' });
     }
 
+    // Quota check
+    const userId = (req as any).user?.userId as string;
+    const plan = (req as any).user?.plan as string || 'free';
+    const quota = await checkQuotaAndConsume({ userId, plan, type: 'image', units: 1 });
+    if (!quota.allowed) {
+      res.setHeader('Retry-After', String(Math.max(1, Math.ceil((new Date(quota.resetAt).getTime() - Date.now()) / 1000))));
+      return res.status(402).json({ error: 'AI quota exceeded', remaining: quota.remaining, resetAt: quota.resetAt });
+    }
+
     try {
-      /* DEPRECATED: Removed OpenAI attempt (using OpenRouter only) */
       // Using OpenRouter for all image generation
+      const breaker = getCircuitBreaker('images:openrouter');
+      try {
+        breaker.allowOrThrow();
+      } catch (e) {
+        if (e instanceof CircuitOpenError) {
+          res.setHeader('Retry-After', String(Math.max(1, e.retryAfterSec)));
+          return res.status(503).json({ error: 'Provider temporarily unavailable' });
+        }
+        throw e;
+      }
+
       const apiKey = process.env.OPENROUTER_API_KEY;
       if (!apiKey) {
         return res.status(500).json({ error: 'Server not configured for image generation' });
@@ -70,8 +91,11 @@ export default function imagesRouter() {
         const errText = await response.text();
         const status = response.status;
         console.error('[Images] OpenRouter error', status, errText);
+        getCircuitBreaker('images:openrouter').onFailure();
         return res.status(status).json({ error: 'Image request failed', details: errText });
       }
+
+      getCircuitBreaker('images:openrouter').onSuccess();
 
       // OpenRouter image-capable chat completion response (robust extraction)
       type ORImageMsg = { [k: string]: any };
@@ -179,6 +203,10 @@ export default function imagesRouter() {
       }
     } catch (e) {
       console.error('[Images] Error', e);
+      if (e instanceof CircuitOpenError) {
+        res.setHeader('Retry-After', String(Math.max(1, e.retryAfterSec)));
+        return res.status(503).json({ error: 'Provider temporarily unavailable' });
+      }
       return res.status(500).json({ error: 'Image generation failed' });
     }
   });
