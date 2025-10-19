@@ -64,7 +64,9 @@ const CharacterFinalization: React.FC = () => {
       const campaignId = searchParams.get('campaign') || undefined;
       const artStyle = analytics.detectArtStyle({ characterTheme: state.character?.theme });
       analytics.aiRegenerateClicked('description', { campaignId, artStyle });
-    } catch {}
+    } catch (e) {
+      // ignore analytics errors
+    }
 
     setIsGeneratingDescription(true);
     try {
@@ -142,7 +144,9 @@ const CharacterFinalization: React.FC = () => {
       const campaignId = searchParams.get('campaign') || undefined;
       const artStyle = analytics.detectArtStyle({ characterTheme: state.character?.theme });
       analytics.aiRegenerateClicked('avatar', { campaignId, artStyle });
-    } catch {}
+    } catch (e) {
+      // ignore analytics errors
+    }
 
     setIsGeneratingAvatar(true);
     setGenerationStep('avatar');
@@ -217,7 +221,9 @@ const CharacterFinalization: React.FC = () => {
       const campaignId = searchParams.get('campaign') || undefined;
       const artStyle = analytics.detectArtStyle({ characterTheme: state.character?.theme });
       analytics.aiRegenerateClicked('design_sheet', { campaignId, artStyle });
-    } catch {}
+    } catch (e) {
+      // ignore analytics errors
+    }
 
     setIsGeneratingImage(true);
     setGenerationStep('sheet');

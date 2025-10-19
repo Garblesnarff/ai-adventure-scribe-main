@@ -414,7 +414,9 @@ const WizardContent: React.FC = () => {
                 campaignGenre: undefined,
               });
               analytics.characterCreationCompleted({ campaignId, artStyle });
-            } catch {}
+            } catch (e) {
+              // ignore analytics errors
+            }
             toast({
               title: "Success!",
               description: "Character created successfully! Background image generation may continue in the background.",

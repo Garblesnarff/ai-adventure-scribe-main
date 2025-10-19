@@ -34,13 +34,17 @@ export const analytics = {
       if (g.gtag && typeof g.gtag === 'function') {
         g.gtag('event', event, data);
       }
-    } catch {}
+    } catch (err) {
+      // ignore analytics errors
+    }
 
     try {
       if (g.posthog && typeof g.posthog.capture === 'function') {
         g.posthog.capture(event, data);
       }
-    } catch {}
+    } catch (err) {
+      // ignore analytics errors
+    }
   },
 
   campaignTabViewed(tab: string, info: { campaignId?: string; artStyle?: string } = {}): void {
