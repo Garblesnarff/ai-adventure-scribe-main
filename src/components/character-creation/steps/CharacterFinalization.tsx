@@ -11,6 +11,8 @@ import { openRouterService } from '@/services/openrouter-service';
 import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react';
 import logger from '@/lib/logger';
 import { useCampaign } from '@/contexts/CampaignContext';
+import { analytics } from '@/services/analytics';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * CharacterFinalization component for character creation
@@ -25,6 +27,7 @@ const CharacterFinalization: React.FC = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('fantasy');
   const [generationStep, setGenerationStep] = useState<'idle' | 'avatar' | 'sheet' | 'background'>('idle');
+  const [searchParams] = useSearchParams();
 
   // Initialize theme from campaign defaults when available
   useEffect(() => {
@@ -56,6 +59,12 @@ const CharacterFinalization: React.FC = () => {
       });
       return;
     }
+
+    try {
+      const campaignId = searchParams.get('campaign') || undefined;
+      const artStyle = analytics.detectArtStyle({ characterTheme: state.character?.theme });
+      analytics.aiRegenerateClicked('description', { campaignId, artStyle });
+    } catch {}
 
     setIsGeneratingDescription(true);
     try {
@@ -129,6 +138,12 @@ const CharacterFinalization: React.FC = () => {
       return;
     }
 
+    try {
+      const campaignId = searchParams.get('campaign') || undefined;
+      const artStyle = analytics.detectArtStyle({ characterTheme: state.character?.theme });
+      analytics.aiRegenerateClicked('avatar', { campaignId, artStyle });
+    } catch {}
+
     setIsGeneratingAvatar(true);
     setGenerationStep('avatar');
     try {
@@ -197,6 +212,12 @@ const CharacterFinalization: React.FC = () => {
       });
       return;
     }
+
+    try {
+      const campaignId = searchParams.get('campaign') || undefined;
+      const artStyle = analytics.detectArtStyle({ characterTheme: state.character?.theme });
+      analytics.aiRegenerateClicked('design_sheet', { campaignId, artStyle });
+    } catch {}
 
     setIsGeneratingImage(true);
     setGenerationStep('sheet');
