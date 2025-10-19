@@ -1,8 +1,13 @@
 import express from 'express';
+import type { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import fs from 'fs';
+import path from 'path';
 import { registerRoutes } from './routes/index.js';
+import { blogRouter } from './routes/blog.js';
+import { seoRouter } from './routes/seo.js';
 
 export function createApp() {
   const app = express();
@@ -40,9 +45,39 @@ export function createApp() {
   app.use(express.json({ limit: '10mb' }));
   app.use(morgan('dev'));
 
+  registerStaticAssetMiddleware(app);
+
   app.get('/health', (_req, res) => res.json({ ok: true }));
+
+  // Mount public blog and SEO routers with cache headers
+  app.use('/blog', blogRouter());
+  app.use('/', seoRouter());
 
   registerRoutes(app);
 
   return app;
+}
+
+function registerStaticAssetMiddleware(app: Express) {
+  const distRoot = resolveFromCwd(process.env.VITE_CLIENT_DIST || 'dist');
+  const assetDir = path.join(distRoot, 'assets');
+  const brandingDir = resolveFromCwd('branding');
+
+  if (fs.existsSync(assetDir)) {
+    app.use('/assets', express.static(assetDir, {
+      immutable: true,
+      maxAge: '31536000',
+    }));
+  }
+
+  if (fs.existsSync(brandingDir)) {
+    app.use('/branding', express.static(brandingDir, {
+      immutable: true,
+      maxAge: '31536000',
+    }));
+  }
+}
+
+function resolveFromCwd(targetPath: string) {
+  return path.isAbsolute(targetPath) ? targetPath : path.resolve(process.cwd(), targetPath);
 }

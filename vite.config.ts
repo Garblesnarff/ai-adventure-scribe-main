@@ -21,7 +21,12 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    manifest: true,
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        'blog-client': path.resolve(__dirname, 'src/blog-client.ts'),
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
