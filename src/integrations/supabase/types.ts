@@ -356,6 +356,9 @@ export type Database = {
           tone: string | null
           updated_at: string | null
           user_id: string | null
+          art_style: string | null
+          style_config: Json | null
+          rules_config: Json | null
         }
         Insert: {
           atmosphere?: string | null
@@ -374,6 +377,9 @@ export type Database = {
           tone?: string | null
           updated_at?: string | null
           user_id?: string | null
+          art_style?: string | null
+          style_config?: Json | null
+          rules_config?: Json | null
         }
         Update: {
           atmosphere?: string | null
@@ -392,8 +398,40 @@ export type Database = {
           tone?: string | null
           updated_at?: string | null
           user_id?: string | null
+          art_style?: string | null
+          style_config?: Json | null
+          rules_config?: Json | null
         }
         Relationships: []
+      }
+      campaign_members: {
+        Row: {
+          campaign_id: string
+          user_id: string
+          role: string
+          joined_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          user_id: string
+          role?: string
+          joined_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          user_id?: string
+          role?: string
+          joined_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_members_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -540,6 +578,7 @@ export type Database = {
           description: string | null
           experience_points: number | null
           id: string
+          campaign_id: string | null
           level: number | null
           name: string
           race: string
@@ -554,6 +593,7 @@ export type Database = {
           description?: string | null
           experience_points?: number | null
           id?: string
+          campaign_id?: string | null
           level?: number | null
           name: string
           race: string
@@ -568,6 +608,7 @@ export type Database = {
           description?: string | null
           experience_points?: number | null
           id?: string
+          campaign_id?: string | null
           level?: number | null
           name?: string
           race?: string

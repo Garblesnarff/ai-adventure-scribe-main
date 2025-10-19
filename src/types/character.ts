@@ -130,6 +130,7 @@ export interface CharacterBackground {
 export interface Character {
   id?: string;
   user_id?: string;
+  campaign_id?: string;
   name?: string;
   description?: string;
   race?: CharacterRace | null;
@@ -324,6 +325,7 @@ export function transformCharacterForStorage(character: Character) {
   return {
     id: character.id,
     user_id: character.user_id || '',
+    campaign_id: character.campaign_id || null,
     name: character.name || '',
     description: character.description || '',
     race: character.race?.name || '',
