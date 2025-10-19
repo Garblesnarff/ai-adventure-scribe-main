@@ -5,7 +5,7 @@ export type AnalyticsPayload = Record<string, any>;
 
 // Utility to safely access window-bound analytics without failing in SSR/tests
 function getGlobal(): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return typeof window !== 'undefined' ? (window as any) : {};
 }
 

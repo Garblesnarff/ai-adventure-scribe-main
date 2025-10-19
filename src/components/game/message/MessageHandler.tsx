@@ -44,7 +44,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
 
   const toHeaderExcerpt = React.useCallback((raw: string, limit = 220) => {
     if (!raw) return '';
-    let cleaned = raw
+    const cleaned = raw
       .replace(/^VISUAL\s+PROMPT:.*$/gim, '')
       .replace(/^\s*[A-F]\.\s.*$/gim, '')
       .replace(/\*\*|__|`/g, '')

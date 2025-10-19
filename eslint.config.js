@@ -9,6 +9,8 @@ export default tseslint.config(
       "dist",
       "server/**",
       "supabase/**",
+      "coverage/**",
+      "src/engine/**",
       "src/agents/**",
       "unify-graphql/**",
       "unify-service-layer/**",
