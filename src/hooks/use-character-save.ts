@@ -18,6 +18,7 @@ import { Character, transformCharacterForStorage } from '@/types/character';
 // Services
 import { characterBackgroundGenerator } from '@/services/character-background-generator';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCampaign } from '@/contexts/CampaignContext';
 
 
 /**
@@ -34,6 +35,7 @@ export const useCharacterSave = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { state: campaignState } = useCampaign();
 
   /**
    * Saves character data to Supabase
@@ -50,10 +52,13 @@ export const useCharacterSave = () => {
       // Get current user if authenticated
       const { data: { user } } = await supabase.auth.getUser();
       
+      const effectiveCampaignId = character.campaign_id || campaignState.campaign?.id || null;
+
       // Transform and save character data
       const characterData = {
         ...transformCharacterForStorage({
           ...character,
+          campaign_id: effectiveCampaignId,
           // Use authenticated user ID if available, otherwise use local UUID
           user_id: user?.id || LOCAL_USER_ID,
         }),
@@ -73,7 +78,7 @@ export const useCharacterSave = () => {
 
         if (insertError) throw insertError;
         characterData.id = newCharacter.id;
-        savedCharacter = { ...character, id: newCharacter.id };
+        savedCharacter = { ...character, id: newCharacter.id, campaign_id: effectiveCampaignId };
       } else {
         // For existing characters, we can update
         const { error: updateError } = await supabase
@@ -82,7 +87,7 @@ export const useCharacterSave = () => {
           .eq('id', characterData.id);
 
         if (updateError) throw updateError;
-        savedCharacter = { ...character };
+        savedCharacter = { ...character, campaign_id: effectiveCampaignId };
       }
 
       // Transform and save character stats
@@ -154,6 +159,13 @@ export const useCharacterSave = () => {
       if (!character.id && characterData.id) {
         generateBackgroundImage(characterData.id, savedCharacter);
       }
+
+      // Invalidate queries for character lists
+      queryClient.invalidateQueries({ queryKey: ['characters'] });
+      if (effectiveCampaignId) {
+        queryClient.invalidateQueries({ queryKey: ['campaign', effectiveCampaignId, 'characters'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['character', characterData.id] });
 
       // Return the complete character data
       return savedCharacter;

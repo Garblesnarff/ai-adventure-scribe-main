@@ -130,7 +130,7 @@ export interface CharacterBackground {
 export interface Character {
   id?: string;
   user_id?: string;
-  campaign_id?: string;
+  campaign_id?: string | null;
   name?: string;
   description?: string;
   race?: CharacterRace | null;

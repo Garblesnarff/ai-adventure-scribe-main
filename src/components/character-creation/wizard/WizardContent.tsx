@@ -403,12 +403,17 @@ const WizardContent: React.FC = () => {
           logger.debug('Save result:', savedCharacter);
 
           if (savedCharacter?.id) {
-            logger.info('Character saved successfully, navigating to /characters');
+            logger.info('Character saved successfully');
             toast({
               title: "Success!",
               description: "Character created successfully! Background image generation may continue in the background.",
             });
-            navigate('/app/characters');
+            const targetCampaignId = savedCharacter.campaign_id || state.character?.campaign_id;
+            if (targetCampaignId) {
+              navigate(`/app/campaigns/${targetCampaignId}/characters`);
+            } else {
+              navigate('/app/characters');
+            }
           } else {
             logger.error('Save succeeded but no ID returned');
             toast({
@@ -417,7 +422,7 @@ const WizardContent: React.FC = () => {
               variant: "default",
             });
             // Still navigate to give user a chance to see their characters
-            navigate('/characters');
+            navigate('/app/characters');
           }
         } catch (error) {
           logger.error('Error saving character:', error);

@@ -246,7 +246,7 @@ describe('WizardContent', () => {
       });
 
       // Check for navigation
-      expect(mockNavigateFn).toHaveBeenCalledWith(`/campaign/${testCampaignId}`);
+      expect(mockNavigateFn).toHaveBeenCalledWith(`/app/campaigns/${testCampaignId}`);
     });
 
     it('should show error toast and not navigate if final validation passes but save fails', async () => {
