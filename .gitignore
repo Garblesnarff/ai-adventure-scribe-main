@@ -48,6 +48,11 @@ crewai-service/.ruff_cache/
 coverage/
 .coverage
 
+# Playwright artifacts
+playwright-report/
+blob-report/
+.test-results/
+
 # Local logs (if previously tracked)
 frontend.log
 server.log
