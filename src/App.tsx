@@ -18,6 +18,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import BlogAdmin from './pages/BlogAdmin';
 import BlogEditor from './pages/BlogEditor';
+import BlogPost from './pages/BlogPost';
+import BlogIndex from './pages/BlogIndex';
 
 // TODO [legacy-character-deprecation]: Feature flag for legacy character entry. When disabling legacy character creation, set to false and then remove this flag following docs/cleanup/campaign-character-migration.md
 const ENABLE_LEGACY_CHARACTER_ENTRY = true;
@@ -68,6 +70,10 @@ function App() {
 
                     {/* Original landing page - keep as backup */}
                     <Route path="/original-landing" element={<Landing />} />
+
+                    {/* Public blog routes - accessible without authentication */}
+                    <Route path="/blog" element={<BlogIndex />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
 
                     {/* Protected app routes */}
                     <Route path="/app/*" element={
