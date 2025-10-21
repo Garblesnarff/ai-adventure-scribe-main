@@ -75,12 +75,12 @@ const CampaignHub: React.FC = () => {
   const isCreateCharacter = location.pathname.endsWith('/characters/new');
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">{campaign.name}</h1>
-            <p className="text-muted-foreground">Campaign Hub</p>
+            <p className="text-muted-foreground">Campaign</p>
           </div>
           <Button asChild>
             <Link to={`/app/campaigns/${campaignId}/characters`}>Characters</Link>
@@ -88,8 +88,8 @@ const CampaignHub: React.FC = () => {
         </div>
       </div>
 
-      <Tabs value={currentTab} onValueChange={onTabChange}>
-        <TabsList>
+      <Tabs value={currentTab} onValueChange={onTabChange} aria-label="Campaign sections">
+        <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="characters">Characters</TabsTrigger>
           <TabsTrigger value="sessions">Sessions</TabsTrigger>

@@ -205,7 +205,7 @@ The realms are waiting. What legend will you write?
 
 *Happy adventuring!*  
 *The Infinite Realms Team*`,
-        featured_image_url: 'https://infinite-realms.ai/branding/hero_header.png',
+        featured_image_url: '/blog-assets/images/posts/2025/10-october/welcome-to-infinite-realms/hero_header.png',
         hero_image_alt: 'Welcome to Infinite Realms - AI-powered fantasy RPG',
         seo_title: 'Welcome to Infinite Realms: AI-Powered Fantasy RPG Adventures',
         seo_description: 'Discover the next evolution in tabletop RPG gaming with AI-powered storytelling, dynamic worlds, and endless adventure possibilities.',
@@ -282,7 +282,7 @@ The future of AI storytelling is character-driven, and we're excited to be leadi
 ---
 
 *What kind of characters would you like to see in your adventures? Let us know in the comments!*`,
-        featured_image_url: 'https://infinite-realms.ai/branding/character-creation.png',
+        featured_image_url: '/blog-assets/images/posts/2025/10-october/building-better-ai-characters/character-creation.png',
         hero_image_alt: 'AI character creation in Infinite Realms',
         seo_title: 'Building Better AI Characters: Behind the Scenes at Infinite Realms',
         seo_description: 'Learn how we use advanced AI to create NPCs with realistic personalities, memories, and motivations that make every adventure unique.',
@@ -350,7 +350,7 @@ The Infinite Realms community is full of creative players sharing stories, tips,
 ---
 
 *What tips would you add for new players? Share your wisdom in the comments below!*`,
-        featured_image_url: 'https://infinite-realms.ai/branding/adventure-tips.png',
+        featured_image_url: '/blog-assets/images/posts/2025/10-october/top-10-tips-for-new-players/adventure-tips.png',
         hero_image_alt: 'Tips for new Infinite Realms players',
         seo_title: 'Top 10 Tips for New Infinite Realms Players | Beginner Guide',
         seo_description: 'Essential tips and tricks for new players starting their adventure in Infinite Realms. Learn how to create better characters, make strategic choices, and get the most out of AI-powered RPG gameplay.',
@@ -446,7 +446,7 @@ What makes a fantasy world compelling to you? Share your thoughts in the comment
 
 *Happy world-building!*  
 *The Infinite Realms Team*`,
-        featured_image_url: 'https://infinite-realms.ai/branding/world-building.png',
+        featured_image_url: '/blog-assets/images/posts/2025/10-october/art-of-world-building/world-building.png',
         hero_image_alt: 'Fantasy world-building in Infinite Realms',
         seo_title: 'The Art of World-Building: Creating Immersive Fantasy Realms',
         seo_description: 'Learn the principles and techniques behind crafting believable fantasy worlds. From geography and cultures to magic systems and player agency, discover what makes virtual worlds come alive.',
