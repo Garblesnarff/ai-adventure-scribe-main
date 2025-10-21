@@ -41,12 +41,13 @@ const CampaignHub: React.FC = () => {
   }, [campaign, dispatch]);
 
   const currentTab = React.useMemo(() => {
-    if (location.pathname.endsWith('/characters') || location.pathname.includes('/characters/')) return 'characters';
-    if (location.pathname.endsWith('/sessions')) return 'sessions';
-    if (location.pathname.endsWith('/world')) return 'world';
-    if (location.pathname.endsWith('/settings')) return 'settings';
+    const path = location.pathname + (location.search || '');
+    if (/\/characters(?:\/?|\?|$)/.test(path)) return 'characters';
+    if (/\/sessions(?:\/?|\?|$)/.test(path)) return 'sessions';
+    if (/\/world(?:\/?|\?|$)/.test(path)) return 'world';
+    if (/\/settings(?:\/?|\?|$)/.test(path)) return 'settings';
     return 'overview';
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const onTabChange = (value: string) => {
     navigate(`/app/campaigns/${campaignId}/${value === 'overview' ? '' : value}`);
@@ -69,6 +70,9 @@ const CampaignHub: React.FC = () => {
       </div>
     );
   }
+
+  // Simple derived state; not a hook to avoid conditional hook order issues
+  const isCreateCharacter = location.pathname.endsWith('/characters/new');
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -93,13 +97,10 @@ const CampaignHub: React.FC = () => {
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
-          <CampaignOverview />
+          <CampaignOverview campaign={campaign} />
         </TabsContent>
         <TabsContent value="characters">
-          <Routes>
-            <Route index element={<CampaignCharacters />} />
-            <Route path="new" element={<CampaignCharacters mode="create" />} />
-          </Routes>
+          <CampaignCharacters mode={isCreateCharacter ? 'create' : 'list'} />
         </TabsContent>
         <TabsContent value="sessions">
           <CampaignSessions />

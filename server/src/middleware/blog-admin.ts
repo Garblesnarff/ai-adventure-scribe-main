@@ -19,7 +19,7 @@ export async function requireBlogAdmin(req: Request, res: Response, next: NextFu
   const devOverrideEnabled = (process.env.BLOG_ADMIN_DEV_OVERRIDE === 'true' || process.env.BLOG_ADMIN_DEV_OVERRIDE === '1')
     && process.env.NODE_ENV !== 'production';
   if (devOverrideEnabled) {
-    req.blogAdminRoles = ['admin'];
+    req.blogRole = 'admin';
     return next();
   }
 
