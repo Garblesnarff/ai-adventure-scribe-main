@@ -40,16 +40,6 @@ export default function aiRouter() {
         if (!anthropic) {
           return res.status(400).json({ error: 'Anthropic API key not configured' });
         }
-<<<<<<< HEAD
-        const response = await anthropic.messages.create({
-          model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20240620',
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages: messages.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
-        });
-        const content = response.content[0]?.type === 'text' ? response.content[0].text : '';
-        return res.json({ response: content });
-=======
         const breaker = getCircuitBreaker('llm:anthropic');
         try {
           breaker.allowOrThrow();
@@ -74,25 +64,12 @@ export default function aiRouter() {
           breaker.onFailure();
           throw e;
         }
->>>>>>> integration/campaign-centric-flow
       }
 
       // default to openai
       if (!openai) {
         return res.status(400).json({ error: 'OpenAI API key not configured' });
       }
-<<<<<<< HEAD
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-        messages: [
-          ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
-          ...messages,
-        ],
-        temperature: 0.9,
-      });
-      const text = completion.choices[0]?.message?.content || '';
-      return res.json({ response: text });
-=======
       const breaker = getCircuitBreaker('llm:openai');
       try {
         breaker.allowOrThrow();
@@ -119,7 +96,6 @@ export default function aiRouter() {
         breaker.onFailure();
         throw e;
       }
->>>>>>> integration/campaign-centric-flow
     } catch (e) {
       console.error('AI error', e);
       if (e instanceof CircuitOpenError) {

@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getBearerToken, AuthTokenPayload } from '../lib/jwt.js';
 import { verifySupabaseToken } from '../lib/supabase.js';
-<<<<<<< HEAD
-=======
 import { createClient } from '../lib/db.js';
->>>>>>> integration/campaign-centric-flow
 
 declare global {
   namespace Express {
@@ -14,8 +11,6 @@ declare global {
   }
 }
 
-<<<<<<< HEAD
-=======
 async function resolveUserPlan(userId: string, req: Request): Promise<string> {
   // 1) Explicit header override (useful for tests): X-Plan: free|pro|enterprise
   const hdr = (req.headers['x-plan'] as string | undefined)?.toLowerCase();
@@ -42,7 +37,6 @@ async function resolveUserPlan(userId: string, req: Request): Promise<string> {
   return 'free';
 }
 
->>>>>>> integration/campaign-centric-flow
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = getBearerToken(req.headers.authorization || null);
   if (!token) return res.status(401).json({ error: 'Missing token' });
@@ -50,18 +44,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   try {
     const supabaseUser = await verifySupabaseToken(token);
     if (!supabaseUser) return res.status(401).json({ error: 'Invalid token' });
-<<<<<<< HEAD
-    req.user = {
-      userId: supabaseUser.userId,
-      email: supabaseUser.email,
-      plan: 'free',
-=======
     const plan = await resolveUserPlan(supabaseUser.userId, req);
     req.user = {
       userId: supabaseUser.userId,
       email: supabaseUser.email,
       plan,
->>>>>>> integration/campaign-centric-flow
     } as AuthTokenPayload;
     next();
   } catch {
