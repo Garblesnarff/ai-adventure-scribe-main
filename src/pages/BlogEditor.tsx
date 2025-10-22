@@ -7,10 +7,10 @@ import { useBlogPostById } from '@/hooks/blog/useBlogPosts';
 import { useAuth } from '@/contexts/AuthContext';
 
 const BlogEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const { isBlogAdmin } = useAuth();
-  const isNewPost = id === 'new';
+  const isNewPost = !id || id === 'new';
 
   const { data: post, isLoading, error } = useBlogPostById(isNewPost ? undefined : id);
 
