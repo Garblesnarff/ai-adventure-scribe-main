@@ -193,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     fetchBlogRole();
     // Recompute role only when user.id changes, not when fetchBlogRole reference changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user?.id]);
 
   const signUp = async (email: string, password: string) => {

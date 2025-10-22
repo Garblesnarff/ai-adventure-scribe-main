@@ -8,7 +8,6 @@ import LaunchPage from './pages/LaunchPage';
 import DiceTest from './pages/DiceTest';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
-import CharacterWizard from './components/character-creation/character-wizard';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
 import { SimpleCampaignView } from './components/campaign-view/SimpleCampaignView';
 import GameContent from './components/game/GameContent';
@@ -20,6 +19,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import BlogAdmin from './pages/BlogAdmin';
 import BlogEditor from './pages/BlogEditor';
+import BlogPost from './pages/BlogPost';
+import BlogIndex from './pages/BlogIndex';
+import CharacterCreateEntry from './pages/CharacterCreateEntry';
+import CampaignHub from './pages/campaigns/CampaignHub';
+
+// TODO [legacy-character-deprecation]: Feature flag for legacy character entry. When disabling legacy character creation, set to false and then remove this flag following docs/cleanup/campaign-character-migration.md
+const ENABLE_LEGACY_CHARACTER_ENTRY = true;
 
 /**
  * Create a new QueryClient instance
@@ -66,6 +72,10 @@ function App() {
                     {/* Original landing page - keep as backup */}
                     <Route path="/original-landing" element={<Landing />} />
 
+                    {/* Public blog routes - accessible without authentication */}
+                    <Route path="/blog" element={<BlogIndex />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+
                     {/* Protected app routes */}
                     <Route path="/app/*" element={
                       <ProtectedRoute>
@@ -75,11 +85,13 @@ function App() {
                           <Routes>
                             <Route path="/" element={<Index />} />
                             <Route path="/dice-test" element={<DiceTest />} />
-                            <Route path="/characters" element={<CharacterList />} />
-                            <Route path="/characters/create" element={<CharacterWizard />} />
+                            {/* TODO [legacy-character-deprecation]: Legacy character list and creation routes. Gate behind ENABLE_LEGACY_CHARACTER_ENTRY and remove per docs/cleanup/campaign-character-migration.md */}
+                            {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters" element={<CharacterList />} />}
+                            {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters/create" element={<CharacterCreateEntry />} />}
                             <Route path="/character/:id" element={<CharacterSheet />} />
                             <Route path="/campaigns/create" element={<CampaignWizard />} />
                             <Route path="/campaign/:id" element={<SimpleCampaignView />} />
+                            <Route path="/campaigns/:id/*" element={<CampaignHub />} />
                             <Route path="/game/:id" element={<GameContent />} />
                             <Route path="/blog" element={<BlogAdmin />} />
                             <Route path="/blog/posts/new" element={<BlogEditor />} />

@@ -582,7 +582,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                               size="sm"
                               onClick={() => {
                                 const next = !showSceneBlurb;
-                                try { localStorage.setItem('ui:sceneBlurb', next ? '1' : '0'); } catch {}
+                                try { localStorage.setItem('ui:sceneBlurb', next ? '1' : '0'); } catch (e) { /* ignore */ }
                                 setShowSceneBlurb(next);
                               }}
                               title="Toggle scene blurb"

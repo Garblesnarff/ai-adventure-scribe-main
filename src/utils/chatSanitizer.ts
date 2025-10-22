@@ -15,7 +15,7 @@ export function sanitizeDMText(input: string | undefined | null): string {
   if (!input) return '';
 
   // First, strip any inline repeated sequences
-  let text = input
+  const text = input
     .replace(/(?:Combat has begun!\s*Initiative order established\.?\s*)+/gi, '')
     .replace(/(?:Unknown deals damage\s*)+/gi, '');
 

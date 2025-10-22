@@ -2,7 +2,7 @@ export function generateExcerpt(text: string, maxLength: number = 200): string {
   if (!text) return '';
   
   const cleanText = text
-    .replace(/[#*_`~>\[\]]/g, '')
+    .replace(/[#*_`~>[\]]/g, '')
     .replace(/\n+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

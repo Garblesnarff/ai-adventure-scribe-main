@@ -37,7 +37,7 @@ export async function compressImage(
 
         ctx.drawImage(img, 0, 0, width, height);
 
-        let quality = 0.9;
+        const quality = 0.9;
         const targetSizeBytes = maxSizeMB * 1024 * 1024;
 
         const tryCompress = (q: number) => {

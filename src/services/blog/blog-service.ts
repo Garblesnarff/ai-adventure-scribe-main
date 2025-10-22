@@ -58,7 +58,7 @@ const coerceDate = (value: Maybe<string>): string | null => {
 
 const mapCategory = (row: any): BlogCategory => ({
   id: String(row.id),
-  title: row.title ?? '',
+  title: row.name ?? row.title ?? '',
   slug: row.slug ?? '',
   description: row.description ?? null,
   createdAt: row.created_at ?? row.createdAt ?? new Date().toISOString(),
@@ -80,9 +80,9 @@ const mapBlogPost = (row: any): BlogPost => ({
   id: String(row.id),
   title: row.title ?? '',
   slug: row.slug ?? '',
-  excerpt: row.excerpt ?? null,
+  excerpt: row.excerpt ?? row.summary ?? null,
   content: row.content ?? '',
-  coverImageUrl: row.cover_image_url ?? row.coverImageUrl ?? null,
+  coverImageUrl: row.cover_image_url ?? row.featured_image_url ?? row.coverImageUrl ?? null,
   status: (row.status ?? 'draft') as BlogPostStatus,
   seoTitle: row.seo_title ?? row.seoTitle ?? null,
   seoDescription: row.seo_description ?? row.seoDescription ?? null,
@@ -91,7 +91,7 @@ const mapBlogPost = (row: any): BlogPost => ({
   createdAt: row.created_at ?? row.createdAt ?? new Date().toISOString(),
   updatedAt: row.updated_at ?? row.updatedAt ?? row.created_at ?? new Date().toISOString(),
   authorId: row.author_id ?? row.authorId ?? '',
-  authorRole: row.author_role ?? row.authorRole ?? null,
+  authorRole: row.authorRole ?? null,
   categoryIds: toStringArray(row.category_ids ?? row.categoryIds),
   tagIds: toStringArray(row.tag_ids ?? row.tagIds),
   categories: Array.isArray(row.categories)
@@ -106,15 +106,14 @@ const buildInsertPayload = (input: BlogPostMutationInput) => ({
   title: input.title,
   slug: input.slug,
   content: input.content,
-  excerpt: input.excerpt ?? null,
-  cover_image_url: input.coverImageUrl ?? null,
+  summary: input.excerpt ?? null,
+  featured_image_url: input.coverImageUrl ?? null,
   status: input.status,
   seo_title: input.seoTitle ?? null,
   seo_description: input.seoDescription ?? null,
   published_at: input.publishedAt ?? null,
   scheduled_for: input.scheduledFor ?? null,
-  category_ids: input.categoryIds ?? [],
-  tag_ids: input.tagIds ?? [],
+  /* columns for category/tag links moved to join tables; kept here for compatibility no-ops */
   allow_comments: input.allowComments ?? true,
 });
 
@@ -123,15 +122,14 @@ const buildUpdatePayload = (input: Partial<BlogPostMutationInput>) => {
   if (input.title !== undefined) payload.title = input.title;
   if (input.slug !== undefined) payload.slug = input.slug;
   if (input.content !== undefined) payload.content = input.content;
-  if (input.excerpt !== undefined) payload.excerpt = input.excerpt ?? null;
-  if (input.coverImageUrl !== undefined) payload.cover_image_url = input.coverImageUrl ?? null;
+  if (input.excerpt !== undefined) payload.summary = input.excerpt ?? null;
+  if (input.coverImageUrl !== undefined) payload.featured_image_url = input.coverImageUrl ?? null;
   if (input.status !== undefined) payload.status = input.status;
   if (input.seoTitle !== undefined) payload.seo_title = input.seoTitle ?? null;
   if (input.seoDescription !== undefined) payload.seo_description = input.seoDescription ?? null;
   if (input.publishedAt !== undefined) payload.published_at = input.publishedAt ?? null;
   if (input.scheduledFor !== undefined) payload.scheduled_for = input.scheduledFor ?? null;
-  if (input.categoryIds !== undefined) payload.category_ids = input.categoryIds ?? [];
-  if (input.tagIds !== undefined) payload.tag_ids = input.tagIds ?? [];
+  // category_ids and tag_ids are maintained via join tables in this schema
   if (input.allowComments !== undefined) payload.allow_comments = input.allowComments;
   return payload;
 };
@@ -164,9 +162,9 @@ export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<Blog
       id,
       title,
       slug,
-      excerpt,
+      summary,
       content,
-      cover_image_url,
+      featured_image_url,
       status,
       seo_title,
       seo_description,
@@ -174,10 +172,7 @@ export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<Blog
       scheduled_for,
       created_at,
       updated_at,
-      author_id,
-      author_role,
-      category_ids,
-      tag_ids
+      author_id
     `);
 
   if (filters?.status && filters.status !== 'all') {
@@ -189,12 +184,7 @@ export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<Blog
   if (filters?.search) {
     query = query.ilike('title', `%${filters.search}%`);
   }
-  if (filters?.categoryId) {
-    query = query.contains('category_ids', [filters.categoryId]);
-  }
-  if (filters?.tagId) {
-    query = query.contains('tag_ids', [filters.tagId]);
-  }
+  // category/tag filters require joins; omitted in this minimal client query
 
   const sortBy = filters?.sortBy || 'updatedAt';
   const ascending = filters?.sortDirection === 'asc';
@@ -215,7 +205,12 @@ export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<Blog
     throw new Error(error.message);
   }
 
-  return (data ?? []).map(mapBlogPost);
+  const rows = (data ?? []).map((row: any) => ({
+    ...row,
+    excerpt: row.summary,
+    cover_image_url: row.featured_image_url,
+  }));
+  return rows.map(mapBlogPost);
 };
 
 export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
@@ -302,7 +297,7 @@ export const listBlogCategories = async (): Promise<BlogCategory[]> => {
   const { data, error } = await supabaseClient
     .from('blog_categories')
     .select('*')
-    .order('title', { ascending: true });
+    .order('name', { ascending: true });
 
   if (error) {
     throw new Error(error.message);
@@ -315,7 +310,7 @@ export const createBlogCategory = async (input: { title: string; slug: string; d
   const { data, error } = await supabaseClient
     .from('blog_categories')
     .insert({
-      title: input.title,
+      name: input.title,
       slug: input.slug,
       description: input.description ?? null,
     })
@@ -333,7 +328,7 @@ export const updateBlogCategory = async (id: string, input: { title?: string; sl
   const { data, error } = await supabaseClient
     .from('blog_categories')
     .update({
-      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.title !== undefined ? { name: input.title } : {}),
       ...(input.slug !== undefined ? { slug: input.slug } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
     })

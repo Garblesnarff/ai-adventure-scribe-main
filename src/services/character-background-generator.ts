@@ -143,7 +143,7 @@ export class CharacterBackgroundGenerator {
    */
   private async generateWithRetry(prompt: string, maxAttempts: number, referenceImage?: string): Promise<string> {
     let lastError: Error | null = null;
-    let chosenModel = 'google/gemini-2.5-flash-image-preview';
+    const chosenModel = 'google/gemini-2.5-flash-image-preview';
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {

@@ -12,6 +12,8 @@ import { WizardStep } from './types';
 import { wizardSteps } from './constants';
 import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
 import logger from '@/lib/logger';
+import { analytics } from '@/services/analytics';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * Main content component for the character creation wizard
@@ -24,6 +26,7 @@ const WizardContent: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { scrollToTop } = useAutoScroll();
+  const [searchParams] = useSearchParams();
 
   // Filter steps based on character state
   const getFilteredSteps = React.useCallback(() => {
@@ -404,11 +407,26 @@ const WizardContent: React.FC = () => {
 
           if (savedCharacter?.id) {
             logger.info('Character saved successfully, navigating to /characters');
+            try {
+              const campaignId = searchParams.get('campaign') || undefined;
+              const artStyle = analytics.detectArtStyle({
+                characterTheme: state.character?.theme,
+                campaignGenre: undefined,
+              });
+              analytics.characterCreationCompleted({ campaignId, artStyle });
+            } catch (e) {
+              // ignore analytics errors
+            }
             toast({
               title: "Success!",
               description: "Character created successfully! Background image generation may continue in the background.",
             });
-            navigate('/app/characters');
+            const targetCampaignId = savedCharacter.campaign_id || state.character?.campaign_id;
+            if (targetCampaignId) {
+              navigate(`/app/campaigns/${targetCampaignId}/characters`);
+            } else {
+              navigate('/app/characters');
+            }
           } else {
             logger.error('Save succeeded but no ID returned');
             toast({
@@ -417,7 +435,7 @@ const WizardContent: React.FC = () => {
               variant: "default",
             });
             // Still navigate to give user a chance to see their characters
-            navigate('/characters');
+            navigate('/app/characters');
           }
         } catch (error) {
           logger.error('Error saving character:', error);

@@ -31,6 +31,9 @@ export interface Campaign {
   setting: CampaignSetting;
   thematic_elements: ThematicElements;
   status?: string;
+  art_style?: string;
+  style_config?: Record<string, any>;
+  rules_config?: Record<string, any>;
   created_at?: string;
   updated_at?: string;
 }

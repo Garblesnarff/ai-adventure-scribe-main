@@ -73,8 +73,8 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
         description: "Your game session has begun!",
       });
 
-      // Navigate to campaign view with both session and character IDs
-      navigate(`/campaign/${campaignId}?session=${session.id}&character=${characterId}`);
+      // Navigate to campaign hub with character and session IDs
+      navigate(`/app/campaigns/${campaignId}?session=${session.id}&character=${characterId}`);
     } catch (error) {
       logger.error('Error starting session:', error);
       toast({
