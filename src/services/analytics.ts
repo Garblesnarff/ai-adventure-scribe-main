@@ -5,7 +5,7 @@ export type AnalyticsPayload = Record<string, any>;
 
 // Utility to safely access window-bound analytics without failing in SSR/tests
 function getGlobal(): any {
-   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return typeof window !== 'undefined' ? (window as any) : {};
 }
 
@@ -34,17 +34,13 @@ export const analytics = {
       if (g.gtag && typeof g.gtag === 'function') {
         g.gtag('event', event, data);
       }
-    } catch (err) {
-      // ignore analytics errors
-    }
+    } catch {}
 
     try {
       if (g.posthog && typeof g.posthog.capture === 'function') {
         g.posthog.capture(event, data);
       }
-    } catch (err) {
-      // ignore analytics errors
-    }
+    } catch {}
   },
 
   campaignTabViewed(tab: string, info: { campaignId?: string; artStyle?: string } = {}): void {
