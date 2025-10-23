@@ -1,0 +1,15 @@
+{
+  "title": "HTTP Latency Overview",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Backend p95 latency by route",
+      "query": "metrics.request.duration.ms{service:backend,env:$environment}.p95 by route"
+    },
+    {
+      "type": "timeseries",
+      "title": "Edge p95 latency by function",
+      "query": "metrics.request.duration.ms{service:edge,env:$environment}.p95 by function"
+    }
+  ]
+}

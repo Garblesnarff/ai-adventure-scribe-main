@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id, x-release, x-environment',
 }
 
 interface RuleValidationRequest {
@@ -39,9 +39,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  const requestId = req.headers.get('x-request-id') || (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
   try {
     const { task, agentContext } = await req.json() as RuleValidationRequest;
-    console.log('Processing rule validation request:', { task, agentContext });
+    console.log('Processing rule validation request:', { task, agentContext, requestId });
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -63,18 +65,18 @@ serve(async (req) => {
     const result = await validateRules(task, ruleValidations || []);
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({ ...result, requestId }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
         status: 200,
       },
     )
-  } catch (error) {
-    console.error('Error in rules-interpreter-execute:', error);
+  } catch (error: any) {
+    console.error('Error in rules-interpreter-execute:', error, { requestId });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message, requestId }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
         status: 500,
       },
     )

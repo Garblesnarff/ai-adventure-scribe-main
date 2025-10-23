@@ -7,7 +7,7 @@ import { DMResponse, StructuredDMResponse, VoiceContext, NarrationSegment } from
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id, x-release, x-environment',
 };
 
 serve(async (req) => {
@@ -15,11 +15,14 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  const requestId = req.headers.get('x-request-id') || (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
   try {
     const { task, agentContext, voiceContext, isFirstMessage = false, combatContext } = await req.json();
     const { campaignDetails, characterDetails, memories = [] } = agentContext;
 
     console.log('Processing DM Agent task:', {
+      requestId,
       taskType: task.description,
       campaign: campaignDetails?.name,
       character: characterDetails?.name,
@@ -40,7 +43,8 @@ serve(async (req) => {
     console.log('Using relevant memories:', relevantMemories.map(m => ({
       content: m.content,
       importance: m.importance,
-      type: m.type
+      type: m.type,
+      requestId,
     })));
 
     const environmentGen = new EnvironmentGenerator();
@@ -59,7 +63,7 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not found in environment variables. Please set GEMINI_API_KEY in Supabase secrets.');
     }
     
-    console.log('Using Gemini API key:', geminiApiKey.substring(0, 10) + '...');
+    console.log('Using Gemini API key:', geminiApiKey.substring(0, 10) + '...', { requestId });
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
@@ -99,9 +103,9 @@ serve(async (req) => {
         const structuredResponse: StructuredDMResponse = JSON.parse(rawResponse);
         narrativeText = structuredResponse.text;
         narrationSegments = structuredResponse.narration_segments;
-        console.log('Successfully parsed structured response with', narrationSegments?.length, 'segments');
+        console.log('Successfully parsed structured response with', narrationSegments?.length, 'segments', { requestId });
       } catch (parseError) {
-        console.warn('Failed to parse structured response, falling back to plain text:', parseError);
+        console.warn('Failed to parse structured response, falling back to plain text:', parseError, { requestId });
         // Keep narrativeText as rawResponse for backward compatibility
       }
     }
@@ -141,7 +145,8 @@ serve(async (req) => {
     const responseData: any = {
       response: narrativeText,
       context: agentContext,
-      raw: narrativeResponse
+      raw: narrativeResponse,
+      requestId,
     };
 
     // Add narration segments if they were parsed successfully
@@ -152,16 +157,16 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(responseData),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
       }
     );
-  } catch (error) {
-    console.error('Error in DM agent execution:', error);
+  } catch (error: any) {
+    console.error('Error in DM agent execution:', error, { requestId });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message, requestId }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'x-request-id': requestId },
       }
     );
   }

@@ -2,14 +2,15 @@ import express from 'express';
 import type { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
 import { registerRoutes } from './routes/index.js';
 import { blogRouter } from './routes/blog.js';
 import { seoRouter } from './routes/seo.js';
+import { errorLoggingMiddleware, requestIdMiddleware, requestLoggingMiddleware } from './lib/logger.js';
+import type { Db } from './lib/db.js';
 
-export function createApp() {
+export function createApp(_db?: Db) {
   const app = express();
 
   // Dynamic CORS configuration that accepts any localhost port
@@ -37,13 +38,25 @@ export function createApp() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Request-Id',
+      'x-request-id',
+      'X-Release',
+      'x-release',
+      'X-Environment',
+      'x-environment',
+    ]
   };
 
   app.use(cors(corsOptions));
   app.use(helmet());
   app.use(express.json({ limit: '10mb' }));
-  app.use(morgan('dev'));
+
+  // Observability: request id + structured logging
+  app.use(requestIdMiddleware());
+  app.use(requestLoggingMiddleware());
 
   registerStaticAssetMiddleware(app);
 
@@ -54,6 +67,9 @@ export function createApp() {
   app.use('/', seoRouter());
 
   registerRoutes(app);
+
+  // Error logging middleware should be last
+  app.use(errorLoggingMiddleware());
 
   return app;
 }
