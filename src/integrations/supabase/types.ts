@@ -341,6 +341,7 @@ export type Database = {
       campaigns: {
         Row: {
           atmosphere: string | null
+          background_image: string | null
           campaign_length: string | null
           created_at: string | null
           description: string | null
@@ -359,9 +360,20 @@ export type Database = {
           art_style: string | null
           style_config: Json | null
           rules_config: Json | null
+          template: boolean
+          visibility: string
+          slug: string | null
+          template_version: number
+          manifest_url: string | null
+          thumbnail_url: string | null
+          published_at: string | null
+          published_by: string | null
+          source_template_id: string | null
+          content_hash: string | null
         }
         Insert: {
           atmosphere?: string | null
+          background_image?: string | null
           campaign_length?: string | null
           created_at?: string | null
           description?: string | null
@@ -380,9 +392,20 @@ export type Database = {
           art_style?: string | null
           style_config?: Json | null
           rules_config?: Json | null
+          template?: boolean
+          visibility?: string
+          slug?: string | null
+          template_version?: number
+          manifest_url?: string | null
+          thumbnail_url?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          source_template_id?: string | null
+          content_hash?: string | null
         }
         Update: {
           atmosphere?: string | null
+          background_image?: string | null
           campaign_length?: string | null
           created_at?: string | null
           description?: string | null
@@ -401,8 +424,33 @@ export type Database = {
           art_style?: string | null
           style_config?: Json | null
           rules_config?: Json | null
+          template?: boolean
+          visibility?: string
+          slug?: string | null
+          template_version?: number
+          manifest_url?: string | null
+          thumbnail_url?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          source_template_id?: string | null
+          content_hash?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_source_template_id_fkey"
+            columns: ["source_template_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       campaign_members: {
         Row: {

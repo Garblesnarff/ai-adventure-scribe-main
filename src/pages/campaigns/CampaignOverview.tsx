@@ -118,11 +118,11 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign }) => {
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-gold flex items-center justify-center">
                 <span className="text-white font-bold text-lg">📜</span>
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Campaign Overview</h2>
+              <h2 className="text-2xl font-bold dark:text-white text-gray-900">Campaign Overview</h2>
             </div>
 
             <div className="prose prose-lg max-w-none">
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              <p className="dark:text-white text-gray-900 leading-relaxed whitespace-pre-line text-base sm:text-lg">
                 {campaign.description || 'No description provided yet. The journey awaits...'}
               </p>
             </div>
@@ -132,25 +132,25 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign }) => {
               {campaign.genre && (
                 <div className="text-center p-3 rounded-lg bg-brand-primary/10 border border-brand-primary/20">
                   <div className="text-brand-primary font-semibold text-sm">Genre</div>
-                  <div className="text-foreground text-sm">{campaign.genre}</div>
+                  <div className="dark:text-white text-gray-900 text-sm">{campaign.genre}</div>
                 </div>
               )}
               {campaign.tone && (
-                <div className="text-center p-3 rounded-lg bg-white/5 border border-border/30">
-                  <div className="text-muted-foreground font-semibold text-sm">Tone</div>
-                  <div className="text-foreground text-sm">{campaign.tone}</div>
+                <div className="text-center p-3 rounded-lg bg-white/10 border border-border/40">
+                  <div className="dark:text-gray-200 text-gray-700 font-semibold text-sm">Tone</div>
+                  <div className="dark:text-white text-gray-900 font-medium text-sm">{campaign.tone}</div>
                 </div>
               )}
               {campaign.campaign_length && (
                 <div className="text-center p-3 rounded-lg bg-brand-secondary/10 border border-brand-secondary/20">
                   <div className="text-brand-secondary font-semibold text-sm">Length</div>
-                  <div className="text-foreground text-sm">{campaign.campaign_length}</div>
+                  <div className="dark:text-white text-gray-900 text-sm">{campaign.campaign_length}</div>
                 </div>
               )}
               {campaign.difficulty_level && (
                 <div className="text-center p-3 rounded-lg bg-brand-accent/10 border border-brand-accent/20">
                   <div className="text-brand-accent font-semibold text-sm">Difficulty</div>
-                  <div className="text-foreground text-sm">{campaign.difficulty_level}</div>
+                  <div className="dark:text-white text-gray-900 text-sm">{campaign.difficulty_level}</div>
                 </div>
               )}
             </div>
@@ -160,29 +160,29 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign }) => {
         {/* Sidebar Info Panel */}
         <div className="space-y-6">
           <div className="glass-strong rounded-2xl p-6 hover-lift">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-white text-gray-900">
               <span className="w-2 h-2 rounded-full bg-infinite-gold"></span>
               Campaign Details
             </h3>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center py-2 border-b border-border/20">
-                <span className="text-muted-foreground">Status</span>
+              <div className="flex justify-between items-center py-2 border-b border-border/30">
+                <span className="dark:text-gray-200 text-gray-700 font-medium">Status</span>
                 <Badge className="bg-success/20 text-success border-success/30">Active</Badge>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-border/20">
-                <span className="text-muted-foreground">Created</span>
-                <span className="text-foreground">Recently</span>
+              <div className="flex justify-between items-center py-2 border-b border-border/30">
+                <span className="dark:text-gray-200 text-gray-700 font-medium">Created</span>
+                <span className="dark:text-white text-gray-900 font-semibold">Recently</span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-muted-foreground">Players</span>
-                <span className="text-foreground">0 / 6</span>
+                <span className="dark:text-gray-200 text-gray-700 font-medium">Players</span>
+                <span className="dark:text-white text-gray-900 font-semibold">0 / 6</span>
               </div>
             </div>
           </div>
 
           {/* Quick Actions */}
           <div className="glass-strong rounded-2xl p-6 hover-lift">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-white text-gray-900">
               <span className="w-2 h-2 rounded-full bg-infinite-teal"></span>
               Quick Actions
             </h3>
@@ -204,7 +204,7 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign }) => {
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-infinite-teal to-infinite-purple flex items-center justify-center">
             <span className="text-white font-bold text-lg">🎨</span>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Campaign Gallery</h2>
+          <h2 className="text-2xl font-bold dark:text-white text-gray-900">Campaign Gallery</h2>
         </div>
 
         {campaignId && (

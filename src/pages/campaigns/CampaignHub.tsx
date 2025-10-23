@@ -88,7 +88,7 @@ const CampaignHub: React.FC = () => {
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-infinite-purple to-infinite-gold bg-clip-text text-transparent">
                       {campaign.name}
                     </h1>
-                    <p className="text-muted-foreground">Epic Campaign Adventure</p>
+                    <p className="dark:text-gray-200 text-gray-700">Epic Campaign Adventure</p>
                   </div>
                 </div>
               </div>
