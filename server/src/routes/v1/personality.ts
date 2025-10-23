@@ -4,11 +4,32 @@ import { supabase } from '../../lib/supabase.js';
 const router = Router();
 
 /**
- * GET /personality/random/:type
- * Get a random personality element of the specified type
- * Query params:
- * - background: Filter by background ID (optional)
- * - alignment: Filter by alignment for ideals (optional)
+ * GET /v1/personality/random/:type
+ *
+ * BUSINESS PURPOSE:
+ * - Fetches a single random personality element (trait, ideal, bond, or flaw).
+ * - Used during character creation to provide suggestions and inspiration to the player.
+ *
+ * REQUEST:
+ * - Method: GET
+ * - Path Param: type - one of 'traits', 'ideals', 'bonds', 'flaws'
+ * - Query Params:
+ *   - background (optional): Filter traits by a specific background.
+ *   - alignment (optional, future): Filter ideals by alignment.
+ *
+ * RESPONSE SUCCESS (200 OK):
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "id": "...",
+ *     "description": "I am always polite and respectful."
+ *   }
+ * }
+ *
+ * RESPONSE ERRORS:
+ * - 400 Bad Request: Invalid 'type' parameter.
+ * - 404 Not Found: No data found for the given criteria.
+ * - 500 Internal Server Error: Database query failed.
  */
 router.get('/random/:type', async (req, res) => {
   try {
@@ -43,13 +64,6 @@ router.get('/random/:type', async (req, res) => {
     if (background && typeof background === 'string' && tableName === 'personality_traits') {
       query = query.or(`background.eq.${background},background.is.null`);
     }
-
-    // Add alignment filter for ideals only (if alignment column exists)
-    // Note: Current ideals table doesn't have alignment column, so this is disabled
-    // if (type === 'ideals' && alignment && typeof alignment === 'string') {
-    //   const ethicalAxis = alignment.split(' ')[0];
-    //   query = query.or(`alignment.eq.${ethicalAxis},alignment.is.null`);
-    // }
 
     const { data, error } = await query;
 
@@ -87,11 +101,23 @@ router.get('/random/:type', async (req, res) => {
 });
 
 /**
- * GET /personality/batch/random
- * Get random personality elements for all types at once
- * Query params:
- * - background: Filter by background ID (optional)
- * - alignment: Filter by alignment for ideals (optional)
+ * GET /v1/personality/batch/random
+ *
+ * BUSINESS PURPOSE:
+ * - Fetches a batch of random personality elements (one of each type, plus a second trait).
+ * - A convenience endpoint to populate the entire personality section of the character creator at once.
+ *
+ * RESPONSE SUCCESS (200 OK):
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "traits": { ... },
+ *     "ideals": { ... },
+ *     "bonds": { ... },
+ *     "flaws": { ... },
+ *     "traits2": { ... }
+ *   }
+ * }
  */
 router.get('/batch/random', async (req, res) => {
   try {
@@ -119,13 +145,6 @@ router.get('/batch/random', async (req, res) => {
       if (background && typeof background === 'string' && tableName === 'personality_traits') {
         query = query.or(`background.eq.${background},background.is.null`);
       }
-
-      // Add alignment filter for ideals only (if alignment column exists)
-      // Note: Current ideals table doesn't have alignment column, so this is disabled
-      // if (type === 'ideals' && alignment && typeof alignment === 'string') {
-      //   const ethicalAxis = alignment.split(' ')[0];
-      //   query = query.or(`alignment.eq.${ethicalAxis},alignment.is.null`);
-      // }
 
       const { data, error } = await query;
 
@@ -168,11 +187,11 @@ router.get('/batch/random', async (req, res) => {
 });
 
 /**
- * GET /personality/:type
- * Get all personality elements of the specified type
- * Query params:
- * - background: Filter by background ID (optional)
- * - limit: Limit number of results (optional, default 100)
+ * GET /v1/personality/:type
+ *
+ * BUSINESS PURPOSE:
+ * - Fetches all available personality elements of a given type.
+ * - Used to populate selection lists in the character creator.
  */
 router.get('/:type', async (req, res) => {
   try {

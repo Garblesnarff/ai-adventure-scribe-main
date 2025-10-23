@@ -1,9 +1,43 @@
+/**
+ * Represents a single ability score for a character (e.g., Strength, Dexterity).
+ *
+ * @property score - The base value of the ability, typically from 3 to 20.
+ * @property modifier - The calculated modifier, derived from the score ((score - 10) / 2).
+ * @property savingThrow - Whether the character is proficient in this ability's saving throw.
+ */
 export interface Ability {
   score: number;
   modifier: number;
   savingThrow: boolean;
 }
 
+/**
+ * ABILITY_SCORES - The 6 core abilities in D&D
+ *
+ * WHY THESE EXIST:
+ * - Determine what character is good at (Strength = melee, Intelligence = spells)
+ * - Range 3-20 in D&D 5e (lower is worse, higher is better)
+ * - Create character variety (barbarian high Strength, wizard high Intelligence)
+ *
+ * HOW CALCULATED:
+ * - Players roll 4d6, drop lowest (standard method) - implemented in character creation
+ * - Or use standard array: [15, 14, 13, 12, 10, 8]
+ * - Race can modify scores (human +1 to all, half-elf +2 to two chosen)
+ *
+ * MODIFIERS:
+ * - Modifier = (score - 10) / 2, rounded down
+ * - Score 16 = modifier +3
+ * - Score 8 = modifier -1
+ * - Used in combat/skill checks (attach Modifier to each ability)
+ *
+ * STORAGE:
+ * - Store base score (before race modifiers)
+ * - Calculate final score = base + race modifier
+ * - Store modifier separately for quick lookup in combat
+ *
+ * TODO: Currently not persisted to database
+ * After v1 launch, add ability_scores table join
+ */
 export interface AbilityScores {
   strength: Ability;
   dexterity: Ability;
@@ -13,6 +47,33 @@ export interface AbilityScores {
   charisma: Ability;
 }
 
+/**
+ * CHARACTER_RACE - Available races player can choose
+ *
+ * BUSINESS LOGIC:
+ * - Defines core character traits (speed, languages, abilities)
+ * - D&D 5e official races + some homebrew (Dragonborn, Tiefling, etc)
+ *
+ * FIELDS:
+ * - id: Used in database and character sheet lookups (string key)
+ * - name: Displayed to player (Human, Elf, Dwarf, etc)
+ * - traits: Special abilities (Extra Attack, Darkvision, etc) - FOR FUTURE
+ * - subraces: Optional variants (e.g., High Elf vs Wood Elf)
+ * - heightRange: [min, max] in inches - used to clamp physical step sliders
+ * - weightRange: [min, max] in pounds - used to validate and suggest reasonable weight
+ *
+ * IF ADDING A NEW RACE:
+ * 1. Add to src/data/races/newrace.ts
+ * 2. Import in src/data/races/index.ts
+ * 3. Add heightRange and weightRange (required)
+ * 4. Test: Physical step slider should clamp to new range
+ * 5. Test: Character save should work with new race
+ *
+ * NEVER:
+ * - Remove race from list (existing characters reference it)
+ * - Change race.id (it's a foreign key to character records)
+ * - Change abilityScoreIncrease without updating game calculations
+ */
 export interface CharacterRace {
   id: string;
   name: string;
@@ -27,6 +88,13 @@ export interface CharacterRace {
   weightRange?: [number, number];
 }
 
+/**
+ * Represents a single spell that a character can learn or cast.
+ *
+ * BUSINESS LOGIC:
+ * - Spells are a core mechanic for many classes, defining their power and utility.
+ * - The availability and effects of spells are based on D&D 5e rules.
+ */
 export interface Spell {
   id: string;
   name: string;
@@ -55,6 +123,13 @@ export interface Spell {
   source_feature?: string;
 }
 
+/**
+ * Represents a sub-race, a variation of a primary character race.
+ *
+ * BUSINESS LOGIC:
+ * - Subraces provide additional customization and flavor, offering unique traits and abilities.
+ * - For example, an Elf can be a High Elf or a Wood Elf, each with different bonuses.
+ */
 export interface Subrace {
   id: string;
   name: string;
@@ -75,6 +150,13 @@ export interface Subrace {
   armorProficiencies?: string[];
 }
 
+/**
+ * Represents a specific feature or ability granted by a character's class.
+ *
+ * BUSINESS LOGIC:
+ * - Class features are the primary way characters gain new abilities as they level up.
+ * - Some features offer choices, allowing for further character customization.
+ */
 export interface ClassFeature {
   id: string;
   name: string;
@@ -86,6 +168,13 @@ export interface ClassFeature {
   };
 }
 
+/**
+ * Represents a character's chosen class (e.g., Fighter, Wizard).
+ *
+ * BUSINESS LOGIC:
+ * - The class is the most significant choice a player makes, defining the character's role and abilities.
+ * - It determines hit points, proficiencies, and access to features like spellcasting.
+ */
 export interface CharacterClass {
   id: string;
   name: string;
@@ -111,6 +200,13 @@ export interface CharacterClass {
   toolProficiencies?: string[];
 }
 
+/**
+ * Represents a character's background, detailing their life before adventuring.
+ *
+ * BUSINESS LOGIC:
+ * - Backgrounds provide skill proficiencies and roleplaying hooks.
+ * - They help to flesh out a character's story and personality.
+ */
 export interface CharacterBackground {
   id: string;
   name: string;
@@ -129,12 +225,69 @@ export interface CharacterBackground {
   suggestedFlaws?: string[];
 }
 
+/**
+ * GENDER - Character presentation/pronouns
+ *
+ * VALUES:
+ * - "male": For roleplay and character sheet presentation
+ * - "female": For roleplay and character sheet presentation
+ *
+ * NOTES:
+ * - Cosmetic only (no gameplay impact)
+ * - Players choose for immersion/roleplay
+ * - Used in flavor text if AI narrator implemented
+ * - D&D 5e rules ignore gender (no mechanical difference)
+ *
+ * FUTURE: Consider non-binary option if players request
+ */
+export type Gender = 'male' | 'female';
+
+
+/**
+ * CHARACTER - Represents a player character in any state
+ *
+ * LIFECYCLE:
+ * 1. Created: User enters name, race, class (minimal fields)
+ * 2. Developed: User adds abilities, skills, equipment (optional fields)
+ * 3. Saved: All fields persisted to database with user_id and timestamp
+ * 4. Loaded: Retrieved from database when user plays or edits
+ * 5. Deleted: Soft-deleted (record stays, is_deleted flag set)
+ *
+ * REQUIRED FIELDS (cannot save without):
+ * - name: 1-50 characters, shown in character list
+ * - race: CharacterRace object, determines traits and languages
+ * - class: CharacterClass object, determines abilities and spells
+ *
+ * OPTIONAL FIELDS (nice to have):
+ * - background: influences roleplay and skills
+ * - physical attributes: cosmetic only, no game impact
+ * - spells: depends on class (clerics can have spells, barbarians cannot)
+ *
+ * MONETIZATION:
+ * - campaign_id: if set, character visible to campaign members
+ * - if null, character private to owner
+ * - Free tier: max 1 campaign per user
+ * - Pro tier: unlimited campaigns
+ *
+ * DATABASE MAPPING:
+ * - Stored in Supabase 'characters' table
+ * - user_id: References auth.users (RLS enforces ownership)
+ * - campaign_id: Nullable reference to campaigns table
+ * - created_at: Auto-set by Supabase
+ * - updated_at: Auto-updated by Supabase
+ *
+ * SECURITY:
+ * - RLS policy: Users can only see their own characters
+ * - RLS policy: Campaign members can see campaign's characters
+ * - Never send user_id to frontend (derived from auth context)
+ * - Never send JWT in character object
+ */
 export interface Character {
   id?: string;
   user_id?: string;
   campaign_id?: string | null;
   name?: string;
-  gender?: 'male' | 'female';
+  gender?: Gender;
   age?: number;
   height?: number;
   weight?: number;

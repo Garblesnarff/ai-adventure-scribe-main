@@ -7,6 +7,32 @@ export default function campaignRouter() {
 
   router.use(requireAuth);
 
+  /**
+   * GET /v1/campaigns
+   *
+   * BUSINESS PURPOSE:
+   * - Retrieves a list of all campaigns created by the authenticated user.
+   * - Used to populate the user's dashboard or campaign selection screen.
+   *
+   * REQUEST:
+   * - Method: GET
+   * - Auth: Required (Bearer token)
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * [
+   *   {
+   *     "id": "camp_123",
+   *     "name": "The Lost Mines of Phandelver",
+   *     "description": "A classic D&D adventure.",
+   *     "status": "active",
+   *     ...
+   *   }
+   * ]
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 500 Internal Server Error: Database query failed.
+   */
   router.get('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     try {
@@ -22,6 +48,33 @@ export default function campaignRouter() {
     }
   });
 
+  /**
+   * POST /v1/campaigns
+   *
+   * BUSINESS PURPOSE:
+   * - Creates a new campaign for the authenticated user.
+   *
+   * REQUEST:
+   * - Method: POST
+   * - Auth: Required (Bearer token)
+   * - Body: { "name": "Curse of Strahd", "description": "A gothic horror adventure." }
+   *
+   * RESPONSE SUCCESS (201 Created):
+   * {
+   *   "id": "camp_456",
+   *   "name": "Curse of Strahd",
+   *   ...
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 400 Bad Request: Missing required 'name' field.
+   * - 500 Internal Server Error: Database insert failed.
+   *
+   * MONETIZATION:
+   * - Before creating the campaign, this endpoint should check the user's plan and current campaign count.
+   * - If a free-tier user already has a campaign, a 402 Payment Required response should be returned.
+   */
   router.post('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const {
@@ -64,6 +117,31 @@ export default function campaignRouter() {
     }
   });
 
+  /**
+   * GET /v1/campaigns/:id
+   *
+   * BUSINESS PURPOSE:
+   * - Retrieves the details of a single campaign.
+   *
+   * REQUEST:
+   * - Method: GET
+   * - Auth: Required (Bearer token)
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * {
+   *   "id": "camp_123",
+   *   "name": "The Lost Mines of Phandelver",
+   *   ...
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 404 Not Found: The campaign does not exist or does not belong to the user.
+   * - 500 Internal Server Error: Database query failed.
+   *
+   * SECURITY:
+   * - The query is scoped by both campaign ID and the user ID from the JWT to prevent unauthorized access.
+   */
   router.get('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { id } = req.params;
@@ -85,6 +163,33 @@ export default function campaignRouter() {
     }
   });
 
+  /**
+   * PUT /v1/campaigns/:id
+   *
+   * BUSINESS PURPOSE:
+   * - Updates the details of an existing campaign.
+   *
+   * REQUEST:
+   * - Method: PUT
+   * - Auth: Required (Bearer token)
+   * - Body: { "name": "The Sunless Citadel", "status": "completed" }
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * {
+   *   "id": "camp_789",
+   *   "name": "The Sunless Citadel",
+   *   "status": "completed",
+   *   ...
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 404 Not Found: The campaign does not exist or does not belong to the user.
+   * - 500 Internal Server Error: Database update failed.
+   *
+   * SECURITY:
+   * - The query is scoped by both campaign ID and the user ID from the JWT to prevent unauthorized modification.
+   */
   router.put('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { id } = req.params;
@@ -134,6 +239,28 @@ export default function campaignRouter() {
     }
   });
 
+  /**
+   * DELETE /v1/campaigns/:id
+   *
+   * BUSINESS PURPOSE:
+   * - Deletes a campaign and all associated data (characters, sessions, etc.).
+   *
+   * REQUEST:
+   * - Method: DELETE
+   * - Auth: Required (Bearer token)
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * { "ok": true }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 404 Not Found: The campaign does not exist or does not belong to the user.
+   * - 500 Internal Server Error: Database deletion failed.
+   *
+   * SECURITY:
+   * - The query is scoped by both campaign ID and the user ID from the JWT to prevent unauthorized deletion.
+   * - Database foreign key constraints with `ON DELETE CASCADE` should be used to ensure all related data is properly deleted.
+   */
   router.delete('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { id } = req.params;
@@ -158,4 +285,3 @@ export default function campaignRouter() {
 
   return router;
 }
-

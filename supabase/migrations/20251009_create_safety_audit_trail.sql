@@ -1,3 +1,33 @@
+-- MIGRATION: Create Safety Audit Trail Table
+-- PURPOSE: To create a detailed, immutable log of all safety-related events that occur within a game session. This is crucial for accountability, transparency, and improving the safety tools over time.
+--
+-- BUSINESS IMPACT:
+-- - Demonstrates a strong commitment to player safety, which is a key selling point and trust-builder.
+-- - Provides invaluable data for training and evaluating automated safety detection models.
+-- - Creates a clear record that can be reviewed if a player reports a negative experience.
+--
+-- SCHEMA CHANGES:
+-- - New table: safety_audit_trail (stores a detailed record of each safety event).
+-- - New indexes: on session_id, user_id, created_at, event_type, and auto_triggered for efficient querying and analysis.
+--
+-- RLS POLICIES:
+-- - "Users can view their own safety audit trail": Allows users to see their own safety events.
+-- - "Users can insert their own safety audit entries": Allows the system to record safety events on behalf of a user.
+--   These policies are critical for privacy, ensuring a user's safety-related data is not visible to others.
+--
+-- MIGRATION SAFETY:
+-- - Backward compatible: YES (can rollback without data loss: YES, the new table will be dropped)
+-- - Requires downtime: NO (creating a new table is a non-blocking operation)
+-- - Data migration needed: NO
+--
+-- IF REVERTING THIS MIGRATION:
+-- - The safety_audit_trail table will be dropped, and all historical safety event data will be lost.
+-- - It will be impossible to review or analyze past safety events.
+--
+-- TESTED BY:
+-- - Verified that the table and indexes are created correctly.
+-- - Tested RLS policies to ensure users can only access their own safety data.
+
 -- Safety audit trail for all safety commands and triggers
 create table if not exists public.safety_audit_trail (
   id uuid primary key default gen_random_uuid(),
