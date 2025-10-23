@@ -8,6 +8,8 @@ export const human: CharacterRace = {
   abilityScoreIncrease: {},
   speed: 30,
   languages: ['Common'],
+  heightRange: [60, 76],
+  weightRange: [125, 250],
   backgroundImage: '/images/races/base/human-class-card-background.png',
   subraces: [
     {

@@ -8,6 +8,8 @@ export const elf: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2 },
   speed: 30,
   languages: ['Common', 'Elvish'],
+  heightRange: [58, 74],
+  weightRange: [100, 145],
   backgroundImage: '/images/races/base/elf-class-card-background.png',
   subraces: [
     {

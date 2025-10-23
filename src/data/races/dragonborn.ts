@@ -9,6 +9,8 @@ export const dragonborn: CharacterRace = {
   abilityScoreIncrease: { strength: 2, charisma: 1 },
   speed: 30,
   languages: ['Common', 'Draconic'],
+  heightRange: [72, 80],
+  weightRange: [220, 320],
   backgroundImage: '/images/races/base/dragonborn-class-card-background.png',
   subraces: []
 };

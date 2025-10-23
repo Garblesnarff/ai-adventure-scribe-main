@@ -8,6 +8,8 @@ export const dwarf: CharacterRace = {
   abilityScoreIncrease: { constitution: 2 },
   speed: 25,
   languages: ['Common', 'Dwarvish'],
+  heightRange: [48, 60],
+  weightRange: [130, 170],
   backgroundImage: '/images/races/base/dwarf-class-card-background.png',
   subraces: [
     {

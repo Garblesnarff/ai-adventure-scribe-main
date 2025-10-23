@@ -8,6 +8,8 @@ export const gnome: CharacterRace = {
   abilityScoreIncrease: { intelligence: 2 },
   speed: 25,
   languages: ['Common', 'Gnomish'],
+  heightRange: [36, 48],
+  weightRange: [35, 45],
   backgroundImage: '/images/races/base/gnome-class-card-background.png',
   subraces: [
     {

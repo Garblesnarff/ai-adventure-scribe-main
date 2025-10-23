@@ -1,5 +1,6 @@
 import { WizardStep } from './types';
 import BasicInfo from '../steps/BasicInfo';
+import PhysicalStep from '../steps/PhysicalStep';
 import PersonalitySelection from '../steps/PersonalitySelection';
 import RaceSelection from '../steps/RaceSelection';
 import SubraceSelection from '../steps/SubraceSelection';
@@ -30,6 +31,10 @@ export const wizardSteps: WizardStep[] = [
   {
     component: BasicInfo,
     label: 'Basic Info'
+  },
+  {
+    component: PhysicalStep,
+    label: 'Physical'
   },
   {
     component: RaceSelection,
