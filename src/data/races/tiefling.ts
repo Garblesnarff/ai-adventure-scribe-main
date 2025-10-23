@@ -8,6 +8,8 @@ export const tiefling: CharacterRace = {
   abilityScoreIncrease: { intelligence: 1, charisma: 2 },
   speed: 30,
   languages: ['Common', 'Infernal'],
+  heightRange: [60, 76],
+  weightRange: [125, 250],
   backgroundImage: '/images/races/base/tiefling-class-card-background.png',
   subraces: [
     {

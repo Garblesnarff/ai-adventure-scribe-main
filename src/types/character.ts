@@ -23,6 +23,8 @@ export interface CharacterRace {
   languages: string[];
   subraces?: Subrace[];
   backgroundImage?: string;
+  heightRange?: [number, number];
+  weightRange?: [number, number];
 }
 
 export interface Spell {
@@ -132,6 +134,13 @@ export interface Character {
   user_id?: string;
   campaign_id?: string | null;
   name?: string;
+  gender?: 'male' | 'female';
+  age?: number;
+  height?: number;
+  weight?: number;
+  eyes?: string;
+  skin?: string;
+  hair?: string;
   description?: string;
   race?: CharacterRace | null;
   subrace?: Subrace | null;

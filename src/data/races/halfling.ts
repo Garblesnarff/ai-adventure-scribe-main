@@ -9,6 +9,8 @@ export const halfling: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2 },
   speed: 25,
   languages: ['Common', 'Halfling'],
+  heightRange: [34, 38],
+  weightRange: [35, 45],
   backgroundImage: '/images/races/base/halfling-class-card-background.png',
   subraces: [
     {
