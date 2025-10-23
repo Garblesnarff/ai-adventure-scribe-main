@@ -1,27 +1,30 @@
 /**
- * Character Context
+ * CHARACTER CONTEXT - Central state management for character creation and display
  * 
- * This file defines the CharacterContext for managing global character data
- * within the application. It includes the context provider, a reducer for state
- * updates (e.g., during character creation or when loading a character), and
- * a custom hook for accessing the character state and dispatch function.
+ * WHY THIS EXISTS:
+ * - 10+ components need access to same character data (race, class, abilities, etc)
+ * - Prevents prop drilling through 7 levels of components
+ * - Enables undo/redo and draft management
  * 
- * Main Components:
- * - CharacterContext: The React context object.
- * - CharacterProvider: The provider component.
- * - useCharacter: Custom hook to consume the context.
+ * BUSINESS LOGIC:
+ * - isDirty flag prevents data loss on back button
+ * - canSave validation ensures required fields before database save
+ * - Character cannot be saved without: name, race, class (mandatory for monetization)
  * 
- * Key State:
- * - character: Object containing details of the currently active/selected character.
- * - isDirty, currentStep, isLoading, error: UI state related to character management.
+ * INTEGRATION:
+ * - Read from: /pages/CharacterCreateEntry (entry point)
+ * - Write to: Supabase when user clicks "Save Character"
+ * - Consumed by: 10+ child components via useCharacter() hook
  * 
- * Dependencies:
- * - React
- * - Supabase client (`@/integrations/supabase/client`) - (Note: supabase client is imported but not directly used in this file's current code, might be for future use or removed if unused)
- * - Character types (`@/types/character`)
- * - useToast hook (`@/components/ui/use-toast`)
+ * PERFORMANCE NOTE:
+ * - Memoized with useMemo to prevent unnecessary re-renders
+ * - 100+ render cycles possible during character creation (if not optimized)
+ * - Each dispatch triggers re-render of all subscribers
  * 
- * @author AI Dungeon Master Team
+ * SECURITY NOTE:
+ * - campaign_id is set when creating character in campaign context
+ * - This field is CRITICAL - without it, user sees other campaigns' characters
+ * - Always verify campaign_id matches authenticated user
  */
 
 // SDK Imports
@@ -36,8 +39,30 @@ import logger from '@/lib/logger';
 
 // Interfaces and Types (defined in-file, specific to this context)
 /**
- * Interface defining the shape of the character state
- * Includes the character data, UI state, and error handling
+ * CHARACTER STATE - Represents one character from creation → gameplay
+ *
+ * REQUIRED FIELDS (character cannot save without these):
+ * - character.name: string (1-50 chars, stored on character sheet)
+ * - character.race: CharacterRace (determines speed, languages, physical traits)
+ * - character.class: CharacterClass (determines hit die, abilities, spells)
+ *
+ * OPTIONAL FIELDS (nice to have, don't block save):
+ * - background, personality traits, physical attributes, etc
+ *
+ * MONETIZATION FIELDS:
+ * - character.campaign_id: nullable string (free users: 1 campaign, pro: unlimited)
+ * - If campaign_id set, character is "campaign-scoped" (shared with teammates)
+ * - If campaign_id null, character is "personal" (only visible to owner)
+ *
+ * FLAGS:
+ * - isDirty: true if unsaved changes exist (shows "*" in UI, prevents accidental loss)
+ * - isLoading: true during save (shows spinner, disables buttons)
+ * - error: string | null with validation errors (what user must fix before saving)
+ *
+ * NEVER:
+ * - Modify state directly - always dispatch
+ * - Store user_id outside of the character object (it's part of the character data model)
+ * - Store JWT token (security risk)
  */
 interface CharacterState {
   character: Character | null;
@@ -142,6 +167,23 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
   try {
     switch (action.type) {
       case 'SET_CHARACTER': {
+        /**
+         * WHY: Replaces the entire character object in the state.
+         *
+         * BUSINESS IMPACT:
+         * - Used when loading a character from the database.
+         * - Essential for editing existing characters or resuming a creation session.
+         *
+         * FLOW:
+         * 1. Component: Character loading logic (e.g., in a character selection screen).
+         * 2. Dispatch: SET_CHARACTER with the full character object from the database.
+         * 3. Reducer: Overwrites state.character, sets isDirty=false.
+         * 4. Effect: The entire character creation wizard/sheet updates to reflect the loaded character.
+         *
+         * EDGE CASES:
+         * - Payload must be a valid, complete character object.
+         * - This action resets any unsaved changes (isDirty=false).
+         */
         // Validate character data before setting
         if (!action.payload || typeof action.payload !== 'object') {
           logger.error('Invalid character payload:', action.payload);
@@ -160,6 +202,23 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'UPDATE_CHARACTER': {
+        /**
+         * WHY: Merges partial updates into the existing character state.
+         *
+         * BUSINESS IMPACT:
+         * - The most common action during character creation.
+         * - Allows individual components to update only the piece of state they manage (e.g., race, name, class).
+         *
+         * FLOW:
+         * 1. Component: A wizard step (e.g., RaceSelection).
+         * 2. Dispatch: UPDATE_CHARACTER with a partial character object (e.g., `{ race: selectedRace }`).
+         * 3. Reducer: Merges the payload into state.character, marks isDirty=true.
+         * 4. Effect: The UI reflects the change, and the "unsaved changes" indicator appears.
+         *
+         * DEPENDENCIES:
+         * - Any component that modifies a part of the character sheet uses this.
+         * - Triggers re-renders in all components subscribed to the updated fields.
+         */
         // Only log when there are actual changes to reduce noise
         const currentCharacter = state.character;
         const payload = action.payload;
@@ -243,48 +302,88 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         return newState;
       }
       case 'SET_GENDER':
+        /**
+         * WHY: User sets the character's gender.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.gender, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, gender: action.payload },
           isDirty: true,
         };
       case 'SET_AGE':
+        /**
+         * WHY: User sets the character's age.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.age, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, age: action.payload },
           isDirty: true,
         };
       case 'SET_HEIGHT':
+        /**
+         * WHY: User sets the character's height.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.height, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, height: action.payload },
           isDirty: true,
         };
       case 'SET_WEIGHT':
+        /**
+         * WHY: User sets the character's weight.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.weight, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, weight: action.payload },
           isDirty: true,
         };
       case 'SET_EYES':
+        /**
+         * WHY: User sets the character's eye color.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.eyes, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, eyes: action.payload },
           isDirty: true,
         };
       case 'SET_SKIN':
+        /**
+         * WHY: User sets the character's skin color.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.skin, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, skin: action.payload },
           isDirty: true,
         };
       case 'SET_HAIR':
+        /**
+         * WHY: User sets the character's hair color/style.
+         * BUSINESS IMPACT: Cosmetic detail for player immersion. No gameplay impact.
+         * FLOW: PhysicalStep component -> dispatch -> reducer updates character.hair, isDirty=true.
+         */
         return {
           ...state,
           character: { ...state.character!, hair: action.payload },
           isDirty: true,
         };
       case 'SET_STEP': {
+        /**
+         * WHY: Controls the current step in the character creation wizard.
+         * BUSINESS IMPACT: Essential for navigating the multi-step creation process.
+         * FLOW: Next/Back buttons in wizard -> dispatch -> reducer updates currentStep.
+         */
         // Validate step number
         const step = action.payload;
         if (typeof step !== 'number' || step < 0 || step > 20) {
@@ -303,6 +402,11 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'SET_LOADING': {
+        /**
+         * WHY: Manages the loading state for asynchronous operations.
+         * BUSINESS IMPACT: Provides user feedback during saving/loading, prevents duplicate submissions.
+         * FLOW: Before async call (e.g., save) -> dispatch(true) -> After call -> dispatch(false).
+         */
         // Validate loading boolean
         const loading = action.payload;
         if (typeof loading !== 'boolean') {
@@ -321,6 +425,11 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'SET_ERROR': {
+        /**
+         * WHY: Stores error messages from validation or API calls.
+         * BUSINESS IMPACT: Displays actionable error messages to the user.
+         * FLOW: Catch block in an async operation -> dispatch(error.message) -> UI displays the error.
+         */
         // Validate error message
         const error = action.payload;
         if (error !== null && typeof error !== 'string') {
@@ -338,6 +447,11 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'UPDATE_SPELL_SLOTS': {
+         /**
+         * WHY: Updates the number of available spell slots for a character.
+         * BUSINESS IMPACT: Critical for gameplay; tracks a core resource for spellcasters.
+         * FLOW: After casting a spell or taking a long rest -> dispatch -> updates spellSlots.
+         */
         // Validate spell slots payload
         const spellSlots = action.payload;
         if (!spellSlots || typeof spellSlots !== 'object') {
@@ -391,6 +505,11 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'UPDATE_CONCENTRATION': {
+        /**
+         * WHY: Tracks the spell a character is currently concentrating on.
+         * BUSINESS IMPACT: Core D&D mechanic; a character can only concentrate on one spell at a time.
+         * FLOW: Casting a concentration spell -> dispatch(spellName) -> Taking damage -> dispatch(null).
+         */
         // Validate concentration payload
         const concentration = action.payload;
         if (concentration !== null && typeof concentration !== 'string') {
@@ -422,6 +541,11 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
       }
 
       case 'RESET': {
+        /**
+         * WHY: Resets the entire character state to its initial, empty values.
+         * BUSINESS IMPACT: Allows the user to start character creation over from scratch.
+         * FLOW: "Start Over" button -> dispatch -> state is replaced by initialState.
+         */
         logger.info('Resetting character state to initial state');
         return initialState;
       }

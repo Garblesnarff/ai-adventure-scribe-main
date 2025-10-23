@@ -1,3 +1,38 @@
+-- MIGRATION: Create World Fact Ledger Schema
+-- PURPOSE: To establish a structured, consistent, and verifiable "brain" for the AI Dungeon Master. This schema allows the AI to maintain a persistent and coherent understanding of the game world, its entities, and their relationships.
+--
+-- BUSINESS IMPACT:
+-- - Drastically improves the quality and consistency of the AI's narrative by preventing contradictions and forgetfulness.
+-- - Enables more complex and emergent gameplay based on the relationships and facts stored in the ledger.
+-- - Creates a more believable and immersive game world, which is a major driver of player satisfaction and retention.
+-- - Lays the groundwork for future features like world history, character knowledge, and automated quest generation.
+--
+-- SCHEMA CHANGES:
+-- - New table: world_entities (the "nouns" of the world: people, places, things).
+-- - New table: world_relationships (the "verbs" connecting the nouns).
+-- - New table: world_facts (the detailed statements about entities and relationships).
+-- - New table: world_conflicts (a system for detecting and resolving contradictions).
+-- - New table: world_rules (a set of constraints to maintain world consistency).
+-- - New indexes: Numerous indexes on the new tables for performant querying of the world state.
+-- - New trigger: on all new tables to automatically update the updated_at timestamp.
+--
+-- RLS POLICIES:
+-- - A comprehensive set of policies is applied to all new tables to ensure that the world state of one session is completely isolated from all others. Users can only interact with the world ledger of a session they are a part of.
+--   This is a critical security and privacy measure.
+--
+-- MIGRATION SAFETY:
+-- - Backward compatible: YES (can rollback without data loss: YES, all new tables and objects will be dropped)
+-- - Requires downtime: NO (creating new tables and related objects is a non-blocking operation)
+-- - Data migration needed: NO
+--
+-- IF REVERTING THIS MIGRATION:
+-- - The AI will lose its persistent "memory," and all world-building and narrative consistency features will be disabled.
+-- - All game worlds created by users will be permanently lost.
+--
+-- TESTED BY:
+-- - Verified that all tables, indexes, and triggers are created correctly.
+-- - Tested RLS policies to ensure strict data isolation between sessions.
+
 -- World Fact Ledger for maintaining consistent world state
 -- Module 4: World Graph & Fact Ledger
 

@@ -19,6 +19,40 @@ export default function imagesRouter() {
   router.use(requireAuth);
   router.use(planRateLimit('images'));
 
+  /**
+   * POST /v1/images/generate
+   *
+   * BUSINESS PURPOSE:
+   * - Generates an image based on a text prompt using an AI model.
+   * - Used to create character portraits, scene illustrations, and other visual assets for the game.
+   *
+   * REQUEST:
+   * - Method: POST
+   * - Auth: Required (Bearer token)
+   * - Body: {
+   *     "prompt": "A heroic elf ranger in a dark forest",
+   *     "referenceImage": "base64-encoded-string", // Optional
+   *     "model": "google/gemini-2.5-flash-image-preview" // Optional
+   *   }
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * {
+   *   "image": "base64-encoded-string" // The generated image
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 402 Payment Required: The user's image generation quota has been exceeded.
+   * - 503 Service Unavailable: The image generation provider is temporarily unavailable.
+   * - 500 Internal Server Error: Image generation failed for another reason.
+   *
+   * MONETIZATION:
+   * - Each successful image generation consumes a unit from the user's image quota.
+   * - Higher-tier plans offer more or higher-quality image generations.
+   *
+   * RELIABILITY:
+   * - Uses a circuit breaker to protect against a failing image generation provider.
+   */
   router.post('/generate', async (req: Request, res: Response) => {
     const { prompt, referenceImage, model, quality, size }: { prompt: string; referenceImage?: string; model?: string; quality?: 'low' | 'medium' | 'high'; size?: string } = req.body || {};
 
@@ -211,7 +245,21 @@ export default function imagesRouter() {
     }
   });
 
-  // Append a generated image record to a dialogue_history message
+  /**
+   * PATCH /v1/images/message/:id/images
+   *
+   * BUSINESS PURPOSE:
+   * - Associates a generated image with a specific message in the dialogue history.
+   *
+   * REQUEST:
+   * - Method: PATCH
+   * - Auth: Required
+   * - Path Param: id - The ID of the dialogue_history message.
+   * - Body: { "url": "https://...", "prompt": "..." }
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * { "images": [ ... ] } // The updated array of images for the message
+   */
   router.patch('/message/:id/images', async (req: Request, res: Response) => {
     const { id } = req.params;
     const body = req.body || {};

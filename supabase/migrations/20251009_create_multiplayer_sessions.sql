@@ -1,3 +1,45 @@
+-- MIGRATION: Create Multiplayer Sessions Schema
+-- PURPOSE: To introduce a comprehensive data model for real-time, collaborative multiplayer game sessions. This is the foundation for the entire multiplayer feature set.
+--
+-- BUSINESS IMPACT:
+-- - Enables a major new feature: multiplayer gameplay. This is a critical driver for user acquisition, engagement, and retention.
+-- - Opens up new monetization avenues, such as premium features for Dungeon Masters or group subscription plans.
+-- - Transforms the application from a single-player experience to a collaborative one.
+--
+-- SCHEMA CHANGES:
+-- - New table: shared_sessions (stores the core information for a multiplayer session).
+-- - New table: session_participants (tracks which users are part of which session).
+-- - New table: session_turns (manages the turn order and actions within a session).
+-- - New table: session_events (a log for real-time events to be broadcast to clients).
+-- - New table: session_conflicts (a system for resolving disagreements or conflicts in the game state).
+-- - New table: session_snapshots (stores periodic snapshots of the game state for recovery).
+-- - New table: session_messages (a persistent chat log for each session).
+-- - New indexes: Numerous indexes on the new tables to ensure performant queries.
+-- - New function: update_session_activity (a trigger function to update the last_activity timestamp).
+-- - New function: generate_session_code (a helper function to create unique, human-readable join codes).
+-- - New function: calculate_session_stats (a helper function for analytics).
+-- - New triggers: to automatically call the update_session_activity function.
+--
+-- RLS POLICIES:
+-- - Policies on shared_sessions: Allow a user to create, view, and update sessions they own. Participants can view sessions they are a part of.
+-- - Policies on session_participants: Allow users to join sessions and manage their own participant record.
+-- - Policies on other tables (turns, events, etc.): Generally restrict access to participants of the session.
+--   These policies are CRITICAL for ensuring that one group of players cannot access the data of another group's game.
+--
+-- MIGRATION SAFETY:
+-- - Backward compatible: YES (can rollback without data loss: YES, all new tables and objects will be dropped)
+-- - Requires downtime: NO (creating new tables and related objects is a non-blocking operation)
+-- - Data migration needed: NO
+--
+-- IF REVERTING THIS MIGRATION:
+-- - The entire multiplayer feature will become non-functional.
+-- - All multiplayer session data, including chat logs and game states, will be permanently lost.
+--
+-- TESTED BY:
+-- - Verified that all tables, indexes, functions, and triggers are created correctly.
+-- - Tested RLS policies to ensure data isolation between different sessions and users.
+-- - Tested the generate_session_code function to confirm generation of unique codes.
+
 -- Multi-User Orchestration Schema
 -- Supports session sharing, turn management, and player synchronization
 

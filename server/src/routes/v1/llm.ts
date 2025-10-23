@@ -13,6 +13,44 @@ export default function llmRouter() {
   // Plan-aware per-IP and per-user limiter
   router.use(planRateLimit('llm'));
 
+  /**
+   * POST /v1/llm/generate
+   *
+   * BUSINESS PURPOSE:
+   * - Provides a generic interface to interact with a Large Language Model (LLM) for various in-game actions.
+   * - This is the core endpoint for generating narrative, NPC dialogue, and other AI-driven content.
+   * - Functionally similar to /v1/ai/respond, but may be used for different types of LLM tasks.
+   *
+   * REQUEST:
+   * - Method: POST
+   * - Auth: Required (Bearer token)
+   * - Body: {
+   *     "prompt": "Describe the enchanted forest.",
+   *     "provider": "openrouter" | "gemini",
+   *     "history": [
+   *       { "role": "user", "content": "What's my quest?" },
+   *       { "role": "assistant", "content": "You must find the Sunstone." }
+   *     ]
+   *   }
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * {
+   *   "text": "The forest is ancient and filled with glowing fungi..."
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 402 Payment Required: The user's AI interaction quota has been exceeded.
+   * - 429 Too Many Requests: The user has exceeded the rate limit.
+   * - 503 Service Unavailable: The downstream LLM provider is temporarily unavailable.
+   * - 500 Internal Server Error: The LLM request failed for another reason.
+   *
+   * MONETIZATION:
+   * - Each call consumes a unit from the user's LLM quota.
+   *
+   * RELIABILITY:
+   * - Uses a circuit breaker for each provider to prevent cascading failures.
+   */
   router.post('/generate', async (req: Request, res: Response) => {
     const {
       prompt,

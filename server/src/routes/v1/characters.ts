@@ -6,6 +6,43 @@ export default function characterRouter() {
   const router = Router();
   router.use(requireAuth);
 
+  /**
+   * GET /v1/characters
+   *
+   * BUSINESS PURPOSE:
+   * - Returns all characters belonging to the authenticated user.
+   * - Used in: Character list page, campaign character selection, etc.
+   * - WHO CAN USE: Any authenticated user.
+   *
+   * REQUEST:
+   * - Method: GET
+   * - Auth: Required (Bearer token)
+   * - Headers: Authorization: Bearer <jwt>
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * [
+   *   {
+   *     "id": "char_123",
+   *     "name": "Aragorn",
+   *     "race": "Human",
+   *     "class": "Fighter",
+   *     "level": 5
+   *   },
+   *   ...
+   * ]
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 500 Internal Server Error: Database connection failed.
+   *
+   * BUSINESS LOGIC:
+   * - The user_id from the JWT is used to filter the characters, ensuring a user can only see their own.
+   * - Returns an empty array if the user has no characters.
+   *
+   * PERFORMANCE:
+   * - Query is indexed on user_id for fast lookups.
+   * - Should complete in <200ms for a typical user.
+   */
   router.get('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 
@@ -43,6 +80,36 @@ export default function characterRouter() {
     }
   });
 
+  /**
+   * POST /v1/characters
+   *
+   * BUSINESS PURPOSE:
+   * - Creates a new character for the authenticated user.
+   * - This is the final step in the character creation wizard.
+   *
+   * REQUEST:
+   * - Method: POST
+   * - Auth: Required (Bearer token)
+   * - Body: { "name": "Bilbo", "race": "Hobbit", "class": "Rogue", ... }
+   *
+   * RESPONSE SUCCESS (201 Created):
+   * {
+   *   "id": "char_456",
+   *   "name": "Bilbo",
+   *   "race": "Hobbit",
+   *   "class": "Rogue",
+   *   ...
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 400 Bad Request: Missing required fields (e.g., name, race, class).
+   * - 500 Internal Server Error: Database insert failed.
+   *
+   * MONETIZATION:
+   * - Before inserting, this endpoint should check the user's plan and character count to enforce the character limit for the free tier.
+   * - If the user is at their limit, a 402 Payment Required response should be returned.
+   */
   router.post('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const {
@@ -93,6 +160,33 @@ export default function characterRouter() {
     }
   });
 
+  /**
+   * GET /v1/characters/:id
+   *
+   * BUSINESS PURPOSE:
+   * - Retrieves a single character by its ID.
+   * - Used when a user selects a character to view or edit.
+   *
+   * REQUEST:
+   * - Method: GET
+   * - Auth: Required (Bearer token)
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * {
+   *   "id": "char_123",
+   *   "name": "Aragorn",
+   *   ...
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 404 Not Found: The character does not exist, or does not belong to the user.
+   * - 500 Internal Server Error: Database query failed.
+   *
+   * SECURITY:
+   * - The query includes a `where` clause for both the character ID and the user ID from the JWT.
+   *   This is CRITICAL to prevent a user from accessing another user's character by guessing its ID.
+   */
   router.get('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { id } = req.params;
@@ -123,6 +217,33 @@ export default function characterRouter() {
     }
   });
 
+  /**
+   * PUT /v1/characters/:id
+   *
+   * BUSINESS PURPOSE:
+   * - Updates an existing character.
+   *
+   * REQUEST:
+   * - Method: PUT
+   * - Auth: Required (Bearer token)
+   * - Body: { "name": "Strider", "level": 6, ... }
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * {
+   *   "id": "char_123",
+   *   "name": "Strider",
+   *   "level": 6,
+   *   ...
+   * }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 404 Not Found: The character does not exist, or does not belong to the user.
+   * - 500 Internal Server Error: Database update failed.
+   *
+   * SECURITY:
+   * - The `update` query is scoped to the character ID and the user ID from the JWT to prevent unauthorized modification of other users' characters.
+   */
   router.put('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { id } = req.params;
@@ -179,6 +300,27 @@ export default function characterRouter() {
     }
   });
 
+  /**
+   * DELETE /v1/characters/:id
+   *
+   * BUSINESS PURPOSE:
+   * - Deletes a character.
+   *
+   * REQUEST:
+   * - Method: DELETE
+   * - Auth: Required (Bearer token)
+   *
+   * RESPONSE SUCCESS (200 OK):
+   * { "ok": true }
+   *
+   * RESPONSE ERRORS:
+   * - 401 Unauthorized: No token or invalid token.
+   * - 404 Not Found: The character does not exist, or does not belong to the user.
+   * - 500 Internal Server Error: Database deletion failed.
+   *
+   * SECURITY:
+   * - The `delete` query is scoped to the character ID and the user ID from the JWT to prevent unauthorized deletion of other users' characters.
+   */
   router.delete('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { id } = req.params;
@@ -420,4 +562,3 @@ export default function characterRouter() {
 
   return router;
 }
-

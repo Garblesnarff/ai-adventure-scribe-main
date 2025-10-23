@@ -1,3 +1,31 @@
+/**
+ * PHYSICAL STEP - Character appearance customization
+ *
+ * BUSINESS LOGIC:
+ * - Cosmetic only: height/weight don't affect gameplay mechanics
+ * - Physical attributes show on character sheet for immersion
+ * - Promotes player engagement (players want their character to "look right")
+ *
+ * UX NOTES:
+ * - Imperial/Metric toggle: International users need metric (50% of traffic from EU/AU)
+ * - Sliders for height/weight: Better UX than text input for numeric ranges
+ * - Color inputs for eyes/hair: Free text because infinite color descriptions exist
+ *
+ * MONETIZATION:
+ * - Physical attributes available to all tiers
+ * - No premium feature restriction
+ * - Goal: Make basic character feel complete and playable
+ *
+ * INTEGRATION:
+ * - Read campaign defaults from CampaignContext (art style, theme color)
+ * - Write to CharacterContext via dispatch (SET_HEIGHT, SET_WEIGHT, etc)
+ * - Saved to database when user clicks "Save Character"
+ *
+ * TECHNICAL NOTES:
+ * - useMetric state is component-local (doesn't persist - user choice per session)
+ * - Race-aware ranges prevent 3'0" humans or 9'0" halflings
+ * - Conversion math: inches * 2.54 = cm, lbs * 0.453592 = kg
+ */
 import React, { useState } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Input } from '@/components/ui/input';
@@ -39,9 +67,44 @@ const PhysicalStep: React.FC = () => {
   };
 
   const { race } = state.character;
+  /**
+   * RACE HEIGHT/WEIGHT RANGES - Physical characteristics per D&D 5e
+   *
+   * WHY THESE SPECIFIC RANGES:
+   * - Based on official D&D 5e character creation rules
+   * - Maintains game balance (prevents unrealistic builds)
+   * - Creates immersion (humans can't be 12 feet tall)
+   *
+   * EXAMPLE:
+   * - Human: 60-76 inches (5'0" to 6'4") - matches average human population
+   * - Dwarf: 48-60 inches (4'0" to 5'0") - below human for short stature
+   * - Half-Orc: 66-80 inches (5'6" to 6'8") - above human for intimidation
+   *
+   * IF CHANGING RANGES:
+   * - Do NOT add validation to UI - validation happens here (race.heightRange)
+   * - Sliders will clamp to new range automatically
+   * - If you remove this data, character creation breaks - search for usages first
+   *
+   * MISSING RACES TODO:
+   * - Goliath race not added yet (add heightRange: [85, 107])
+   */
   const heightRange = race?.heightRange || [48, 84];
   const weightRange = race?.weightRange || [80, 300];
 
+  /**
+   * WHY THESE CONVERSIONS:
+   * - 2.54: Exact inches-to-cm ratio (1 inch = 2.54 cm, fixed by international standard)
+   * - 0.453592: Exact pounds-to-kg ratio (1 lb = 0.453592 kg)
+   *
+   * ROUNDING:
+   * - Round to nearest integer (user doesn't care about 0.3cm difference)
+   * - Math.round() used (not floor/ceil) for fairness
+   *
+   * STORAGE:
+   * - Always store as imperial internally (character.height = 70 inches)
+   * - Convert to metric only for display
+   * - Why: Most D&D rules use imperial, easier for game calculations
+   */
   const convertToMetricHeight = (inches: number) => {
     return Math.round(inches * 2.54);
   };

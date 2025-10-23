@@ -1,3 +1,39 @@
+-- MIGRATION: Create Session Configuration Table
+-- PURPOSE: To provide granular control over session-specific settings, including safety tools, content filters, and AI Dungeon Master behavior.
+--
+-- BUSINESS IMPACT:
+-- - Enhances player safety and comfort, which is a key differentiator and selling point.
+-- - Allows for a highly customizable gameplay experience, increasing player engagement.
+-- - Provides levers for managing AI resource consumption (e.g., response time mode).
+--
+-- SCHEMA CHANGES:
+-- - New table: session_config (stores all session-specific settings).
+-- - New indexes: on session_id and updated_at for performance.
+-- - New function: update_updated_at_column (a trigger function to automatically update the updated_at timestamp).
+-- - New trigger: session_config_updated_at (applies the trigger function to the session_config table).
+-- - New function: create_default_session_config (a helper function to create a default configuration for a new session).
+--
+-- RLS POLICIES:
+-- - "Users can view their own session config": Allows a user to read the configuration for a session they own.
+-- - "Users can insert their own session config": Allows a user to create a configuration for a session they own.
+-- - "Users can update their own session config": Allows a user to modify the configuration for a session they own.
+-- - "Users can delete their own session config": Allows a user to delete the configuration for a session they own.
+--   These policies are critical for preventing users from viewing or modifying the settings of other users' sessions.
+--
+-- MIGRATION SAFETY:
+-- - Backward compatible: YES (can rollback without data loss: YES, the new table and related objects will be dropped)
+-- - Requires downtime: NO (creating a new table and related objects is a non-blocking operation)
+-- - Data migration needed: NO
+--
+-- IF REVERTING THIS MIGRATION:
+-- - The session_config table will be dropped, and all customized session settings will be lost.
+-- - The application will revert to default, hard-coded settings, and all safety/customization features will be disabled.
+--
+-- TESTED BY:
+-- - Verified that the table and its columns/constraints are created correctly.
+-- - Verified that the RLS policies are applied and correctly restrict access.
+-- - Tested the create_default_session_config function to ensure it creates a valid default configuration.
+
 -- Session configuration for safety settings and game options
 create table if not exists public.session_config (
   id uuid primary key default gen_random_uuid(),
