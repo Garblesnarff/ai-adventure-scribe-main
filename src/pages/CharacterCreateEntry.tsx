@@ -19,12 +19,9 @@ const CharacterCreateEntry: React.FC = () => {
     }
   }, [featureOn, preselectedCampaign, navigate]);
 
-  // Legacy behavior: render wizard directly
-  if (!featureOn) {
-    return <CharacterWizard />;
-  }
-
-  // Feature enabled and no campaign selected: show a simple picker
+  // Always call hook regardless of feature flag (rules of hooks requirement)
+  // Feature enabled and campaign picker: show campaigns
+  // Feature disabled: don't use this data
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['available-campaigns-for-create'],
     queryFn: async () => {
@@ -35,7 +32,13 @@ const CharacterCreateEntry: React.FC = () => {
       if (error) throw error;
       return data as Array<{ id: string; name: string; description?: string | null }>;
     },
+    enabled: featureOn, // Only run query if feature is enabled
   });
+
+  // Legacy behavior: render wizard directly
+  if (!featureOn) {
+    return <CharacterWizard />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

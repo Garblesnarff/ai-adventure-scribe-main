@@ -27,7 +27,9 @@ import { v4 as uuidv4 } from 'uuid';
           body: JSON.stringify({ message: err?.message || 'fetch_failed', stack: err?.stack, extra: { input: String(input) } }),
           keepalive: true,
         });
-      } catch {}
+      } catch {
+        // Ignore error reporting failures
+      }
       throw err;
     });
   };
@@ -42,7 +44,9 @@ import { v4 as uuidv4 } from 'uuid';
         body: JSON.stringify({ message: event?.error?.message || event?.message || 'error', stack: event?.error?.stack, extra: { filename: event?.filename, lineno: event?.lineno, colno: event?.colno } }),
         keepalive: true,
       });
-    } catch {}
+    } catch {
+      // Ignore error reporting failures
+    }
   });
   window.addEventListener('unhandledrejection', (event) => {
     try {
@@ -54,7 +58,9 @@ import { v4 as uuidv4 } from 'uuid';
         body: JSON.stringify({ message: (reason && (reason.message || String(reason))) || 'unhandledrejection', stack: reason?.stack }),
         keepalive: true,
       });
-    } catch {}
+    } catch {
+      // Ignore error reporting failures
+    }
   });
 })();
 
