@@ -4,11 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users } from 'lucide-react';
 
 import CampaignOverview from './CampaignOverview';
 import CampaignCharacters from './CampaignCharacters';
@@ -38,18 +36,17 @@ const CampaignHub: React.FC = () => {
 
   React.useEffect(() => {
     if (campaign) {
-      dispatch({ type: 'UPDATE_CAMPAIGN', payload: { id: campaign.id, name: campaign.name, defaultArtStyle: 'fantasy', description: campaign.description || undefined, genre: campaign.genre || undefined, tone: campaign.tone as 'serious' | 'humorous' | 'gritty' | undefined, difficulty_level: campaign.difficulty_level || undefined, campaign_length: campaign.campaign_length as 'one-shot' | 'short' | 'full' | undefined } });
+      dispatch({ type: 'UPDATE_CAMPAIGN', payload: { id: campaign.id, name: campaign.name, defaultArtStyle: campaign.theme || 'fantasy', description: campaign.description, genre: campaign.genre, tone: campaign.tone, difficulty_level: campaign.difficulty_level, campaign_length: campaign.campaign_length } });
     }
   }, [campaign, dispatch]);
 
   const currentTab = React.useMemo(() => {
-    const path = location.pathname + (location.search || '');
-    if (/\/characters(?:\/?|\?|$)/.test(path)) return 'characters';
-    if (/\/sessions(?:\/?|\?|$)/.test(path)) return 'sessions';
-    if (/\/world(?:\/?|\?|$)/.test(path)) return 'world';
-    if (/\/settings(?:\/?|\?|$)/.test(path)) return 'settings';
+    if (location.pathname.endsWith('/characters') || location.pathname.includes('/characters/')) return 'characters';
+    if (location.pathname.endsWith('/sessions')) return 'sessions';
+    if (location.pathname.endsWith('/world')) return 'world';
+    if (location.pathname.endsWith('/settings')) return 'settings';
     return 'overview';
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   const onTabChange = (value: string) => {
     navigate(`/app/campaigns/${campaignId}/${value === 'overview' ? '' : value}`);
@@ -73,98 +70,47 @@ const CampaignHub: React.FC = () => {
     );
   }
 
-  // Simple derived state; not a hook to avoid conditional hook order issues
-  const isCreateCharacter = location.pathname.endsWith('/characters/new');
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/20">
-      <div className="container mx-auto px-4 py-8">
-        {/* Enhanced Header */}
-        <div className="mb-6">
-          <div className="glass-strong rounded-2xl p-6 hover-lift">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-infinite-purple to-infinite-gold flex items-center justify-center shadow-lg">
-                    <span className="text-xl">⚔️</span>
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-infinite-purple to-infinite-gold bg-clip-text text-transparent">
-                      {campaign.name}
-                    </h1>
-                    <p className="text-muted-foreground">Epic Campaign Adventure</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild className="bg-gradient-to-r from-infinite-purple to-infinite-purple-dark hover:from-infinite-purple-dark hover:to-infinite-purple text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                  <Link to={`/app/campaigns/${campaignId}/characters`}>
-                    <Users className="w-4 h-4 mr-2" />
-                    Manage Characters
-                  </Link>
-                </Button>
-                <Button variant="outline" className="border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10">
-                  <span className="mr-2">+</span>
-                  New Session
-                </Button>
-              </div>
-            </div>
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{campaign.name}</h1>
+            <p className="text-muted-foreground">Campaign Hub</p>
           </div>
+          <Button asChild>
+            <Link to={`/app/campaigns/${campaignId}/characters`}>Characters</Link>
+          </Button>
         </div>
-
-        {/* Enhanced Tabs */}
-        <Tabs value={currentTab} onValueChange={onTabChange} aria-label="Campaign sections" className="mb-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-1 mb-4">
-            <TabsTrigger
-              value="overview"
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-infinite-purple data-[state=active]:to-infinite-purple-dark data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 font-medium"
-            >
-              📜 Overview
-            </TabsTrigger>
-            <TabsTrigger
-              value="characters"
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-infinite-gold data-[state=active]:to-infinite-gold-dark data-[state=active]:text-infinite-dark data-[state=active]:shadow-lg transition-all duration-300 font-medium"
-            >
-              ⚔️ Characters
-            </TabsTrigger>
-            <TabsTrigger
-              value="sessions"
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-infinite-teal data-[state=active]:to-infinite-teal-dark data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 font-medium"
-            >
-              📖 Sessions
-            </TabsTrigger>
-            <TabsTrigger
-              value="world"
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 font-medium"
-            >
-              🌍 World
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-600 data-[state=active]:to-slate-700 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 font-medium"
-            >
-              ⚙️ Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview">
-            <CampaignOverview campaign={campaign} />
-          </TabsContent>
-          <TabsContent value="characters">
-            <CampaignCharacters mode={isCreateCharacter ? 'create' : 'list'} />
-          </TabsContent>
-          <TabsContent value="sessions">
-            <CampaignSessions />
-          </TabsContent>
-          <TabsContent value="world">
-            <CampaignWorld />
-          </TabsContent>
-          <TabsContent value="settings">
-            <CampaignSettings />
-          </TabsContent>
-        </Tabs>
       </div>
+
+      <Tabs value={currentTab} onValueChange={onTabChange}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="characters">Characters</TabsTrigger>
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
+          <TabsTrigger value="world">World</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <CampaignOverview />
+        </TabsContent>
+        <TabsContent value="characters">
+          <Routes>
+            <Route index element={<CampaignCharacters />} />
+            <Route path="new" element={<CampaignCharacters mode="create" />} />
+          </Routes>
+        </TabsContent>
+        <TabsContent value="sessions">
+          <CampaignSessions />
+        </TabsContent>
+        <TabsContent value="world">
+          <CampaignWorld />
+        </TabsContent>
+        <TabsContent value="settings">
+          <CampaignSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

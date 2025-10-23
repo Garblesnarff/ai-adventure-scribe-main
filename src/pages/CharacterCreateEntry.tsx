@@ -19,9 +19,12 @@ const CharacterCreateEntry: React.FC = () => {
     }
   }, [featureOn, preselectedCampaign, navigate]);
 
-  // Legacy behavior: when flag is OFF, we still render CharacterWizard here
-  // but Hooks must not be called conditionally, so we compute campaigns query unconditionally
+  // Legacy behavior: render wizard directly
+  if (!featureOn) {
+    return <CharacterWizard />;
+  }
 
+  // Feature enabled and no campaign selected: show a simple picker
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['available-campaigns-for-create'],
     queryFn: async () => {
@@ -33,10 +36,6 @@ const CharacterCreateEntry: React.FC = () => {
       return data as Array<{ id: string; name: string; description?: string | null }>;
     },
   });
-
-  if (!featureOn) {
-    return <CharacterWizard />;
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
