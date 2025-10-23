@@ -54,6 +54,13 @@ interface CharacterState {
 type CharacterAction =
   | { type: 'SET_CHARACTER'; payload: Character }
   | { type: 'UPDATE_CHARACTER'; payload: Partial<Character> }
+  | { type: 'SET_GENDER'; payload: 'male' | 'female' }
+  | { type: 'SET_AGE'; payload: number }
+  | { type: 'SET_HEIGHT'; payload: number }
+  | { type: 'SET_WEIGHT'; payload: number }
+  | { type: 'SET_EYES'; payload: string }
+  | { type: 'SET_SKIN'; payload: string }
+  | { type: 'SET_HAIR'; payload: string }
   | { type: 'SET_STEP'; payload: number }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
@@ -235,6 +242,48 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
 
         return newState;
       }
+      case 'SET_GENDER':
+        return {
+          ...state,
+          character: { ...state.character!, gender: action.payload },
+          isDirty: true,
+        };
+      case 'SET_AGE':
+        return {
+          ...state,
+          character: { ...state.character!, age: action.payload },
+          isDirty: true,
+        };
+      case 'SET_HEIGHT':
+        return {
+          ...state,
+          character: { ...state.character!, height: action.payload },
+          isDirty: true,
+        };
+      case 'SET_WEIGHT':
+        return {
+          ...state,
+          character: { ...state.character!, weight: action.payload },
+          isDirty: true,
+        };
+      case 'SET_EYES':
+        return {
+          ...state,
+          character: { ...state.character!, eyes: action.payload },
+          isDirty: true,
+        };
+      case 'SET_SKIN':
+        return {
+          ...state,
+          character: { ...state.character!, skin: action.payload },
+          isDirty: true,
+        };
+      case 'SET_HAIR':
+        return {
+          ...state,
+          character: { ...state.character!, hair: action.payload },
+          isDirty: true,
+        };
       case 'SET_STEP': {
         // Validate step number
         const step = action.payload;

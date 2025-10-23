@@ -8,6 +8,8 @@ export const halfOrc: CharacterRace = {
   abilityScoreIncrease: { strength: 2, constitution: 1 },
   speed: 30,
   languages: ['Common', 'Orc'],
+  heightRange: [60, 76],
+  weightRange: [140, 240],
   backgroundImage: '/images/races/base/halforc-class-card-background.png',
   subraces: []
 };
