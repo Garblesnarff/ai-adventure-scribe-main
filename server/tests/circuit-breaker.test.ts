@@ -3,6 +3,13 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { createApp } from '../src/app';
 
+vi.mock('../src/lib/supabase.js', () => ({
+  verifySupabaseToken: vi.fn().mockResolvedValue({
+    userId: 'cb-user',
+    email: 'cb@example.com',
+  }),
+}));
+
 let base: request.SuperTest<request.Test>;
 let token: string;
 
