@@ -9,7 +9,6 @@ import DiceTest from './pages/DiceTest';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
-import { SimpleCampaignView } from './components/campaign-view/SimpleCampaignView';
 import GameContent from './components/game/GameContent';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
@@ -90,7 +89,6 @@ function App() {
                             {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters/create" element={<CharacterCreateEntry />} />}
                             <Route path="/character/:id" element={<CharacterSheet />} />
                             <Route path="/campaigns/create" element={<CampaignWizard />} />
-                            <Route path="/campaign/:id" element={<SimpleCampaignView />} />
                             <Route path="/campaigns/:id/*" element={<CampaignHub />} />
                             <Route path="/game/:id" element={<GameContent />} />
                             <Route path="/blog" element={<BlogAdmin />} />
