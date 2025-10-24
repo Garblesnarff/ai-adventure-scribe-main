@@ -1,3 +1,13 @@
+/**
+ * @file src/types/character.ts
+ * @description Defines the core data structures for characters in the game.
+ * This file contains all TypeScript interfaces and types related to a character's
+ * abilities, class, race, background, and combat-related stats.
+ *
+ * @author Jules
+ * @see CODE_STANDARDS.md For style and documentation guidelines.
+ */
+
 export interface Ability {
   score: number;
   modifier: number;
@@ -129,6 +139,22 @@ export interface CharacterBackground {
   suggestedFlaws?: string[];
 }
 
+export type Condition =
+  | 'Blinded'
+  | 'Charmed'
+  | 'Deafened'
+  | 'Frightened'
+  | 'Grappled'
+  | 'Incapacitated'
+  | 'Invisible'
+  | 'Paralyzed'
+  | 'Petrified'
+  | 'Poisoned'
+  | 'Prone'
+  | 'Restrained'
+  | 'Stunned'
+  | 'Unconscious';
+
 export interface Character {
   id?: string;
   user_id?: string;
@@ -229,6 +255,16 @@ export interface Character {
     remaining: number;
     type: string; // e.g., "d8", "d10"
   };
+  // Death and Conditions
+  // These fields are essential for implementing the core combat mechanics of D&D 5E.
+  // The logic for managing these states will be handled by the RulesInterpreterAgent.
+  deathSaves?: {
+    successes: number;
+    failures: number;
+  };
+  isDead?: boolean;
+  activeConditions?: Condition[];
+  exhaustionLevel?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   // Equipment & Inventory
   inventory?: Array<{
     itemId: string;
@@ -376,6 +412,10 @@ export function transformCharacterForStorage(character: Character) {
     damage_resistances: JSON.stringify(character.damageResistances || []),
     damage_immunities: JSON.stringify(character.damageImmunities || []),
     damage_vulnerabilities: JSON.stringify(character.damageVulnerabilities || []),
+    // Death and Conditions
+    death_saves: JSON.stringify(character.deathSaves || { successes: 0, failures: 0 }),
+    active_conditions: JSON.stringify(character.activeConditions || []),
+    exhaustion_level: character.exhaustionLevel || 0,
     // Vision and Stealth
     vision_types: JSON.stringify(character.visionTypes || []),
     obscurement: character.obscurement || 'clear',
