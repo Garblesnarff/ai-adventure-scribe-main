@@ -32,7 +32,7 @@ const locationPatterns: ClassificationPattern = {
     // Matches named locations
     /[A-Z][a-z]+ (?:Woods|Mountains|Valley|Keep|Castle|Village|Town)/,
   ],
-  importance: 7
+  importance: 4
 };
 
 /**
@@ -60,7 +60,7 @@ const npcPatterns: ClassificationPattern = {
     // Matches character names with titles
     /[A-Z][a-z]+ the (?:Elder|Wise|Bold|Great)/i,
   ],
-  importance: 6
+  importance: 3
 };
 
 /**
@@ -84,7 +84,7 @@ const eventPatterns: ClassificationPattern = {
     // Matches significant moments
     /(?:ancient|great|terrible|mysterious) (?:battle|war|prophecy)/i,
   ],
-  importance: 8
+  importance: 5
 };
 
 /**
@@ -108,7 +108,7 @@ const itemPatterns: ClassificationPattern = {
     // Matches important items
     /(?:legendary|mythical|powerful|sacred) (?:artifact|weapon|relic)/i,
   ],
-  importance: 5
+  importance: 3
 };
 
 /**
@@ -134,7 +134,7 @@ const questPatterns: ClassificationPattern = {
     // Matches quest completion
     /(?:complete|finish|accomplish|succeed) (?:quest|mission|task)/i,
   ],
-  importance: 8
+  importance: 5
 };
 
 /**
@@ -160,7 +160,7 @@ const storyBeatPatterns: ClassificationPattern = {
     // Matches beat descriptions
     /(?:key|important|significant) (?:beat|moment|development)/i,
   ],
-  importance: 7
+  importance: 4
 };
 
 /**
@@ -186,7 +186,7 @@ const characterMomentPatterns: ClassificationPattern = {
     // Matches defining moments
     /(?:defining|pivotal|life-changing) (?:moment|decision|choice)/i,
   ],
-  importance: 6
+  importance: 3
 };
 
 /**
@@ -212,7 +212,7 @@ const dialogueGemPatterns: ClassificationPattern = {
     // Matches significant speech
     /(?:famous|legendary|prophetic|wise) (?:words|quote|saying)/i,
   ],
-  importance: 5
+  importance: 3
 };
 
 /**
@@ -238,7 +238,7 @@ const plotPointPatterns: ClassificationPattern = {
     // Matches plot points
     /(?:first|second|third) (?:act|plot point)/i,
   ],
-  importance: 8
+  importance: 5
 };
 
 /**
@@ -264,7 +264,7 @@ const foreshadowingPatterns: ClassificationPattern = {
     // Matches symbolic elements
     /(?:symbolic|metaphoric|allegorical) (?:meaning|significance)/i,
   ],
-  importance: 6
+  importance: 3
 };
 
 /**
@@ -290,7 +290,7 @@ const worldDetailPatterns: ClassificationPattern = {
     // Matches world systems
     /(?:magic|political|religious|social) (?:system|structure|order)/i,
   ],
-  importance: 5
+  importance: 3
 };
 
 /**
@@ -316,7 +316,7 @@ const atmospherePatterns: ClassificationPattern = {
     // Matches sensory atmosphere
     /(?:sounds|smells|feels) (?:of|like) (?:\w+)/i,
   ],
-  importance: 4
+  importance: 2
 };
 
 export const CLASSIFICATION_PATTERNS: Record<MemoryType, ClassificationPattern> = {
@@ -324,7 +324,7 @@ export const CLASSIFICATION_PATTERNS: Record<MemoryType, ClassificationPattern> 
     type: 'general',
     patterns: [],
     contextPatterns: [],
-    importance: 3
+    importance: 2
   },
   npc: npcPatterns,
   location: locationPatterns,

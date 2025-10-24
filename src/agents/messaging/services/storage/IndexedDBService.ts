@@ -10,16 +10,16 @@
  * - IndexedDBService: Manages IndexedDB operations (init, store, get, update, clear).
  * 
  * Key Dependencies:
- * - DatabaseInitializer (`./core/database-initializer.ts`)
- * - DEFAULT_STORAGE_CONFIG (`./config/storage-config.ts`)
+ * - DatabaseInitializer (`./core/DatabaseInitializer.ts`)
+ * - DEFAULT_STORAGE_CONFIG (`./config/StorageConfig.ts`)
  * - Various storage types from `./types.ts`.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Utilities & Config (assuming kebab-case filenames)
-import { DEFAULT_STORAGE_CONFIG } from './config/storage-config';
-import { DatabaseInitializer } from './core/database-initializer';
+// Project Utilities & Config
+import { DEFAULT_STORAGE_CONFIG } from './config/StorageConfig';
+import { DatabaseInitializer } from './core/DatabaseInitializer';
 
 // Project Types
 import { OfflineState, QueueState, StoredMessage } from './types';

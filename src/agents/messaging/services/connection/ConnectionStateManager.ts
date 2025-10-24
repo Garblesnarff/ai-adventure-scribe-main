@@ -10,21 +10,21 @@
  * - ConnectionStateManager: Manages connection state and related events.
  * 
  * Key Dependencies:
- * - EventEmitter (./event-emitter.ts)
- * - MessageQueueService (`../message-queue-service.ts`)
- * - OfflineStateService (`../offline/offline-state-service.ts`)
- * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
+ * - EventEmitter (./EventEmitter.ts)
+ * - MessageQueueService (`../MessageQueueService.ts`)
+ * - OfflineStateService (`../offline/OfflineStateService.ts`)
+ * - MessagePersistenceService (`../storage/MessagePersistenceService.ts`)
  * - ConnectionState type (`./types.ts`)
  * - General message types (`../../types.ts`)
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { EventEmitter } from './event-emitter';
-import { MessageQueueService } from '../message-queue-service';
-import { OfflineStateService } from '../offline/offline-state-service';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { EventEmitter } from './EventEmitter';
+import { MessageQueueService } from '../MessageQueueService';
+import { OfflineStateService } from '../offline/OfflineStateService';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';

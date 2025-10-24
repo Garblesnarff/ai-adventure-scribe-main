@@ -9,9 +9,9 @@
  * - MessageProcessingService: Processes messages for delivery.
  * 
  * Key Dependencies:
- * - MessageQueueService (./message-queue-service.ts)
- * - MessageDeliveryService (./message-delivery-service.ts)
- * - MessagePersistenceService (./storage/message-persistence-service.ts)
+ * - MessageQueueService (./MessageQueueService.ts)
+ * - MessageDeliveryService (./MessageDeliveryService.ts)
+ * - MessagePersistenceService (./storage/MessagePersistenceService.ts)
  * - useToast hook (`@/hooks/use-toast`) - (Note: useToast usage in a class is unconventional)
  * - Various message types from '../types'.
  * 
@@ -19,9 +19,9 @@
  */
 
 // Project Services (assuming kebab-case filenames)
-import { MessageDeliveryService } from './message-delivery-service';
-import { MessagePersistenceService } from './storage/message-persistence-service';
-import { MessageQueueService } from './message-queue-service';
+import { MessageDeliveryService } from './MessageDeliveryService';
+import { MessagePersistenceService } from './storage/MessagePersistenceService';
+import { MessageQueueService } from './MessageQueueService';
 import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsService';
 
 // Project Types

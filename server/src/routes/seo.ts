@@ -69,12 +69,21 @@ function buildRssFeed(siteUrl: string, siteName: string, siteDescription: string
   const items = posts.map((post) => {
     const link = `${siteUrl}/blog/${post.slug}`;
     const description = post.summary ?? post.excerpt ?? '';
+    const categoryValues = Array.from(
+      new Set([...(Array.isArray(post.categories) ? post.categories : []), ...(Array.isArray(post.tags) ? post.tags : [])])
+    )
+      .map((value) => String(value))
+      .filter(Boolean);
+    const categories = categoryValues
+      .map((category) => `<category>${escapeXml(category)}</category>`)
+      .join('\n');
     return `<item>
 <title>${escapeXml(post.title)}</title>
 <link>${escapeXml(link)}</link>
 <guid>${escapeXml(link)}</guid>
 <pubDate>${escapeXml(new Date(post.publishedAt).toUTCString())}</pubDate>
 <description>${escapeCdata(description)}</description>
+${categories}
 <content:encoded><![CDATA[${post.html}]]></content:encoded>
 </item>`;
   });

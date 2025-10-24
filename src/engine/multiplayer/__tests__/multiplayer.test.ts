@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { vi } from 'vitest';
 import { SessionManager } from '../SessionManager';
 import { TurnManager } from '../TurnManager';
 import { SynchronizationManager } from '../SynchronizationManager';
@@ -216,7 +218,7 @@ describe('Multiplayer Session Management', () => {
     });
 
     it('should handle turn timeouts', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       // Start a turn with short timeout
       const session = sessionManager['sessions'].get(sessionId)!;
@@ -226,14 +228,14 @@ describe('Multiplayer Session Management', () => {
       expect(result.success).toBe(true);
 
       // Fast-forward time beyond timeout
-      jest.advanceTimersByTime(1500);
+      vi.advanceTimersByTime(1500);
 
       // Check that turn was skipped
       const updatedTurn = turnManager.getCurrentTurn(sessionId);
       expect(updatedTurn.status).toBe('timeout');
       expect(updatedTurn.isSkipped).toBe(true);
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it('should track turn history', async () => {

@@ -68,13 +68,24 @@ export class SessionManager {
       const settings: SessionSettings = {
         allowSpectators: false,
         requireApproval: false,
-        autoSaveInterval: 300, // 5 minutes
-        turnTimeLimit: 300, // 5 minutes
+        autoSaveInterval: 300,
+        turnTimeLimit: 300,
         synchronizationMode: 'turn_based',
         conflictResolution: 'vote',
-        spectatorDelay: 30, // 30 seconds
+        spectatorDelay: 30,
+        maxPlayers: 4,
+        minPlayers: 1,
+        spectatorLimit: 10,
         ...request.settings
       };
+
+      if (settings.maxPlayers < settings.minPlayers) {
+        settings.maxPlayers = settings.minPlayers;
+      }
+
+      if (settings.maxPlayers < 1) {
+        settings.maxPlayers = 1;
+      }
 
       // Create initial game state
       const initialGameState: SceneState = {
@@ -158,7 +169,7 @@ export class SessionManager {
         description: request.description,
         creatorId,
         isPublic: false,
-        maxPlayers: 4,
+        maxPlayers: settings.maxPlayers,
         currentPlayers: 1,
         status: 'waiting',
         gameState: initialGameState,
@@ -174,6 +185,7 @@ export class SessionManager {
       // Store session
       this.sessions.set(sessionId, session);
       this.trackParticipant(creatorParticipant);
+      session.currentPlayers = this.countActivePlayers(session);
 
       // Log creation event
       await this.logSessionEvent(sessionId, {
@@ -219,6 +231,8 @@ export class SessionManager {
         };
       }
 
+      const isSpectator = (request.role ?? 'player') === 'spectator';
+
       // Check if user can join
       const validation = this.validateJoinRequest(session, request, userId);
       if (!validation.valid) {
@@ -229,12 +243,14 @@ export class SessionManager {
       }
 
       // Create participant
+      const requiresApproval = session.settings.requireApproval && !isSpectator;
+
       const participant: SessionParticipant = {
         id: this.generateId(),
         sessionId: session.id,
         userId,
         role: request.role || 'player',
-        status: session.settings.requireApproval ? 'invited' : 'joined',
+        status: requiresApproval ? 'invited' : 'joined',
         displayName: request.displayName,
         characterId: request.characterId,
         permissions: this.getDefaultPermissions(request.role || 'player'),
@@ -252,9 +268,7 @@ export class SessionManager {
 
       // Add participant to session
       session.participants.push(participant);
-      session.currentPlayers = session.participants.filter(p => 
-        ['active', 'joined'].includes(p.status)
-      ).length;
+      session.currentPlayers = this.countActivePlayers(session);
       session.lastActivity = new Date();
       session.updatedAt = new Date();
 
@@ -502,7 +516,9 @@ export class SessionManager {
       throw new Error('Session not found');
     }
 
-    const onlineParticipants = session.participants.filter(p => p.connectionState.isOnline).length;
+    const onlineParticipants = session.participants.filter(p =>
+      p.connectionState.isOnline && Boolean(p.connectionState.connectionId)
+    ).length;
     const totalTurns = session.gameState.turnCount;
     const conflictsCount = this.conflicts.filter(c => c.sessionId === sessionId && c.status === 'active').length;
     
@@ -591,7 +607,25 @@ export class SessionManager {
       });
     }
 
-    if (session.currentPlayers >= session.maxPlayers) {
+    const isSpectator = (request.role ?? 'player') === 'spectator';
+
+    if (isSpectator) {
+      if (!session.settings.allowSpectators) {
+        errors.push({
+          field: 'session',
+          message: 'Spectators are not allowed in this session',
+          severity: 'error'
+        });
+      }
+
+      if (session.settings.spectatorLimit && this.countSpectators(session) >= session.settings.spectatorLimit) {
+        errors.push({
+          field: 'session',
+          message: 'Spectator capacity reached',
+          severity: 'error'
+        });
+      }
+    } else if (this.countActivePlayers(session) >= session.maxPlayers) {
       errors.push({
         field: 'session',
         message: 'Session is full',
@@ -695,6 +729,20 @@ export class SessionManager {
       this.participantsByUser.set(userId, []);
     }
     this.participantsByUser.get(userId)!.push(participant);
+  }
+
+  private countActivePlayers(session: SharedSession): number {
+    return session.participants.filter(participant =>
+      (participant.role === 'player' || participant.role === 'dm') &&
+      ['active', 'joined'].includes(participant.status)
+    ).length;
+  }
+
+  private countSpectators(session: SharedSession): number {
+    return session.participants.filter(participant =>
+      participant.role === 'spectator' &&
+      ['active', 'joined', 'invited'].includes(participant.status)
+    ).length;
   }
 
   private async initializeWorldGraph(sessionId: string, initialState?: any): Promise<void> {

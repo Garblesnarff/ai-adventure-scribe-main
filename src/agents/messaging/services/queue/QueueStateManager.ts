@@ -10,14 +10,14 @@
  * - QueueStateManager: Manages and persists the state of the message queue.
  * 
  * Key Dependencies:
- * - IndexedDBService (`../storage/indexed-db-service.ts`)
+ * - IndexedDBService (`../storage/IndexedDBService.ts`)
  * - Message and Queue state types.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Services (assuming kebab-case filenames)
-import { IndexedDBService } from '../storage/indexed-db-service';
+// Project Services
+import { IndexedDBService } from '../storage/IndexedDBService';
 
 // Project Types
 import { QueuedMessage } from '../../types';

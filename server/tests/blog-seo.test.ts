@@ -59,8 +59,15 @@ describe('Blog SSR routes', () => {
   });
 
   it('renders an individual blog post with article metadata', async () => {
+    const relatedPost: BlogPost = {
+      ...basePost,
+      id: '2',
+      slug: 'arcane-legends',
+      title: 'Arcane Legends',
+    };
+
     mockFetchBlogPostBySlug.mockResolvedValueOnce(basePost);
-    mockFetchPublishedBlogPosts.mockResolvedValueOnce([basePost]);
+    mockFetchPublishedBlogPosts.mockResolvedValueOnce([basePost, relatedPost]);
 
     const response = await request(app).get('/blog/infinite-realms-update');
 

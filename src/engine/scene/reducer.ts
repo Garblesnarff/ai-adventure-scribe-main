@@ -17,7 +17,6 @@ export function applyIntent(state: SceneState, intent: PlayerIntent): SceneState
       if (!next.metadata) next.metadata = {};
       next.metadata.lastMove = intent;
       next.metadata.moveCount = (next.metadata.moveCount || 0) + 1;
-      console.log(`Move intent: ${intent.actorId} to ${JSON.stringify(intent.to)}`);
       break;
       
     case 'attack':
@@ -25,7 +24,6 @@ export function applyIntent(state: SceneState, intent: PlayerIntent): SceneState
       if (!next.metadata) next.metadata = {};
       next.metadata.lastAttack = intent;
       next.metadata.attackCount = (next.metadata.attackCount || 0) + 1;
-      console.log(`Attack intent: ${intent.actorId} -> ${intent.targetId}${intent.weaponId ? ` with ${intent.weaponId}` : ''}`);
       break;
       
     case 'skill_check':
@@ -33,17 +31,14 @@ export function applyIntent(state: SceneState, intent: PlayerIntent): SceneState
       if (!next.metadata) next.metadata = {};
       next.metadata.lastSkillCheck = intent;
       next.metadata.skillCheckCount = (next.metadata.skillCheckCount || 0) + 1;
-      console.log(`Skill check intent: ${intent.actorId} -> ${intent.skill}${intent.approach ? ` (${intent.approach})` : ''}`);
       break;
       
     case 'cast':
       // Placeholder for spell casting
-      console.log(`Cast intent: ${intent.actorId} -> ${intent.spellId}${intent.slot ? ` (slot ${intent.slot})` : ''}`);
       break;
       
     case 'ooc':
       // Out of character - handle safety or meta commands
-      console.log(`OOC intent: ${intent.actorId} -> ${intent.message}`);
       break;
       
     default:
@@ -61,23 +56,19 @@ export function applyDMAction(state: SceneState, action: DMAction): SceneState {
   
   switch (action.type) {
     case 'call_for_check':
-      console.log(`DM calls for check: ${action.actorId} -> ${action.skill} DC ${action.dc} (${action.reason})`);
       break;
       
     case 'apply_damage':
-      console.log(`DM applies damage: ${action.targetId} takes ${action.amount} from ${action.source}`);
       break;
       
     case 'advance_clock':
       const clock = next.clocks.find(c => c.id === action.clockId);
       if (clock) {
         clock.value = Math.min(clock.max, clock.value + action.ticks);
-        console.log(`Clock advanced: ${action.clockId} ${clock.value}/${clock.max} (${action.reason})`);
       }
       break;
       
     case 'narrate':
-      console.log(`DM narration: ${action.text.substring(0, 50)}...`);
       break;
       
     case 'pause_scene':
@@ -87,7 +78,6 @@ export function applyDMAction(state: SceneState, action: DMAction): SceneState {
         at: Date.now(),
         data: action.reason
       };
-      console.log(`Scene paused: ${action.reason || 'No reason given'}`);
       break;
       
     case 'resume_scene':
@@ -97,7 +87,6 @@ export function applyDMAction(state: SceneState, action: DMAction): SceneState {
         at: Date.now(),
         data: 'resumed'
       };
-      console.log(`Scene resumed`);
       break;
       
     case 'veil_content':
@@ -106,7 +95,6 @@ export function applyDMAction(state: SceneState, action: DMAction): SceneState {
         at: Date.now(),
         data: action.topic
       };
-      console.log(`Content veiled: ${action.topic}`);
       break;
       
     default:
@@ -123,7 +111,6 @@ export function applyRulesEvent(state: SceneState, evt: RulesEvent): SceneState 
   
   switch (evt.type) {
     case 'roll':
-      console.log(`Roll event: ${evt.actorId} -> ${evt.rollType} ${evt.result} (${evt.d}d${evt.mod >= 0 ? '+' : ''}${evt.mod})${evt.rationale ? ` - ${evt.rationale}` : ''}`);
       break;
       
     case 'turn_start':
@@ -131,16 +118,13 @@ export function applyRulesEvent(state: SceneState, evt: RulesEvent): SceneState 
       const turnStartIndex = next.initiative.indexOf(evt.actorId);
       if (turnStartIndex !== -1) {
         next.turnIndex = turnStartIndex;
-        console.log(`Turn started: ${evt.actorId} (index ${turnStartIndex})`);
       }
       break;
       
     case 'turn_end':
-      console.log(`Turn ended: ${evt.actorId}`);
       break;
       
     case 'reaction_window':
-      console.log(`Reaction window opened: ${evt.forActorId} (${evt.reason})`);
       break;
       
     default:
@@ -181,19 +165,20 @@ export function applySequence(
 
 // Helper functions for creating initial state
 export function createSceneState(overrides: Partial<SceneState> = {}): SceneState {
+  const baseTimestamp = overrides.id ? 0 : Date.now();
   const defaultState: SceneState = {
-    id: `scene-${Date.now()}`,
-    locationId: `location-${Date.now()}`,
-    time: new Date().toISOString(),
+    id: overrides.id ?? `scene-${baseTimestamp}`,
+    locationId: overrides.locationId ?? `location-${baseTimestamp}`,
+    time: overrides.time ?? new Date(baseTimestamp).toISOString(),
     participants: [],
     initiative: [],
     turnIndex: 0,
     clocks: [],
     hazards: [],
-    seed: `seed-${Date.now()}`,
+    seed: overrides.seed ?? (overrides.id ? `seed-${overrides.id}` : `seed-${baseTimestamp}`),
     paused: false
   };
-  
+
   return { ...defaultState, ...overrides };
 }
 

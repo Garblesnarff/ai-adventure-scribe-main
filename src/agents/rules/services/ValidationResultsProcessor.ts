@@ -17,7 +17,7 @@
  */
 
 // Project Services (assuming kebab-case filenames)
-import { RuleEvaluationService } from './rule-evaluation-service';
+import { RuleEvaluationService } from './RuleEvaluationService';
 
 
 export class ValidationResultsProcessor {

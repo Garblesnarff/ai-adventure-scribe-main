@@ -1,7 +1,7 @@
 // src/engine/scene/orchestrator.ts
 import type { SceneState, PlayerIntent, DMAction, RulesEvent, EventLogEntry } from './types';
 import { applyIntent, hashState } from './reducer';
-import { append, hasProcessed, markProcessed } from './event-log';
+import { append, hasProcessed, markProcessed, storeSnapshot, getSnapshot } from './event-log';
 import { randomUUID } from 'node:crypto';
 
 export interface OrchestratorDeps {
@@ -35,21 +35,26 @@ export class SceneOrchestrator {
   ): { state: SceneState; log: EventLogEntry } {
     // Check if intent should be ignored
     if (this.config.enableIdempotency && hasProcessed(intent.idempotencyKey)) {
+      const snapshot = this.config.enableIdempotency ? getSnapshot(intent.idempotencyKey) : undefined;
+      const baseState = snapshot ?? state;
       const ignoredEntry: EventLogEntry = {
         id: randomUUID(),
         sceneId: state.id,
         at: this.deps.now(),
         actorId: intent.actorId,
         action: { type: 'narrate', text: 'Duplicate intent ignored' },
-        stateHashBefore: hashState(state),
-        stateHashAfter: hashState(state)
+        stateHashBefore: hashState(baseState),
+        stateHashAfter: hashState(baseState)
       };
       
       if (this.config.enableLogging) {
         append(ignoredEntry);
       }
       
-      return { state, log: ignoredEntry };
+      return {
+        state: snapshot ? JSON.parse(JSON.stringify(snapshot)) : state,
+        log: ignoredEntry
+      };
     }
 
     // Check if scene is paused (except for safety commands)
@@ -69,6 +74,10 @@ export class SceneOrchestrator {
       }
       
       return { state, log: pausedEntry };
+    }
+
+    if (this.config.enableIdempotency) {
+      storeSnapshot(intent.idempotencyKey, state);
     }
 
     const before = hashState(state);

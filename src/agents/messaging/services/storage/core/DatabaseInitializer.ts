@@ -10,13 +10,13 @@
  * - DatabaseInitializer: Contains the static `initDatabase` method.
  * 
  * Key Dependencies:
- * - DEFAULT_STORAGE_CONFIG from `../config/storage-config.ts`.
+ * - DEFAULT_STORAGE_CONFIG from `../config/StorageConfig.ts`.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Config (assuming kebab-case for StorageConfig.ts)
-import { DEFAULT_STORAGE_CONFIG } from '../config/storage-config';
+// Project Config
+import { DEFAULT_STORAGE_CONFIG } from '../config/StorageConfig';
 
 
 export class DatabaseInitializer {

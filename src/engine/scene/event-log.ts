@@ -1,10 +1,11 @@
 // src/engine/scene/event-log.ts
-import type { EventLogEntry } from './types';
+import type { EventLogEntry, SceneState } from './types';
 
 // In-memory store for idempotency tracking and event persistence
 // In production, this would be backed by a database
 const processedKeys = new Set<string>(); // idempotency keys
 const log: EventLogEntry[] = [];
+const snapshots = new Map<string, SceneState>();
 
 export function hasProcessed(idempotencyKey: string): boolean {
   return processedKeys.has(idempotencyKey);
@@ -18,6 +19,15 @@ export function append(entry: EventLogEntry): void {
   log.push(entry);
 }
 
+export function storeSnapshot(idempotencyKey: string, state: SceneState): void {
+  snapshots.set(idempotencyKey, JSON.parse(JSON.stringify(state)));
+}
+
+export function getSnapshot(idempotencyKey: string): SceneState | undefined {
+  const snapshot = snapshots.get(idempotencyKey);
+  return snapshot ? JSON.parse(JSON.stringify(snapshot)) : undefined;
+}
+
 export function all(): EventLogEntry[] {
   return [...log];
 }
@@ -29,6 +39,7 @@ export function forScene(sceneId: string): EventLogEntry[] {
 export function clear(): void {
   processedKeys.clear();
   log.length = 0;
+  snapshots.clear();
 }
 
 // Query functions

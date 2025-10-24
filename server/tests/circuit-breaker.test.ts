@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, vi, afterEach, afterAll } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { createApp } from '../src/app';
@@ -35,6 +35,7 @@ beforeAll(() => {
   process.env.SUPABASE_JWT_SECRET = 'testsecret';
   process.env.CB_FAILURE_THRESHOLD = '2'; // open after 2 failures
   process.env.CB_COOLDOWN_MS = '30000';
+  process.env.OPENROUTER_API_KEY = 'test-key';
   const app = createApp();
   base = request(app);
   token = jwt.sign({ sub: 'cb-user', email: 'cb@example.com' }, process.env.SUPABASE_JWT_SECRET!);
@@ -42,6 +43,10 @@ beforeAll(() => {
 
 afterEach(() => {
   callCount = 0;
+});
+
+afterAll(() => {
+  delete process.env.OPENROUTER_API_KEY;
 });
 
 describe('Circuit breaker for external AI providers', () => {

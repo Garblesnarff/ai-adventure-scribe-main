@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 import { TypeConverter } from './TypeConverter';
 import { MessageSequence, SyncState, VectorClock, SyncStatus } from '../types';
-import { ErrorHandlingService } from '../../../../error/services/ErrorHandlingService';
+import { ErrorHandlingService } from '../../../../error/services/error-handling-service';
 import { ErrorCategory, ErrorSeverity } from '../../../../error/types';
 
 export class DatabaseAdapter {

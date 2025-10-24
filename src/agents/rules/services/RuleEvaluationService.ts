@@ -9,15 +9,15 @@
  * - RuleEvaluationService: Evaluates game rules.
  * 
  * Key Dependencies:
- * - RuleConditionChecker (../utils/rule-condition-checker.ts)
- * - RuleRequirementChecker (../utils/rule-requirement-checker.ts)
+ * - RuleConditionChecker (../utils/RuleConditionChecker.ts)
+ * - RuleRequirementChecker (../utils/RuleRequirementChecker.ts)
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Utilities (assuming kebab-case filenames)
-import { RuleConditionChecker } from '../utils/rule-condition-checker';
-import { RuleRequirementChecker } from '../utils/rule-requirement-checker';
+// Project Utilities
+import { RuleConditionChecker } from '../utils/RuleConditionChecker';
+import { RuleRequirementChecker } from '../utils/RuleRequirementChecker';
 
 
 export class RuleEvaluationService {

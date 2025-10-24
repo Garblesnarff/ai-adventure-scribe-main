@@ -2,7 +2,17 @@ import { ChatMessage } from '@/types/game';
 import logger from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 
-const SAFETY_ENABLED = String(import.meta.env.VITE_ENABLE_SAFETY_GUARDS ?? '').toLowerCase() === 'true';
+const rawSafetyFlag = (() => {
+  try {
+    return (import.meta as any)?.env?.VITE_ENABLE_SAFETY_GUARDS;
+  } catch {
+    return undefined;
+  }
+})();
+
+const normalizedFlag = String(rawSafetyFlag ?? '').trim().toLowerCase();
+const SAFETY_ENABLED = normalizedFlag === 'false' ? false : true;
+const SAFETY_REMOTE_ENABLED = normalizedFlag === 'true';
 
 // Debounce utility function
 const debounce = <T extends (...args: any[]) => void>(
@@ -83,7 +93,7 @@ export class SafetyCommandProcessor {
   }
 
   private async loadSessionConfig(): Promise<SessionConfig | null> {
-    if (!SAFETY_ENABLED) {
+    if (!SAFETY_REMOTE_ENABLED) {
       return null;
     }
     // Cache config for 5 minutes
@@ -119,7 +129,7 @@ export class SafetyCommandProcessor {
   }
 
   private async getTriggerWords(): Promise<TriggerWords> {
-    if (!SAFETY_ENABLED) {
+    if (!SAFETY_REMOTE_ENABLED) {
       return { ...SAFETY_TRIGGER_WORDS };
     }
     const config = await this.loadSessionConfig();
@@ -428,7 +438,7 @@ export class SafetyCommandProcessor {
   }
 
   private async logSafetyEvent(command: SafetyCommand, playerMessage?: string, aiResponse?: string, sessionState?: any): Promise<void> {
-    if (!SAFETY_ENABLED) {
+    if (!SAFETY_REMOTE_ENABLED) {
       return;
     }
     try {

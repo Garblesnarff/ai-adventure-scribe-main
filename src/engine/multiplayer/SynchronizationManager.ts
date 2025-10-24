@@ -5,10 +5,7 @@ import {
   WorldChange,
   SessionParticipant,
   SynchronizationRequest,
-  SynchronizationResponse,
-  SessionEvent,
-  SharedSession,
-  SyncStatus
+  SynchronizationResponse
 } from './types';
 import { SceneState } from '../scene/types';
 import { WorldGraph } from '../world/graph';
@@ -22,6 +19,7 @@ export class SynchronizationManager {
   private pendingChanges: Map<string, WorldChange[]> = new Map();
   private conflicts: Map<string, SessionConflict[]> = new Map();
   private participantSyncs: Map<string, Map<string, ParticipantSync>> = new Map();
+  private entityStateCache: Map<string, Map<string, { value: any; participantId: string; timestamp: Date }>> = new Map();
   
   constructor(private worldGraphs: Map<string, WorldGraph>) {}
 
@@ -34,6 +32,7 @@ export class SynchronizationManager {
     participants.forEach(participant => {
       participantSyncs.set(participant.id, {
         participantId: participant.id,
+        userId: participant.userId,
         lastSyncedTurn: 0,
         isCurrent: true,
         pendingChanges: [],
@@ -56,6 +55,7 @@ export class SynchronizationManager {
     this.participantSyncs.set(sessionId, participantSyncs);
     this.pendingChanges.set(sessionId, []);
     this.conflicts.set(sessionId, []);
+    this.entityStateCache.set(sessionId, new Map());
 
     return syncState;
   }
@@ -74,19 +74,17 @@ export class SynchronizationManager {
       this.pendingChanges.set(sessionId, pendingChanges);
 
       // Mark participant as having changes to distribute
-      const participantSyncs = this.participantSyncs.get(sessionId);
-      if (participantSyncs) {
-        const sync = participantSyncs.get(participantId);
-        if (sync) {
-          sync.pendingChanges.push(...changes);
-          sync.isCurrent = false; // Participant has changes not yet synchronized
-        }
+      const actingSync = this.resolveParticipantSync(sessionId, participantId);
+      if (actingSync) {
+        actingSync.pendingChanges.push(...changes);
+        actingSync.isCurrent = false;
       }
 
       // Check for conflicts with other participants' changes
       const conflicts = await this.detectChangeConflicts(sessionId, changes, participantId);
       if (conflicts.length > 0) {
         await this.handleConflicts(sessionId, conflicts);
+        this.updateSynchronizationProgress(sessionId);
         return false; // Conflict detected, changes pending resolution
       }
 
@@ -117,13 +115,13 @@ export class SynchronizationManager {
         throw new Error('Participant sync state not found');
       }
 
-      const participantSync = participantSyncs.get(request.participantId);
+      const participantSync = this.resolveParticipantSync(sessionId, request.participantId);
       if (!participantSync) {
         throw new Error('Participant not found in session');
       }
 
       // Get current world state
-      const worldGraph = this.worldGraphs.get(sessionId);
+      const worldGraph = this.getWorldGraph(sessionId);
       if (!worldGraph) {
         throw new Error('World graph not found');
       }
@@ -186,34 +184,26 @@ export class SynchronizationManager {
    * Get participant sync state
    */
   getParticipantSync(sessionId: string, participantId: string): ParticipantSync | null {
-    const participantSyncs = this.participantSyncs.get(sessionId);
-    return participantSyncs?.get(participantId) || null;
+    return this.resolveParticipantSync(sessionId, participantId);
   }
 
   /**
    * Handle participant connection/disconnection
    */
   handleParticipantConnect(sessionId: string, participantId: string, connectionId: string): void {
-    const participantSyncs = this.participantSyncs.get(sessionId);
-    if (participantSyncs) {
-      const sync = participantSyncs.get(participantId);
-      if (sync) {
-        // Mark as potentially out of sync after reconnection
-        sync.isCurrent = false;
-      }
+    const sync = this.resolveParticipantSync(sessionId, participantId);
+    if (sync) {
+      sync.isCurrent = false;
     }
 
     this.updateSynchronizationProgress(sessionId);
   }
 
   handleParticipantDisconnect(sessionId: string, participantId: string): void {
-    const participantSyncs = this.participantSyncs.get(sessionId);
-    if (participantSyncs) {
-      const sync = participantSyncs.get(participantId);
-      if (sync) {
-        sync.isCurrent = false;
-        sync.lastSyncedTurn = 0; // Will need full sync on reconnection
-      }
+    const sync = this.resolveParticipantSync(sessionId, participantId);
+    if (sync) {
+      sync.isCurrent = false;
+      sync.lastSyncedTurn = 0;
     }
 
     this.updateSynchronizationProgress(sessionId);
@@ -237,6 +227,7 @@ export class SynchronizationManager {
       // Clear pending changes and conflicts
       this.pendingChanges.set(sessionId, []);
       this.conflicts.set(sessionId, []);
+      this.entityStateCache.set(sessionId, new Map());
 
       // Update sync state
       this.updateSynchronizationProgress(sessionId);
@@ -323,10 +314,10 @@ export class SynchronizationManager {
 
     // Check individual participant sync
     let outOfSyncCount = 0;
-    participantSyncs?.forEach((sync, participantId) => {
+    participantSyncs?.forEach(sync => {
       if (!sync.isCurrent) {
         outOfSyncCount++;
-        issues.push(`Participant ${participantId} is out of sync`);
+        issues.push(`Participant ${sync.participantId} is out of sync`);
       }
     });
 
@@ -352,8 +343,17 @@ export class SynchronizationManager {
   ): Promise<SessionConflict[]> {
     const conflicts: SessionConflict[] = [];
     const existingChanges = this.pendingChanges.get(sessionId) || [];
+    const cache = this.getStateCache(sessionId);
 
     for (const change of changes) {
+      const cacheKey = this.getCacheKey(change);
+      const cachedEntry = cache.get(cacheKey);
+
+      if (cachedEntry && !this.statesEqual(cachedEntry.value, change.oldValue)) {
+        conflicts.push(this.buildStateConflict(sessionId, change, cachedEntry, participantId));
+        continue;
+      }
+
       // Check for conflicts with opposite changes
       const conflictingChanges = existingChanges.filter(existing => 
         this.changesConflict(change, existing, participantId)
@@ -433,18 +433,20 @@ export class SynchronizationManager {
     sessionConflicts.push(...conflicts);
     this.conflicts.set(sessionId, sessionConflicts);
 
-    // Update participant sync states
-    const participantSyncs = this.participantSyncs.get(sessionId);
-    if (participantSyncs) {
-      conflicts.forEach(conflict => {
-        conflict.affectedParticipants.forEach(participantId => {
-          const sync = participantSyncs.get(participantId);
-          if (sync) {
-            sync.conflicts.push(conflict.id);
-            sync.isCurrent = false;
-          }
-        });
+    conflicts.forEach(conflict => {
+      conflict.affectedParticipants.forEach(participantId => {
+        const sync = this.resolveParticipantSync(sessionId, participantId);
+        if (sync) {
+          sync.conflicts.push(conflict.id);
+          sync.isCurrent = false;
+        }
       });
+    });
+
+    const syncState = this.syncStates.get(sessionId);
+    if (syncState) {
+      syncState.pendingConflicts = sessionConflicts.filter(conflict => conflict.status === 'active');
+      syncState.isSynchronized = false;
     }
   }
 
@@ -453,7 +455,7 @@ export class SynchronizationManager {
     changes: WorldChange[],
     participantId: string
   ): Promise<void> {
-    const worldGraph = this.worldGraphs.get(sessionId);
+    const worldGraph = this.getWorldGraph(sessionId);
     if (!worldGraph) return;
 
     // Apply changes to world graph
@@ -463,13 +465,29 @@ export class SynchronizationManager {
 
     // Update participant sync states
     const participantSyncs = this.participantSyncs.get(sessionId);
+    const cache = this.getStateCache(sessionId);
+    const actingSync = this.resolveParticipantSync(sessionId, participantId);
+    const actingParticipantId = actingSync?.participantId;
+
     if (participantSyncs) {
-      participantSyncs.forEach((sync, id) => {
-        if (id === participantId) {
-          sync.lastSyncedTurn = sync.lastSyncedTurn + 1; // Increment turn count
+      participantSyncs.forEach(sync => {
+        const isActing = actingParticipantId ?
+          sync.participantId === actingParticipantId || sync.userId === participantId :
+          sync.participantId === participantId || sync.userId === participantId;
+
+        if (isActing) {
+          sync.lastSyncedTurn = sync.lastSyncedTurn + 1;
           sync.pendingChanges = [];
+          changes.forEach(change => {
+            const cacheKey = this.getCacheKey(change);
+            cache.set(cacheKey, {
+              value: change.newValue,
+              participantId,
+              timestamp: change.timestamp ?? new Date()
+            });
+          });
+          sync.isCurrent = true;
         } else {
-          // Mark other participants as having received changes
           sync.isCurrent = false;
         }
       });
@@ -477,11 +495,10 @@ export class SynchronizationManager {
 
     // Remove processed changes from pending
     const pendingChanges = this.pendingChanges.get(sessionId) || [];
-    const changesToRemove = changes.map(c => JSON.stringify(c));
-    const remainingChanges = pendingChanges.filter(c => 
-      !changesToRemove.includes(JSON.stringify(c))
-    );
+    const remainingChanges = pendingChanges.filter(c => !changes.includes(c));
     this.pendingChanges.set(sessionId, remainingChanges);
+
+    this.updateSynchronizationProgress(sessionId);
   }
 
   private async applyChangeToWorld(worldGraph: WorldGraph, change: WorldChange): Promise<void> {
@@ -557,9 +574,16 @@ export class SynchronizationManager {
     if (!participantSyncs) return {};
 
     const states: Record<string, any> = {};
-    participantSyncs.forEach((sync, id) => {
-      if (id !== participantId) {
-        states[id] = {
+    const actingSync = this.resolveParticipantSync(sessionId, participantId);
+    const actingParticipantId = actingSync?.participantId;
+
+    participantSyncs.forEach(sync => {
+      const isActing = actingParticipantId ?
+        sync.participantId === actingParticipantId || sync.userId === participantId :
+        sync.participantId === participantId || sync.userId === participantId;
+
+      if (!isActing) {
+        states[sync.participantId] = {
           lastSyncedTurn: sync.lastSyncedTurn,
           isCurrent: sync.isCurrent,
           pendingChangesCount: sync.pendingChanges.length
@@ -585,6 +609,81 @@ export class SynchronizationManager {
       syncState.synchronizationProgress = progress;
       syncState.isSynchronized = progress >= 0.9;
     }
+  }
+
+  private resolveParticipantSync(sessionId: string, participantOrUserId: string): ParticipantSync | null {
+    const participantSyncs = this.participantSyncs.get(sessionId);
+    if (!participantSyncs) {
+      return null;
+    }
+
+    const direct = participantSyncs.get(participantOrUserId);
+    if (direct) {
+      return direct;
+    }
+
+    for (const sync of participantSyncs.values()) {
+      if (sync.userId && sync.userId === participantOrUserId) {
+        return sync;
+      }
+    }
+
+    return null;
+  }
+
+  private getWorldGraph(sessionId: string): WorldGraph | undefined {
+    return this.worldGraphs.get(sessionId) ?? WorldGraph.getFromRegistry(sessionId);
+  }
+
+  private getStateCache(sessionId: string): Map<string, { value: any; participantId: string; timestamp: Date }> {
+    let cache = this.entityStateCache.get(sessionId);
+    if (!cache) {
+      cache = new Map();
+      this.entityStateCache.set(sessionId, cache);
+    }
+    return cache;
+  }
+
+  private getCacheKey(change: WorldChange): string {
+    if (change.entityId) {
+      return `entity:${change.entityId}`;
+    }
+    if (change.relationshipId) {
+      return `relationship:${change.relationshipId}`;
+    }
+    if (change.factId) {
+      return `fact:${change.factId}`;
+    }
+    return `change:${change.participantId}:${change.type}`;
+  }
+
+  private statesEqual(previous: any, current: any): boolean {
+    return JSON.stringify(previous ?? null) === JSON.stringify(current ?? null);
+  }
+
+  private buildStateConflict(
+    sessionId: string,
+    change: WorldChange,
+    cachedEntry: { value: any; participantId: string; timestamp: Date },
+    participantId: string
+  ): SessionConflict {
+    return {
+      id: this.generateId(),
+      sessionId,
+      conflictType: this.inferConflictType(change),
+      status: 'active',
+      initiatorId: participantId,
+      affectedParticipants: [participantId, cachedEntry.participantId],
+      originalAction: change as any,
+      conflictingStates: [{
+        ...change,
+        participantId: cachedEntry.participantId,
+        newValue: cachedEntry.value
+      } as any],
+      createdAt: new Date(),
+      severity: 'medium',
+      canProceed: false
+    };
   }
 
   private async applyConflictResolution(

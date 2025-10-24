@@ -11,16 +11,16 @@
  * - MessageRecoveryService: Handles recovery of pending messages.
  * 
  * Key Dependencies:
- * - IndexedDBService (`../storage/indexed-db-service.ts`)
- * - MessageQueueService (`../message-queue-service.ts`)
+ * - IndexedDBService (`../storage/IndexedDBService.ts`)
+ * - MessageQueueService (`../MessageQueueService.ts`)
  * - QueuedMessage type from `../../types`.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Services (assuming kebab-case filenames)
-import { IndexedDBService } from '../storage/indexed-db-service';
-import { MessageQueueService } from '../message-queue-service';
+// Project Services
+import { IndexedDBService } from '../storage/IndexedDBService';
+import { MessageQueueService } from '../MessageQueueService';
 
 // Project Types
 import { QueuedMessage } from '../../types';

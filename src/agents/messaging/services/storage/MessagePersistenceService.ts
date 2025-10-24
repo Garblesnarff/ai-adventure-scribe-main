@@ -10,14 +10,14 @@
  * - MessagePersistenceService: Manages message persistence using IndexedDBService.
  * 
  * Key Dependencies:
- * - IndexedDBService (`./indexed-db-service.ts`)
+ * - IndexedDBService (`./IndexedDBService.ts`)
  * - Various message and queue state types.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Services (assuming kebab-case filenames)
-import { IndexedDBService } from './indexed-db-service';
+// Project Services
+import { IndexedDBService } from './IndexedDBService';
 
 // Project Types
 import { QueuedMessage } from '../../types';

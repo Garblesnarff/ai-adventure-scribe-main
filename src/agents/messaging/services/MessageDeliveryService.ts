@@ -25,7 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 // Project Services (assuming kebab-case filenames)
 import { CircuitBreakerService } from '../../error/services/circuit-breaker-service';
 import { ErrorHandlingService } from '../../error/services/error-handling-service';
-import { MessageAcknowledgmentService } from './message-acknowledgment-service';
+import { MessageAcknowledgmentService } from './MessageAcknowledgmentService';
 import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsService';
 
 // Project Types

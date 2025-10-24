@@ -22,6 +22,7 @@ export class TurnManager {
   private turnOrders: Map<string, TurnOrder> = new Map();
   private turnTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private turnHistory: Map<string, TurnState[]> = new Map();
+  private sessionRefs: Map<string, SharedSession> = new Map();
 
   constructor(private worldGraphs: Map<string, WorldGraph>) {}
 
@@ -31,7 +32,7 @@ export class TurnManager {
   initializeTurnOrder(sessionId: string, participants: SessionParticipant[]): TurnOrder {
     // Filter participants who can take turns
     const activeParticipants = participants.filter(p => 
-      p.status === 'active' && p.permissions.canControlEntities
+      ['active', 'joined'].includes(p.status) && p.permissions.canControlEntities
     );
 
     // Sort by role priority (DM first, then by join order or random)
@@ -64,6 +65,7 @@ export class TurnManager {
     session: SharedSession
   ): Promise<SessionResult<TurnState>> {
     try {
+      this.sessionRefs.set(sessionId, session);
       const turnOrder = this.turnOrders.get(sessionId);
       if (!turnOrder) {
         return {
@@ -116,6 +118,12 @@ export class TurnManager {
 
       this.currentTurns.set(sessionId, turnState);
       this.updateTurnOrder(sessionId, turnState);
+
+      session.currentTurn = turnState;
+      session.gameState.currentPlayer = nextParticipantId;
+      session.gameState.isActive = true;
+      session.lastActivity = new Date();
+      session.updatedAt = new Date();
 
       // Start turn timeout
       this.scheduleTurnTimeout(sessionId, turnState.id, session.settings.turnTimeLimit * 1000);
@@ -225,6 +233,15 @@ export class TurnManager {
       // Clear timeout
       this.clearTurnTimeout(sessionId);
 
+      const session = this.sessionRefs.get(sessionId);
+      if (session) {
+        session.gameState.turnCount += 1;
+        session.gameState.currentPlayer = null;
+        session.currentTurn = currentTurn;
+        session.lastActivity = new Date();
+        session.updatedAt = new Date();
+      }
+
       // Add to history
       const history = this.turnHistory.get(sessionId) || [];
       history.push(currentTurn);
@@ -270,7 +287,7 @@ export class TurnManager {
       }
 
       // Skip turn
-      currentTurn.status = 'skipped';
+      currentTurn.status = currentTurn.status === 'timeout' ? 'timeout' : 'skipped';
       currentTurn.isSkipped = true;
       currentTurn.endedAt = new Date();
       currentTurn.duration = currentTurn.endedAt.getTime() - currentTurn.startedAt.getTime();
@@ -284,6 +301,15 @@ export class TurnManager {
 
       // Clear timeout
       this.clearTurnTimeout(sessionId);
+
+      const session = this.sessionRefs.get(sessionId);
+      if (session) {
+        session.gameState.turnCount += 1;
+        session.gameState.currentPlayer = null;
+        session.currentTurn = currentTurn;
+        session.lastActivity = new Date();
+        session.updatedAt = new Date();
+      }
 
       // Add to history
       const history = this.turnHistory.get(sessionId) || [];
@@ -431,8 +457,18 @@ export class TurnManager {
   private getNextParticipant(sessionId: string): string | null {
     const turnOrder = this.turnOrders.get(sessionId);
     if (!turnOrder || turnOrder.participantIds.length === 0) return null;
+    const currentTurn = this.currentTurns.get(sessionId);
 
-    const nextIndex = (turnOrder.currentTurnIndex + 1) % turnOrder.participantIds.length;
+    if (!currentTurn) {
+      return turnOrder.participantIds[turnOrder.currentTurnIndex] ?? null;
+    }
+
+    const currentIndex = turnOrder.participantIds.indexOf(currentTurn.participantId);
+    if (currentIndex === -1) {
+      return turnOrder.participantIds[turnOrder.currentTurnIndex] ?? null;
+    }
+
+    const nextIndex = (currentIndex + 1) % turnOrder.participantIds.length;
     return turnOrder.participantIds[nextIndex];
   }
 
@@ -491,7 +527,7 @@ export class TurnManager {
   }
 
   private async processTurnAction(sessionId: string, turn: TurnState): Promise<void> {
-    const worldGraph = this.worldGraphs.get(sessionId);
+    const worldGraph = this.getWorldGraph(sessionId);
     if (!worldGraph) return;
 
     // Process action through world graph
@@ -502,7 +538,7 @@ export class TurnManager {
 
   private async finalizeTurnWorldChanges(sessionId: string, turn: TurnState): Promise<void> {
     // Apply any pending world changes from the turn
-    const worldGraph = this.worldGraphs.get(sessionId);
+    const worldGraph = this.getWorldGraph(sessionId);
     if (!worldGraph) return;
 
     // Apply world changes synchronously
@@ -575,5 +611,9 @@ export class TurnManager {
     // For now, return empty array
     
     return conflicts;
+  }
+
+  private getWorldGraph(sessionId: string): WorldGraph | undefined {
+    return this.worldGraphs.get(sessionId) ?? WorldGraph.getFromRegistry(sessionId);
   }
 }

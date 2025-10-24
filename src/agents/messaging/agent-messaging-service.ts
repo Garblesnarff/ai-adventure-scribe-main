@@ -25,13 +25,13 @@
 import { QueuedMessage, MessageType, MessagePriority, OfflineState } from './types';
 
 // Messaging Sub-Services (assuming kebab-case filenames)
-import { ConnectionStateService } from './services/connection/connection-state-service';
-import { MessagePersistenceService } from './services/storage/message-persistence-service';
-import { MessageProcessingService } from './services/message-processing-service';
-import { MessageQueueService } from './services/message-queue-service';
-import { MessageRecoveryService } from './services/recovery/message-recovery-service';
-import { MessageSynchronizationService } from './services/sync/message-synchronization-service';
-import { OfflineStateService } from './services/offline/offline-state-service';
+import { ConnectionStateService } from './services/connection/ConnectionStateService';
+import { MessagePersistenceService } from './services/storage/MessagePersistenceService';
+import { MessageProcessingService } from './services/MessageProcessingService';
+import { MessageQueueService } from './services/MessageQueueService';
+import { MessageRecoveryService } from './services/recovery/MessageRecoveryService';
+import { MessageSynchronizationService } from './services/sync/MessageSynchronizationService';
+import { OfflineStateService } from './services/offline/OfflineStateService';
 
 import { AgentNotificationService } from './services/notifications/AgentNotificationService';
 import { MessageDiagnosticsService } from './services/diagnostics/MessageDiagnosticsService';

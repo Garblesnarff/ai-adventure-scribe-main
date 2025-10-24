@@ -52,6 +52,9 @@ export interface SessionSettings {
   synchronizationMode: 'realtime' | 'turn_based' | 'hybrid';
   conflictResolution: 'automatic' | 'vote' | 'dm_override';
   spectatorDelay: number; // seconds delay for spectators
+  maxPlayers: number;
+  minPlayers: number;
+  spectatorLimit?: number;
 }
 
 export interface SessionParticipant {
@@ -171,6 +174,7 @@ export interface SynchronizationState {
 
 export interface ParticipantSync {
   participantId: string;
+  userId?: string;
   lastSyncedTurn: number;
   isCurrent: boolean;
   pendingChanges: WorldChange[];

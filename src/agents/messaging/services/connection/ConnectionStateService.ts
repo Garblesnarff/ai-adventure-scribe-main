@@ -12,12 +12,12 @@
  * 
  * Key Dependencies:
  * - Supabase client (`@/integrations/supabase/client`)
- * - EventEmitter (./event-emitter.ts)
- * - ReconnectionManager (./reconnection-manager.ts)
- * - ConnectionStateManager (./connection-state-manager.ts)
- * - MessageQueueService (`../message-queue-service.ts`)
- * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
- * - OfflineStateService (`../offline/offline-state-service.ts`)
+ * - EventEmitter (./EventEmitter.ts)
+ * - ReconnectionManager (./ReconnectionManager.ts)
+ * - ConnectionStateManager (./ConnectionStateManager.ts)
+ * - MessageQueueService (`../MessageQueueService.ts`)
+ * - MessagePersistenceService (`../storage/MessagePersistenceService.ts`)
+ * - OfflineStateService (`../offline/OfflineStateService.ts`)
  * - ConnectionState and ReconnectionConfig types (`./types.ts`)
  * 
  * @author AI Dungeon Master Team
@@ -26,13 +26,13 @@
 // External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { ConnectionStateManager } from './connection-state-manager';
-import { EventEmitter } from './event-emitter';
-import { MessageQueueService } from '../message-queue-service';
-import { OfflineStateService } from '../offline/offline-state-service';
-import { ReconnectionManager } from './reconnection-manager';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { ConnectionStateManager } from './ConnectionStateManager';
+import { EventEmitter } from './EventEmitter';
+import { MessageQueueService } from '../MessageQueueService';
+import { OfflineStateService } from '../offline/OfflineStateService';
+import { ReconnectionManager } from './ReconnectionManager';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { ConnectionState, ReconnectionConfig } from './types';

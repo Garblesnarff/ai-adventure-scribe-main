@@ -102,10 +102,35 @@ export const processContent = (content: string): MemorySegment[] => {
     });
     const baseImportance = CLASSIFICATION_PATTERNS[type]?.importance ?? 3;
     importance = Math.max(importance, baseImportance);
-    
-    // Normalize importance score from 1-10 range to 1-5 range
-    // calculateImportance returns 1-10 for internal weighting, but the database expects 1-5
-    const normalizedImportance = Math.min(5, Math.max(1, Math.round(importance / 2)));
+
+    const scaledImportance = Math.min(10, Math.max(1, importance));
+    let normalizedImportance: number;
+    if (scaledImportance >= 8) {
+      normalizedImportance = 5;
+    } else if (scaledImportance >= 6) {
+      normalizedImportance = 4;
+    } else if (scaledImportance >= 4) {
+      normalizedImportance = 3;
+    } else if (scaledImportance >= 2) {
+      normalizedImportance = 2;
+    } else {
+      normalizedImportance = 1;
+    }
+
+    const highImpactKeywords = [
+      'critical', 'urgent', 'danger', 'threat', 'mission', 'quest',
+      'kingdom', 'artifact', 'undead', 'siege', 'defend', 'campaign'
+    ];
+    const keywordMatches = highImpactKeywords.reduce((count, keyword) => (
+      segment.toLowerCase().includes(keyword) ? count + 1 : count
+    ), 0);
+
+    if (keywordMatches >= 3) {
+      normalizedImportance = 5;
+    }
+
+    const minimumPatternImportance = CLASSIFICATION_PATTERNS[type]?.importance ?? 2;
+    normalizedImportance = Math.max(normalizedImportance, minimumPatternImportance);
     
     return {
       content: segment.trim(),

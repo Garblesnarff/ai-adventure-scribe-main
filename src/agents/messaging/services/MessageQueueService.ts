@@ -11,16 +11,16 @@
  * - MessageQueueService: Manages the message queue.
  * 
  * Key Dependencies:
- * - QueueStateManager (`./queue/queue-state-manager.ts`)
- * - QueueValidator (`./queue/queue-validator.ts`)
+ * - QueueStateManager (`./queue/QueueStateManager.ts`)
+ * - QueueValidator (`./queue/QueueValidator.ts`)
  * - Message types from '../types'.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Utilities (assuming kebab-case filenames)
-import { QueueStateManager } from './queue/queue-state-manager';
-import { QueueValidator } from './queue/queue-validator';
+// Project Utilities
+import { QueueStateManager } from './queue/QueueStateManager';
+import { QueueValidator } from './queue/QueueValidator';
 
 // Project Types
 import { QueuedMessage, MessageQueueConfig } from '../types';

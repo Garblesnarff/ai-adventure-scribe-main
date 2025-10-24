@@ -40,7 +40,13 @@ function createBuilder(result: any) {
     }),
     order: vi.fn(() => builder),
     eq: vi.fn(() => builder),
+    neq: vi.fn(() => builder),
+    in: vi.fn(() => builder),
+    lte: vi.fn(() => builder),
+    or: vi.fn(() => builder),
+    not: vi.fn(() => builder),
     range: vi.fn(() => builder),
+    maybeSingle: vi.fn(() => Promise.resolve(result)),
     single: vi.fn(() => Promise.resolve(result)),
     then: (resolve: any, reject?: any) => Promise.resolve(result).then(resolve, reject),
   };
@@ -90,6 +96,7 @@ describe('Blog router', () => {
     verifySupabaseTokenMock.mockReset();
     process.env.SITE_URL = 'https://example.com';
     process.env.BLOG_MEDIA_BUCKET = 'blog-media';
+    process.env.BLOG_ADMIN_DEV_OVERRIDE = '1';
 
     const app = createApp();
     agent = request(app);
@@ -176,6 +183,9 @@ describe('Blog router', () => {
     verifySupabaseTokenMock.mockResolvedValue({ userId: 'admin-1', email: 'admin@example.com' });
     getUserByIdMock.mockResolvedValue({ data: { user: { id: 'admin-1', app_metadata: { blogRoles: ['admin'] } } }, error: null });
 
+    enqueue('user_profiles', createBuilder({ data: { blog_role: 'admin' }, error: null }));
+    enqueue('blog_authors', createBuilder({ data: { id: 'author-1' }, error: null }));
+
     const insertBuilder = createBuilder({ data: { id: 'new-post' }, error: null });
     const deleteCategoriesBuilder = createBuilder({ data: [], error: null });
     const insertCategoriesBuilder = createBuilder({ data: [], error: null });
@@ -232,6 +242,9 @@ describe('Blog router', () => {
     verifySupabaseTokenMock.mockResolvedValue({ userId: 'user-2', email: 'user@example.com' });
     getUserByIdMock.mockResolvedValue({ data: { user: { id: 'user-2', app_metadata: { blogRoles: [] } } }, error: null });
 
+    enqueue('user_profiles', createBuilder({ data: { blog_role: 'viewer' }, error: null }));
+    enqueue('blog_authors', createBuilder({ data: null, error: null }));
+
     const response = await agent
       .post('/v1/blog/posts')
       .set('Authorization', 'Bearer token')
@@ -244,6 +257,9 @@ describe('Blog router', () => {
   it('generates signed upload URLs for media', async () => {
     verifySupabaseTokenMock.mockResolvedValue({ userId: 'admin-1', email: 'admin@example.com' });
     getUserByIdMock.mockResolvedValue({ data: { user: { id: 'admin-1', app_metadata: { blogRoles: ['admin'] } } }, error: null });
+
+    enqueue('user_profiles', createBuilder({ data: { blog_role: 'admin' }, error: null }));
+    enqueue('blog_authors', createBuilder({ data: { id: 'author-1' }, error: null }));
 
     const storageHandler = {
       createSignedUploadUrl: vi.fn().mockResolvedValue({

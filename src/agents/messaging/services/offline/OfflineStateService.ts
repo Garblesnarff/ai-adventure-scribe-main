@@ -10,22 +10,22 @@
  * - OfflineStateService: Manages and tracks online/offline status and synchronization.
  * 
  * Key Dependencies:
- * - IndexedDBService (`../storage/indexed-db-service.ts`)
- * - MessageQueueService (`../message-queue-service.ts`)
- * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
- * - MessageRecoveryService (`../recovery/message-recovery-service.ts`)
- * - QueueStateManager (`../queue/queue-state-manager.ts`)
+ * - IndexedDBService (`../storage/IndexedDBService.ts`)
+ * - MessageQueueService (`../MessageQueueService.ts`)
+ * - MessagePersistenceService (`../storage/MessagePersistenceService.ts`)
+ * - MessageRecoveryService (`../recovery/MessageRecoveryService.ts`)
+ * - QueueStateManager (`../queue/QueueStateManager.ts`)
  * - Various message and storage types.
  * 
  * @author AI Dungeon Master Team
  */
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { MessageQueueService } from '../message-queue-service';
-import { QueueStateManager } from '../queue/queue-state-manager';
-import { MessageRecoveryService } from '../recovery/message-recovery-service';
-import { IndexedDBService } from '../storage/indexed-db-service';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { MessageQueueService } from '../MessageQueueService';
+import { QueueStateManager } from '../queue/QueueStateManager';
+import { MessageRecoveryService } from '../recovery/MessageRecoveryService';
+import { IndexedDBService } from '../storage/IndexedDBService';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';

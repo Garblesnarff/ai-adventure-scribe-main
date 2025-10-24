@@ -6,6 +6,7 @@ import type { SceneState, PlayerIntent } from '../../scene/types';
 
 // Mock deterministic time function
 const mockNow = vi.fn(() => 1730764800000);
+const now = mockNow;
 
 function mkState(): SceneState {
   return createSceneState({
@@ -35,6 +36,8 @@ describe('Scene Engine Replay', () => {
         state1 = res.state;
         return res.log;
       });
+
+      clear();
 
       // Second run
       let state2 = mkState();

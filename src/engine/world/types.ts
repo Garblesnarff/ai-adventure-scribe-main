@@ -111,6 +111,7 @@ export type EntityStatus =
   | 'active' 
   | 'inactive' 
   | 'destroyed' 
+  | 'dead'
   | 'unknown';
 
 export type RelationshipType = 
@@ -133,6 +134,7 @@ export type RelationshipType =
   | 'follows' 
   | 'trades_with' 
   | 'lives_in'
+  | 'participates_in'
   | 'controls' 
   | 'protects' 
   | 'hunts' 
@@ -170,7 +172,8 @@ export type ConflictType =
   | 'property_conflict' 
   | 'relationship_conflict' 
   | 'location_conflict' 
-  | 'temporal_conflict';
+  | 'temporal_conflict'
+  | 'entity_conflict';
 
 export type ConflictSeverity = 
   | 'low' 
@@ -266,6 +269,12 @@ export interface EntityCreateRequest {
   category?: string;
   confidenceScore?: number;
   sourceType?: SourceType;
+  status?: EntityStatus;
+  aliases?: string[];
+  lifespanStart?: Date;
+  lifespanEnd?: Date;
+  currentLocationId?: string;
+  sourceSessionId?: string;
 }
 
 export interface RelationshipCreateRequest {
@@ -277,6 +286,9 @@ export interface RelationshipCreateRequest {
   mutual?: boolean;
   confidenceScore?: number;
   sourceType?: SourceType;
+  sourceSessionId?: string;
+  validFrom?: Date;
+  validUntil?: Date;
 }
 
 export interface FactUpdateRequest {
@@ -286,6 +298,10 @@ export interface FactUpdateRequest {
   confidenceScore?: number;
   verificationMethod?: VerificationMethod;
   sourceType?: SourceType;
+  validFrom?: Date;
+  validUntil?: Date;
+  reason?: string;
+  changedBy?: string;
 }
 
 // Query and search interfaces
@@ -330,6 +346,50 @@ export interface ValidationResult {
   conflicts: WorldConflict[];
   recommendations: string[];
 }
+
+export type TemporalEventType =
+  | 'entity_lifecycle'
+  | 'relationship_change'
+  | 'fact_update'
+  | 'conflict'
+  | 'rule_trigger';
+
+export interface TemporalEvent {
+  id: string;
+  type: TemporalEventType;
+  description: string;
+  timestamp: Date;
+  entityId?: string;
+  relationshipId?: string;
+  factId?: string;
+  confidence?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface OperationStat {
+  conflictDetected?: boolean;
+  similarEntities?: string[];
+  conflictingFacts?: string[];
+  error?: string;
+  warnings?: string[];
+  autoResolved?: boolean;
+}
+
+export interface ConflictResolutionResult {
+  success: boolean;
+  resolvedCount: number;
+  unresolvedConflicts: string[];
+  method: ResolutionMethod;
+}
+
+export type Result<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  code?: string;
+  warnings?: string[];
+  stat?: OperationStat;
+};
 
 export interface ValidationMessage {
   type: 'warning' | 'error' | 'info';
