@@ -1,24 +1,10 @@
 import { defineConfig } from 'vitest/config';
-import { fileURLToPath } from 'node:url';
-
-const srcPath = fileURLToPath(new URL('./src', import.meta.url));
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': srcPath,
-    },
-  },
   test: {
-    environment: 'node',
-    include: ['tests/**/*.test.ts', 'tests/**/*.spec.ts'],
     globals: true,
-    coverage: {
-      enabled: true,
-      provider: 'v8',
-      reporter: ['text', 'html'],
-      reportsDirectory: 'coverage',
-      include: ['src/rules/**/*.ts'],
-    },
+    environment: 'node',
+    setupFiles: ['./src/lib/test/setup-env.ts'],
+    include: ['./tests/**/*.test.ts'],
   },
 });
