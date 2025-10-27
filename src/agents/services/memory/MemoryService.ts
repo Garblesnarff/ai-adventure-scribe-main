@@ -1,5 +1,6 @@
 import { getGeminiApiManager } from '@/services/gemini-api-manager-singleton';
 import type { GeminiApiManager } from '@/services/gemini-api-manager';
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
 
 import type { Memory as UIMemory, MemoryType as UIMemoryType } from '@/components/game/memory/types';
 import type { EnhancedMemory, MemoryQueryOptions } from '@/types/memory';
@@ -91,7 +92,7 @@ export class MemoryService {
     try {
       const geminiManager = MemoryService.getGeminiManager();
       return await geminiManager.executeWithRotation(async (genAI) => {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
         const extractionPrompt = `You are a memory extraction system for a D&D campaign. Extract important memories from this conversation exchange.
 
 CONTEXT:

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { getGeminiApiManager } from './gemini-api-manager-singleton';
 import type { GeminiApiManager } from './gemini-api-manager';
 import { MemoryManager, MemoryContext } from './memory-manager';
@@ -81,7 +82,7 @@ export class AIService {
       const geminiManager = this.getGeminiManager();
       
       const result = await geminiManager.executeWithRotation(async (genAI) => {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
         
         const prompt = `Create an engaging D&D 5e campaign description that hooks players immediately and sets up an epic adventure.
 
@@ -267,7 +268,7 @@ When combat is detected, you MUST:
               try {
                 const geminiManager = this.getGeminiManager();
                 const genAIResult = await geminiManager.executeWithRotation(async (genAI) => {
-                  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+                  const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
                   const prompt = `Respond to the player succinctly (2-3 short paragraphs) and end with 2-3 lettered options. Player said: "${params.message}"`;
                   const response = await model.generateContent(prompt);
                   const res = await response.response;
@@ -345,7 +346,7 @@ When combat is detected, you MUST:
       const geminiManager = this.getGeminiManager();
       
       const result = await geminiManager.executeWithRotation(async (genAI) => {
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+          const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
           
           // Build enhanced context for DM interactions with voice segmentation
           let contextPrompt = `<persona>
@@ -943,7 +944,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
       const geminiManager = this.getGeminiManager();
       
       const result = await geminiManager.executeWithRotation(async (genAI) => {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
         
         // Build enhanced context for opening message
         let contextPrompt = `You are an expert D&D 5e Dungeon Master with years of experience creating memorable adventures. You have a vivid, immersive storytelling style that immediately draws players into the world.`;
@@ -951,7 +952,8 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
         // Determine campaign tone and genre for appropriate DM voice
         let campaignTone = 'balanced';
         if (params.context.campaignDetails) {
-          const description = params.context.campaignDetails.description.toLowerCase();
+          const rawDescription = params.context.campaignDetails.description || '';
+          const description = rawDescription.toLowerCase();
           if (description.includes('dark') || description.includes('horror') || description.includes('grim')) {
             campaignTone = 'dark';
           } else if (description.includes('light') || description.includes('comedy') || description.includes('fun')) {

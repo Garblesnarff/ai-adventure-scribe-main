@@ -307,9 +307,13 @@ export class GeminiApiManager {
         const restClient = this.createRestGenAI(primaryKey);
         return await operation(restClient);
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error || '');
         if (this.isAuthenticationError(error)) {
           this.directModeDisabled = true;
           console.warn('[GeminiApiManager] Direct mode disabled after authentication error, falling back to proxy');
+        } else if (error instanceof TypeError || /failed to fetch|access-control-allow-origin|cors/i.test(message)) {
+          this.directModeDisabled = true;
+          console.warn('[GeminiApiManager] Direct mode disabled after network/CORS failure, falling back to proxy');
         } else {
           throw error;
         }

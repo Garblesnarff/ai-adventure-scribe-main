@@ -10,6 +10,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id, x-release, x-environment',
 };
 
+const GEMINI_TEXT_MODEL = Deno.env.get('GEMINI_TEXT_MODEL') ?? 'gemini-1.5-flash';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -65,7 +67,7 @@ serve(async (req) => {
     
     console.log('Using Gemini API key:', geminiApiKey.substring(0, 10) + '...', { requestId });
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
 
     const chat = model.startChat({
       history: [

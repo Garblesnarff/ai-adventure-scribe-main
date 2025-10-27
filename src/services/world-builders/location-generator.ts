@@ -1,6 +1,7 @@
 import { getGeminiApiManager } from '../gemini-api-manager-singleton';
 import type { GeminiApiManager } from '../gemini-api-manager';
 import { supabase } from '@/integrations/supabase/client';
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { getAveragePartyLevel } from '@/utils/character-level-utils';
 import logger from '@/lib/logger';
 
@@ -68,7 +69,7 @@ export class LocationGenerator {
       const geminiManager = this.getGeminiManager();
       
       const result = await geminiManager.executeWithRotation(async (genAI) => {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
         
         const prompt = this.buildLocationPrompt(request);
         

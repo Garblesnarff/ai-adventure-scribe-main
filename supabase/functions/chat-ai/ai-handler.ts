@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
 import { ChatMessage } from './types.ts';
 
+const GEMINI_TEXT_MODEL = Deno.env.get('GEMINI_TEXT_MODEL') ?? 'gemini-1.5-flash';
 const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');
 
 /**
@@ -25,7 +26,7 @@ export async function generateAIResponse(
   messages: ChatMessage[],
   memoryContext: string
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
 
   try {
     // Prepare chat history with memory context

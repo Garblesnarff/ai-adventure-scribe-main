@@ -15,6 +15,7 @@ import CampaignCharacters from './CampaignCharacters';
 import CampaignSessions from './CampaignSessions';
 import CampaignWorld from './CampaignWorld';
 import CampaignSettings from './CampaignSettings';
+import CharacterSelectionModal from '@/components/campaign-list/character-selection-modal';
 
 const CampaignHub: React.FC = () => {
   const { id: campaignId } = useParams();
@@ -53,6 +54,8 @@ const CampaignHub: React.FC = () => {
   const onTabChange = (value: string) => {
     navigate(`/app/campaigns/${campaignId}/${value === 'overview' ? '' : value}`);
   };
+
+  const [showCharacterModal, setShowCharacterModal] = React.useState(false);
 
   if (isLoading) {
     return (
@@ -100,7 +103,11 @@ const CampaignHub: React.FC = () => {
                     Manage Characters
                   </Link>
                 </Button>
-                <Button variant="outline" className="border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10">
+                <Button
+                  variant="outline"
+                  className="border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
+                  onClick={() => setShowCharacterModal(true)}
+                >
                   <span className="mr-2">+</span>
                   New Session
                 </Button>
@@ -145,7 +152,10 @@ const CampaignHub: React.FC = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            <CampaignOverview campaign={campaign} />
+            <CampaignOverview
+              campaign={campaign}
+              onStartNewSession={() => setShowCharacterModal(true)}
+            />
           </TabsContent>
           <TabsContent value="characters">
             <Routes>
@@ -164,6 +174,13 @@ const CampaignHub: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <CharacterSelectionModal
+        isOpen={showCharacterModal}
+        onClose={() => setShowCharacterModal(false)}
+        campaignId={campaign.id}
+        campaignName={campaign.name}
+      />
     </div>
   );
 };

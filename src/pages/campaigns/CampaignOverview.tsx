@@ -14,9 +14,10 @@ interface CampaignOverviewProps {
     difficulty_level?: string | null;
     background_image?: string | null;
   } | null;
+  onStartNewSession?: () => void;
 }
 
-const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign }) => {
+const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign, onStartNewSession }) => {
   const { id: campaignId } = useParams();
 
   if (!campaign) {
@@ -187,7 +188,10 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign }) => {
               Quick Actions
             </h3>
             <div className="space-y-3">
-              <button className="w-full px-4 py-3 bg-gradient-to-r from-infinite-purple to-infinite-purple-dark text-white rounded-lg hover:from-infinite-purple-dark hover:to-infinite-purple transition-all duration-300 hover-lift font-medium">
+              <button
+                className="w-full px-4 py-3 bg-gradient-to-r from-infinite-purple to-infinite-purple-dark text-white rounded-lg hover:from-infinite-purple-dark hover:to-infinite-purple transition-all duration-300 hover-lift font-medium"
+                onClick={() => onStartNewSession?.()}
+              >
                 Start New Session
               </button>
               <button className="w-full px-4 py-3 border-2 border-infinite-gold text-infinite-gold rounded-lg hover:bg-infinite-gold/10 transition-all duration-300 font-medium">

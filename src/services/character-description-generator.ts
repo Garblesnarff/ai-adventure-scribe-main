@@ -10,6 +10,7 @@
 import { geminiService } from './gemini-service';
 import { openRouterService } from './openrouter-service';
 import logger from '@/lib/logger';
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
 
 interface CharacterData {
   name: string;
@@ -84,7 +85,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-2.5-flash-lite',
+        model: GEMINI_TEXT_MODEL,
         maxTokens: 1000,
         temperature: 0.8,
       });
@@ -441,7 +442,7 @@ export class CharacterDescriptionGenerator {
 
       const response = await geminiService.generateText({
         prompt,
-        model: 'gemini-2.5-flash-lite',
+        model: GEMINI_TEXT_MODEL,
         maxTokens: 100,
         temperature: 0.7,
       });
