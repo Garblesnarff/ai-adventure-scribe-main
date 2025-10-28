@@ -1,7 +1,14 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { createApp } from '../src/app';
+
+vi.mock('../src/lib/supabase.js', () => ({
+  verifySupabaseToken: vi.fn().mockResolvedValue({
+    userId: 'quota-user',
+    email: 'q@example.com',
+  }),
+}));
 
 let base: request.SuperTest<request.Test>;
 let tokenFree: string;

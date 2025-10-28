@@ -3,13 +3,15 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 import type { BlogPost } from '../src/services/blog-service.js';
 
-const mockFetchPublishedBlogPosts = vi.fn<[], Promise<BlogPost[]>>();
-const mockFetchBlogPostBySlug = vi.fn<[string], Promise<BlogPost | null>>();
-
 vi.mock('../src/services/blog-service.js', () => ({
-  fetchPublishedBlogPosts: mockFetchPublishedBlogPosts,
-  fetchBlogPostBySlug: mockFetchBlogPostBySlug,
+  fetchPublishedBlogPosts: vi.fn(),
+  fetchBlogPostBySlug: vi.fn(),
 }));
+
+import { fetchPublishedBlogPosts, fetchBlogPostBySlug } from '../src/services/blog-service.js';
+
+const mockFetchPublishedBlogPosts = fetchPublishedBlogPosts as vi.Mock<[], Promise<BlogPost[]>>;
+const mockFetchBlogPostBySlug = fetchBlogPostBySlug as vi.Mock<[string], Promise<BlogPost | null>>;
 
 const app = createApp();
 

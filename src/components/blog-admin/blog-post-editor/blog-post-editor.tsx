@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -15,7 +15,6 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MarkdownEditor } from './markdown-editor';
 import { MediaManager } from './media-manager';
 import { MultiSelect } from './multi-select';
 import { slugify } from '@/utils/slug';
@@ -188,14 +187,16 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
 
   return (
     <>
-      <Form {...form}>
+      <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Blog Post' : 'Create Blog Post'}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {isEditMode ? 'Update your blog post details' : 'Fill in the details to create a new blog post'}
-              </p>
+              <div className="flex items-center gap-4">
+                 <p className="text-sm text-muted-foreground mt-1">
+                   {isEditMode ? 'Update your blog post details' : 'Fill in the details to create a new blog post'}
+                 </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" onClick={handlePreview}>
@@ -317,10 +318,10 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <MarkdownEditor
-                            value={field.value}
-                            onChange={field.onChange}
-                            disabled={isPending}
+                           <Textarea
+                            placeholder="Write your blog post content here..."
+                            rows={20}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -543,7 +544,7 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
             </div>
           </div>
         </form>
-      </Form>
+      </FormProvider>
 
       <MediaManager
         open={mediaManagerOpen}

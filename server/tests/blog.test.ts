@@ -2,13 +2,22 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app';
 
-process.env.SITE_URL = 'https://example.com';
-process.env.BLOG_MEDIA_BUCKET = 'blog-media';
+vi.mock('../src/lib/supabase.js', () => ({
+  supabaseService: {
+    from: vi.fn(),
+    storage: { from: vi.fn() },
+    auth: { admin: { getUserById: vi.fn() } },
+  },
+  verifySupabaseToken: vi.fn(),
+  supabase: {},
+}));
 
-const fromMock = vi.fn();
-const storageFromMock = vi.fn();
-const getUserByIdMock = vi.fn();
-const verifySupabaseTokenMock = vi.fn();
+import { supabaseService, verifySupabaseToken } from '../src/lib/supabase.js';
+
+const fromMock = supabaseService.from as vi.Mock;
+const storageFromMock = supabaseService.storage.from as vi.Mock;
+const getUserByIdMock = supabaseService.auth.admin.getUserById as vi.Mock;
+const verifySupabaseTokenMock = verifySupabaseToken as vi.Mock;
 
 const fromQueues: Record<string, any[]> = {};
 const storageBuckets: Record<string, any> = {};
@@ -65,22 +74,12 @@ storageFromMock.mockImplementation((bucket: string) => {
   return handler;
 });
 
-vi.mock('../src/lib/supabase.js', () => ({
-  supabaseService: {
-    from: fromMock,
-    storage: { from: storageFromMock },
-    auth: { admin: { getUserById: getUserByIdMock } },
-  },
-  verifySupabaseToken: verifySupabaseTokenMock,
-  supabase: {},
-}));
-
 let agent: request.SuperTest<request.Test>;
 
 describe('Blog router', () => {
   beforeEach(() => {
     Object.keys(fromQueues).forEach((key) => {
-      fromQueues[key] = [];
+      delete fromQueues[key];
     });
     Object.keys(storageBuckets).forEach((key) => {
       delete storageBuckets[key];
