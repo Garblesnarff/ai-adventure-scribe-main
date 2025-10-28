@@ -10,7 +10,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id, x-release, x-environment',
 };
 
-const GEMINI_TEXT_MODEL = Deno.env.get('GEMINI_TEXT_MODEL') ?? 'gemini-1.5-flash';
+const DEFAULT_PRIMARY_MODEL = 'gemini-2.5-flash-lite';
+const DEFAULT_FALLBACK_MODEL = 'gemini-2.0-flash-lite';
+
+const GEMINI_PRIMARY_MODEL = (Deno.env.get('GEMINI_TEXT_MODEL') ?? DEFAULT_PRIMARY_MODEL).trim() || DEFAULT_PRIMARY_MODEL;
+const GEMINI_FALLBACK_MODEL = (Deno.env.get('GEMINI_TEXT_FALLBACK') ?? DEFAULT_FALLBACK_MODEL).trim() || DEFAULT_FALLBACK_MODEL;
+const GEMINI_VARIANT_MODELS = (Deno.env.get('GEMINI_MODEL_VARIANTS') ?? '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter((value) => value.length > 0);
+
+const dedupeModels = (models: string[]): string[] => {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const model of models) {
+    if (!model || seen.has(model)) continue;
+    seen.add(model);
+    ordered.push(model);
+  }
+  return ordered;
+};
+
+const buildModelCandidates = (preferred: string, variants: string[], fallback: string): string[] => {
+  const autoVariants: string[] = [];
+  if (/^gemini-2\.5-flash-lite$/i.test(preferred)) {
+    autoVariants.push('gemini-2.5-flash-lite-001', 'gemini-2.5-flash-lite-preview');
+  }
+  return dedupeModels([preferred, ...variants, ...autoVariants, fallback]);
+};
+
+const GEMINI_MODEL_CANDIDATES = buildModelCandidates(GEMINI_PRIMARY_MODEL, GEMINI_VARIANT_MODELS, GEMINI_FALLBACK_MODEL);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -67,33 +96,65 @@ serve(async (req) => {
     
     console.log('Using Gemini API key:', geminiApiKey.substring(0, 10) + '...', { requestId });
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
 
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user', // User role for the initial system prompt
-          parts: [prompt],
-        },
-        {
-          role: 'model', // Model role for an example of expected output structure or tone (optional)
-          parts: ["Understood. I will generate a narrative response based on the provided context and task."]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7, // Adjusted for narrative generation
-        topK: 1,
-        topP: 0.9, // Adjusted for narrative generation
-        maxOutputTokens: 2048,
+    const baseHistory = [
+      {
+        role: 'user',
+        parts: [prompt],
       },
-    });
+      {
+        role: 'model',
+        parts: ["Understood. I will generate a narrative response based on the provided context and task."]
+      }
+    ];
 
-    const result = await chat.sendMessage(task.description);
-    const aiResponse = await result.response;
-    const rawResponse = aiResponse.text();
+    const baseGenerationConfig = {
+      temperature: 0.7,
+      topK: 1,
+      topP: 0.9,
+      maxOutputTokens: 2048,
+    } as const;
 
-    if (!rawResponse) {
-      throw new Error(`Gemini API error: No text in response`);
+    const attempts: string[] = [];
+    let chosenModel: string | null = null;
+    let rawResponse: string | null = null;
+    let unavailableMessage: string | null = null;
+
+    for (const candidate of GEMINI_MODEL_CANDIDATES) {
+      attempts.push(candidate);
+      try {
+        const chat = genAI.getGenerativeModel({ model: candidate }).startChat({
+          history: baseHistory.map((entry) => ({ ...entry, parts: [...entry.parts] })),
+          generationConfig: { ...baseGenerationConfig },
+        });
+
+        const result = await chat.sendMessage(task.description);
+        const aiResponse = await result.response;
+        const text = aiResponse.text();
+        if (!text) {
+          throw new Error('Gemini API error: No text in response');
+        }
+        rawResponse = text;
+        chosenModel = candidate;
+        break;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/not a valid model id|unsupported model|model \w+ has been disabled/i.test(message)) {
+          console.warn(`[DM Agent] Gemini model "${candidate}" unavailable: ${message}`, { requestId });
+          unavailableMessage = message;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!rawResponse || !chosenModel) {
+      const details = unavailableMessage ? ` (${unavailableMessage})` : '';
+      throw new Error(`Gemini models unavailable. Tried: ${attempts.join(', ')}${details}`);
+    }
+
+    if (chosenModel !== GEMINI_PRIMARY_MODEL) {
+      console.warn(`[DM Agent] Gemini model fallback engaged. Requested "${GEMINI_PRIMARY_MODEL}", using "${chosenModel}"`, { requestId });
     }
 
     // Parse structured response if voice context provided

@@ -22,12 +22,19 @@ export class GeminiApiManager {
 
   constructor() {
     const hasKeys = Boolean(import.meta.env.VITE_GEMINI_API_KEYS || import.meta.env.VITE_GOOGLE_GEMINI_API_KEY);
+    const allowDirect = this.isDirectModeOptIn();
+    this.directModeDisabled = !allowDirect;
+
     if (this.isDevelopment()) {
-      console.log(hasKeys
-        ? 'GeminiApiManager initialized (direct Gemini mode)'
-        : 'GeminiApiManager initialized (server-proxy mode)'
-      );
+      const mode = hasKeys && allowDirect ? 'direct Gemini mode' : 'server-proxy mode';
+      console.log(`GeminiApiManager initialized (${mode})`);
     }
+  }
+
+  private isDirectModeOptIn(): boolean {
+    const flag = String(import.meta.env.VITE_GEMINI_DIRECT ?? '').trim().toLowerCase();
+    if (!flag) return false;
+    return flag === 'true' || flag === '1' || flag === 'yes' || flag === 'on';
   }
 
   private isAuthenticationError(error: unknown): boolean {
@@ -106,9 +113,19 @@ export class GeminiApiManager {
     return contents;
   }
 
+  private selectApiVersion(model: string): 'v1' | 'v1beta' {
+    if (/^gemini-2\.5-/i.test(model)) return 'v1';
+    return 'v1beta';
+  }
+
+  private buildEndpoint(model: string, apiKey: string): string {
+    const version = this.selectApiVersion(model);
+    const encodedModel = encodeURIComponent(model);
+    return `https://generativelanguage.googleapis.com/${version}/models/${encodedModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  }
+
   private createRestGenAI(apiKey: string) {
     const buildPrompt = (input: any) => this.buildPromptFromInput(input);
-    const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
     const callText = async (
       model: string,
@@ -124,7 +141,7 @@ export class GeminiApiManager {
         body.generationConfig = config;
       }
 
-      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      const response = await fetch(this.buildEndpoint(model, apiKey), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -240,6 +257,7 @@ export class GeminiApiManager {
             model,
             maxTokens: params.maxTokens ?? defaultMax,
             temperature: params.temperature ?? defaultTemp,
+            provider: 'gemini',
           });
         };
 
@@ -314,6 +332,9 @@ export class GeminiApiManager {
         } else if (error instanceof TypeError || /failed to fetch|access-control-allow-origin|cors/i.test(message)) {
           this.directModeDisabled = true;
           console.warn('[GeminiApiManager] Direct mode disabled after network/CORS failure, falling back to proxy');
+        } else if (/model\s+(id\s+)?['"]?[^'"\s]+['"]?\s+is\s+not\s+valid|unsupported\s+model/i.test(message)) {
+          this.directModeDisabled = true;
+          console.warn('[GeminiApiManager] Direct mode disabled after model availability error, falling back to proxy');
         } else {
           throw error;
         }

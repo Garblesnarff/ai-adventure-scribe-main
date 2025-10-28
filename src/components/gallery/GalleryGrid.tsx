@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export interface GalleryItem {
   url: string;
@@ -38,7 +38,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ title, images, emptyMessage }
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((img, index) => (
           <div
-            key={img.url}
+            key={`${img.url}-${index}`}
             className="relative group cursor-pointer"
             onClick={() => {
               setActive(img);
@@ -84,6 +84,11 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ title, images, emptyMessage }
             <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-infinite-gold to-infinite-purple bg-clip-text text-transparent">
               {active?.label || active?.name || 'Gallery Preview'}
             </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {active?.label || active?.name
+                ? `Previewing ${active?.label || active?.name}`
+                : 'Preview of selected gallery image.'}
+            </DialogDescription>
           </DialogHeader>
           {active && (
             <div className="relative w-full max-h-[70vh] overflow-hidden rounded-lg">

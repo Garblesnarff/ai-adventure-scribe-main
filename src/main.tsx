@@ -7,6 +7,11 @@ import { v4 as uuidv4 } from 'uuid';
 (function setupObservability() {
   const RELEASE = (import.meta as any).env?.VITE_RELEASE || (import.meta as any).env?.VITE_APP_VERSION || 'dev';
   const ENV = (import.meta as any).env?.VITE_ENVIRONMENT || (import.meta as any).env?.MODE || 'development';
+  const OBS_ENABLED = (() => {
+    const flag = String((import.meta as any).env?.VITE_OBSERVABILITY_ENABLED ?? '').trim().toLowerCase();
+    if (!flag) return false;
+    return flag === 'true' || flag === '1' || flag === 'yes' || flag === 'on';
+  })();
 
   // Inject X-Request-Id header into all fetch() calls
   const originalFetch = window.fetch.bind(window);
@@ -19,16 +24,18 @@ import { v4 as uuidv4 } from 'uuid';
 
     const nextInit: RequestInit = { ...(init || {}), headers };
     return originalFetch(input as any, nextInit).catch((err) => {
-      // fire-and-forget error capture to backend
-      try {
-        originalFetch('/v1/observability/error', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'x-request-id': String(rid), 'x-release': String(RELEASE), 'x-environment': String(ENV) },
-          body: JSON.stringify({ message: err?.message || 'fetch_failed', stack: err?.stack, extra: { input: String(input) } }),
-          keepalive: true,
-        });
-      } catch {
-        // Ignore error reporting failures
+      if (OBS_ENABLED) {
+        // fire-and-forget error capture to backend
+        try {
+          originalFetch('/v1/observability/error', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-request-id': String(rid), 'x-release': String(RELEASE), 'x-environment': String(ENV) },
+            body: JSON.stringify({ message: err?.message || 'fetch_failed', stack: err?.stack, extra: { input: String(input) } }),
+            keepalive: true,
+          }).catch(() => {});
+        } catch {
+          // Ignore error reporting failures
+        }
       }
       throw err;
     });
@@ -36,6 +43,7 @@ import { v4 as uuidv4 } from 'uuid';
 
   // Global error listeners
   window.addEventListener('error', (event) => {
+    if (!OBS_ENABLED) return;
     try {
       const rid = uuidv4();
       originalFetch('/v1/observability/error', {
@@ -43,12 +51,13 @@ import { v4 as uuidv4 } from 'uuid';
         headers: { 'content-type': 'application/json', 'x-request-id': String(rid), 'x-release': String(RELEASE), 'x-environment': String(ENV) },
         body: JSON.stringify({ message: event?.error?.message || event?.message || 'error', stack: event?.error?.stack, extra: { filename: event?.filename, lineno: event?.lineno, colno: event?.colno } }),
         keepalive: true,
-      });
+      }).catch(() => {});
     } catch {
       // Ignore error reporting failures
     }
   });
   window.addEventListener('unhandledrejection', (event) => {
+    if (!OBS_ENABLED) return;
     try {
       const rid = uuidv4();
       const reason: any = (event as any).reason;
@@ -57,7 +66,7 @@ import { v4 as uuidv4 } from 'uuid';
         headers: { 'content-type': 'application/json', 'x-request-id': String(rid), 'x-release': String(RELEASE), 'x-environment': String(ENV) },
         body: JSON.stringify({ message: (reason && (reason.message || String(reason))) || 'unhandledrejection', stack: reason?.stack }),
         keepalive: true,
-      });
+      }).catch(() => {});
     } catch {
       // Ignore error reporting failures
     }
