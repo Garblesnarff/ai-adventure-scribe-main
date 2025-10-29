@@ -1,5 +1,11 @@
 import type { CharacterRace } from '@/types/character';
 
+import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
+
+const ranges = getHeightWeightRange('halfling');
+const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [33, 39];
+const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [37, 43];
+
 export const halfling: CharacterRace = {
   id: 'halfling',
   name: 'Halfling',
@@ -9,8 +15,8 @@ export const halfling: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2 },
   speed: 25,
   languages: ['Common', 'Halfling'],
-  heightRange: [34, 38],
-  weightRange: [35, 45],
+  heightRange,
+  weightRange,
   backgroundImage: '/images/races/base/halfling-class-card-background.png',
   subraces: [
     {

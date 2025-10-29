@@ -1,5 +1,11 @@
 import type { CharacterRace } from '@/types/character';
 
+import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
+
+const ranges = getHeightWeightRange('dragonborn');
+const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [68, 82];
+const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [179, 367];
+
 export const dragonborn: CharacterRace = {
   id: 'dragonborn',
   name: 'Dragonborn',
@@ -9,8 +15,8 @@ export const dragonborn: CharacterRace = {
   abilityScoreIncrease: { strength: 2, charisma: 1 },
   speed: 30,
   languages: ['Common', 'Draconic'],
-  heightRange: [72, 80],
-  weightRange: [220, 320],
+  heightRange,
+  weightRange,
   backgroundImage: '/images/races/base/dragonborn-class-card-background.png',
   subraces: []
 };

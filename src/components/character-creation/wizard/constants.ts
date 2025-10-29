@@ -33,10 +33,6 @@ export const wizardSteps: WizardStep[] = [
     label: 'Basic Info'
   },
   {
-    component: PhysicalStep,
-    label: 'Physical'
-  },
-  {
     component: RaceSelection,
     label: 'Race'
   },
@@ -50,6 +46,10 @@ export const wizardSteps: WizardStep[] = [
       if (character.subrace) return true;
       return false;
     }
+  },
+  {
+    component: PhysicalStep,
+    label: 'Physical'
   },
   {
     component: ClassSelection,

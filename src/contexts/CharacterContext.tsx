@@ -58,9 +58,9 @@ type CharacterAction =
   | { type: 'SET_AGE'; payload: number }
   | { type: 'SET_HEIGHT'; payload: number }
   | { type: 'SET_WEIGHT'; payload: number }
-  | { type: 'SET_EYES'; payload: string }
-  | { type: 'SET_SKIN'; payload: string }
-  | { type: 'SET_HAIR'; payload: string }
+  | { type: 'SET_EYES'; payload: string | undefined }
+  | { type: 'SET_SKIN'; payload: string | undefined }
+  | { type: 'SET_HAIR'; payload: string | undefined }
   | { type: 'SET_STEP'; payload: number }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }

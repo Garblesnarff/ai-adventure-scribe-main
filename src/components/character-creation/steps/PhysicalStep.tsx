@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getAppearanceOptions } from '@/data/appearance/appearanceOptions';
 
 const PhysicalStep: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -26,21 +28,25 @@ const PhysicalStep: React.FC = () => {
     dispatch({ type: 'SET_WEIGHT', payload: value[0] });
   };
 
-  const handleEyesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: 'SET_EYES', payload: e.target.value });
-  };
-
-  const handleSkinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: 'SET_SKIN', payload: e.target.value });
-  };
-
-  const handleHairChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: 'SET_HAIR', payload: e.target.value });
-  };
-
-  const { race } = state.character;
+  const { race, subrace } = state.character;
   const heightRange = race?.heightRange || [48, 84];
   const weightRange = race?.weightRange || [80, 300];
+  const appearanceOptions = useMemo(
+    () => getAppearanceOptions(race?.id || race?.name, subrace?.id || subrace?.name),
+    [race?.id, race?.name, subrace?.id, subrace?.name]
+  );
+
+  useEffect(() => {
+    if (state.character.eyes && !appearanceOptions.eyeColors.includes(state.character.eyes)) {
+      dispatch({ type: 'SET_EYES', payload: undefined });
+    }
+    if (state.character.skin && !appearanceOptions.skinColors.includes(state.character.skin)) {
+      dispatch({ type: 'SET_SKIN', payload: undefined });
+    }
+    if (state.character.hair && !appearanceOptions.hairColors.includes(state.character.hair)) {
+      dispatch({ type: 'SET_HAIR', payload: undefined });
+    }
+  }, [appearanceOptions, dispatch, state.character.eyes, state.character.skin, state.character.hair]);
 
   const convertToMetricHeight = (inches: number) => {
     return Math.round(inches * 2.54);
@@ -133,27 +139,57 @@ const PhysicalStep: React.FC = () => {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Label htmlFor="eyes">Eye Color</Label>
-          <Input
-            id="eyes"
-            value={state.character.eyes || ''}
-            onChange={handleEyesChange}
-          />
+          <Select
+            value={state.character.eyes ?? undefined}
+            onValueChange={(value) => dispatch({ type: 'SET_EYES', payload: value })}
+          >
+            <SelectTrigger id="eyes">
+              <SelectValue placeholder="Select eye color" />
+            </SelectTrigger>
+            <SelectContent>
+              {appearanceOptions.eyeColors.map((color) => (
+                <SelectItem key={color} value={color}>
+                  {color}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor="skin">Skin Color</Label>
-          <Input
-            id="skin"
-            value={state.character.skin || ''}
-            onChange={handleSkinChange}
-          />
+          <Select
+            value={state.character.skin ?? undefined}
+            onValueChange={(value) => dispatch({ type: 'SET_SKIN', payload: value })}
+          >
+            <SelectTrigger id="skin">
+              <SelectValue placeholder="Select skin color" />
+            </SelectTrigger>
+            <SelectContent>
+              {appearanceOptions.skinColors.map((color) => (
+                <SelectItem key={color} value={color}>
+                  {color}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor="hair">Hair Color</Label>
-          <Input
-            id="hair"
-            value={state.character.hair || ''}
-            onChange={handleHairChange}
-          />
+          <Select
+            value={state.character.hair ?? undefined}
+            onValueChange={(value) => dispatch({ type: 'SET_HAIR', payload: value })}
+          >
+            <SelectTrigger id="hair">
+              <SelectValue placeholder="Select hair color" />
+            </SelectTrigger>
+            <SelectContent>
+              {appearanceOptions.hairColors.map((color) => (
+                <SelectItem key={color} value={color}>
+                  {color}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

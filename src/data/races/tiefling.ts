@@ -1,5 +1,11 @@
 import type { CharacterRace } from '@/types/character';
 
+import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
+
+const ranges = getHeightWeightRange('tiefling');
+const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [59, 73];
+const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [114, 238];
+
 export const tiefling: CharacterRace = {
   id: 'tiefling',
   name: 'Tiefling',
@@ -8,8 +14,8 @@ export const tiefling: CharacterRace = {
   abilityScoreIncrease: { intelligence: 1, charisma: 2 },
   speed: 30,
   languages: ['Common', 'Infernal'],
-  heightRange: [60, 76],
-  weightRange: [125, 250],
+  heightRange,
+  weightRange,
   backgroundImage: '/images/races/base/tiefling-class-card-background.png',
   subraces: [
     {

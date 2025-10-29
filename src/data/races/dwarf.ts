@@ -1,5 +1,11 @@
 import type { CharacterRace } from '@/types/character';
 
+import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
+
+const ranges = getHeightWeightRange('dwarf');
+const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [50, 56];
+const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [154, 246];
+
 export const dwarf: CharacterRace = {
   id: 'dwarf',
   name: 'Dwarf',
@@ -8,8 +14,8 @@ export const dwarf: CharacterRace = {
   abilityScoreIncrease: { constitution: 2 },
   speed: 25,
   languages: ['Common', 'Dwarvish'],
-  heightRange: [48, 60],
-  weightRange: [130, 170],
+  heightRange,
+  weightRange,
   backgroundImage: '/images/races/base/dwarf-class-card-background.png',
   subraces: [
     {

@@ -1,5 +1,11 @@
 import type { CharacterRace } from '@/types/character';
 
+import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
+
+const ranges = getHeightWeightRange('gnome');
+const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [37, 43];
+const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [37, 43];
+
 export const gnome: CharacterRace = {
   id: 'gnome',
   name: 'Gnome',
@@ -8,8 +14,8 @@ export const gnome: CharacterRace = {
   abilityScoreIncrease: { intelligence: 2 },
   speed: 25,
   languages: ['Common', 'Gnomish'],
-  heightRange: [36, 48],
-  weightRange: [35, 45],
+  heightRange,
+  weightRange,
   backgroundImage: '/images/races/base/gnome-class-card-background.png',
   subraces: [
     {

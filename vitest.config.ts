@@ -41,6 +41,8 @@ export default defineConfig({
       'src/__tests__/components/spell-selection-component.test.tsx',
       'src/components/spells/__tests__/SpellCard.test.tsx',
       'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx',
+      'src/data/appearance/appearanceOptions.test.ts',
+      'src/data/appearance/physicalTraits.test.ts',
       'src/engine/**/*.test.ts'
     ],
     exclude: [
