@@ -27,7 +27,22 @@ serve(async (req) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const prompt = `Generate a compelling campaign description for a ${genre} campaign with ${difficulty} difficulty, ${length} length, and a ${tone} tone. The description should be 2-3 paragraphs long and capture the essence of an exciting D&D adventure.`;
+    const prompt = `<task>
+  <instruction>Generate a compelling campaign description for a D&D adventure</instruction>
+</task>
+
+<parameters>
+  <genre>${genre}</genre>
+  <difficulty>${difficulty}</difficulty>
+  <length>${length}</length>
+  <tone>${tone}</tone>
+</parameters>
+
+<requirements>
+  <requirement>The description should be 2-3 paragraphs long</requirement>
+  <requirement>Capture the essence of an exciting D&D adventure</requirement>
+  <requirement>Match the specified genre, difficulty, length, and tone</requirement>
+</requirements>`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

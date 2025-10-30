@@ -119,22 +119,28 @@ export class LocationGenerator {
    */
   private static buildLocationPrompt(request: LocationRequest): string {
     const { type, size = 'medium', purpose, atmosphere = 'mysterious', context } = request;
-    
-    return `
-You are a master world builder creating a ${type} for a ${context.genre} D&D campaign. Generate a detailed, immersive location.
 
-REQUIREMENTS:
-- Type: ${type}
-- Size: ${size}
-- Purpose: ${purpose || 'undefined - be creative'}
-- Atmosphere: ${atmosphere}
-- Player Level: ${context.playerLevel || 'unknown'}
-- Campaign Genre: ${context.genre}
+    return `<task>
+  <description>You are a master world builder creating a ${type} for a ${context.genre} D&D campaign. Generate a detailed, immersive location.</description>
+</task>
 
-${request.context.currentStory ? `CURRENT STORY: ${request.context.currentStory}` : ''}
-${request.context.nearbyLocations?.length ? `NEARBY LOCATIONS: ${request.context.nearbyLocations.join(', ')}` : ''}
+<requirements>
+  <type>${type}</type>
+  <size>${size}</size>
+  <purpose>${purpose || 'undefined - be creative'}</purpose>
+  <atmosphere>${atmosphere}</atmosphere>
+  <player_level>${context.playerLevel || 'unknown'}</player_level>
+  <genre>${context.genre}</genre>
+</requirements>
 
-Generate a location in this EXACT JSON format:
+<context>
+  ${request.context.currentStory ? `<current_story>${request.context.currentStory}</current_story>` : ''}
+  ${request.context.nearbyLocations?.length ? `<nearby_locations>${request.context.nearbyLocations.join(', ')}</nearby_locations>` : ''}
+</context>
+
+<output_format>
+  <instruction>Generate a location in this EXACT JSON format:</instruction>
+  <json_structure>
 {
   "name": "Location Name",
   "description": "Rich 2-3 paragraph description with atmosphere and mood",
@@ -161,15 +167,18 @@ Generate a location in this EXACT JSON format:
     "interactiveFeatures": ["Things players can interact with"]
   }
 }
+  </json_structure>
+</output_format>
 
-GUIDELINES:
-- Make it vivid and immersive
-- Include specific, memorable details
-- Provide clear hooks for player interaction
-- Match the ${context.genre} genre
-- Consider player level ${context.playerLevel || 1} for appropriate challenges
-- Be creative but grounded in D&D logic
-- Include both obvious and subtle elements`;
+<guidelines>
+  <guideline>Make it vivid and immersive</guideline>
+  <guideline>Include specific, memorable details</guideline>
+  <guideline>Provide clear hooks for player interaction</guideline>
+  <guideline>Match the ${context.genre} genre</guideline>
+  <guideline>Consider player level ${context.playerLevel || 1} for appropriate challenges</guideline>
+  <guideline>Be creative but grounded in D&D logic</guideline>
+  <guideline>Include both obvious and subtle elements</guideline>
+</guidelines>`;
   }
 
   /**

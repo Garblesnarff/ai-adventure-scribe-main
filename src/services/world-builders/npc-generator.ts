@@ -28,7 +28,16 @@ export interface GeneratedNPC {
   race: string;
   class?: string;
   level?: number;
-  
+
+  // Physical Characteristics
+  gender?: 'male' | 'female';
+  age?: number;
+  height?: number; // in inches
+  weight?: number; // in pounds
+  eyes?: string;
+  skin?: string;
+  hair?: string;
+
   // Core Identity
   role: string;
   occupation: string;
@@ -158,29 +167,42 @@ export class NPCGenerator {
    */
   private static buildNPCPrompt(request: NPCRequest): string {
     const { role, importance, purpose, relationship = 'neutral', context } = request;
-    
-    return `
-You are a master character creator for a ${context.genre} D&D campaign. Create a compelling, three-dimensional NPC.
 
-REQUIREMENTS:
-- Role: ${role}
-- Importance: ${importance}
-- Purpose: ${purpose || 'undefined - be creative'}
-- Relationship to player: ${relationship}
-- Campaign Genre: ${context.genre}
-- Player Level: ${context.playerLevel || 'unknown'}
+    return `<task>
+  <description>You are a master character creator for a ${context.genre} D&D campaign. Create a compelling, three-dimensional NPC.</description>
+</task>
 
-${context.currentStory ? `CURRENT STORY CONTEXT: ${context.currentStory}` : ''}
-${context.locationName ? `LOCATION: ${context.locationName}` : ''}
-${context.playerCharacterName ? `PLAYER CHARACTER: ${context.playerCharacterName}` : ''}
+<requirements>
+  <role>${role}</role>
+  <importance>${importance}</importance>
+  <purpose>${purpose || 'undefined - be creative'}</purpose>
+  <relationship>${relationship}</relationship>
+  <genre>${context.genre}</genre>
+  <player_level>${context.playerLevel || 'unknown'}</player_level>
+</requirements>
 
-Generate an NPC in this EXACT JSON format:
+<context>
+  ${context.currentStory ? `<story>${context.currentStory}</story>` : ''}
+  ${context.locationName ? `<location>${context.locationName}</location>` : ''}
+  ${context.playerCharacterName ? `<player_character>${context.playerCharacterName}</player_character>` : ''}
+</context>
+
+<output_format>
+  <instruction>Generate an NPC in this EXACT JSON format:</instruction>
+  <json_structure>
 {
   "name": "Full Name",
   "description": "Rich 2-3 sentence description capturing essence",
   "race": "D&D race",
   "class": "D&D class or null",
   "level": null,
+  "gender": "male or female",
+  "age": 25,
+  "height": 68,
+  "weight": 150,
+  "eyes": "Eye color",
+  "skin": "Skin tone/color",
+  "hair": "Hair color/style",
   "role": "${role}",
   "occupation": "Specific job/profession",
   "socialStatus": "Social position/rank",
@@ -226,16 +248,22 @@ Generate an NPC in this EXACT JSON format:
     "specialAbilities": ["Unique abilities or talents"]
   }
 }
+  </json_structure>
+</output_format>
 
-GUIDELINES:
-- Create a unique, memorable character
-- Match the ${context.genre} genre
-- Give them clear motivations and flaws
-- Include story hooks for player interaction
-- Make them feel like a real person with agency
-- Consider their role in the ${importance} story
-- Include specific, vivid details
-- Provide multiple adventure opportunities`;
+<guidelines>
+  <guideline>Create a unique, memorable character</guideline>
+  <guideline>Match the ${context.genre} genre</guideline>
+  <guideline>Give them clear motivations and flaws</guideline>
+  <guideline>Include story hooks for player interaction</guideline>
+  <guideline>Make them feel like a real person with agency</guideline>
+  <guideline>Consider their role in the ${importance} story</guideline>
+  <guideline>Include specific, vivid details</guideline>
+  <guideline>Provide multiple adventure opportunities</guideline>
+  <guideline>Physical characteristics should be race-appropriate (height in inches, weight in pounds)</guideline>
+  <guideline>Age should fit their role and experience level</guideline>
+  <guideline>Physical description should be vivid and memorable</guideline>
+</guidelines>`;
   }
 
   /**
@@ -272,6 +300,13 @@ GUIDELINES:
         race: npc.race,
         class: npc.class,
         level: npc.level,
+        gender: npc.gender,
+        age: npc.age,
+        height: npc.height,
+        weight: npc.weight,
+        eyes: npc.eyes,
+        skin: npc.skin,
+        hair: npc.hair,
         personality_traits: npc.personality.traits,
         campaign_id: npc.metadata.campaignId,
         location_id: npc.metadata.locationId,
