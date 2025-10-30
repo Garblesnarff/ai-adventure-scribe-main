@@ -48,11 +48,21 @@ export const useCharacterSave = () => {
 
     try {
       setIsSaving(true);
-      
+
       // Get current user if authenticated
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const effectiveCampaignId = character.campaign_id || campaignState.campaign?.id || null;
+
+      if (!effectiveCampaignId) {
+        console.warn('Attempted to save character without campaign context');
+        toast({
+          title: 'Campaign Required',
+          description: 'Select or create a campaign before saving this character.',
+          variant: 'destructive',
+        });
+        return null;
+      }
 
       // Transform and save character data
       const characterData = {

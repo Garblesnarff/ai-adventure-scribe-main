@@ -32,6 +32,7 @@ export default defineConfig({
       'src/services/encounters/__tests__/telemetry.test.ts',
       'src/services/encounters/__tests__/templates.test.ts',
       'src/services/encounters/__tests__/hazard-validation.test.ts',
+      'src/services/prompts/__tests__/characterPrompts.test.ts',
       'src/agents/__tests__/encounter-validation.test.ts',
       'src/agents/__tests__/encounter-validator-party.test.ts',
       'src/agents/services/intent/PlayerIntentDetector.test.ts',

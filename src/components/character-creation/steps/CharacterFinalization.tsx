@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { characterDescriptionGenerator } from '@/services/character-description-generator';
 import { characterImageGenerator } from '@/services/character-image-generator';
 import { openRouterService } from '@/services/openrouter-service';
+import { toCharacterPromptData } from '@/services/prompts/characterPrompts';
 import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react';
 import logger from '@/lib/logger';
 import { useCampaign } from '@/contexts/CampaignContext';
@@ -70,24 +71,7 @@ const CharacterFinalization: React.FC = () => {
 
     setIsGeneratingDescription(true);
     try {
-      const characterData = {
-        name: state.character.name,
-        description: state.character.description,
-        race: state.character.race?.name || null,
-        subrace: state.character.subrace?.name || null,
-        class: state.character.class?.name || null,
-        background: state.character.background?.name || null,
-        level: state.character.level || null,
-        alignment: state.character.alignment || null,
-        personalityTraits: state.character.personalityTraits || [],
-        ideals: state.character.ideals || [],
-        bonds: state.character.bonds || [],
-        flaws: state.character.flaws || [],
-        personality_notes: state.character.personality_notes || null,
-        ability_scores: state.character.abilityScores || null,
-        enhancementSelections: state.character.enhancementSelections || [],
-        enhancementEffects: state.character.enhancementEffects || {},
-      };
+      const characterData = toCharacterPromptData(state.character);
 
       const enhancedDescription = await characterDescriptionGenerator.generateDescription(
         characterData,
@@ -152,18 +136,7 @@ const CharacterFinalization: React.FC = () => {
     setGenerationStep('avatar');
     try {
       const characterData = {
-        name: state.character.name,
-        description: state.character.description,
-        race: state.character.race?.name || null,
-        subrace: state.character.subrace?.name || null,
-        class: state.character.class?.name || null,
-        background: state.character.background?.name || null,
-        alignment: state.character.alignment || null,
-        appearance: state.character.appearance,
-        personality_traits: state.character.personality_traits,
-        personality_notes: state.character.personality_notes,
-        enhancementSelections: state.character.enhancementSelections || [],
-        enhancementEffects: state.character.enhancementEffects || {},
+        ...toCharacterPromptData(state.character),
         theme: selectedTheme,
       };
 
@@ -229,18 +202,7 @@ const CharacterFinalization: React.FC = () => {
     setGenerationStep('sheet');
     try {
       const characterData = {
-        name: state.character.name,
-        description: state.character.description,
-        race: state.character.race?.name || null,
-        subrace: state.character.subrace?.name || null,
-        class: state.character.class?.name || null,
-        background: state.character.background?.name || null,
-        alignment: state.character.alignment || null,
-        appearance: state.character.appearance,
-        personality_traits: state.character.personality_traits,
-        personality_notes: state.character.personality_notes,
-        enhancementSelections: state.character.enhancementSelections || [],
-        enhancementEffects: state.character.enhancementEffects || {},
+        ...toCharacterPromptData(state.character),
         theme: selectedTheme,
       };
 

@@ -405,7 +405,12 @@ const WizardContent: React.FC = () => {
           const savedCharacter = await saveCharacter(state.character);
           logger.debug('Save result:', savedCharacter);
 
-          if (savedCharacter?.id) {
+          if (!savedCharacter) {
+            logger.warn('Character save returned null; staying on wizard step for user correction');
+            return;
+          }
+
+          if (savedCharacter.id) {
             logger.info('Character saved successfully, navigating to /characters');
             try {
               const campaignId = searchParams.get('campaign') || undefined;
@@ -430,12 +435,10 @@ const WizardContent: React.FC = () => {
           } else {
             logger.error('Save succeeded but no ID returned');
             toast({
-              title: "Partial Save Success",
-              description: "Character was saved but some data may be incomplete. Please check your characters list and edit if needed.",
-              variant: "default",
+              title: "Save Warning",
+              description: "Character data may be incomplete. Please review your characters list and edit if needed.",
+              variant: "destructive",
             });
-            // Still navigate to give user a chance to see their characters
-            navigate('/app/characters');
           }
         } catch (error) {
           logger.error('Error saving character:', error);
