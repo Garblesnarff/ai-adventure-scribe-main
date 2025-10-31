@@ -133,21 +133,21 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                 const backgroundImage = character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
 
                 return (
-                  <Card key={character.id} className="group cursor-pointer hover:shadow-xl hover:shadow-infinite-purple/30 transition-all duration-500 overflow-hidden border-2 border-border/30 hover:border-infinite-gold/70 relative">
+                  <Card key={character.id} className="group cursor-pointer hover:shadow-2xl hover:shadow-infinite-purple/40 transition-all duration-500 overflow-hidden border-2 border-border/60 hover:border-infinite-gold/90 hover:scale-[1.02] relative bg-white dark:bg-background">
                     {/* Glow effect on hover */}
                     <div className="absolute inset-0 z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                      <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(168,85,247,0.3)]" />
+                      <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
                     </div>
-                    
-                    <div 
-                      className="relative h-32 bg-cover bg-center transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
+
+                    <div
+                      className="relative h-32 bg-cover bg-center transition-all duration-700 ease-out group-hover:scale-105 group-hover:brightness-110"
                       style={{
                         backgroundImage: `url(${backgroundImage})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'
                       }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/90" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/80 to-white/95 dark:from-background/60 dark:via-background/80 dark:to-background/95" />
                       {character.avatar_url && (
                         <div className="absolute -bottom-8 left-4 z-10">
                           <img
@@ -158,10 +158,10 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                         </div>
                       )}
                     </div>
-                    <CardContent className="p-4 pt-10">
+                    <CardContent className="p-4 pt-10 bg-white dark:bg-background">
                       <div className="space-y-3">
                         <div>
-                          <h3 className="font-semibold text-lg">{character.name}</h3>
+                          <h3 className="font-semibold text-lg text-foreground">{character.name}</h3>
                           <p className="text-sm text-muted-foreground">
                             Level {character.level} {character.race} {character.class}
                           </p>
@@ -170,42 +170,42 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                         {stats && (
                           <>
                             {/* HP and AC */}
-                            <div className="flex gap-4 text-sm">
+                            <div className="flex gap-4 text-sm bg-gray-100 dark:bg-muted p-2 rounded-md border border-gray-200 dark:border-border">
                               <div className="flex items-center gap-1">
-                                <span className="font-semibold">HP:</span>
-                                <span>{stats.max_hit_points || '—'}</span>
+                                <span className="font-semibold text-foreground">HP:</span>
+                                <span className="text-foreground">{stats.max_hit_points || '—'}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="font-semibold">AC:</span>
-                                <span>{stats.armor_class || '—'}</span>
+                                <span className="font-semibold text-foreground">AC:</span>
+                                <span className="text-foreground">{stats.armor_class || '—'}</span>
                               </div>
                             </div>
 
                             {/* Ability Scores Grid */}
                             <div className="grid grid-cols-3 gap-2 text-xs">
-                              <div className="flex flex-col items-center p-2 bg-muted rounded">
+                              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">STR</span>
-                                <span className="text-lg font-bold">{getModifier(stats.strength)}</span>
+                                <span className="text-lg font-bold text-foreground">{getModifier(stats.strength)}</span>
                               </div>
-                              <div className="flex flex-col items-center p-2 bg-muted rounded">
+                              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">DEX</span>
-                                <span className="text-lg font-bold">{getModifier(stats.dexterity)}</span>
+                                <span className="text-lg font-bold text-foreground">{getModifier(stats.dexterity)}</span>
                               </div>
-                              <div className="flex flex-col items-center p-2 bg-muted rounded">
+                              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">CON</span>
-                                <span className="text-lg font-bold">{getModifier(stats.constitution)}</span>
+                                <span className="text-lg font-bold text-foreground">{getModifier(stats.constitution)}</span>
                               </div>
-                              <div className="flex flex-col items-center p-2 bg-muted rounded">
+                              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">INT</span>
-                                <span className="text-lg font-bold">{getModifier(stats.intelligence)}</span>
+                                <span className="text-lg font-bold text-foreground">{getModifier(stats.intelligence)}</span>
                               </div>
-                              <div className="flex flex-col items-center p-2 bg-muted rounded">
+                              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">WIS</span>
-                                <span className="text-lg font-bold">{getModifier(stats.wisdom)}</span>
+                                <span className="text-lg font-bold text-foreground">{getModifier(stats.wisdom)}</span>
                               </div>
-                              <div className="flex flex-col items-center p-2 bg-muted rounded">
+                              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">CHA</span>
-                                <span className="text-lg font-bold">{getModifier(stats.charisma)}</span>
+                                <span className="text-lg font-bold text-foreground">{getModifier(stats.charisma)}</span>
                               </div>
                             </div>
                           </>
