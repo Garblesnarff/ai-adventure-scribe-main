@@ -26,10 +26,10 @@ const CharacterPreview: React.FC = () => {
 
   if (!character) {
     return (
-      <Card className="p-6 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 border-2 border-dashed border-muted-foreground/25">
-        <div className="text-center space-y-4">
-          <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center">
-            <Sparkles className="w-12 h-12 text-muted-foreground" />
+      <Card className="glass-strong rounded-2xl border-2 border-dashed border-infinite-purple/25">
+        <div className="p-6 text-center space-y-4">
+          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-infinite-purple/20 to-infinite-gold/20 rounded-full flex items-center justify-center">
+            <Sparkles className="w-12 h-12 text-infinite-purple" />
           </div>
           <div>
             <h3 className="font-semibold text-lg">Character Preview</h3>
@@ -66,12 +66,12 @@ const CharacterPreview: React.FC = () => {
   const proficiencyBonus = Math.ceil(totalLevel / 4) + 1;
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
-      <div className="space-y-6">
+    <Card className="glass-strong rounded-2xl hover-lift border-2 border-infinite-purple/20">
+      <div className="p-6 space-y-6">
         {/* Character Header */}
         <div className="text-center space-y-3">
           <div className="relative">
-            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-infinite-purple to-infinite-gold rounded-full flex items-center justify-center border-4 border-white shadow-lg">
               {character.avatar_url ? (
                 <img
                   src={character.avatar_url}
@@ -83,7 +83,7 @@ const CharacterPreview: React.FC = () => {
               )}
             </div>
             {character.name && (
-              <Badge className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white text-gray-800 border-2 border-blue-200">
+              <Badge className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white text-gray-800 border-2 border-infinite-purple/30">
                 Level {totalLevel}
               </Badge>
             )}

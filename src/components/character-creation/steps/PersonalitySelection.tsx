@@ -186,11 +186,11 @@ const PersonalitySelection: React.FC = () => {
       {/* Header Section */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center space-x-3">
-          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full">
+          <div className="p-3 bg-gradient-to-br from-infinite-purple to-infinite-gold rounded-full shadow-lg">
             <Heart className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-infinite-purple to-infinite-gold bg-clip-text text-transparent">
               Define Your Character
             </h2>
             <p className="text-muted-foreground">
@@ -205,26 +205,28 @@ const PersonalitySelection: React.FC = () => {
 
       {/* Background Info */}
       {selectedBackground && (
-        <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-          <div className="flex items-center space-x-2 mb-2">
-            <Crown className="w-4 h-4 text-blue-600" />
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-              {selectedBackground.name} Background
-            </h3>
-          </div>
-          <p className="text-sm text-blue-700 dark:text-blue-200">
-            {selectedBackground.description}
-          </p>
+        <Card className="glass rounded-2xl border-2 border-infinite-teal/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-2 mb-2">
+              <Crown className="w-4 h-4 text-infinite-teal" />
+              <h3 className="font-semibold">
+                {selectedBackground.name} Background
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {selectedBackground.description}
+            </p>
+          </CardContent>
         </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Personality Traits */}
-        <Card className="p-6 bg-gradient-to-br from-white to-purple-50/50 dark:from-gray-900 dark:to-purple-950/50 border-purple-200 dark:border-purple-800">
-          <div className="space-y-4">
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-purple/20">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Zap className="w-5 h-5 text-purple-600" />
+                <Zap className="w-5 h-5 text-infinite-purple" />
                 <h3 className="text-lg font-semibold">Personality Traits</h3>
               </div>
               <Button
@@ -261,7 +263,7 @@ const PersonalitySelection: React.FC = () => {
                   placeholder="e.g., I idolize a particular hero of my faith..."
                   value={state.character?.personalityTraits?.[0] || ''}
                   onChange={(e) => handlePersonalityTraitsChange([e.target.value, state.character?.personalityTraits?.[1] || ''])}
-                  className="min-h-[60px] transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="min-h-[60px] transition-all duration-200 focus:ring-2 focus:ring-infinite-purple focus:border-infinite-purple"
                 />
               </div>
               <div className="space-y-1">
@@ -282,19 +284,19 @@ const PersonalitySelection: React.FC = () => {
                   placeholder="e.g., I can find common ground between enemies..."
                   value={state.character?.personalityTraits?.[1] || ''}
                   onChange={(e) => handlePersonalityTraitsChange([state.character?.personalityTraits?.[0] || '', e.target.value])}
-                  className="min-h-[60px] transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="min-h-[60px] transition-all duration-200 focus:ring-2 focus:ring-infinite-purple focus:border-infinite-purple"
                 />
               </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
 
         {/* Ideal */}
-        <Card className="p-6 bg-gradient-to-br from-white to-green-50/50 dark:from-gray-900 dark:to-green-950/50 border-green-200 dark:border-green-800">
-          <div className="space-y-4">
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-gold/20">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Crown className="w-5 h-5 text-green-600" />
+                <Crown className="w-5 h-5 text-infinite-gold" />
                 <h3 className="text-lg font-semibold">Ideal</h3>
               </div>
               <Button
@@ -317,17 +319,17 @@ const PersonalitySelection: React.FC = () => {
               placeholder="e.g., Freedom. Tyrants must not be allowed to oppress people."
               value={state.character?.ideals?.[0] || ''}
               onChange={(e) => handleIdealChange(e.target.value)}
-              className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-infinite-gold focus:border-infinite-gold"
             />
-          </div>
+          </CardContent>
         </Card>
 
         {/* Bond */}
-        <Card className="p-6 bg-gradient-to-br from-white to-blue-50/50 dark:from-gray-900 dark:to-blue-950/50 border-blue-200 dark:border-blue-800">
-          <div className="space-y-4">
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-teal/20">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Heart className="w-5 h-5 text-blue-600" />
+                <Heart className="w-5 h-5 text-infinite-teal" />
                 <h3 className="text-lg font-semibold">Bond</h3>
               </div>
               <Button
@@ -350,17 +352,17 @@ const PersonalitySelection: React.FC = () => {
               placeholder="e.g., I owe my life to the priest who took me in..."
               value={state.character?.bonds?.[0] || ''}
               onChange={(e) => handleBondChange(e.target.value)}
-              className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-infinite-teal focus:border-infinite-teal"
             />
-          </div>
+          </CardContent>
         </Card>
 
         {/* Flaw */}
-        <Card className="p-6 bg-gradient-to-br from-white to-red-50/50 dark:from-gray-900 dark:to-red-950/50 border-red-200 dark:border-red-800">
-          <div className="space-y-4">
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-purple/20">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-red-600" />
+                <Shield className="w-5 h-5 text-infinite-teal" />
                 <h3 className="text-lg font-semibold">Flaw</h3>
               </div>
               <Button
@@ -383,9 +385,9 @@ const PersonalitySelection: React.FC = () => {
               placeholder="e.g., I judge others harshly, and myself even more severely."
               value={state.character?.flaws?.[0] || ''}
               onChange={(e) => handleFlawChange(e.target.value)}
-              className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="min-h-[100px] transition-all duration-200 focus:ring-2 focus:ring-infinite-purple focus:border-infinite-purple"
             />
-          </div>
+          </CardContent>
         </Card>
       </div>
 

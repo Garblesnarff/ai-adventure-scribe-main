@@ -494,30 +494,39 @@ const WizardContent: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Main Character Creation Area */}
-        <div className="xl:col-span-2">
-          <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-            <h1 className="text-3xl font-bold text-center mb-8">Create Your Character</h1>
-            <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
-            <div className="min-h-[600px]">
-              <CurrentStepComponent />
-            </div>
-            <StepNavigation
-              currentStep={currentStep}
-              totalSteps={filteredSteps.length}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              isLoading={isSaving}
-            />
-          </Card>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-indigo-50/20">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Main Character Creation Area */}
+          <div className="xl:col-span-2">
+            <Card className="p-6 glass-strong rounded-2xl hover-lift shadow-xl border-2 border-white/20">
+              <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-infinite-purple via-infinite-gold to-infinite-teal bg-clip-text text-transparent">
+                Create Your Character
+              </h1>
+              <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
+              <div className="min-h-[600px] transition-all duration-500 ease-in-out">
+                <div
+                  key={currentStep}
+                  className="animate-in fade-in slide-in-from-right-4 duration-500"
+                >
+                  <CurrentStepComponent />
+                </div>
+              </div>
+              <StepNavigation
+                currentStep={currentStep}
+                totalSteps={filteredSteps.length}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+                isLoading={isSaving}
+              />
+            </Card>
+          </div>
 
-        {/* Character Preview Sidebar */}
-        <div className="xl:col-span-1">
-          <div className="sticky top-8">
-            <CharacterPreview />
+          {/* Character Preview Sidebar */}
+          <div className="xl:col-span-1">
+            <div className="sticky top-8 transition-all duration-300">
+              <CharacterPreview />
+            </div>
           </div>
         </div>
       </div>
