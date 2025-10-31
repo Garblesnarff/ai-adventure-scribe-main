@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import logger from '@/lib/logger';
 import CampaignGallery from '@/components/gallery/CampaignGallery';
 
 interface CampaignOverviewProps {
@@ -22,87 +19,6 @@ interface CampaignOverviewProps {
 
 const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign, onStartNewSession }) => {
   const { id: campaignId } = useParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isStarting, setIsStarting] = useState(false);
-
-  const handleStartSession = async () => {
-    if (!campaignId) {
-      toast({
-        title: "Error",
-        description: "Campaign ID not found",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsStarting(true);
-
-    try {
-      // Fetch characters for this campaign
-      const { data: characters, error: fetchError } = await supabase
-        .from('characters')
-        .select('id, name, level, image_url')
-        .eq('campaign_id', campaignId)
-        .order('created_at', { ascending: false });
-
-      if (fetchError) {
-        logger.error('Error fetching characters:', fetchError);
-        throw new Error('Failed to fetch characters');
-      }
-
-      // Handle based on character count
-      if (!characters || characters.length === 0) {
-        // No characters - prompt to create one
-        toast({
-          title: "Create a Character First",
-          description: "You need a character to start playing",
-        });
-        navigate(`/app/campaigns/${campaignId}/characters/new`);
-        return;
-      }
-
-      // Use the first character (or most recently created)
-      const characterId = characters[0].id;
-
-      logger.info('Starting session with character:', characterId);
-
-      // Create game session
-      const { data: session, error: sessionError } = await supabase
-        .from('game_sessions')
-        .insert({
-          campaign_id: campaignId,
-          character_id: characterId,
-          status: 'active',
-        })
-        .select()
-        .single();
-
-      if (sessionError) {
-        logger.error('Error creating session:', sessionError);
-        throw new Error('Failed to create game session');
-      }
-
-      toast({
-        title: "Session Started",
-        description: `Starting adventure with ${characters[0].name}!`,
-      });
-
-      onStartNewSession?.();
-
-      // Navigate to game interface
-      navigate(`/app/game/${campaignId}?character=${characterId}&session=${session.id}`);
-    } catch (error) {
-      logger.error('Error starting session:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to start session",
-        variant: "destructive",
-      });
-    } finally {
-      setIsStarting(false);
-    }
-  };
 
   if (!campaign) {
     return (
@@ -273,11 +189,10 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign, onStartNe
             </h3>
             <div className="space-y-3">
               <button
-                onClick={handleStartSession}
-                disabled={isStarting}
+                onClick={() => onStartNewSession?.()}
                 className="w-full px-4 py-3 bg-gradient-to-r from-infinite-purple to-infinite-purple-dark text-white rounded-lg hover:from-infinite-purple-dark hover:to-infinite-purple transition-all duration-300 hover-lift font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isStarting ? 'Starting...' : 'Start New Session'}
+                Start New Session
               </button>
               <button className="w-full px-4 py-3 border-2 border-infinite-gold text-infinite-gold rounded-lg hover:bg-infinite-gold/10 transition-all duration-300 font-medium">
                 Invite Players
