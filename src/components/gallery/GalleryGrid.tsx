@@ -38,7 +38,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ title, images, emptyMessage }
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((img, index) => (
           <div
-            key={`${img.url}-${index}`}
+            key={img.name || `${img.url}-${index}`}
             className="relative group cursor-pointer"
             onClick={() => {
               setActive(img);

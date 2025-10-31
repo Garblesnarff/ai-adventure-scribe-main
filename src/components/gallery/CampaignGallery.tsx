@@ -16,10 +16,17 @@ const CampaignGallery: React.FC<CampaignGalleryProps> = ({ campaignId, backgroun
   });
 
   const images = [] as { url: string; name?: string; createdAt?: string; label?: string }[];
-  if (backgroundImageUrl) {
-    images.push({ url: backgroundImageUrl, label: 'Background' });
-  }
+
+  // Add gallery images from storage first
   if (data && data.length > 0) images.push(...data);
+
+  // Only add background image if it's not already in the gallery
+  if (backgroundImageUrl) {
+    const backgroundExists = images.some(img => img.url === backgroundImageUrl);
+    if (!backgroundExists) {
+      images.push({ url: backgroundImageUrl, label: 'Background' });
+    }
+  }
 
   if (isLoading) {
     return (

@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getAppearanceOptions } from '@/data/appearance/appearanceOptions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Ruler, Weight, User, Eye, Palette, Sparkles } from 'lucide-react';
 
 const PhysicalStep: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -28,25 +29,21 @@ const PhysicalStep: React.FC = () => {
     dispatch({ type: 'SET_WEIGHT', payload: value[0] });
   };
 
-  const { race, subrace } = state.character;
+  const handleEyesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: 'SET_EYES', payload: e.target.value });
+  };
+
+  const handleSkinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: 'SET_SKIN', payload: e.target.value });
+  };
+
+  const handleHairChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: 'SET_HAIR', payload: e.target.value });
+  };
+
+  const { race } = state.character;
   const heightRange = race?.heightRange || [48, 84];
   const weightRange = race?.weightRange || [80, 300];
-  const appearanceOptions = useMemo(
-    () => getAppearanceOptions(race?.id || race?.name, subrace?.id || subrace?.name),
-    [race?.id, race?.name, subrace?.id, subrace?.name]
-  );
-
-  useEffect(() => {
-    if (state.character.eyes && !appearanceOptions.eyeColors.includes(state.character.eyes)) {
-      dispatch({ type: 'SET_EYES', payload: undefined });
-    }
-    if (state.character.skin && !appearanceOptions.skinColors.includes(state.character.skin)) {
-      dispatch({ type: 'SET_SKIN', payload: undefined });
-    }
-    if (state.character.hair && !appearanceOptions.hairColors.includes(state.character.hair)) {
-      dispatch({ type: 'SET_HAIR', payload: undefined });
-    }
-  }, [appearanceOptions, dispatch, state.character.eyes, state.character.skin, state.character.hair]);
 
   const convertToMetricHeight = (inches: number) => {
     return Math.round(inches * 2.54);
@@ -73,125 +70,209 @@ const PhysicalStep: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <Label htmlFor="metric-switch">Imperial</Label>
-        <Switch
-          id="metric-switch"
-          checked={useMetric}
-          onCheckedChange={setUseMetric}
-        />
-        <Label htmlFor="metric-switch">Metric</Label>
-      </div>
-
-      <div>
-        <Label>Gender</Label>
-        <RadioGroup
-          defaultValue={state.character.gender}
-          onValueChange={handleGenderChange}
-          className="flex space-x-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="male" id="male" />
-            <Label htmlFor="male">Male</Label>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center space-x-3">
+          <div className="p-3 bg-gradient-to-br from-infinite-purple to-infinite-teal rounded-full shadow-lg">
+            <User className="w-8 h-8 text-white" />
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="female" id="female" />
-            <Label htmlFor="female">Female</Label>
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-infinite-purple to-infinite-teal bg-clip-text text-transparent">
+              Physical Appearance
+            </h2>
+            <p className="text-muted-foreground">Define your character's physical traits</p>
           </div>
-        </RadioGroup>
+        </div>
+        {race && (
+          <Badge variant="outline" className="text-sm">
+            {race.name} Character
+          </Badge>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="age">Age</Label>
-          <Input
-            id="age"
-            type="number"
-            value={state.character.age || ''}
-            onChange={handleAgeChange}
-          />
-        </div>
+      {/* Units Toggle */}
+      <Card className="glass rounded-2xl hover-lift">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center space-x-3">
+            <Label htmlFor="metric-switch" className={!useMetric ? 'font-semibold' : ''}>Imperial</Label>
+            <Switch
+              id="metric-switch"
+              checked={useMetric}
+              onCheckedChange={setUseMetric}
+            />
+            <Label htmlFor="metric-switch" className={useMetric ? 'font-semibold' : ''}>Metric</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Gender & Age Card */}
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-purple/20 transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5 text-infinite-purple" />
+              Basic Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Gender</Label>
+              <RadioGroup
+                defaultValue={state.character.gender}
+                onValueChange={handleGenderChange}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2 flex-1">
+                  <RadioGroupItem value="male" id="male" />
+                  <Label htmlFor="male" className="cursor-pointer">Male</Label>
+                </div>
+                <div className="flex items-center space-x-2 flex-1">
+                  <RadioGroupItem value="female" id="female" />
+                  <Label htmlFor="female" className="cursor-pointer">Female</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <Label htmlFor="age" className="text-sm font-medium mb-2 block">Age (years)</Label>
+              <Input
+                id="age"
+                type="number"
+                value={state.character.age || ''}
+                onChange={handleAgeChange}
+                className="text-lg"
+                placeholder="Enter age"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Height Card */}
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-gold/20 transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <Ruler className="w-5 h-5 text-infinite-gold" />
+                Height
+              </div>
+              <Badge variant="secondary" className="text-lg font-bold">
+                {formatHeight(state.character.height || heightRange[0])}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Slider
+              min={heightRange[0]}
+              max={heightRange[1]}
+              step={1}
+              value={[state.character.height || heightRange[0]]}
+              onValueChange={handleHeightChange}
+              className="py-4"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Min: {formatHeight(heightRange[0])}</span>
+              <span>Max: {formatHeight(heightRange[1])}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Weight Card */}
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-teal/20 transition-all">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <Weight className="w-5 h-5 text-infinite-teal" />
+                Weight
+              </div>
+              <Badge variant="secondary" className="text-lg font-bold">
+                {formatWeight(state.character.weight || weightRange[0])}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Slider
+              min={weightRange[0]}
+              max={weightRange[1]}
+              step={1}
+              value={[state.character.weight || weightRange[0]]}
+              onValueChange={handleWeightChange}
+              className="py-4"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Min: {formatWeight(weightRange[0])}</span>
+              <span>Max: {formatWeight(weightRange[1])}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Colors Card */}
+        <Card className="glass rounded-2xl hover-lift border-2 border-infinite-purple/20 transition-all lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-infinite-purple" />
+              Appearance Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="eyes" className="flex items-center gap-2 text-sm font-medium">
+                <Eye className="w-4 h-4" />
+                Eye Color
+              </Label>
+              <Input
+                id="eyes"
+                value={state.character.eyes || ''}
+                onChange={handleEyesChange}
+                placeholder="e.g., Blue, Green, Brown"
+                className="transition-all focus:ring-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="skin" className="flex items-center gap-2 text-sm font-medium">
+                <Sparkles className="w-4 h-4" />
+                Skin Color
+              </Label>
+              <Input
+                id="skin"
+                value={state.character.skin || ''}
+                onChange={handleSkinChange}
+                placeholder="e.g., Pale, Tan, Dark"
+                className="transition-all focus:ring-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hair" className="flex items-center gap-2 text-sm font-medium">
+                <Palette className="w-4 h-4" />
+                Hair Color
+              </Label>
+              <Input
+                id="hair"
+                value={state.character.hair || ''}
+                onChange={handleHairChange}
+                placeholder="e.g., Black, Blonde, Red"
+                className="transition-all focus:ring-2"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div>
-        <Label>Height: {formatHeight(state.character.height || heightRange[0])}</Label>
-        <Slider
-          min={heightRange[0]}
-          max={heightRange[1]}
-          step={1}
-          value={[state.character.height || heightRange[0]]}
-          onValueChange={handleHeightChange}
-        />
-      </div>
-
-      <div>
-        <Label>Weight: {formatWeight(state.character.weight || weightRange[0])}</Label>
-        <Slider
-          min={weightRange[0]}
-          max={weightRange[1]}
-          step={1}
-          value={[state.character.weight || weightRange[0]]}
-          onValueChange={handleWeightChange}
-        />
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="eyes">Eye Color</Label>
-          <Select
-            value={state.character.eyes ?? undefined}
-            onValueChange={(value) => dispatch({ type: 'SET_EYES', payload: value })}
-          >
-            <SelectTrigger id="eyes">
-              <SelectValue placeholder="Select eye color" />
-            </SelectTrigger>
-            <SelectContent>
-              {appearanceOptions.eyeColors.map((color) => (
-                <SelectItem key={color} value={color}>
-                  {color}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="skin">Skin Color</Label>
-          <Select
-            value={state.character.skin ?? undefined}
-            onValueChange={(value) => dispatch({ type: 'SET_SKIN', payload: value })}
-          >
-            <SelectTrigger id="skin">
-              <SelectValue placeholder="Select skin color" />
-            </SelectTrigger>
-            <SelectContent>
-              {appearanceOptions.skinColors.map((color) => (
-                <SelectItem key={color} value={color}>
-                  {color}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="hair">Hair Color</Label>
-          <Select
-            value={state.character.hair ?? undefined}
-            onValueChange={(value) => dispatch({ type: 'SET_HAIR', payload: value })}
-          >
-            <SelectTrigger id="hair">
-              <SelectValue placeholder="Select hair color" />
-            </SelectTrigger>
-            <SelectContent>
-              {appearanceOptions.hairColors.map((color) => (
-                <SelectItem key={color} value={color}>
-                  {color}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Info Card */}
+      <Card className="glass rounded-2xl border-2 border-infinite-teal/20">
+        <CardContent className="pt-6">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-infinite-teal/20 rounded-full">
+              <Sparkles className="w-4 h-4 text-infinite-teal" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
+                <strong>Tip:</strong> Your physical characteristics help bring your character to life. These details will be used for character portraits and descriptions during gameplay.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -9,19 +9,27 @@ export class PromptComposer {
     if (!state) return '';
 
     const lines: string[] = [];
-    lines.push('SESSION STATE SNAPSHOT:');
-    lines.push(`Scene: ${state.scene || 'Unknown'}`);
+    lines.push('<session_state>');
+    lines.push(`  <scene>${state.scene || 'Unknown'}</scene>`);
     if (state.combat) {
-      lines.push(`Combat: ${state.combat.active ? 'ACTIVE' : 'inactive'} | Round: ${state.combat.round}`);
+      lines.push(`  <combat status="${state.combat.active ? 'ACTIVE' : 'inactive'}" round="${state.combat.round}">`);
       if (state.combat.order?.length) {
-        const order = state.combat.order.map(c => `${c.name}(HP:${c.hp}, AC:${c.ac})`).join(', ');
-        lines.push(`Turn Order: ${order}`);
+        lines.push('    <turn_order>');
+        state.combat.order.forEach(c => {
+          lines.push(`      <combatant name="${c.name}" hp="${c.hp}" ac="${c.ac}"/>`);
+        });
+        lines.push('    </turn_order>');
       }
+      lines.push('  </combat>');
     }
     if (state.quests?.length) {
-      const quests = state.quests.map(q => `${q.summary} [${q.status}]`).join(' | ');
-      lines.push(`Quests: ${quests}`);
+      lines.push('  <quests>');
+      state.quests.forEach(q => {
+        lines.push(`    <quest status="${q.status}">${q.summary}</quest>`);
+      });
+      lines.push('  </quests>');
     }
+    lines.push('</session_state>');
     return '\n\n' + lines.join('\n');
   }
 }

@@ -1123,6 +1123,13 @@ export type Database = {
           stats: Json | null
           updated_at: string | null
           world_id: string | null
+          gender: string | null
+          age: number | null
+          height: number | null
+          weight: number | null
+          eyes: string | null
+          skin: string | null
+          hair: string | null
         }
         Insert: {
           class?: string | null
@@ -1137,6 +1144,13 @@ export type Database = {
           stats?: Json | null
           updated_at?: string | null
           world_id?: string | null
+          gender?: string | null
+          age?: number | null
+          height?: number | null
+          weight?: number | null
+          eyes?: string | null
+          skin?: string | null
+          hair?: string | null
         }
         Update: {
           class?: string | null
@@ -1151,6 +1165,13 @@ export type Database = {
           stats?: Json | null
           updated_at?: string | null
           world_id?: string | null
+          gender?: string | null
+          age?: number | null
+          height?: number | null
+          weight?: number | null
+          eyes?: string | null
+          skin?: string | null
+          hair?: string | null
         }
         Relationships: [
           {

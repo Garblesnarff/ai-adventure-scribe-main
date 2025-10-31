@@ -186,33 +186,40 @@ export class QuestGenerator {
    */
   private static async buildQuestPrompt(request: QuestRequest): Promise<string> {
     const { type, difficulty, urgency, scope, giver, location, context } = request;
-    
+
     // Get relevant memories for context
     let memoryContext = '';
     if (context.sessionId && context.recentMemories) {
       const memories = context.recentMemories.slice(0, 5);
       if (memories.length > 0) {
-        memoryContext = `\nRECENT MEMORIES:\n${memories.map(m => `- ${m.content}`).join('\n')}`;
+        memoryContext = `<recent_memories>\n${memories.map(m => `  <memory>${m.content}</memory>`).join('\n')}\n</recent_memories>`;
       }
     }
-    
-    return `
-You are a master quest designer creating a ${type} quest for a ${context.genre} D&D campaign.
 
-REQUIREMENTS:
-- Quest Type: ${type}
-- Difficulty: ${difficulty} (for level ${context.playerLevel || 1} characters)
-- Urgency: ${urgency}
-- Scope: ${scope}
-- Party Size: ${context.partySize || 1}
-- Campaign Genre: ${context.genre}
+    return `<task>
+  <description>You are a master quest designer creating a ${type} quest for a ${context.genre} D&D campaign.</description>
+</task>
 
-${giver ? `QUEST GIVER: ${giver}` : ''}
-${location ? `PRIMARY LOCATION: ${location}` : ''}
-${context.currentStory ? `CURRENT STORY: ${context.currentStory}` : ''}
-${memoryContext}
+<requirements>
+  <quest_type>${type}</quest_type>
+  <difficulty>${difficulty}</difficulty>
+  <character_level>${context.playerLevel || 1}</character_level>
+  <urgency>${urgency}</urgency>
+  <scope>${scope}</scope>
+  <party_size>${context.partySize || 1}</party_size>
+  <genre>${context.genre}</genre>
+</requirements>
 
-Generate a quest in this EXACT JSON format:
+<context>
+  ${giver ? `<quest_giver>${giver}</quest_giver>` : ''}
+  ${location ? `<primary_location>${location}</primary_location>` : ''}
+  ${context.currentStory ? `<current_story>${context.currentStory}</current_story>` : ''}
+  ${memoryContext}
+</context>
+
+<output_format>
+  <instruction>Generate a quest in this EXACT JSON format:</instruction>
+  <json_structure>
 {
   "title": "Compelling Quest Title",
   "description": "2-3 paragraph quest overview with hooks",
@@ -283,18 +290,21 @@ Generate a quest in this EXACT JSON format:
     "twists": ["Potential plot twists"]
   }
 }
+  </json_structure>
+</output_format>
 
-GUIDELINES:
-- Create ${scope} content appropriate for ${difficulty} difficulty
-- Match the ${context.genre} genre and ${urgency} urgency
-- Include multiple paths/approaches
-- Design for ${context.partySize || 1} player(s)
-- Provide clear objectives and meaningful choices
-- Include specific, actionable stages
-- Create opportunities for roleplay
-- Consider consequences of player actions
-- Make it engaging and memorable
-- Include appropriate rewards for level ${context.playerLevel || 1}`;
+<guidelines>
+  <guideline>Create ${scope} content appropriate for ${difficulty} difficulty</guideline>
+  <guideline>Match the ${context.genre} genre and ${urgency} urgency</guideline>
+  <guideline>Include multiple paths/approaches</guideline>
+  <guideline>Design for ${context.partySize || 1} player(s)</guideline>
+  <guideline>Provide clear objectives and meaningful choices</guideline>
+  <guideline>Include specific, actionable stages</guideline>
+  <guideline>Create opportunities for roleplay</guideline>
+  <guideline>Consider consequences of player actions</guideline>
+  <guideline>Make it engaging and memorable</guideline>
+  <guideline>Include appropriate rewards for level ${context.playerLevel || 1}</guideline>
+</guidelines>`;
   }
 
   /**
@@ -448,17 +458,28 @@ GUIDELINES:
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
         
-        const prompt = `
-Based on this game context: "${contextMessage}"
+        const prompt = `<task>
+  <description>Generate a quest hook based on the current game context</description>
+</task>
 
-Generate a quest hook in JSON format:
+<context>
+  <game_situation>${contextMessage}</game_situation>
+</context>
+
+<output_format>
+  <instruction>Generate a quest hook in JSON format:</instruction>
+  <json_structure>
 {
   "title": "Quest Title",
   "hook": "1-2 sentence hook that introduces the quest opportunity",
   "questType": "main|side|personal|investigation|social"
 }
+  </json_structure>
+</output_format>
 
-Make it immediately actionable and intriguing.`;
+<guidelines>
+  <guideline>Make it immediately actionable and intriguing</guideline>
+</guidelines>`;
 
         const response = await model.generateContent(prompt);
         const text = await response.response.text();
