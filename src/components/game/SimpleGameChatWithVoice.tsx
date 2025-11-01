@@ -410,10 +410,6 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                       <div className="whitespace-pre-wrap leading-relaxed">
                         {streamingMessage}
                       </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span className="text-xs text-muted-foreground">DM is thinking...</span>
-                      </div>
                     </div>
                   </div>
                 )}
