@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Send, Paperclip, Smile, Dice6 } from 'lucide-react';
+import { Send, Paperclip, Smile, Dice6, Loader2 } from 'lucide-react';
 import { mightBeDiceCommand, getDiceCommandSuggestions } from '@/utils/diceCommandParser';
 
 interface ChatInputProps {
@@ -187,7 +187,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
             }`}
             aria-label="Send message"
           >
-            <Send className="h-5 w-5" />
+            {!canSend && isDisabled ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
           </Button>
         </div>
 

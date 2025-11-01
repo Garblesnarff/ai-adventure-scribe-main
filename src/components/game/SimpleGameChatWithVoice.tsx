@@ -39,7 +39,6 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
   const [currentMessage, setCurrentMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState('');
   const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -209,7 +208,6 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
     if (!messageContent.trim()) return;
 
     setIsSending(true);
-    setStreamingMessage('');
 
     // Add user message immediately
     const userMessage: ChatMessage = {
@@ -283,7 +281,6 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       setMessages(messages);
     } finally {
       setIsSending(false);
-      setStreamingMessage('');
     }
   }, [session?.id, messages, isSending, campaignId, characterId, campaignDetails, characterDetails]);
 
@@ -403,19 +400,8 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                   )
                 ))}
 
-                {/* Streaming message */}
-                {streamingMessage && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] p-4 rounded-lg shadow-sm bg-muted text-foreground mr-4">
-                      <div className="whitespace-pre-wrap leading-relaxed">
-                        {streamingMessage}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Loading indicator */}
-                {isSending && !streamingMessage && (
+                {isSending && (
                   <div className="flex justify-start">
                     <div className="max-w-[80%] p-4 rounded-lg shadow-sm bg-muted text-foreground mr-4">
                       <div className="flex items-center gap-2">

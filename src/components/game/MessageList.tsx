@@ -316,6 +316,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
           logger.warn('[MessageList] Failed to persist image to message', persistErr);
         }
       }
+      // Clear any previous error for this message on successful generation
+      setGenErrorByMessage(prev => {
+        const updated = { ...prev };
+        delete updated[messageId];
+        return updated;
+      });
       incCap(sessionId);
       lastGenRef.current = performance.now();
       logger.info('[MessageList] Scene image generated', { ms: Math.round(lastGenRef.current - t0), model: res.model });

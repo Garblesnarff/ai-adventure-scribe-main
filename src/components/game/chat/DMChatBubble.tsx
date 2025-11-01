@@ -284,7 +284,7 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
             )}
 
             {/* Enhanced Processing Indicator */}
-            {isProcessing && isThisMessagePlaying && (
+            {isProcessing && isThisMessagePlaying && !(currentSegmentIndex >= 0 && segments[currentSegmentIndex]) && (
               <div className="flex items-center gap-3 pt-3 border-t border-white/10">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-infinite-purple/10 px-3 py-1 rounded-full">
                   <div className="flex gap-1">
