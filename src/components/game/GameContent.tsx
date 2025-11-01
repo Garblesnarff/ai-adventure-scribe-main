@@ -1,79 +1,59 @@
-import React, { useEffect, useLayoutEffect, useState, useCallback } from 'react';
-import { Card } from '../ui/card';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Character } from '@/types/character'; // Assuming this type aligns with what CharacterContext expects
-import { Campaign as CampaignType } from '@/types/campaign'; // Assuming this type aligns
+import { Campaign as CampaignType } from '@/types/campaign';
 import { characterLoaderService } from '@/services/character-loader';
-import { MessageList } from './MessageList';
-import { ChatInput } from './ChatInput';
-import { GameSidePanel } from './MemoryPanel';
-import { StatsBar } from './StatsBar';
-import { SafetyBanner } from '../safety/SafetyBanner';
-import { MessageHandler } from './message/MessageHandler';
-import { TypingIndicator } from './TypingIndicator';
 import { MemoryProvider } from '@/contexts/MemoryContext';
 import { MessageProvider } from '@/contexts/MessageContext';
 import { VoiceProvider } from '@/contexts/VoiceContext';
 import { useGameSession } from '@/hooks/use-game-session';
 import { CombatProvider, useCombat } from '@/contexts/CombatContext';
 import { GameProvider } from '@/contexts/GameContext';
-import CombatInterface from '@/components/combat/CombatInterface';
-import { CombatStatus } from '@/components/combat/CombatStatus';
 import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
 import { useInitialGreeting } from '@/hooks/use-initial-greeting';
 import { useMessageContext } from '@/contexts/MessageContext';
 import { useMemoryContext } from '@/contexts/MemoryContext';
-import { usePendingRolls } from '@/hooks/use-pending-rolls';
-import { FloatingActionPanel } from './FloatingActionPanel';
-import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
 import logger from '@/lib/logger';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
-import { Z_INDEX } from '@/constants/z-index';
-import { CampaignSidePanel } from './CampaignSidePanel';
-import { TimelineRail } from './TimelineRail';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { handleAsyncError } from '@/utils/error-handler';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { GameLoadingOverlay, GameLayout } from './game-content';
 
 /**
  * GameContent Component
- * Main component for the game interface
- * Handles layout and component composition
+ *
+ * Main component for the game interface. Handles data loading, session management,
+ * and provides context providers. Delegates UI rendering to GameLayout sub-component.
  */
 const GameContent: React.FC = () => {
   const { id: campaignIdFromParams } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const characterIdFromParams = searchParams.get('character');
-  // const sessionIdFromParams = searchParams.get('session'); // This was for MessageHandler, will now come from useGameSession
 
   const { state: characterState, dispatch: characterDispatch } = useCharacter();
   const { dispatch: campaignDispatch } = useCampaign();
-  
-  // Initialize useGameSession here
-  const { 
-    sessionData, 
-    sessionId, // This is the actual current sessionId from the hook
-    sessionState, 
-    updateGameSessionState, 
-    // createGameSession // if manual creation is needed elsewhere
+
+  // Initialize game session
+  const {
+    sessionData,
+    sessionId,
+    sessionState,
+    updateGameSessionState,
   } = useGameSession(campaignIdFromParams, characterIdFromParams || undefined);
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadingPhase, setLoadingPhase] = useState<'initial' | 'data' | 'session' | 'greeting'>('initial');
   const [error, setError] = useState<string | null>(null);
-  // Legacy: combatMode previously switched the main view away from chat.
-  // New UX: chat is always primary. We use a sheet to show the tracker.
-  const [combatMode, setCombatMode] = useState(false); // repurposed to control sheet visibility
-  const [showCombatInterface, setShowCombatInterface] = useState(false); // unused after redesign
+  const [combatMode, setCombatMode] = useState(false);
   const { user } = useAuth();
   const [isDM, setIsDM] = useState(false);
   const [showSceneBlurb, setShowSceneBlurb] = useLocalStorage('ui:sceneBlurb', true);
 
+  // Load game data (character and campaign)
   useEffect(() => {
     const loadGameData = async () => {
       if (!characterIdFromParams || !campaignIdFromParams) {
@@ -89,7 +69,6 @@ const GameContent: React.FC = () => {
 
       try {
         // Load character with all spell data populated
-        setLoadingPhase('data');
         logger.info(`🔄 [GameContent] Loading character ${characterIdFromParams} with spells`);
 
         const loadedCharacter = await characterLoaderService.loadCharacterWithSpells(characterIdFromParams);
@@ -123,11 +102,10 @@ const GameContent: React.FC = () => {
         if (!campaignData) {
           throw new Error('Campaign not found.');
         }
-        
-        // Assuming CampaignContext UPDATE_CAMPAIGN can handle partial updates of CampaignType
+
         campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as unknown as Partial<CampaignType> });
 
-        // Derive DM role: env override or campaign owner (user_id)
+        // Derive DM role: env override or campaign owner
         try {
           const envVal = String(((import.meta as any)?.env?.VITE_FORCE_DM) || '');
           const forceDM = ['true', '1', 'yes', 'on'].includes(envVal.toLowerCase());
@@ -157,89 +135,27 @@ const GameContent: React.FC = () => {
     loadGameData();
   }, [characterIdFromParams, campaignIdFromParams, characterDispatch, campaignDispatch, user?.id]);
 
-  // Memoized toggle handlers to prevent unnecessary re-renders
-  const handleLeftPanelToggle = useCallback(() => {
-    setIsLeftCollapsed((v) => !v);
-  }, []);
-
-  const handleRightPanelToggle = useCallback(() => {
-    setIsRightCollapsed((v) => !v);
-  }, []);
-
-  // Open/close the combat tracker sheet
+  // Memoized toggle handlers
   const handleCombatToggle = useCallback(() => {
     setCombatMode((v) => !v);
-    // Mark that user manually toggled the tracker so auto-open is avoided
     sessionStorage.setItem('manualCombatToggle', 'true');
     setTimeout(() => sessionStorage.removeItem('manualCombatToggle'), 30000);
   }, []);
 
-  // Handle AI response for combat detection - moved to inner component
-  const handleAIResponse = React.useCallback(async (message: any) => {
-    // Basic logging for now, actual combat detection handled in inner component
+  const handleAIResponse = useCallback(async (message: any) => {
     logger.info('🎯 AI response received in outer component:', message.text?.substring(0, 100) + '...');
   }, []);
 
-  // Combine loading states: initial data load and session loading
+  // Combine loading states
   const combinedIsLoading = isLoading || sessionState === 'loading';
   const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
 
-  // Loading Overlay Component
-  const LoadingOverlay = () => {
-    const getPhaseMessage = () => {
-      switch (loadingPhase) {
-        case 'initial':
-          return "Welcome to your infinite realm...";
-        case 'data':
-          return "Loading character and campaign data...";
-        case 'session':
-          return "Initializing game session...";
-        case 'greeting':
-          return "The Dungeon Master is crafting your opening scene...";
-        default:
-          return "Preparing your adventure...";
-      }
-    };
-
-    return (
-      <div className={`fixed inset-0 z-[${Z_INDEX.LOADING_OVERLAY}] bg-background/90 backdrop-blur-md flex items-center justify-center`}>
-        <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 text-center">
-          <div className="flex flex-col items-center space-y-6">
-            {/* Animated DM icon */}
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple via-infinite-teal to-infinite-purple rounded-full flex items-center justify-center animate-pulse shadow-lg">
-                <span className="text-3xl">🎭</span>
-              </div>
-              <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
-            </div>
-
-            {/* Progress content */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {getPhaseMessage()}
-              </p>
-            </div>
-
-            {/* Animated progress dots */}
-            <div className="flex items-center justify-center gap-1">
-              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-              <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
-            </div>
-
-            {/* Loading spinner */}
-            <div className="w-8 h-8 border-2 border-infinite-purple/20 border-t-infinite-purple rounded-full animate-spin"></div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
+  // Loading state
   if (combinedIsLoading) {
-    return <LoadingOverlay />;
+    return <GameLoadingOverlay loadingPhase={loadingPhase} />;
   }
 
+  // Error state
   if (combinedError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -251,6 +167,7 @@ const GameContent: React.FC = () => {
     );
   }
 
+  // Session validation
   if (!sessionId || !sessionData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -262,11 +179,6 @@ const GameContent: React.FC = () => {
     );
   }
 
-  // These are validated ones from params, used for data loading.
-  // MessageHandler will use the sessionId from useGameSession.
-  const campaignIdForHandler = campaignIdFromParams;
-  const characterIdForHandler = characterIdFromParams;
-
   return (
     <ErrorBoundary level="feature">
       <CombatProvider sessionId={sessionId}>
@@ -275,30 +187,30 @@ const GameContent: React.FC = () => {
             <MemoryProvider sessionId={sessionId}>
               <VoiceProvider>
                 <GameContentInner
-                sessionId={sessionId}
-                campaignIdForHandler={campaignIdFromParams ?? null}
-                characterIdForHandler={characterIdFromParams ?? null}
-                sessionData={sessionData}
-                updateGameSessionState={updateGameSessionState}
-                characterState={characterState}
-                combatMode={combatMode}
-                setCombatMode={setCombatMode}
-                handleCombatToggle={handleCombatToggle}
-                handleAIResponse={handleAIResponse}
-                isDM={isDM}
-                showSceneBlurb={showSceneBlurb}
-                setShowSceneBlurb={setShowSceneBlurb}
-              />
-            </VoiceProvider>
-          </MemoryProvider>
-        </MessageProvider>
+                  sessionId={sessionId}
+                  campaignIdForHandler={campaignIdFromParams ?? null}
+                  characterIdForHandler={characterIdFromParams ?? null}
+                  sessionData={sessionData}
+                  updateGameSessionState={updateGameSessionState}
+                  characterState={characterState}
+                  combatMode={combatMode}
+                  setCombatMode={setCombatMode}
+                  handleCombatToggle={handleCombatToggle}
+                  handleAIResponse={handleAIResponse}
+                  isDM={isDM}
+                  showSceneBlurb={showSceneBlurb}
+                  setShowSceneBlurb={setShowSceneBlurb}
+                />
+              </VoiceProvider>
+            </MemoryProvider>
+          </MessageProvider>
         </GameProvider>
       </CombatProvider>
     </ErrorBoundary>
   );
 };
 
-// Inner component that has access to CombatProvider
+// Inner component with access to all context providers
 interface GameContentInnerProps {
   sessionId: string;
   campaignIdForHandler: string | null;
@@ -323,41 +235,22 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   updateGameSessionState,
   characterState,
   combatMode,
-  setCombatMode,
-  handleCombatToggle,
-  handleAIResponse,
   isDM,
   showSceneBlurb,
   setShowSceneBlurb,
+  handleAIResponse,
 }) => {
-  // UI state management
-  // Calculate default panel collapsed states based on screen width (only if localStorage is empty)
+  // Calculate default panel states based on screen width
   const getDefaultLeftCollapsed = () => typeof window !== 'undefined' && window.innerWidth < 1200;
   const getDefaultRightCollapsed = () => typeof window !== 'undefined' && window.innerWidth < 1440;
 
   const [isLeftCollapsed, setIsLeftCollapsed] = useLocalStorage('ui:leftPanelCollapsed', getDefaultLeftCollapsed());
   const [isRightCollapsed, setIsRightCollapsed] = useLocalStorage('ui:rightPanelCollapsed', getDefaultRightCollapsed());
-  const [topOffset, setTopOffset] = useState(0);
-  const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
   const [isCombatDetected, setIsCombatDetected] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
-  const chatScrollRef = React.useRef<HTMLDivElement>(null);
-  const { state: campaignState } = useCampaign();
 
-  // Measure sticky nav + breadcrumbs height to constrain viewport
-  useLayoutEffect(() => {
-    const calc = () => {
-      const nav = document.getElementById('app-nav')?.offsetHeight || 0;
-      const crumbs = document.getElementById('app-breadcrumbs')?.offsetHeight || 0;
-      setTopOffset(nav + crumbs);
-    };
-    calc();
-    window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
-  }, []);
-  
-  // Safety state management
-  const [lastSafetyCommand, setLastSafetyCommand] = useState<{
+  // Safety state
+  const [lastSafetyCommand] = useState<{
     type: 'x_card' | 'veil' | 'pause' | 'resume';
     timestamp: string;
     autoTriggered?: boolean;
@@ -367,15 +260,10 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   const [showSafetyInfo] = useState(false);
 
   // Get message context for sending initial greeting
-  const { messages, sendMessage, queueStatus, isLoading: messagesLoading } = useMessageContext();
-
-  // Get memory context for creating initial memories
+  const { messages, sendMessage, messagesLoading } = useMessageContext();
   const { createMemory } = useMemoryContext();
 
-  // Track pending dice roll requests
-  const { hasPendingRolls, pendingRequests } = usePendingRolls();
-
-  // Combat AI integration for automatic combat detection
+  // Combat AI integration
   const combatAI = useCombatAIIntegration({
     sessionId,
     characterId: characterIdForHandler || undefined,
@@ -384,8 +272,8 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   const { state: combatState } = useCombat();
   const prevInCombatRef = React.useRef(combatState.isInCombat);
 
-  // Auto-generate initial greeting for new sessions
-  const { isGenerating: isGeneratingGreeting, hasGenerated, error: greetingError } = useInitialGreeting({
+  // Auto-generate initial greeting
+  const { isGenerating: isGeneratingGreeting } = useInitialGreeting({
     sessionId,
     sessionData,
     characterId: characterIdForHandler,
@@ -407,39 +295,21 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
     },
   });
 
-  // Detect combat but do not switch away from chat; only show HUD and let user open tracker.
+  // Detect combat
   React.useEffect(() => {
     setIsCombatDetected(!!combatAI.isInCombat);
-    // Do not auto-open the tracker unless a manual override is not set and user wants that behavior (future flag)
   }, [combatAI.isInCombat]);
 
-  // Handle AI response for combat detection in inner component
+  // Handle AI response with combat detection
   const innerHandleAIResponse = React.useCallback(async (message: any) => {
     try {
       logger.info('🎯 Processing AI response for combat detection:', message.text?.substring(0, 100) + '...');
-      
-      // Check if the message has combat detection data
-      if (message.combatDetection) {
-        logger.info('⚔️ Combat detection data found in AI response:', {
-          isCombat: message.combatDetection.isCombat,
-          confidence: message.combatDetection.confidence,
-          shouldStartCombat: message.combatDetection.shouldStartCombat,
-          shouldEndCombat: message.combatDetection.shouldEndCombat,
-          enemies: message.combatDetection.enemies?.length || 0,
-          actions: message.combatDetection.combatActions?.length || 0
-        });
-        
-        // Use the combat AI integration to process the DM response
-        const result = await combatAI.processDMResponse(message, characterState.character);
-        
-        logger.info('⚔️ Combat processing result:', {
-          combatDetected: result.combatDetected,
-          shouldStartCombat: result.shouldStartCombat,
-          shouldEndCombat: result.shouldEndCombat,
-          combatMessages: result.combatMessages.length
-        });
 
-        // Pipe any combat messages (initiative, rolls) into chat so users see them
+      if (message.combatDetection) {
+        logger.info('⚔️ Combat detection data found in AI response');
+        const result = await combatAI.processDMResponse(message, characterState.character);
+
+        // Send combat messages to chat
         if (result.combatMessages && result.combatMessages.length > 0) {
           for (const m of result.combatMessages) {
             try {
@@ -454,25 +324,21 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
             }
           }
         }
-      } else {
-        logger.info('📝 No combat detection data in AI response');
       }
-      
-      // Also call the outer handleAIResponse if needed
+
       await handleAIResponse(message);
-      
+
     } catch (error) {
       handleAsyncError(error, {
         userMessage: 'Failed to process AI response for combat',
         context: { location: 'GameContent.onAIResponseWithCombat' }
       });
     }
-  }, [combatAI, characterState, handleAIResponse]);
+  }, [combatAI, characterState, handleAIResponse, sendMessage]);
 
-  // When combat ends, emit a simple summary message and close the tracker if open.
+  // Handle combat end
   React.useEffect(() => {
     if (prevInCombatRef.current && !combatState.isInCombat) {
-      // Combat transitioned from true -> false
       const enc = combatState.activeEncounter;
       const rounds = enc?.currentRound || enc?.roundsElapsed || 1;
       const participants = (enc?.participants || []).map((p: any) => ({
@@ -496,315 +362,33 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
       setShowTracker(false);
     }
     prevInCombatRef.current = combatState.isInCombat;
-  }, [combatState.isInCombat]);
+  }, [combatState.isInCombat, combatState.activeEncounter, sendMessage]);
 
   return (
-          <div className="bg-background" style={{ ['--top-offset' as any]: `${topOffset}px` }}>
-            <div className="w-full h-[calc(100dvh-var(--top-offset,0px))] mobile-bottom-safe overflow-hidden">
-              <div key={sessionId} className={`grid transition-all duration-300 ease-in-out h-full gap-2 md:gap-3 items-stretch w-full ` +
-                (
-                  isLeftCollapsed && isRightCollapsed
-                    ? 'grid-cols-1'
-                    : isLeftCollapsed
-                      ? 'grid-cols-1 md:grid-cols-[1fr_minmax(280px,320px)]'
-                      : isRightCollapsed
-                        ? 'grid-cols-1 md:grid-cols-[minmax(200px,240px)_1fr]'
-                        : 'grid-cols-1 md:grid-cols-[minmax(200px,240px)_1fr_minmax(280px,320px)]'
-                )
-              }>
-                {/* Left Campaign Panel */}
-                {!isLeftCollapsed && (
-                  <div className="order-1 md:order-1 w-full md:w-auto min-h-0">
-                    <CampaignSidePanel isCollapsed={false} onToggle={() => setIsLeftCollapsed(true)} />
-                  </div>
-                )}
-                {/* Main Content Area - Optimized for Maximum Space */}
-                <div className={`flex-1 min-w-0 min-h-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}>
-                  <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/40 overflow-hidden transition-all duration-300 hover:shadow-3xl hover-glow mobile-chat h-full bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm">
-                    {/* Enhanced Cinematic Header with Improved Visual Hierarchy */}
-                    <div className="relative p-3 md:p-4 border-b border-white/10 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-md overflow-hidden transition-all duration-500">
-                      {/* Enhanced Animated Background Particles */}
-                      <div className="absolute inset-0 overflow-hidden">
-                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-70" style={{animationDelay: '0s'}}></div>
-                        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-infinite-teal rounded-full animate-pulse opacity-50" style={{animationDelay: '1s'}}></div>
-                        <div className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-infinite-purple rounded-full animate-pulse opacity-60" style={{animationDelay: '2s'}}></div>
-                        <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-infinite-gold rounded-full animate-pulse opacity-40" style={{animationDelay: '0.5s'}}></div>
-                        <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-infinite-teal rounded-full animate-pulse opacity-30" style={{animationDelay: '1.5s'}}></div>
-                        <div className="absolute top-1/6 left-2/3 w-1 h-1 bg-infinite-purple rounded-full animate-pulse opacity-50" style={{animationDelay: '2.5s'}}></div>
-                      </div>
-
-                      {/* Enhanced Atmospheric Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-infinite-purple/8 to-transparent opacity-80"></div>
-                      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-slate-900/10"></div>
-
-                      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 gap-4 md:gap-6">
-                        <div className="flex-1">
-                          <div className="mb-2">
-                            <h1 className="text-xl md:text-2xl font-display mb-1 truncate">
-                              {campaignState?.campaign?.name || 'InfiniteRealms Adventure'}
-                            </h1>
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-sm">
-                              <div className="flex items-center gap-3 bg-infinite-gold/20 px-4 py-2 rounded-full border border-infinite-gold/30 w-fit">
-                                <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
-                                <span className="font-display text-infinite-gold font-medium text-responsive-sm">Chapter {sessionData.turn_count ?? 0}</span>
-                              </div>
-                              <div className="hidden md:block h-4 w-px bg-white/20"></div>
-                              {showSceneBlurb && (
-                                <div className="flex-1 hidden xl:block">
-                                  <p className="text-narrative text-muted-foreground leading-relaxed text-xs line-clamp-2">
-                                    {sessionData.current_scene_description ?? "Your infinite story unfolds across realms of endless possibility..."}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Enhanced Stats and Combat Status (compact) */}
-                          <div className="flex items-center gap-3 text-sm mt-0">
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm">
-                                <StatsBar />
-                              </div>
-                            </div>
-                            <div className="shrink-0">
-                              <CombatStatus />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Safety Banner */}
-                        <SafetyBanner
-                          isPaused={sessionData?.is_paused || false}
-                          lastSafetyCommand={lastSafetyCommand}
-                          contentWarnings={contentWarnings}
-                          comfortLevel={comfortLevel}
-                          showSafetyInfo={showSafetyInfo}
-                        />
-
-                        {/* Sidebar Toggles + Tracker */}
-                        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 md:ml-8 w-full md:w-auto">
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={handleLeftPanelToggle} title="Toggle campaign panel">
-                              {isLeftCollapsed ? 'Show Campaign' : 'Hide Campaign'}
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={handleRightPanelToggle} title="Toggle character panel">
-                              {isRightCollapsed ? 'Show Character' : 'Hide Character'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setShowSceneBlurb(!showSceneBlurb);
-                              }}
-                              title="Toggle scene blurb"
-                            >
-                              {showSceneBlurb ? 'Hide Blurb' : 'Show Blurb'}
-                            </Button>
-                          </div>
-                          <Button
-                            variant={showTracker ? "destructive" : "outline"}
-                            size="lg"
-                            onClick={() => setShowTracker((v) => !v)}
-                            className={`relative overflow-hidden transition-all duration-300 border-2 hover-glow focus-glow ${
-                              showTracker
-                                ? 'bg-gradient-to-r from-red-600 to-red-700 border-red-500 animate-pulse shadow-2xl'
-                                : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50 hover:from-infinite-purple/30 hover:to-infinite-teal/30'
-                            }`}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                            <div className="relative flex items-center gap-2">
-                              {showTracker ? (
-                                <>
-                                  <X className="w-5 h-5" />
-                                  <span className="font-display font-medium">Close Tracker</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Sword className="w-5 h-5" />
-                                  <span className="font-display font-medium">Open Tracker</span>
-                                </>
-                              )}
-                            </div>
-                          </Button>
-
-                          {/* Enhanced Status Indicators */}
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-infinite-teal/20 rounded-full border border-infinite-teal/40 glass">
-                              <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse shadow-lg"></div>
-                              <span className="text-xs font-display font-medium text-infinite-teal">Realm Active</span>
-                            </div>
-                            {showTracker && (
-                              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 rounded-full border border-red-400/40 glass">
-                                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
-                                <span className="text-xs font-display font-medium text-red-400">Tracker Open</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Enhanced Content Area - Chat is always visible; tracker lives in a sheet */}
-                    <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-b from-card/60 via-card/40 to-card/60 transition-all duration-300">
-                        {/* HUD Banner when combat is active/detected */}
-                        {isCombatDetected && (
-                          <div className="mx-3 mt-3 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
-                            <div className="text-sm text-red-700 font-medium">⚔️ Combat in progress</div>
-                            <Button size="sm" variant="outline" onClick={() => setShowTracker(true)}>Open Tracker</Button>
-                          </div>
-                        )}
-
-                        <MessageHandler
-                          sessionId={sessionId} // Use sessionId from useGameSession
-                          campaignId={campaignIdForHandler || null}
-                          characterId={characterIdForHandler}
-                          turnCount={sessionData.turn_count ?? 0}
-                          updateGameSessionState={updateGameSessionState}
-                          onAIResponse={innerHandleAIResponse}
-                        >
-                          {({ handleSendMessage, isProcessing }) => (
-                            <>
-                              <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-                                <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} containerRef={chatScrollRef} />
-                                <TimelineRail rootRef={chatScrollRef} />
-                              </div>
-
-                              {/* Enhanced loading indicator for initial greeting - now only for greeting phase */}
-                              {isGeneratingGreeting && (
-                                <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-20 animate-in fade-in duration-300">
-                                  <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 transform animate-in slide-in-from-bottom-4 duration-500">
-                                    <div className="flex flex-col items-center text-center space-y-6">
-                                      {/* Animated DM icon */}
-                                      <div className="relative">
-                                        <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple via-infinite-teal to-infinite-purple rounded-full flex items-center justify-center animate-pulse shadow-lg">
-                                          <span className="text-3xl">🎭</span>
-                                        </div>
-                                        <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
-                                      </div>
-
-                                      {/* Progress content */}
-                                      <div className="space-y-3">
-                                        <h3 className="text-lg font-semibold text-card-foreground">Crafting Opening Scene</h3>
-                                        <p className="text-sm text-muted-foreground leading-relaxed">
-                                          The Dungeon Master is generating your personalized adventure introduction based on your character and campaign.
-                                        </p>
-                                      </div>
-
-                                      {/* Animated progress dots */}
-                                      <div className="flex items-center justify-center gap-1">
-                                        <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                        <div className="w-2 h-2 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                        <div className="w-2 h-2 bg-infinite-purple rounded-full animate-bounce"></div>
-                                      </div>
-
-                                      {/* Subtle loading spinner */}
-                                      <div className="w-8 h-8 border-2 border-infinite-purple/20 border-t-infinite-purple rounded-full animate-spin"></div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Typing Indicator - shows when AI is responding */}
-                              {queueStatus === 'processing' && (
-                                <div className="absolute bottom-24 left-6 z-10 animate-in slide-in-from-left-2 duration-300 md:bottom-20">
-                                  <div className="flex items-center gap-3 px-4 py-2 bg-card/90 backdrop-blur-sm border border-border/60 rounded-full shadow-lg">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-teal flex items-center justify-center">
-                                      <span className="text-xs font-medium text-white">DM</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                      <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                      <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce"></div>
-                                    </div>
-                                    <span className="text-xs text-muted-foreground font-medium">Dungeon Master is thinking...</span>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Pending Roll Indicator */}
-                              {hasPendingRolls && (
-                                <div className="border-t border-orange-200 bg-orange-50 p-3">
-                                  <div className="flex items-center gap-2 text-orange-700">
-                                    <Dice6 className="w-4 h-4" />
-                                    <span className="text-sm font-medium">
-                                      {pendingRequests.length === 1
-                                        ? `Please complete the ${pendingRequests[0].type} roll above`
-                                        : `Please complete ${pendingRequests.length} pending rolls above`
-                                      }
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Input Area at bottom - sticky */}
-                              <div className="border-t border-border/60 bg-card/70 backdrop-blur-sm pb-4 md:pb-[env(safe-area-inset-bottom)] sticky bottom-0 left-0 right-0 z-30 shrink-0">
-                                <ChatInput
-                                  onSendMessage={handleSendMessage}
-                                  isDisabled={isProcessing || hasPendingRolls}
-                                />
-                              </div>
-                            </>
-                          )}
-                        </MessageHandler>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Responsive Side Panel */}
-                {!isRightCollapsed && (
-                  <div className={`${isLeftCollapsed ? 'order-2' : 'order-3'} w-full md:w-auto min-h-0 transition-all duration-300`}>
-                    <GameSidePanel
-                      sessionData={sessionData}
-                      updateGameSessionState={updateGameSessionState}
-                      combatMode={combatMode}
-                      isCollapsed={isRightCollapsed}
-                      onToggle={handleRightPanelToggle}
-                    />
-                  </div>
-                )}
-
-                {/* Enhanced Floating Toggle Button when Collapsed */}
-                {isRightCollapsed && (
-                  <div className="fixed right-3 bottom-3 md:top-1/2 md:bottom-auto md:right-6 z-40 md:transform md:-translate-y-1/2 transition-all duration-300">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsRightCollapsed(false)}
-                      className={`rounded-full p-4 h-auto shadow-2xl border-2 hover:scale-110 transition-all duration-300 hover-glow focus-glow touch-manipulation min-h-[48px] min-w-[48px] ${
-                        combatMode
-                          ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-400/50 animate-pulse'
-                          : 'bg-gradient-to-r from-infinite-purple/20 to-infinite-teal/20 border-infinite-purple/50'
-                      }`}
-                    >
-                      <Menu className="h-6 w-6 md:hidden" />
-                      <ChevronDown className="h-5 w-5 hidden md:block rotate-90" />
-                      {/* Enhanced Context indicators */}
-                      <div className="absolute -top-2 -right-2 flex flex-col gap-1">
-                        {combatMode && (
-                          <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
-                        )}
-                        <div className="w-3 h-3 bg-infinite-gold rounded-full animate-pulse shadow-lg"></div>
-                      </div>
-                    </Button>
-                  </div>
-                )}
-
-                {/* Floating Action Panel for Quick RPG Actions */}
-                <FloatingActionPanel
-                  isVisible={isFloatingPanelVisible}
-                  onToggle={() => setIsFloatingPanelVisible(!isFloatingPanelVisible)}
-                  combatMode={combatMode}
-                />
-
-                {/* Tracker Sheet */}
-                <Sheet open={showTracker} onOpenChange={setShowTracker}>
-                  <SheetContent side="right" className="w-[420px] sm:max-w-[480px] overflow-y-auto">
-                    <CombatInterface isDM={isDM} />
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
-          </div>
+    <GameLayout
+      sessionId={sessionId}
+      campaignIdForHandler={campaignIdForHandler}
+      characterIdForHandler={characterIdForHandler}
+      sessionData={sessionData}
+      updateGameSessionState={updateGameSessionState}
+      isLeftCollapsed={isLeftCollapsed}
+      isRightCollapsed={isRightCollapsed}
+      setIsLeftCollapsed={setIsLeftCollapsed}
+      setIsRightCollapsed={setIsRightCollapsed}
+      showSceneBlurb={showSceneBlurb}
+      setShowSceneBlurb={setShowSceneBlurb}
+      combatMode={combatMode}
+      showTracker={showTracker}
+      setShowTracker={setShowTracker}
+      isCombatDetected={isCombatDetected}
+      isGeneratingGreeting={isGeneratingGreeting}
+      innerHandleAIResponse={innerHandleAIResponse}
+      isDM={isDM}
+      lastSafetyCommand={lastSafetyCommand}
+      contentWarnings={contentWarnings}
+      comfortLevel={comfortLevel}
+      showSafetyInfo={showSafetyInfo}
+    />
   );
 };
 
