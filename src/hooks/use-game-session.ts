@@ -56,7 +56,7 @@ export interface ExtendedGameSession extends GameSession {
 
 export const useGameSession = (campaignId?: string, characterId?: string) => {
   const [sessionData, setSessionData] = useState<ExtendedGameSession | null>(null);
-  const [sessionState, setSessionState] = useState<'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle'>('loading');
+  const [sessionState, setSessionState] = useState<'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle'>('idle');
   const { toast } = useToast();
 
   const currentSessionId = sessionData?.id || null;
@@ -264,12 +264,6 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
    * Initialize and maintain session
    */
   useEffect(() => {
-    // Guard: Prevent concurrent initialization
-    if (initializingRef.current) {
-      logger.info('Session initialization already in progress, skipping...');
-      return;
-    }
-
     // Guard: Only initialize if we have the required IDs
     if (!campaignId || !characterId) {
       if (mountedRef.current) {
@@ -278,11 +272,18 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       return;
     }
 
-    // Mark initialization as in progress
+    // Guard: Prevent concurrent initialization
+    if (initializingRef.current) {
+      logger.info('Session initialization already in progress, skipping...');
+      return;
+    }
+
+    // Mark initialization as in progress IMMEDIATELY after checks
     initializingRef.current = true;
 
     const initSession = async () => {
       try {
+        // Set loading state at start
         if (mountedRef.current) {
           setSessionState('loading');
         }
