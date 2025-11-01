@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMessageContext } from '@/contexts/MessageContext';
+import logger from '@/lib/logger';
 
 interface TimelineRailProps {
   /** Scroll container element that holds the messages */
@@ -33,15 +34,15 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
 
   // Debug logging
   React.useEffect(() => {
-    console.log('[TimelineRail] Messages:', messages.length);
-    console.log('[TimelineRail] Anchors:', anchors);
-    console.log('[TimelineRail] Root ref:', rootRef.current);
+    logger.debug('[TimelineRail] Messages:', messages.length);
+    logger.debug('[TimelineRail] Anchors:', anchors);
+    logger.debug('[TimelineRail] Root ref:', rootRef.current);
 
     // Check if elements exist
     if (rootRef.current) {
       anchors.forEach(anchor => {
         const element = rootRef.current!.querySelector(`#${CSS.escape(anchor)}`);
-        console.log(`[TimelineRail] Element ${anchor}:`, element);
+        logger.debug(`[TimelineRail] Element ${anchor}:`, element);
       });
     }
   }, [messages, anchors, rootRef]);

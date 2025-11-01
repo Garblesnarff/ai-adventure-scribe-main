@@ -20,6 +20,7 @@ import { NarrationSegment } from '@/hooks/use-ai-response';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { handleAsyncError } from '@/utils/error-handler';
 
 interface SimpleGameChatWithVoiceProps {
   campaignId: string;
@@ -109,8 +110,10 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
-      logger.error('Failed to generate opening message:', error);
-      toast.error('Failed to start adventure. Please try again.');
+      handleAsyncError(error, {
+        userMessage: 'Failed to start adventure. Please try again.',
+        context: { location: 'SimpleGameChatWithVoice.generateOpeningMessage', sessionId: session.id }
+      });
     }
   }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
 
@@ -158,7 +161,12 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         setHasLoadedHistory(true);
       }
     } catch (error) {
-      logger.error('Failed to load history:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to load history',
+        logLevel: 'warn',
+        showToast: false,
+        context: { location: 'SimpleGameChatWithVoice.loadHistory', sessionId: session.id }
+      });
       // Fallback to generating opening message if history loading fails
       await generateOpeningMessage();
       setHasLoadedHistory(true);
@@ -189,11 +197,15 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         });
 
       if (error) {
-        logger.error('Error saving message to database:', error);
         throw error;
       }
     } catch (error) {
-      logger.error('Failed to save message:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to save message',
+        logLevel: 'warn',
+        showToast: false,
+        context: { location: 'SimpleGameChatWithVoice.saveMessageToDatabase', sessionId }
+      });
       // Don't throw here to avoid breaking the UI flow
     }
   }, []);
@@ -274,9 +286,15 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
-      logger.error('Failed to send message:', error);
-      toast.error('Failed to send message. Please try again.');
-      
+      handleAsyncError(error, {
+        userMessage: 'Failed to send message. Please try again.',
+        context: {
+          location: 'SimpleGameChatWithVoice.sendMessage',
+          sessionId: session.id,
+          messageContent: message.content.substring(0, 50)
+        }
+      });
+
       // Remove user message on failure
       setMessages(messages);
     } finally {
@@ -317,8 +335,10 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         toast.success('Adventure ended. Your progress has been saved.');
         navigate('/');
       } catch (error) {
-        logger.error('Failed to end session:', error);
-        toast.error('Failed to end session properly, but navigating home.');
+        handleAsyncError(error, {
+          userMessage: 'Failed to end session properly, but navigating home.',
+          context: { location: 'SimpleGameChatWithVoice.handleEndSession', sessionId: session.id }
+        });
         navigate('/');
       }
     }

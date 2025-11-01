@@ -9,6 +9,7 @@ import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
 import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { toast } from 'sonner';
 import logger from '@/lib/logger';
+import { handleAsyncError } from '@/utils/error-handler';
 
 interface SimpleGameChatProps {
   campaignId: string;
@@ -79,8 +80,10 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       
       logger.info('Opening message generated and saved');
     } catch (error) {
-      logger.error('Failed to generate opening message:', error);
-      toast.error('Failed to generate opening message');
+      handleAsyncError(error, {
+        userMessage: 'Failed to generate opening message',
+        context: { location: 'SimpleGameChat.generateOpeningMessage', sessionId: session.id }
+      });
     }
   }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
 
@@ -97,8 +100,10 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
         await generateOpeningMessage();
       }
     } catch (error) {
-      logger.error('Failed to load conversation history:', error);
-      toast.error('Failed to load conversation history');
+      handleAsyncError(error, {
+        userMessage: 'Failed to load conversation history',
+        context: { location: 'SimpleGameChat.loadConversationHistory', sessionId: session.id }
+      });
     } finally {
       setIsLoadingHistory(false);
     }
@@ -132,8 +137,10 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       // Navigate back to campaign page
       navigate(`/campaign/${campaignId}`);
     } catch (error) {
-      logger.error('Error ending session:', error);
-      toast.error('Failed to end session properly');
+      handleAsyncError(error, {
+        userMessage: 'Failed to end session properly',
+        context: { location: 'SimpleGameChat.handleEndSession', sessionId: session.id, campaignId }
+      });
     }
   };
 
@@ -199,26 +206,37 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      
+
     } catch (error) {
-      logger.error('Failed to send message:', error);
-      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
+      // Determine user-friendly message based on error type
+      let userMessage = 'Failed to send message. Please try again.';
+      let description: string | undefined;
+
       if (errorMessage.includes('Rate limit exceeded')) {
-        toast.error('Rate limit exceeded. Please wait before sending another message.', {
-          description: 'You\'ve hit the daily or per-minute API limit. Check the API Stats for details.',
-          duration: 5000,
-        });
+        userMessage = 'Rate limit exceeded. Please wait before sending another message.';
+        description = 'You\'ve hit the daily or per-minute API limit. Check the API Stats for details.';
       } else if (errorMessage.includes('all AI services unavailable')) {
-        toast.error('AI services are currently unavailable', {
-          description: 'Both Edge Functions and local API failed. Please try again later.',
-          duration: 5000,
-        });
-      } else {
-        toast.error('Failed to send message. Please try again.');
+        userMessage = 'AI services are currently unavailable';
+        description = 'Both Edge Functions and local API failed. Please try again later.';
       }
-      
+
+      handleAsyncError(error, {
+        userMessage,
+        context: {
+          location: 'SimpleGameChat.sendMessage',
+          sessionId: session.id,
+          messageContent: userMessage.content.substring(0, 50)
+        },
+        onError: () => {
+          // Show custom description if needed
+          if (description) {
+            toast.error(userMessage, { description, duration: 5000 });
+          }
+        }
+      });
+
       // Remove the user message from UI on error
       setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
     } finally {

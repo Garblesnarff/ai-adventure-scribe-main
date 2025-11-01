@@ -1,6 +1,7 @@
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import logger from '@/lib/logger';
+import { handleAsyncError } from '@/utils/error-handler';
 
 interface VoiceSettings {
   stability: number;
@@ -76,7 +77,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           audioRef.current = audio;
         }
       } catch (playError) {
-        logger.error('Error playing audio:', playError);
+        handleAsyncError(playError, {
+          userMessage: 'Failed to play audio',
+          logLevel: 'warn',
+          showToast: false,
+          context: { location: 'AudioPlayer.playAudio.play' }
+        });
         throw new Error('Failed to play audio');
       }
 
@@ -89,12 +95,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       };
 
     } catch (error) {
-      logger.error('Voice error:', error);
       setIsSpeaking(false);
-      toast({
-        title: "Voice Error",
-        description: error instanceof Error ? error.message : 'Failed to process voice',
-        variant: "destructive",
+      handleAsyncError(error, {
+        userMessage: 'Voice Error',
+        context: { location: 'AudioPlayer.playAudio', textLength: text.length },
+        onError: () => {
+          // Use the legacy toast for consistency with existing UI
+          toast({
+            title: "Voice Error",
+            description: error instanceof Error ? error.message : 'Failed to process voice',
+            variant: "destructive",
+          });
+        }
       });
     }
   };
