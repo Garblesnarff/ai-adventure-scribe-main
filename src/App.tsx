@@ -9,7 +9,7 @@ import DiceTest from './pages/DiceTest';
 import CharacterSheet from './components/character-sheet/character-sheet';
 import CharacterList from './components/character-list/character-list';
 import CampaignWizard from './components/campaign-creation/campaign-wizard';
-import GameContent from './components/game/GameContent';
+import GameContentWithErrorBoundary from './components/game/GameContentWithErrorBoundary';
 import Navigation from './components/layout/navigation';
 import Breadcrumbs from './components/layout/breadcrumbs';
 import { CharacterProvider } from './contexts/CharacterContext';
@@ -22,6 +22,7 @@ import BlogPost from './pages/BlogPost';
 import BlogIndex from './pages/BlogIndex';
 import CharacterCreateEntry from './pages/CharacterCreateEntry';
 import CampaignHub from './pages/campaigns/CampaignHub';
+import { ErrorBoundary } from './components/error/ErrorBoundary';
 
 // TODO [legacy-character-deprecation]: Feature flag for legacy character entry. When disabling legacy character creation, set to false and then remove this flag following docs/cleanup/campaign-character-migration.md
 const ENABLE_LEGACY_CHARACTER_ENTRY = true;
@@ -45,68 +46,70 @@ const queryClient = new QueryClient({
  */
 function App() {
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CharacterProvider>
-            <CampaignProvider>
-              <Router
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true
-                }}
-              >
-                <div className="min-h-screen">
-                  {/* Skip to content for keyboard users */}
-                  <a
-                    href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-primary focus:text-primary-foreground focus:px-3 focus:py-2 focus:rounded"
-                  >
-                    Skip to content
-                  </a>
-                  <Routes>
-                    {/* Beta Launch Page - new main entry point */}
-                    <Route path="/" element={<LaunchPage />} />
+    <ErrorBoundary level="app">
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <CharacterProvider>
+              <CampaignProvider>
+                <Router
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true
+                  }}
+                >
+                  <div className="min-h-screen">
+                    {/* Skip to content for keyboard users */}
+                    <a
+                      href="#main-content"
+                      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-primary focus:text-primary-foreground focus:px-3 focus:py-2 focus:rounded"
+                    >
+                      Skip to content
+                    </a>
+                    <Routes>
+                      {/* Beta Launch Page - new main entry point */}
+                      <Route path="/" element={<LaunchPage />} />
 
-                    {/* Original landing page - keep as backup */}
-                    <Route path="/original-landing" element={<Landing />} />
+                      {/* Original landing page - keep as backup */}
+                      <Route path="/original-landing" element={<Landing />} />
 
-                    {/* Public blog routes - accessible without authentication */}
-                    <Route path="/blog" element={<BlogIndex />} />
-                    <Route path="/blog/:slug" element={<BlogPost />} />
+                      {/* Public blog routes - accessible without authentication */}
+                      <Route path="/blog" element={<BlogIndex />} />
+                      <Route path="/blog/:slug" element={<BlogPost />} />
 
-                    {/* Protected app routes */}
-                    <Route path="/app/*" element={
-                      <ProtectedRoute>
-                        <Navigation />
-                        <Breadcrumbs />
-                        <main id="main-content" tabIndex={-1}>
-                          <Routes>
-                            <Route path="/" element={<Index />} />
-                            <Route path="/dice-test" element={<DiceTest />} />
-                            {/* TODO [legacy-character-deprecation]: Legacy character list and creation routes. Gate behind ENABLE_LEGACY_CHARACTER_ENTRY and remove per docs/cleanup/campaign-character-migration.md */}
-                            {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters" element={<CharacterList />} />}
-                            {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters/create" element={<CharacterCreateEntry />} />}
-                            <Route path="/character/:id" element={<CharacterSheet />} />
-                            <Route path="/campaigns/create" element={<CampaignWizard />} />
-                            <Route path="/campaigns/:id/*" element={<CampaignHub />} />
-                            <Route path="/game/:id" element={<GameContent />} />
-                            <Route path="/blog" element={<BlogAdmin />} />
-                            <Route path="/blog/posts/new" element={<BlogEditor />} />
-                            <Route path="/blog/posts/:id" element={<BlogEditor />} />
-                          </Routes>
-                        </main>
-                      </ProtectedRoute>
-                    } />
-                  </Routes>
-                  <Toaster />
-                </div>
-              </Router>
-            </CampaignProvider>
-          </CharacterProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+                      {/* Protected app routes */}
+                      <Route path="/app/*" element={
+                        <ProtectedRoute>
+                          <Navigation />
+                          <Breadcrumbs />
+                          <main id="main-content" tabIndex={-1}>
+                            <Routes>
+                              <Route path="/" element={<Index />} />
+                              <Route path="/dice-test" element={<DiceTest />} />
+                              {/* TODO [legacy-character-deprecation]: Legacy character list and creation routes. Gate behind ENABLE_LEGACY_CHARACTER_ENTRY and remove per docs/cleanup/campaign-character-migration.md */}
+                              {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters" element={<CharacterList />} />}
+                              {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters/create" element={<CharacterCreateEntry />} />}
+                              <Route path="/character/:id" element={<CharacterSheet />} />
+                              <Route path="/campaigns/create" element={<CampaignWizard />} />
+                              <Route path="/campaigns/:id/*" element={<CampaignHub />} />
+                              <Route path="/game/:id" element={<GameContentWithErrorBoundary />} />
+                              <Route path="/blog" element={<BlogAdmin />} />
+                              <Route path="/blog/posts/new" element={<BlogEditor />} />
+                              <Route path="/blog/posts/:id" element={<BlogEditor />} />
+                            </Routes>
+                          </main>
+                        </ProtectedRoute>
+                      } />
+                    </Routes>
+                    <Toaster />
+                  </div>
+                </Router>
+              </CampaignProvider>
+            </CharacterProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 }
 

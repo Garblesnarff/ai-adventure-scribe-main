@@ -1,22 +1,22 @@
 /**
  * useGameSession Hook
- * 
+ *
  * Manages the lifecycle of a game session, including creation, expiration,
  * cleanup, and summary generation. Handles session state and integrates with Supabase.
- * 
+ *
  * Dependencies:
- * - React hooks (useState, useEffect)
+ * - React hooks (useState, useEffect, useCallback, useRef)
  * - Supabase client (src/integrations/supabase/client.ts)
  * - Toast notification hook (src/hooks/use-toast.ts)
  * - Game session types (src/types/game.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
  // ============================
  // SDK/library imports
  // ============================
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
  // ============================
  // External integrations
@@ -61,42 +61,64 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
   const currentSessionId = sessionData?.id || null;
 
+  // Race condition prevention: track initialization and mount status
+  const initializingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Store toast in ref to avoid dependency changes
+  const toastRef = useRef(toast);
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
   /**
    * Creates a new game session in Supabase.
-   * 
+   *
    * @returns {Promise<string | null>} The new session ID or null if failed
    */
-  const createGameSession = useCallback(async (): Promise<string | null> => {
-    if (!campaignId || !characterId) {
-      toast({ title: "Error", description: "Campaign or Character ID missing for session creation.", variant: "destructive" });
-      setSessionState('error'); // Or a specific error state
+  const createGameSession = useCallback(async (
+    campId: string,
+    charId: string
+  ): Promise<string | null> => {
+    if (!campId || !charId) {
+      toastRef.current({ title: "Error", description: "Campaign or Character ID missing for session creation.", variant: "destructive" });
+      if (mountedRef.current) {
+        setSessionState('error');
+      }
       return null;
     }
-    setSessionState('loading');
+
+    if (mountedRef.current) {
+      setSessionState('loading');
+    }
+
     const { data, error } = await supabase
       .from('game_sessions')
-      .insert([{ 
-        session_number: 1, // This might need to be dynamic if multiple sessions per campaign/char
+      .insert([{
+        session_number: 1,
         status: 'active',
-        campaign_id: campaignId,
-        character_id: characterId,
+        campaign_id: campId,
+        character_id: charId,
         turn_count: 0,
-        current_scene_description: "The adventure begins...", // Default scene
+        current_scene_description: "The adventure begins...",
         session_notes: ""
       }])
       .select()
       .single();
 
+    if (!mountedRef.current) return null;
+
     if (error) {
       logger.error('Error creating game session:', error);
       setSessionState('error');
-      toast({ title: "Error", description: "Failed to create game session", variant: "destructive" });
+      toastRef.current({ title: "Error", description: "Failed to create game session", variant: "destructive" });
       return null;
     }
+
     setSessionData(data as ExtendedGameSession);
     setSessionState('active');
     return data.id;
-  }, [campaignId, characterId, toast]);
+  }, []); // Stable dependencies - uses refs and parameters instead
 
   /**
    * Generates a summary string for the session based on dialogue history.
@@ -164,72 +186,107 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
   /**
    * Cleans up an expired session, generates a summary, and updates status.
-   * 
-   * @param {string} sessionId - The session ID
+   *
+   * @param {string} sessionIdToClean - The session ID
    * @returns {Promise<string>} The generated summary
    */
   const cleanupSession = useCallback(async (sessionIdToClean: string): Promise<string> => {
-    setSessionState('ending');
+    if (mountedRef.current) {
+      setSessionState('ending');
+    }
+
     const summary = await generateSessionSummary(sessionIdToClean);
-    
+
+    if (!mountedRef.current) return summary;
+
     const { error } = await supabase
       .from('game_sessions')
-      .update({ 
+      .update({
         end_time: new Date().toISOString(),
         summary,
         status: 'completed' as const
       })
       .eq('id', sessionIdToClean);
 
+    if (!mountedRef.current) return summary;
+
     if (error) {
       logger.error('Error cleaning up session:', error);
-      toast({ title: "Error", description: "Failed to cleanup session properly", variant: "destructive" });
+      toastRef.current({ title: "Error", description: "Failed to cleanup session properly", variant: "destructive" });
     } else {
       setSessionState('expired');
-      if (currentSessionId === sessionIdToClean) {
-        setSessionData(prev => prev ? { ...prev, status: 'completed', end_time: new Date().toISOString(), summary } : null);
-      }
+      // Use functional update to get current value
+      setSessionData(prev => {
+        if (prev && prev.id === sessionIdToClean) {
+          return { ...prev, status: 'completed', end_time: new Date().toISOString(), summary };
+        }
+        return prev;
+      });
     }
     return summary;
-  }, [toast, currentSessionId]);
+  }, []); // Stable dependencies - uses refs and parameters
 
 
   const updateGameSessionState = useCallback(async (newState: Partial<ExtendedGameSession>) => {
-    if (!currentSessionId) return;
+    // Get current session ID from state using functional approach
+    let sessId: string | null = null;
+    setSessionData(prev => {
+      if (prev) {
+        sessId = prev.id;
+        // Optimistically update local state
+        return { ...prev, ...newState };
+      }
+      return prev;
+    });
 
-    // Optimistically update local state
-    setSessionData(prev => prev ? { ...prev, ...newState } : null);
+    if (!sessId || !mountedRef.current) return;
 
     const { data, error } = await supabase
       .from('game_sessions')
       .update(newState)
-      .eq('id', currentSessionId)
+      .eq('id', sessId)
       .select()
       .single();
 
+    if (!mountedRef.current) return;
+
     if (error) {
       logger.error('Error updating game session state:', error);
-      toast({ title: "Error", description: "Failed to save game state. Changes may be lost.", variant: "destructive" });
+      toastRef.current({ title: "Error", description: "Failed to save game state. Changes may be lost.", variant: "destructive" });
       // Potentially revert optimistic update here or refetch
     } else if (data) {
       setSessionData(data as ExtendedGameSession); // Update with actual data from DB
     }
-  }, [currentSessionId, toast]);
+  }, []); // Stable dependencies - uses refs and functional updates
 
 
   /**
    * Initialize and maintain session
    */
   useEffect(() => {
-    const initSession = async () => {
-      setSessionState('loading');
-      
-      if (!campaignId || !characterId) {
-        setSessionState('idle');
-        return;
-      }
+    // Guard: Prevent concurrent initialization
+    if (initializingRef.current) {
+      logger.info('Session initialization already in progress, skipping...');
+      return;
+    }
 
+    // Guard: Only initialize if we have the required IDs
+    if (!campaignId || !characterId) {
+      if (mountedRef.current) {
+        setSessionState('idle');
+      }
+      return;
+    }
+
+    // Mark initialization as in progress
+    initializingRef.current = true;
+
+    const initSession = async () => {
       try {
+        if (mountedRef.current) {
+          setSessionState('loading');
+        }
+
         // First, try to find the most recent session for this campaign & character
         // Look for both active and completed sessions to get the latest one
         const { data: existingSessions, error: existingSessionError } = await supabase
@@ -240,44 +297,50 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
           .order('created_at', { ascending: false })
           .limit(5); // Get last 5 sessions to find the best one to resume
 
+        // Check if still mounted after async operation
+        if (!mountedRef.current) return;
+
         if (existingSessionError) {
           logger.error("Error fetching existing sessions:", existingSessionError);
           // If we can't fetch sessions, create a new one
-          await createGameSession();
+          await createGameSession(campaignId, characterId);
           return;
         }
-        
+
         // Look for an active session first
         let sessionToResume = existingSessions?.find(s => s.status === 'active') as ExtendedGameSession | undefined;
-        
+
         // If we have an active session, check if it's expired
         if (sessionToResume) {
           if (isSessionExpired(sessionToResume)) {
             logger.info('Found active session but it has expired, cleaning up...');
             await cleanupSession(sessionToResume.id);
+            if (!mountedRef.current) return;
             sessionToResume = undefined;
           } else {
             logger.info('Resuming active session:', sessionToResume.id);
-            setSessionData(sessionToResume);
-            setSessionState('active');
+            if (mountedRef.current) {
+              setSessionData(sessionToResume);
+              setSessionState('active');
+            }
             return;
           }
         }
-        
+
         // If no active session, look for the most recent completed session
         // and create a new session based on its state
         const lastCompletedSession = existingSessions?.find(s => s.status === 'completed');
-        
+
         if (lastCompletedSession) {
           logger.info('Creating new session continuing from previous session:', lastCompletedSession.id);
           // Create a new session but maintain continuity from the last one
           const sessionNumber = Math.max(
             ...(existingSessions?.map(s => s.session_number || 1) || [1])
           ) + 1;
-          
+
           const { data, error } = await supabase
             .from('game_sessions')
-            .insert([{ 
+            .insert([{
               session_number: sessionNumber,
               status: 'active',
               campaign_id: campaignId,
@@ -289,47 +352,66 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
             .select()
             .single();
 
+          if (!mountedRef.current) return;
+
           if (error) {
             logger.error('Error creating continuation session:', error);
             setSessionState('error');
-            toast({ title: "Error", description: "Failed to create game session", variant: "destructive" });
+            toastRef.current({ title: "Error", description: "Failed to create game session", variant: "destructive" });
             return;
           }
-          
+
           setSessionData(data as ExtendedGameSession);
           setSessionState('active');
           return;
         }
-        
+
         // No existing sessions found, create the first one
         logger.info('No existing sessions found, creating first session');
-        await createGameSession();
-        
+        await createGameSession(campaignId, characterId);
+
       } catch (error) {
         logger.error('Error in session initialization:', error);
-        setSessionState('error');
-        toast({ title: "Error", description: "Failed to initialize game session", variant: "destructive" });
+        if (mountedRef.current) {
+          setSessionState('error');
+          toastRef.current({ title: "Error", description: "Failed to initialize game session", variant: "destructive" });
+        }
+      } finally {
+        // Always clear the initialization flag
+        initializingRef.current = false;
       }
     };
 
     initSession();
-  }, [campaignId, characterId, createGameSession, cleanupSession, toast]);
+
+    // Cleanup on unmount
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [campaignId, characterId, createGameSession, cleanupSession]); // Stable dependencies now
 
 
-  // Periodic cleanup check (remains similar)
+  // Periodic cleanup check with stable references
   useEffect(() => {
     const cleanupIntervalId = setInterval(async () => {
-      if (sessionData && sessionData.id && sessionData.status === 'active') {
-        if (isSessionExpired(sessionData)) {
-          await cleanupSession(sessionData.id);
+      // Use functional state read to avoid stale closure
+      setSessionData(currentSession => {
+        if (currentSession && currentSession.id && currentSession.status === 'active') {
+          if (isSessionExpired(currentSession)) {
+            // Don't await here to avoid blocking the interval
+            cleanupSession(currentSession.id).catch(err => {
+              logger.error('Error in periodic cleanup:', err);
+            });
+          }
         }
-      }
+        return currentSession; // Return unchanged
+      });
     }, CLEANUP_INTERVAL);
 
     return () => {
       clearInterval(cleanupIntervalId);
     };
-  }, [sessionData, cleanupSession]);
+  }, [cleanupSession]); // Only depends on stable cleanupSession
 
   return { 
     sessionData, 

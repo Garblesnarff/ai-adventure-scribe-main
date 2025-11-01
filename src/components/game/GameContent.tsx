@@ -33,8 +33,12 @@ import { Sword, X, Dice6, ChevronDown, Menu } from 'lucide-react';
 import logger from '@/lib/logger';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
+import { Z_INDEX } from '@/constants/z-index';
 import { CampaignSidePanel } from './CampaignSidePanel';
 import { TimelineRail } from './TimelineRail';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { handleAsyncError } from '@/utils/error-handler';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
 /**
  * GameContent Component
@@ -68,14 +72,7 @@ const GameContent: React.FC = () => {
   const [showCombatInterface, setShowCombatInterface] = useState(false); // unused after redesign
   const { user } = useAuth();
   const [isDM, setIsDM] = useState(false);
-  const [showSceneBlurb, setShowSceneBlurb] = useState(() => {
-    try {
-      const v = localStorage.getItem('ui:sceneBlurb');
-      return v === null ? true : v === '1';
-    } catch {
-      return true;
-    }
-  });
+  const [showSceneBlurb, setShowSceneBlurb] = useLocalStorage('ui:sceneBlurb', true);
 
   useEffect(() => {
     const loadGameData = async () => {
@@ -141,8 +138,16 @@ const GameContent: React.FC = () => {
         }
 
       } catch (err: any) {
-        logger.error("Error loading game data:", err);
-        setError(err.message);
+        const errorMessage = err.message || 'Failed to load game data';
+        setError(errorMessage);
+        handleAsyncError(err, {
+          userMessage: 'Failed to load game data',
+          context: {
+            location: 'GameContent.loadGameData',
+            campaignId: campaignIdFromParams,
+            characterId: characterIdFromParams
+          }
+        });
       } finally {
         setIsLoading(false);
         setLoadingPhase('greeting');
@@ -197,7 +202,7 @@ const GameContent: React.FC = () => {
     };
 
     return (
-      <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center">
+      <div className={`fixed inset-0 z-[${Z_INDEX.LOADING_OVERLAY}] bg-background/90 backdrop-blur-md flex items-center justify-center`}>
         <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 text-center">
           <div className="flex flex-col items-center space-y-6">
             {/* Animated DM icon */}
@@ -263,31 +268,33 @@ const GameContent: React.FC = () => {
   const characterIdForHandler = characterIdFromParams;
 
   return (
-    <CombatProvider sessionId={sessionId}>
-      <GameProvider>
-        <MessageProvider sessionId={sessionId}>
-          <MemoryProvider sessionId={sessionId}>
-            <VoiceProvider>
-              <GameContentInner
-              sessionId={sessionId}
-              campaignIdForHandler={campaignIdFromParams ?? null}
-              characterIdForHandler={characterIdFromParams ?? null}
-              sessionData={sessionData}
-              updateGameSessionState={updateGameSessionState}
-              characterState={characterState}
-              combatMode={combatMode}
-              setCombatMode={setCombatMode}
-              handleCombatToggle={handleCombatToggle}
-              handleAIResponse={handleAIResponse}
-              isDM={isDM}
-              showSceneBlurb={showSceneBlurb}
-              setShowSceneBlurb={setShowSceneBlurb}
-            />
-          </VoiceProvider>
-        </MemoryProvider>
-      </MessageProvider>
-      </GameProvider>
-    </CombatProvider>
+    <ErrorBoundary level="feature">
+      <CombatProvider sessionId={sessionId}>
+        <GameProvider>
+          <MessageProvider sessionId={sessionId}>
+            <MemoryProvider sessionId={sessionId}>
+              <VoiceProvider>
+                <GameContentInner
+                sessionId={sessionId}
+                campaignIdForHandler={campaignIdFromParams ?? null}
+                characterIdForHandler={characterIdFromParams ?? null}
+                sessionData={sessionData}
+                updateGameSessionState={updateGameSessionState}
+                characterState={characterState}
+                combatMode={combatMode}
+                setCombatMode={setCombatMode}
+                handleCombatToggle={handleCombatToggle}
+                handleAIResponse={handleAIResponse}
+                isDM={isDM}
+                showSceneBlurb={showSceneBlurb}
+                setShowSceneBlurb={setShowSceneBlurb}
+              />
+            </VoiceProvider>
+          </MemoryProvider>
+        </MessageProvider>
+        </GameProvider>
+      </CombatProvider>
+    </ErrorBoundary>
   );
 };
 
@@ -324,34 +331,18 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   setShowSceneBlurb,
 }) => {
   // UI state management
-  const [isRightCollapsed, setIsRightCollapsed] = useState(false);
-  const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
+  // Calculate default panel collapsed states based on screen width (only if localStorage is empty)
+  const getDefaultLeftCollapsed = () => typeof window !== 'undefined' && window.innerWidth < 1200;
+  const getDefaultRightCollapsed = () => typeof window !== 'undefined' && window.innerWidth < 1440;
+
+  const [isLeftCollapsed, setIsLeftCollapsed] = useLocalStorage('ui:leftPanelCollapsed', getDefaultLeftCollapsed());
+  const [isRightCollapsed, setIsRightCollapsed] = useLocalStorage('ui:rightPanelCollapsed', getDefaultRightCollapsed());
   const [topOffset, setTopOffset] = useState(0);
   const [isFloatingPanelVisible, setIsFloatingPanelVisible] = useState(false);
   const [isCombatDetected, setIsCombatDetected] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
   const chatScrollRef = React.useRef<HTMLDivElement>(null);
   const { state: campaignState } = useCampaign();
-
-  // Persist collapsed states
-  React.useEffect(() => {
-    const left = localStorage.getItem('ui:leftPanelCollapsed');
-    const right = localStorage.getItem('ui:rightPanelCollapsed');
-    if (left !== null) {
-      setIsLeftCollapsed(left === '1');
-    } else {
-      // Default collapse left on narrow screens
-      setIsLeftCollapsed(window.innerWidth < 1200);
-    }
-    if (right !== null) {
-      setIsRightCollapsed(right === '1');
-    } else {
-      // Default collapse right on medium screens
-      setIsRightCollapsed(window.innerWidth < 1440);
-    }
-  }, []);
-  React.useEffect(() => { localStorage.setItem('ui:leftPanelCollapsed', isLeftCollapsed ? '1' : '0'); }, [isLeftCollapsed]);
-  React.useEffect(() => { localStorage.setItem('ui:rightPanelCollapsed', isRightCollapsed ? '1' : '0'); }, [isRightCollapsed]);
 
   // Measure sticky nav + breadcrumbs height to constrain viewport
   useLayoutEffect(() => {
@@ -406,7 +397,12 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
       try {
         await createMemory(memory as any);
       } catch (e) {
-        logger.error('Failed to create memory from greeting:', e);
+        handleAsyncError(e, {
+          userMessage: 'Failed to save greeting memory',
+          logLevel: 'warn',
+          showToast: false,
+          context: { location: 'GameContent.onMemoryCreated' }
+        });
       }
     },
   });
@@ -449,7 +445,12 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
             try {
               await sendMessage(m);
             } catch (e) {
-              logger.warn('Failed to send combat message to chat', e);
+              handleAsyncError(e, {
+                userMessage: 'Failed to send combat message',
+                logLevel: 'warn',
+                showToast: false,
+                context: { location: 'GameContent.onAIResponseWithCombat.sendCombatMessage' }
+              });
             }
           }
         }
@@ -461,7 +462,10 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
       await handleAIResponse(message);
       
     } catch (error) {
-      logger.error('Error processing AI response for combat:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to process AI response for combat',
+        context: { location: 'GameContent.onAIResponseWithCombat' }
+      });
     }
   }, [combatAI, characterState, handleAIResponse]);
 
@@ -590,9 +594,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const next = !showSceneBlurb;
-                                try { localStorage.setItem('ui:sceneBlurb', next ? '1' : '0'); } catch (e) { /* ignore */ }
-                                setShowSceneBlurb(next);
+                                setShowSceneBlurb(!showSceneBlurb);
                               }}
                               title="Toggle scene blurb"
                             >

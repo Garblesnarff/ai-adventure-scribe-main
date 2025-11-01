@@ -14,6 +14,7 @@ import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { NarrationSegment } from '@/hooks/use-ai-response';
 import { AISegment } from '@/services/voice-director';
 import logger from '@/lib/logger';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface ProgressiveVoicePlayerProps {
   text: string;
@@ -67,13 +68,8 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
   } = useProgressiveVoice();
 
   const [showSegments, setShowSegments] = React.useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = React.useState(() => {
-    return localStorage.getItem('progressive-voice-user-interacted') === 'true';
-  });
-  const [autoPlayEnabled, setAutoPlayEnabled] = React.useState(() => {
-    // DISABLED: Auto-play causes browser policy violations and race conditions
-    return false;
-  });
+  const [hasUserInteracted, setHasUserInteracted] = useLocalStorage('progressive-voice-user-interacted', false);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useLocalStorage('progressive-voice-auto-play', false); // DISABLED by default: Auto-play causes browser policy violations
 
   // Auto-play functionality DISABLED to prevent browser policy issues
   const [lastText, setLastText] = React.useState('');
@@ -96,11 +92,10 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
   const handlePlayPause = React.useCallback(() => {
     // Initialize audio context during user interaction for browser autoplay compliance
     initializeAudioContext();
-    
+
     // Mark that user has interacted
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
-      localStorage.setItem('progressive-voice-user-interacted', 'true');
     }
 
     if (isPlaying) {
@@ -113,7 +108,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
         narrationSegmentsType: typeof narrationSegments,
         rawNarrationSegments: narrationSegments
       });
-      
+
       if (narrationSegments && narrationSegments.length > 0) {
         logger.debug('🎭 Manual play with AI segments');
         const aiSegments = convertNarrationToAISegments(narrationSegments);
@@ -124,13 +119,11 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
         speakPlainText(text);
       }
     }
-  }, [isPlaying, isProcessing, stopPlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted, initializeAudioContext]);
+  }, [isPlaying, isProcessing, stopPlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted, initializeAudioContext, setHasUserInteracted]);
 
   const handleAutoPlayToggle = React.useCallback(() => {
-    const newAutoPlayState = !autoPlayEnabled;
-    setAutoPlayEnabled(newAutoPlayState);
-    localStorage.setItem('progressive-voice-auto-play', newAutoPlayState.toString());
-  }, [autoPlayEnabled]);
+    setAutoPlayEnabled(!autoPlayEnabled);
+  }, [autoPlayEnabled, setAutoPlayEnabled]);
 
   const handleRetry = React.useCallback(() => {
     if (text && isVoiceEnabled && !isProcessing) {
@@ -151,9 +144,8 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     // Mark user interaction
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
-      localStorage.setItem('progressive-voice-user-interacted', 'true');
     }
-    
+
     // Test with simple DM narration
     const testSegments = [{
       type: 'dm' as const,
@@ -161,7 +153,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
       character: undefined,
       voice_category: undefined
     }];
-    
+
     await speakAISegments(testSegments);
   }, [speakAISegments, hasUserInteracted]);
 

@@ -20,6 +20,8 @@ import { llmApiClient } from '@/services/llm-api-client';
 import { Image as ImageIcon, RefreshCw, Loader2 } from 'lucide-react';
 import ChatImage from '@/components/game/ChatImage';
 import { useParams } from 'react-router-dom';
+import { Z_INDEX } from '@/constants/z-index';
+import { handleAsyncError } from '@/utils/error-handler';
 
 // Constants
 const DYNAMIC_OPTIONS_FETCH_DELAY_MS = 10000; // 10 seconds delay before fetching dynamic options
@@ -209,7 +211,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
       } catch (e: any) {
         // Ignore abort errors
         if (e.name === 'AbortError') return;
-        console.warn('[MessageList] dynamic options fetch failed:', e);
+        handleAsyncError(e, {
+          userMessage: 'Failed to fetch dynamic options',
+          logLevel: 'warn',
+          showToast: false,
+          context: { location: 'MessageList.dynamicOptions' }
+        });
       }
     }, DYNAMIC_OPTIONS_FETCH_DELAY_MS);
 
@@ -268,7 +275,10 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
       }
       logger.info('[MessageList] Successfully sent option message');
     } catch (error) {
-      logger.error('[MessageList] Failed to send option selection:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to send option selection',
+        context: { location: 'MessageList.handleOptionSelect' }
+      });
     }
   }, [onSendFullMessage, sendMessage]);
 
@@ -328,7 +338,12 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
             image: { url: res.url, prompt: res.prompt, model: res.model, quality: res.quality }
           });
         } catch (persistErr) {
-          logger.warn('[MessageList] Failed to persist image to message', persistErr);
+          handleAsyncError(persistErr, {
+            userMessage: 'Failed to save generated image',
+            logLevel: 'warn',
+            showToast: false,
+            context: { location: 'MessageList.handleGenerateScene.persist', messageId: message.id }
+          });
         }
       }
       // Clear any previous error for this message on successful generation
@@ -343,7 +358,10 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
     } catch (e: any) {
       const msg = e?.message || 'Failed to generate image';
       setGenErrorByMessage(prev => ({ ...prev, [messageId]: msg }));
-      logger.error('[MessageList] Scene image generation failed:', e);
+      handleAsyncError(e, {
+        userMessage: 'Failed to generate scene image',
+        context: { location: 'MessageList.handleGenerateScene', messageId }
+      });
     } finally {
       setGeneratingFor(prev => {
         const next = new Set(prev);
@@ -485,7 +503,10 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
       // NOTE: DM will get information from the dice roll message context above
       // Don't send a second text message to avoid duplicates
     } catch (error) {
-      logger.error('[MessageList] Failed to handle dice roll:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to process dice roll',
+        context: { location: 'MessageList.handleDiceRoll' }
+      });
     }
   }, [sendMessage, getCurrentDiceRoll, completeDiceRoll]);
 
@@ -558,7 +579,10 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
         };
       }
     } catch (error) {
-      logger.error('[MessageList] Failed to handle manual dice result:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to process dice result',
+        context: { location: 'MessageList.handleManualDiceResult' }
+      });
     }
   }, [sendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]);
 
@@ -837,7 +861,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
         if (!currentRoll) return null;
 
         return (
-          <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50">
+          <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}>
             <DiceRollRequest
               request={{
                 type: currentRoll.requestType as any,

@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { AISegment } from '@/services/voice-director';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface MultiVoicePlayerProps {
   text: string;
@@ -49,15 +50,8 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
   } = useProgressiveVoice();
 
   const [showSegments, setShowSegments] = React.useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = React.useState(false);
-
-  React.useEffect(() => {
-    setHasUserInteracted(localStorage.getItem('audio-user-interacted') === 'true');
-  }, []);
-
-  const [autoPlayEnabled, setAutoPlayEnabled] = React.useState(() => {
-    return localStorage.getItem('auto-play-enabled') !== 'false';
-  });
+  const [hasUserInteracted, setHasUserInteracted] = useLocalStorage('audio-user-interacted', false);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useLocalStorage('auto-play-enabled', true);
 
   const [lastText, setLastText] = React.useState('');
 
@@ -86,7 +80,6 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
   const handlePlayPause = React.useCallback(() => {
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
-      localStorage.setItem('audio-user-interacted', 'true');
       initializeAudioContext();
     }
 
@@ -101,13 +94,11 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
         speakPlainText(text);
       }
     }
-  }, [isPlaying, isPaused, isProcessing, pausePlayback, resumePlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted, initializeAudioContext]);
+  }, [isPlaying, isPaused, isProcessing, pausePlayback, resumePlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted, initializeAudioContext, setHasUserInteracted]);
 
   const handleAutoPlayToggle = React.useCallback(() => {
-    const newAutoPlayState = !autoPlayEnabled;
-    setAutoPlayEnabled(newAutoPlayState);
-    localStorage.setItem('auto-play-enabled', newAutoPlayState.toString());
-  }, [autoPlayEnabled]);
+    setAutoPlayEnabled(!autoPlayEnabled);
+  }, [autoPlayEnabled, setAutoPlayEnabled]);
 
   const handleVolumeChange = React.useCallback((values: number[]) => {
     setVolume(values[0]);

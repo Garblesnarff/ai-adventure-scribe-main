@@ -11,6 +11,7 @@ import { MemoizedCharacterCard } from './character-card';
 import EmptyState from './empty-state';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
+import { CharacterListSkeleton } from '@/components/skeletons/CharacterListSkeleton';
 
 const CHARACTER_CACHE_KEY = 'aas_cached_characters';
 
@@ -216,13 +217,7 @@ const CharacterList: React.FC = () => {
           </div>
 
           {/* Skeleton Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-square bg-card rounded-lg shadow-md animate-pulse">
-                <div className="h-full w-full rounded-lg bg-muted"></div>
-              </div>
-            ))}
-          </div>
+          <CharacterListSkeleton />
         </div>
       </div>
     );

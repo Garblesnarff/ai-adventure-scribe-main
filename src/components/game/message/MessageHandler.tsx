@@ -11,6 +11,7 @@ import { useCharacter } from '@/contexts/CharacterContext';
 import { checkSafetyCommands, processSafetyCommand } from '@/utils/safetyCommands';
 import logger from '@/lib/logger';
 import { sanitizeDMText } from '@/utils/chatSanitizer';
+import { handleAsyncError } from '@/utils/error-handler';
 
 interface MessageHandlerProps {
   sessionId: string; // Should be non-null if we reach here
@@ -42,6 +43,27 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   const character = characterState.character;
   const headerMode = String(((import.meta as any)?.env?.VITE_SCENE_SUMMARY_HEADER ?? 'short')).toLowerCase();
 
+  // Refs to track current values for async operations
+  const turnCountRef = React.useRef(turnCount);
+  const messagesRef = React.useRef(messages);
+
+  // Request queue to prevent concurrent message sends
+  const sendQueueRef = React.useRef<Array<{
+    message: string;
+    resolve: (value: void | PromiseLike<void>) => void;
+    reject: (error: any) => void;
+  }>>([]);
+  const isSendingRef = React.useRef(false);
+
+  // Update refs when values change
+  React.useEffect(() => {
+    turnCountRef.current = turnCount;
+  }, [turnCount]);
+
+  React.useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   const toHeaderExcerpt = React.useCallback((raw: string, limit = 220) => {
     if (!raw) return '';
     const cleaned = raw
@@ -68,10 +90,39 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   }, [character]);
   
   // Assuming validateSession is still relevant or adapted
-  const validateSession = useSessionValidator({ sessionId, campaignId, characterId }); 
+  const validateSession = useSessionValidator({ sessionId, campaignId, characterId });
 
-  const handleSendMessage = async (playerInput: string) => {
-    if (queueStatus === 'processing') return; // Or if isProcessing from its own state
+  // Process the send queue one message at a time
+  const processSendQueue = React.useCallback(async () => {
+    // Don't process if already sending or queue is empty
+    if (isSendingRef.current || sendQueueRef.current.length === 0) {
+      return;
+    }
+
+    isSendingRef.current = true;
+    const { message: playerInput, resolve, reject } = sendQueueRef.current[0];
+
+    try {
+      await actualSendMessage(playerInput);
+      resolve();
+    } catch (error) {
+      reject(error);
+    } finally {
+      // Remove processed item and continue with next
+      sendQueueRef.current.shift();
+      isSendingRef.current = false;
+
+      // Process next item if any
+      if (sendQueueRef.current.length > 0) {
+        // Recursively process next message
+        processSendQueue();
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // actualSendMessage uses refs so no deps needed
+
+  // The actual message sending logic (extracted from handleSendMessage)
+  const actualSendMessage = async (playerInput: string) => {
 
     try {
       // Check if game is paused and this isn't a resume command
@@ -186,7 +237,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
           // Also send to AI for context (so DM knows what was rolled)
           const aiContextMessage = `Player rolled ${diceCommand.formula} and got ${rollResult.total}${diceCommand.label ? ` for ${diceCommand.label}` : ''}. ${rollResult.critical ? (rollResult.naturalRoll === 20 ? 'Critical success!' : 'Critical failure!') : ''}`;
           
-          const aiResponseMessage = await getAIResponse([...messages, diceRollMessage], sessionId); 
+          const aiResponseMessage = await getAIResponse([...messagesRef.current, diceRollMessage], sessionId); 
           
           await sendMessage(aiResponseMessage);
           
@@ -195,13 +246,21 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
             try {
               await onAIResponse(aiResponseMessage);
             } catch (combatError) {
-              logger.error('Error processing AI response for combat after dice roll:', combatError);
+              handleAsyncError(combatError, {
+                userMessage: 'Failed to process combat response after dice roll',
+                logLevel: 'warn',
+                showToast: false,
+                context: { location: 'MessageHandler.diceRoll.combatDetection' }
+              });
             }
           }
 
           return; // Exit early for dice commands
         } catch (rollError) {
-          logger.error('Error executing dice roll:', rollError);
+          handleAsyncError(rollError, {
+            userMessage: 'Failed to execute dice roll',
+            context: { location: 'MessageHandler.diceCommand', command: playerInput }
+          });
           const errorMessage: ChatMessage = {
             text: 'Failed to execute dice roll. Please try again.',
             sender: 'system',
@@ -212,8 +271,11 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         }
       }
 
-      const newTurnCount = turnCount + 1;
-      const isFirstMessage = messages.length === 0;
+      // Use ref to get current turn count to avoid stale closure
+      const currentTurnCount = turnCountRef.current;
+      const newTurnCount = currentTurnCount + 1;
+      const currentMessages = messagesRef.current;
+      const isFirstMessage = currentMessages.length === 0;
 
       // Add player message
       const playerMessage: ChatMessage = {
@@ -231,6 +293,9 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Update turn count immediately after player message is sent
       await updateGameSessionState({ turn_count: newTurnCount });
 
+      // Update the ref to reflect the new turn count
+      turnCountRef.current = newTurnCount;
+
       logger.info('[Memory Flow] Extracting memories from player input');
       await extractMemories(playerInput); // Assuming this is non-critical path for state update
       
@@ -240,7 +305,8 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       
       logger.info('[Memory Flow] Getting AI response for session:', sessionId);
       // Pass necessary context to getAIResponse. It fetches its own campaign/char details if needed.
-      const aiResponseMessage = await getAIResponse([...messages, playerMessage], sessionId); 
+      // Use ref to get current messages to avoid stale closure
+      const aiResponseMessage = await getAIResponse([...messagesRef.current, playerMessage], sessionId); 
       const sanitizedAiResponseMessage: ChatMessage = {
         ...aiResponseMessage,
         text: sanitizeDMText(aiResponseMessage.text)
@@ -291,7 +357,12 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
           logger.info('[Combat Flow] Processing AI response for combat detection');
           await onAIResponse(sanitizedAiResponseMessage);
         } catch (combatError) {
-          logger.error('Error processing AI response for combat:', combatError);
+          handleAsyncError(combatError, {
+            userMessage: 'Failed to process combat response',
+            logLevel: 'warn',
+            showToast: false,
+            context: { location: 'MessageHandler.onAIResponse.combatDetection' }
+          });
           // Don't throw here - combat processing should not break the message flow
         }
       }
@@ -312,7 +383,14 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       }
 
     } catch (error) {
-      logger.error('Error in message flow:', error);
+      handleAsyncError(error, {
+        userMessage: 'Failed to process your message',
+        context: {
+          location: 'MessageHandler.actualSendMessage',
+          playerInput,
+          turnCount: turnCountRef.current
+        }
+      });
 
       // Provide user feedback and recovery options
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -329,14 +407,26 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         };
         await sendMessage(systemErrorMessage);
       } catch (systemMessageError) {
-        logger.error('Failed to send system error message:', systemMessageError);
+        handleAsyncError(systemMessageError, {
+          userMessage: 'Failed to send error recovery message',
+          logLevel: 'warn',
+          showToast: false,
+          context: { location: 'MessageHandler.errorRecovery' }
+        });
       }
 
-      // Revert turn count if AI response failed
+      // Revert turn count if AI response failed (use original value from when error occurred)
       try {
-        await updateGameSessionState({ turn_count: turnCount });
+        const revertCount = Math.max(0, turnCountRef.current - 1);
+        await updateGameSessionState({ turn_count: revertCount });
+        turnCountRef.current = revertCount;
       } catch (revertError) {
-        logger.error('Failed to revert turn count:', revertError);
+        handleAsyncError(revertError, {
+          userMessage: 'Failed to revert turn count',
+          logLevel: 'warn',
+          showToast: false,
+          context: { location: 'MessageHandler.revertTurnCount' }
+        });
       }
 
       toast({
@@ -347,8 +437,23 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
     }
   };
 
+  // Public handleSendMessage that queues messages
+  const handleSendMessage = React.useCallback(async (playerInput: string): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      // Add to queue
+      sendQueueRef.current.push({
+        message: playerInput,
+        resolve,
+        reject
+      });
+
+      // Start processing if not already processing
+      processSendQueue();
+    });
+  }, [processSendQueue]);
+
   return children({
     handleSendMessage,
-    isProcessing: queueStatus === 'processing',
+    isProcessing: queueStatus === 'processing' || isSendingRef.current,
   });
 };

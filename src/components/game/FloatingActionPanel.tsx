@@ -5,6 +5,7 @@ import { Dice6, Heart, Shield, Zap, Plus, X } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
 import logger from '@/lib/logger';
+import { Z_INDEX } from '@/constants/z-index';
 
 interface FloatingActionPanelProps {
   isVisible: boolean;
@@ -46,7 +47,7 @@ export const FloatingActionPanel: React.FC<FloatingActionPanelProps> = ({
 
   if (!isVisible) {
     return (
-      <div className="fixed left-4 bottom-4 z-30 md:left-6 md:bottom-6">
+      <div className={`fixed left-4 bottom-4 z-[${Z_INDEX.FLOATING_PANEL}] md:left-6 md:bottom-6`}>
         <Button
           onClick={onToggle}
           size="sm"
@@ -65,7 +66,7 @@ export const FloatingActionPanel: React.FC<FloatingActionPanelProps> = ({
   }
 
   return (
-    <div className="fixed left-4 bottom-4 z-30 md:left-6 md:bottom-6 animate-in slide-in-from-bottom-2 duration-300">
+    <div className={`fixed left-4 bottom-4 z-[${Z_INDEX.FLOATING_PANEL}] md:left-6 md:bottom-6 animate-in slide-in-from-bottom-2 duration-300`}>
       <Card className="glass-strong border-2 border-infinite-purple/30 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-3 border-b border-white/10 bg-gradient-to-r from-infinite-purple/10 to-infinite-teal/10">
