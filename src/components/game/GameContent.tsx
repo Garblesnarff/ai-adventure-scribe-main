@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -152,13 +152,22 @@ const GameContent: React.FC = () => {
     loadGameData();
   }, [characterIdFromParams, campaignIdFromParams, characterDispatch, campaignDispatch, user?.id]);
 
+  // Memoized toggle handlers to prevent unnecessary re-renders
+  const handleLeftPanelToggle = useCallback(() => {
+    setIsLeftCollapsed((v) => !v);
+  }, []);
+
+  const handleRightPanelToggle = useCallback(() => {
+    setIsRightCollapsed((v) => !v);
+  }, []);
+
   // Open/close the combat tracker sheet
-  const handleCombatToggle = () => {
+  const handleCombatToggle = useCallback(() => {
     setCombatMode((v) => !v);
     // Mark that user manually toggled the tracker so auto-open is avoided
     sessionStorage.setItem('manualCombatToggle', 'true');
     setTimeout(() => sessionStorage.removeItem('manualCombatToggle'), 30000);
-  };
+  }, []);
 
   // Handle AI response for combat detection - moved to inner component
   const handleAIResponse = React.useCallback(async (message: any) => {
@@ -571,10 +580,10 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                         {/* Sidebar Toggles + Tracker */}
                         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 md:ml-8 w-full md:w-auto">
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setIsLeftCollapsed(v=>!v)} title="Toggle campaign panel">
+                            <Button variant="outline" size="sm" onClick={handleLeftPanelToggle} title="Toggle campaign panel">
                               {isLeftCollapsed ? 'Show Campaign' : 'Hide Campaign'}
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => setIsRightCollapsed(v=>!v)} title="Toggle character panel">
+                            <Button variant="outline" size="sm" onClick={handleRightPanelToggle} title="Toggle character panel">
                               {isRightCollapsed ? 'Show Character' : 'Hide Character'}
                             </Button>
                             <Button
@@ -747,7 +756,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
                       updateGameSessionState={updateGameSessionState}
                       combatMode={combatMode}
                       isCollapsed={isRightCollapsed}
-                      onToggle={() => setIsRightCollapsed(!isRightCollapsed)}
+                      onToggle={handleRightPanelToggle}
                     />
                   </div>
                 )}

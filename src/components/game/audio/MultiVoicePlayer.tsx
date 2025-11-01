@@ -65,13 +65,20 @@ export const MultiVoicePlayer: React.FC<MultiVoicePlayerProps> = ({
     if (text && text !== lastText && text.trim() && isVoiceEnabled) {
       setLastText(text);
       if (hasUserInteracted && autoPlayEnabled && !isPlaying && !isProcessing) {
-        setTimeout(() => {
+        let mounted = true;
+        const timeoutId = setTimeout(() => {
+          if (!mounted) return;
           if (narrationSegments && narrationSegments.length > 0) {
             speakAISegments(narrationSegments);
           } else {
             speakPlainText(text);
           }
         }, 100);
+
+        return () => {
+          mounted = false;
+          clearTimeout(timeoutId);
+        };
       }
     }
   }, [text, narrationSegments, lastText, isVoiceEnabled, hasUserInteracted, autoPlayEnabled, isPlaying, isProcessing, speakAISegments, speakPlainText]);
