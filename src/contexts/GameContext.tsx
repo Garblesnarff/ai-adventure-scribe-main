@@ -14,7 +14,7 @@
  * @author AI Dungeon Master Team
  */
 
-import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect, useRef } from 'react';
 import logger from '@/lib/logger';
 import { DiceRollRequest, DiceRollQueue, DiceRollRequestType } from '@/types/combat';
 import { useCombat } from '@/contexts/CombatContext';
@@ -226,18 +226,31 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const { state: combatState } = useCombat();
 
-  // Sync with combat context
+  // Track previous combat state values to prevent infinite loops
+  const prevCombatStateRef = useRef({
+    isInCombat: false,
+    currentTurnPlayerId: undefined as string | undefined
+  });
+
+  // Sync with combat context - only dispatch when values actually change
   useEffect(() => {
     const isInCombat = combatState.isInCombat;
     const currentTurnPlayerId = combatState.activeEncounter?.currentTurnParticipantId;
 
-    if (state.isInCombat !== isInCombat || state.currentTurnPlayerId !== currentTurnPlayerId) {
+    // Only dispatch if values actually changed from the previous combat context values
+    const prevState = prevCombatStateRef.current;
+    if (prevState.isInCombat !== isInCombat ||
+        prevState.currentTurnPlayerId !== currentTurnPlayerId) {
+
+      // Update ref to track new values
+      prevCombatStateRef.current = { isInCombat, currentTurnPlayerId };
+
       dispatch({
         type: 'SET_COMBAT_STATE',
         payload: { isInCombat, currentTurnPlayerId }
       });
     }
-  }, [combatState.isInCombat, combatState.activeEncounter?.currentTurnParticipantId, state.isInCombat, state.currentTurnPlayerId]);
+  }, [combatState.isInCombat, combatState.activeEncounter?.currentTurnParticipantId]);
 
   // Auto-cleanup completed/cancelled rolls after delay
   useEffect(() => {
