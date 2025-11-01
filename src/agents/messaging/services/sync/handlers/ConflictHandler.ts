@@ -1,6 +1,7 @@
 import { MessageSequence, QueuedMessage, ConflictResolutionStrategy } from '../types';
 import { DatabaseAdapter } from '../adapters/DatabaseAdapter';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../../../../../lib/logger';
 
 export class ConflictHandler {
   private defaultStrategy: ConflictResolutionStrategy = {
@@ -25,9 +26,9 @@ export class ConflictHandler {
         .update(resolvedMessage)
         .eq('id', sequence.messageId);
 
-      console.log('[ConflictHandler] Conflict resolved:', sequence.messageId);
+      logger.info('[ConflictHandler] Conflict resolved:', sequence.messageId);
     } catch (error) {
-      console.error('[ConflictHandler] Conflict resolution error:', error);
+      logger.error('[ConflictHandler] Conflict resolution error:', error);
     }
   }
 }

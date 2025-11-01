@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
 import { ErrorMetadata } from '../types';
+import { logger } from '../../../lib/logger';
 
 
 export class RecoveryService {
@@ -41,7 +42,7 @@ export class RecoveryService {
     error: Error,
     metadata?: ErrorMetadata
   ): Promise<boolean> {
-    console.log(`[RecoveryService] Attempting recovery for ${context}`);
+    logger.info(`[RecoveryService] Attempting recovery for ${context}`);
     
     // Log recovery attempt
     this.logRecoveryAttempt(context, error);
@@ -58,7 +59,7 @@ export class RecoveryService {
       
       return true;
     } catch (recoveryError) {
-      console.error('[RecoveryService] Recovery failed:', recoveryError);
+      logger.error('[RecoveryService] Recovery failed:', recoveryError);
       await this.logRecoveryFailure(context, error, recoveryError, metadata);
       return false;
     }
@@ -82,7 +83,7 @@ export class RecoveryService {
         await this.restoreAgentCommunicationState(metadata);
         break;
       default:
-        console.log(`[RecoveryService] No specific recovery procedure for ${context}`);
+        logger.info(`[RecoveryService] No specific recovery procedure for ${context}`);
     }
   }
 

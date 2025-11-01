@@ -2,6 +2,7 @@ import { Spell } from '@/types/character';
 import { cantrips } from './cantrips';
 import { firstLevelSpells } from './level1';
 import { classSpellMappings } from './mappings';
+import { logger } from '../../lib/logger';
 
 export const allSpells: Spell[] = [...cantrips, ...firstLevelSpells];
 
@@ -11,17 +12,17 @@ export const getClassSpells = (className: string): { cantrips: Spell[]; spells: 
   
   // Debug logging for troubleshooting spell loading issues
   if (process.env.NODE_ENV === 'development') {
-    console.debug(`🔍 [getClassSpells] Looking up spells for: ${className} -> ${normalizedClassName}`);
-    console.debug(`📊 [getClassSpells] Available mappings:`, Object.keys(classSpellMappings));
-    console.debug(`📋 [getClassSpells] Mapping found:`, !!mapping);
+    logger.debug(`🔍 [getClassSpells] Looking up spells for: ${className} -> ${normalizedClassName}`);
+    logger.debug(`📊 [getClassSpells] Available mappings:`, Object.keys(classSpellMappings));
+    logger.debug(`📋 [getClassSpells] Mapping found:`, !!mapping);
     if (mapping) {
-      console.debug(`🎯 [getClassSpells] Expected cantrips: ${mapping.cantrips.length}, spells: ${mapping.spells.length}`);
+      logger.debug(`🎯 [getClassSpells] Expected cantrips: ${mapping.cantrips.length}, spells: ${mapping.spells.length}`);
     }
   }
   
   if (!mapping) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn(`⚠️ [getClassSpells] No mapping found for class: ${normalizedClassName}`);
+      logger.warn(`⚠️ [getClassSpells] No mapping found for class: ${normalizedClassName}`);
     }
     return { cantrips: [], spells: [] };
   }
@@ -30,7 +31,7 @@ export const getClassSpells = (className: string): { cantrips: Spell[]; spells: 
   const resultSpells = firstLevelSpells.filter(spell => mapping.spells.includes(spell.id));
   
   if (process.env.NODE_ENV === 'development') {
-    console.debug(`✅ [getClassSpells] ${normalizedClassName} results:`, {
+    logger.debug(`✅ [getClassSpells] ${normalizedClassName} results:`, {
       cantrips: resultCantrips.length,
       spells: resultSpells.length,
       totalAvailable: `cantrips: ${cantrips.length}, spells: ${firstLevelSpells.length}`,

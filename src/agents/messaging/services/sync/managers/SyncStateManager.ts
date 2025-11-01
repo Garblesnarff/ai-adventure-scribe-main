@@ -1,5 +1,6 @@
 import { VectorClock, SyncState } from '../types';
 import { DatabaseAdapter } from '../adapters/DatabaseAdapter';
+import { logger } from '../../../../../lib/logger';
 
 export class SyncStateManager {
   private vectorClock: VectorClock = {};
@@ -11,7 +12,7 @@ export class SyncStateManager {
         this.vectorClock = syncStatus.vectorClock;
       }
     } catch (error) {
-      console.error('[SyncStateManager] Error loading vector clock:', error);
+      logger.error('[SyncStateManager] Error loading vector clock:', error);
     }
   }
 

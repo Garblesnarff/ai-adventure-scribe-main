@@ -29,6 +29,7 @@ import { MessagePersistenceService } from '../storage/message-persistence-servic
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';
 import { ConnectionState } from './types';
+import { logger } from '../../../../lib/logger';
 
 
 export class ConnectionStateManager {
@@ -47,7 +48,7 @@ export class ConnectionStateManager {
   ) {}
 
   public async handleConnectionRestored(): Promise<void> {
-    console.log('[ConnectionStateManager] Connection restored');
+    logger.info('[ConnectionStateManager] Connection restored');
     
     this.state = {
       ...this.state,
@@ -61,7 +62,7 @@ export class ConnectionStateManager {
   }
 
   public async handleConnectionLost(): Promise<void> {
-    console.log('[ConnectionStateManager] Connection lost');
+    logger.info('[ConnectionStateManager] Connection lost');
     
     this.state = {
       ...this.state,
@@ -77,7 +78,7 @@ export class ConnectionStateManager {
     try {
       const isValid = await this.queueService.validateQueue();
       if (!isValid) {
-        console.warn('[ConnectionStateManager] Queue validation failed, initiating recovery...');
+        logger.warn('[ConnectionStateManager] Queue validation failed, initiating recovery...');
         await this.persistenceService.cleanupOldMessages();
       }
 
@@ -108,7 +109,7 @@ export class ConnectionStateManager {
       });
 
     } catch (error) {
-      console.error('[ConnectionStateManager] Error handling reconnection:', error);
+      logger.error('[ConnectionStateManager] Error handling reconnection:', error);
       this.eventEmitter.emit('reconnectionError', {
         error,
         timestamp: new Date()

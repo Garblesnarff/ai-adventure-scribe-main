@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../lib/logger';
 
 export type RollKind = 'check' | 'save' | 'attack' | 'initiative' | 'damage';
 
@@ -49,7 +50,7 @@ async function safePrune(sessionId: string, cap = 500) {
     }
   } catch (e) {
     // Fail-safe: table may not exist or permission error; ignore
-    console.warn('[RollManager] prune skipped:', e);
+    logger.warn('[RollManager] prune skipped:', e);
   }
 }
 
@@ -71,7 +72,7 @@ export const RollManager = {
       await supabase.from('roll_history').insert(payload);
       await safePrune(e.sessionId);
     } catch (err) {
-      console.warn('[RollManager] recordRollRequest failed (non-fatal):', err);
+      logger.warn('[RollManager] recordRollRequest failed (non-fatal):', err);
     }
   },
 
@@ -95,7 +96,7 @@ export const RollManager = {
       await supabase.from('roll_history').insert(payload);
       await safePrune(e.sessionId);
     } catch (err) {
-      console.warn('[RollManager] recordRollResult failed (non-fatal):', err);
+      logger.warn('[RollManager] recordRollResult failed (non-fatal):', err);
     }
   },
 
@@ -111,7 +112,7 @@ export const RollManager = {
       if (error) throw error;
       return data || [];
     } catch (err) {
-      console.warn('[RollManager] getRecentRolls failed (non-fatal):', err);
+      logger.warn('[RollManager] getRecentRolls failed (non-fatal):', err);
       return [] as any[];
     }
   },

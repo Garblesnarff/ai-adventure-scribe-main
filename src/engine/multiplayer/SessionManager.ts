@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger';
 import {
   SharedSession,
   SessionParticipant,
@@ -779,7 +780,7 @@ export class SessionManager {
 
         await this.handleTurnTimeout(sessionId, turnId);
       } catch (error) {
-        console.error('Error handling turn timeout:', error);
+        logger.error('Error handling turn timeout:', error);
       }
     }, delay);
   }

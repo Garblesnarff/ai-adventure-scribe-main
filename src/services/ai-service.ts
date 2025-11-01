@@ -218,9 +218,9 @@ When combat is detected, you MUST:
       // if (params.context.sessionId) {
       //   try {
       //     voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
-      //     console.log(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
+      //     logger.info(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
       //   } catch (voiceError) {
-      //     console.warn('Failed to retrieve voice context:', voiceError);
+      //     logger.warn('Failed to retrieve voice context:', voiceError);
       //   }
       // }
 
@@ -241,7 +241,7 @@ When combat is detected, you MUST:
       // Optional path: delegate to CrewAI orchestrator behind feature flag
       if (this.useCrewAI() && params.context.sessionId) {
         try {
-          console.log('Using CrewAI microservice for chat...');
+          logger.info('Using CrewAI microservice for chat...');
           const sessionState = await SessionStateService.getState(params.context.sessionId);
           const crewResult = await AgentOrchestrator.generateResponse({
             message: params.message,
@@ -264,7 +264,7 @@ When combat is detected, you MUST:
               const advantage = rr.advantage ? ' with advantage' : rr.disadvantage ? ' with disadvantage' : '';
               finalText = `Please roll ${purpose}${target}${advantage}.`;
             } else {
-              console.log('CrewAI returned placeholder text; generating narration via local Gemini.');
+              logger.info('CrewAI returned placeholder text; generating narration via local Gemini.');
               try {
                 const geminiManager = this.getGeminiManager();
                 const genAIResult = await geminiManager.executeWithRotation(async (genAI) => {
@@ -276,7 +276,7 @@ When combat is detected, you MUST:
                 });
                 finalText = genAIResult || finalText;
               } catch (e) {
-                console.warn('Gemini fallback for placeholder failed, using placeholder text:', e);
+                logger.warn('Gemini fallback for placeholder failed, using placeholder text:', e);
               }
             }
           }
@@ -298,10 +298,10 @@ When combat is detected, you MUST:
               );
               if (extractionResult.memories.length > 0) {
                 await MemoryManager.saveMemories(extractionResult.memories);
-                console.log(`🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`);
+                logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`);
               }
             } catch (memoryError) {
-              console.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
+              logger.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
             }
 
             try {
@@ -313,10 +313,10 @@ When combat is detected, you MUST:
                 finalText
               );
               if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
-                console.log(`🌍 World expanded (CrewAI): +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+                logger.info(`🌍 World expanded (CrewAI): +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
               }
             } catch (worldError) {
-              console.warn('World building (CrewAI path) failed (non-fatal):', worldError);
+              logger.warn('World building (CrewAI path) failed (non-fatal):', worldError);
             }
           }
 
@@ -336,13 +336,13 @@ When combat is detected, you MUST:
 
           return enhancedCrewResult;
         } catch (crewError) {
-          console.warn('CrewAI orchestrator failed, falling back to Gemini:', crewError);
+          logger.warn('CrewAI orchestrator failed, falling back to Gemini:', crewError);
           // Continue to legacy path below
         }
       }
       
       // Use local Gemini API
-      console.log('Using local Gemini API for chat...');
+      logger.info('Using local Gemini API for chat...');
       const geminiManager = this.getGeminiManager();
       
       const result = await geminiManager.executeWithRotation(async (genAI) => {

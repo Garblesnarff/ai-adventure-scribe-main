@@ -30,6 +30,7 @@ import { MessagePersistenceService } from '../storage/message-persistence-servic
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';
 import { OfflineState, StoredMessage } from '../storage/types';
+import { logger } from '../../../../lib/logger';
 
 
 export class OfflineStateService {
@@ -80,14 +81,14 @@ export class OfflineStateService {
 
       await this.saveState();
       
-      console.log('[OfflineStateService] Initialized with state:', this.state);
+      logger.info('[OfflineStateService] Initialized with state:', this.state);
     } catch (error) {
-      console.error('[OfflineStateService] Initialization error:', error);
+      logger.error('[OfflineStateService] Initialization error:', error);
     }
   }
 
   private async handleOnline(): Promise<void> {
-    console.log('[OfflineStateService] Connection restored');
+    logger.info('[OfflineStateService] Connection restored');
     
     this.state.isOnline = true;
     this.state.lastOnlineTimestamp = new Date().toISOString();
@@ -98,7 +99,7 @@ export class OfflineStateService {
   }
 
   private async handleOffline(): Promise<void> {
-    console.log('[OfflineStateService] Connection lost');
+    logger.info('[OfflineStateService] Connection lost');
     
     this.state.isOnline = false;
     this.state.lastOfflineTimestamp = new Date().toISOString();
@@ -112,7 +113,7 @@ export class OfflineStateService {
     try {
       const isValid = await this.queueService.validateQueue();
       if (!isValid) {
-        console.warn('[OfflineStateService] Queue validation failed, initiating recovery...');
+        logger.warn('[OfflineStateService] Queue validation failed, initiating recovery...');
         await this.recoveryService.recoverMessages();
       }
 
@@ -126,9 +127,9 @@ export class OfflineStateService {
       this.state.reconnectionAttempts = 0;
       await this.saveState();
 
-      console.log('[OfflineStateService] Synchronization complete');
+      logger.info('[OfflineStateService] Synchronization complete');
     } catch (error) {
-      console.error('[OfflineStateService] Synchronization error:', error);
+      logger.error('[OfflineStateService] Synchronization error:', error);
       this.state.pendingSync = true;
       await this.saveState();
     }
@@ -157,7 +158,7 @@ export class OfflineStateService {
     try {
       await this.storage.saveOfflineState(this.state);
     } catch (error) {
-      console.error('[OfflineStateService] Error saving state:', error);
+      logger.error('[OfflineStateService] Error saving state:', error);
     }
   }
 

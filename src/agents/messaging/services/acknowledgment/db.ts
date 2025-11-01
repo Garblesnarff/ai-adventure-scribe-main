@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
 import { AcknowledgmentData, AcknowledgmentStatus } from './types';
+import { logger } from '../../../../lib/logger';
 
 
 export async function createAcknowledgment(messageId: string): Promise<void> {
@@ -35,7 +36,7 @@ export async function createAcknowledgment(messageId: string): Promise<void> {
 
     if (error) throw error;
   } catch (error) {
-    console.error('[MessageAcknowledgmentDB] Create acknowledgment error:', error);
+    logger.error('[MessageAcknowledgmentDB] Create acknowledgment error:', error);
     throw error;
   }
 }
@@ -63,7 +64,7 @@ export async function updateAcknowledgment(
 
     if (error) throw error;
   } catch (error) {
-    console.error('[MessageAcknowledgmentDB] Update acknowledgment error:', error);
+    logger.error('[MessageAcknowledgmentDB] Update acknowledgment error:', error);
     throw error;
   }
 }
@@ -86,7 +87,7 @@ export async function getAcknowledgmentStatus(messageId: string): Promise<Acknow
       status: data.status as AcknowledgmentStatus['status']
     };
   } catch (error) {
-    console.error('[MessageAcknowledgmentDB] Check status error:', error);
+    logger.error('[MessageAcknowledgmentDB] Check status error:', error);
     return null;
   }
 }

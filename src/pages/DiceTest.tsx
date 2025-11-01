@@ -5,6 +5,7 @@ import { type ChatMessage } from '../services/ai-service';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
+import { logger } from '../lib/logger';
 
 export default function DiceTest() {
   const [customExpression, setCustomExpression] = useState('1d20+5');
@@ -113,7 +114,7 @@ export default function DiceTest() {
                 <DMChatBubble
                   key={message.id}
                   message={message}
-                  onOptionSelect={(option) => console.log('Option selected:', option)}
+                  onOptionSelect={(option) => logger.info('Option selected:', option)}
                 />
               ))}
             </div>

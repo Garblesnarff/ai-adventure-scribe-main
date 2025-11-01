@@ -16,6 +16,7 @@
 
 // Project Types
 import { ErrorMetadata } from '../types';
+import { logger } from '../../../lib/logger';
 
 interface RetryConfig {
   maxRetries: number;
@@ -57,7 +58,7 @@ export class RetryService {
         }
 
         const delay = this.calculateDelay(attempts, retryConfig);
-        console.log(`[RetryService] Attempt ${attempts} failed, retrying in ${delay}ms`);
+        logger.info(`[RetryService] Attempt ${attempts} failed, retrying in ${delay}ms`);
         await this.delay(delay);
       }
     }

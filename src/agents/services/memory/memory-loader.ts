@@ -12,6 +12,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Memory, isValidMemoryType } from '@/components/game/memory/types';
+import { logger } from '../../../lib/logger';
 
 export class MemoryLoader {
   /**
@@ -31,7 +32,7 @@ export class MemoryLoader {
 
     return (data || []).map((memory): Memory => {
       if (!isValidMemoryType(memory.type)) {
-        console.warn(`[MemoryLoader] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
+        logger.warn(`[MemoryLoader] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
         memory.type = 'general';
       }
       return {

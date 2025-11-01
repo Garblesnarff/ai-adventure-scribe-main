@@ -1,4 +1,5 @@
 import { llmApiClient, type GenerateTextParams } from './llm-api-client';
+import { logger } from '../lib/logger';
 
 type GeminiHistoryEntry = { role: 'user' | 'assistant' | 'system'; content: string };
 
@@ -27,7 +28,7 @@ export class GeminiApiManager {
 
     if (this.isDevelopment()) {
       const mode = hasKeys && allowDirect ? 'direct Gemini mode' : 'server-proxy mode';
-      console.log(`GeminiApiManager initialized (${mode})`);
+      logger.info(`GeminiApiManager initialized (${mode})`);
     }
   }
 
@@ -53,7 +54,7 @@ export class GeminiApiManager {
       this.googleClientCtorPromise = import('@google/generative-ai')
         .then(mod => mod?.GoogleGenerativeAI ?? null)
         .catch(error => {
-          console.warn('[GeminiApiManager] Failed to load @google/generative-ai:', error);
+          logger.warn('[GeminiApiManager] Failed to load @google/generative-ai:', error);
           return null;
         });
     }
@@ -328,13 +329,13 @@ export class GeminiApiManager {
         const message = error instanceof Error ? error.message : String(error || '');
         if (this.isAuthenticationError(error)) {
           this.directModeDisabled = true;
-          console.warn('[GeminiApiManager] Direct mode disabled after authentication error, falling back to proxy');
+          logger.warn('[GeminiApiManager] Direct mode disabled after authentication error, falling back to proxy');
         } else if (error instanceof TypeError || /failed to fetch|access-control-allow-origin|cors/i.test(message)) {
           this.directModeDisabled = true;
-          console.warn('[GeminiApiManager] Direct mode disabled after network/CORS failure, falling back to proxy');
+          logger.warn('[GeminiApiManager] Direct mode disabled after network/CORS failure, falling back to proxy');
         } else if (/model\s+(id\s+)?['"]?[^'"\s]+['"]?\s+is\s+not\s+valid|unsupported\s+model/i.test(message)) {
           this.directModeDisabled = true;
-          console.warn('[GeminiApiManager] Direct mode disabled after model availability error, falling back to proxy');
+          logger.warn('[GeminiApiManager] Direct mode disabled after model availability error, falling back to proxy');
         } else {
           throw error;
         }

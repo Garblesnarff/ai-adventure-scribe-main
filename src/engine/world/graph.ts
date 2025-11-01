@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger';
 import {
   WorldEntity,
   WorldRelationship,
@@ -748,7 +749,7 @@ export class WorldGraph {
     }
 
     // Log rule violation
-    console.log(`Rule ${rule.name} triggered with ${results.errors.length} errors and ${results.warnings.length} warnings`);
+    logger.info(`Rule ${rule.name} triggered with ${results.errors.length} errors and ${results.warnings.length} warnings`);
   }
 
   private resolveConflicts(method: ResolutionMethod): void {

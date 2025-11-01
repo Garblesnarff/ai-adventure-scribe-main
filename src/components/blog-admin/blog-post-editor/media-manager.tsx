@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useBlogMedia, useUploadBlogMedia, useDeleteBlogMedia } from '@/hooks/blog/useBlogMedia';
 import type { BlogMediaAsset } from '@/types/blog';
 import { compressImage, convertToWebP } from '@/utils/image-compression';
+import { logger } from '../../../lib/logger';
 
 interface MediaManagerProps {
   open: boolean;
@@ -51,7 +52,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
           try {
             processedFile = await convertToWebP(file);
           } catch (conversionError) {
-            console.warn('WebP conversion failed, compressing original:', conversionError);
+            logger.warn('WebP conversion failed, compressing original:', conversionError);
             processedFile = await compressImage(file);
           }
         }

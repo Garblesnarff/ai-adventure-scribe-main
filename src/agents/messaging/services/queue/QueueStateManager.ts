@@ -22,6 +22,7 @@ import { IndexedDBService } from '../storage/indexed-db-service';
 // Project Types
 import { QueuedMessage } from '../../types';
 import { QueueState } from '../storage/types';
+import { logger } from '../../../../lib/logger';
 
 
 export class QueueStateManager {
@@ -61,9 +62,9 @@ export class QueueStateManager {
       };
       
       await this.storage.saveQueueState(snapshot);
-      console.log('[QueueStateManager] Queue snapshot saved:', snapshot.lastSyncTimestamp);
+      logger.info('[QueueStateManager] Queue snapshot saved:', snapshot.lastSyncTimestamp);
     } catch (error) {
-      console.error('[QueueStateManager] Failed to save queue snapshot:', error);
+      logger.error('[QueueStateManager] Failed to save queue snapshot:', error);
       throw error;
     }
   }
@@ -78,13 +79,13 @@ export class QueueStateManager {
 
       const missingMessages = [...storedIds].filter(id => !currentIds.has(id));
       if (missingMessages.length > 0) {
-        console.warn('[QueueStateManager] Found missing messages:', missingMessages);
+        logger.warn('[QueueStateManager] Found missing messages:', missingMessages);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('[QueueStateManager] Queue validation error:', error);
+      logger.error('[QueueStateManager] Queue validation error:', error);
       return false;
     }
   }

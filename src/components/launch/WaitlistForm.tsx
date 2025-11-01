@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface WaitlistFormProps {
   className?: string;
@@ -115,7 +116,7 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
       onSuccess?.();
 
     } catch (error) {
-      console.error('Waitlist signup error:', error);
+      logger.error('Waitlist signup error:', error);
       setStatus('error');
 
       // Track analytics

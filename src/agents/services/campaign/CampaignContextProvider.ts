@@ -24,6 +24,7 @@ import { ErrorHandlingService } from '../../error/services/error-handling-servic
 
 // Project Types
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
+import { logger } from '../../../lib/logger';
 
 
 export class CampaignContextProvider {
@@ -47,7 +48,7 @@ export class CampaignContextProvider {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error fetching campaign details:', error);
+      logger.error('Error fetching campaign details:', error);
       return null;
     }
   }

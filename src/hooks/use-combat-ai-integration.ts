@@ -12,11 +12,12 @@ import { useMessages } from '@/hooks/use-messages';
 import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
 import { detectCombatFromText, createCombatParticipantsFromDetection, DetectedCombatAction, PlayerCharacterLike } from '@/utils/combatDetection';
 import { rollDice, DiceRoll } from '@/utils/diceUtils';
-import { 
-  CombatEvent, 
-  CombatAction, 
+import { logger } from '../lib/logger';
+import {
+  CombatEvent,
+  CombatAction,
   CombatParticipant,
-  ActionType 
+  ActionType
 } from '@/types/combat';
 import { ChatMessage } from '@/types/game';
 
@@ -362,7 +363,7 @@ export const useCombatAIIntegration = ({
         }
       }
     } catch (error) {
-      console.error('Error processing combat event:', error);
+      logger.error('Error processing combat event:', error);
     }
   }, [sessionId, characterId, campaignId, combatState, addMessage]);
 
@@ -399,7 +400,7 @@ export const useCombatAIIntegration = ({
         errors: validation?.errors ?? []
       };
     } catch (error) {
-      console.error('Error validating combat action:', error);
+      logger.error('Error validating combat action:', error);
       return { isValid: true, suggestions: [], errors: [] };
     }
   }, [state.activeEncounter]);

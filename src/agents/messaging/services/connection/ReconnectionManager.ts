@@ -21,6 +21,7 @@ import { EventEmitter } from './event-emitter';
 
 // Project Types
 import { ReconnectionConfig, ReconnectionState } from './types';
+import { logger } from '../../../../lib/logger';
 
 
 export class ReconnectionManager {
@@ -47,7 +48,7 @@ export class ReconnectionManager {
     }
 
     const delay = this.calculateBackoffDelay();
-    console.log(`[ReconnectionManager] Attempting reconnection in ${delay}ms`);
+    logger.info(`[ReconnectionManager] Attempting reconnection in ${delay}ms`);
 
     if (this.timer) {
       clearTimeout(this.timer);

@@ -31,6 +31,7 @@ import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsServi
 // Project Types
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
 import { QueuedMessage } from '../types';
+import { logger } from '../../../lib/logger';
 
 
 export class MessageDeliveryService {
@@ -58,7 +59,7 @@ export class MessageDeliveryService {
     const context = `MessageDelivery.${message.id}`;
 
     if (this.circuitBreaker.isOpen(context)) {
-      console.warn(`[MessageDeliveryService] Circuit breaker open for ${context}`);
+      logger.warn(`[MessageDeliveryService] Circuit breaker open for ${context}`);
       return false;
     }
 
@@ -95,7 +96,7 @@ export class MessageDeliveryService {
       this.circuitBreaker.recordSuccess(context);
       return true;
     } catch (error) {
-      console.error('[MessageDeliveryService] Delivery error:', error);
+      logger.error('[MessageDeliveryService] Delivery error:', error);
       this.circuitBreaker.recordError(context);
       this.diagnostics.recordFailure(error instanceof Error ? error.message : 'Delivery error');
       
@@ -141,7 +142,7 @@ export class MessageDeliveryService {
 
       this.diagnostics.recordDeadLetter(message);
     } catch (error) {
-      console.error('[MessageDeliveryService] Failed delivery handling error:', error);
+      logger.error('[MessageDeliveryService] Failed delivery handling error:', error);
     }
   }
 }

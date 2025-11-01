@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../lib/logger';
 
 export type EntityType = 'campaign' | 'character';
 
@@ -56,7 +57,7 @@ export async function listEntityImages(
     images.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     return images;
   } catch (e) {
-    console.error('[GalleryService] listEntityImages failed:', e);
+    logger.error('[GalleryService] listEntityImages failed:', e);
     return [];
   }
 }

@@ -26,6 +26,7 @@ import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsServi
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../types';
+import { logger } from '../../../lib/logger';
 
 
 export class MessageProcessingService {
@@ -71,7 +72,7 @@ export class MessageProcessingService {
         return false;
       }
     } catch (error) {
-      console.error('[MessageProcessingService] Error processing message:', error);
+      logger.error('[MessageProcessingService] Error processing message:', error);
       this.diagnostics.recordFailure(error instanceof Error ? error.message : 'Unknown error');
       return false;
     }

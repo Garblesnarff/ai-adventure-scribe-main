@@ -30,6 +30,7 @@ import { ErrorCategory, ErrorSeverity, ErrorMetadata } from '../types';
 
 // Hooks
 import { useToast } from '@/hooks/use-toast'; // Note: useToast usage in a class is unconventional.
+import { logger } from '../../../lib/logger';
 
 interface OperationConfig {
   category: ErrorCategory;
@@ -107,14 +108,14 @@ export class ErrorHandlingService {
     context: string,
     metadata?: ErrorMetadata
   ): Promise<void> {
-    console.error(`[ErrorHandlingService] Error in ${context}:`, error);
+    logger.error(`[ErrorHandlingService] Error in ${context}:`, error);
 
     // Track error
     await this.trackingService.trackError(error, category, context, metadata);
 
     // Check circuit breaker
     if (this.circuitBreaker.isOpen(context)) {
-      console.warn(`[ErrorHandlingService] Circuit breaker open for ${context}`);
+      logger.warn(`[ErrorHandlingService] Circuit breaker open for ${context}`);
       throw new Error(`Service unavailable: ${context}`);
     }
 

@@ -36,6 +36,7 @@ import { MessagePersistenceService } from '../storage/message-persistence-servic
 
 // Project Types
 import { ConnectionState, ReconnectionConfig } from './types';
+import { logger } from '../../../../lib/logger';
 
 
 export class ConnectionStateService {
@@ -111,7 +112,7 @@ export class ConnectionStateService {
       }
       await this.handleOnline();
     } catch (error) {
-      console.error('[ConnectionStateService] Reconnection attempt failed:', error);
+      logger.error('[ConnectionStateService] Reconnection attempt failed:', error);
       this.reconnectionManager.startReconnection();
     }
   }

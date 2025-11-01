@@ -1,3 +1,4 @@
+import { logger } from '../../lib/logger';
 import {
   SynchronizationState,
   ParticipantSync,
@@ -94,7 +95,7 @@ export class SynchronizationManager {
       await this.synchronizeChanges(sessionId, changes, participantId);
       return true;
     } catch (error) {
-      console.error('Error processing world changes:', error);
+      logger.error('Error processing world changes:', error);
       return false;
     }
   }
@@ -243,7 +244,7 @@ export class SynchronizationManager {
 
       return true;
     } catch (error) {
-      console.error('Error forcing resynchronization:', error);
+      logger.error('Error forcing resynchronization:', error);
       return false;
     }
   }
@@ -282,7 +283,7 @@ export class SynchronizationManager {
       this.updateSynchronizationProgress(sessionId);
       return true;
     } catch (error) {
-      console.error('Error resolving conflict:', error);
+      logger.error('Error resolving conflict:', error);
       return false;
     }
   }
@@ -514,7 +515,7 @@ export class SynchronizationManager {
         // Update fact logic
         break;
       default:
-        console.warn(`Unknown change type: ${change.type}`);
+        logger.warn(`Unknown change type: ${change.type}`);
     }
   }
 

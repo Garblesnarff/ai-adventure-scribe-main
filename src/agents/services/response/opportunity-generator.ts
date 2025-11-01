@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
 import { CampaignContext } from '@/types/dm';
+import { logger } from '../../../lib/logger';
 
 
 export class OpportunityGenerator {
@@ -31,7 +32,7 @@ export class OpportunityGenerator {
       .eq('status', 'available'); // Ensure this status matches enum or actual values
 
     if (questError) {
-      console.error("Error fetching quests:", questError);
+      logger.error("Error fetching quests:", questError);
       // Decide how to handle quest fetching errors, e.g., return empty or a default hook
     }
 

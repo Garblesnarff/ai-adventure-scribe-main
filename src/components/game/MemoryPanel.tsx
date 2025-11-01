@@ -8,6 +8,7 @@ import { useMemoryContext } from '@/contexts/MemoryContext';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
 import { useCampaign } from '@/contexts/CampaignContext';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { MemoryType } from './memory/types';
 import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lucide-react';
 import { MemoryCard } from './memory/MemoryCard';
@@ -56,39 +57,41 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
 
-  // Local state
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'character' | 'memory' | 'combat'>('character');
-  const [localSessionNotes, setLocalSessionNotes] = useState('');
-  const [panelWidth, setPanelWidth] = useState('340px'); // Default fixed width (within 280-400px)
+  // Persistent state using type-safe localStorage hook
+  type GameSidePanelState = {
+    isExpanded: boolean;
+    activeTab: 'character' | 'memory' | 'combat';
+    panelWidth: string;
+  };
 
-  // Load state from localStorage on mount
+  const [panelState, setPanelState] = useLocalStorage<GameSidePanelState>('gameSidePanelState', {
+    isExpanded: true,
+    activeTab: 'character',
+    panelWidth: '340px'
+  });
+
+  // Local state
+  const [isExpanded, setIsExpanded] = useState(panelState.isExpanded);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'character' | 'memory' | 'combat'>(panelState.activeTab);
+  const [localSessionNotes, setLocalSessionNotes] = useState('');
+  const [panelWidth, setPanelWidth] = useState(panelState.panelWidth);
+
+  // Sync panel width with ref on mount
   useEffect(() => {
-    const saved = localStorage.getItem('gameSidePanelState');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setIsExpanded(parsed.isExpanded ?? true);
-      setActiveTab(parsed.activeTab as any ?? 'character');
-      if (parsed.panelWidth) {
-        setPanelWidth(parsed.panelWidth);
-        if (panelRef.current) {
-          panelRef.current.style.width = parsed.panelWidth;
-        }
-      }
+    if (panelRef.current) {
+      panelRef.current.style.width = panelWidth;
     }
   }, []);
 
   // Save state to localStorage on changes
   useEffect(() => {
-    const stateToSave = {
+    setPanelState({
       isExpanded,
       activeTab,
-      panelWidth,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('gameSidePanelState', JSON.stringify(stateToSave));
-  }, [isExpanded, activeTab, panelWidth]);
+      panelWidth
+    });
+  }, [isExpanded, activeTab, panelWidth, setPanelState]);
 
   // Resizable drag functionality
   const startDrag = useCallback((e: React.MouseEvent) => {

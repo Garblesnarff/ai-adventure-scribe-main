@@ -18,6 +18,8 @@
  * @author AI Dungeon Master Team
  */
 
+import { logger } from '../../../lib/logger';
+
 interface CircuitBreakerState {
   failures: number;
   lastFailure: number;
@@ -60,7 +62,7 @@ export class CircuitBreakerService {
 
     if (state.failures >= this.FAILURE_THRESHOLD) {
       state.state = 'OPEN';
-      console.warn(`[CircuitBreaker] Circuit opened for ${context}`);
+      logger.warn(`[CircuitBreaker] Circuit opened for ${context}`);
     }
   }
 
@@ -69,7 +71,7 @@ export class CircuitBreakerService {
     if (state.state === 'HALF_OPEN') {
       state.state = 'CLOSED';
       state.failures = 0;
-      console.log(`[CircuitBreaker] Circuit closed for ${context}`);
+      logger.info(`[CircuitBreaker] Circuit closed for ${context}`);
     }
   }
 

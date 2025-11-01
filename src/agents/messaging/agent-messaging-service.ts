@@ -35,6 +35,7 @@ import { OfflineStateService } from './services/offline/offline-state-service';
 
 import { AgentNotificationService } from './services/notifications/AgentNotificationService';
 import { MessageDiagnosticsService } from './services/diagnostics/MessageDiagnosticsService';
+import { logger } from '../../lib/logger';
 
 export class AgentMessagingService {
   private static instance: AgentMessagingService;
@@ -87,7 +88,7 @@ export class AgentMessagingService {
         this.startQueueProcessor();
       }
     } catch (error) {
-      console.error('[AgentMessagingService] Initialization error:', error);
+      logger.error('[AgentMessagingService] Initialization error:', error);
     }
   }
 
@@ -106,7 +107,7 @@ export class AgentMessagingService {
   private async processMessageQueue(): Promise<void> {
     const isValid = await this.queueService.validateQueue();
     if (!isValid) {
-      console.warn('[AgentMessagingService] Queue validation failed, initiating recovery...');
+      logger.warn('[AgentMessagingService] Queue validation failed, initiating recovery...');
       await this.recoveryService.recoverMessages();
       return;
     }
@@ -122,7 +123,7 @@ export class AgentMessagingService {
       this.queueService.dequeue();
       await this.queueService.completeProcessing(success);
     } catch (error) {
-      console.error('[AgentMessagingService] Error processing message:', error);
+      logger.error('[AgentMessagingService] Error processing message:', error);
       await this.queueService.completeProcessing(false);
     }
   }
@@ -160,7 +161,7 @@ export class AgentMessagingService {
 
       return enqueued;
     } catch (error) {
-      console.error('[AgentMessagingService] Send message error:', error);
+      logger.error('[AgentMessagingService] Send message error:', error);
       this.notifier.notify({
         level: 'error',
         title: 'Message dispatch failed',

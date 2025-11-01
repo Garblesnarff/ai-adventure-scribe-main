@@ -1,6 +1,7 @@
 import { MessageSequence } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { TypeConverter } from '../adapters/TypeConverter';
+import { logger } from '../../../../../lib/logger';
 
 export class ConsistencyValidator {
   public async checkConsistency(): Promise<boolean> {
@@ -20,7 +21,7 @@ export class ConsistencyValidator {
       for (const sequence of sequences) {
         if (sequence.sequence_number !== lastSequence + 1) {
           isConsistent = false;
-          console.warn(
+          logger.warn(
             '[ConsistencyValidator] Consistency check failed:',
             `Expected ${lastSequence + 1}, got ${sequence.sequence_number}`
           );
@@ -31,7 +32,7 @@ export class ConsistencyValidator {
 
       return isConsistent;
     } catch (error) {
-      console.error('[ConsistencyValidator] Consistency check error:', error);
+      logger.error('[ConsistencyValidator] Consistency check error:', error);
       return false;
     }
   }

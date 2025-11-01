@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { checkSafetyCommands, processSafetyCommand } from '@/utils/safetyCommands';
+import { logger } from '../lib/logger';
 
 export interface UseKeyboardShortcutsOptions {
   sessionId: string;
@@ -88,7 +89,7 @@ export const useKeyboardShortcuts = ({
           }
         }
       } catch (error) {
-        console.error('Error handling safety keyboard shortcut:', error);
+        logger.error('Error handling safety keyboard shortcut:', error);
       }
     }
   }, [sessionId, onSafetyCommand, onGameStateUpdate, disabled]);

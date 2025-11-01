@@ -12,6 +12,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CampaignContext } from '@/types/dm'; // Ensure this type aligns with returned structure
+import { logger } from '../../../lib/logger';
 
 // Define ThematicElements locally if not imported or different from CampaignContext's version
 interface ThematicElements {
@@ -44,7 +45,7 @@ export class CampaignContextLoader {
       .single();
 
     if (error) {
-      console.error(`Error loading campaign context for ID ${campaignId}:`, error.message);
+      logger.error(`Error loading campaign context for ID ${campaignId}:`, error.message);
       throw new Error(`Failed to load campaign context: ${error.message}`);
     }
     if (!campaign) {

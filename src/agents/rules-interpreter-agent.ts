@@ -35,6 +35,7 @@ import { EncounterSpec, MonsterDef } from '@/types/encounters';
 
 // Utilities
 import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
+import { logger } from '../lib/logger';
 
 export class RulesInterpreterAgent implements Agent {
   id: string;
@@ -72,7 +73,7 @@ export class RulesInterpreterAgent implements Agent {
     const errorHandler = ErrorHandlingService.getInstance();
 
     try {
-      console.log(`Rules Interpreter executing task: ${task.description}`);
+      logger.info(`Rules Interpreter executing task: ${task.description}`);
 
       const ruleValidations = task.context?.ruleType ? 
         await this.validationService.validateRules(task.context) : null;
@@ -88,7 +89,7 @@ export class RulesInterpreterAgent implements Agent {
             const { loadMonsters } = await import('@/services/encounters/srd-loader');
             monsters = loadMonsters();
           } catch (e) {
-            console.warn('Failed to load SRD monsters in RulesInterpreterAgent; using empty list');
+            logger.warn('Failed to load SRD monsters in RulesInterpreterAgent; using empty list');
           }
         }
         const party = task.context?.party;
@@ -149,7 +150,7 @@ export class RulesInterpreterAgent implements Agent {
         }
       };
     } catch (error) {
-      console.error('Error executing Rules Interpreter task:', error);
+      logger.error('Error executing Rules Interpreter task:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to execute task'

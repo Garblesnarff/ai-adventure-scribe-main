@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { supabase } from '@/integrations/supabase/client';
 import { Character } from '@/types/character';
 import { baseRaces } from '@/data/raceOptions';
@@ -13,35 +14,12 @@ import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
 import { CharacterListSkeleton } from '@/components/skeletons/CharacterListSkeleton';
 
-const CHARACTER_CACHE_KEY = 'aas_cached_characters';
-
-const loadCachedCharacters = (): Partial<Character>[] => {
-  if (typeof window === 'undefined') return [];
-  const raw = window.localStorage.getItem(CHARACTER_CACHE_KEY);
-  if (!raw) return [];
-  try {
-    const data = JSON.parse(raw) as Partial<Character>[];
-    return Array.isArray(data) ? data : [];
-  } catch (error) {
-    logger.warn('Failed to parse cached characters', error);
-    return [];
-  }
-};
-
-const persistCharacters = (characters: Partial<Character>[]) => {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(CHARACTER_CACHE_KEY, JSON.stringify(characters));
-  } catch (error) {
-    logger.warn('Failed to persist characters cache', error);
-  }
-};
-
 /**
  * CharacterList component displays all characters for the current user
  * Provides options to view existing characters or create new ones
  */
 const CharacterList: React.FC = () => {
+  const [cachedCharacters, setCachedCharacters] = useLocalStorage<Partial<Character>[]>('aas_cached_characters', []);
   const [characters, setCharacters] = React.useState<Partial<Character>[]>([]);
   const [filteredCharacters, setFilteredCharacters] = React.useState<Partial<Character>[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -78,17 +56,16 @@ const CharacterList: React.FC = () => {
 
       if (isOffline()) {
         setOfflineMode(true);
-        const cached = loadCachedCharacters();
         if (!offlineNoticeShown.current) {
           toast({
             title: 'Offline mode',
-            description: cached.length > 0
+            description: cachedCharacters.length > 0
               ? 'You are viewing cached characters. Changes will sync when you reconnect.'
               : 'You appear to be offline. Reconnect to load your characters.',
           });
           offlineNoticeShown.current = true;
         }
-        setCharacters(cached);
+        setCharacters(cachedCharacters);
         return;
       }
 
@@ -122,7 +99,7 @@ const CharacterList: React.FC = () => {
       if (error) throw error;
       const transformedData = transformCharacterData(data || []);
       setCharacters(transformedData);
-      persistCharacters(transformedData);
+      setCachedCharacters(transformedData);
     } catch (error) {
       logger.error('Error fetching characters:', error);
       toast({
@@ -133,7 +110,7 @@ const CharacterList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast, navigate]);
+  }, [toast, navigate, cachedCharacters, setCachedCharacters]);
 
   React.useEffect(() => {
     fetchCharacters();
@@ -147,13 +124,13 @@ const CharacterList: React.FC = () => {
     }));
     disposers.push(addNetworkListener('offline', () => {
       setOfflineMode(true);
-      setCharacters(loadCachedCharacters());
+      setCharacters(cachedCharacters);
     }));
 
     return () => {
       disposers.forEach((dispose) => dispose());
     };
-  }, [fetchCharacters]);
+  }, [fetchCharacters, cachedCharacters]);
 
   // Filter characters based on search term
   React.useEffect(() => {

@@ -17,6 +17,7 @@
 
 // Project Config (assuming kebab-case for StorageConfig.ts)
 import { DEFAULT_STORAGE_CONFIG } from '../config/storage-config';
+import { logger } from '../../../../../lib/logger';
 
 
 export class DatabaseInitializer {
@@ -25,12 +26,12 @@ export class DatabaseInitializer {
       const request = indexedDB.open(DEFAULT_STORAGE_CONFIG.dbName, DEFAULT_STORAGE_CONFIG.version);
 
       request.onerror = () => {
-        console.error('[IndexedDB] Failed to open database');
+        logger.error('[IndexedDB] Failed to open database');
         reject(request.error);
       };
 
       request.onsuccess = () => {
-        console.log('[IndexedDB] Database opened successfully');
+        logger.info('[IndexedDB] Database opened successfully');
         resolve(request.result);
       };
 

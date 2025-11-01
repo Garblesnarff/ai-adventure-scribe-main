@@ -230,7 +230,7 @@ export const useAIResponse = () => {
           }
         }
       } catch (e) {
-        console.warn('Non-fatal: failed to append roll result log', e);
+        logger.warn('Non-fatal: failed to append roll result log', e);
       }
       
       // Detect if this is the first player message in the session
@@ -424,7 +424,7 @@ export const useAIResponse = () => {
             });
           }
         } catch (e) {
-          console.warn('Non-fatal: failed to append roll request log', e);
+          logger.warn('Non-fatal: failed to append roll request log', e);
         }
       }
 

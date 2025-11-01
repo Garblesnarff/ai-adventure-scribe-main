@@ -32,6 +32,7 @@ import { ConsistencyValidator } from './validators/consistency-validator';
 // Project Types
 import { ErrorCategory, ErrorSeverity } from '../../../error/types';
 import { QueuedMessage } // Assuming QueuedMessage is from a higher-level type definition if not explicitly used here
+import { logger } from '../../../../lib/logger';
     // If QueuedMessage from '../../types' is needed, add: import { QueuedMessage } from '../../types';
     from './types'; // Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
 import { MessageSequence, MessageSyncOptions, SyncStatus } from './types';
@@ -75,9 +76,9 @@ export class MessageSynchronizationService {
       await this.stateManager.loadVectorClock();
       this.startConsistencyChecks();
       this.listenToConnectionChanges();
-      console.log('[MessageSynchronizationService] Initialized successfully');
+      logger.info('[MessageSynchronizationService] Initialized successfully');
     } catch (error) {
-      console.error('[MessageSynchronizationService] Initialization error:', error);
+      logger.error('[MessageSynchronizationService] Initialization error:', error);
     }
   }
 
@@ -126,7 +127,7 @@ export class MessageSynchronizationService {
       await this.stateManager.updateSyncState(agentId, this.queueService.getQueueIds());
       return true;
     } catch (error) {
-      console.error('[MessageSynchronizationService] Synchronization error:', error);
+      logger.error('[MessageSynchronizationService] Synchronization error:', error);
       await recoveryService.attemptRecovery('message-sync', error as Error);
       return false;
     }
@@ -153,9 +154,9 @@ export class MessageSynchronizationService {
         await this.processMessageSequence(sequence);
       }
 
-      console.log('[MessageSynchronizationService] Messages synchronized successfully');
+      logger.info('[MessageSynchronizationService] Messages synchronized successfully');
     } catch (error) {
-      console.error('[MessageSynchronizationService] Synchronization error:', error);
+      logger.error('[MessageSynchronizationService] Synchronization error:', error);
       await RecoveryService.getInstance().attemptRecovery('message-sync', error as Error);
     }
   }

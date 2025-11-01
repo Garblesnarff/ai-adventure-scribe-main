@@ -16,7 +16,9 @@
 import React from 'react';
 import { VoiceDirector, VoiceSegment, AISegment } from '@/services/voice-director';
 import { useToast } from './use-toast';
+import { useLocalStorage } from './use-local-storage';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../lib/logger';
 
 export interface ProgressiveVoiceState {
   segments: VoiceSegment[];
@@ -32,7 +34,12 @@ export interface ProgressiveVoiceState {
 
 export const useProgressiveVoice = () => {
   const { toast } = useToast();
-  
+
+  // Persistent settings with type-safe localStorage hooks
+  const [volume, setVolume] = useLocalStorage<number>('progressive-voice-volume', 1);
+  const [isMuted, setIsMuted] = useLocalStorage<boolean>('progressive-voice-muted', false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useLocalStorage<boolean>('progressive-voice-enabled', true);
+
   // State
   const [state, setState] = React.useState<ProgressiveVoiceState>({
     segments: [],
@@ -40,9 +47,9 @@ export const useProgressiveVoice = () => {
     isPlaying: false,
     isPaused: false,
     isProcessing: false,
-    volume: 1,
-    isMuted: false,
-    isVoiceEnabled: true
+    volume,
+    isMuted,
+    isVoiceEnabled
   });
 
   // API key state
@@ -65,53 +72,39 @@ export const useProgressiveVoice = () => {
    * Initialize audio context during user interaction for browser autoplay compliance
    */
   const initializeAudioContext = React.useCallback(() => {
-    console.log('🎵 Initializing audio context during user interaction');
-    
+    logger.info('🎵 Initializing audio context during user interaction');
+
     if (!preCreatedAudio.current) {
       preCreatedAudio.current = new Audio();
       preCreatedAudio.current.volume = state.isMuted ? 0 : state.volume;
-      console.log('✅ Pre-created audio element during user interaction');
+      logger.info('✅ Pre-created audio element during user interaction');
     }
-    
+
     return preCreatedAudio.current;
   }, [state.isMuted, state.volume]);
-
-  // Load settings from localStorage
-  React.useEffect(() => {
-    const savedVolume = localStorage.getItem('progressive-voice-volume');
-    const savedMuted = localStorage.getItem('progressive-voice-muted');
-    const savedEnabled = localStorage.getItem('progressive-voice-enabled');
-
-    setState(prev => ({
-      ...prev,
-      volume: savedVolume ? parseFloat(savedVolume) : 1,
-      isMuted: savedMuted === 'true',
-      isVoiceEnabled: savedEnabled !== 'false'
-    }));
-  }, []);
 
   // Fetch API key from Supabase secrets or environment
   React.useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        console.log('🔑 Attempting to retrieve ElevenLabs API key...');
+        logger.info('🔑 Attempting to retrieve ElevenLabs API key...');
         
         // Try environment variable first (for development)
         const envApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-        console.log('📝 Environment check:', {
+        logger.info('📝 Environment check:', {
           hasEnvKey: !!envApiKey,
           keyLength: envApiKey ? envApiKey.length : 0,
           keyPrefix: envApiKey ? envApiKey.substring(0, 10) + '...' : 'N/A'
         });
         
         if (envApiKey) {
-          console.log('✅ Using ElevenLabs API key from environment variable');
+          logger.info('✅ Using ElevenLabs API key from environment variable');
           setApiKey(envApiKey);
           apiKeyRef.current = envApiKey; // Set ref immediately
           return;
         }
         
-        console.log('🔄 No environment variable found, trying Supabase edge function...');
+        logger.info('🔄 No environment variable found, trying Supabase edge function...');
         
         // Fallback to Supabase edge function (for production)
         const { data, error } = await supabase.functions.invoke('get-secret', {
@@ -119,20 +112,20 @@ export const useProgressiveVoice = () => {
         });
 
         if (error) {
-          console.error('❌ Error calling get-secret function:', error);
+          logger.error('❌ Error calling get-secret function:', error);
           throw new Error(`Failed to call get-secret: ${error.message}`);
         }
 
         if (data?.secret) {
-          console.log('✅ Retrieved ElevenLabs API key from Supabase secrets');
+          logger.info('✅ Retrieved ElevenLabs API key from Supabase secrets');
           setApiKey(data.secret);
           apiKeyRef.current = data.secret; // Set ref immediately
         } else {
-          console.error('❌ Empty response from get-secret function:', data);
+          logger.error('❌ Empty response from get-secret function:', data);
           throw new Error('ElevenLabs API key is empty or not found');
         }
       } catch (error) {
-        console.error('❌ Error fetching API key for progressive voice:', error);
+        logger.error('❌ Error fetching API key for progressive voice:', error);
         
         // Show detailed error message
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -154,7 +147,7 @@ export const useProgressiveVoice = () => {
    * Main function: Process and play AI segments
    */
   const speakAISegments = React.useCallback(async (aiSegments: AISegment[]): Promise<void> => {
-    console.log('🎭 Progressive Voice: speakAISegments called with:', {
+    logger.info('🎭 Progressive Voice: speakAISegments called with:', {
       segmentCount: aiSegments?.length || 0,
       isVoiceEnabled: state.isVoiceEnabled,
       isProcessing: state.isProcessing,
@@ -165,14 +158,14 @@ export const useProgressiveVoice = () => {
     });
 
     if (!state.isVoiceEnabled || !aiSegments?.length || state.isProcessing) {
-      console.log('🚫 Voice not enabled, no segments, or already processing');
+      logger.info('🚫 Voice not enabled, no segments, or already processing');
       return;
     }
 
     // Wait for API key if it's not available yet (max 3 seconds)
     const currentApiKey = apiKeyRef.current;
     if (!currentApiKey) {
-      console.log('⏳ API key not ready, waiting...');
+      logger.info('⏳ API key not ready, waiting...');
       
       let attempts = 0;
       const maxAttempts = 30; // 3 seconds at 100ms intervals
@@ -183,7 +176,7 @@ export const useProgressiveVoice = () => {
       }
       
       if (!apiKeyRef.current) {
-        console.error('❌ API key is still missing after waiting');
+        logger.error('❌ API key is still missing after waiting');
         setState(prev => ({ ...prev, error: 'API key timeout - could not retrieve ElevenLabs API key' }));
         toast({
           title: "API Key Timeout",
@@ -193,29 +186,29 @@ export const useProgressiveVoice = () => {
         return;
       }
       
-      console.log('✅ API key is now available after waiting');
+      logger.info('✅ API key is now available after waiting');
     }
 
-    console.log('🎭 Progressive Voice: Starting to process', aiSegments.length, 'AI segments');
+    logger.info('🎭 Progressive Voice: Starting to process', aiSegments.length, 'AI segments');
 
     // Abort any ongoing processing
     if (abortController.current) {
-      console.log('⚠️ Aborting previous audio processing');
+      logger.info('⚠️ Aborting previous audio processing');
       abortController.current.abort();
     }
     abortController.current = new AbortController();
-    console.log('🆕 Created new abort controller for audio processing');
+    logger.info('🆕 Created new abort controller for audio processing');
 
     // Stop current audio only if actually playing or processing
     if (state.isPlaying || currentAudio.current) {
-      console.log('🛑 Stopping current audio before starting new segments');
+      logger.info('🛑 Stopping current audio before starting new segments');
       stopPlayback();
     }
     
     // SIMPLIFIED: Initialize audio context during user interaction to comply with browser autoplay policies
     const initializedAudio = initializeAudioContext();
     if (initializedAudio) {
-      console.log('✅ Audio element ready for playback');
+      logger.info('✅ Audio element ready for playback');
     }
 
     setState(prev => ({ ...prev, isProcessing: true, error: undefined }));
@@ -223,10 +216,10 @@ export const useProgressiveVoice = () => {
     try {
       // Step 1: Convert AI segments to voice segments using VoiceDirector
       const validatedSegments = VoiceDirector.validateAISegments(aiSegments);
-      console.log('📝 Validated segments:', validatedSegments.length);
+      logger.info('📝 Validated segments:', validatedSegments.length);
       
       const voiceSegments = VoiceDirector.processAISegments(validatedSegments);
-      console.log('🎵 Voice segments created:', voiceSegments.length);
+      logger.info('🎵 Voice segments created:', voiceSegments.length);
 
       if (voiceSegments.length === 0) {
         throw new Error('No valid voice segments created');
@@ -243,7 +236,7 @@ export const useProgressiveVoice = () => {
       await processSegmentsProgressively(voiceSegments);
 
     } catch (error) {
-      console.error('❌ Error in speakAISegments:', error);
+      logger.error('❌ Error in speakAISegments:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to process voice segments';
       
       setState(prev => ({ 
@@ -268,7 +261,7 @@ export const useProgressiveVoice = () => {
       return;
     }
 
-    console.log('📝 Progressive Voice: Processing plain text as fallback');
+    logger.info('📝 Progressive Voice: Processing plain text as fallback');
 
     const voiceSegments = VoiceDirector.processPlainText(text);
     if (voiceSegments.length === 0) {
@@ -288,7 +281,7 @@ export const useProgressiveVoice = () => {
    * Progressive generation and playback
    */
   const processSegmentsProgressively = async (segments: VoiceSegment[], startIndex: number = 0): Promise<void> => {
-    console.log('🎪 Starting progressive processing of', segments.length, 'segments', startIndex > 0 ? `from index ${startIndex}` : '');
+    logger.info('🎪 Starting progressive processing of', segments.length, 'segments', startIndex > 0 ? `from index ${startIndex}` : '');
 
     setState(prev => ({ ...prev, isPlaying: true }));
 
@@ -296,14 +289,14 @@ export const useProgressiveVoice = () => {
       const actualIndex = startIndex + i;
       // Check if we should abort
       if (abortController.current?.signal.aborted) {
-        console.log('🛑 Processing aborted at segment', actualIndex + 1, 'due to abort signal');
+        logger.info('🛑 Processing aborted at segment', actualIndex + 1, 'due to abort signal');
         break;
       }
 
       const segment = segments[i];
 
       try {
-        console.log(`🎵 Processing segment ${actualIndex + 1}: ${segment.character}`);
+        logger.info(`🎵 Processing segment ${actualIndex + 1}: ${segment.character}`);
 
         // Update current segment index
         setState(prev => ({
@@ -330,7 +323,7 @@ export const useProgressiveVoice = () => {
 
         // If generation failed, log and continue
         if (segmentWithAudio.error) {
-          console.warn(`⚠️ Audio generation failed for segment ${actualIndex + 1}:`, segmentWithAudio.error);
+          logger.warn(`⚠️ Audio generation failed for segment ${actualIndex + 1}:`, segmentWithAudio.error);
           continue;
         }
 
@@ -340,7 +333,7 @@ export const useProgressiveVoice = () => {
         }
 
       } catch (error) {
-        console.error(`❌ Error processing segment ${actualIndex + 1}:`, error);
+        logger.error(`❌ Error processing segment ${actualIndex + 1}:`, error);
         // Continue with next segment
         continue;
       }
@@ -355,7 +348,7 @@ export const useProgressiveVoice = () => {
       currentSegmentIndex: -1
     }));
 
-    console.log('🏁 Progressive processing complete');
+    logger.info('🏁 Progressive processing complete');
   };
 
   /**
@@ -364,12 +357,12 @@ export const useProgressiveVoice = () => {
   const playAudioSegment = (segment: VoiceSegment, index: number): Promise<void> => {
     return new Promise((resolve) => {
       if (!segment.audioUrl) {
-        console.warn(`⚠️ No audio URL for segment ${index + 1}`);
+        logger.warn(`⚠️ No audio URL for segment ${index + 1}`);
         resolve();
         return;
       }
 
-      console.log(`▶️ Playing segment ${index + 1}: ${segment.character} - "${segment.text.substring(0, 50)}..."`);
+      logger.info(`▶️ Playing segment ${index + 1}: ${segment.character} - "${segment.text.substring(0, 50)}..."`);
 
       // Use pre-created audio element if available, otherwise create new one
       const audio = preCreatedAudio.current || new Audio();
@@ -377,16 +370,16 @@ export const useProgressiveVoice = () => {
       
       // Set up all event handlers before setting src to avoid race conditions
       const onLoadedData = () => {
-        console.log(`📦 Audio loaded for segment ${index + 1}`);
+        logger.info(`📦 Audio loaded for segment ${index + 1}`);
         audio.volume = state.isMuted ? 0 : state.volume;
         currentAudio.current = audio;
         
         // Start playing immediately after load
         audio.play().then(() => {
-          console.log(`🎵 Successfully started playing segment ${index + 1}`);
+          logger.info(`🎵 Successfully started playing segment ${index + 1}`);
         }).catch((playError) => {
-          console.error(`❌ Failed to start playing segment ${index + 1}:`, playError);
-          console.error('Audio play error details:', {
+          logger.error(`❌ Failed to start playing segment ${index + 1}:`, playError);
+          logger.error('Audio play error details:', {
             audioUrl: segment.audioUrl,
             userVolume: state.volume,
             isMuted: state.isMuted,
@@ -400,7 +393,7 @@ export const useProgressiveVoice = () => {
       };
       
       const onEnded = () => {
-        console.log(`✅ Segment ${index + 1} finished playing`);
+        logger.info(`✅ Segment ${index + 1} finished playing`);
         
         // Clean up event listeners
         audio.removeEventListener('loadeddata', onLoadedData);
@@ -422,7 +415,7 @@ export const useProgressiveVoice = () => {
       };
 
       const onError = (error: Event) => {
-        console.error(`❌ Audio error for segment ${index + 1}:`, error);
+        logger.error(`❌ Audio error for segment ${index + 1}:`, error);
         // Clean up event listeners
         audio.removeEventListener('loadeddata', onLoadedData);
         audio.removeEventListener('ended', onEnded);
@@ -432,7 +425,7 @@ export const useProgressiveVoice = () => {
       };
       
       const onAbort = () => {
-        console.log(`🛑 Audio aborted for segment ${index + 1}`);
+        logger.info(`🛑 Audio aborted for segment ${index + 1}`);
         // Clean up event listeners
         audio.removeEventListener('loadeddata', onLoadedData);
         audio.removeEventListener('ended', onEnded);
@@ -466,7 +459,7 @@ export const useProgressiveVoice = () => {
    * Pause current playback without losing state
    */
   const pausePlayback = React.useCallback(() => {
-    console.log('⏸️ Pausing progressive voice playback');
+    logger.info('⏸️ Pausing progressive voice playback');
 
     // Pause current audio but keep the element and position
     if (currentAudio.current) {
@@ -485,7 +478,7 @@ export const useProgressiveVoice = () => {
    * Resume paused playback from current position
    */
   const resumePlayback = React.useCallback(async () => {
-    console.log('▶️ Resuming progressive voice playback');
+    logger.info('▶️ Resuming progressive voice playback');
 
     // If we have a current audio element, resume it
     if (currentAudio.current && state.isPaused) {
@@ -496,16 +489,16 @@ export const useProgressiveVoice = () => {
           isPlaying: true,
           isPaused: false
         }));
-        console.log('✅ Resumed audio from paused position');
+        logger.info('✅ Resumed audio from paused position');
         return;
       } catch (error) {
-        console.error('❌ Failed to resume audio:', error);
+        logger.error('❌ Failed to resume audio:', error);
       }
     }
 
     // If no current audio or not paused, continue with remaining segments
     if (state.segments.length > 0 && state.currentSegmentIndex >= 0) {
-      console.log(`🎪 Continuing from segment ${state.currentSegmentIndex + 1}`);
+      logger.info(`🎪 Continuing from segment ${state.currentSegmentIndex + 1}`);
 
       setState(prev => ({
         ...prev,
@@ -524,7 +517,7 @@ export const useProgressiveVoice = () => {
    * Stop current playback completely
    */
   const stopPlayback = React.useCallback(() => {
-    console.log('🛑 Stopping progressive voice playback');
+    logger.info('🛑 Stopping progressive voice playback');
     console.trace('🔍 stopPlayback called from:'); // Add stack trace
 
     // Stop current audio
@@ -560,41 +553,41 @@ export const useProgressiveVoice = () => {
   /**
    * Volume control
    */
-  const setVolume = React.useCallback((volume: number) => {
-    const clampedVolume = Math.max(0, Math.min(1, volume));
-    
+  const handleSetVolume = React.useCallback((newVolume: number) => {
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+
     setState(prev => ({ ...prev, volume: clampedVolume }));
-    localStorage.setItem('progressive-voice-volume', clampedVolume.toString());
+    setVolume(clampedVolume);
 
     // Update current audio volume
     if (currentAudio.current) {
       currentAudio.current.volume = state.isMuted ? 0 : clampedVolume;
     }
-  }, [state.isMuted]);
+  }, [state.isMuted, setVolume]);
 
   /**
    * Mute toggle
    */
   const toggleMute = React.useCallback(() => {
     const newMutedState = !state.isMuted;
-    
+
     setState(prev => ({ ...prev, isMuted: newMutedState }));
-    localStorage.setItem('progressive-voice-muted', newMutedState.toString());
+    setIsMuted(newMutedState);
 
     // Update current audio volume
     if (currentAudio.current) {
       currentAudio.current.volume = newMutedState ? 0 : state.volume;
     }
-  }, [state.isMuted, state.volume]);
+  }, [state.isMuted, state.volume, setIsMuted]);
 
   /**
    * Voice mode toggle
    */
   const toggleVoiceEnabled = React.useCallback(() => {
     const newVoiceState = !state.isVoiceEnabled;
-    
+
     setState(prev => ({ ...prev, isVoiceEnabled: newVoiceState }));
-    localStorage.setItem('progressive-voice-enabled', newVoiceState.toString());
+    setIsVoiceEnabled(newVoiceState);
 
     if (!newVoiceState) {
       stopPlayback();
@@ -602,17 +595,17 @@ export const useProgressiveVoice = () => {
 
     toast({
       title: newVoiceState ? "Progressive Voice Enabled" : "Progressive Voice Disabled",
-      description: newVoiceState 
-        ? "Character voices are now active with progressive generation" 
+      description: newVoiceState
+        ? "Character voices are now active with progressive generation"
         : "Progressive voice is now disabled",
     });
-  }, [state.isVoiceEnabled, stopPlayback, toast]);
+  }, [state.isVoiceEnabled, stopPlayback, toast, setIsVoiceEnabled]);
 
   /**
    * Manual API key retry function
    */
   const retryApiKeyFetch = React.useCallback(async () => {
-    console.log('🔄 Manually retrying API key fetch...');
+    logger.info('🔄 Manually retrying API key fetch...');
     setApiKey(null);
     setState(prev => ({ ...prev, error: undefined }));
     
@@ -620,7 +613,7 @@ export const useProgressiveVoice = () => {
       // Try environment variable first (for development)
       const envApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
       if (envApiKey) {
-        console.log('✅ Using ElevenLabs API key from environment variable');
+        logger.info('✅ Using ElevenLabs API key from environment variable');
         setApiKey(envApiKey);
         apiKeyRef.current = envApiKey; // Set ref immediately
         toast({
@@ -640,7 +633,7 @@ export const useProgressiveVoice = () => {
       }
 
       if (data?.secret) {
-        console.log('✅ Retrieved ElevenLabs API key from Supabase secrets');
+        logger.info('✅ Retrieved ElevenLabs API key from Supabase secrets');
         setApiKey(data.secret);
         apiKeyRef.current = data.secret; // Set ref immediately
         toast({
@@ -651,7 +644,7 @@ export const useProgressiveVoice = () => {
         throw new Error('ElevenLabs API key is empty or not found');
       }
     } catch (error) {
-      console.error('❌ Error in manual API key retry:', error);
+      logger.error('❌ Error in manual API key retry:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setState(prev => ({ ...prev, error: `API Key Error: ${errorMessage}` }));
       toast({
@@ -691,7 +684,7 @@ export const useProgressiveVoice = () => {
     pausePlayback,   // Pause without losing state
     resumePlayback,  // Resume from pause
     stopPlayback,    // Stop completely
-    setVolume,
+    setVolume: handleSetVolume,
     toggleMute,
     toggleVoiceEnabled,
     retryApiKeyFetch, // Manual API key retry

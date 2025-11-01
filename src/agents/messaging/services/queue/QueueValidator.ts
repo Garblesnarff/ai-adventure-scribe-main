@@ -16,6 +16,7 @@
 
 // Project Types
 import { QueuedMessage } from '../../types';
+import { logger } from '../../../../lib/logger';
 
 
 export class QueueValidator {
@@ -36,12 +37,12 @@ export class QueueValidator {
     
     for (const message of messages) {
       if (!this.validateMessage(message)) {
-        console.error('[QueueValidator] Invalid message found:', message.id);
+        logger.error('[QueueValidator] Invalid message found:', message.id);
         return false;
       }
 
       if (seenIds.has(message.id)) {
-        console.error('[QueueValidator] Duplicate message ID found:', message.id);
+        logger.error('[QueueValidator] Duplicate message ID found:', message.id);
         return false;
       }
 
@@ -57,7 +58,7 @@ export class QueueValidator {
       const currMsg = messages[i];
 
       if (prevMsg.priority < currMsg.priority) {
-        console.warn('[QueueValidator] Queue order violation:', {
+        logger.warn('[QueueValidator] Queue order violation:', {
           prev: prevMsg.id,
           curr: currMsg.id
         });

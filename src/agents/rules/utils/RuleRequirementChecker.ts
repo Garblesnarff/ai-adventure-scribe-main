@@ -17,6 +17,7 @@
 
 // Project Types
 import { RuleRequirement } from '@/types/agent'; // Assuming RuleRequirement is a defined type
+import { logger } from '../../../lib/logger';
 
 
 export class RuleRequirementChecker {
@@ -35,7 +36,7 @@ export class RuleRequirementChecker {
       case 'component':
         return this.checkComponent(requirement);
       default:
-        console.warn(`Unknown requirement type: ${requirement.type}`);
+        logger.warn(`Unknown requirement type: ${requirement.type}`);
         return true;
     }
   }

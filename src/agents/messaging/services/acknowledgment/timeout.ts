@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Utilities (assuming kebab-case for ./db.ts)
 import { updateAcknowledgment } from './db';
+import { logger } from '../../../../lib/logger';
 
 
 export async function handleTimeout(messageId: string): Promise<void> {
@@ -37,6 +38,6 @@ export async function handleTimeout(messageId: string): Promise<void> {
       });
     }
   } catch (error) {
-    console.error('[MessageAcknowledgmentTimeout] Handle timeout error:', error);
+    logger.error('[MessageAcknowledgmentTimeout] Handle timeout error:', error);
   }
 }

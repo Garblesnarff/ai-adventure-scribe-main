@@ -17,6 +17,7 @@
 
 // External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../../../lib/logger';
 
 
 export class ValidationService {
@@ -30,7 +31,7 @@ export class ValidationService {
     const cacheKey = `${ruleContext.type}_${JSON.stringify(ruleContext)}`;
     
     if (this.validationCache.has(cacheKey)) {
-      console.log('Using cached validation result');
+      logger.info('Using cached validation result');
       return this.validationCache.get(cacheKey);
     }
 
@@ -52,7 +53,7 @@ export class ValidationService {
 
       return data;
     } catch (error) {
-      console.error('Error validating rules:', error);
+      logger.error('Error validating rules:', error);
       return null;
     }
   }

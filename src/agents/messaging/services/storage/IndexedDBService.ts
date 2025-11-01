@@ -23,6 +23,7 @@ import { DatabaseInitializer } from './core/database-initializer';
 
 // Project Types
 import { OfflineState, QueueState, StoredMessage } from './types';
+import { logger } from '../../../../lib/logger';
 
 
 export class IndexedDBService {
@@ -44,7 +45,7 @@ export class IndexedDBService {
     try {
       this.db = await DatabaseInitializer.initDatabase();
     } catch (error) {
-      console.error('[IndexedDB] Initialization error:', error);
+      logger.error('[IndexedDB] Initialization error:', error);
       throw error;
     }
   }
@@ -61,7 +62,7 @@ export class IndexedDBService {
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
-        console.log('[IndexedDB] Message stored successfully:', message.id);
+        logger.info('[IndexedDB] Message stored successfully:', message.id);
         resolve();
       };
     });
@@ -119,7 +120,7 @@ export class IndexedDBService {
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
-        console.log('[IndexedDB] Queue state saved successfully');
+        logger.info('[IndexedDB] Queue state saved successfully');
         resolve();
       };
     });
@@ -152,7 +153,7 @@ export class IndexedDBService {
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
-        console.log('[IndexedDB] Offline state saved successfully');
+        logger.info('[IndexedDB] Offline state saved successfully');
         resolve();
       };
     });
@@ -197,7 +198,7 @@ export class IndexedDBService {
           cursor.delete();
           cursor.continue();
         } else {
-          console.log('[IndexedDB] Old messages cleared successfully');
+          logger.info('[IndexedDB] Old messages cleared successfully');
           resolve();
         }
       };

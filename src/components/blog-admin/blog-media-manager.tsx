@@ -7,6 +7,7 @@ import { Upload, Image as ImageIcon, X, Plus, FolderOpen } from 'lucide-react';
 import { useBlogMedia, useUploadBlogMedia } from '@/hooks/blog/useBlogMedia';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 
 interface MediaFile extends File {
   preview?: string;
@@ -41,7 +42,7 @@ export const BlogMediaManager: React.FC = () => {
         toast.success(`Uploaded ${file.name}`);
         refetch(); // Refresh media list
       } catch (error) {
-        console.error('Upload error:', error);
+        logger.error('Upload error:', error);
         toast.error(`Failed to upload ${file.name}`);
       } finally {
         setUploadingFiles(prev => {

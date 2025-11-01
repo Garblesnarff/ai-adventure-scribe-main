@@ -24,6 +24,7 @@ import { MessageQueueService } from '../message-queue-service';
 
 // Project Types
 import { QueuedMessage } from '../../types';
+import { logger } from '../../../../lib/logger';
 
 
 export class MessageRecoveryService {
@@ -45,11 +46,11 @@ export class MessageRecoveryService {
 
   public async recoverMessages(): Promise<void> {
     try {
-      console.log('[MessageRecoveryService] Starting message recovery...');
+      logger.info('[MessageRecoveryService] Starting message recovery...');
       
       // Get all pending messages from storage
       const pendingMessages = await this.storage.getPendingMessages();
-      console.log(`[MessageRecoveryService] Found ${pendingMessages.length} pending messages`);
+      logger.info(`[MessageRecoveryService] Found ${pendingMessages.length} pending messages`);
 
       // Validate and restore messages to queue
       for (const storedMessage of pendingMessages) {
@@ -73,16 +74,16 @@ export class MessageRecoveryService {
         // Validate message integrity
         if (this.validateMessage(queuedMessage)) {
           await this.queueService.enqueue(queuedMessage);
-          console.log(`[MessageRecoveryService] Recovered message: ${queuedMessage.id}`);
+          logger.info(`[MessageRecoveryService] Recovered message: ${queuedMessage.id}`);
         } else {
-          console.error(`[MessageRecoveryService] Invalid message found: ${queuedMessage.id}`);
+          logger.error(`[MessageRecoveryService] Invalid message found: ${queuedMessage.id}`);
           await this.storage.updateMessageStatus(queuedMessage.id, 'failed');
         }
       }
 
-      console.log('[MessageRecoveryService] Message recovery completed');
+      logger.info('[MessageRecoveryService] Message recovery completed');
     } catch (error) {
-      console.error('[MessageRecoveryService] Recovery error:', error);
+      logger.error('[MessageRecoveryService] Recovery error:', error);
       throw error;
     }
   }
@@ -111,13 +112,13 @@ export class MessageRecoveryService {
       const missingMessages = storedQueueIds.filter(id => !currentQueueIds.includes(id));
       
       if (missingMessages.length > 0) {
-        console.warn(`[MessageRecoveryService] Found ${missingMessages.length} missing messages`);
+        logger.warn(`[MessageRecoveryService] Found ${missingMessages.length} missing messages`);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('[MessageRecoveryService] Queue validation error:', error);
+      logger.error('[MessageRecoveryService] Queue validation error:', error);
       return false;
     }
   }

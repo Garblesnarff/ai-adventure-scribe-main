@@ -22,6 +22,7 @@ import { IndexedDBService } from './indexed-db-service';
 // Project Types
 import { QueuedMessage } from '../../types';
 import { StoredMessage, QueueState } from './types';
+import { logger } from '../../../../lib/logger';
 
 
 export class MessagePersistenceService {
@@ -55,7 +56,7 @@ export class MessagePersistenceService {
     };
 
     await this.storage.storeMessage(storedMessage);
-    console.log('[MessagePersistence] Message persisted:', message.id);
+    logger.info('[MessagePersistence] Message persisted:', message.id);
   }
 
   public async updateMessageStatus(
@@ -63,7 +64,7 @@ export class MessagePersistenceService {
     status: StoredMessage['status']
   ): Promise<void> {
     await this.storage.updateMessageStatus(messageId, status);
-    console.log('[MessagePersistence] Message status updated:', messageId, status);
+    logger.info('[MessagePersistence] Message status updated:', messageId, status);
   }
 
   public async getUnsentMessages(): Promise<StoredMessage[]> {

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Play, Pause, Volume2, VolumeX, AlertCircle, RefreshCw } from 'lucide-react';
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { ChatMessage } from '@/services/ai-service';
 import { NarrationSegment } from '@/hooks/use-ai-response';
 import { ActionOptions } from '@/components/game/ActionOptions';
@@ -118,9 +119,10 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
     initializeAudioContext
   } = useProgressiveVoice();
 
-  const [hasUserInteracted, setHasUserInteracted] = React.useState(() => {
-    return localStorage.getItem('progressive-voice-user-interacted') === 'true';
-  });
+  const [hasUserInteracted, setHasUserInteracted] = useLocalStorage<boolean>(
+    'progressive-voice-user-interacted',
+    false
+  );
 
   // Handle option selection
   const handleOptionSelect = React.useCallback((option: any) => {
@@ -141,11 +143,10 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
   const handlePlayPause = React.useCallback(() => {
     // Initialize audio context during user interaction
     initializeAudioContext();
-    
+
     // Mark that user has interacted
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
-      localStorage.setItem('progressive-voice-user-interacted', 'true');
     }
 
     if (isThisMessagePlaying) {
@@ -165,15 +166,16 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
       }
     }
   }, [
-    isThisMessagePlaying, 
-    isProcessing, 
-    stopPlayback, 
-    speakAISegments, 
-    speakPlainText, 
-    message.content, 
-    message.id, 
-    narrationSegments, 
-    hasUserInteracted, 
+    isThisMessagePlaying,
+    isProcessing,
+    stopPlayback,
+    speakAISegments,
+    speakPlainText,
+    message.content,
+    message.id,
+    narrationSegments,
+    hasUserInteracted,
+    setHasUserInteracted,
     initializeAudioContext
   ]);
 

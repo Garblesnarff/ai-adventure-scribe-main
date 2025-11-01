@@ -35,6 +35,7 @@ import { isValidUUID } from '@/utils/validation'; // Assuming kebab-case
 
 // Project Types
 import { Character, AbilityScores } from '@/types/character';
+import { logger } from '../lib/logger';
 
 
 // Helper Functions (defined in-file)
@@ -332,7 +333,7 @@ export const useCharacterData = (characterId: string | undefined) => {
       
       setCharacter(transformedCharacter);
     } catch (error) {
-      console.error('Error fetching character:', error);
+      logger.error('Error fetching character:', error);
       toast({
         title: "Error",
         description: "Failed to load character data. Please try again.",

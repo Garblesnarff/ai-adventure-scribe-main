@@ -6,6 +6,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { modelUsageTracker } from './model-usage-tracker';
 import { llmApiClient } from './llm-api-client';
+import { logger } from '../lib/logger';
 
 interface ImageGenerationRequest { prompt: string; model?: string; referenceImage?: string; quality?: 'low' | 'medium' | 'high'; }
 interface TextGenerationRequest { prompt: string; model?: string; maxTokens?: number; temperature?: number }
@@ -125,13 +126,13 @@ export class OpenRouterService {
         .from(bucket)
         .upload(path, blob, { cacheControl: '3600', upsert: false, contentType: 'image/png' });
       if (error) {
-        console.error('Error uploading to Supabase storage:', error);
+        logger.error('Error uploading to Supabase storage:', error);
         return `data:image/png;base64,${cleanBase64}`;
       }
       const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
       return publicUrlData.publicUrl;
     } catch (e) {
-      console.error('Error in uploadImage:', e);
+      logger.error('Error in uploadImage:', e);
       const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
       return `data:image/png;base64,${cleanBase64}`;
     }

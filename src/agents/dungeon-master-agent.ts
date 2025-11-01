@@ -38,6 +38,7 @@ import { ConversationStateStore } from './services/conversation/ConversationStat
 import encounterGenerator from '@/services/encounters/encounter-generator';
 import { EncounterGenerationInput, EncounterSpec } from '@/types/encounters';
 import { postEncounterTelemetry } from '@/services/encounters/telemetry-client';
+import { logger } from '../lib/logger';
 
 
 export class DungeonMasterAgent implements Agent {
@@ -125,7 +126,7 @@ export class DungeonMasterAgent implements Agent {
    */
   async executeTask(task: AgentTask): Promise<AgentResult> {
     try {
-      console.log(`DM Agent executing task: ${task.description}`);
+      logger.info(`DM Agent executing task: ${task.description}`);
 
       // Note: We initialize memory manager and response coordinator separately
       // to ensure dependencies are ready before generating a response.
@@ -159,7 +160,7 @@ export class DungeonMasterAgent implements Agent {
 
       return response;
     } catch (error) {
-      console.error('Error executing DM agent task:', error);
+      logger.error('Error executing DM agent task:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to execute task'
@@ -301,7 +302,7 @@ export class DungeonMasterAgent implements Agent {
       ...this.gameState,
       ...newState
     };
-    console.log('Updated game state:', this.gameState);
+    logger.info('Updated game state:', this.gameState);
   }
 
   /**
@@ -412,7 +413,7 @@ export class DungeonMasterAgent implements Agent {
     try {
       await postEncounterTelemetry({ sessionId, difficulty: spec.difficulty, resourcesUsedEst });
     } catch (e) {
-      console.warn('Failed to post encounter telemetry', e);
+      logger.warn('Failed to post encounter telemetry', e);
     }
   }
 }

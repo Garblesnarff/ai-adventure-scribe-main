@@ -6,6 +6,7 @@
  */
 
 import { llmApiClient } from './llm-api-client';
+import { logger } from '../lib/logger';
 
 interface GeminiImageGenerationRequest {
   prompt: string;
@@ -84,7 +85,7 @@ export class GeminiImageService {
       this.recordUsage();
       return imageData;
     } catch (error) {
-      console.error('Error generating image (server-proxy):', error);
+      logger.error('Error generating image (server-proxy):', error);
       throw new Error(`Gemini image generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

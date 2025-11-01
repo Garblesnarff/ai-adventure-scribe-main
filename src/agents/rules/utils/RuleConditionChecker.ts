@@ -17,6 +17,7 @@
 
 // Project Types
 import { RuleCondition } from '@/types/agent'; // Assuming RuleCondition is a defined type
+import { logger } from '../../../lib/logger';
 
 
 export class RuleConditionChecker {
@@ -37,7 +38,7 @@ export class RuleConditionChecker {
       case 'resource_requirement':
         return this.checkResourceRequirement(condition);
       default:
-        console.warn(`Unknown condition type: ${condition.type}`);
+        logger.warn(`Unknown condition type: ${condition.type}`);
         return true;
     }
   }

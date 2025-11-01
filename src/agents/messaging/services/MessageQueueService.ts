@@ -24,6 +24,7 @@ import { QueueValidator } from './queue/queue-validator';
 
 // Project Types
 import { QueuedMessage, MessageQueueConfig } from '../types';
+import { logger } from '../../../lib/logger';
 
 
 export class MessageQueueService {
@@ -52,12 +53,12 @@ export class MessageQueueService {
 
   public async enqueue(message: QueuedMessage): Promise<boolean> {
     if (this.messageQueue.length >= this.config.maxQueueSize) {
-      console.warn('[MessageQueueService] Queue size limit reached');
+      logger.warn('[MessageQueueService] Queue size limit reached');
       return false;
     }
 
     if (!QueueValidator.validateMessage(message)) {
-      console.error('[MessageQueueService] Invalid message:', message);
+      logger.error('[MessageQueueService] Invalid message:', message);
       return false;
     }
 

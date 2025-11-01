@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
+import { logger } from '../../../lib/logger';
 
 interface MarkdownEditorProps {
   value: string;
@@ -58,7 +59,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
       return cleanHtml;
     } catch (error) {
-      console.error('Markdown parsing error:', error);
+      logger.error('Markdown parsing error:', error);
       return '<p>Error rendering markdown preview</p>';
     }
   };

@@ -35,6 +35,7 @@ import { callEdgeFunction } from '@/utils/edgeFunctionHandler';
 // Project Types
 import { AgentResult, AgentTask } from '../../types';
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
+import { logger } from '../../../lib/logger';
 
 
 export class ResponseCoordinator {
@@ -83,7 +84,7 @@ export class ResponseCoordinator {
         : null);
 
       const playerIntent = this.intentDetector.detectIntent(task.description);
-      console.log('Detected player intent:', playerIntent);
+      logger.info('Detected player intent:', playerIntent);
 
       const narrativeResponse = await this.responseGenerator.generateResponse(
         task.description,
@@ -111,7 +112,7 @@ export class ResponseCoordinator {
         }
       };
     } catch (error) {
-      console.error('Error generating response:', error);
+      logger.error('Error generating response:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to execute task'
@@ -127,7 +128,7 @@ export class ResponseCoordinator {
   ) {
     return await this.errorHandler.handleOperation(
       async () => {
-        console.log('Calling dm-agent-execute with payload:', {
+        logger.info('Calling dm-agent-execute with payload:', {
           task,
           agentContext: {
             campaignDetails,

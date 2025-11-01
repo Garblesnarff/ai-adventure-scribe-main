@@ -4,6 +4,7 @@ import { useState } from 'react';
 // Project Imports
 import { useToast } from '@/components/ui/use-toast'; // Assuming kebab-case
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../lib/logger';
 import {
   transformAbilityScoresForStorage,
   transformEquipmentForStorage,
@@ -55,7 +56,7 @@ export const useCharacterSave = () => {
       const effectiveCampaignId = character.campaign_id || campaignState.campaign?.id || null;
 
       if (!effectiveCampaignId) {
-        console.warn('Attempted to save character without campaign context');
+        logger.warn('Attempted to save character without campaign context');
         toast({
           title: 'Campaign Required',
           description: 'Select or create a campaign before saving this character.',
@@ -75,7 +76,7 @@ export const useCharacterSave = () => {
         ...transformMulticlassingForStorage(character)
       };
 
-      console.log('Saving character data:', characterData);
+      logger.info('Saving character data:', characterData);
 
       // For new characters, we need to insert first to get an ID
       let savedCharacter: Character;
@@ -115,7 +116,7 @@ export const useCharacterSave = () => {
         });
 
       if (statsError) {
-        console.warn('Stats save failed but continuing:', statsError);
+        logger.warn('Stats save failed but continuing:', statsError);
         // Don't throw - character core data saved
       }
 
@@ -133,7 +134,7 @@ export const useCharacterSave = () => {
           });
 
         if (equipmentError) {
-          console.warn('Equipment save failed but continuing:', equipmentError);
+          logger.warn('Equipment save failed but continuing:', equipmentError);
           // Don't throw - character core data saved
         }
       }
@@ -142,14 +143,14 @@ export const useCharacterSave = () => {
       if ((character.cantrips && character.cantrips.length > 0) || (character.knownSpells && character.knownSpells.length > 0)) {
         try {
           const frontendSpellIds = [...(character.cantrips || []), ...(character.knownSpells || [])];
-          console.log('🔄 Frontend spell IDs:', frontendSpellIds);
+          logger.info('🔄 Frontend spell IDs:', frontendSpellIds);
 
           // Convert frontend kebab-case IDs to database UUIDs
           const databaseSpellIds = convertSpellIdsToDatabase(frontendSpellIds);
-          console.log('🔄 Converted to database UUIDs:', databaseSpellIds);
+          logger.info('🔄 Converted to database UUIDs:', databaseSpellIds);
 
           if (databaseSpellIds.length === 0) {
-            console.warn('⚠️ No valid spell mappings found, skipping spell save');
+            logger.warn('⚠️ No valid spell mappings found, skipping spell save');
             return savedCharacter;
           }
 
@@ -157,9 +158,9 @@ export const useCharacterSave = () => {
             spells: databaseSpellIds,
             className: character.class?.name || ''
           });
-          console.log(`✅ Successfully saved ${databaseSpellIds.length}/${frontendSpellIds.length} spells for character ${characterData.id}`);
+          logger.info(`✅ Successfully saved ${databaseSpellIds.length}/${frontendSpellIds.length} spells for character ${characterData.id}`);
         } catch (spellError) {
-          console.warn('❌ Spell save failed but continuing:', spellError);
+          logger.warn('❌ Spell save failed but continuing:', spellError);
           // Don't throw - character core data saved
         }
       }
@@ -180,7 +181,7 @@ export const useCharacterSave = () => {
       // Return the complete character data
       return savedCharacter;
     } catch (error) {
-      console.error('Error saving character:', error);
+      logger.error('Error saving character:', error);
       toast({
         title: "Save Error",
         description: `Failed to save character: ${error.message || 'Unknown error'}`,
@@ -198,13 +199,13 @@ export const useCharacterSave = () => {
    */
   const generateBackgroundImage = async (characterId: string, character: Character) => {
     try {
-      console.log(`Generating background image for character ${characterId}`);
+      logger.info(`Generating background image for character ${characterId}`);
 
       // Generate the image with character portrait as reference if available
       const options: { referenceImageUrl?: string; retryAttempts?: number; fallbackToDefault?: boolean; useSimplifiedPrompt?: boolean } = {};
       if (character.image_url) {
         options.referenceImageUrl = character.image_url;
-        console.log(`Using character image as reference: ${character.image_url}`);
+        logger.info(`Using character image as reference: ${character.image_url}`);
       }
 
       const imageUrl = await characterBackgroundGenerator.generateCharacterBackground(character, options);
@@ -219,10 +220,10 @@ export const useCharacterSave = () => {
         .eq('id', characterId);
 
       if (error) {
-        console.error('Error updating character with background image:', error);
+        logger.error('Error updating character with background image:', error);
         // Don't throw error - character creation should still succeed
       } else {
-        console.log(`Successfully generated and saved background image for character ${characterId}`);
+        logger.info(`Successfully generated and saved background image for character ${characterId}`);
 
         // Invalidate specific queries to refresh the UI with the new image
         queryClient.invalidateQueries({ queryKey: ['characters'] });
@@ -235,7 +236,7 @@ export const useCharacterSave = () => {
         });
       }
     } catch (error) {
-      console.error(`Failed to generate background image for character ${characterId}:`, error);
+      logger.error(`Failed to generate background image for character ${characterId}:`, error);
 
       // Show user-friendly error notification
       toast({

@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
 import { ErrorCategory, ErrorMetadata } from '../types';
+import { logger } from '../../../lib/logger';
 
 
 export class ErrorTrackingService {
@@ -90,7 +91,7 @@ export class ErrorTrackingService {
       if (key.startsWith(context) && 
           stats.count >= threshold && 
           stats.lastSeen - stats.firstSeen <= timeWindow) {
-        console.warn(
+        logger.warn(
           `[ErrorTrackingService] Error pattern detected in ${context}: ` +
           `${stats.count} occurrences in ${(stats.lastSeen - stats.firstSeen) / 1000}s`
         );

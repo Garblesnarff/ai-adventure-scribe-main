@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
 import { CampaignContext } from '@/types/dm';
+import { logger } from '../../../lib/logger';
 
 
 export class MechanicsGenerator {
@@ -38,7 +39,7 @@ export class MechanicsGenerator {
       .limit(3);
 
     if (error) {
-      console.error("Error fetching rules for context:", error);
+      logger.error("Error fetching rules for context:", error);
       return ["Error fetching rules."];
     }
 
