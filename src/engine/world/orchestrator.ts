@@ -386,7 +386,7 @@ export class WorldOrchestrator {
         }
       } as DMAction);
 
-      sceneState.metadata.worldEntities = (sceneState.metadata.worldEntities || []).concat(event.id));
+      sceneState.metadata.worldEntities = (sceneState.metadata.worldEntities || []).concat(event.id);
       sceneState.metadata.lastEventAction = {
         eventId: event.id,
         action: 'created',
@@ -426,6 +426,7 @@ export class WorldOrchestrator {
             confidence: result.data.confidenceScore
           }
         } as DMAction);
+      }
     });
 
     // Track relationship changes
@@ -440,6 +441,7 @@ export class WorldOrchestrator {
             confidence: result.data.confidenceScore
           }
         } as DMAction);
+      }
     });
   }
 
@@ -447,6 +449,9 @@ export class WorldOrchestrator {
    * Analyze a text intent for world graph impact
    */
   private analyzeActionIntent(intent: PlayerIntent): {
+    entityUpdates: FactUpdateRequest[];
+    relationshipChanges: RelationshipCreateRequest[];
+  } {
     const entityUpdates: FactUpdateRequest[] = [];
     const relationshipChanges: RelationshipCreateRequest[] = [];
     
@@ -720,7 +725,7 @@ export class WorldOrchestrator {
     ];
 
     const participants: string[] = [];
-    const participantMatches = text.toLowerCase().matchAll(/(?:with|and)\s+([A-Z][a-z]+)?(?:\s+the)?/g) || []);
+    const participantMatches = text.toLowerCase().matchAll(/(?:with|and)\s+([A-Z][a-z]+)?(?:\s+the)?/g) || [];
 
     participantMatches.forEach(match => {
       if (match[1]) {
@@ -781,8 +786,8 @@ export class WorldOrchestrator {
       'aragorn', 'celebrim', 'drizzt', 'frank', 'samantha', 'rebecca'
     ];
 
-    return personIndicators.some(indicator => name.toLowerCase().includes(indicator)) || 
-           (name.match(/^[A-Z][a-z]+$/) && name.length >= 2 && name.length <= 15));
+    return personIndicators.some(indicator => name.toLowerCase().includes(indicator)) ||
+           (name.match(/^[A-Z][a-z]+$/) && name.length >= 2 && name.length <= 15);
   }
 
   private isPlaceName(name: string): boolean {
@@ -845,6 +850,10 @@ export class WorldOrchestrator {
    * Extract world information from DM actions
    */
   private extractWorldInfo(action: DMAction): {
+    entities: EntityCreateRequest[];
+    relationships: RelationshipCreateRequest[];
+    facts: FactUpdateRequest[];
+  } {
     const entities: EntityCreateRequest[] = [];
     const relationships: RelationshipCreateRequest[] = [];
     const facts: FactUpdateRequest[] = [];

@@ -14,6 +14,8 @@
     "skipLibCheck": true,
     "allowJs": true,
     "noUnusedLocals": false,
-    "strictNullChecks": false
+    // Enable strict null checks for improved type safety
+    // This helps catch potential null/undefined errors at compile time
+    "strictNullChecks": true
   }
 }

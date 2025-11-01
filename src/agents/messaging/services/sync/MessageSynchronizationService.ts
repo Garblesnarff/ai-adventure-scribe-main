@@ -31,10 +31,10 @@ import { ConsistencyValidator } from './validators/consistency-validator';
 
 // Project Types
 import { ErrorCategory, ErrorSeverity } from '../../../error/types';
-import { QueuedMessage } // Assuming QueuedMessage is from a higher-level type definition if not explicitly used here
+import { QueuedMessage } from './types'; // Assuming QueuedMessage is from a higher-level type definition if not explicitly used here
 import { logger } from '../../../../lib/logger';
     // If QueuedMessage from '../../types' is needed, add: import { QueuedMessage } from '../../types';
-    from './types'; // Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
+    // Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
 import { MessageSequence, MessageSyncOptions, SyncStatus } from './types';
 
 

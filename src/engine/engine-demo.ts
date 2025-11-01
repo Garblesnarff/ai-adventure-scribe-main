@@ -15,7 +15,7 @@ export function demonstrateEngineWorkflow() {
   
   // 1. Create a new scene
   logger.info('\n1. Creating new battle scene...');
-  const battleScene = createNewScene('combat-arena-123', ['hero-1', 'monster-1'],征服战斗场景-456');
+  const battleScene = createNewScene('combat-arena-123', ['hero-1', 'monster-1'], 'battle-scene-456');
   logger.info('Scene created:', {
     id: battleScene.id,
     location: battleScene.locationId,

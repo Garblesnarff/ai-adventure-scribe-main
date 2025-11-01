@@ -1,7 +1,7 @@
 export interface RollRecord {
   sceneId: string; 
   actorId: string; 
-  kind: 'check'|' | 'save'|' | 'attack'|' | 'damage';
+  kind: 'check' | 'save' | 'attack' | 'damage';
   d: number; 
   mod: number; 
   value: number; 
