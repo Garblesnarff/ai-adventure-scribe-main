@@ -21,6 +21,9 @@ import { Image as ImageIcon, RefreshCw, Loader2 } from 'lucide-react';
 import ChatImage from '@/components/game/ChatImage';
 import { useParams } from 'react-router-dom';
 
+// Constants
+const DYNAMIC_OPTIONS_FETCH_DELAY_MS = 10000; // 10 seconds delay before fetching dynamic options
+
 interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
   sessionId?: string;
@@ -137,6 +140,9 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
     }
 
     // Delay 10s then fetch options
+    const abortController = new AbortController();
+    let mounted = true;
+
     optionsTimerRef.current = window.setTimeout(async () => {
       try {
         const baseUrl = (import.meta as any)?.env?.VITE_CREWAI_BASE_URL || 'http://127.0.0.1:8000';
@@ -170,9 +176,14 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
             state_section: `COMBAT: ${combatState.isInCombat ? 'ACTIVE' : 'NOT_IN_COMBAT'}`,
             last_roll,
           }),
+          signal: abortController.signal,
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+
+        // Only update state if still mounted
+        if (!mounted) return;
+
         // Clear last_roll after a successful fetch to avoid re-sending
         if (lastRollRef.current) lastRollRef.current = null;
         const opts: string[] = Array.isArray(data?.options) ? data.options.slice(0, 3) : [];
@@ -195,12 +206,16 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
           // Suppress showing generic fallbacks to avoid low-value UX
           setDynamicOptions(null);
         }
-      } catch (e) {
+      } catch (e: any) {
+        // Ignore abort errors
+        if (e.name === 'AbortError') return;
         console.warn('[MessageList] dynamic options fetch failed:', e);
       }
-    }, 10000);
+    }, DYNAMIC_OPTIONS_FETCH_DELAY_MS);
 
     return () => {
+      mounted = false;
+      abortController.abort();
       if (optionsTimerRef.current) {
         window.clearTimeout(optionsTimerRef.current);
         optionsTimerRef.current = null;

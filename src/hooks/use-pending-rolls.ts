@@ -34,12 +34,12 @@ export const usePendingRolls = () => {
     }
 
     const lastDMMessage = dmMessages[dmMessages.length - 1];
-    
+
     // Check if there have been any player responses after the last DM message
-    const lastDMMessageIndex = messages.findIndex(m => m === lastDMMessage);
-    const playerResponsesAfter = messages
-      .slice(lastDMMessageIndex + 1)
-      .filter(m => m.sender === 'player');
+    const lastDMMessageIndex = messages?.findIndex(m => m === lastDMMessage) ?? -1;
+    const playerResponsesAfter = lastDMMessageIndex >= 0
+      ? (messages?.slice(lastDMMessageIndex + 1) ?? []).filter(m => m.sender === 'player')
+      : [];
 
     // Parse roll requests from the last DM message
     const rollRequests = parseRollRequests(lastDMMessage.text);

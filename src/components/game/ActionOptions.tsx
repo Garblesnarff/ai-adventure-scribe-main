@@ -63,11 +63,17 @@ export const ActionOptions: React.FC<ActionOptionsProps> = ({
   // Show options after delay
   useEffect(() => {
     if (options.length > 0) {
+      let mounted = true;
       const timer = setTimeout(() => {
-        setVisible(true);
+        if (mounted) {
+          setVisible(true);
+        }
       }, delay);
 
-      return () => clearTimeout(timer);
+      return () => {
+        mounted = false;
+        clearTimeout(timer);
+      };
     }
   }, [options, delay]);
 
