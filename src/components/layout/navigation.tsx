@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Sword, Users, Home, LogOut, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { Z_INDEX } from '@/constants/z-index';
 
 /**
  * Main navigation component that provides consistent navigation across the application
@@ -29,7 +30,7 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav id="app-nav" className="bg-infinite-dark/95 backdrop-blur supports-[backdrop-filter]:bg-infinite-dark/60 sticky top-0 z-50 w-full border-b border-infinite-purple/30">
+    <nav id="app-nav" className={`bg-infinite-dark/95 backdrop-blur supports-[backdrop-filter]:bg-infinite-dark/60 sticky top-0 z-[${Z_INDEX.STICKY}] w-full border-b border-infinite-purple/30`}>
       <div className="container mx-auto px-4">
         <div className="flex h-14 items-center justify-between">
           {/* Logo/Home */}
