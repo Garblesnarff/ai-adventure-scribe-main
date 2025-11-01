@@ -118,7 +118,6 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         processSendQueue();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // actualSendMessage uses refs so no deps needed
 
   // The actual message sending logic (extracted from handleSendMessage)
@@ -172,9 +171,9 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         
         // Handle pause/resume state changes
         if (safetyCheck.shouldPause) {
-          await updateGameSessionState({ is_paused: true });
+          await updateGameSessionState(prev => ({ ...prev, is_paused: true }));
         } else if (safetyCheck.shouldResume) {
-          await updateGameSessionState({ is_paused: false });
+          await updateGameSessionState(prev => ({ ...prev, is_paused: false }));
         }
         
         return; // Exit early for safety commands
@@ -290,8 +289,11 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       };
       await sendMessage(playerMessage); // This adds to UI and saves to dialogue_history
 
-      // Update turn count immediately after player message is sent
-      await updateGameSessionState({ turn_count: newTurnCount });
+      // Update turn count immediately after player message is sent using functional form
+      await updateGameSessionState(prev => ({
+        ...prev,
+        turn_count: (prev.turn_count || 0) + 1
+      }));
 
       // Update the ref to reflect the new turn count
       turnCountRef.current = newTurnCount;
@@ -343,7 +345,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
         
         // Handle pause state
         if (autoSafetyCheck.shouldPause) {
-          await updateGameSessionState({ is_paused: true });
+          await updateGameSessionState(prev => ({ ...prev, is_paused: true }));
         }
         
         return; // Exit early for auto-triggered safety commands
@@ -377,7 +379,10 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Update current_scene_description with short blurb (not full reply)
       if (sanitizedAiResponseMessage.text) {
         const blurb = headerMode === 'off' ? '' : toHeaderExcerpt(sanitizedAiResponseMessage.text);
-        await updateGameSessionState({ current_scene_description: blurb });
+        await updateGameSessionState(prev => ({
+          ...prev,
+          current_scene_description: blurb
+        }));
         logger.info('[Memory Flow] Extracting memories from AI response:', sanitizedAiResponseMessage.text);
         await extractMemories(sanitizedAiResponseMessage.text); // Non-critical path
       }
@@ -418,7 +423,10 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       // Revert turn count if AI response failed (use original value from when error occurred)
       try {
         const revertCount = Math.max(0, turnCountRef.current - 1);
-        await updateGameSessionState({ turn_count: revertCount });
+        await updateGameSessionState(prev => ({
+          ...prev,
+          turn_count: Math.max(0, (prev.turn_count || 0) - 1)
+        }));
         turnCountRef.current = revertCount;
       } catch (revertError) {
         handleAsyncError(revertError, {

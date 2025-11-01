@@ -8,18 +8,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Settings, Zap, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import logger from '@/lib/logger';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export const VoiceHandler: React.FC = () => {
   const { messages } = useMessageContext();
-  const [useProgressiveVoice, setUseProgressiveVoice] = React.useState(() => {
-    return localStorage.getItem('use-progressive-voice') !== 'false';
-  });
+  const [useProgressiveVoice, setUseProgressiveVoice] = useLocalStorage('use-progressive-voice', true);
 
   const lastMessage = messages[messages.length - 1];
   const shouldRenderPlayer = lastMessage?.sender === 'dm' && lastMessage.text;
   const cleanText = shouldRenderPlayer ? lastMessage.text.replace(/[*_`#]/g, '') : '';
   const narrationSegments = lastMessage?.narrationSegments;
-  
+
   // Debug logging
   React.useEffect(() => {
     if (shouldRenderPlayer) {
@@ -35,10 +34,8 @@ export const VoiceHandler: React.FC = () => {
   }, [lastMessage, shouldRenderPlayer, narrationSegments]);
 
   const handleToggleVoiceMode = React.useCallback(() => {
-    const newValue = !useProgressiveVoice;
-    setUseProgressiveVoice(newValue);
-    localStorage.setItem('use-progressive-voice', newValue.toString());
-  }, [useProgressiveVoice]);
+    setUseProgressiveVoice(!useProgressiveVoice);
+  }, [useProgressiveVoice, setUseProgressiveVoice]);
 
   if (!shouldRenderPlayer) {
     return null;
