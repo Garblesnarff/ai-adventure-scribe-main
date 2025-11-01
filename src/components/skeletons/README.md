@@ -14,6 +14,16 @@ This directory contains loading skeleton components for various UI elements.
 - **Usage**: Displayed while campaign data is being fetched
 - **Design**: Wraps existing CampaignSkeleton component in consistent grid
 
+### CharacterSelectionSkeleton
+- **Purpose**: Loading placeholder for character selection modal
+- **Usage**: Displayed while character data is being fetched in modals/dialogs
+- **Design**: Shows 4 skeleton cards optimized for modal display with avatar and stats
+
+### TimelineSkeleton
+- **Purpose**: Loading placeholder for timeline/history views
+- **Usage**: Displayed while timeline events are being loaded
+- **Design**: Shows 5 skeleton events with timeline dots and descriptions
+
 ## Usage Example
 
 ```tsx

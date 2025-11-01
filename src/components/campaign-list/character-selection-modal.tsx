@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Play, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
+import { CharacterSelectionSkeleton } from '@/components/skeletons/CharacterSelectionSkeleton';
 
 interface Character {
   id: string;
@@ -116,7 +117,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
         
         <div className="mt-4">
           {isLoading ? (
-            <div className="text-center py-8">Loading your characters...</div>
+            <CharacterSelectionSkeleton />
           ) : characters && characters.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {characters.map((character) => {
