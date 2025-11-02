@@ -79,6 +79,22 @@ export const useInitialGreeting = ({
     try {
       logger.info('[Initial Greeting] Starting generation for session:', sessionId);
 
+      // Ensure we are not resuming an existing conversation
+      const { count: existingMessageCount, error: countError } = await supabase
+        .from('dialogue_history')
+        .select('id', { count: 'exact', head: true })
+        .eq('session_id', sessionId!);
+
+      if (countError) {
+        logger.warn('[Initial Greeting] Failed to check existing messages, continuing with caution', countError);
+      }
+
+      if ((existingMessageCount ?? 0) > 0) {
+        logger.info('[Initial Greeting] Detected existing dialogue entries; skipping automated greeting.');
+        setState(prev => ({ ...prev, isGenerating: false, hasGenerated: true }));
+        return;
+      }
+
       // Fetch character data
       const { data: characterData, error: characterError } = await supabase
         .from('characters')
