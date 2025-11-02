@@ -132,7 +132,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           isFirstInGroup={isFirstInGroup}
           isLastInGroup={isLastInGroup}
           displayContent={parsedMessage ? parsedMessage.content || messageWithOverlay : messageWithOverlay}
-          isLongMessage={isLongMessage}
           isExpanded={isExpanded}
           onToggleExpanded={toggleExpanded}
           imageUrl={firstMessageImgUrl || ephemeralImgUrl}
