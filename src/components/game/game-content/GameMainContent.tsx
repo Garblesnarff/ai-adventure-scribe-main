@@ -212,7 +212,12 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
             {({ handleSendMessage, isProcessing }) => (
               <>
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-                  <MessageList onSendFullMessage={handleSendMessage} sessionId={sessionId} containerRef={chatScrollRef} />
+                  <MessageList
+                    onSendFullMessage={handleSendMessage}
+                    sessionId={sessionId}
+                    containerRef={chatScrollRef}
+                    suppressEmptyState={isGeneratingGreeting}
+                  />
                   <TimelineRail rootRef={chatScrollRef} />
                 </div>
 
