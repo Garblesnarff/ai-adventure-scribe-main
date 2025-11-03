@@ -58,30 +58,29 @@ export function useLocalStorage<T>(
   // Wrapper function to set value and sync to localStorage
   const setValue = useCallback(
     (value: T | ((prev: T) => T)) => {
-      try {
-        // Allow value to be a function (like useState)
-        const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue((previousValue) => {
+        const nextValue = value instanceof Function ? (value as (prev: T) => T)(previousValue) : value;
 
-        // Update state
-        setStoredValue(valueToStore);
-
-        // Skip localStorage during SSR
-        if (typeof window === 'undefined') {
-          return;
+        if (Object.is(previousValue, nextValue)) {
+          return previousValue;
         }
 
-        // Handle special case: boolean stored as '1'/'0'
-        if (typeof valueToStore === 'boolean') {
-          window.localStorage.setItem(key, valueToStore ? '1' : '0');
-        } else {
-          // Store as JSON
-          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        try {
+          if (typeof window !== 'undefined') {
+            if (typeof nextValue === 'boolean') {
+              window.localStorage.setItem(key, nextValue ? '1' : '0');
+            } else {
+              window.localStorage.setItem(key, JSON.stringify(nextValue));
+            }
+          }
+        } catch (error) {
+          logger.error(`Error setting localStorage key "${key}":`, error);
         }
-      } catch (error) {
-        logger.error(`Error setting localStorage key "${key}":`, error);
-      }
+
+        return nextValue;
+      });
     },
-    [key, storedValue]
+    [key]
   );
 
   // Sync with localStorage when value changes externally (e.g., in another tab)

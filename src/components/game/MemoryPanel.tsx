@@ -86,10 +86,20 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
 
   // Save state to localStorage on changes
   useEffect(() => {
-    setPanelState({
-      isExpanded,
-      activeTab,
-      panelWidth
+    setPanelState((previousState) => {
+      if (
+        previousState?.isExpanded === isExpanded &&
+        previousState?.activeTab === activeTab &&
+        previousState?.panelWidth === panelWidth
+      ) {
+        return previousState;
+      }
+
+      return {
+        isExpanded,
+        activeTab,
+        panelWidth
+      };
     });
   }, [isExpanded, activeTab, panelWidth, setPanelState]);
 
