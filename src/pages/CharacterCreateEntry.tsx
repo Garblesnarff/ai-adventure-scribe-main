@@ -6,6 +6,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/error';
+import { CharacterCreationErrorFallback } from '@/components/error/CharacterCreationErrorFallback';
 
 type CampaignTemplate = {
   id: string;
@@ -95,59 +97,66 @@ const CharacterCreateEntry: React.FC = () => {
   );
 
   // Legacy behavior: render wizard directly
+  // CharacterWizard is already wrapped with ErrorBoundary internally
   if (!featureOn) {
     return <CharacterWizard />;
   }
 
+  // Wrap campaign selection UI with ErrorBoundary for campaign template loading errors
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="p-6">
-        <h1 className="text-2xl font-semibold mb-2">Choose a Campaign</h1>
-        <p className="text-muted-foreground mb-4">Select a campaign to create a character for.</p>
-        {cloneError && <div className="mb-4 text-sm text-destructive">{cloneError}</div>}
-        {isError ? (
-          <div className="text-sm text-destructive">Failed to load campaigns: {error?.message}</div>
-        ) : isLoading ? (
-          <div>Loading campaigns…</div>
-        ) : templates && templates.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.map((template) => {
-              const isCloning = cloneMutation.isPending && activeTemplateId === template.id;
-              return (
-                <Card key={template.id} className="p-4 flex flex-col gap-3">
-                  <div className="space-y-1">
-                    <div className="font-medium text-lg">{template.name}</div>
-                    {template.description && (
-                      <div className="text-sm text-muted-foreground line-clamp-3">{template.description}</div>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {[
-                      template.genre && `Genre: ${template.genre}`,
-                      template.tone && `Tone: ${template.tone}`,
-                      template.difficulty_level && `Difficulty: ${template.difficulty_level}`,
-                      template.campaign_length && `Length: ${template.campaign_length}`,
-                    ]
-                      .filter(Boolean)
-                      .join(' • ')}
-                  </div>
-                  <div className="mt-auto flex justify-end">
-                    <Button
-                      onClick={() => handleSelect(template.id)}
-                      disabled={isCloning}
-                    >
-                      {isCloning ? 'Cloning…' : 'Select'}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div>No campaigns found.</div>
-        )}
-      </Card>
-    </div>
+    <ErrorBoundary
+      level="feature"
+      fallback={<CharacterCreationErrorFallback showReturnToCharacters />}
+    >
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-6">
+          <h1 className="text-2xl font-semibold mb-2">Choose a Campaign</h1>
+          <p className="text-muted-foreground mb-4">Select a campaign to create a character for.</p>
+          {cloneError && <div className="mb-4 text-sm text-destructive">{cloneError}</div>}
+          {isError ? (
+            <div className="text-sm text-destructive">Failed to load campaigns: {error?.message}</div>
+          ) : isLoading ? (
+            <div>Loading campaigns…</div>
+          ) : templates && templates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {templates.map((template) => {
+                const isCloning = cloneMutation.isPending && activeTemplateId === template.id;
+                return (
+                  <Card key={template.id} className="p-4 flex flex-col gap-3">
+                    <div className="space-y-1">
+                      <div className="font-medium text-lg">{template.name}</div>
+                      {template.description && (
+                        <div className="text-sm text-muted-foreground line-clamp-3">{template.description}</div>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {[
+                        template.genre && `Genre: ${template.genre}`,
+                        template.tone && `Tone: ${template.tone}`,
+                        template.difficulty_level && `Difficulty: ${template.difficulty_level}`,
+                        template.campaign_length && `Length: ${template.campaign_length}`,
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')}
+                    </div>
+                    <div className="mt-auto flex justify-end">
+                      <Button
+                        onClick={() => handleSelect(template.id)}
+                        disabled={isCloning}
+                      >
+                        {isCloning ? 'Cloning…' : 'Select'}
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div>No campaigns found.</div>
+          )}
+        </Card>
+      </div>
+    </ErrorBoundary>
   );
 };
 

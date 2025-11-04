@@ -6,3 +6,5 @@
 
 export { ErrorBoundary } from './ErrorBoundary';
 export { GameErrorFallback } from './GameErrorFallback';
+export { CampaignErrorFallback } from './CampaignErrorFallback';
+export { CharacterCreationErrorFallback } from './CharacterCreationErrorFallback';

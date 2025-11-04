@@ -14,6 +14,7 @@ import { Play, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
 import { CharacterSelectionSkeleton } from '@/components/skeletons/CharacterSelectionSkeleton';
+import { Z_INDEX } from '@/constants/z-index';
 
 interface Character {
   id: string;
@@ -135,8 +136,8 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
 
                 return (
                   <Card key={character.id} className="group cursor-pointer hover:shadow-2xl hover:shadow-infinite-purple/40 transition-all duration-500 overflow-hidden border-2 border-border/60 hover:border-infinite-gold/90 hover:scale-[1.02] relative bg-white dark:bg-background">
-                    {/* Glow effect on hover */}
-                    <div className="absolute inset-0 z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                    {/* Glow effect on hover - uses BACKGROUND_LAYER for visual effects within card */}
+                    <div className={`absolute inset-0 z-[${Z_INDEX.BACKGROUND_LAYER}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
                       <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
                     </div>
 

@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { BookOpen, Check, Sparkles, Users, Scroll } from 'lucide-react';
 import logger from '@/lib/logger';
+import { Z_INDEX } from '@/constants/z-index';
 
 /**
  * Component for selecting character background during character creation
@@ -94,7 +95,7 @@ const BackgroundSelection: React.FC = () => {
             >
               {/* Selected Indicator */}
               {isSelected && (
-                <div className="absolute top-4 right-4 z-10 bg-infinite-teal text-white rounded-full p-2 shadow-lg">
+                <div className={`absolute top-4 right-4 z-[${Z_INDEX.DROPDOWN}] bg-infinite-teal text-white rounded-full p-2 shadow-lg`}>
                   <Check className="w-5 h-5" />
                 </div>
               )}

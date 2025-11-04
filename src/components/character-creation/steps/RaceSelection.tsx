@@ -13,6 +13,7 @@ import { HalfElfAbilityChoice } from '../modals/HalfElfAbilityChoice';
 import { VariantHumanChoice } from '../modals/VariantHumanChoice';
 import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
 import logger from '@/lib/logger';
+import { Z_INDEX } from '@/constants/z-index';
 
 const RaceSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -310,7 +311,7 @@ const RaceSelection: React.FC = () => {
                       {baseRace.backgroundImage && (
                         <div className="absolute inset-0 bg-black/60 z-0" />
                       )}
-                      <CardContent className={`p-4 relative z-10 ${baseRace.backgroundImage ? 'text-white' : ''}`}>
+                      <CardContent className={`p-4 relative z-[${Z_INDEX.OVERLAY_EFFECT}] ${baseRace.backgroundImage ? 'text-white' : ''}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4 flex-1">
                             <div className="flex items-center gap-2 min-w-0">
@@ -398,7 +399,7 @@ const RaceSelection: React.FC = () => {
                         <div className="absolute inset-0 bg-black/60 z-0" />
                       )}
                       <div className="p-4">
-                        <div className={`flex items-center justify-between mb-3 relative z-10 ${baseRace.backgroundImage ? 'text-white' : ''}`}>
+                        <div className={`flex items-center justify-between mb-3 relative z-[${Z_INDEX.OVERLAY_EFFECT}] ${baseRace.backgroundImage ? 'text-white' : ''}`}>
                           <div className="flex items-center gap-2">
                             <Users className={`w-5 h-5 ${baseRace.backgroundImage ? 'text-yellow-400' : 'text-primary'}`} />
                             <h3 className="font-bold text-lg">{baseRace.name}</h3>
@@ -409,7 +410,7 @@ const RaceSelection: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-1.5 mb-3 relative z-10">
+                        <div className={`flex flex-wrap gap-1.5 mb-3 relative z-[${Z_INDEX.OVERLAY_EFFECT}]`}>
                           {Object.entries(baseRace.abilityScoreIncrease).map(([ability, bonus]) => (
                             <Badge
                               key={ability}
@@ -420,9 +421,9 @@ const RaceSelection: React.FC = () => {
                             </Badge>
                           ))}
                         </div>
-                        <p className={`text-sm line-clamp-2 relative z-10 leading-relaxed ${baseRace.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{baseRace.description}</p>
+                        <p className={`text-sm line-clamp-2 relative z-[${Z_INDEX.OVERLAY_EFFECT}] leading-relaxed ${baseRace.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{baseRace.description}</p>
                         {baseRace.subraces && baseRace.subraces.length > 0 && (
-                          <div className={`text-xs text-center mt-3 pt-2 border-t relative z-10 ${baseRace.backgroundImage ? 'text-gray-300 border-gray-400' : 'text-muted-foreground border-border'}`}>
+                          <div className={`text-xs text-center mt-3 pt-2 border-t relative z-[${Z_INDEX.OVERLAY_EFFECT}] ${baseRace.backgroundImage ? 'text-gray-300 border-gray-400' : 'text-muted-foreground border-border'}`}>
                             {baseRace.subraces.length} subrace{baseRace.subraces.length > 1 ? 's' : ''} available
                           </div>
                         )}
@@ -463,7 +464,7 @@ const RaceSelection: React.FC = () => {
                     }} />
 
                     {/* Top-right indicators */}
-                    <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                    <div className={`absolute top-3 right-3 z-[${Z_INDEX.CARD_HOVER}] flex items-center gap-2`}>
                       {/* Favorite and comparison buttons */}
                       <Button
                         variant="ghost"
@@ -498,7 +499,7 @@ const RaceSelection: React.FC = () => {
                     </div>
 
                     {/* Hover popup */}
-                    <div className={`hover-popup ${isHovered ? 'opacity-100 scale-100 pointer-events-auto z-20' : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
+                    <div className={`hover-popup ${isHovered ? `opacity-100 scale-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
                       <div className="bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-xl border border-border w-80 max-w-[90vw] max-h-[70vh] overflow-y-auto">
                         {/* Race name */}
                         <div className="flex items-center gap-2 mb-2">
@@ -618,14 +619,14 @@ const RaceSelection: React.FC = () => {
                       </div>
                     )}
                     
-                    <CardHeader className="relative z-10">
+                    <CardHeader className={`relative z-[${Z_INDEX.OVERLAY_EFFECT}]`}>
                       <div className="flex items-center gap-2">
                         <Users className={`w-5 h-5 ${subrace.backgroundImage ? 'text-yellow-400' : 'text-primary'}`} />
                         <h3 className={`text-2xl font-bold ${subrace.backgroundImage ? 'text-white' : ''}`}>{subrace.name}</h3>
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="space-y-4 relative z-10">
+                    <CardContent className={`space-y-4 relative z-[${Z_INDEX.OVERLAY_EFFECT}]`}>
                       <p className={`${subrace.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{subrace.description}</p>
                       
                       {/* Ability Score Increases */}

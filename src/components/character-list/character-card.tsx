@@ -23,6 +23,7 @@ import { Character } from '@/types/character';
 import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
 import { Skeleton } from '@/components/ui/skeleton';
 import logger from '@/lib/logger';
+import { Z_INDEX } from '@/constants/z-index';
 
 /**
  * Props interface for CharacterCard component
@@ -180,8 +181,8 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Glow effect on hover */}
-      <div className="absolute inset-0 z-[5] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+      {/* Glow effect on hover - uses OVERLAY_EFFECT for visual effects */}
+      <div className={`absolute inset-0 z-[${Z_INDEX.OVERLAY_EFFECT}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
         <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
       </div>
       
@@ -228,7 +229,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
         )}
         {/* Overlay and popup for character details */}
         <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-        <div className={`hover-popup ${isHovered ? 'opacity-100 scale-100 pointer-events-auto z-20' : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
+        <div className={`hover-popup ${isHovered ? `opacity-100 scale-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
           <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border max-w-xs">
             {/* Avatar Display */}
             {character.avatar_url && (

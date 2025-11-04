@@ -7,6 +7,13 @@ interface Props {
   onClose: () => void;
 }
 
+/**
+ * CreateCharacterPanel Component
+ *
+ * Renders character creation wizard in a slide-out panel for campaign-based character creation.
+ * The CharacterWizard component is already wrapped with ErrorBoundary, so this component
+ * does not need additional error boundary wrapping.
+ */
 const CreateCharacterPanel: React.FC<Props> = ({ open, onClose }) => {
   return (
     <Sheet open={open} onOpenChange={(open) => { if (!open) onClose(); }}>

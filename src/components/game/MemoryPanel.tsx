@@ -20,6 +20,7 @@ import { CombatSummary } from './CombatSummary';
 import { ExtendedGameSession } from '@/hooks/use-game-session';
 import { useParams } from 'react-router-dom';
 import { analytics } from '@/services/analytics';
+import { Z_INDEX } from '@/constants/z-index';
 
 interface MemoryPanelProps {
   sessionData: ExtendedGameSession | null;
@@ -165,7 +166,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   if (isCollapsed) {
     if (isMobile) {
       return (
-        <div className="fixed bottom-4 right-4 z-30 md:hidden">
+        <div className={`fixed bottom-4 right-4 z-[${Z_INDEX.STICKY}] md:hidden`}>
           <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
             <SheetTrigger asChild>
               <Button
@@ -227,7 +228,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
     }
 
     return (
-      <div className="hidden md:block fixed right-4 top-1/2 z-30">
+      <div className={`hidden md:block fixed right-4 top-1/2 z-[${Z_INDEX.STICKY}]`}>
         <Button
           variant="outline"
           size="sm"

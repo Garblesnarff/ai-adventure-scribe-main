@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { GameSidePanel } from '../MemoryPanel';
 import { Menu, ChevronDown } from 'lucide-react';
+import { Z_INDEX } from '@/constants/z-index';
 
 /**
  * GameRightPanel Component
@@ -41,7 +42,7 @@ export const GameRightPanel: React.FC<GameRightPanelProps> = ({
 
   // Floating toggle button when collapsed
   return (
-    <div className="fixed right-3 bottom-3 md:top-1/2 md:bottom-auto md:right-6 z-40 md:transform md:-translate-y-1/2 transition-all duration-300">
+    <div className={`fixed right-3 bottom-3 md:top-1/2 md:bottom-auto md:right-6 z-[${Z_INDEX.FLOATING_PANEL}] md:transform md:-translate-y-1/2 transition-all duration-300`}>
       <Button
         variant="outline"
         size="sm"

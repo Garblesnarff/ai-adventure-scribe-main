@@ -3,10 +3,13 @@ import { CharacterProvider } from '@/contexts/CharacterContext';
 import WizardContent from './wizard/WizardContent';
 import { useSearchParams } from 'react-router-dom';
 import { analytics } from '@/services/analytics';
+import { ErrorBoundary } from '@/components/error';
+import { CharacterCreationErrorFallback } from '@/components/error/CharacterCreationErrorFallback';
 
 /**
  * Wrapper component that provides character context to the wizard
  * Ensures all child components have access to character state
+ * Protected by ErrorBoundary to gracefully handle any character creation crashes
  * @returns {JSX.Element} The complete character creation wizard
  */
 const CharacterWizard: React.FC = () => {
@@ -18,9 +21,14 @@ const CharacterWizard: React.FC = () => {
   }, [searchParams]);
 
   return (
-    <CharacterProvider>
-      <WizardContent />
-    </CharacterProvider>
+    <ErrorBoundary
+      level="feature"
+      fallback={<CharacterCreationErrorFallback showReturnToCharacters />}
+    >
+      <CharacterProvider>
+        <WizardContent />
+      </CharacterProvider>
+    </ErrorBoundary>
   );
 };
 

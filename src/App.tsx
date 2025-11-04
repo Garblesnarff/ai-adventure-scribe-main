@@ -21,7 +21,7 @@ import BlogEditor from './pages/BlogEditor';
 import BlogPost from './pages/BlogPost';
 import BlogIndex from './pages/BlogIndex';
 import CharacterCreateEntry from './pages/CharacterCreateEntry';
-import CampaignHub from './pages/campaigns/CampaignHub';
+import CampaignHubWithErrorBoundary from './pages/campaigns/CampaignHubWithErrorBoundary';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
 
 // TODO [legacy-character-deprecation]: Feature flag for legacy character entry. When disabling legacy character creation, set to false and then remove this flag following docs/cleanup/campaign-character-migration.md
@@ -91,7 +91,7 @@ function App() {
                               {ENABLE_LEGACY_CHARACTER_ENTRY && <Route path="/characters/create" element={<CharacterCreateEntry />} />}
                               <Route path="/character/:id" element={<CharacterSheet />} />
                               <Route path="/campaigns/create" element={<CampaignWizard />} />
-                              <Route path="/campaigns/:id/*" element={<CampaignHub />} />
+                              <Route path="/campaigns/:id/*" element={<CampaignHubWithErrorBoundary />} />
                               <Route path="/game/:id" element={<GameContentWithErrorBoundary />} />
                               <Route path="/blog" element={<BlogAdmin />} />
                               <Route path="/blog/posts/new" element={<BlogEditor />} />

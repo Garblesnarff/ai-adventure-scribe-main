@@ -22,6 +22,7 @@ import CharacterSelectionModal from './character-selection-modal';
 import { useCampaignImageHotLoading } from '@/hooks/use-image-hot-loading';
 import { Skeleton } from '@/components/ui/skeleton';
 import logger from '@/lib/logger';
+import { Z_INDEX } from '@/constants/z-index';
 
 interface CampaignCardProps {
   campaign: {
@@ -146,8 +147,8 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Glow effect on hover */}
-      <div className="absolute inset-0 z-[5] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+      {/* Glow effect on hover - uses OVERLAY_EFFECT for visual effects */}
+      <div className={`absolute inset-0 z-[${Z_INDEX.OVERLAY_EFFECT}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
         <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
       </div>
       
@@ -184,7 +185,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
         )}
         {/* Overlay and popup for all cards */}
         <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-            <div className={`hover-popup ${isHovered ? 'opacity-100 pointer-events-auto z-20' : 'opacity-0 pointer-events-none'} absolute left-1/2 top-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
+            <div className={`hover-popup ${isHovered ? `opacity-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 pointer-events-none'} absolute left-1/2 top-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
           <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border">
             <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : campaign.name}</div>
             {imageLoading ? (
@@ -235,7 +236,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
         </div>
 
         {/* Mobile actions (visible on touch / small screens) */}
-        <div className="absolute bottom-3 left-3 z-20 flex gap-2 md:hidden">
+        <div className={`absolute bottom-3 left-3 z-[${Z_INDEX.CARD_HOVER}] flex gap-2 md:hidden`}>
           <Button size="sm" className="bg-infinite-gold text-infinite-dark hover:bg-infinite-purple"
             aria-label="Play campaign"
             onClick={(e) => { e.stopPropagation(); setShowCharacterModal(true); }}>

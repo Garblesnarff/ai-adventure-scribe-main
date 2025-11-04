@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Sword, Shield, Heart, Zap, Check, Sparkles, BookOpen } from 'lucide-react';
 import logger from '@/lib/logger';
+import { Z_INDEX } from '@/constants/z-index';
 
 const ClassSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -128,12 +129,12 @@ const ClassSelection: React.FC = () => {
 
               {/* Selected Indicator */}
               {isSelected && (
-                <div className="absolute top-4 right-4 z-20 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
+                <div className={`absolute top-4 right-4 z-[${Z_INDEX.CARD_HOVER}] bg-primary text-primary-foreground rounded-full p-2 shadow-lg`}>
                   <Check className="w-5 h-5" />
                 </div>
               )}
 
-              <CardHeader className="relative z-10 pb-3">
+              <CardHeader className={`relative z-[${Z_INDEX.OVERLAY_EFFECT}] pb-3`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${characterClass.backgroundImage ? 'bg-white/20 backdrop-blur-sm' : 'bg-primary/10'}`}>
@@ -146,7 +147,7 @@ const ClassSelection: React.FC = () => {
                 </div>
               </CardHeader>
 
-              <CardContent className="relative z-10 space-y-4">
+              <CardContent className={`relative z-[${Z_INDEX.OVERLAY_EFFECT}] space-y-4`}>
                 <p className={`text-sm leading-relaxed ${characterClass.backgroundImage ? 'text-gray-100' : 'text-muted-foreground'}`}>
                   {characterClass.description}
                 </p>

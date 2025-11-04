@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, Users } from 'lucide-react';
 import CampaignList from '@/components/campaign-list/campaign-list';
+import { ErrorBoundary, CampaignErrorFallback } from '@/components/error';
+import { ErrorBoundaryTest } from '@/components/error/ErrorBoundaryTest';
 
 /**
  * Index page component serving as the landing page
@@ -93,7 +95,19 @@ const Index = () => {
           </div>
         </div>
 
-        <CampaignList searchTerm={searchTerm} sortBy={sortBy} />
+        <ErrorBoundary
+          level="feature"
+          fallback={
+            <CampaignErrorFallback
+              showReturnToCampaigns={false}
+            />
+          }
+        >
+          <CampaignList searchTerm={searchTerm} sortBy={sortBy} />
+        </ErrorBoundary>
+
+        {/* Development only: Error boundary testing */}
+        {import.meta.env.DEV && <ErrorBoundaryTest />}
       </div>
     </div>
   );

@@ -14,11 +14,12 @@
  * @author AI Dungeon Master Team
  */
 
-import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect, useRef, useMemo } from 'react';
 import logger from '@/lib/logger';
 import { DiceRollRequest, DiceRollQueue, DiceRollRequestType } from '@/types/combat';
 import { useCombat } from '@/contexts/CombatContext';
 import { v4 as uuidv4 } from 'uuid';
+import { throttle } from '@/lib/utils';
 
 // Game phase types
 export type GamePhase =
@@ -104,6 +105,12 @@ const GameContext = createContext<GameContextValue | undefined>(undefined);
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'SET_PHASE':
+      // Change Detection: Primitive comparison (===)
+      // Only update state if phase actually changes
+      // Comparison Strategy: GamePhase is a string union type (primitive)
+      if (state.currentPhase === action.payload) {
+        return state; // No change, return same reference to prevent re-render
+      }
       return {
         ...state,
         currentPhase: action.payload
@@ -177,6 +184,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'CLEAR_DICE_ROLL_QUEUE':
+      // Change Detection: Check if queue is already empty
+      // Comparison Strategy: Array length check and boolean primitive comparison
+      if (state.diceRollQueue.pendingRolls.length === 0 &&
+          state.diceRollQueue.isProcessingRoll === false) {
+        return state; // Queue already cleared, return same reference to prevent re-render
+      }
       return {
         ...state,
         diceRollQueue: {
@@ -185,13 +198,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       };
 
-    case 'SET_COMBAT_STATE':
+    case 'SET_COMBAT_STATE': {
+      // Change Detection: Primitive comparison (===)
+      // Only update state if combat state values actually change
+      // Comparison Strategy: All values are primitives (boolean, string | undefined)
+      const newPhase = action.payload.isInCombat ? 'combat' : 'exploration';
+      if (state.isInCombat === action.payload.isInCombat &&
+          state.currentTurnPlayerId === action.payload.currentTurnPlayerId &&
+          state.currentPhase === newPhase) {
+        return state; // No change, return same reference to prevent re-render
+      }
       return {
         ...state,
         isInCombat: action.payload.isInCombat,
         currentTurnPlayerId: action.payload.currentTurnPlayerId,
-        currentPhase: action.payload.isInCombat ? 'combat' : 'exploration'
+        currentPhase: newPhase
       };
+    }
 
     case 'SET_AI_RESPONSE':
       return {
@@ -203,12 +226,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'ADD_PENDING_ACTION':
+      // Change Detection: Check if action already exists in pendingActions
+      // Comparison Strategy: Array includes check for primitive string values
+      if (state.pendingActions.includes(action.payload)) {
+        return state; // Action already pending, return same reference to prevent re-render
+      }
       return {
         ...state,
         pendingActions: [...state.pendingActions, action.payload]
       };
 
     case 'REMOVE_PENDING_ACTION':
+      // Change Detection: Check if action exists before filtering
+      // Comparison Strategy: Array includes check for primitive string values
+      if (!state.pendingActions.includes(action.payload)) {
+        return state; // Action not in list, return same reference to prevent re-render
+      }
       return {
         ...state,
         pendingActions: state.pendingActions.filter(action => action !== action.payload)
@@ -227,17 +260,36 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { state: combatState } = useCombat();
 
   // Track previous combat state values to prevent infinite loops
+  // This ref stores the last combat state values we synchronized with GameContext
+  // Equality Strategy: Uses primitive comparison (=== for boolean and string)
+  // - isInCombat: boolean primitive, compared by value
+  // - currentTurnPlayerId: string | undefined primitive, compared by value
+  // Deep equality is NOT needed because we only track primitive values, not nested objects
   const prevCombatStateRef = useRef({
     isInCombat: false,
     currentTurnPlayerId: undefined as string | undefined
   });
 
+  // Ref to always access latest state without causing useCallback dependencies to change
+  // This prevents stale closure bugs in async operations and callbacks
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
   // Sync with combat context - only dispatch when values actually change
+  // Performance: This effect extracts primitives from combatState to avoid triggering
+  // on activeEncounter object reference changes. Only the extracted primitive values
+  // are compared, preventing unnecessary re-renders and infinite loops.
   useEffect(() => {
     const isInCombat = combatState.isInCombat;
     const currentTurnPlayerId = combatState.activeEncounter?.currentTurnParticipantId;
 
     // Only dispatch if values actually changed from the previous combat context values
+    // Comparison Strategy:
+    // - Uses !== for primitive values (boolean and string)
+    // - Prevents infinite loops by storing previous values in ref
+    // - No deep equality needed as we're only comparing primitives
     const prevState = prevCombatStateRef.current;
     if (prevState.isInCombat !== isInCombat ||
         prevState.currentTurnPlayerId !== currentTurnPlayerId) {
@@ -271,6 +323,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   /**
    * Request a new dice roll with automatic deduplication
+   *
+   * Fixed: Properly memoized with useCallback and empty dependencies.
+   * Only uses dispatch (stable) and local variables, so no external dependencies needed.
+   * Dependencies: [] - no external dependencies, uses only dispatch and local scope
    */
   const requestDiceRoll = useCallback((
     request: Omit<DiceRollRequest, 'id' | 'timestamp' | 'status'>
@@ -286,45 +342,73 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'ADD_DICE_ROLL_REQUEST', payload: rollRequest });
 
     return rollRequest.id;
-  }, []);
+  }, []); // No dependencies - only uses dispatch and function parameters
 
   /**
    * Complete a dice roll with the result
+   *
+   * Fixed: Properly memoized with useCallback and empty dependencies.
+   * Only uses dispatch (stable) and function parameters.
+   * Dependencies: [] - no external dependencies, uses only dispatch and parameters
    */
   const completeDiceRoll = useCallback((rollId: string, result: any) => {
     logger.info('🎯 Completing dice roll:', rollId, result);
     dispatch({ type: 'COMPLETE_DICE_ROLL', payload: { id: rollId, result } });
-  }, []);
+  }, []); // No dependencies - only uses dispatch and function parameters
 
   /**
    * Cancel a pending dice roll
+   *
+   * Fixed: Properly memoized with useCallback and empty dependencies.
+   * Only uses dispatch (stable) and function parameters.
+   * Dependencies: [] - no external dependencies, uses only dispatch and parameters
    */
   const cancelDiceRoll = useCallback((rollId: string) => {
     logger.info('❌ Cancelling dice roll:', rollId);
     dispatch({ type: 'CANCEL_DICE_ROLL', payload: rollId });
-  }, []);
+  }, []); // No dependencies - only uses dispatch and function parameters
 
   /**
    * Get the current dice roll that should be displayed to the user
+   *
+   * Fixed: Uses stateRef to access latest state without recreating callback on every state change.
+   * This prevents stale closures while maintaining stable function reference.
    */
   const getCurrentDiceRoll = useCallback((): DiceRollRequest | null => {
-    if (!state.diceRollQueue.currentRollId) return null;
+    const currentState = stateRef.current;
+    if (!currentState.diceRollQueue.currentRollId) return null;
 
-    return state.diceRollQueue.pendingRolls.find(
-      roll => roll.id === state.diceRollQueue.currentRollId && roll.status === 'pending'
+    return currentState.diceRollQueue.pendingRolls.find(
+      roll => roll.id === currentState.diceRollQueue.currentRollId && roll.status === 'pending'
     ) || null;
-  }, [state.diceRollQueue.currentRollId, state.diceRollQueue.pendingRolls]);
+  }, []); // Empty deps - uses stateRef to always get fresh state
 
   /**
    * Set the current game phase
+   *
+   * Fixed: Properly memoized with useCallback and empty dependencies.
+   * Only uses dispatch (stable) and function parameters.
+   * Change Detection: Uses stateRef to check current phase before dispatching.
+   * Comparison Strategy: Primitive comparison (===) for GamePhase string union type.
+   * Dependencies: [] - no external dependencies, uses stateRef and dispatch
    */
   const setGamePhase = useCallback((phase: GamePhase) => {
+    // Change Detection: Only dispatch if phase actually changes
+    // Uses stateRef to access current state without adding dependencies
+    if (stateRef.current.currentPhase === phase) {
+      logger.info('🎮 Game phase unchanged, skipping dispatch:', phase);
+      return; // Early return prevents unnecessary dispatch and re-render
+    }
     logger.info('🎮 Setting game phase:', phase);
     dispatch({ type: 'SET_PHASE', payload: phase });
-  }, []);
+  }, []); // No dependencies - only uses dispatch and function parameters
 
   /**
    * Process AI response and extract dice roll requests with deduplication
+   *
+   * Fixed: Properly memoized with requestDiceRoll dependency.
+   * Since requestDiceRoll has stable reference (empty deps), this handler won't recreate unnecessarily.
+   * Dependencies: [requestDiceRoll] - needed for calling requestDiceRoll within the handler
    */
   const processAiResponse = useCallback((rollRequests: any[]) => {
     logger.info('🤖 Processing AI response with roll requests:', rollRequests);
@@ -384,14 +468,58 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     dispatch({ type: 'SET_AI_RESPONSE', payload: { rollRequests: processedRollRequests } });
-  }, [requestDiceRoll]);
+  }, [requestDiceRoll]); // Depends on requestDiceRoll (stable reference)
 
   /**
    * Update combat state integration
+   *
+   * Fixed: Properly memoized with useCallback and empty dependencies.
+   * Only uses dispatch (stable) and function parameters.
+   * Change Detection: Uses stateRef to check combat state before dispatching.
+   * Comparison Strategy: Primitive comparison (===) for boolean and string values.
+   * Dependencies: [] - no external dependencies, uses stateRef and dispatch
    */
   const updateCombatState = useCallback((isInCombat: boolean, currentTurnPlayerId?: string) => {
+    // Change Detection: Only dispatch if combat state values actually change
+    // Uses stateRef to access current state without adding dependencies
+    const currentState = stateRef.current;
+    if (currentState.isInCombat === isInCombat &&
+        currentState.currentTurnPlayerId === currentTurnPlayerId) {
+      logger.info('⚔️ Combat state unchanged, skipping dispatch:', { isInCombat, currentTurnPlayerId });
+      return; // Early return prevents unnecessary dispatch and re-render
+    }
     dispatch({ type: 'SET_COMBAT_STATE', payload: { isInCombat, currentTurnPlayerId } });
-  }, []);
+  }, []); // No dependencies - only uses dispatch and function parameters
+
+  /**
+   * Throttled versions of frequently-called functions to prevent performance issues
+   *
+   * Throttle Strategy:
+   * - updateCombatState: 100ms - Combat state updates need near-instant feedback but can be throttled slightly
+   * - setGamePhase: 250ms - Phase transitions are less frequent but can happen during rapid state changes
+   * - processAiResponse: 500ms - AI responses are async and don't need immediate processing
+   *
+   * Functions NOT throttled:
+   * - requestDiceRoll: Already has deduplication logic in reducer, throttling could lose rolls
+   * - completeDiceRoll: Must execute immediately to show results to user
+   * - cancelDiceRoll: Must execute immediately for responsive user feedback
+   * - getCurrentDiceRoll: Read-only getter, no state updates
+   */
+  const throttledUpdateCombatState = useMemo(
+    () => throttle(updateCombatState, 100),
+    [updateCombatState]
+  ); // 100ms - Combat state updates should be near-instant but can be throttled slightly
+
+  const throttledSetGamePhase = useMemo(
+    () => throttle(setGamePhase, 250),
+    [setGamePhase]
+  ); // 250ms - Phase transitions are less frequent but can happen during rapid state changes
+
+  const throttledProcessAiResponse = useMemo(
+    () => throttle(processAiResponse, 500),
+    [processAiResponse]
+  ); // 500ms - AI responses are async and don't need immediate processing
+
 
   const contextValue: GameContextValue = {
     state,
@@ -400,9 +528,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     completeDiceRoll,
     cancelDiceRoll,
     getCurrentDiceRoll,
-    setGamePhase,
-    processAiResponse,
-    updateCombatState
+    setGamePhase: throttledSetGamePhase,
+    processAiResponse: throttledProcessAiResponse,
+    updateCombatState: throttledUpdateCombatState
   };
 
   return (

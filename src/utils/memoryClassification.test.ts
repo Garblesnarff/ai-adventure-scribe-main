@@ -61,11 +61,13 @@ describe('Memory Classification', () => {
       
       expect(segments.length).toBeGreaterThanOrEqual(1); // Depends on segmentation logic
       
-      // Check types and importance (importance is harder to test precisely without mocking calculateImportance)
+      // Check types and importance (importance is normalized to 1-5 range)
       segments.forEach(segment => {
         expect(segment.content).toBeTypeOf('string');
         expect(CLASSIFICATION_PATTERNS[segment.type]).toBeDefined();
-        expect(segment.importance).toBeGreaterThanOrEqual(CLASSIFICATION_PATTERNS[segment.type]?.importance || 0);
+        // After normalization, importance should be in the 1-5 range
+        expect(segment.importance).toBeGreaterThanOrEqual(1);
+        expect(segment.importance).toBeLessThanOrEqual(5);
       });
 
       // Example checks based on expected segmentation and classification

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users } from 'lucide-react';
+import { ErrorBoundaryTest } from '@/components/error/ErrorBoundaryTest';
 
 import CampaignOverview from './CampaignOverview';
 import CampaignCharacters from './CampaignCharacters';
@@ -207,6 +208,9 @@ const CampaignHub: React.FC = () => {
         campaignId={campaign.id}
         campaignName={campaign.name}
       />
+
+      {/* Development only: Error boundary testing */}
+      {import.meta.env.DEV && <ErrorBoundaryTest />}
     </div>
   );
 };

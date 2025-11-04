@@ -16,8 +16,10 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts', // Optional: if we need setup files
     css: true, // If you have CSS imports in components
     include: [
+      'src/lib/logger.test.ts',
       'src/utils/diceRolls.test.ts',
       'src/utils/abilityScoreUtils.test.ts',
+      'src/utils/equality.test.ts',
       'src/utils/__tests__/spell-validation.test.ts',
       'src/utils/__tests__/spell-validation-async.test.ts',
       'src/utils/__tests__/sentence-segmenter.test.ts',
@@ -70,6 +72,7 @@ export default defineConfig({
       reportsDirectory: 'coverage',
       all: false,
       include: [
+        'src/lib/logger.ts',
         'src/utils/diceRolls.ts',
         'src/utils/abilityScoreUtils.ts',
         'src/utils/sentence-segmenter.ts',

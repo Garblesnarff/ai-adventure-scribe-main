@@ -518,7 +518,7 @@ export const useProgressiveVoice = () => {
    */
   const stopPlayback = React.useCallback(() => {
     logger.info('🛑 Stopping progressive voice playback');
-    console.trace('🔍 stopPlayback called from:'); // Add stack trace
+    logger.debug('🔍 stopPlayback called from:', new Error().stack); // Add stack trace
 
     // Stop current audio
     if (currentAudio.current) {
