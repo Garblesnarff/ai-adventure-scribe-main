@@ -13,6 +13,7 @@ import EmptyState from './empty-state';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
 import { CharacterListSkeleton } from '@/components/skeletons/CharacterListSkeleton';
+import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
 /**
  * CharacterList component displays all characters for the current user
@@ -25,9 +26,15 @@ const CharacterList: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [offlineMode, setOfflineMode] = React.useState(isOffline());
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  const cachedCharactersRef = React.useRef<Partial<Character>[]>(cachedCharacters);
   const navigate = useNavigate();
   const { toast } = useToast();
   const offlineNoticeShown = React.useRef(false);
+
+  React.useEffect(() => {
+    cachedCharactersRef.current = cachedCharacters;
+  }, [cachedCharacters]);
 
   /**
    * Transforms raw database character data into Character type
@@ -50,22 +57,24 @@ const CharacterList: React.FC = () => {
   /**
    * Fetches all characters for the current user from Supabase
    */
-  const fetchCharacters = React.useCallback(async () => {
+  const fetchCharacters = React.useCallback(async ({ suppressLoader = false }: { suppressLoader?: boolean } = {}) => {
     try {
-      setLoading(true);
+      if (!suppressLoader) {
+        setLoading(true);
+      }
 
       if (isOffline()) {
         setOfflineMode(true);
         if (!offlineNoticeShown.current) {
           toast({
             title: 'Offline mode',
-            description: cachedCharacters.length > 0
+            description: cachedCharactersRef.current.length > 0
               ? 'You are viewing cached characters. Changes will sync when you reconnect.'
               : 'You appear to be offline. Reconnect to load your characters.',
           });
           offlineNoticeShown.current = true;
         }
-        setCharacters(cachedCharacters);
+        setCharacters(cachedCharactersRef.current);
         return;
       }
 
@@ -84,10 +93,15 @@ const CharacterList: React.FC = () => {
         return;
       }
 
+      setCurrentUserId(session.user.id);
+
       const { data, error } = await supabase
         .from('characters')
         .select(`
-          id, name, description, race, class, level, image_url, background_image, appearance, personality_traits, backstory_elements, background,
+          id, name, race, class, level,
+          image_url, avatar_url, background_image,
+          campaign_id,
+          created_at, updated_at,
           character_stats!left (
             strength, dexterity, constitution, intelligence, wisdom, charisma,
             max_hit_points, current_hit_points, armor_class
@@ -108,9 +122,11 @@ const CharacterList: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (!suppressLoader) {
+        setLoading(false);
+      }
     }
-  }, [toast, navigate, cachedCharacters, setCachedCharacters]);
+  }, [toast, navigate, setCachedCharacters]);
 
   React.useEffect(() => {
     fetchCharacters();
@@ -124,13 +140,34 @@ const CharacterList: React.FC = () => {
     }));
     disposers.push(addNetworkListener('offline', () => {
       setOfflineMode(true);
-      setCharacters(cachedCharacters);
+      setCharacters(cachedCharactersRef.current);
     }));
 
     return () => {
       disposers.forEach((dispose) => dispose());
     };
-  }, [fetchCharacters, cachedCharacters]);
+  }, [fetchCharacters]);
+
+  React.useEffect(() => {
+    if (!currentUserId) return;
+
+    const callbackId = subscriptionManager.subscribeToEvents('characters', {
+      events: ['INSERT', 'UPDATE', 'DELETE'],
+      filter: (payload) => {
+        const payloadUserId = (payload.new as { user_id?: string } | null | undefined)?.user_id ?? (payload.old as { user_id?: string } | null | undefined)?.user_id;
+        return payloadUserId === currentUserId;
+      },
+      callback: () => {
+        fetchCharacters({ suppressLoader: true }).catch((error) => {
+          logger.error('Failed to refresh characters after realtime update:', error);
+        });
+      }
+    });
+
+    return () => {
+      subscriptionManager.unsubscribeFromEvents('characters', callbackId);
+    };
+  }, [currentUserId, fetchCharacters]);
 
   // Filter characters based on search term
   React.useEffect(() => {

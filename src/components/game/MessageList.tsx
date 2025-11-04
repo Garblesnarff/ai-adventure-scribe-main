@@ -38,8 +38,13 @@ type LastRollMeta = {
  * Displays a list of chat messages with styling based on sender type
  * Refactored to use sub-components and custom hooks for better maintainability
  */
-export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, sessionId, containerRef, suppressEmptyState }) => {
-  const { messages = [], sendMessage } = useMessageContext();
+export const MessageList: React.FC<MessageListProps> = ({
+  onSendFullMessage,
+  sessionId,
+  containerRef,
+  suppressEmptyState,
+}) => {
+  const { messages = [], sendMessage, hasMore, loadMore, isFetchingMore } = useMessageContext();
   const { getCurrentDiceRoll } = useGame();
   const { state: combatState } = useCombat();
   const { state: characterState } = useCharacter();
@@ -67,7 +72,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
     messages,
   });
 
-  useScrollBehavior(messagesRef, messages);
+  useScrollBehavior(messagesRef, messages, hasMore, loadMore, isFetchingMore);
 
   // Handle option selection
   const handleOptionSelect = React.useCallback(
@@ -121,6 +126,8 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
           onOptionSelect={handleOptionSelect}
           onSendMessage={sendMessage}
           onSendFullMessage={onSendFullMessage}
+          isFetchingMore={isFetchingMore}
+          hasMore={hasMore}
           suppressEmptyState={suppressEmptyState}
         />
       </div>

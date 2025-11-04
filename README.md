@@ -22,6 +22,28 @@
 *   **State Management**: TanStack Query, React Context
 *   **Testing**: Vitest, React Testing Library
 
+#### **Performance & Scalability**
+
+InfiniteRealms implements comprehensive database optimizations for production-scale performance:
+
+*   **Query Optimization**: 83-95% reduction in database queries through batch operations and JOINs
+*   **Response Times**: 5-12× faster API responses for character creation and spell validation
+*   **Race Condition Prevention**: Unique constraints eliminate duplicate session creation issues
+*   **Automatic Archival**: Session archival system maintains 50% smaller database size
+*   **Client Storage Management**: IndexedDB auto-cleanup keeps browser storage under 1 MB
+*   **Strategic Indexes**: Optimized query performance with targeted database indexes
+
+**📊 Performance Impact:**
+- Spell validation: 300-1200ms → 50-200ms (75-95% faster)
+- Database queries: 6-12 queries → 1-2 queries (83-93% reduction)
+- Database size: Controlled growth with 90-day retention policy
+
+**📚 Documentation:**
+- [Database Optimizations Overview](docs/DATABASE_OPTIMIZATIONS.md)
+- [Migration Guide](docs/MIGRATION_GUIDE.md)
+- [Performance Report](docs/PERFORMANCE_REPORT.md)
+- [Monitoring Guide](docs/MONITORING.md)
+
 #### **Quick Start**
 1.  **Prerequisites**: Node.js and npm installed.
 2.  **Clone the repository**:

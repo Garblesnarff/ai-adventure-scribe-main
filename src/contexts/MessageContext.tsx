@@ -40,6 +40,9 @@ import { ChatMessage } from '@/types/game';
 interface MessageContextType {
   messages: ChatMessage[];
   isLoading: boolean;
+  isFetchingMore: boolean;
+  hasMore: boolean;
+  loadMore: () => void;
   sendMessage: (message: ChatMessage) => Promise<void>;
   queueStatus: 'idle' | 'processing' | 'error' | 'retrying';
 }
@@ -49,16 +52,25 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 /**
  * Provider component for managing message-related state and operations
  */
-export const MessageProvider: React.FC<{ 
+export const MessageProvider: React.FC<{
   sessionId: string | null;
   children: ReactNode; // Used ReactNode
 }> = ({ sessionId, children }) => {
-  const { data: messages = [], isLoading } = useMessages(sessionId);
+  const {
+    data: messages = [],
+    isLoading,
+    isFetching,
+    hasMore,
+    loadMore
+  } = useMessages(sessionId);
   const { messageMutation, queueStatus } = useMessageQueue(sessionId);
 
   const value: MessageContextType = {
     messages,
     isLoading,
+    isFetchingMore: isFetching && !isLoading,
+    hasMore,
+    loadMore,
     sendMessage: messageMutation.mutateAsync,
     queueStatus,
   };

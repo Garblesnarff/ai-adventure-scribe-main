@@ -132,7 +132,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         .from('dialogue_history')
         .select('message, speaker_type, context')
         .eq('session_id', sessionId)
-        .order('timestamp', { ascending: true });
+        .order('sequence_number', { ascending: true });
 
       if (error) {
         logger.error('Error fetching dialogue history:', error);

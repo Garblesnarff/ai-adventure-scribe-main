@@ -75,9 +75,16 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
     queryKey: ['campaigns', searchTerm, sortBy],
     queryFn: async () => {
       try {
+        // Only select minimal fields needed for campaign list view
+        // Excludes heavy JSONB fields (setting_details, thematic_elements, style_config, rules_config)
         let query = supabase
           .from('campaigns')
-          .select('*')
+          .select(`
+            id, name, description, genre,
+            difficulty_level, campaign_length, tone,
+            status, background_image, art_style,
+            created_at, updated_at
+          `)
           .order(sortBy, { ascending: false });
 
         // Apply search filter

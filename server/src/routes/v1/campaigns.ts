@@ -10,9 +10,16 @@ export default function campaignRouter() {
   router.get('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     try {
+      // Only select minimal fields needed for campaign list view
+      // Excludes heavy JSONB fields (setting_details, thematic_elements, style_config, rules_config)
       const { data, error } = await supabaseService
         .from('campaigns')
-        .select('*')
+        .select(`
+          id, name, description, genre,
+          difficulty_level, campaign_length, tone,
+          status, background_image, art_style,
+          created_at, updated_at
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;

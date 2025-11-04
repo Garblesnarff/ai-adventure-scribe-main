@@ -1026,6 +1026,7 @@ export type Database = {
           created_at: string | null
           id: string
           message: string
+          sequence_number: number
           session_id: string | null
           speaker_id: string | null
           speaker_type: string | null
@@ -1037,6 +1038,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message: string
+          sequence_number?: number
           session_id?: string | null
           speaker_id?: string | null
           speaker_type?: string | null
@@ -1048,6 +1050,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           message?: string
+          sequence_number?: number
           session_id?: string | null
           speaker_id?: string | null
           speaker_type?: string | null

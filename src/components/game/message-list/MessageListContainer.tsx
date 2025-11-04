@@ -21,6 +21,8 @@ interface MessageListContainerProps {
   onOptionSelect: (optionText: string) => Promise<void>;
   onSendMessage: (message: ChatMessage) => Promise<void>;
   onSendFullMessage?: (message: string) => Promise<void>;
+  isFetchingMore?: boolean;
+  hasMore?: boolean;
   suppressEmptyState?: boolean;
 }
 
@@ -58,6 +60,8 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   onOptionSelect,
   onSendMessage,
   onSendFullMessage,
+  isFetchingMore,
+  hasMore,
   suppressEmptyState = false,
 }) => {
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
@@ -209,6 +213,16 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
 
   return (
     <>
+      {/* Loading indicator at top when fetching more */}
+      {isFetchingMore && hasMore && (
+        <div className="flex justify-center py-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span>Loading older messages...</span>
+          </div>
+        </div>
+      )}
+
       {groupedMessages.map((group, groupIndex) => (
         <div key={`group-${groupIndex}`} className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}>
           <div className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>

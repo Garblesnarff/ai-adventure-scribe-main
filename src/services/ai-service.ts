@@ -911,7 +911,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
         .from('dialogue_history')
         .select('*')
         .eq('session_id', sessionId)
-        .order('created_at', { ascending: true });
+        .order('sequence_number', { ascending: true });
 
       if (error) {
         logger.error('Error getting conversation history:', error);
