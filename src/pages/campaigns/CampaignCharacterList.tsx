@@ -1,14 +1,16 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MemoizedCharacterCard } from '@/components/character-list/character-card';
 import { Character } from '@/types/character';
 import { Skeleton } from '@/components/ui/skeleton';
 import logger from '@/lib/logger';
+import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
 const CampaignCharacterList: React.FC = () => {
   const { id: campaignId } = useParams();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['campaign', campaignId, 'characters'],
@@ -29,6 +31,56 @@ const CampaignCharacterList: React.FC = () => {
     },
     enabled: Boolean(campaignId),
   });
+
+  React.useEffect(() => {
+    if (!campaignId) return;
+
+    const callbackId = subscriptionManager.subscribeToEvents('characters', {
+      events: ['INSERT', 'UPDATE', 'DELETE'],
+      filter: (payload) => {
+        const newCampaignId = (payload.new as { campaign_id?: string } | null | undefined)?.campaign_id;
+        const oldCampaignId = (payload.old as { campaign_id?: string } | null | undefined)?.campaign_id;
+        return newCampaignId === campaignId || oldCampaignId === campaignId;
+      },
+      callback: (payload) => {
+        const queryKey: [string, string | undefined, string] = ['campaign', campaignId, 'characters'];
+        if (payload.eventType === 'DELETE' || payload.eventType === 'INSERT') {
+          logger.debug('Characters realtime change detected, invalidating query', {
+            eventType: payload.eventType,
+            id: (payload.new ?? payload.old)?.id
+          });
+          queryClient.invalidateQueries({ queryKey, exact: true });
+          return;
+        }
+
+        if (payload.eventType === 'UPDATE' && payload.new) {
+          queryClient.setQueryData(queryKey, (previous: any) => {
+            if (!Array.isArray(previous)) {
+              return previous;
+            }
+
+            const index = previous.findIndex((row: any) => row.id === (payload.new as any).id);
+            if (index === -1) {
+              return previous;
+            }
+
+            const updatedRow = {
+              ...previous[index],
+              ...payload.new
+            };
+
+            const next = [...previous];
+            next[index] = updatedRow;
+            return next;
+          });
+        }
+      }
+    });
+
+    return () => {
+      subscriptionManager.unsubscribeFromEvents('characters', callbackId);
+    };
+  }, [campaignId, queryClient]);
 
   if (isLoading) {
     return (

@@ -3,21 +3,32 @@ import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supab
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
 
-interface SubscriptionCallback {
+type PostgresEvent = 'INSERT' | 'UPDATE' | 'DELETE';
+
+interface RecordSubscriptionCallback {
   id: string;
   recordId: string;
   imageField: string;
   callback: (imageUrl: string | null) => void;
 }
 
+interface EventSubscriptionCallback {
+  id: string;
+  events: PostgresEvent[];
+  filter?: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => boolean;
+  callback: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
+}
+
 interface TableSubscription {
   channel: RealtimeChannel | null;
-  callbacks: Map<string, SubscriptionCallback>;
+  recordCallbacks: Map<string, RecordSubscriptionCallback>;
+  eventCallbacks: Map<string, EventSubscriptionCallback>;
   retryCount: number;
   isConnected: boolean;
   isConnecting: boolean;
   lastRetry: number;
-  timeoutId: ReturnType<typeof setTimeout> | null;
+  connectionTimeoutId: ReturnType<typeof setTimeout> | null;
+  cleanupTimeoutId: ReturnType<typeof setTimeout> | null;
   disabled: boolean;
 }
 
@@ -30,6 +41,7 @@ class SupabaseSubscriptionManager {
   private readonly maxRetries = 2;
   private readonly retryDelay = 5000; // 5 seconds
   private readonly connectionTimeout = 15000; // 15 seconds
+  private readonly cleanupDelay = 3000; // 3 seconds grace period before tearing down
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -48,7 +60,7 @@ class SupabaseSubscriptionManager {
    * Subscribe to image updates for a specific record
    */
   subscribe(
-    tableName: 'campaigns' | 'characters',
+    tableName: string,
     recordId: string,
     imageField: string,
     callback: (imageUrl: string | null) => void
@@ -59,20 +71,27 @@ class SupabaseSubscriptionManager {
     if (!this.subscriptions.has(tableName)) {
       this.subscriptions.set(tableName, {
         channel: null,
-        callbacks: new Map(),
+        recordCallbacks: new Map(),
+        eventCallbacks: new Map(),
         retryCount: 0,
         isConnected: false,
         isConnecting: false,
         lastRetry: 0,
-        timeoutId: null,
+        connectionTimeoutId: null,
+        cleanupTimeoutId: null,
         disabled: false
       });
     }
 
     const subscription = this.subscriptions.get(tableName)!;
 
+    if (subscription.cleanupTimeoutId) {
+      clearTimeout(subscription.cleanupTimeoutId);
+      subscription.cleanupTimeoutId = null;
+    }
+
     // Add callback
-    subscription.callbacks.set(callbackId, {
+    subscription.recordCallbacks.set(callbackId, {
       id: callbackId,
       recordId,
       imageField,
@@ -88,16 +107,66 @@ class SupabaseSubscriptionManager {
   /**
    * Unsubscribe a specific callback
    */
-  unsubscribe(tableName: 'campaigns' | 'characters', callbackId: string): void {
+  unsubscribe(tableName: string, callbackId: string): void {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
 
-    subscription.callbacks.delete(callbackId);
+    subscription.recordCallbacks.delete(callbackId);
 
-    // Clean up empty subscriptions
-    if (subscription.callbacks.size === 0) {
-      this.cleanupTableSubscription(tableName);
+    this.scheduleCleanupIfIdle(tableName, subscription);
+  }
+
+  subscribeToEvents(
+    tableName: string,
+    options: {
+      events?: PostgresEvent[];
+      filter?: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => boolean;
+      callback: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
     }
+  ): string {
+    const callbackId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    if (!this.subscriptions.has(tableName)) {
+      this.subscriptions.set(tableName, {
+        channel: null,
+        recordCallbacks: new Map(),
+        eventCallbacks: new Map(),
+        retryCount: 0,
+        isConnected: false,
+        isConnecting: false,
+        lastRetry: 0,
+        connectionTimeoutId: null,
+        cleanupTimeoutId: null,
+        disabled: false
+      });
+    }
+
+    const subscription = this.subscriptions.get(tableName)!;
+
+    if (subscription.cleanupTimeoutId) {
+      clearTimeout(subscription.cleanupTimeoutId);
+      subscription.cleanupTimeoutId = null;
+    }
+
+    subscription.eventCallbacks.set(callbackId, {
+      id: callbackId,
+      events: options.events ?? ['INSERT', 'UPDATE', 'DELETE'],
+      filter: options.filter,
+      callback: options.callback
+    });
+
+    this.ensureChannelConnected(tableName);
+
+    return callbackId;
+  }
+
+  unsubscribeFromEvents(tableName: string, callbackId: string): void {
+    const subscription = this.subscriptions.get(tableName);
+    if (!subscription) return;
+
+    subscription.eventCallbacks.delete(callbackId);
+
+    this.scheduleCleanupIfIdle(tableName, subscription);
   }
 
   /**
@@ -106,6 +175,13 @@ class SupabaseSubscriptionManager {
   private ensureChannelConnected(tableName: string): void {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
+
+    const hasCallbacks =
+      subscription.recordCallbacks.size > 0 || subscription.eventCallbacks.size > 0;
+
+    if (!hasCallbacks) {
+      return;
+    }
 
     if (isOffline()) {
       logger.info(`Skipping ${tableName} subscription setup while offline`);
@@ -159,16 +235,16 @@ class SupabaseSubscriptionManager {
     subscription.isConnecting = true;
 
     const channel = supabase
-      .channel(`shared_${tableName}_image_updates`)
+      .channel(`shared_${tableName}_updates`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: tableName
         },
         (payload) => {
-          this.handleTableUpdate(tableName, payload);
+          this.handleTableEvent(tableName, payload as RealtimePostgresChangesPayload<Record<string, unknown>>);
         }
       )
       .subscribe((status) => {
@@ -178,12 +254,12 @@ class SupabaseSubscriptionManager {
     subscription.channel = channel;
 
     // Set connection timeout
-    if (subscription.timeoutId) {
-      clearTimeout(subscription.timeoutId);
+    if (subscription.connectionTimeoutId) {
+      clearTimeout(subscription.connectionTimeoutId);
     }
 
     const expectedChannel = channel;
-    subscription.timeoutId = setTimeout(() => {
+    subscription.connectionTimeoutId = setTimeout(() => {
       if (!subscription.isConnected && subscription.channel === expectedChannel && !subscription.disabled) {
         logger.warn(`Connection timeout for ${tableName} subscription`);
         this.handleConnectionFailure(tableName);
@@ -194,29 +270,45 @@ class SupabaseSubscriptionManager {
   /**
    * Handle table update events
    */
-  private handleTableUpdate(
+  private handleTableEvent(
     tableName: string,
-    payload: RealtimePostgresChangesPayload<{ id: string | number } & Record<string, unknown>>
+    payload: RealtimePostgresChangesPayload<Record<string, unknown>>
   ): void {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
 
-    const recordId = payload.new?.id as string | number | undefined;
-    if (!recordId) return;
+    const recordId = payload.new?.id ?? payload.old?.id;
 
-    // Notify relevant callbacks
-    subscription.callbacks.forEach((callbackData) => {
-      if (callbackData.recordId === recordId) {
-        const newImageUrl = (payload.new as Record<string, unknown>)?.[callbackData.imageField] as string | null | undefined;
-        const oldImageUrl = (payload.old as Record<string, unknown>)?.[callbackData.imageField] as string | null | undefined;
+    if (recordId) {
+      subscription.recordCallbacks.forEach((callbackData) => {
+        if (callbackData.recordId === recordId) {
+          const newImageUrl = (payload.new ?? {})[callbackData.imageField] as string | null | undefined;
+          const oldImageUrl = (payload.old ?? {})[callbackData.imageField] as string | null | undefined;
 
-        // Only trigger if image field actually changed
-        if (newImageUrl !== oldImageUrl) {
-          logger.info(`Image updated for ${tableName} ${recordId}: ${newImageUrl}`);
-          callbackData.callback(newImageUrl || null);
+          if (newImageUrl !== oldImageUrl) {
+            logger.info(`Image updated for ${tableName} ${recordId}: ${newImageUrl}`);
+            callbackData.callback(newImageUrl || null);
+          }
         }
-      }
-    });
+      });
+    }
+
+    if (subscription.eventCallbacks.size > 0) {
+      subscription.eventCallbacks.forEach((callbackData) => {
+        const eventType = payload.eventType as PostgresEvent | undefined;
+        if (!eventType || !callbackData.events.includes(eventType)) {
+          return;
+        }
+
+        try {
+          if (!callbackData.filter || callbackData.filter(payload)) {
+            callbackData.callback(payload);
+          }
+        } catch (error) {
+          logger.error(`Error running subscription callback for ${tableName}:`, error);
+        }
+      });
+    }
   }
 
   /**
@@ -233,9 +325,9 @@ class SupabaseSubscriptionManager {
         subscription.isConnected = true;
         subscription.retryCount = 0;
         subscription.isConnecting = false;
-        if (subscription.timeoutId) {
-          clearTimeout(subscription.timeoutId);
-          subscription.timeoutId = null;
+        if (subscription.connectionTimeoutId) {
+          clearTimeout(subscription.connectionTimeoutId);
+          subscription.connectionTimeoutId = null;
         }
         break;
 
@@ -249,9 +341,9 @@ class SupabaseSubscriptionManager {
       case 'CLOSED':
         subscription.isConnected = false;
         subscription.isConnecting = false;
-        if (subscription.timeoutId) {
-          clearTimeout(subscription.timeoutId);
-          subscription.timeoutId = null;
+        if (subscription.connectionTimeoutId) {
+          clearTimeout(subscription.connectionTimeoutId);
+          subscription.connectionTimeoutId = null;
         }
         break;
     }
@@ -278,9 +370,9 @@ class SupabaseSubscriptionManager {
     } else {
       logger.warn(`Max retries exceeded for ${tableName} subscription`);
       subscription.disabled = true;
-      if (subscription.timeoutId) {
-        clearTimeout(subscription.timeoutId);
-        subscription.timeoutId = null;
+      if (subscription.connectionTimeoutId) {
+        clearTimeout(subscription.connectionTimeoutId);
+        subscription.connectionTimeoutId = null;
       }
     }
   }
@@ -299,9 +391,13 @@ class SupabaseSubscriptionManager {
       subscription.retryCount = 0;
       subscription.isConnecting = false;
       subscription.disabled = false;
-      if (subscription.timeoutId) {
-        clearTimeout(subscription.timeoutId);
-        subscription.timeoutId = null;
+      if (subscription.connectionTimeoutId) {
+        clearTimeout(subscription.connectionTimeoutId);
+        subscription.connectionTimeoutId = null;
+      }
+      if (subscription.cleanupTimeoutId) {
+        clearTimeout(subscription.cleanupTimeoutId);
+        subscription.cleanupTimeoutId = null;
       }
       this.ensureChannelConnected(tableName);
     });
@@ -316,9 +412,13 @@ class SupabaseSubscriptionManager {
       subscription.isConnected = false;
       subscription.isConnecting = false;
       subscription.lastRetry = Date.now();
-      if (subscription.timeoutId) {
-        clearTimeout(subscription.timeoutId);
-        subscription.timeoutId = null;
+      if (subscription.connectionTimeoutId) {
+        clearTimeout(subscription.connectionTimeoutId);
+        subscription.connectionTimeoutId = null;
+      }
+      if (subscription.cleanupTimeoutId) {
+        clearTimeout(subscription.cleanupTimeoutId);
+        subscription.cleanupTimeoutId = null;
       }
       logger.info(`Suspended ${tableName} subscription due to offline status`);
     });
@@ -337,11 +437,29 @@ class SupabaseSubscriptionManager {
       supabase.removeChannel(subscription.channel);
     }
 
-    if (subscription.timeoutId) {
-      clearTimeout(subscription.timeoutId);
+    if (subscription.connectionTimeoutId) {
+      clearTimeout(subscription.connectionTimeoutId);
+    }
+
+    if (subscription.cleanupTimeoutId) {
+      clearTimeout(subscription.cleanupTimeoutId);
     }
 
     this.subscriptions.delete(tableName);
+  }
+
+  private scheduleCleanupIfIdle(tableName: string, subscription: TableSubscription): void {
+    if (subscription.recordCallbacks.size > 0 || subscription.eventCallbacks.size > 0) {
+      return;
+    }
+
+    if (subscription.cleanupTimeoutId) {
+      clearTimeout(subscription.cleanupTimeoutId);
+    }
+
+    subscription.cleanupTimeoutId = setTimeout(() => {
+      this.cleanupTableSubscription(tableName);
+    }, this.cleanupDelay);
   }
 
   /**
@@ -354,8 +472,11 @@ class SupabaseSubscriptionManager {
       if (subscription.channel) {
         supabase.removeChannel(subscription.channel);
       }
-      if (subscription.timeoutId) {
-        clearTimeout(subscription.timeoutId);
+      if (subscription.connectionTimeoutId) {
+        clearTimeout(subscription.connectionTimeoutId);
+      }
+      if (subscription.cleanupTimeoutId) {
+        clearTimeout(subscription.cleanupTimeoutId);
       }
     });
 

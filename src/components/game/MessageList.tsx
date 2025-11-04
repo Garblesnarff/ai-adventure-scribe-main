@@ -17,6 +17,7 @@ interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
   sessionId?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
+  suppressEmptyState?: boolean;
 }
 
 // Type for last roll metadata to inform /dm/options
@@ -37,7 +38,12 @@ type LastRollMeta = {
  * Displays a list of chat messages with styling based on sender type
  * Refactored to use sub-components and custom hooks for better maintainability
  */
-export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, sessionId, containerRef }) => {
+export const MessageList: React.FC<MessageListProps> = ({
+  onSendFullMessage,
+  sessionId,
+  containerRef,
+  suppressEmptyState,
+}) => {
   const { messages = [], sendMessage, hasMore, loadMore, isFetchingMore } = useMessageContext();
   const { getCurrentDiceRoll } = useGame();
   const { state: combatState } = useCombat();
@@ -122,6 +128,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onSendFullMessage, ses
           onSendFullMessage={onSendFullMessage}
           isFetchingMore={isFetchingMore}
           hasMore={hasMore}
+          suppressEmptyState={suppressEmptyState}
         />
       </div>
     </div>

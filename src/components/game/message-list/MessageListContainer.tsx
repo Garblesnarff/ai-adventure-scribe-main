@@ -23,6 +23,7 @@ interface MessageListContainerProps {
   onSendFullMessage?: (message: string) => Promise<void>;
   isFetchingMore?: boolean;
   hasMore?: boolean;
+  suppressEmptyState?: boolean;
 }
 
 // Type for last roll metadata
@@ -61,6 +62,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   onSendFullMessage,
   isFetchingMore,
   hasMore,
+  suppressEmptyState = false,
 }) => {
   const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const lastRollRef = useRef<LastRollMeta | null>(null);
@@ -309,7 +311,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
       })()}
 
       {/* Loading state */}
-      {messages?.length === 0 && (
+      {!suppressEmptyState && messages?.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-center py-12">
           <div className="w-16 h-16 bg-gradient-to-br from-infinite-purple to-infinite-teal rounded-full flex items-center justify-center mb-6 animate-pulse">
             <span className="text-2xl">🎭</span>

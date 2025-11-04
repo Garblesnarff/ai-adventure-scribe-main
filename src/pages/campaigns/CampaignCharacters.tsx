@@ -12,14 +12,27 @@ const CampaignCharacters: React.FC<Props> = ({ mode = 'list' }) => {
   const { id: campaignId } = useParams();
   const navigate = useNavigate();
 
-  const openCreate = () => navigate(`/app/campaigns/${campaignId}/characters/new`);
-  const closeCreate = () => navigate(`/app/campaigns/${campaignId}/characters`);
+  const openCreate = () => {
+    if (!campaignId) {
+      return;
+    }
+    navigate(`/app/campaigns/${campaignId}/characters/new?campaign=${campaignId}`);
+  };
+
+  const closeCreate = () => {
+    if (!campaignId) {
+      return;
+    }
+    navigate(`/app/campaigns/${campaignId}/characters`, { replace: true });
+  };
 
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Characters</h2>
-        <Button onClick={openCreate}>Create Character</Button>
+        <Button onClick={openCreate} disabled={!campaignId}>
+          Create Character
+        </Button>
       </div>
       <CampaignCharacterList />
       {mode === 'create' && (

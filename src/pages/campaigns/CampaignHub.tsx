@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -56,6 +56,35 @@ const CampaignHub: React.FC = () => {
   };
 
   const [showCharacterModal, setShowCharacterModal] = React.useState(false);
+  const searchParams = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+  React.useEffect(() => {
+    if (searchParams.get('startSession') === 'true' && !showCharacterModal) {
+      setShowCharacterModal(true);
+    }
+  }, [searchParams, showCharacterModal]);
+
+  const openCharacterModal = React.useCallback(() => {
+    setShowCharacterModal(true);
+    const params = new URLSearchParams(location.search);
+    params.set('startSession', 'true');
+    const search = params.toString();
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true });
+  }, [location.pathname, location.search, navigate]);
+
+  const closeCharacterModal = React.useCallback(() => {
+    setShowCharacterModal(false);
+    const params = new URLSearchParams(location.search);
+    if (params.has('startSession')) {
+      params.delete('startSession');
+      const search = params.toString();
+      navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate]);
+  const isCharacterCreationRoute = React.useMemo(
+    () => location.pathname.includes('/characters/new'),
+    [location.pathname]
+  );
 
   if (isLoading) {
     return (
@@ -106,7 +135,7 @@ const CampaignHub: React.FC = () => {
                 <Button
                   variant="outline"
                   className="border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
-                  onClick={() => setShowCharacterModal(true)}
+                  onClick={openCharacterModal}
                 >
                   <span className="mr-2">+</span>
                   New Session
@@ -154,14 +183,11 @@ const CampaignHub: React.FC = () => {
           <TabsContent value="overview">
             <CampaignOverview
               campaign={campaign}
-              onStartNewSession={() => setShowCharacterModal(true)}
+              onStartNewSession={openCharacterModal}
             />
           </TabsContent>
           <TabsContent value="characters">
-            <Routes>
-              <Route index element={<CampaignCharacters />} />
-              <Route path="new" element={<CampaignCharacters mode="create" />} />
-            </Routes>
+            <CampaignCharacters mode={isCharacterCreationRoute ? 'create' : 'list'} />
           </TabsContent>
           <TabsContent value="sessions">
             <CampaignSessions />
@@ -177,7 +203,7 @@ const CampaignHub: React.FC = () => {
 
       <CharacterSelectionModal
         isOpen={showCharacterModal}
-        onClose={() => setShowCharacterModal(false)}
+        onClose={closeCharacterModal}
         campaignId={campaign.id}
         campaignName={campaign.name}
       />
