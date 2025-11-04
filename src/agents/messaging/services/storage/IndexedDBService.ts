@@ -29,6 +29,12 @@ import { logger } from '../../../../lib/logger';
 export class IndexedDBService {
   private static instance: IndexedDBService;
   private db: IDBDatabase | null = null;
+  private lastCleanupTime: number = 0;
+  private cleanupStats = {
+    lastCleanupTime: 0,
+    totalMessagesDeleted: 0,
+    lastDeletedCount: 0,
+  };
 
   private constructor() {
     this.initDatabase();
@@ -65,6 +71,9 @@ export class IndexedDBService {
         logger.info('[IndexedDB] Message stored successfully:', message.id);
         resolve();
       };
+    }).then(async () => {
+      // Check if cleanup is needed after storing a message
+      await this.checkAndCleanup();
     });
   }
 
@@ -177,12 +186,13 @@ export class IndexedDBService {
     });
   }
 
-  public async clearOldMessages(maxAgeMs: number = 24 * 60 * 60 * 1000): Promise<void> {
+  public async clearOldMessages(maxAgeMs: number = 24 * 60 * 60 * 1000): Promise<number> {
     if (!this.db) {
       throw new Error('Database not initialized');
     }
 
     const cutoffTime = new Date(Date.now() - maxAgeMs).toISOString();
+    let deletedCount = 0;
 
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.messageStoreName], 'readwrite');
@@ -195,13 +205,94 @@ export class IndexedDBService {
       request.onsuccess = (event) => {
         const cursor = (event.target as IDBRequest).result;
         if (cursor) {
-          cursor.delete();
+          // Skip messages that are pending or in retry state
+          const message = cursor.value as StoredMessage;
+          if (message.status !== 'pending' && message.status !== 'failed') {
+            cursor.delete();
+            deletedCount++;
+          }
           cursor.continue();
         } else {
-          logger.info('[IndexedDB] Old messages cleared successfully');
-          resolve();
+          // Update cleanup stats
+          this.cleanupStats.lastCleanupTime = Date.now();
+          this.cleanupStats.lastDeletedCount = deletedCount;
+          this.cleanupStats.totalMessagesDeleted += deletedCount;
+
+          logger.info(`[IndexedDB] Cleanup complete: removed ${deletedCount} old messages`);
+          resolve(deletedCount);
         }
       };
     });
+  }
+
+  /**
+   * Check if cleanup is needed and run it if necessary
+   * Uses requestIdleCallback to avoid blocking the main thread
+   */
+  private async checkAndCleanup(): Promise<void> {
+    const config = DEFAULT_STORAGE_CONFIG.cleanup;
+    if (!config) return;
+
+    const now = Date.now();
+    const timeSinceLastCleanup = now - this.lastCleanupTime;
+
+    // Only run cleanup if enough time has passed
+    if (timeSinceLastCleanup < config.checkIntervalMs) {
+      return;
+    }
+
+    // Update last cleanup time immediately to prevent concurrent cleanups
+    this.lastCleanupTime = now;
+
+    // Use requestIdleCallback if available to avoid blocking UI
+    const runCleanup = async () => {
+      try {
+        const deletedCount = await this.clearOldMessages(config.maxMessageAgeMs);
+        if (deletedCount > 0) {
+          logger.info(`[IndexedDB] Auto-cleanup: removed ${deletedCount} messages older than ${config.maxMessageAgeMs}ms`);
+        }
+      } catch (error) {
+        logger.error('[IndexedDB] Auto-cleanup error:', error);
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      window.requestIdleCallback(() => {
+        runCleanup().catch(err => logger.error('[IndexedDB] Idle cleanup error:', err));
+      });
+    } else {
+      // Fallback to setTimeout with a small delay
+      setTimeout(() => {
+        runCleanup().catch(err => logger.error('[IndexedDB] Delayed cleanup error:', err));
+      }, 100);
+    }
+  }
+
+  /**
+   * Get cleanup statistics
+   */
+  public getCleanupStats(): {
+    lastCleanupTime: number;
+    totalMessagesDeleted: number;
+    lastDeletedCount: number;
+  } {
+    return { ...this.cleanupStats };
+  }
+
+  /**
+   * Manually trigger cleanup (useful for settings/debug UI)
+   */
+  public async manualCleanup(maxAgeMs?: number): Promise<number> {
+    const config = DEFAULT_STORAGE_CONFIG.cleanup;
+    const ageMs = maxAgeMs ?? config?.maxMessageAgeMs ?? 24 * 60 * 60 * 1000;
+
+    try {
+      const deletedCount = await this.clearOldMessages(ageMs);
+      logger.info(`[IndexedDB] Manual cleanup: removed ${deletedCount} messages`);
+      return deletedCount;
+    } catch (error) {
+      logger.error('[IndexedDB] Manual cleanup error:', error);
+      throw error;
+    }
   }
 }

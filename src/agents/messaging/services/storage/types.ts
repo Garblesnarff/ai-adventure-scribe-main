@@ -34,6 +34,10 @@ export interface StorageConfig {
   queueStoreName: string;
   offlineStoreName: string;
   version: number;
+  cleanup?: {
+    maxMessageAgeMs: number;
+    checkIntervalMs: number;
+  };
 }
 
 /**

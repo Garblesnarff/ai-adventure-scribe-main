@@ -87,7 +87,10 @@ const CharacterList: React.FC = () => {
       const { data, error } = await supabase
         .from('characters')
         .select(`
-          id, name, description, race, class, level, image_url, background_image, appearance, personality_traits, backstory_elements, background,
+          id, name, race, class, level,
+          image_url, avatar_url, background_image,
+          campaign_id,
+          created_at, updated_at,
           character_stats!left (
             strength, dexterity, constitution, intelligence, wisdom, charisma,
             max_hit_points, current_hit_points, armor_class

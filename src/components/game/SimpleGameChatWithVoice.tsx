@@ -132,7 +132,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         .from('dialogue_history')
         .select('*')
         .eq('session_id', session.id)
-        .order('timestamp', { ascending: true });
+        .order('sequence_number', { ascending: true });
 
       if (historyError) {
         logger.error('Error loading history:', historyError);

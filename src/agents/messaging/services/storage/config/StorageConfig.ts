@@ -24,4 +24,8 @@ export const DEFAULT_STORAGE_CONFIG: StorageConfig = {
   queueStoreName: 'queueState',
   offlineStoreName: 'offlineState',
   version: 1,
+  cleanup: {
+    maxMessageAgeMs: 24 * 60 * 60 * 1000, // 24 hours
+    checkIntervalMs: 6 * 60 * 60 * 1000,   // 6 hours
+  },
 };

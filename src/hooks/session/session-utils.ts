@@ -48,7 +48,7 @@ export async function generateSessionSummary(sessionId: string): Promise<string>
     .from('dialogue_history')
     .select('message, speaker_type, context')
     .eq('session_id', sessionId)
-    .order('timestamp', { ascending: true });
+    .order('sequence_number', { ascending: true });
 
   if (!messages?.length) return "No activity recorded in this session";
 

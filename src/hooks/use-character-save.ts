@@ -78,68 +78,108 @@ export const useCharacterSave = () => {
 
       logger.info('Saving character data:', characterData);
 
-      // For new characters, we need to insert first to get an ID
+      // For new characters, use atomic RPC function
       let savedCharacter: Character;
       if (!characterData.id) {
-        const { data: newCharacter, error: insertError } = await supabase
-          .from('characters')
-          .insert(characterData)
-          .select()
-          .single();
+        // Transform stats data
+        const statsData = transformAbilityScoresForStorage(
+          character.abilityScores!,
+          '00000000-0000-0000-0000-000000000000' // Temporary ID, will be replaced
+        );
 
-        if (insertError) throw insertError;
-        characterData.id = newCharacter.id;
-        savedCharacter = { ...character, id: newCharacter.id, campaign_id: effectiveCampaignId };
+        // Transform equipment data if present
+        const equipmentData = character.inventory && character.inventory.length > 0
+          ? transformEquipmentForStorage(character, '00000000-0000-0000-0000-000000000000')
+          : null;
+
+        // Call atomic RPC function
+        const { data: newCharacterId, error: rpcError } = await supabase
+          .rpc('create_character_atomic', {
+            character_data: characterData,
+            stats_data: {
+              strength: statsData.strength,
+              dexterity: statsData.dexterity,
+              constitution: statsData.constitution,
+              intelligence: statsData.intelligence,
+              wisdom: statsData.wisdom,
+              charisma: statsData.charisma,
+              armor_class: statsData.armor_class,
+              current_hit_points: statsData.current_hit_points,
+              max_hit_points: statsData.max_hit_points
+            },
+            equipment_data: equipmentData ? equipmentData.map(item => ({
+              item_name: item.item_name,
+              item_type: item.item_type,
+              quantity: item.quantity,
+              equipped: item.equipped,
+              is_magic: item.is_magic,
+              magic_bonus: item.magic_bonus,
+              magic_properties: item.magic_properties,
+              requires_attunement: item.requires_attunement,
+              is_attuned: item.is_attuned,
+              attunement_requirements: item.attunement_requirements,
+              magic_item_type: item.magic_item_type,
+              magic_item_rarity: item.magic_item_rarity,
+              magic_effects: item.magic_effects
+            })) : null
+          });
+
+        if (rpcError) throw rpcError;
+        characterData.id = newCharacterId;
+        savedCharacter = { ...character, id: newCharacterId, campaign_id: effectiveCampaignId };
       } else {
-        // For existing characters, we can update
+        // For existing characters, use traditional update approach
         const { error: updateError } = await supabase
           .from('characters')
           .update(characterData)
           .eq('id', characterData.id);
 
         if (updateError) throw updateError;
+
+        // Transform and save character stats
+        const statsData = {
+          ...transformAbilityScoresForStorage(
+            character.abilityScores!,
+            characterData.id
+          )
+        };
+
+        const { error: statsError } = await supabase
+          .from('character_stats')
+          .upsert(statsData, {
+            onConflict: 'character_id'
+          });
+
+        if (statsError) {
+          logger.warn('Stats save failed but continuing:', statsError);
+          // Don't throw - character core data saved
+        }
+
+        // Save equipment if present (non-blocking)
+        if (character.inventory && character.inventory.length > 0) {
+          const equipmentData = transformEquipmentForStorage(
+            character,
+            characterData.id
+          );
+
+          const { error: equipmentError } = await supabase
+            .from('character_equipment')
+            .upsert(equipmentData, {
+              onConflict: 'character_id,item_name'
+            });
+
+          if (equipmentError) {
+            logger.warn('Equipment save failed but continuing:', equipmentError);
+            // Don't throw - character core data saved
+          }
+        }
+
         savedCharacter = { ...character, campaign_id: effectiveCampaignId };
       }
 
-      // Transform and save character stats
-      const statsData = {
-        ...transformAbilityScoresForStorage(
-          character.abilityScores!,
-          characterData.id
-        )
-      };
-
-      const { error: statsError } = await supabase
-        .from('character_stats')
-        .upsert(statsData, {
-          onConflict: 'character_id'
-        });
-
-      if (statsError) {
-        logger.warn('Stats save failed but continuing:', statsError);
-        // Don't throw - character core data saved
-      }
-
-      // Save equipment if present (non-blocking)
-      if (character.inventory && character.inventory.length > 0) {
-        const equipmentData = transformEquipmentForStorage(
-          character,
-          characterData.id
-        );
-
-        const { error: equipmentError } = await supabase
-          .from('character_equipment')
-          .upsert(equipmentData, { 
-            onConflict: 'character_id,item_name'
-          });
-
-        if (equipmentError) {
-          logger.warn('Equipment save failed but continuing:', equipmentError);
-          // Don't throw - character core data saved
-        }
-      }
-
-      // Save spells if present (non-blocking)
+      // Save spells if present (handled separately from atomic creation)
+      // Note: Spell saving happens AFTER character creation to maintain separation of concerns
+      // If spell saving fails for a NEW character, we should consider cleanup
       if ((character.cantrips && character.cantrips.length > 0) || (character.knownSpells && character.knownSpells.length > 0)) {
         try {
           const frontendSpellIds = [...(character.cantrips || []), ...(character.knownSpells || [])];
@@ -160,7 +200,19 @@ export const useCharacterSave = () => {
           });
           logger.info(`✅ Successfully saved ${databaseSpellIds.length}/${frontendSpellIds.length} spells for character ${characterData.id}`);
         } catch (spellError) {
-          logger.warn('❌ Spell save failed but continuing:', spellError);
+          // For NEW characters, spell save failures are more critical
+          // because the character might be in an inconsistent state
+          if (!character.id) {
+            logger.error('❌ Critical: Spell save failed for new character. Character data saved but spells missing:', spellError);
+            toast({
+              title: "Partial Save Success",
+              description: "Character created but spell assignment failed. You can add spells manually later.",
+              variant: "destructive",
+            });
+          } else {
+            // For existing characters, spell failures are less critical
+            logger.warn('❌ Spell save failed but continuing:', spellError);
+          }
           // Don't throw - character core data saved
         }
       }

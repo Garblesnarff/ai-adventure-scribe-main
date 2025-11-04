@@ -18,8 +18,9 @@ export default function characterRouter() {
       const { data: characters, error } = await supabaseService
         .from('characters')
         .select(`
-          id, name, description, race, class, level, alignment, experience_points,
-          image_url, appearance, personality_traits, backstory_elements, background,
+          id, name, race, class, level,
+          image_url, avatar_url,
+          campaign_id,
           created_at, updated_at
         `)
         .eq('user_id', userId)
@@ -101,7 +102,10 @@ export default function characterRouter() {
         .from('characters')
         .select(`
           id, name, description, race, class, level, alignment, experience_points,
-          image_url, appearance, personality_traits, backstory_elements, background,
+          image_url, avatar_url, background_image,
+          appearance, personality_traits, backstory_elements, background,
+          personality_notes, vision_types, obscurement, is_hidden,
+          campaign_id, user_id,
           created_at, updated_at
         `)
         .eq('id', id)
@@ -240,30 +244,39 @@ export default function characterRouter() {
         return res.status(400).json({ error: 'Invalid class name' });
       }
 
-      // Validate each spell against class spell list
-      const validationErrors: string[] = [];
+      // Validate all spells in a single batch query
+      const { data: validClassSpells, error: validationError } = await supabaseService
+        .from('class_spells')
+        .select('spell_id, spells(id, name)')
+        .eq('class_id', classData.id)
+        .in('spell_id', spells);
 
-      for (const spellId of spells) {
-        const { data: classSpell, error: spellError } = await supabaseService
-          .from('class_spells')
-          .select('id')
-          .eq('class_id', classData.id)
-          .eq('spell_id', spellId)
-          .single();
-
-        if (spellError || !classSpell) {
-          // Get spell name for error message
-          const { data: spellData } = await supabaseService
-            .from('spells')
-            .select('name')
-            .eq('id', spellId)
-            .single();
-
-          validationErrors.push(`${className} cannot learn ${spellData?.name || spellId}`);
-        }
+      if (validationError) {
+        console.error('Error validating class spells:', validationError);
+        return res.status(500).json({ error: 'Failed to validate spells' });
       }
 
-      if (validationErrors.length > 0) {
+      // Create a Set of valid spell IDs for O(1) lookup
+      const validSpellIds = new Set(validClassSpells?.map((cs: any) => cs.spell_id) || []);
+
+      // Find any invalid spells
+      const invalidSpells = spells.filter((spellId: string) => !validSpellIds.has(spellId));
+
+      if (invalidSpells.length > 0) {
+        // Get spell names for invalid spells to provide helpful error messages
+        const { data: invalidSpellData } = await supabaseService
+          .from('spells')
+          .select('id, name')
+          .in('id', invalidSpells);
+
+        const spellNameMap = new Map(
+          invalidSpellData?.map((spell: any) => [spell.id, spell.name]) || []
+        );
+
+        const validationErrors = invalidSpells.map((spellId: string) =>
+          `${className} cannot learn ${spellNameMap.get(spellId) || spellId}`
+        );
+
         return res.status(400).json({
           error: 'Invalid spell selection',
           details: validationErrors
@@ -316,10 +329,37 @@ export default function characterRouter() {
     });
 
     try {
-      // Verify character ownership with detailed logging
+      // Single query to get character and spells (eliminates N+1 query)
       const { data: character, error: charError } = await supabaseService
         .from('characters')
-        .select('id, class, level, user_id')  // Include user_id for debugging
+        .select(`
+          id,
+          class,
+          level,
+          user_id,
+          character_spells (
+            spell_id,
+            is_prepared,
+            source_feature,
+            spells (
+              id,
+              name,
+              level,
+              school,
+              casting_time,
+              range_text,
+              components_verbal,
+              components_somatic,
+              components_material,
+              material_components,
+              duration,
+              concentration,
+              ritual,
+              description,
+              higher_level_text
+            )
+          )
+        `)
         .eq('id', characterId)
         .eq('user_id', userId)
         .single();
@@ -341,37 +381,8 @@ export default function characterRouter() {
         ownerId: character.user_id
       });
 
-      // Get character spells with full spell data
-      const { data: characterSpells, error: spellsError } = await supabaseService
-        .from('character_spells')
-        .select(`
-          spell_id,
-          is_prepared,
-          source_feature,
-          spells (
-            id,
-            name,
-            level,
-            school,
-            casting_time,
-            range_text,
-            components_verbal,
-            components_somatic,
-            components_material,
-            material_components,
-            duration,
-            concentration,
-            ritual,
-            description,
-            higher_level_text
-          )
-        `)
-        .eq('character_id', characterId);
-
-      if (spellsError) {
-        console.error('[CHARACTER_SPELLS] Error fetching character spells:', spellsError);
-        return res.status(500).json({ error: 'Failed to fetch character spells' });
-      }
+      // Extract character spells from the joined result
+      const characterSpells = character.character_spells || [];
 
       console.log('[CHARACTER_SPELLS] Raw spells data:', {
         spellCount: characterSpells?.length || 0,
