@@ -40,7 +40,15 @@ router.get('/random/:type', async (req, res) => {
       .select('*');
 
     // Add background filter if provided (only for traits table)
+    // SECURITY: Validate background parameter to prevent injection
     if (background && typeof background === 'string' && tableName === 'personality_traits') {
+      const validBackground = /^[a-zA-Z0-9_-]+$/.test(background);
+      if (!validBackground) {
+        return res.status(400).json({
+          error: 'Invalid background parameter',
+          message: 'Background must contain only alphanumeric characters, hyphens, and underscores'
+        });
+      }
       query = query.or(`background.eq.${background},background.is.null`);
     }
 
@@ -116,7 +124,15 @@ router.get('/batch/random', async (req, res) => {
         .select('*');
 
       // Add background filter if provided (only for traits table)
+      // SECURITY: Validate background parameter to prevent injection
       if (background && typeof background === 'string' && tableName === 'personality_traits') {
+        const validBackground = /^[a-zA-Z0-9_-]+$/.test(background);
+        if (!validBackground) {
+          return res.status(400).json({
+            error: 'Invalid background parameter',
+            message: 'Background must contain only alphanumeric characters, hyphens, and underscores'
+          });
+        }
         query = query.or(`background.eq.${background},background.is.null`);
       }
 

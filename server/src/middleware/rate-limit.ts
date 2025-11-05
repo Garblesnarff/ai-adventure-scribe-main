@@ -15,7 +15,7 @@ export type PlanRateConfig = {
 
 // Default limits used by planRateLimit if caller doesn't pass a config
 const DEFAULT_LIMITS: Record<string, PlanRateConfig> = {
-  // Generous defaults; tests can override plan via X-Plan header
+  // Generous defaults; tests can override plan via X-Plan header in test/dev environments only
   llm: {
     key: 'llm',
     perIp: { windowMs: 60_000, maxByPlan: { free: 20, pro: 120, enterprise: 600 } },
@@ -66,9 +66,12 @@ function getUserId(req: Request): string | null {
 }
 
 function getUserPlan(req: Request): PlanName {
-  // Allow overriding via header for tests and easy configuration
-  const hdr = (req.headers['x-plan'] as string | undefined)?.toLowerCase();
-  if (hdr) return hdr;
+  // SECURITY: X-Plan header only allowed in test/development environments
+  const isTestOrDev = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
+  if (isTestOrDev) {
+    const hdr = (req.headers['x-plan'] as string | undefined)?.toLowerCase();
+    if (hdr) return hdr;
+  }
   // @ts-ignore
   const plan = (req as any).user?.plan as string | undefined;
   return (plan || 'free').toLowerCase();

@@ -89,17 +89,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setBlogRoleLoading(true);
     try {
-      // Dev override: allow admin access in non-production without email setup
-      const devAdminEmail = (import.meta as any)?.env?.VITE_DEV_BLOG_ADMIN_EMAIL as string | undefined;
+      // SECURITY: Dev override for admin access - only in development mode with explicit opt-in
+      // WARNING: This bypasses normal authorization checks
+      const isDev = (import.meta as any)?.env?.MODE === 'development';
       const devOverrideRaw = (import.meta as any)?.env?.VITE_BLOG_ADMIN_DEV_OVERRIDE as string | undefined;
-      const isDev = (import.meta as any)?.env?.MODE !== 'production';
-      const enableDevOverride = devOverrideRaw === 'true' || devOverrideRaw === '1' || (devOverrideRaw === undefined && !devAdminEmail);
-      if (isDev && enableDevOverride) {
+      const devAdminEmail = (import.meta as any)?.env?.VITE_DEV_BLOG_ADMIN_EMAIL as string | undefined;
+
+      // Only enable in development mode with explicit VITE_BLOG_ADMIN_DEV_OVERRIDE=true
+      const enableDevOverride = isDev && devOverrideRaw === 'true';
+
+      if (enableDevOverride) {
+        console.warn('DEV MODE: Using admin override - this should NEVER happen in production!');
         setBlogRole('admin');
         return;
       }
-      // If a specific dev admin email is set, grant admin for that user
+
+      // If a specific dev admin email is set, grant admin for that user (requires exact match)
       if (isDev && devAdminEmail && user.email && user.email.toLowerCase() === devAdminEmail.toLowerCase()) {
+        console.info('DEV MODE: Admin access granted via VITE_DEV_BLOG_ADMIN_EMAIL');
         setBlogRole('admin');
         return;
       }

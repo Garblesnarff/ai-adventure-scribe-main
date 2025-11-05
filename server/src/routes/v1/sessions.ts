@@ -29,18 +29,32 @@ export default function sessionRouter() {
 
   router.get('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
+    const userId = req.user!.userId;
     try {
+      // Fetch session with related campaign and character to verify ownership
       const { data, error } = await supabaseService
         .from('game_sessions')
-        .select('*')
+        .select('*, campaigns!game_sessions_campaign_id_fkey(user_id), characters!game_sessions_character_id_fkey(user_id)')
         .eq('id', id)
         .single();
+
       if (error) {
         if ((error as any).code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
         throw error;
       }
       if (!data) return res.status(404).json({ error: 'Not found' });
-      return res.json(data);
+
+      // Verify ownership through campaign or character
+      const campaignOwner = (data as any).campaigns?.user_id;
+      const characterOwner = (data as any).characters?.user_id;
+
+      if (campaignOwner !== userId && characterOwner !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Remove the joined data before returning
+      const { campaigns, characters, ...session } = data as any;
+      return res.json(session);
     } catch (e) {
       return res.status(500).json({ error: 'Failed to fetch session' });
     }
@@ -49,7 +63,30 @@ export default function sessionRouter() {
   router.post('/:id/complete', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { summary } = req.body as { summary?: string };
+    const userId = req.user!.userId;
     try {
+      // First verify ownership
+      const { data: sessionData, error: fetchError } = await supabaseService
+        .from('game_sessions')
+        .select('*, campaigns!game_sessions_campaign_id_fkey(user_id), characters!game_sessions_character_id_fkey(user_id)')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        if ((fetchError as any).code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
+        throw fetchError;
+      }
+      if (!sessionData) return res.status(404).json({ error: 'Not found' });
+
+      // Verify ownership through campaign or character
+      const campaignOwner = (sessionData as any).campaigns?.user_id;
+      const characterOwner = (sessionData as any).characters?.user_id;
+
+      if (campaignOwner !== userId && characterOwner !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Now update the session
       const { data, error } = await supabaseService
         .from('game_sessions')
         .update({
@@ -60,10 +97,7 @@ export default function sessionRouter() {
         .eq('id', id)
         .select()
         .single();
-      if (error) {
-        if ((error as any).code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
-        throw error;
-      }
+      if (error) throw error;
       if (!data) return res.status(404).json({ error: 'Not found' });
       return res.json(data);
     } catch (e) {
