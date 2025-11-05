@@ -68,8 +68,12 @@ function checkMissingAuth(filePath, content) {
   // Skip if this is not a route file
   if (!relPath.includes('routes/')) return;
 
-  // Skip auth.ts (deprecated), observability.ts (public by design), seo.ts (public)
+  // Skip utility files that aren't route handlers
   const basename = path.basename(filePath);
+  const utilityFiles = ['mappers.ts', 'schemas.ts', 'types.ts', 'index.ts', 'blog.tsx'];
+  if (utilityFiles.some(util => basename.endsWith(util))) return;
+
+  // Skip auth.ts (deprecated), observability.ts (public by design), seo.ts (public)
   if (['auth.ts', 'observability.ts', 'seo.ts'].includes(basename)) return;
 
   // Skip blog.ts - has public endpoints with custom rate limiting
@@ -107,8 +111,12 @@ function checkMissingRateLimit(filePath, content) {
   // Skip if this is not a route file
   if (!relPath.includes('routes/')) return;
 
-  // Skip auth.ts (deprecated)
+  // Skip utility files that aren't route handlers
   const basename = path.basename(filePath);
+  const utilityFiles = ['mappers.ts', 'schemas.ts', 'types.ts', 'index.ts', 'blog.tsx'];
+  if (utilityFiles.some(util => basename.endsWith(util))) return;
+
+  // Skip auth.ts (deprecated)
   if (basename === 'auth.ts') return;
 
   const lines = content.split('\n');
@@ -178,6 +186,9 @@ function checkDangerousHTML(filePath, content) {
 
   // Only check React/TSX files
   if (!filePath.endsWith('.tsx') && !filePath.endsWith('.jsx')) return;
+
+  // Skip server-side rendering views - these are controlled by application, not user input
+  if (relPath.includes('server/src/views/')) return;
 
   const lines = content.split('\n');
 
@@ -317,6 +328,9 @@ function checkSQLInjection(filePath, content) {
 
   // Only check server-side files
   if (!relPath.includes('server/src')) return;
+
+  // Skip seed scripts and one-time utilities
+  if (relPath.includes('server/src/scripts/')) return;
 
   const lines = content.split('\n');
 

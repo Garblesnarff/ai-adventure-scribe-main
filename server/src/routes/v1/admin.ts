@@ -182,11 +182,8 @@ export default function adminRouter() {
   router.get('/archivable-sessions', async (req: Request, res: Response) => {
     try {
       // SECURITY: Validate and bound input parameters
-      const retentionDaysRaw = parseInt(req.query.retentionDays as string) || 90;
-      const limitRaw = parseInt(req.query.limit as string) || 100;
-
-      const retentionDays = Math.max(30, Math.min(retentionDaysRaw, 3650)); // 30 days to 10 years
-      const limit = Math.max(1, Math.min(limitRaw, 1000)); // Max 1000 results
+      const retentionDays = Math.max(30, Math.min(parseInt(req.query.retentionDays as string) || 90, 3650)); // 30 days to 10 years
+      const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 100, 1000)); // Max 1000 results
 
       console.log('Archivable sessions request:', {
         retentionDays,
