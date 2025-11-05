@@ -1,5 +1,6 @@
 import express, { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import Stripe from 'stripe';
 import { supabaseService } from '../../lib/supabase.js';
 
@@ -8,6 +9,7 @@ export default function stripeRouter() {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-06-20' });
 
   router.use(requireAuth);
+  router.use(planRateLimit('default'));
 
   router.post('/create-checkout-session', async (req: Request, res: Response) => {
     const { priceId, successUrl, cancelUrl } = req.body as { priceId: string; successUrl: string; cancelUrl: string };

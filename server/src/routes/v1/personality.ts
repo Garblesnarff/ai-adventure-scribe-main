@@ -1,7 +1,13 @@
 import { Router } from 'express';
+import { requireAuth } from '../../middleware/auth.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabase } from '../../lib/supabase.js';
 
 const router = Router();
+
+// SECURITY: Require authentication - personality data is for authenticated users creating characters
+router.use(requireAuth);
+router.use(planRateLimit('default'));
 
 /**
  * GET /personality/random/:type

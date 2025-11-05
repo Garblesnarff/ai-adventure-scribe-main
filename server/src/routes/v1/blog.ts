@@ -3,6 +3,7 @@ import { supabaseService } from '../../lib/supabase.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { requireBlogAdmin } from '../../middleware/blog-admin.js';
 import { requireBlogAuthor, canManagePost, getBlogRole } from '../../middleware/blog-author.js';
+import { createRateLimiter } from '../../middleware/rate-limit.js';
 import { mapBlogCategory, mapBlogPost, mapBlogTag } from './blog/mappers.js';
 import type { BlogPostRow, BlogCategoryRow, BlogTagRow, BlogCategory, BlogTag } from './blog/types.js';
 import {
@@ -237,7 +238,14 @@ function normalizeStatusPayload(status: string, scheduledFor?: string | null, pu
 export default function blogRouter() {
   const router = Router();
 
-  router.get('/posts', async (req: Request, res: Response) => {
+  // SECURITY: Rate limit public blog endpoints to prevent scraping/DoS
+  const publicRateLimit = createRateLimiter({
+    windowMs: 60_000, // 1 minute
+    max: 100, // Generous limit for legitimate readers
+    key: 'blog-public'
+  });
+
+  router.get('/posts', publicRateLimit, async (req: Request, res: Response) => {
     const parsed = blogListQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       return handleValidationError(res, parsed.error);
@@ -287,7 +295,7 @@ export default function blogRouter() {
     }
   });
 
-  router.get('/posts/:slug', async (req: Request, res: Response) => {
+  router.get('/posts/:slug', publicRateLimit, async (req: Request, res: Response) => {
     const { slug } = req.params;
     if (!slug) {
       return res.status(400).json({ error: 'Missing slug' });
@@ -314,7 +322,7 @@ export default function blogRouter() {
     }
   });
 
-  router.get('/categories', async (_req: Request, res: Response) => {
+  router.get('/categories', publicRateLimit, async (_req: Request, res: Response) => {
     try {
       const { data, error } = await supabaseService
         .from('blog_categories')
@@ -330,7 +338,7 @@ export default function blogRouter() {
     }
   });
 
-  router.get('/tags', async (_req: Request, res: Response) => {
+  router.get('/tags', publicRateLimit, async (_req: Request, res: Response) => {
     try {
       const { data, error } = await supabaseService
         .from('blog_tags')

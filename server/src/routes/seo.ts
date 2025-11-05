@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createRateLimiter } from './middleware/rate-limit.js';
 import { fetchPublishedBlogPosts } from '../services/blog-service.js';
 import { getSiteConfig } from '../config/site.js';
 
@@ -7,7 +8,14 @@ type BlogPosts = Awaited<ReturnType<typeof fetchPublishedBlogPosts>>;
 export function seoRouter() {
   const router = Router();
 
-  router.get('/sitemap.xml', async (_req, res) => {
+  // SECURITY: Rate limit SEO endpoints to prevent scraping/DoS
+  const seoRateLimit = createRateLimiter({
+    windowMs: 60_000, // 1 minute
+    max: 30, // SEO bots typically request once per crawl
+    key: 'seo-endpoints'
+  });
+
+  router.get('/sitemap.xml', seoRateLimit, async (_req, res) => {
     try {
       const site = getSiteConfig();
       const posts = await fetchPublishedBlogPosts();
@@ -21,7 +29,7 @@ export function seoRouter() {
     }
   });
 
-  router.get('/rss.xml', async (_req, res) => {
+  router.get('/rss.xml', seoRateLimit, async (_req, res) => {
     try {
       const site = getSiteConfig();
       const posts = await fetchPublishedBlogPosts();
@@ -35,7 +43,7 @@ export function seoRouter() {
     }
   });
 
-  router.get('/robots.txt', (_req, res) => {
+  router.get('/robots.txt', seoRateLimit, (_req, res) => {
     const site = getSiteConfig();
     const body = [`User-agent: *`, 'Allow: /', `Sitemap: ${site.url}/sitemap.xml`, `Host: ${site.url}`].join('\n');
     res.setHeader('Content-Type', 'text/plain');

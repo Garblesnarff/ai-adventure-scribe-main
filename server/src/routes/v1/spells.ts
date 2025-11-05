@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import { requireAuth } from '../../middleware/auth.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabaseService } from '../../lib/supabase.js';
 import {
   getClassSpells,
@@ -11,7 +13,10 @@ import {
 
 export default function spellRouter() {
   const router = Router();
-  // Removed authentication requirement for spell data - spells are public game information
+
+  // SECURITY: Require authentication - spell data is for authenticated users in the app
+  router.use(requireAuth);
+  router.use(planRateLimit('default'));
 
   // Get all spells with optional filtering
   router.get('/', async (req: Request, res: Response) => {
@@ -25,7 +30,9 @@ export default function spellRouter() {
         const classSpells = getClassSpells(className as string);
         spells = [...classSpells.cantrips, ...classSpells.spells];
       } else if (level !== undefined) {
-        spells = getSpellsByLevel(parseInt(level as string));
+        // SECURITY: Bound parseInt to valid spell levels (0-9)
+        const levelNum = Math.max(0, Math.min(parseInt(level as string) || 0, 9));
+        spells = getSpellsByLevel(levelNum);
       } else if (school) {
         spells = getSpellsBySchool(school as string);
       } else {
@@ -105,7 +112,8 @@ export default function spellRouter() {
       const classSpells = getClassSpells(className);
 
       // Filter spells by level (include spells up to the specified level)
-      const maxLevel = parseInt(level);
+      // SECURITY: Bound parseInt to valid spell levels (0-9)
+      const maxLevel = Math.max(0, Math.min(parseInt(level) || 0, 9));
       const { cantrips, spells } = classSpells;
 
       const availableCantrips = cantrips; // Cantrips are always available
@@ -156,7 +164,8 @@ export default function spellRouter() {
           caster_level, spell_slots_1, spell_slots_2, spell_slots_3, spell_slots_4,
           spell_slots_5, spell_slots_6, spell_slots_7, spell_slots_8, spell_slots_9
         `)
-        .eq('caster_level', parseInt(casterLevel))
+        // SECURITY: Bound parseInt to valid caster levels (1-20)
+        .eq('caster_level', Math.max(1, Math.min(parseInt(casterLevel) || 1, 20)))
         .single();
 
       if (error) {

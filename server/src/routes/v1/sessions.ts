@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabaseService } from '../../lib/supabase.js';
 
 export default function sessionRouter() {
   const router = Router();
   router.use(requireAuth);
+  router.use(planRateLimit('default'));
 
   router.post('/', async (req: Request, res: Response) => {
     const { campaign_id, character_id, session_number } = req.body;

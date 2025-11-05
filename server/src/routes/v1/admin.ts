@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { requireAdmin } from '../../middleware/admin.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabaseService } from '../../lib/supabase.js';
 
 /**
@@ -11,6 +12,7 @@ export default function adminRouter() {
   const router = Router();
   router.use(requireAuth);
   router.use(requireAdmin);
+  router.use(planRateLimit('default'));
 
   /**
    * POST /v1/admin/archive-sessions
