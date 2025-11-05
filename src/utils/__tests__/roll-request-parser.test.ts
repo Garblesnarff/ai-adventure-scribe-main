@@ -24,4 +24,23 @@ describe('rollRequestParser', () => {
     const out = parseRollRequests(msg);
     expect(out.some(r => r.type === 'damage')).toBe(true);
   });
+
+  it('parses structured ROLL_REQUESTS_V1 block', () => {
+    const msg = `You steady your breathing and look for an opening.\n\n\`\`\`ROLL_REQUESTS_V1\n{"rolls":[{"type":"skill_check","formula":"1d20+modifier","purpose":"Stealth check to remain hidden","dc":13}]}\n\`\`\``;
+    const out = parseRollRequests(msg);
+    expect(out).toHaveLength(1);
+    expect(out[0].type).toBe('skill_check');
+    expect(out[0].purpose).toContain('Stealth');
+    expect(out[0].dc).toBe(13);
+    expect(out[0].confidence).toBeGreaterThan(0.9);
+  });
+
+  it('parses inline JSON roll_requests array', () => {
+    const msg = '{"text":"Make your move.","roll_requests":[{"type":"attack","formula":"1d20+5","purpose":"Longsword attack","ac":14}] }';
+    const out = parseRollRequests(msg);
+    expect(out).toHaveLength(1);
+    expect(out[0].type).toBe('attack');
+    expect(out[0].ac).toBe(14);
+    expect(out[0].formula).toBe('1d20+5');
+  });
 });

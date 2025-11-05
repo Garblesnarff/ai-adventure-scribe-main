@@ -77,7 +77,7 @@ const CLEANUP_INTERVAL = 1000 * 60 * 15; // Check every 15 minutes (was 5 minute
  *   setSessionData: (data: ExtendedGameSession | null) => void,
  *   sessionId: string | null,
  *   sessionState: 'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle',
- *   updateGameSessionState: (newState: Partial<ExtendedGameSession>) => Promise<void>,
+ *   updateGameSessionState: (newState: SessionStateUpdater) => Promise<void>,
  *   createGameSession: (campId: string, charId: string) => Promise<string | null>,
  *   isSessionReady: () => boolean
  * }} Session state and control functions
@@ -88,6 +88,35 @@ export interface ExtendedGameSession extends GameSession {
   turn_count?: number | null;
   campaign_id?: string | null;
   character_id?: string | null;
+}
+
+export type SessionStateUpdater =
+  | Partial<ExtendedGameSession>
+  | ((prev: ExtendedGameSession) => Partial<ExtendedGameSession> | null | undefined);
+
+const IMMUTABLE_SESSION_FIELDS = new Set<keyof ExtendedGameSession | string>([
+  'id',
+  'campaign_id',
+  'character_id',
+  'created_at',
+  'updated_at',
+  'sequence_number'
+]);
+
+function sanitizeSessionPatch(patch: Partial<ExtendedGameSession>) {
+  const sanitized: Partial<ExtendedGameSession> = {};
+  const removed: string[] = [];
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (IMMUTABLE_SESSION_FIELDS.has(key)) {
+      removed.push(key);
+      continue;
+    }
+
+    sanitized[key as keyof ExtendedGameSession] = value as ExtendedGameSession[keyof ExtendedGameSession];
+  }
+
+  return { sanitized, removed };
 }
 
 export const useGameSession = (campaignId?: string, characterId?: string) => {
@@ -432,74 +461,105 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
    * @param {Partial<ExtendedGameSession>} newState - Partial session state to update
    * @returns {Promise<void>}
    */
-  const updateGameSessionState = useCallback(async (newState: Partial<ExtendedGameSession>) => {
-    // Guard: Validate newState parameter
-    if (!newState || typeof newState !== 'object') {
+  const updateGameSessionState = useCallback(async (newStateOrUpdater: SessionStateUpdater) => {
+    if (newStateOrUpdater === null || newStateOrUpdater === undefined) {
       logger.warn('⚠️ [updateGameSessionState] Invalid newState parameter', {
-        providedValue: newState
+        providedValue: newStateOrUpdater
       });
       return;
     }
 
-    // Guard: Prevent updating critical immutable properties
-    if ('id' in newState) {
-      logger.warn('⚠️ [updateGameSessionState] Cannot update session id', {
-        attemptedUpdate: newState
-      });
-      return;
-    }
-
-    // Guard: Check if newState is empty
-    if (Object.keys(newState).length === 0) {
-      logger.warn('⚠️ [updateGameSessionState] newState is empty, no update needed');
-      return;
-    }
-
-    // Get current session ID from state using functional approach
+    let resolvedState: Partial<ExtendedGameSession> | null = null;
     let sessId: string | null = null;
-    let currentState: 'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle' = 'idle';
+    let invalidReason: 'invalid' | 'empty' | null = null;
+    let removedImmutableKeys: string[] = [];
 
     setSessionData(prev => {
-      // Guard: Validate session before optimistic update
-      if (prev && isValidSession(prev)) {
-        sessId = prev.id;
-        // Optimistically update local state
-        return { ...prev, ...newState };
+      if (!prev || !isValidSession(prev)) {
+        return prev;
       }
-      return prev;
+
+      sessId = prev.id;
+      const candidate = typeof newStateOrUpdater === 'function'
+        ? newStateOrUpdater(prev)
+        : newStateOrUpdater;
+
+      if (!candidate || typeof candidate !== 'object') {
+        invalidReason = 'invalid';
+        return prev;
+      }
+      const { sanitized, removed } = sanitizeSessionPatch(candidate as Partial<ExtendedGameSession>);
+      removedImmutableKeys = removed;
+
+      if (Object.keys(sanitized).length === 0) {
+        invalidReason = 'empty';
+        return prev;
+      }
+
+      resolvedState = sanitized;
+      return { ...prev, ...sanitized };
     });
 
-    // Capture current session state for validation
+    if (invalidReason === 'invalid') {
+      logger.warn('⚠️ [updateGameSessionState] Invalid newState parameter', {
+        providedValue: newStateOrUpdater
+      });
+      return;
+    }
+
+    if (invalidReason === 'empty') {
+      if (removedImmutableKeys.length > 0) {
+        logger.warn('⚠️ [updateGameSessionState] Update contained only immutable fields', {
+          attemptedUpdate: newStateOrUpdater,
+          removedFields: removedImmutableKeys
+        });
+      } else {
+        logger.warn('⚠️ [updateGameSessionState] newState is empty, no update needed');
+      }
+      return;
+    }
+
+    if (!resolvedState) {
+      logger.warn('⚠️ [updateGameSessionState] Could not resolve new state', {
+        providedValue: newStateOrUpdater
+      });
+      return;
+    }
+
+    if (removedImmutableKeys.length > 0) {
+      logger.debug('[updateGameSessionState] Removed immutable fields from session update', {
+        removedFields: removedImmutableKeys
+      });
+    }
+
+    let currentState: 'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle' = 'idle';
     setSessionState(prev => {
       currentState = prev;
       return prev;
     });
 
-    // Guard: Prevent updates when session is not initialized
     if (!sessId) {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - session not initialized', {
-        attemptedUpdate: newState,
+        attemptedUpdate: resolvedState,
         currentSessionState: currentState
       });
       return;
     }
 
-    // Guard: Prevent updates during inappropriate states
     if (currentState === 'loading') {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - session is loading', {
-        attemptedUpdate: newState
+        attemptedUpdate: resolvedState
       });
       return;
     }
 
     if (currentState === 'error') {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - session is in error state', {
-        attemptedUpdate: newState
+        attemptedUpdate: resolvedState
       });
       return;
     }
 
-    // Guard: Prevent updates after component unmount
     if (!mountedRef.current) {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - component unmounted');
       return;
@@ -507,12 +567,11 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
     const { data, error } = await supabase
       .from('game_sessions')
-      .update(newState)
+      .update(resolvedState)
       .eq('id', sessId)
       .select()
       .single();
 
-    // Guard: Check mount status after async operation
     if (!mountedRef.current) {
       logger.warn('⚠️ [updateGameSessionState] Component unmounted during update');
       return;
@@ -525,12 +584,11 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         description: "Failed to save game state. Changes may be lost.",
         variant: "destructive"
       });
-      // Potentially revert optimistic update here or refetch
     } else if (data) {
-      setSessionData(data as ExtendedGameSession); // Update with actual data from DB
+      setSessionData(data as ExtendedGameSession);
       logger.info('✅ [updateGameSessionState] Session updated successfully:', sessId);
     }
-  }, []); // Stable dependencies - uses refs and functional updates
+  }, []);
 
 
   /**

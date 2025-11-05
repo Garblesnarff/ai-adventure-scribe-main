@@ -17,14 +17,14 @@ import { useMemoryFiltering } from '@/hooks/memory/useMemoryFiltering';
 import { Textarea } from '../ui/textarea';
 import { CompactCharacterHeader } from './CompactCharacterHeader';
 import { CombatSummary } from './CombatSummary';
-import { ExtendedGameSession } from '@/hooks/use-game-session';
+import { ExtendedGameSession, SessionStateUpdater } from '@/hooks/use-game-session';
 import { useParams } from 'react-router-dom';
 import { analytics } from '@/services/analytics';
 import { Z_INDEX } from '@/constants/z-index';
 
 interface MemoryPanelProps {
   sessionData: ExtendedGameSession | null;
-  updateGameSessionState: (newState: Partial<ExtendedGameSession>) => Promise<void>;
+  updateGameSessionState: (newState: SessionStateUpdater) => Promise<void>;
   combatMode: boolean;
 }
 
@@ -428,7 +428,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
 // Extracted content component for mobile drawer
 const GameSidePanelContent: React.FC<{
   sessionData: ExtendedGameSession | null;
-  updateGameSessionState: (newState: Partial<ExtendedGameSession>) => Promise<void>;
+  updateGameSessionState: (newState: SessionStateUpdater) => Promise<void>;
   combatMode: boolean;
   isExpanded: boolean;
   setIsExpanded: (expanded: boolean) => void;
