@@ -16,10 +16,6 @@ import { CharacterProvider } from './contexts/CharacterContext';
 import { CampaignProvider } from './contexts/CampaignContext';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import BlogAdmin from './pages/BlogAdmin';
-import BlogEditor from './pages/BlogEditor';
-import BlogPost from './pages/BlogPost';
-import BlogIndex from './pages/BlogIndex';
 import CharacterCreateEntry from './pages/CharacterCreateEntry';
 import CampaignHubWithErrorBoundary from './pages/campaigns/CampaignHubWithErrorBoundary';
 import { ErrorBoundary } from './components/error/ErrorBoundary';
@@ -73,10 +69,6 @@ function App() {
                       {/* Original landing page - keep as backup */}
                       <Route path="/original-landing" element={<Landing />} />
 
-                      {/* Public blog routes - accessible without authentication */}
-                      <Route path="/blog" element={<BlogIndex />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
-
                       {/* Protected app routes */}
                       <Route path="/app/*" element={
                         <ProtectedRoute>
@@ -93,9 +85,6 @@ function App() {
                               <Route path="/campaigns/create" element={<CampaignWizard />} />
                               <Route path="/campaigns/:id/*" element={<CampaignHubWithErrorBoundary />} />
                               <Route path="/game/:id" element={<GameContentWithErrorBoundary />} />
-                              <Route path="/blog" element={<BlogAdmin />} />
-                              <Route path="/blog/posts/new" element={<BlogEditor />} />
-                              <Route path="/blog/posts/:id" element={<BlogEditor />} />
                             </Routes>
                           </main>
                         </ProtectedRoute>
