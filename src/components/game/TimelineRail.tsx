@@ -36,13 +36,25 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
   React.useEffect(() => {
     logger.debug('[TimelineRail] Messages:', messages.length);
     logger.debug('[TimelineRail] Anchors:', anchors);
-    logger.debug('[TimelineRail] Root ref:', rootRef.current);
+    logger.debug('[TimelineRail] Root ref:', rootRef.current
+      ? {
+          tag: rootRef.current.tagName,
+          id: rootRef.current.id,
+          class: rootRef.current.className,
+        }
+      : null);
 
     // Check if elements exist
     if (rootRef.current) {
       anchors.forEach(anchor => {
         const element = rootRef.current!.querySelector(`#${CSS.escape(anchor)}`);
-        logger.debug(`[TimelineRail] Element ${anchor}:`, element);
+        logger.debug(`[TimelineRail] Element ${anchor}:`, element
+          ? {
+              tag: element.tagName,
+              id: element instanceof HTMLElement ? element.id : undefined,
+              class: element instanceof HTMLElement ? element.className : undefined,
+            }
+          : null);
       });
     }
   }, [messages, anchors, rootRef]);
