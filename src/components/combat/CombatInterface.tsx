@@ -6,7 +6,36 @@
  * Manages combat mode and participant selection.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sword,
+  Shield,
+  Users,
+  X,
+  Play,
+  Pause,
+  RefreshCw,
+  AlertTriangle,
+  Flame,
+  Zap
+} from 'lucide-react';
+import { useCombat } from '@/contexts/CombatContext';
+import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
+import { useGameSession } from '@/hooks/use-game-session';
+import { useCharacter } from '@/contexts/CharacterContext';
+import InitiativeTracker from './InitiativeTracker';
+import EnemyCard from './EnemyCard';
+import DiceRoller from '@/components/ui/dice-roller';
+import DeathSaveManager from './DeathSaveManager';
+import HPTracker from './HPTracker';
+import ReactionOpportunityPanel from './ReactionOpportunityPanel';
+import ActionPanel from './ActionPanel';
+import { ActionType, ReactionOpportunity } from '@/types/combat';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +67,7 @@ import { ActionType, ReactionOpportunity } from '@/types/combat';
 import { rollDice, rollAttack, rollDamage, calculateDamage } from '@/utils/diceUtils';
 import { getRacialTraits, canUseRacialTrait, useRacialTrait } from '@/utils/racialTraits';
 import { getClassFeatures, canUseClassFeature, useClassFeature, getSneakAttackDice, getRageDamageBonus } from '@/utils/classFeatures';
+import { RulesInterpreterAgent } from '@/agents/rules-interpreter-agent';
 import { 
   createReactionOpportunity, 
   checkOpportunityAttacks, 
@@ -101,6 +131,8 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     hasAdvantage?: boolean;
     hasDisadvantage?: boolean;
   } | null>(null);
+
+  const rulesInterpreter = useMemo(() => new RulesInterpreterAgent(), []);
 
   // Get player characters and potential enemies
   const playerParticipants = activeEncounter?.participants.filter(p => p.participantType === 'player') || [];
@@ -497,33 +529,23 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     if (!activeEncounter) return;
 
     const participant = activeEncounter.participants.find(p => p.id === participantId);
-    if (!participant || !needsDeathSaves(participant)) return;
+    if (!participant) return;
 
-    const { updatedParticipant, roll } = rollDeathSave(participant);
+    const updatedCharacter = rulesInterpreter.handleDeathSavingThrow(participant);
 
-    // Update participant state
-    updateParticipant(participantId, {
-      deathSaves: updatedParticipant.deathSaves,
-      isStable: updatedParticipant.isStable,
-      isDead: updatedParticipant.isDead,
-      currentHitPoints: updatedParticipant.currentHitPoints,
-      isUnconscious: updatedParticipant.isUnconscious,
-    });
+    updateParticipant(participantId, updatedCharacter);
 
-    const description = `${participant.name} death save: ${roll.total} ${roll.total >= 10 ? '(Success)' : '(Failure)'} (${updatedParticipant.deathSaves.successes}/3, ${updatedParticipant.deathSaves.failures}/3)`;
+    const description = `${participant.name} makes a death saving throw.`;
 
     const action = {
       participantId,
       actionType: 'death_save' as ActionType,
       description,
       deathSaveResult: {
-        roll: roll.total,
-        result: roll.total >= 10 ? 'success' : 'failure',
-        successes: updatedParticipant.deathSaves.successes,
-        failures: updatedParticipant.deathSaves.failures,
-        isStable: updatedParticipant.isStable,
-        isDead: updatedParticipant.isDead,
-        isCritical: roll.critical,
+        successes: updatedCharacter.deathSaves.successes,
+        failures: updatedCharacter.deathSaves.failures,
+        isStable: !updatedCharacter.activeConditions.includes('Unconscious'),
+        isDead: updatedCharacter.deathSaves.failures >= 3,
       }
     };
 
@@ -602,29 +624,9 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     const participant = activeEncounter.participants.find(p => p.id === participantId);
     if (!participant) return;
 
-    const newHP = Math.max(0, (participant.currentHitPoints || 0) - damageAmount);
-    const isUnconscious = newHP <= 0;
+    const updatedCharacter = rulesInterpreter.applyDamage(participant, damageAmount);
 
-    let concentrationLost = false;
-    if (participant.activeConcentration && damageAmount > 0) {
-      concentrationLost = !checkConcentration(participant as any, damageAmount);
-    }
-
-    const updatedProps: Partial<CombatParticipant> = {
-      currentHitPoints: newHP,
-      isUnconscious,
-    };
-
-    if (concentrationLost) {
-      updatedProps.activeConcentration = null;
-    }
-
-    if (isUnconscious && (participant.currentHitPoints || 0) > 0) {
-      updatedProps.isStable = false;
-      updatedProps.deathSaves = { successes: 0, failures: 0 };
-    }
-
-    updateParticipant(participantId, updatedProps);
+    updateParticipant(participantId, updatedCharacter);
 
     const action = {
       participantId,
@@ -633,9 +635,8 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       damageDealt: damageAmount,
       damageType: damageType as any,
       effects: {
-        newHitPoints: newHP,
-        unconscious: isUnconscious,
-        concentrationLost,
+        newHitPoints: updatedCharacter.hitPoints.current,
+        unconscious: updatedCharacter.activeConditions.includes('Unconscious'),
       }
     };
     await takeAction(action);
@@ -648,19 +649,11 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     const participant = activeEncounter.participants.find(p => p.id === participantId);
     if (!participant) return;
 
-    // Simple healing logic
-    const maxHP = participant.maxHitPoints || 1;
-    const newHP = Math.min(maxHP, (participant.currentHitPoints || 0) + healingAmount);
-    const wasUnconscious = (participant.currentHitPoints || 0) <= 0;
-    const revived = wasUnconscious && newHP > 0;
+    const updatedCharacter = rulesInterpreter.applyHealing(participant, healingAmount);
 
-    // Update participant
-    updateParticipant(participantId, {
-      currentHitPoints: newHP,
-      isUnconscious: (newHP <= 0) as any
-    } as any);
+    updateParticipant(participantId, updatedCharacter);
 
-    const description = `${participant.name} heals ${healingAmount} hit points${revived ? ' and regains consciousness' : ''}`;
+    const description = `${participant.name} heals ${healingAmount} hit points`;
 
     const action = {
       participantId,
@@ -668,8 +661,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       description,
       healingAmount,
       effects: {
-        revivedFromUnconscious: revived,
-        newHitPoints: newHP
+        newHitPoints: updatedCharacter.hitPoints.current,
       }
     };
 
