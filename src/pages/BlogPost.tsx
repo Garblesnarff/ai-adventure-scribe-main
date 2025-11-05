@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Tag, Home } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -6,10 +6,30 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBlogPostBySlug } from '@/hooks/blog/useBlogPosts';
 import type { BlogPost } from '@/types/blog';
+import sanitizeHtml from 'sanitize-html';
 
 const BlogPost: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading, error } = useBlogPostBySlug(slug);
+
+  // SECURITY: Sanitize blog content to prevent XSS attacks
+  const sanitizedContent = useMemo(() => {
+    if (!post?.content && !post?.excerpt) return 'Content not available';
+    const rawHtml = post?.content || post?.excerpt || '';
+    return sanitizeHtml(rawHtml, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+        'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'iframe'
+      ]),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        img: ['src', 'alt', 'title', 'width', 'height', 'class'],
+        a: ['href', 'name', 'target', 'rel', 'class'],
+        iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+        '*': ['class', 'id']
+      },
+      allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com']
+    });
+  }, [post?.content, post?.excerpt]);
 
   if (isLoading) {
     return (
@@ -121,7 +141,7 @@ const BlogPost: React.FC = () => {
         <div className="prose prose-lg prose-invert prose-slate max-w-none">
           <div
             className="leading-relaxed prose-headings:font-heading prose-headings:tracking-tight prose-headings:text-amber-50 prose-p:text-slate-300 prose-a:text-amber-400 prose-a:no-underline hover:prose-a:text-amber-300 hover:prose-a:underline prose-strong:text-slate-200 prose-code:rounded prose-code:bg-slate-900/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-amber-300"
-            dangerouslySetInnerHTML={{ __html: post.content || post.excerpt || 'Content not available' }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </div>
 

@@ -129,8 +129,10 @@ export function planRateLimit(configOrKey?: Partial<PlanRateConfig> | string) {
       }
 
       return next();
-    } catch {
-      // Fail-open on limiter errors
+    } catch (err) {
+      // SECURITY: Log rate limiter errors but still allow request
+      // In production, consider failing closed for critical endpoints
+      console.error('Rate limiter error:', err);
       return next();
     }
   };
@@ -152,7 +154,9 @@ export function createRateLimiter(options: { windowMs: number; max: number; key?
         return res.status(429).json({ error: 'Too many requests', retryAfter: retryAfterSec });
       }
       return next();
-    } catch {
+    } catch (err) {
+      // SECURITY: Log rate limiter errors
+      console.error('Legacy rate limiter error:', err);
       return next();
     }
   };

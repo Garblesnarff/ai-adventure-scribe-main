@@ -8,7 +8,35 @@ export default function sessionRouter() {
 
   router.post('/', async (req: Request, res: Response) => {
     const { campaign_id, character_id, session_number } = req.body;
+    const userId = req.user!.userId;
+
     try {
+      // SECURITY: Verify user owns the campaign or character before creating session
+      if (campaign_id) {
+        const { data: campaign, error: campErr } = await supabaseService
+          .from('campaigns')
+          .select('user_id')
+          .eq('id', campaign_id)
+          .single();
+
+        if (campErr || !campaign || campaign.user_id !== userId) {
+          return res.status(403).json({ error: 'Campaign not found or access denied' });
+        }
+      }
+
+      if (character_id) {
+        const { data: character, error: charErr } = await supabaseService
+          .from('characters')
+          .select('user_id')
+          .eq('id', character_id)
+          .single();
+
+        if (charErr || !character || character.user_id !== userId) {
+          return res.status(403).json({ error: 'Character not found or access denied' });
+        }
+      }
+
+      // Create session only after ownership verified
       const { data, error } = await supabaseService
         .from('game_sessions')
         .insert({
@@ -23,6 +51,7 @@ export default function sessionRouter() {
       if (error) throw error;
       return res.status(201).json(data);
     } catch (e) {
+      console.error('Session creation error:', e);
       return res.status(500).json({ error: 'Failed to create session' });
     }
   });

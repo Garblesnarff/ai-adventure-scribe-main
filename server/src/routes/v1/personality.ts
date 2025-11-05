@@ -214,10 +214,14 @@ router.get('/:type', async (req, res) => {
 
     const tableName = tableMap[type];
 
+    // SECURITY: Validate and bound limit parameter
+    const limitRaw = parseInt(limit as string) || 100;
+    const boundedLimit = Math.max(1, Math.min(limitRaw, 1000)); // Max 1000 results
+
     let query = supabase
       .from(tableName)
       .select('*')
-      .limit(parseInt(limit as string));
+      .limit(boundedLimit);
 
     // Add background filter if provided (only for traits table)
     if (background && typeof background === 'string' && tableName === 'personality_traits') {

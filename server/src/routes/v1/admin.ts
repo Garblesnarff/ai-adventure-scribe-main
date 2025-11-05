@@ -62,9 +62,10 @@ export default function adminRouter() {
       return res.json(data);
     } catch (error) {
       console.error('Archive error:', error);
+      // SECURITY: Don't leak error details to client
       return res.status(500).json({
         error: 'Failed to archive sessions',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'An internal error occurred. Please check server logs.',
       });
     }
   });
@@ -116,9 +117,10 @@ export default function adminRouter() {
       return res.json(data);
     } catch (error) {
       console.error('Restore error:', error);
+      // SECURITY: Don't leak error details to client
       return res.status(500).json({
         error: 'Failed to restore session',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'An internal error occurred. Please check server logs.',
       });
     }
   });
@@ -155,9 +157,10 @@ export default function adminRouter() {
       });
     } catch (error) {
       console.error('Statistics error:', error);
+      // SECURITY: Don't leak error details to client
       return res.status(500).json({
         error: 'Failed to fetch statistics',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'An internal error occurred. Please check server logs.',
       });
     }
   });
@@ -176,8 +179,12 @@ export default function adminRouter() {
    */
   router.get('/archivable-sessions', async (req: Request, res: Response) => {
     try {
-      const retentionDays = parseInt(req.query.retentionDays as string) || 90;
-      const limit = parseInt(req.query.limit as string) || 100;
+      // SECURITY: Validate and bound input parameters
+      const retentionDaysRaw = parseInt(req.query.retentionDays as string) || 90;
+      const limitRaw = parseInt(req.query.limit as string) || 100;
+
+      const retentionDays = Math.max(30, Math.min(retentionDaysRaw, 3650)); // 30 days to 10 years
+      const limit = Math.max(1, Math.min(limitRaw, 1000)); // Max 1000 results
 
       console.log('Archivable sessions request:', {
         retentionDays,
@@ -211,9 +218,10 @@ export default function adminRouter() {
       });
     } catch (error) {
       console.error('Archivable sessions error:', error);
+      // SECURITY: Don't leak error details to client
       return res.status(500).json({
         error: 'Failed to fetch archivable sessions',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: 'An internal error occurred. Please check server logs.',
       });
     }
   });
