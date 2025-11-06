@@ -62,9 +62,15 @@ export const useImageGeneration = ({
         const parsed = parseMessageOptions(message.text || '');
         const baseText = parsed?.content || message.text || '';
         let sceneText = removeRollRequestsFromMessage(baseText);
-        const vpMatch = (message.text || '').match(/^[\t ]*VISUAL\s+PROMPT:\s*(.+)$/im);
-        if (vpMatch && vpMatch[1]) {
-          sceneText += `\nVisual focus: ${vpMatch[1].trim()}`;
+
+        const visualPrompt = message.imageRequests?.[0]?.prompt?.trim();
+        if (visualPrompt && visualPrompt.length > 0) {
+          sceneText += `\nVisual focus: ${visualPrompt}`;
+        } else {
+          const vpMatch = (message.text || '').match(/^[\t ]*VISUAL\s+PROMPT:\s*(.+)$/im);
+          if (vpMatch && vpMatch[1]) {
+            sceneText += `\nVisual focus: ${vpMatch[1].trim()}`;
+          }
         }
 
         const t0 = performance.now();
@@ -158,10 +164,10 @@ export const useImageGeneration = ({
     if (alreadyTriggered(sessionId, String(msgId))) return;
     if (generatingFor.has(String(msgId))) return;
 
-    const hasImageRequests =
-      Array.isArray((lastDm as any).imageRequests) && (lastDm as any).imageRequests.length > 0;
-    const hasVisualMarker = /^[\t ]*VISUAL\s+PROMPT:\s*(.+)$/im.test(lastDm.text || '');
-    if (!hasImageRequests && !hasVisualMarker) return;
+    const hasImageRequests = Array.isArray((lastDm as any).imageRequests) && (lastDm as any).imageRequests.length > 0;
+    const hasVisualMarker =
+      hasImageRequests || /^[\t ]*VISUAL\s+PROMPT:\s*(.+)$/im.test(lastDm.text || '');
+    if (!hasVisualMarker) return;
 
     if (performance.now() - lastGenRef.current < 1000) return;
 

@@ -844,12 +844,18 @@ Whenever you request the PLAYER to roll dice, append your narrative with a fence
 
 <visual_prompt_rule>
 **OPTIONAL VISUAL PROMPT (for image generation):**
-At the very end of the response, if the scene would benefit from an illustration, include a single concise line starting with:
-VISUAL PROMPT: <short art prompt focusing on key visual elements>
+If the scene would benefit from an illustration, append a fenced code block at the end of the response using this exact format:
+\`\`\`VISUAL_PROMPT
+Short art prompt focusing on key visual elements
+\`\`\`
 Examples:
-- VISUAL PROMPT: Moonlit forest clearing with ancient standing stones and swirling mist
-- VISUAL PROMPT: Crumbling obsidian keep under stormy skies with lightning forks
-Keep this to a single line; do not include quotes or extra commentary.
+\`\`\`VISUAL_PROMPT
+Moonlit forest clearing with ancient standing stones and swirling mist
+\`\`\`
+\`\`\`VISUAL_PROMPT
+Crumbling obsidian keep under stormy skies with lightning forks
+\`\`\`
+Do **not** include the visual prompt text in the narrative itself; keep it only inside the fenced block.
 </visual_prompt_rule>
 
 <player_choice_generation>

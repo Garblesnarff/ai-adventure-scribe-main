@@ -78,7 +78,7 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
       setSpells(primarySpells);
 
       // Optional: Try to enhance with API data (non-blocking)
-      if (character?.id) {
+      if (character?.id && characterSpellService.isEnabled()) {
         try {
           setLoading(true);
           const apiSpellData = await characterSpellService.getCharacterSpells(character.id);
@@ -110,6 +110,8 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
         } finally {
           setLoading(false);
         }
+      } else if (!characterSpellService.isEnabled()) {
+        logger.info('🛑 [SpellsTab] Spell API enhancement disabled; using character data only');
       }
     };
 

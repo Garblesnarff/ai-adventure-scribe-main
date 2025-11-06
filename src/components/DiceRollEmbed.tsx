@@ -138,6 +138,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   const [hasRolled, setHasRolled] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const [canvasKey, setCanvasKey] = useState(0);
+  const [hasContextLoss, setHasContextLoss] = useState(false);
   const diceSound = useRef<Howl | null>(null);
   const disable3D = String((import.meta as any)?.env?.VITE_DISABLE_DICE_3D ?? 'false').toLowerCase() === 'true';
   const threeDEnabled = !disable3D && !__dice3dDead;
@@ -150,6 +151,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
       e.preventDefault();
       __dice3dDead = true;
       setContextLost(true);
+      setHasContextLoss(true);
       if (!__dice3dWarned) {
         __dice3dWarned = true;
         logger.warn('Dice 3D disabled after WebGL context loss; falling back to 2D/text for this session.');
@@ -214,6 +216,14 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
         onRoll(rollResult);
       }
     }, showAnimation ? 1500 : 100);
+  };
+
+  const handleRetry3D = () => {
+    if (disable3D) return;
+    __dice3dDead = false;
+    setContextLost(false);
+    setHasContextLoss(false);
+    setCanvasKey(k => k + 1);
   };
 
   const getCriticalityBadge = (result: DiceRollResult) => {
@@ -311,8 +321,13 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
       )}
 
       {showAnimation && !threeDEnabled && hasRolled && (
-        <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200 flex items-center justify-center text-xs text-gray-600 bg-gray-50">
-          3D dice unavailable. Showing results without 3D animation.
+        <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200 flex flex-col items-center justify-center gap-2 text-xs text-gray-600 bg-gray-50">
+          <span>3D dice unavailable. Showing results without 3D animation.</span>
+          {hasContextLoss && (
+            <Button size="xs" variant="outline" onClick={handleRetry3D}>
+              Try 3D again
+            </Button>
+          )}
         </div>
       )}
 

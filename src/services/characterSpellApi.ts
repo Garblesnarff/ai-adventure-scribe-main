@@ -2,6 +2,21 @@ import { Spell } from '../types/character';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
+const parseBooleanFlag = (value: unknown, fallback = false): boolean => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+  }
+  return fallback;
+};
+
+export class SpellApiDisabledError extends Error {
+  constructor(message = 'Spell API disabled') {
+    super(message);
+    this.name = 'SpellApiDisabledError';
+  }
+}
+
 export interface CharacterSpellData extends Spell {
   is_prepared: boolean;
   source_feature: string;
@@ -29,7 +44,19 @@ export interface SaveSpellsResponse {
 }
 
 class CharacterSpellService {
-  private baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8888';
+  private readonly enabled = parseBooleanFlag((import.meta as any)?.env?.VITE_ENABLE_SPELL_API ?? false);
+  private readonly baseUrl =
+    (import.meta as any)?.env?.VITE_SPELL_API_URL || (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:8888';
+
+  isEnabled() {
+    return this.enabled;
+  }
+
+  private ensureEnabled() {
+    if (!this.enabled) {
+      throw new SpellApiDisabledError();
+    }
+  }
 
   private async getAccessToken(forceRefresh = false): Promise<string> {
     if (!forceRefresh) {
@@ -83,6 +110,7 @@ class CharacterSpellService {
   }
 
   private async fetchWithAuth(url: string, options: RequestInit = {}, allowRetry = true): Promise<Response> {
+    this.ensureEnabled();
     try {
       const initialToken = await this.getAccessToken();
       let response = await this.executeRequest(url, options, initialToken);
@@ -112,12 +140,13 @@ class CharacterSpellService {
 
       return response;
     } catch (error) {
-      logger.error('[CharacterSpellService] Authenticated request failed:', error);
+      logger.warn('[CharacterSpellService] Authenticated request failed:', error);
       throw error;
     }
   }
 
   async getCharacterSpells(characterId: string): Promise<CharacterSpellsResponse> {
+    this.ensureEnabled();
     try {
       const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`);
       return response.json();
@@ -145,6 +174,7 @@ class CharacterSpellService {
     characterId: string,
     request: SaveSpellsRequest
   ): Promise<SaveSpellsResponse> {
+    this.ensureEnabled();
     const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`, {
       method: 'POST',
       body: JSON.stringify(request),
@@ -154,6 +184,7 @@ class CharacterSpellService {
   }
 
   async deleteCharacterSpell(characterId: string, spellId: string): Promise<void> {
+    this.ensureEnabled();
     await this.fetchWithAuth(`/v1/characters/${characterId}/spells/${spellId}`, {
       method: 'DELETE',
     });
@@ -164,6 +195,7 @@ class CharacterSpellService {
     spellId: string,
     isPrepared: boolean
   ): Promise<void> {
+    this.ensureEnabled();
     await this.fetchWithAuth(`/v1/characters/${characterId}/spells/${spellId}/preparation`, {
       method: 'PATCH',
       body: JSON.stringify({ is_prepared: isPrepared }),

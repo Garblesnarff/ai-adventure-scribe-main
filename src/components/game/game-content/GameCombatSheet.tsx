@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CombatInterface from '@/components/combat/CombatInterface';
 
 /**
@@ -20,10 +20,26 @@ export const GameCombatSheet: React.FC<GameCombatSheetProps> = ({
   setShowTracker,
   isDM,
 }) => {
+  const overlayMode = (import.meta.env.VITE_COMBAT_SHEET_OVERLAY as 'light' | 'none' | undefined) ?? 'dark';
+
+  const overlayClassName = overlayMode === 'light' ? 'bg-black/40 backdrop-blur-sm' : undefined;
+  const hideOverlay = overlayMode === 'none';
+
   return (
     <Sheet open={showTracker} onOpenChange={setShowTracker}>
-      <SheetContent side="right" className="w-[420px] sm:max-w-[480px] overflow-y-auto">
-        <CombatInterface isDM={isDM} />
+      <SheetContent
+        side="right"
+        className="flex h-full w-full max-w-full flex-col gap-0 overflow-hidden border-l border-border/40 bg-background/95 !p-0 sm:w-[420px] sm:max-w-[480px] lg:w-[520px]"
+        overlayClassName={overlayClassName}
+        hideOverlay={hideOverlay}
+      >
+        <SheetHeader className="sr-only">
+          <SheetTitle>Combat Tracker</SheetTitle>
+          <SheetDescription>Manage initiative and encounter flow.</SheetDescription>
+        </SheetHeader>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-6 pt-2 sm:px-6">
+          <CombatInterface isDM={isDM} />
+        </div>
       </SheetContent>
     </Sheet>
   );
