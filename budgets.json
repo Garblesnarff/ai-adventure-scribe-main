@@ -1,0 +1,64 @@
+{
+  "budgets": [
+    {
+      "resourceSizes": [
+        {
+          "resourceType": "script",
+          "budget": 600
+        },
+        {
+          "resourceType": "stylesheet",
+          "budget": 50
+        },
+        {
+          "resourceType": "image",
+          "budget": 200
+        },
+        {
+          "resourceType": "font",
+          "budget": 100
+        },
+        {
+          "resourceType": "total",
+          "budget": 1000
+        }
+      ],
+      "resourceCounts": [
+        {
+          "resourceType": "script",
+          "budget": 15
+        },
+        {
+          "resourceType": "stylesheet",
+          "budget": 5
+        },
+        {
+          "resourceType": "image",
+          "budget": 30
+        },
+        {
+          "resourceType": "font",
+          "budget": 4
+        },
+        {
+          "resourceType": "third-party",
+          "budget": 10
+        }
+      ]
+    }
+  ],
+  "thresholds": {
+    "maxBundleSize": 10485760,
+    "maxInitialChunk": 2097152,
+    "maxVendorChunk": 5242880,
+    "warningThreshold": 0.9
+  },
+  "performance": {
+    "fcp": 2000,
+    "lcp": 2500,
+    "cls": 0.1,
+    "tbt": 300,
+    "si": 3400,
+    "tti": 3800
+  }
+}

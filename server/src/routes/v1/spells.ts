@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { supabaseService } from '../../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
 import {
   getClassSpells,
   getSpellById,

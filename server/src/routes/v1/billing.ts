@@ -1,7 +1,7 @@
 import express, { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import Stripe from 'stripe';
-import { supabaseService } from '../../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
 
 export default function stripeRouter() {
   const router = Router();

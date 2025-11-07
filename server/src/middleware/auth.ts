@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getBearerToken, AuthTokenPayload } from '../lib/jwt.js';
-import { verifySupabaseToken } from '../lib/supabase.js';
-import { createClient } from '../lib/db.js';
+import { verifySupabaseToken, createPgClient } from '../../src/infrastructure/database/index.js';
 
 declare global {
   namespace Express {
@@ -19,7 +18,7 @@ async function resolveUserPlan(userId: string, req: Request): Promise<string> {
   // 2) Try to resolve from Postgres users table if configured
   try {
     if (process.env.DATABASE_URL) {
-      const db = createClient();
+      const db = createPgClient();
       const client = await db.connect();
       try {
         const { rows } = await client.query('SELECT plan FROM users WHERE id = $1 LIMIT 1', [userId]);

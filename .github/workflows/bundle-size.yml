@@ -1,0 +1,139 @@
+name: Bundle Size Monitor
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Analyze bundle size
+        id: bundle-stats
+        run: |
+          # Get bundle sizes
+          echo "## Bundle Size Report" > bundle-report.md
+          echo "" >> bundle-report.md
+          echo "### Main Chunks" >> bundle-report.md
+          echo "" >> bundle-report.md
+          echo "| File | Size | Gzipped |" >> bundle-report.md
+          echo "|------|------|---------|" >> bundle-report.md
+
+          # Analyze dist directory
+          find dist/assets -name "*.js" -type f | while read file; do
+            filename=$(basename "$file")
+            size=$(du -h "$file" | cut -f1)
+            gzipped=$(gzip -c "$file" | wc -c | numfmt --to=iec-i --suffix=B)
+            echo "| $filename | $size | $gzipped |" >> bundle-report.md
+          done
+
+          echo "" >> bundle-report.md
+          echo "### Total Bundle Size" >> bundle-report.md
+          total_size=$(du -sh dist | cut -f1)
+          echo "Total: **$total_size**" >> bundle-report.md
+
+          # Check if size exceeds threshold (10MB)
+          total_bytes=$(du -sb dist | cut -f1)
+          max_bytes=$((10 * 1024 * 1024))
+
+          if [ $total_bytes -gt $max_bytes ]; then
+            echo "threshold_exceeded=true" >> $GITHUB_OUTPUT
+            echo "" >> bundle-report.md
+            echo "### ⚠️ Warning" >> bundle-report.md
+            echo "Bundle size exceeds 10MB threshold!" >> bundle-report.md
+          else
+            echo "threshold_exceeded=false" >> $GITHUB_OUTPUT
+            echo "" >> bundle-report.md
+            echo "### ✅ Size Check Passed" >> bundle-report.md
+            echo "Bundle size is within acceptable limits." >> bundle-report.md
+          fi
+
+      - name: Upload bundle report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: |
+            bundle-report.md
+            dist/
+
+      - name: Comment bundle size on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('bundle-report.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Fail if threshold exceeded
+        if: steps.bundle-stats.outputs.threshold_exceeded == 'true'
+        run: |
+          echo "::error::Bundle size exceeds 10MB threshold"
+          exit 1
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    needs: bundle-size
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Lighthouse
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun --config=lighthouserc.json || echo "Lighthouse CI configuration needed"
+        continue-on-error: true
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/

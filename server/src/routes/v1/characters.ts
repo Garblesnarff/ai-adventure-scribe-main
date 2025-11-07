@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
-import { supabaseService } from '../../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
+import { CharacterService } from '../../services/character-service.js';
 
 export default function characterRouter() {
   const router = Router();
@@ -15,29 +16,29 @@ export default function characterRouter() {
     });
 
     try {
-      const { data: characters, error } = await supabaseService
-        .from('characters')
-        .select(`
-          id, name, race, class, level,
-          image_url, avatar_url,
-          campaign_id,
-          created_at, updated_at
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('[CHARACTERS_LIST] Database error:', error);
-        return res.status(500).json({ error: 'Failed to fetch characters' });
-      }
+      const characters = await CharacterService.listForUser(userId);
 
       console.log('[CHARACTERS_LIST] Response:', {
         userId,
-        characterCount: characters?.length || 0,
-        characters: characters?.map(c => ({ id: c.id, name: c.name }))
+        characterCount: characters.length,
+        characters: characters.map(c => ({ id: c.id, name: c.name }))
       });
 
-      return res.json(characters || []);
+      // Transform to match API response format (snake_case)
+      const formattedCharacters = characters.map(c => ({
+        id: c.id,
+        name: c.name,
+        race: c.race,
+        class: c.class,
+        level: c.level,
+        image_url: c.imageUrl,
+        avatar_url: c.avatarUrl,
+        campaign_id: c.campaignId,
+        created_at: c.createdAt,
+        updated_at: c.updatedAt,
+      }));
+
+      return res.json(formattedCharacters);
     } catch (e) {
       console.error('[CHARACTERS_LIST] Error fetching characters:', e);
       return res.status(500).json({ error: 'Failed to fetch characters' });
@@ -62,32 +63,46 @@ export default function characterRouter() {
     } = req.body;
 
     try {
-      const { data: character, error } = await supabaseService
-        .from('characters')
-        .insert({
-          user_id: userId,
-          name,
-          description: description || null,
-          race,
-          class: charClass,
-          level: level || 1,
-          alignment: alignment || null,
-          experience_points: experience_points || 0,
-          image_url: image_url || null,
-          appearance: appearance || null,
-          personality_traits: personality_traits || null,
-          backstory_elements: backstory_elements || null,
-          background: background || null
-        })
-        .select()
-        .single();
+      const character = await CharacterService.create(userId, {
+        name,
+        description,
+        race,
+        class: charClass,
+        level,
+        alignment,
+        experiencePoints: experience_points,
+        imageUrl: image_url,
+        appearance,
+        personalityTraits: personality_traits,
+        backstoryElements: backstory_elements,
+        background,
+      });
 
-      if (error) {
-        console.error('Error creating character:', error);
-        return res.status(500).json({ error: 'Failed to create character' });
-      }
+      // Transform to match API response format (snake_case)
+      const formattedCharacter = {
+        id: character.id,
+        user_id: character.userId,
+        name: character.name,
+        description: character.description,
+        race: character.race,
+        class: character.class,
+        level: character.level,
+        alignment: character.alignment,
+        experience_points: character.experiencePoints,
+        image_url: character.imageUrl,
+        avatar_url: character.avatarUrl,
+        background_image: character.backgroundImage,
+        appearance: character.appearance,
+        personality_traits: character.personalityTraits,
+        personality_notes: character.personalityNotes,
+        backstory_elements: character.backstoryElements,
+        background: character.background,
+        campaign_id: character.campaignId,
+        created_at: character.createdAt,
+        updated_at: character.updatedAt,
+      };
 
-      return res.status(201).json(character);
+      return res.status(201).json(formattedCharacter);
     } catch (e) {
       console.error('Error creating character:', e);
       return res.status(500).json({ error: 'Failed to create character' });
@@ -98,29 +113,40 @@ export default function characterRouter() {
     const userId = req.user!.userId;
     const { id } = req.params;
     try {
-      const { data: character, error } = await supabaseService
-        .from('characters')
-        .select(`
-          id, name, description, race, class, level, alignment, experience_points,
-          image_url, avatar_url, background_image,
-          appearance, personality_traits, backstory_elements, background,
-          personality_notes, vision_types, obscurement, is_hidden,
-          campaign_id, user_id,
-          created_at, updated_at
-        `)
-        .eq('id', id)
-        .eq('user_id', userId)
-        .single();
+      const character = await CharacterService.getById(id, userId);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Character not found' });
-        }
-        console.error('Error fetching character:', error);
-        return res.status(500).json({ error: 'Failed to fetch character' });
+      if (!character) {
+        return res.status(404).json({ error: 'Character not found' });
       }
 
-      return res.json(character);
+      // Transform to match API response format (snake_case)
+      const formattedCharacter = {
+        id: character.id,
+        user_id: character.userId,
+        name: character.name,
+        description: character.description,
+        race: character.race,
+        class: character.class,
+        level: character.level,
+        alignment: character.alignment,
+        experience_points: character.experiencePoints,
+        image_url: character.imageUrl,
+        avatar_url: character.avatarUrl,
+        background_image: character.backgroundImage,
+        appearance: character.appearance,
+        personality_traits: character.personalityTraits,
+        personality_notes: character.personalityNotes,
+        backstory_elements: character.backstoryElements,
+        background: character.background,
+        vision_types: character.visionTypes,
+        obscurement: character.obscurement,
+        is_hidden: character.isHidden,
+        campaign_id: character.campaignId,
+        created_at: character.createdAt,
+        updated_at: character.updatedAt,
+      };
+
+      return res.json(formattedCharacter);
     } catch (e) {
       console.error('Error fetching character:', e);
       return res.status(500).json({ error: 'Failed to fetch character' });
@@ -146,37 +172,50 @@ export default function characterRouter() {
     } = req.body;
 
     try {
-      const { data: character, error } = await supabaseService
-        .from('characters')
-        .update({
-          name,
-          description: description || null,
-          race,
-          class: charClass,
-          level: level || 1,
-          alignment: alignment || null,
-          experience_points: experience_points || 0,
-          image_url: image_url || null,
-          appearance: appearance || null,
-          personality_traits: personality_traits || null,
-          backstory_elements: backstory_elements || null,
-          background: background || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .single();
+      const character = await CharacterService.update(id, userId, {
+        name,
+        description,
+        race,
+        class: charClass,
+        level,
+        alignment,
+        experiencePoints: experience_points,
+        imageUrl: image_url,
+        appearance,
+        personalityTraits: personality_traits,
+        backstoryElements: backstory_elements,
+        background,
+      });
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Character not found' });
-        }
-        console.error('Error updating character:', error);
-        return res.status(500).json({ error: 'Failed to update character' });
+      if (!character) {
+        return res.status(404).json({ error: 'Character not found' });
       }
 
-      return res.json(character);
+      // Transform to match API response format (snake_case)
+      const formattedCharacter = {
+        id: character.id,
+        user_id: character.userId,
+        name: character.name,
+        description: character.description,
+        race: character.race,
+        class: character.class,
+        level: character.level,
+        alignment: character.alignment,
+        experience_points: character.experiencePoints,
+        image_url: character.imageUrl,
+        avatar_url: character.avatarUrl,
+        background_image: character.backgroundImage,
+        appearance: character.appearance,
+        personality_traits: character.personalityTraits,
+        personality_notes: character.personalityNotes,
+        backstory_elements: character.backstoryElements,
+        background: character.background,
+        campaign_id: character.campaignId,
+        created_at: character.createdAt,
+        updated_at: character.updatedAt,
+      };
+
+      return res.json(formattedCharacter);
     } catch (e) {
       console.error('Error updating character:', e);
       return res.status(500).json({ error: 'Failed to update character' });
@@ -187,20 +226,10 @@ export default function characterRouter() {
     const userId = req.user!.userId;
     const { id } = req.params;
     try {
-      const { data: character, error } = await supabaseService
-        .from('characters')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select('id')
-        .single();
+      const deleted = await CharacterService.delete(id, userId);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Character not found' });
-        }
-        console.error('Error deleting character:', error);
-        return res.status(500).json({ error: 'Failed to delete character' });
+      if (!deleted) {
+        return res.status(404).json({ error: 'Character not found' });
       }
 
       return res.json({ ok: true });
@@ -221,7 +250,8 @@ export default function characterRouter() {
     }
 
     try {
-      // Verify character ownership
+      // Use Drizzle - kept Supabase for now due to complex spell validation logic
+      // TODO: Migrate fully to Drizzle in future iteration
       const { data: character, error: charError } = await supabaseService
         .from('characters')
         .select('id, class')
@@ -233,7 +263,6 @@ export default function characterRouter() {
         return res.status(404).json({ error: 'Character not found' });
       }
 
-      // Get class ID
       const { data: classData, error: classError } = await supabaseService
         .from('classes')
         .select('id')
@@ -244,7 +273,6 @@ export default function characterRouter() {
         return res.status(400).json({ error: 'Invalid class name' });
       }
 
-      // Validate all spells in a single batch query
       const { data: validClassSpells, error: validationError } = await supabaseService
         .from('class_spells')
         .select('spell_id, spells(id, name)')
@@ -256,14 +284,10 @@ export default function characterRouter() {
         return res.status(500).json({ error: 'Failed to validate spells' });
       }
 
-      // Create a Set of valid spell IDs for O(1) lookup
       const validSpellIds = new Set(validClassSpells?.map((cs: any) => cs.spell_id) || []);
-
-      // Find any invalid spells
       const invalidSpells = spells.filter((spellId: string) => !validSpellIds.has(spellId));
 
       if (invalidSpells.length > 0) {
-        // Get spell names for invalid spells to provide helpful error messages
         const { data: invalidSpellData } = await supabaseService
           .from('spells')
           .select('id, name')
@@ -283,14 +307,12 @@ export default function characterRouter() {
         });
       }
 
-      // Clear existing spells for this character and class
       await supabaseService
         .from('character_spells')
         .delete()
         .eq('character_id', characterId)
         .eq('source_class_id', classData.id);
 
-      // Insert validated spells
       if (spells.length > 0) {
         const spellInserts = spells.map((spellId: string) => ({
           character_id: characterId,

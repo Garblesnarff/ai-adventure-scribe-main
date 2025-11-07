@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.js';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 
 /**
  * Comprehensive D&D 5E Bard Spell Data Migration
@@ -561,7 +561,7 @@ async function run() {
     process.exit(1);
   }
 
-  const db = createClient();
+  const db = createPgClient();
   const client = await db.connect();
 
   try {

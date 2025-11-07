@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 
 const races = [
   { name: 'Human', description: 'Versatile and ambitious.' },
@@ -27,7 +27,7 @@ async function run() {
     process.exit(1);
   }
 
-  const db = createClient();
+  const db = createPgClient();
   const client = await db.connect();
   try {
     await client.query('BEGIN');

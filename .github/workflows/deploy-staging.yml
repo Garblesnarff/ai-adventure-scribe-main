@@ -1,0 +1,158 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/*
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - preview
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: |
+          npm run server:test
+          npx vitest run
+
+      - name: Build application
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          VITE_API_URL: ${{ secrets.STAGING_API_URL }}
+          VITE_ENVIRONMENT: staging
+          SITE_URL: ${{ secrets.STAGING_SITE_URL }}
+          VITE_GEMINI_API_KEYS: ${{ secrets.VITE_GEMINI_API_KEYS }}
+          VITE_GOOGLE_GEMINI_API_KEY: ${{ secrets.VITE_GOOGLE_GEMINI_API_KEY }}
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-build
+          path: dist/
+          retention-days: 7
+
+      - name: Deploy to Vercel (Staging)
+        id: deploy
+        if: success()
+        run: |
+          # Install Vercel CLI
+          npm install -g vercel
+
+          # Deploy to Vercel
+          # Note: This is a placeholder - configure based on your deployment platform
+          echo "url=https://staging.infinite-realms.ai" >> $GITHUB_OUTPUT
+          echo "Deployment would happen here with: vercel deploy --prod"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment deployment URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.url }}';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Deployed to staging: ${url}`
+            });
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: staging-backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build backend
+        run: npm run server:build
+
+      - name: Upload backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: server/dist/
+          retention-days: 7
+
+      - name: Deploy backend to staging
+        run: |
+          echo "Backend deployment placeholder"
+          echo "Would deploy server/dist/ to staging backend infrastructure"
+          # Add your backend deployment logic here (Railway, Render, AWS, etc.)
+        env:
+          BACKEND_DEPLOY_TOKEN: ${{ secrets.BACKEND_DEPLOY_TOKEN }}
+
+  smoke-tests:
+    runs-on: ubuntu-latest
+    needs: [build, deploy-backend]
+    if: success()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run smoke tests
+        env:
+          STAGING_URL: ${{ secrets.STAGING_SITE_URL }}
+        run: |
+          # Basic health check
+          curl -f $STAGING_URL || exit 1
+          echo "Smoke tests would run here"
+          # npx playwright test --config=playwright.staging.config.ts
+        continue-on-error: true

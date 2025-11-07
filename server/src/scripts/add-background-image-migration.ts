@@ -1,10 +1,10 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.js';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 
 async function addBackgroundImageColumn() {
   console.log('🚀 Adding background_image column to campaigns table...');
   
-  const db = createClient();
+  const db = createPgClient();
   const client = await db.connect();
   
   try {

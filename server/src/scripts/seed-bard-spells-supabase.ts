@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { supabaseService } from '../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
 
 /**
  * Comprehensive D&D 5E Bard Spell Data Migration using Supabase

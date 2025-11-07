@@ -3,6 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "*.sass",
+    "*.less"
+  ],
   "workspaces": [
     "packages/*"
   ],
@@ -33,7 +39,17 @@
     "check-deps": "npx depcheck || true",
     "check-unused-exports": "npx ts-prune --paths ./tsconfig.json || true",
     "check-case": "node scripts/check-case-duplicates.js",
-    "check-dead": "npm run check-deps && npm run check-unused-exports && npm run check-case"
+    "check-dead": "npm run check-deps && npm run check-unused-exports && npm run check-case",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "lighthouse": "lhci autorun",
+    "lighthouse:mobile": "lhci autorun --config=.lighthouserc-mobile.json",
+    "lighthouse:desktop": "lhci autorun --config=lighthouserc.json",
+    "perf:analyze": "npm run build && npm run lighthouse",
+    "perf:analyze:mobile": "npm run build && npm run lighthouse:mobile",
+    "perf:report": "node scripts/performance-report.js"
   },
   "dependencies": {
     "@11labs/react": "^0.0.4",
@@ -42,6 +58,8 @@
     "@fontsource/medievalsharp": "^5.1.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.0",
+    "@langchain/core": "^1.0.2",
+    "@langchain/langgraph": "^1.0.1",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -76,6 +94,9 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.72.2",
+    "@trpc/client": "^11.7.1",
+    "@trpc/react-query": "^11.7.1",
+    "@trpc/server": "^11.7.1",
     "bcryptjs": "^2.4.3",
     "caniuse-lite": "^1.0.30001713",
     "class-variance-authority": "^0.7.1",
@@ -85,6 +106,8 @@
     "date-fns": "^3.6.0",
     "depcheck": "^1.4.7",
     "dotenv": "^16.6.1",
+    "drizzle-kit": "^0.31.6",
+    "drizzle-orm": "^0.44.7",
     "embla-carousel-react": "^8.3.0",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
@@ -99,6 +122,7 @@
     "node-fetch": "^3.3.2",
     "openai": "^4.64.0",
     "pg": "^8.12.0",
+    "postgres": "^3.4.7",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dnd": "^16.0.1",
@@ -119,10 +143,12 @@
     "uuid": "^9.0.1",
     "vaul": "^0.9.3",
     "ws": "^8.18.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.47.2",
     "@tailwindcss/typography": "^0.5.15",
     "@testing-library/jest-dom": "^6.8.0",
@@ -143,6 +169,7 @@
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.1",
     "eslint": "^9.9.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
@@ -156,6 +183,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "web-vitals": "^5.1.0"
   }
 }

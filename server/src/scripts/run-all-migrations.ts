@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -58,7 +58,7 @@ async function checkDatabaseConnection() {
   }
 
   console.log('🔍 Checking database connection...');
-  const db = createClient();
+  const db = createPgClient();
   try {
     const client = await db.connect();
     await client.query('SELECT NOW()');

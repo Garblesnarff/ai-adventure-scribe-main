@@ -1,4 +1,4 @@
-import { createClient } from '../lib/db.js';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 
 export type UsageType = 'llm' | 'image' | 'voice';
 
@@ -52,7 +52,7 @@ export async function checkQuotaAndConsume(opts: {
   // Try Postgres if configured
   if (process.env.DATABASE_URL) {
     try {
-      const db = createClient();
+      const db = createPgClient();
       const client = await db.connect();
       try {
         await client.query(`

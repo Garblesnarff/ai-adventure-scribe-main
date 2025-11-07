@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { supabaseService } from '../../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { requireBlogAdmin } from '../../middleware/blog-admin.js';
 import { requireBlogAuthor, canManagePost, getBlogRole } from '../../middleware/blog-author.js';

@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 
 async function run() {
-  const db = createClient();
+  const db = createPgClient();
   const client = await db.connect();
   try {
     await client.query('BEGIN');

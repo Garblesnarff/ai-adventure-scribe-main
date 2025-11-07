@@ -1,0 +1,139 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Check outdated dependencies
+        id: outdated
+        run: |
+          npm outdated --json > outdated.json || true
+          cat outdated.json
+
+      - name: Upload outdated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: outdated-dependencies
+          path: outdated.json
+
+  security-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Run npm audit fix
+        id: audit-fix
+        run: |
+          npm audit fix --package-lock-only
+          if git diff --quiet package-lock.json; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request for security updates
+        if: steps.audit-fix.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: apply npm audit security fixes'
+          title: 'chore: Security updates from npm audit'
+          body: |
+            ## Automated Security Updates
+
+            This PR applies security fixes identified by `npm audit`.
+
+            ### Changes
+            - Updated vulnerable dependencies
+            - Fixed security issues in package-lock.json
+
+            ### Testing
+            - [ ] CI tests pass
+            - [ ] Manual testing completed
+            - [ ] No breaking changes introduced
+
+            **Note:** This is an automated PR. Please review changes carefully.
+          branch: automated/security-updates
+          delete-branch: true
+          labels: |
+            dependencies
+            security
+            automated
+
+  dependency-updates:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Update dependencies (minor/patch)
+        run: |
+          # Update all patch and minor versions
+          npm update --save
+
+      - name: Run tests
+        run: |
+          npm run lint
+          npm run server:test
+          npx vitest run
+        continue-on-error: true
+
+      - name: Create Pull Request for dependency updates
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies (minor/patch versions)'
+          title: 'chore: Update dependencies'
+          body: |
+            ## Automated Dependency Updates
+
+            This PR updates dependencies to their latest minor/patch versions.
+
+            ### Testing Required
+            - [ ] All tests pass
+            - [ ] Manual smoke testing
+            - [ ] Check for breaking changes
+
+            **Note:** Review the changes and run full test suite before merging.
+          branch: automated/dependency-updates
+          delete-branch: true
+          labels: |
+            dependencies
+            automated

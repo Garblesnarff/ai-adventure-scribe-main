@@ -43,6 +43,8 @@ InfiniteRealms implements comprehensive database optimizations for production-sc
 - [Migration Guide](docs/MIGRATION_GUIDE.md)
 - [Performance Report](docs/PERFORMANCE_REPORT.md)
 - [Monitoring Guide](docs/MONITORING.md)
+- [Performance Testing Guide](docs/PERFORMANCE_TESTING.md)
+- [Performance Budget](PERFORMANCE_BUDGET.md)
 
 #### **Quick Start**
 1.  **Prerequisites**: Node.js and npm installed.
@@ -60,6 +62,33 @@ InfiniteRealms implements comprehensive database optimizations for production-sc
     ```bash
     npm run dev
     ```
+
+#### **Performance Testing**
+
+Run comprehensive performance audits with Lighthouse CI:
+
+```bash
+# Desktop performance audit
+npm run lighthouse:desktop
+
+# Mobile performance audit
+npm run lighthouse:mobile
+
+# Full analysis (build + audit)
+npm run perf:analyze
+
+# View formatted report
+npm run perf:report
+```
+
+**Performance Targets:**
+- Lighthouse Performance Score: ≥ 85 (desktop), ≥ 75 (mobile)
+- First Contentful Paint (FCP): < 1.8s
+- Largest Contentful Paint (LCP): < 2.5s
+- Cumulative Layout Shift (CLS): < 0.1
+- Total Bundle Size: < 500 KB gzipped
+
+See [Performance Testing Guide](docs/PERFORMANCE_TESTING.md) for detailed optimization strategies.
 
 #### **Why This Matters**
 *   **Play Fantasy RPGs Anytime, Anywhere:** No need to schedule sessions or find a group. Your personal, always-available AI Game Master is ready whenever you are.

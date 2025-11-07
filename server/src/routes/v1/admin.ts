@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
 import { requireAdmin } from '../../middleware/admin.js';
-import { supabaseService } from '../../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
 
 /**
  * Admin routes for system maintenance and operations

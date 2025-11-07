@@ -1,13 +1,14 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import path from 'path'; // Added path import
+import path from 'path';
+import { fileURLToPath, URL } from 'url';
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { // Added resolve configuration
+  resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   test: {
@@ -39,6 +40,7 @@ export default defineConfig({
       'src/agents/__tests__/encounter-validator-party.test.ts',
       'src/agents/services/intent/PlayerIntentDetector.test.ts',
       'src/hooks/__tests__/useSpellSelection.test.ts',
+      'src/features/combat/stores/__tests__/combatStore.test.ts',
       'src/__tests__/unit/spell-class-restrictions.test.ts',
       'src/__tests__/unit/response-pipeline.test.ts',
       'src/__tests__/components/spell-selection-component.test.tsx',
@@ -46,7 +48,10 @@ export default defineConfig({
       'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx',
       'src/data/appearance/appearanceOptions.test.ts',
       'src/data/appearance/physicalTraits.test.ts',
-      'src/engine/**/*.test.ts'
+      'src/engine/**/*.test.ts',
+      // LangGraph agent tests
+      'src/agents/langgraph/__tests__/**/*.test.ts',
+      'src/agents/langgraph/nodes/__tests__/**/*.test.ts'
     ],
     exclude: [
       'node_modules/**',
@@ -83,6 +88,8 @@ export default defineConfig({
         'src/agents/services/intent/PlayerIntentDetector.ts',
         'src/hooks/useSpellSelection.ts',
         'src/engine/**/*.ts',
+        // LangGraph agent files
+        'src/agents/langgraph/**/*.ts',
       ],
       exclude: [
         '**/__tests__/**',

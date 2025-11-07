@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createClient } from '../lib/db.js';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 import { classes } from '../data/seeds/classes.js';
 import { races } from '../data/seeds/races.js';
 import { essentialSpells } from '../data/seeds/essentialSpells.js';
@@ -205,7 +205,7 @@ async function run() {
     process.exit(1);
   }
 
-  const db = createClient();
+  const db = createPgClient();
   const client = await db.connect();
 
   try {

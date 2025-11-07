@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabaseService } from '../lib/supabase.js';
+import { supabaseService } from '../../src/infrastructure/database/index.js';
 
 declare global {
   namespace Express {

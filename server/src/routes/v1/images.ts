@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 /* DEPRECATED: Removed OpenAI imports - using OpenRouter only */
 import { requireAuth } from '../../middleware/auth.js';
 import { planRateLimit } from '../../middleware/rate-limit.js';
-import { supabaseService } from '../../lib/supabase.js';
+import { supabaseService } from '../../../src/infrastructure/database/index.js';
 import { checkQuotaAndConsume } from '../../services/ai-usage-service.js';
 import { getCircuitBreaker, CircuitOpenError } from '../../utils/circuit-breaker.js';
 
