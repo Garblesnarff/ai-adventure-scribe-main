@@ -214,6 +214,7 @@ export default function imagesRouter() {
   // Append a generated image record to a dialogue_history message
   router.patch('/message/:id/images', async (req: Request, res: Response) => {
     const { id } = req.params;
+    const userId = (req as any).user?.userId as string;
     const body = req.body || {};
     const image = {
       url: String(body.url || ''),
@@ -228,15 +229,26 @@ export default function imagesRouter() {
     }
 
     try {
-      // Fetch existing images
+      // Fetch message with session and verify ownership through campaign/character
       const { data: existing, error: selErr } = await supabaseService
         .from('dialogue_history')
-        .select('images')
+        .select('images, session_id, game_sessions!dialogue_history_session_id_fkey(campaigns!game_sessions_campaign_id_fkey(user_id), characters!game_sessions_character_id_fkey(user_id))')
         .eq('id', id)
         .single();
+
       if (selErr) {
         return res.status(404).json({ error: 'Message not found' });
       }
+
+      // Verify ownership through session -> campaign or character
+      const session = (existing as any)?.game_sessions;
+      const campaignOwner = session?.campaigns?.user_id;
+      const characterOwner = session?.characters?.user_id;
+
+      if (campaignOwner !== userId && characterOwner !== userId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
       const images = Array.isArray(existing?.images) ? existing.images : [];
       // Append with max 5
       const updated = [...images, image].slice(-5);

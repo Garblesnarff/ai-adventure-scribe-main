@@ -1,8 +1,14 @@
 import { Router } from 'express';
+import { requireAuth } from '../../middleware/auth.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { recordEncounterOutcome, getDifficultyAdjustment } from '../../lib/encounter-telemetry.js';
 
 export default function encountersRouter() {
   const router = Router();
+
+  // SECURITY: Require authentication for all encounter endpoints
+  router.use(requireAuth);
+  router.use(planRateLimit('default'));
 
   router.post('/telemetry', (req, res) => {
     const { sessionId, difficulty, resourcesUsedEst } = req.body || {};

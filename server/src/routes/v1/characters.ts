@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../middleware/auth.js';
+import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabaseService } from '../../lib/supabase.js';
 
 export default function characterRouter() {
   const router = Router();
   router.use(requireAuth);
+  router.use(planRateLimit('default'));
 
   router.get('/', async (req: Request, res: Response) => {
     const userId = req.user!.userId;
