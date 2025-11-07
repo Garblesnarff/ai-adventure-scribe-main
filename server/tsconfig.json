@@ -5,7 +5,22 @@
     "rootDir": "src",
     "outDir": "dist",
     "esModuleInterop": true,
+
+    // Strict mode enabled for improved type safety
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+
+    // Additional strict checks
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "skipLibCheck": true,

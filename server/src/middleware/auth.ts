@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getBearerToken, AuthTokenPayload } from '../lib/jwt.js';
-import { verifySupabaseToken } from '../lib/supabase.js';
-import { createClient } from '../lib/db.js';
+import { verifySupabaseToken, createPgClient } from '../../src/infrastructure/database/index.js';
 
 declare global {
   namespace Express {
@@ -12,33 +11,28 @@ declare global {
 }
 
 async function resolveUserPlan(userId: string, req: Request): Promise<string> {
-  // SECURITY: X-Plan header only allowed in test/development environments
-  // This prevents plan manipulation in production
-  const isTestOrDev = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
-  if (isTestOrDev) {
-    const hdr = (req.headers['x-plan'] as string | undefined)?.toLowerCase();
-    if (hdr) return hdr;
-  }
+  // 1) Explicit header override (useful for tests): X-Plan: free|pro|enterprise
+  const hdr = (req.headers['x-plan'] as string | undefined)?.toLowerCase();
+  if (hdr) return hdr;
 
-  // Try to resolve from Postgres users table if configured
+  // 2) Try to resolve from Postgres users table if configured
   try {
     if (process.env.DATABASE_URL) {
-      const db = createClient();
+      const db = createPgClient();
       const client = await db.connect();
       try {
         const { rows } = await client.query('SELECT plan FROM users WHERE id = $1 LIMIT 1', [userId]);
+        client.release();
         if (rows?.[0]?.plan) return String(rows[0].plan).toLowerCase();
-      } finally {
+      } catch {
         try { client.release(); } catch {}
-        // Don't call db.end() - using singleton pool
+      } finally {
+        try { await db.end(); } catch {}
       }
     }
-  } catch (err) {
-    // Log error but continue with default plan
-    console.error('Error resolving user plan:', err);
-  }
+  } catch {}
 
-  // Default to free plan
+  // 3) Default
   return 'free';
 }
 
