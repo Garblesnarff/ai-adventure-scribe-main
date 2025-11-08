@@ -65,65 +65,21 @@ function format(level: LogLevel, args: unknown[]): unknown[] {
   return [prefix, ...args];
 }
 
-function safeReplacer() {
-  const seen = new WeakSet<object>();
-
-  return (_key: string, value: unknown) => {
-    if (typeof value === 'function') {
-      return `[Function${value.name ? ` ${value.name}` : ''}]`;
-    }
-
-    if (typeof value === 'bigint') {
-      return value.toString();
-    }
-
-    if (typeof Node !== 'undefined' && value instanceof Node) {
-      try {
-        if (value instanceof HTMLElement) {
-          const id = value.id ? ` id="${value.id}"` : '';
-          const cls = value.className ? ` class="${value.className}"` : '';
-          return `<${value.tagName.toLowerCase()}${id}${cls}>`;
-        }
-        return `[Node ${value.nodeName}]`;
-      } catch {
-        return '[DOMNode]';
-      }
-    }
-
-    if (value && typeof value === 'object') {
-      const obj = value as Record<string, unknown>;
-      if (Object.keys(obj).some(key => key.startsWith('__react'))) {
-        return '[ReactInternals]';
-      }
-
-      if (seen.has(obj)) {
-        return '[Circular]';
-      }
-
-      seen.add(obj);
-    }
-
-    return value;
-  };
-}
-
 /**
  * Formats metadata for better console readability
  */
-function formatMetadata(metadata?: LogMetadata): unknown {
+function formatMetadata(metadata?: LogMetadata): string {
   if (!metadata || Object.keys(metadata).length === 0) {
     return '';
   }
 
   if (isDevelopment) {
-    return metadata;
+    // In development, pretty print the metadata
+    return '\n' + JSON.stringify(metadata, null, 2);
   }
 
-  try {
-    return JSON.stringify(metadata, safeReplacer());
-  } catch {
-    return '[Unserializable metadata]';
-  }
+  // In production, compact format
+  return JSON.stringify(metadata);
 }
 
 /**

@@ -16,14 +16,10 @@ export interface ParsedRollRequest extends RollRequest {
 export function parseRollRequests(message: string): ParsedRollRequest[] {
   const requests: ParsedRollRequest[] = [];
 
-  const { structuredRequests, strippedMessage } = extractStructuredRollRequests(message || '');
-  requests.push(...structuredRequests);
-
   let match: RegExpExecArray | null;
 
   // Normalize message to improve regex robustness (strip basic markdown, collapse spaces)
-  const text = (strippedMessage || '')
-    .replace(/```[\s\S]*?```/g, '') // remove any remaining fenced blocks
+  const text = (message || '')
     .replace(/\*\*/g, '') // bold
     .replace(/\*/g, '') // italics
     .replace(/_/g, '') // underscore emphasis
@@ -109,7 +105,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
   }
 
   // "Roll for <skill> (DC 14)" without explicit dice
-  const rollForSkillPattern = /(?:please\s+)?roll\s+for\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)(?:\s*\(?(?:dc|DC)\s*(\d+)\)?)?/gi;
+  const rollForSkillPattern = /(?:please\s+)?roll\s+for\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)(?:\s*\(?:(?:dc|DC)\s*(\d+)\)?)?/gi;
   while ((match = rollForSkillPattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
     const dc = match[2] ? parseInt(match[2]) : undefined;
@@ -268,9 +264,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
   }
 
   const uniqueRequests = requests
-    .filter((request, index, self) =>
-      index === self.findIndex(r => r.type === request.type && r.formula === request.formula && r.purpose === request.purpose)
-    )
+    .filter((request, index, self) => index === self.findIndex(r => r.formula === request.formula && r.purpose === request.purpose))
     .filter(r => r.confidence > 0.5)
     .sort((a, b) => b.confidence - a.confidence);
 
@@ -304,214 +298,4 @@ export function normalizeFormula(formula: string): string {
   }
 
   return normalized;
-}
-
-function extractStructuredRollRequests(message: string): {
-  structuredRequests: ParsedRollRequest[];
-  strippedMessage: string;
-} {
-  const structuredRequests: ParsedRollRequest[] = [];
-  let strippedMessage = message;
-
-  const recordAndStrip = (pattern: RegExp, parser: (payload: string, source: string) => ParsedRollRequest[]) => {
-    let blockMatch: RegExpExecArray | null;
-    while ((blockMatch = pattern.exec(message)) !== null) {
-      const rawBlock = blockMatch[0];
-      const payload = blockMatch[1]?.trim() ?? '';
-      structuredRequests.push(...parser(payload, rawBlock.trim()));
-      strippedMessage = strippedMessage.replace(rawBlock, ' ');
-    }
-  };
-
-  // ```ROLL_REQUESTS_V1 ... ``` blocks
-  recordAndStrip(/```ROLL_REQUESTS_V1\s*([\s\S]*?)```/gi, parseStructuredJsonBlock);
-  // ```json ... ``` blocks that contain roll data
-  recordAndStrip(/```json\s*([\s\S]*?)```/gi, parseStructuredJsonBlock);
-  // Generic ```roll_requests``` fences
-  recordAndStrip(/```roll_requests\s*([\s\S]*?)```/gi, parseStructuredJsonBlock);
-
-  // XML-like roll metadata
-  recordAndStrip(/<roll-requests[^>]*>([\s\S]*?)<\/roll-requests>/gi, parseXmlRollBlock);
-
-  // Top-level JSON responses
-  const trimmed = strippedMessage.trim();
-  if (trimmed.startsWith('{') && trimmed.includes('roll')) {
-    const parsed = parseStructuredJsonBlock(trimmed, 'inline-json');
-    if (parsed.length > 0) {
-      structuredRequests.push(...parsed);
-      strippedMessage = '';
-    }
-  }
-
-  return { structuredRequests, strippedMessage };
-}
-
-function parseStructuredJsonBlock(payload: string, source: string): ParsedRollRequest[] {
-  if (!payload) return [];
-
-  let data: any;
-  const candidates = [payload, payload.trim().replace(/^[^\[{]*([\[{].*[\]}]).*$/s, '$1')];
-
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    try {
-      data = JSON.parse(candidate);
-      break;
-    } catch {
-      continue;
-    }
-  }
-
-  if (!data) return [];
-
-  const rollsArray = Array.isArray(data)
-    ? data
-    : data.rolls || data.roll_requests || data.rollRequests || data.player_rolls || data.playerRolls || [];
-
-  if (!Array.isArray(rollsArray)) return [];
-
-  return rollsArray
-    .map(entry => toParsedRollRequest(entry, source))
-    .filter((entry): entry is ParsedRollRequest => Boolean(entry));
-}
-
-function parseXmlRollBlock(payload: string, source: string): ParsedRollRequest[] {
-  const results: ParsedRollRequest[] = [];
-  if (!payload) return results;
-
-  const rollRegex = /<roll(?:\s+[^>]*)?>([\s\S]*?)<\/roll>/gi;
-  let rollMatch: RegExpExecArray | null;
-  while ((rollMatch = rollRegex.exec(payload)) !== null) {
-    const inner = rollMatch[1] ?? '';
-    const attrString = rollMatch[0].match(/<roll([^>]*)>/i)?.[1] ?? '';
-    const attrMap: Record<string, string> = {};
-    attrString.replace(/(\w+)=\"([^\"]*)\"/g, (_, key: string, value: string) => {
-      attrMap[key.toLowerCase()] = value;
-      return '';
-    });
-
-    const purpose = inner.match(/<purpose>([\s\S]*?)<\/purpose>/i)?.[1]?.trim() || attrMap['purpose'] || attrMap['reason'];
-    const formula = inner.match(/<formula>([\s\S]*?)<\/formula>/i)?.[1]?.trim() || attrMap['formula'];
-    const dc = inner.match(/<dc>([\s\S]*?)<\/dc>/i)?.[1]?.trim() || attrMap['dc'];
-    const ac = inner.match(/<ac>([\s\S]*?)<\/ac>/i)?.[1]?.trim() || attrMap['ac'];
-    const type = inner.match(/<type>([\s\S]*?)<\/type>/i)?.[1]?.trim() || attrMap['type'];
-
-    const parsed = toParsedRollRequest(
-      {
-        type,
-        purpose,
-        formula,
-        dc,
-        ac,
-        advantage: attrMap['advantage'],
-        disadvantage: attrMap['disadvantage'],
-        modifier: attrMap['modifier']
-      },
-      source
-    );
-    if (parsed) results.push(parsed);
-  }
-  return results;
-}
-
-function toParsedRollRequest(entry: any, source: string): ParsedRollRequest | null {
-  if (!entry) return null;
-
-  const rollType = normalizeRollType(entry.type || entry.roll_type || entry.category || entry.kind);
-  if (!rollType) return null;
-
-  const rawFormula = String(entry.formula || entry.dice || entry.dice_expression || entry.expression || '').trim();
-  const formula = rawFormula ? normalizeFormula(rawFormula) : '1d20+modifier';
-
-  const rawPurpose = entry.purpose || entry.reason || entry.description || entry.prompt || `${rollType} roll`;
-  const dcValue = entry.dc ?? entry.target_dc ?? entry.targetDC ?? entry.difficulty;
-  const acValue = entry.ac ?? entry.target_ac ?? entry.targetAC;
-  const modifierValue = entry.modifier ?? entry.mod ?? entry.base_modifier;
-
-  const advantageSource = entry.advantage !== undefined
-    ? entry.advantage
-    : entry.state === 'advantage'
-      ? true
-      : entry.roll_state === 'advantage'
-        ? true
-        : undefined;
-
-  const disadvantageSource = entry.disadvantage !== undefined
-    ? entry.disadvantage
-    : entry.state === 'disadvantage'
-      ? true
-      : entry.roll_state === 'disadvantage'
-        ? true
-        : undefined;
-
-  const parsed: ParsedRollRequest = {
-    type: rollType,
-    formula,
-    purpose: String(rawPurpose).trim() || `${rollType} roll`,
-    dc: toOptionalNumber(dcValue),
-    ac: toOptionalNumber(acValue),
-    advantage: interpretAdvantage(advantageSource),
-    disadvantage: interpretDisadvantage(disadvantageSource),
-    modifier: toOptionalNumber(modifierValue),
-    originalText: source,
-    confidence: typeof entry.confidence === 'number' ? clamp(entry.confidence, 0, 1) : 0.99
-  };
-
-  return parsed;
-}
-
-function normalizeRollType(raw: string | undefined): RollRequest['type'] | null {
-  if (!raw) return 'check';
-  const normalized = raw.toString().trim().toLowerCase().replace(/[-\s]/g, '_');
-
-  switch (normalized) {
-    case 'attack':
-    case 'attack_roll':
-      return 'attack';
-    case 'save':
-    case 'saving_throw':
-    case 'save_throw':
-      return 'save';
-    case 'damage':
-    case 'damage_roll':
-      return 'damage';
-    case 'initiative':
-      return 'initiative';
-    case 'skill_check':
-    case 'skill':
-      return 'skill_check';
-    case 'check':
-    case 'ability_check':
-    default:
-      return 'check';
-  }
-}
-
-function interpretAdvantage(value: any): boolean | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'boolean') return value;
-  const normalized = String(value).trim().toLowerCase();
-  if (['true', 'yes', '1', 'advantage', 'with_advantage', 'adv'].includes(normalized)) return true;
-  if (['false', 'no', '0'].includes(normalized)) return false;
-  return undefined;
-}
-
-function interpretDisadvantage(value: any): boolean | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'boolean') return value;
-  const normalized = String(value).trim().toLowerCase();
-  if (['true', 'yes', '1', 'disadvantage', 'with_disadvantage', 'disadv'].includes(normalized)) return true;
-  if (['false', 'no', '0'].includes(normalized)) return false;
-  return undefined;
-}
-
-function toOptionalNumber(value: any): number | undefined {
-  if (value === undefined || value === null || value === '') return undefined;
-  const num = typeof value === 'number' ? value : parseInt(String(value).replace(/[^-\d]/g, ''), 10);
-  return Number.isFinite(num) ? num : undefined;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  if (Number.isNaN(value)) return min;
-  return Math.min(max, Math.max(min, value));
 }

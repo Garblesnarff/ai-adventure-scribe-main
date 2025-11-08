@@ -27,7 +27,6 @@ import type { DetectedEnemy, DetectedCombatAction } from '@/utils/combatDetectio
 import { detectCombatFromText } from '@/utils/combatDetection';
 import { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } from '@/utils/rollRequestParser';
 import { DiceEngine } from '@/services/dice/DiceEngine';
-import { extractVisualPrompt } from '@/utils/visualPrompt';
 
 // Voice narration types
 export interface NarrationSegment {
@@ -338,26 +337,9 @@ export const useAIResponse = () => {
       });
 
       // Extract response data
-      const { cleaned: responseText, prompt: visualPrompt } = extractVisualPrompt(result.text || '');
+      const responseText = result.text;
       const narrationSegments = (result as any).narration_segments || (result as any).narrationSegments;
-      let imageRequests = (result as any).image_requests || (result as any).imageRequests || undefined;
-      const defaultImageQuality = ((import.meta as any)?.env?.VITE_DM_IMAGE_QUALITY || 'low') as 'low' | 'medium' | 'high';
-
-      if (visualPrompt) {
-        const normalizedPrompt = visualPrompt.trim();
-        if (normalizedPrompt.length > 0) {
-          const existing = Array.isArray(imageRequests) ? imageRequests : [];
-          const hasDuplicate = existing.some((req) => req?.prompt?.trim() === normalizedPrompt);
-          if (!hasDuplicate) {
-            imageRequests = [
-              ...existing,
-              { prompt: normalizedPrompt, quality: defaultImageQuality },
-            ];
-          } else {
-            imageRequests = existing;
-          }
-        }
-      }
+      const imageRequests = (result as any).image_requests || (result as any).imageRequests || undefined;
 
       // Parse roll requests from the response and process through GameContext
       let rollRequests: RollRequest[] = result.roll_requests || [];
