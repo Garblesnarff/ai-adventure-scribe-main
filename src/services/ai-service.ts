@@ -829,38 +829,38 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
           }
           
           // Expand world based on player action and AI response
-          try {
-            const worldExpansion = await WorldBuilderService.respondToPlayerAction(
-              params.context.campaignId,
-              params.context.sessionId!,
-              params.context.characterId,
-              params.message,
-              result.text
-            );
+            try {
+              const worldExpansion = await WorldBuilderService.respondToPlayerAction(
+                params.context.campaignId,
+                params.context.sessionId!,
+                params.context.characterId,
+                params.message,
+                result.text
+              );
             
-            if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
-              logger.info(`🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+              if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
+                logger.info(`🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+              }
+            } catch (worldError) {
+              logger.warn('World building failed (non-fatal):', worldError);
             }
-          } catch (worldError) {
-            logger.warn('World building failed (non-fatal):', worldError);
           }
-        }
         
-        // Add combat detection data to the result
-        const enhancedResult = {
-          ...result,
-          combatDetection: {
-            isCombat: combatDetection.isCombat,
-            confidence: combatDetection.confidence,
-            combatType: combatDetection.combatType,
-            shouldStartCombat: combatDetection.shouldStartCombat,
-            shouldEndCombat: combatDetection.shouldEndCombat,
-            enemies: combatDetection.enemies || [],
-            combatActions: combatDetection.combatActions || []
-          }
-        };
+          // Add combat detection data to the result
+          const enhancedResult = {
+            ...result,
+            combatDetection: {
+              isCombat: combatDetection.isCombat,
+              confidence: combatDetection.confidence,
+              combatType: combatDetection.combatType,
+              shouldStartCombat: combatDetection.shouldStartCombat,
+              shouldEndCombat: combatDetection.shouldEndCombat,
+              enemies: combatDetection.enemies || [],
+              combatActions: combatDetection.combatActions || []
+            }
+          };
         
-        return enhancedResult;
+          return enhancedResult;
         
     } catch (geminiError) {
       logger.error('Local Gemini API failed:', geminiError);
@@ -934,98 +934,110 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
    * Generate an opening message for a new campaign session
    * Creates an engaging introduction based on campaign and character context
    */
-  static async generateOpeningMessage(params: {
-    context: GameContext;
-  }): Promise<string> {
+  static async generateOpeningMessage(params: { context: GameContext }): Promise<string> {
     logger.info('Generating opening message for new session...');
-    
+
+    const ctx = params.context || ({} as GameContext);
+    const campaign = (ctx.campaignDetails || {}) as any;
+    const character = (ctx.characterDetails || {}) as any;
+
+    const richFallback = (): string => {
+      const campaignName = campaign.name || 'Untitled Campaign';
+      const campaignDesc =
+        campaign.description ||
+        'A world of looming dangers, hidden alliances, and secrets waiting beneath the surface.';
+      const charName = character.name || 'your character';
+      const charRace = character.race?.name || character.race || 'adventurer';
+      const charClass = character.class?.name || character.class || 'wanderer';
+      const charBackground = character.background?.name || character.background || null;
+
+      const bgLine = charBackground
+        ? `Forged by your ${charBackground.toLowerCase()} past,`
+        : 'Shaped by untold roads behind you,';
+
+      // 2–3 rich paragraphs, campaign- and character-specific
+      const intro = `The tale of ${campaignName} does not begin in comfort. The air is thick with unspoken omens as ${charName}, a ${charRace} ${charClass}, stands at the threshold of events that will scar the maps of history. ${bgLine} you feel the weight of this place pressing in—its stories, its failures, its forgotten oaths—waiting for someone reckless or brave enough to listen.`;
+
+      const world = `Around you, the world of ${campaignName} stirs: ${campaignDesc} Lantern light claws at the dark, distant bells toll warnings no one wants to name, and whispers travel faster than truth. Faces in the crowd steal glances in your direction—noticing your equipment, your bearing, the way you measure the exits. Someone here knows more than they dare to say aloud.`;
+
+      // 3 on-theme options in required format so ActionOptions can parse
+      const options = [
+        `A. **Follow the tension**, approach the most anxious-looking onlooker or official and press them for what they are afraid to speak.`,
+        `B. **Scout the surroundings**, slip into observation mode—alleys, rooftops, guards, sigils, anything that reveals who truly holds power here.`,
+        `C. **Invite trouble**, stride boldly into the nearest focal point of activity (a tavern, barricade, or shrine) and announce that you are ready to solve someone’s problem—for a price.`
+      ];
+
+      return `${intro}\n\n${world}\n\nWhat do you do?\n${options.join('\n')}`;
+    };
+
     try {
-      // Use local Gemini API
       const geminiManager = this.getGeminiManager();
-      
-      const result = await geminiManager.executeWithRotation(async (genAI) => {
+      const result = await geminiManager.executeWithRotation(async genAI => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-        
-        // Build enhanced context for opening message
-        let contextPrompt = `You are an expert D&D 5e Dungeon Master with years of experience creating memorable adventures. You have a vivid, immersive storytelling style that immediately draws players into the world.`;
-        
-        // Determine campaign tone and genre for appropriate DM voice
-        let campaignTone = 'balanced';
-        if (params.context.campaignDetails) {
-          const rawDescription = params.context.campaignDetails.description || '';
-          const description = rawDescription.toLowerCase();
-          if (description.includes('dark') || description.includes('horror') || description.includes('grim')) {
-            campaignTone = 'dark';
-          } else if (description.includes('light') || description.includes('comedy') || description.includes('fun')) {
-            campaignTone = 'lighthearted';
-          } else if (description.includes('epic') || description.includes('legendary') || description.includes('heroic')) {
-            campaignTone = 'epic';
-          }
-          
-          contextPrompt += `\n\nCAMPAIGN CONTEXT:\nTitle: "${params.context.campaignDetails.name}"\nDescription: ${params.context.campaignDetails.description}`;
+
+        let campaignTone: 'dark' | 'lighthearted' | 'epic' | 'balanced' = 'balanced';
+        if (campaign.description) {
+          const d = String(campaign.description).toLowerCase();
+          if (d.includes('dark') || d.includes('horror') || d.includes('grim')) campaignTone = 'dark';
+          else if (d.includes('light') || d.includes('comedy') || d.includes('fun')) campaignTone = 'lighthearted';
+          else if (d.includes('epic') || d.includes('legendary') || d.includes('heroic')) campaignTone = 'epic';
         }
-        
-        if (params.context.characterDetails) {
-          const char = params.context.characterDetails;
-          contextPrompt += `\n\nPLAYER CHARACTER:\nName: ${char.name}\nRace: ${char.race}\nClass: ${char.class}\nLevel: ${char.level}`;
-          if (char.background) {
-            contextPrompt += `\nBackground: ${char.background}`;
-          }
-          if (char.description) {
-            contextPrompt += `\nDescription: ${char.description}`;
-          }
+
+        let prompt = `You are an expert D&D 5e Dungeon Master. Create an immersive, campaign-specific opening scene.`;
+
+        if (campaign.name || campaign.description) {
+          prompt += `\n\nCAMPAIGN:\nTitle: "${campaign.name || 'Untitled Campaign'}"\nDescription: ${campaign.description || 'N/A'}`;
         }
-        
-        contextPrompt += `\n\nCampaign Tone: ${campaignTone}\n\nCreate an immersive opening scene that:
-1. **Immediate Engagement**: Start in the middle of an intriguing situation, not just "you enter a tavern"
-2. **Sensory Rich**: Include what you see, hear, smell, feel, and taste
-3. **Character Integration**: Reference their ${params.context.characterDetails?.class || 'character'} abilities, equipment, or background naturally
-4. **Decision Point**: End with a compelling choice between 2-3 distinct actions with clear stakes
-5. **NPC Interaction**: Include at least one interesting NPC with direct quoted dialogue
-6. **World Details**: Add unique elements that make this world feel alive and distinct
-7. **Foreshadowing**: Hint at larger mysteries or conflicts without revealing everything
-8. **Clear Stakes**: Make it obvious why this moment matters
 
-**CRITICAL: NPC Dialogue Requirements**
-- ALL NPC interactions MUST use direct quoted speech
-- Examples: "Stranger, you look like you've seen trouble," or "Help me! The bandits took everything!"
-- NEVER describe speech indirectly (e.g., "A merchant greets you" or "Someone calls for help")
-- Every speaking NPC should have actual quoted words that reveal personality and plot
+        if (character.name || character.class || character.race || character.background) {
+          prompt += `\n\nPLAYER CHARACTER:\n`;
+          if (character.name) prompt += `Name: ${character.name}\n`;
+          if (character.race) prompt += `Race: ${character.race?.name || character.race}\n`;
+          if (character.class) prompt += `Class: ${character.class?.name || character.class}\n`;
+          if (character.level) prompt += `Level: ${character.level}\n`;
+          if (character.background) prompt += `Background: ${character.background?.name || character.background}\n`;
+        }
 
-**CRITICAL: ACTION OPTIONS FORMATTING**
-When providing choices to the player, you MUST format them as lettered options with bold action names:
+        prompt += `
 
-Format: A. **Action Name**, brief description of what this choice involves
+TONE: ${campaignTone}
 
-Examples:
-- A. **Approach cautiously**, moving carefully to avoid detection while gathering information
-- B. **Charge forward boldly**, relying on speed and surprise to overcome obstacles
-- C. **Attempt to negotiate**, using your diplomatic skills to find a peaceful solution
+REQUIREMENTS:
+1. Start in the middle of an engaging situation tied to this campaign's themes.
+2. Use vivid sensory detail and make the player feel central to events.
+3. Naturally reflect the character's background, talents, or reputation.
+4. Introduce at least one NPC who speaks in direct quoted dialogue.
+5. End with 2-3 clear, distinct action options formatted EXACTLY like:
+   A. **Action Name**, brief description...
+   B. **Action Name**, brief description...
+   C. **Action Name**, brief description...
+6. The options must be grounded in this scene and this campaign, not generic.
 
-This formatting is REQUIRED for the options to appear as clickable buttons in the game interface. Always include 2-3 options formatted this way at the end of your response.
+STYLE:
+- 2-3 paragraphs, second person ("you"), present tense.
+- No system explanations, no meta commentary.
+- Do NOT wrap the response in JSON or code fences.
+- Do NOT output any content before or after the scene + options.
 
-TONE GUIDELINES:
-- ${campaignTone === 'dark' ? 'Use atmospheric, tension-filled language. Emphasize danger and moral ambiguity.' : ''}
-- ${campaignTone === 'lighthearted' ? 'Include moments of humor and whimsy. Keep things optimistic and fun.' : ''}
-- ${campaignTone === 'epic' ? 'Use grand, inspiring language. Make the player feel heroic and destined for greatness.' : ''}
-- ${campaignTone === 'balanced' ? 'Balance serious moments with lighter touches. Create realistic but hopeful atmosphere.' : ''}
+Now write the opening scene and options.`;
 
-FORMAT: Write 2-3 paragraphs in second person ("you"). End with a specific question about what the player wants to do, offering multiple viable options formatted as described above.
+        const response = await model.generateContent(prompt);
+        const text = (await response.response).text() || '';
 
-Remember: You're not just describing a scene - you're launching an epic story where the player is the hero. Make them excited to take their first action!`;
-        
-        const response = await model.generateContent(contextPrompt);
-        const result = await response.response;
-        return result.text();
+        // If Gemini returns something empty or obviously generic, use rich fallback
+        if (!text.trim() || text.includes('Welcome to your adventure! You find yourself at the beginning of an epic journey.')) {
+          logger.warn('[OpeningMessage] Gemini returned empty or generic text; using rich fallback.');
+          return richFallback();
+        }
+
+        return text;
       });
-      
-      logger.info('Successfully generated opening message');
+
+      logger.info('[OpeningMessage] Successfully generated opening message with AI.');
       return result;
-      
     } catch (error) {
-      logger.error('Failed to generate opening message:', error);
-      // Fallback generic opening
-      return `Welcome to your adventure! You find yourself at the beginning of an epic journey. Your character stands ready to face whatever challenges lie ahead. What would you like to do?`;
+      logger.error('[OpeningMessage] Failed to generate via Gemini, using rich fallback:', error);
+      return richFallback();
     }
   }
 

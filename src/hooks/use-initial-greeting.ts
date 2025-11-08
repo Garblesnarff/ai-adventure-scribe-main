@@ -102,7 +102,7 @@ export const useInitialGreeting = ({
           *,
           character_stats(*)
         `)
-        .eq('id', characterId)
+        .eq('id', characterId as string)
         .single();
 
       if (characterError) {
@@ -113,48 +113,47 @@ export const useInitialGreeting = ({
       const { data: campaignData, error: campaignError } = await supabase
         .from('campaigns')
         .select('*')
-        .eq('id', campaignId)
+        .eq('id', campaignId as string)
         .single();
 
       if (campaignError) {
         throw new Error(`Failed to load campaign: ${campaignError.message}`);
       }
 
-      // Build initial greeting prompt
-      const greetingPrompt = buildGreetingPrompt(characterData, campaignData);
+      // Build initial greeting prompt (not currently used externally, but kept for reference)
+      const greetingPrompt = buildGreetingPrompt(characterData as unknown as Character, campaignData as unknown as Campaign);
 
       logger.info('[Initial Greeting] Generated prompt for AI service');
 
       // Generate AI response using AIService
-      const aiResponse = await AIService.generateOpeningMessage({
+      const openingText = await AIService.generateOpeningMessage({
         context: {
-          campaignId: campaignId,
-          characterId: characterId,
+          campaignId: campaignId as string,
+          characterId: characterId as string,
           sessionId: sessionId!,
-          campaignDetails: campaignData,
-          characterDetails: characterData
-        }
+          // These are stored as loose records in AIService, so cast to Record<string, unknown>
+          campaignDetails: campaignData as unknown as Record<string, unknown>,
+          characterDetails: characterData as unknown as Record<string, unknown>,
+        },
       });
 
-      // Create chat message from AI response (aiResponse is a string directly)
+      // Create chat message from AI response (string only; narration is handled elsewhere)
       const greetingMessage: ChatMessage = {
-        text: aiResponse,
+        // Align with ChatMessage shape from '@/types/game'
+        id: crypto.randomUUID(),
         sender: 'dm',
-        context: {
-          intent: 'initial_greeting',
-          isSystemGenerated: true,
-        },
-        narrationSegments: aiResponse.narration_segments,
+        text: openingText,
+        timestamp: new Date().toISOString(),
       };
 
-      logger.info('[Initial Greeting] Generated initial greeting:', greetingMessage.text?.substring(0, 100) + '...');
+      logger.info('[Initial Greeting] Generated initial greeting:', greetingMessage.text.substring(0, 100) + '...');
 
       // Call the callback to add the message to the conversation
       await onGreetingGenerated(greetingMessage);
 
       // Create initial memories if callback is provided
       if (onMemoryCreated) {
-        await createInitialMemories(characterData, campaignData, greetingMessage.text!, onMemoryCreated);
+        await createInitialMemories(characterData as unknown as Character, campaignData as unknown as Campaign, openingText, onMemoryCreated);
       }
 
       setState(prev => ({
@@ -176,13 +175,10 @@ export const useInitialGreeting = ({
       try {
         logger.info('[Initial Greeting] Providing fallback greeting');
         const fallbackMessage: ChatMessage = {
-          text: "You find yourself standing at the threshold of adventure. The world stretches before you, full of mysteries waiting to be uncovered. What do you do?",
+          id: crypto.randomUUID(),
           sender: 'dm',
-          context: {
-            intent: 'initial_greeting',
-            isSystemGenerated: true,
-            isFallback: true
-          }
+          text: "You find yourself standing at the threshold of adventure. The world stretches before you, full of mysteries waiting to be uncovered. What do you do?",
+          timestamp: new Date().toISOString(),
         };
         await onGreetingGenerated(fallbackMessage);
 

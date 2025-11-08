@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createRateLimiter } from '../middleware/rate-limit.js';
 import { fetchPublishedBlogPosts } from '../services/blog-service.js';
 import { getSiteConfig } from '../config/site.js';
 
