@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle, Circle, Map, Wand2, Settings, Sparkles } from 'lucide-react';
 import { wizardSteps } from '../wizard/constants';
 

@@ -23,7 +23,8 @@ import React from 'react';
  // ============================
 import { CampaignProvider } from '@/contexts/CampaignContext';
 import WizardContent from './wizard/WizardContent';
-import { ErrorBoundary, CampaignErrorFallback } from '@/shared/components/error';
+import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
+import { CampaignErrorFallback } from '@/components/error/CampaignErrorFallback';
 
 /**
  * Campaign Wizard Component

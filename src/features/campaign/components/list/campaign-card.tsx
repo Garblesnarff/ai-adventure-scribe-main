@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ArrowRight, Trash2, Play, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/shared/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -17,10 +17,10 @@ import {
   AlertDialogOverlay,
   AlertDialogPortal,
   AlertDialogTitle,
-} from '@/shared/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog';
 import CharacterSelectionModal from './character-selection-modal';
 import { useCampaignImageHotLoading } from '@/hooks/use-image-hot-loading';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import logger from '@/lib/logger';
 import { Z_INDEX } from '@/constants/z-index';
 

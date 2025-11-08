@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCampaign } from '@/contexts/CampaignContext';
@@ -20,7 +20,7 @@ import logger from '@/lib/logger';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { handleAsyncError } from '@/utils/error-handler';
-import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
 import { GameLoadingOverlay, GameLayout } from './game-content';
 
 /**

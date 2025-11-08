@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMemoryContext } from '@/contexts/MemoryContext';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
@@ -14,7 +14,7 @@ import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lu
 import { MemoryCard } from './memory/MemoryCard';
 import { MemoryFilter } from './memory/MemoryFilter';
 import { useMemoryFiltering } from '@/hooks/memory/useMemoryFiltering';
-import { Textarea } from '../ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { CompactCharacterHeader } from './CompactCharacterHeader';
 import { CombatSummary } from './CombatSummary';
 import { ExtendedGameSession } from '@/hooks/use-game-session';

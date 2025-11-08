@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { GameInterface } from '@/features/game-session/components';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useGameSession } from '@/features/game-session';
 import { useToast } from '@/hooks/use-toast';

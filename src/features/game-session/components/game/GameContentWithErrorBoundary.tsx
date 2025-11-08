@@ -1,5 +1,5 @@
 import React from 'react';
-import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
 import { GameErrorFallback } from '@/components/error/GameErrorFallback';
 import GameContent from './GameContent';
 

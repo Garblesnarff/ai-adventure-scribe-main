@@ -1,7 +1,7 @@
 import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface VolumeButtonProps {
   isMuted: boolean;

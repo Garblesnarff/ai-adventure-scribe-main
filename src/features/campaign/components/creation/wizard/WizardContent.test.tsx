@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 import { CampaignProvider, useCampaign } from '@/contexts/CampaignContext';
 // Constants will be mocked with vi.doMock, so no direct import needed for it here for mocking purposes.
 // import * as Constants from './constants';
-import { useToast } from '@/shared/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useCampaignSave } from './useCampaignSave';
 // Validation will be mocked with vi.mock as it doesn't have hoisting issues with its dependencies.

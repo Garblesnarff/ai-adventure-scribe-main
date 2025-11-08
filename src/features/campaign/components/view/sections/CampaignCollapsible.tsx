@@ -5,7 +5,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger 
-} from '@/shared/components/ui/collapsible';
+} from '@/components/ui/collapsible';
 import { CampaignDetails } from './CampaignDetails';
 import { CampaignParameters } from './CampaignParameters';
 

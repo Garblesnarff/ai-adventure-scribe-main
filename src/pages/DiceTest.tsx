@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { DiceRollEmbed } from '../features/game-session/components/dice/DiceRollEmbed';
 import { DMChatBubble } from '../features/game-session/components/chat/chat/DMChatBubble';
 import { type ChatMessage } from '../services/ai-service';
-import { Button } from '../shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../shared/components/ui/card';
-import { Input } from '../shared/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { logger } from '../lib/logger';
 
 export default function DiceTest() {

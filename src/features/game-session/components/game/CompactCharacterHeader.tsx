@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Heart, Shield, Zap } from 'lucide-react';
-import { Card } from '../ui/card';
-import { Button } from '../ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
 
 /**

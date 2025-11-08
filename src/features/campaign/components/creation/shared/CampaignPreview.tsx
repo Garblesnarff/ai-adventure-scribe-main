@@ -1,8 +1,8 @@
 import React from 'react';
 import { useCampaign } from '@/contexts/CampaignContext';
-import { Card } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
-import { Separator } from '@/shared/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   Map,
   Users,

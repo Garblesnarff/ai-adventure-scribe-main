@@ -7,13 +7,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/shared/components/ui/dialog';
-import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Play, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
-import { CharacterSelectionSkeleton } from '@/shared/components/skeletons/CharacterSelectionSkeleton';
+import { CharacterSelectionSkeleton } from '@/components/skeletons/CharacterSelectionSkeleton';
 import { Z_INDEX } from '@/constants/z-index';
 
 interface Character {

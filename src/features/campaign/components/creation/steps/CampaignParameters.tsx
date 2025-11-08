@@ -1,13 +1,13 @@
 import React from 'react';
-import { Label } from '@/shared/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
-import { Card } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { useToast } from '@/shared/components/ui/use-toast';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
 import { useCampaign } from '@/contexts/CampaignContext';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Gauge, Clock, Theater, Zap, Skull, Grid, List, Eye, Check, Sparkles } from 'lucide-react';
 
 /**

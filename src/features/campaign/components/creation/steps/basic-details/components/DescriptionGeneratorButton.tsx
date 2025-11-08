@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@/shared/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Loader2, Wand2 } from 'lucide-react';
-import { useToast } from '@/shared/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 

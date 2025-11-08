@@ -3,10 +3,10 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import { Howl } from 'howler';
 import * as THREE from 'three';
-import { DiceEngine, type DiceRollResult } from '../services/dice/DiceEngine';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Card } from './ui/card';
+import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Play, Volume2 } from 'lucide-react';
 import logger from '@/lib/logger';
 

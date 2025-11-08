@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardHeader, CardContent } from '@/shared/components/ui/card';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Skeleton loader component for campaign cards

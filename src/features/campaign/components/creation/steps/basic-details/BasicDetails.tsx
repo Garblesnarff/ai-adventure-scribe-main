@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { WizardStepProps } from '../../wizard/types';
-import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import CampaignNameInput from './components/CampaignNameInput';
 import CampaignDescriptionInput from './components/CampaignDescriptionInput';
 

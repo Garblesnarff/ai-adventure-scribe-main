@@ -1,5 +1,5 @@
 import React from 'react';
-import SharedProgressIndicator from '@/shared/components/ProgressIndicator';
+import SharedProgressIndicator from '@/components/shared/ProgressIndicator';
 import { wizardSteps } from '../wizard/constants';
 import { CheckCircle, Circle, Wand2, Map, Settings, Sparkles } from 'lucide-react';
 

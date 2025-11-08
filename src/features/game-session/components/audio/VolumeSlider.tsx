@@ -1,5 +1,5 @@
 import React from 'react';
-import { Slider } from '@/shared/components/ui/slider';
+import { Slider } from '@/components/ui/slider';
 import {
   Tooltip,
   TooltipContent,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Dice6, Heart, Shield, Zap, Plus, X } from 'lucide-react';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';

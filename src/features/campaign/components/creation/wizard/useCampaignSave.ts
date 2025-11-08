@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useToast } from '@/shared/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { campaignImageGenerator } from '@/services/campaign-image-generator';

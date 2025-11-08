@@ -1,8 +1,8 @@
 import React from 'react';
 import { useCombat } from '@/contexts/CombatContext';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Users, 
   Sword, 
@@ -10,7 +10,7 @@ import {
   Zap, 
   Clock 
 } from 'lucide-react';
-import { Progress } from '../ui/progress';
+import { Progress } from '@/components/ui/progress';
 
 /**
  * CombatSummary - Compact combat overview for game sidebar

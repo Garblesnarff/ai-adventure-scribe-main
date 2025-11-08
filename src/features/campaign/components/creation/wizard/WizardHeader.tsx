@@ -1,8 +1,8 @@
 import React from 'react';
 import { Wand2, Sparkles, Crown } from 'lucide-react';
 import { useAutosave } from '@/hooks/useAutosave';
-import { Badge } from '@/shared/components/ui/badge';
-import { Card } from '@/shared/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 type Props = {
   step?: number;
