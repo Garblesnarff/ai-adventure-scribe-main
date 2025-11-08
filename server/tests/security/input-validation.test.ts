@@ -63,8 +63,9 @@ describe('Input Validation Security Tests', () => {
     it('should bound page limits to reasonable values', () => {
       // Simulate bounded limit for pagination
       const boundLimit = (input: string) => {
-        const limitRaw = parseInt(input) || 100;
-        return Math.max(1, Math.min(limitRaw, 1000));
+        const limitRaw = parseInt(input);
+        const defaultedLimit = isNaN(limitRaw) ? 100 : limitRaw;
+        return Math.max(1, Math.min(defaultedLimit, 1000));
       };
 
       // Test upper bound (prevent resource exhaustion)

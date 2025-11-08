@@ -1,12 +1,15 @@
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 const srcPath = fileURLToPath(new URL('./src', import.meta.url));
+const rootDir = fileURLToPath(new URL('..', import.meta.url));
 
 export default defineConfig({
   resolve: {
     alias: {
-      '@': srcPath,
+      '@': path.resolve(rootDir, 'src'),
+      '@server': srcPath,
     },
   },
   test: {
@@ -18,6 +21,10 @@ export default defineConfig({
       'src/**/*.spec.ts',
     ],
     globals: true,
+    setupFiles: ['dotenv/config'],
+    env: {
+      DOTENV_CONFIG_PATH: path.resolve(rootDir, 'server/.env'),
+    },
     coverage: {
       enabled: true,
       provider: 'v8',
