@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getBearerToken, AuthTokenPayload } from '../lib/jwt.js';
-import { verifySupabaseToken, createPgClient } from '../../src/infrastructure/database/index.js';
+import { verifySupabaseToken, createPgClient } from '@/infrastructure/database/index.js';
 
 declare global {
   namespace Express {
@@ -36,13 +36,19 @@ async function resolveUserPlan(userId: string, req: Request): Promise<string> {
   return 'free';
 }
 
-export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const token = getBearerToken(req.headers.authorization || null);
-  if (!token) return res.status(401).json({ error: 'Missing token' });
+  if (!token) {
+    res.status(401).json({ error: 'Missing token' });
+    return;
+  }
 
   try {
     const supabaseUser = await verifySupabaseToken(token);
-    if (!supabaseUser) return res.status(401).json({ error: 'Invalid token' });
+    if (!supabaseUser) {
+      res.status(401).json({ error: 'Invalid token' });
+      return;
+    }
     const plan = await resolveUserPlan(supabaseUser.userId, req);
     req.user = {
       userId: supabaseUser.userId,
@@ -51,7 +57,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     } as AuthTokenPayload;
     next();
   } catch {
-    return res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'Invalid token' });
   }
 }
 

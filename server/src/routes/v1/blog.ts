@@ -434,7 +434,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to update this post' });
       }
@@ -502,7 +502,7 @@ export default function blogRouter() {
       }
 
       if (payload.categoryIds !== undefined || payload.tagIds !== undefined) {
-        await syncPostRelations(id, payload.categoryIds, payload.tagIds);
+        await syncPostRelations(id || "", payload.categoryIds, payload.tagIds);
       }
 
       const { data, error } = await supabaseService
@@ -538,7 +538,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to publish this post' });
       }
@@ -573,7 +573,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to delete this post' });
       }
@@ -858,7 +858,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to preview this post' });
       }
@@ -956,7 +956,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to update this post' });
       }
@@ -995,7 +995,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to update this post' });
       }
@@ -1029,7 +1029,7 @@ export default function blogRouter() {
 
     try {
       const userId = req.user!.userId;
-      const canManage = await canManagePost(id, userId);
+      const canManage = await canManagePost(id || "", userId);
       if (!canManage) {
         return res.status(403).json({ error: 'You do not have permission to update this post' });
       }

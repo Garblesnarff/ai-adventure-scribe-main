@@ -44,7 +44,8 @@ function observabilityRouter() {
 
     // SECURITY: Validate metric data
     if (typeof name !== 'string' || name.length > 100) {
-      return res.status(400).json({ error: 'Invalid metric name' });
+      res.status(400).json({ error: 'Invalid metric name' });
+      return;
     }
 
     const payload = {

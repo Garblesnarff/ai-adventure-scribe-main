@@ -34,7 +34,7 @@ export class CharacterService {
       },
     });
 
-    return chars;
+    return chars as Character[];
   }
 
   /**
@@ -67,9 +67,9 @@ export class CharacterService {
         campaign: {
           columns: {
             id: true,
-            title: true,
+            name: true,
             description: true,
-            imageUrl: true,
+            backgroundImage: true,
           },
         },
         stats: true,
@@ -102,6 +102,7 @@ export class CharacterService {
       })
       .returning();
 
+    if (!character) throw new Error('Failed to create character');
     return character;
   }
 

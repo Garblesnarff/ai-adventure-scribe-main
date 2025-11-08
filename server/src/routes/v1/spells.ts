@@ -109,11 +109,11 @@ export default function spellRouter() {
     const { className, level } = req.params;
 
     try {
-      const classSpells = getClassSpells(className);
+      const classSpells = getClassSpells(className || '');
 
       // Filter spells by level (include spells up to the specified level)
       // SECURITY: Bound parseInt to valid spell levels (0-9)
-      const maxLevel = Math.max(0, Math.min(parseInt(level) || 0, 9));
+      const maxLevel = Math.max(0, Math.min(parseInt(level || '0') || 0, 9));
       const { cantrips, spells } = classSpells;
 
       const availableCantrips = cantrips; // Cantrips are always available
@@ -165,7 +165,7 @@ export default function spellRouter() {
           spell_slots_5, spell_slots_6, spell_slots_7, spell_slots_8, spell_slots_9
         `)
         // SECURITY: Bound parseInt to valid caster levels (1-20)
-        .eq('caster_level', Math.max(1, Math.min(parseInt(casterLevel) || 1, 20)))
+        .eq('caster_level', Math.max(1, Math.min(parseInt(casterLevel || '1') || 1, 20)))
         .single();
 
       if (error) {
@@ -198,7 +198,7 @@ export default function spellRouter() {
     const { id } = req.params;
 
     try {
-      const spell = getSpellById(id);
+      const spell = getSpellById(id || '');
 
       if (!spell) {
         return res.status(404).json({ error: 'Spell not found' });

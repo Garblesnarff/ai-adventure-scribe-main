@@ -43,6 +43,7 @@ export class SessionService {
       })
       .returning();
 
+    if (!session) throw new Error('Failed to create session');
     return session;
   }
 
@@ -89,7 +90,7 @@ export class SessionService {
     });
 
     // Get total count
-    const [{ count }] = await db
+    const countResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(dialogueHistory)
       .where(eq(dialogueHistory.sessionId, sessionId));
@@ -97,7 +98,7 @@ export class SessionService {
     return {
       session,
       messages,
-      total: count,
+      total: countResult[0]?.count || 0,
     };
   }
 
@@ -141,6 +142,7 @@ export class SessionService {
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
+    if (!updated) throw new Error('Failed to complete session');
     return updated;
   }
 
@@ -171,6 +173,7 @@ export class SessionService {
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
+    if (!updated) throw new Error('Failed to update session state');
     return updated;
   }
 
@@ -198,6 +201,7 @@ export class SessionService {
       })
       .returning();
 
+    if (!msg) throw new Error('Failed to add message');
     return msg;
   }
 
@@ -218,12 +222,12 @@ export class SessionService {
     });
 
     // Get total count
-    const [{ count }] = await db
+    const countResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(dialogueHistory)
       .where(eq(dialogueHistory.sessionId, sessionId));
 
-    const total = count;
+    const total = countResult[0]?.count || 0;
     const hasMore = offset + limit < total;
 
     return {

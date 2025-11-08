@@ -20,7 +20,8 @@ const DEFAULT_QUOTAS: Record<string, QuotaConfig> = {
 
 function getPlanQuota(plan: string): QuotaConfig {
   const p = (plan || 'free').toLowerCase();
-  return DEFAULT_QUOTAS[p] || DEFAULT_QUOTAS['free'];
+  const quota = DEFAULT_QUOTAS[p];
+  return quota || DEFAULT_QUOTAS['free']!;
 }
 
 // In-memory fallback store for development/tests
@@ -40,7 +41,7 @@ export async function checkQuotaAndConsume(opts: {
   plan: string;
   type: UsageType;
   units?: number;
-}): Promise<{ allowed: boolean; remaining: number; resetAt: string } | { allowed: false; remaining: 0; resetAt: string }> {
+}): Promise<{ allowed: boolean; remaining: number; resetAt: string }> {
   const { userId, orgId, plan, type } = opts;
   const units = Math.max(1, Math.floor(opts.units ?? 1));
   const quota = getPlanQuota(plan);
@@ -76,7 +77,7 @@ export async function checkQuotaAndConsume(opts: {
           const resetAt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)).toISOString();
           client.release();
           await db.end();
-          return { allowed: false, remaining: Math.max(0, limit - used), resetAt } as any;
+          return { allowed: false, remaining: Math.max(0, limit - used), resetAt };
         }
         // Consume
         await client.query(
@@ -103,7 +104,7 @@ export async function checkQuotaAndConsume(opts: {
   const used = cur && cur.period === pkey ? cur.units : 0;
   if (used + units > limit) {
     const resetAt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)).toISOString();
-    return { allowed: false, remaining: Math.max(0, limit - used), resetAt } as any;
+    return { allowed: false, remaining: Math.max(0, limit - used), resetAt };
   }
   memTotals.set(key, { units: used + units, period: pkey });
   const remaining = Math.max(0, limit - (used + units));

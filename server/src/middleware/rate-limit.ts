@@ -84,17 +84,21 @@ function computeMax(config: { maxByPlan: Record<PlanName, number> }, plan: PlanN
 // New: plan-aware rate limiter (per-IP and optionally per-user)
 export function planRateLimit(configOrKey?: Partial<PlanRateConfig> | string) {
   let cfg: PlanRateConfig;
+  const defaultCfg = DEFAULT_LIMITS.default!;
+
   if (!configOrKey) {
-    cfg = DEFAULT_LIMITS.default;
+    cfg = defaultCfg;
   } else if (typeof configOrKey === 'string') {
-    cfg = DEFAULT_LIMITS[configOrKey] || { ...DEFAULT_LIMITS.default, key: configOrKey };
+    const found = DEFAULT_LIMITS[configOrKey];
+    cfg = found || { ...defaultCfg, key: configOrKey };
   } else {
-    const base = DEFAULT_LIMITS[configOrKey.key || 'default'] || DEFAULT_LIMITS.default;
+    const baseKey = configOrKey.key || 'default';
+    const base = (DEFAULT_LIMITS[baseKey] || defaultCfg)!;
     cfg = {
       key: configOrKey.key || base.key,
       perIp: configOrKey.perIp || base.perIp,
-      perUser: configOrKey.perUser || base.perUser,
-    } as PlanRateConfig;
+      perUser: configOrKey.perUser !== undefined ? configOrKey.perUser : base.perUser,
+    };
   }
 
   return function rateLimit(req: Request, res: Response, next: NextFunction) {

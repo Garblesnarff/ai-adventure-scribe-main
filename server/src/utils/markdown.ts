@@ -25,7 +25,7 @@ const renderer = new marked.Renderer();
 renderer.code = function renderCode({ text, lang }: any) {
   const code: string = typeof text === 'string' ? text : '';
   const rawLanguage = typeof lang === 'string' ? lang.trim().split(/\s+/)[0] : '';
-  const normalizedLanguage = normalizeLanguage(rawLanguage);
+  const normalizedLanguage = normalizeLanguage(rawLanguage || '');
 
   let highlighted = code;
   let detectedLanguage = normalizedLanguage;

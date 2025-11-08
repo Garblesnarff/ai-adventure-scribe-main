@@ -50,7 +50,7 @@ export function rollD20(rng: RNG, adv: AdvantageState = {}): { roll: number; sec
 // Generic dice roller for damage dice like 2d6, 1d8 etc.
 export function rollDice(rng: RNG, dice: string): number {
   const match = /^(\d+)d(\d+)([+-]\d+)?$/i.exec(dice.trim());
-  if (!match) throw new Error(`Invalid dice expression: ${dice}`);
+  if (!match || !match[1] || !match[2]) throw new Error(`Invalid dice expression: ${dice}`);
   const count = parseInt(match[1], 10);
   const sides = parseInt(match[2], 10);
   const mod = match[3] ? parseInt(match[3], 10) : 0;

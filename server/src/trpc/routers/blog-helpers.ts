@@ -67,11 +67,11 @@ export async function resolveAuthorId(
  * Ensures proper values for publishedAt and scheduledFor
  */
 export function normalizeStatusFields(
-  status: string,
+  status: 'draft' | 'review' | 'scheduled' | 'published' | 'archived',
   scheduledFor?: string | null,
   publishedAt?: string | null
 ): {
-  status: string;
+  status: 'draft' | 'review' | 'scheduled' | 'published' | 'archived';
   publishedAt: Date | null;
   scheduledFor: Date | null;
 } {

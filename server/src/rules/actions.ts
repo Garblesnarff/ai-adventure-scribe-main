@@ -179,6 +179,9 @@ export function resolveContestedCheck(
 ): CheckOutcome {
   const aRes = resolveAbilityCheck(rng, a, aCtx);
   const bRes = resolveAbilityCheck(rng, b, bCtx);
+  if (!aRes.rolls[0] || !bRes.rolls[0]) {
+    throw new Error('Contested check requires valid rolls');
+  }
   const aTotal = aRes.rolls[0].total;
   const bTotal = bRes.rolls[0].total;
   const winnerId = aTotal === bTotal ? (abilityMod(a.abilities.dex) >= abilityMod(b.abilities.dex) ? a.id : b.id) : (aTotal > bTotal ? a.id : b.id);

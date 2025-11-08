@@ -16,7 +16,7 @@ router.use(planRateLimit('default'));
  * - background: Filter by background ID (optional)
  * - alignment: Filter by alignment for ideals (optional)
  */
-router.get('/random/:type', async (req, res) => {
+router.get('/random/:type', async (req, res): Promise<void> => {
   try {
     const { type } = req.params;
     const { background, alignment } = req.query;
@@ -24,10 +24,11 @@ router.get('/random/:type', async (req, res) => {
     // Validate type parameter
     const validTypes = ['traits', 'ideals', 'bonds', 'flaws'];
     if (!validTypes.includes(type)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid type parameter',
         message: 'Type must be one of: traits, ideals, bonds, flaws'
       });
+      return;
     }
 
     // Map type to table name
@@ -39,6 +40,10 @@ router.get('/random/:type', async (req, res) => {
     };
 
     const tableName = tableMap[type];
+    if (!tableName) {
+      res.status(500).json({ error: 'Internal error: invalid table mapping' });
+      return;
+    }
 
     // Build query with optional filters
     let query = supabase
@@ -50,10 +55,11 @@ router.get('/random/:type', async (req, res) => {
     if (background && typeof background === 'string' && tableName === 'personality_traits') {
       const validBackground = /^[a-zA-Z0-9_-]+$/.test(background);
       if (!validBackground) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Invalid background parameter',
           message: 'Background must contain only alphanumeric characters, hyphens, and underscores'
         });
+        return;
       }
       query = query.or(`background.eq.${background},background.is.null`);
     }
@@ -69,17 +75,19 @@ router.get('/random/:type', async (req, res) => {
 
     if (error) {
       console.error(`Error fetching random ${type}:`, error);
-      return res.status(500).json({
+      res.status(500).json({
         error: 'Database error',
         message: `Failed to fetch ${type}`
       });
+      return;
     }
 
     if (!data || data.length === 0) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'No data found',
         message: `No ${type} found matching the criteria`
       });
+      return;
     }
 
     // Return a random item from the results
@@ -107,7 +115,7 @@ router.get('/random/:type', async (req, res) => {
  * - background: Filter by background ID (optional)
  * - alignment: Filter by alignment for ideals (optional)
  */
-router.get('/batch/random', async (req, res) => {
+router.get('/batch/random', async (req, res): Promise<void> => {
   try {
     const { background, alignment } = req.query;
 
@@ -124,6 +132,7 @@ router.get('/batch/random', async (req, res) => {
       };
 
       const tableName = tableMap[type];
+      if (!tableName) continue;
 
       let query = supabase
         .from(tableName)
@@ -134,10 +143,11 @@ router.get('/batch/random', async (req, res) => {
       if (background && typeof background === 'string' && tableName === 'personality_traits') {
         const validBackground = /^[a-zA-Z0-9_-]+$/.test(background);
         if (!validBackground) {
-          return res.status(400).json({
+          res.status(400).json({
             error: 'Invalid background parameter',
             message: 'Background must contain only alphanumeric characters, hyphens, and underscores'
           });
+          return;
         }
         query = query.or(`background.eq.${background},background.is.null`);
       }
@@ -153,10 +163,11 @@ router.get('/batch/random', async (req, res) => {
 
       if (error) {
         console.error(`Error fetching random ${type}:`, error);
-        return res.status(500).json({
+        res.status(500).json({
           error: 'Database error',
           message: `Failed to fetch ${type}`
         });
+        return;
       }
 
       if (data && data.length > 0) {
@@ -196,7 +207,7 @@ router.get('/batch/random', async (req, res) => {
  * - background: Filter by background ID (optional)
  * - limit: Limit number of results (optional, default 100)
  */
-router.get('/:type', async (req, res) => {
+router.get('/:type', async (req, res): Promise<void> => {
   try {
     const { type } = req.params;
     const { background, limit = '100' } = req.query;
@@ -204,10 +215,11 @@ router.get('/:type', async (req, res) => {
     // Validate type parameter
     const validTypes = ['traits', 'ideals', 'bonds', 'flaws'];
     if (!validTypes.includes(type)) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid type parameter',
         message: 'Type must be one of: traits, ideals, bonds, flaws'
       });
+      return;
     }
 
     // Map type to table name
@@ -219,6 +231,10 @@ router.get('/:type', async (req, res) => {
     };
 
     const tableName = tableMap[type];
+    if (!tableName) {
+      res.status(500).json({ error: 'Internal error: invalid table mapping' });
+      return;
+    }
 
     // SECURITY: Validate and bound limit parameter
     const limitRaw = parseInt(limit as string) || 100;
@@ -238,10 +254,11 @@ router.get('/:type', async (req, res) => {
 
     if (error) {
       console.error(`Error fetching ${type}:`, error);
-      return res.status(500).json({
+      res.status(500).json({
         error: 'Database error',
         message: `Failed to fetch ${type}`
       });
+      return;
     }
 
     res.json({

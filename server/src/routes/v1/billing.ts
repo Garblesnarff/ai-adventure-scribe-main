@@ -36,18 +36,20 @@ export function billingWebhookRouter() {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-06-20' });
 
   // Stripe webhook must use raw body parser
-  router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
+  router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response): Promise<void> => {
     // SECURITY: Always verify webhook signature - no bypass allowed
     const signature = req.headers['stripe-signature'] as string;
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
     if (!endpointSecret) {
       console.error('STRIPE_WEBHOOK_SECRET not configured');
-      return res.status(500).send('Webhook secret not configured');
+      res.status(500).send('Webhook secret not configured');
+      return;
     }
 
     if (!signature) {
-      return res.status(400).send('Missing stripe-signature header');
+      res.status(400).send('Missing stripe-signature header');
+      return;
     }
 
     let event: Stripe.Event;
@@ -55,7 +57,8 @@ export function billingWebhookRouter() {
       event = stripe.webhooks.constructEvent(req.body, signature, endpointSecret);
     } catch (err: any) {
       console.error('Webhook signature verification failed.', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
     }
 
     // Handle the event

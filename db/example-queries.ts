@@ -6,7 +6,7 @@
  */
 
 import { db } from './client';
-import { blogPosts, blogAuthors, blogCategories, type BlogPost, type NewBlogPost } from './schema';
+import { blogPosts, blogAuthors, blogCategories, blogPostCategories, type BlogPost, type NewBlogPost } from './schema';
 import { eq, and, desc, like, sql } from 'drizzle-orm';
 
 /**
@@ -123,10 +123,12 @@ export async function createPostWithCategories(
       .values(postData)
       .returning();
 
+    if (!newPost) throw new Error('Failed to create post');
+
     // Insert category relationships
     if (categoryIds.length > 0) {
       await tx
-        .insert(sql`blog_post_categories`)
+        .insert(blogPostCategories)
         .values(
           categoryIds.map((categoryId) => ({
             postId: newPost.id,
