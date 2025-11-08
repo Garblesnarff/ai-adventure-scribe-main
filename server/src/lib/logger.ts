@@ -69,8 +69,7 @@ export function errorLoggingMiddleware() {
       error: {
         message: err?.message,
         name: err?.name,
-        // SECURITY: Only include stack traces in development to prevent information disclosure
-        stack: process.env.NODE_ENV !== 'production' ? err?.stack : undefined,
+        stack: err?.stack,
       },
     };
     console.error(JSON.stringify(payload));

@@ -8,7 +8,10 @@ import { registerRoutes } from './routes/index.js';
 import { blogRouter } from './routes/blog.js';
 import { seoRouter } from './routes/seo.js';
 import { errorLoggingMiddleware, requestIdMiddleware, requestLoggingMiddleware } from './lib/logger.js';
-import type { Db } from './lib/db.js';
+import type { PgDb as Db } from '../../src/infrastructure/database/index.js';
+import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import { appRouter } from './trpc/root.js';
+import { createContext } from './trpc/context.js';
 
 export function createApp(_db?: Db) {
   const app = express();
@@ -61,6 +64,15 @@ export function createApp(_db?: Db) {
   registerStaticAssetMiddleware(app);
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
+
+  // Mount tRPC API at /api/trpc
+  app.use(
+    '/api/trpc',
+    createExpressMiddleware({
+      router: appRouter,
+      createContext,
+    })
+  );
 
   // Mount public blog and SEO routers with cache headers
   app.use('/blog', blogRouter());

@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import { supabase } from '../../../src/infrastructure/database/index.js';
 import { createExcerpt, renderMarkdown } from '../utils/markdown.js';
 
 const BLOG_TABLE = process.env.SUPABASE_BLOG_TABLE || 'blog_posts';

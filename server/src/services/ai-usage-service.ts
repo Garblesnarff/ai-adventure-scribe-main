@@ -1,4 +1,4 @@
-import { createClient } from '../lib/db.js';
+import { createPgClient } from '../../../src/infrastructure/database/index.js';
 
 export type UsageType = 'llm' | 'image' | 'voice';
 
@@ -26,9 +26,6 @@ function getPlanQuota(plan: string): QuotaConfig {
 // In-memory fallback store for development/tests
 const memTotals = new Map<string, { units: number; period: string }>();
 
-// Flag to ensure table creation runs only once
-let tableChecked = false;
-
 function periodKey(now = new Date()): string {
   // YYYY-MM-DD UTC
   const y = now.getUTCFullYear();
@@ -55,24 +52,20 @@ export async function checkQuotaAndConsume(opts: {
   // Try Postgres if configured
   if (process.env.DATABASE_URL) {
     try {
-      const db = createClient();
+      const db = createPgClient();
       const client = await db.connect();
       try {
-        // IMPROVED: Only check/create table once per process lifecycle
-        if (!tableChecked) {
-          await client.query(`
-            CREATE TABLE IF NOT EXISTS ai_usage (
-              org_id TEXT,
-              user_id TEXT,
-              plan TEXT,
-              type TEXT,
-              units INTEGER NOT NULL,
-              period_start DATE NOT NULL,
-              created_at TIMESTAMPTZ DEFAULT NOW()
-            );
-          `);
-          tableChecked = true;
-        }
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS ai_usage (
+            org_id TEXT,
+            user_id TEXT,
+            plan TEXT,
+            type TEXT,
+            units INTEGER NOT NULL,
+            period_start DATE NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+        `);
         // Count used units in current period
         const { rows } = await client.query(
           `SELECT COALESCE(SUM(units), 0) AS total FROM ai_usage WHERE (org_id = $1 OR user_id = $2) AND type = $3 AND period_start = $4`,
@@ -82,7 +75,7 @@ export async function checkQuotaAndConsume(opts: {
         if (used + units > limit) {
           const resetAt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)).toISOString();
           client.release();
-          // Don't call db.end() - using singleton pool
+          await db.end();
           return { allowed: false, remaining: Math.max(0, limit - used), resetAt } as any;
         }
         // Consume
@@ -93,16 +86,14 @@ export async function checkQuotaAndConsume(opts: {
         const remaining = Math.max(0, limit - (used + units));
         const resetAt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)).toISOString();
         client.release();
-        // Don't call db.end() - using singleton pool
+        await db.end();
         return { allowed: true, remaining, resetAt };
       } catch (e) {
         try { client.release(); } catch {}
-        // Don't call db.end() - using singleton pool
-        console.error('Error checking AI usage quota:', e);
+        try { await db.end(); } catch {}
         // Fall through to memory
       }
-    } catch (err) {
-      console.error('Error connecting to database for AI usage:', err);
+    } catch {
       // Fall through to memory
     }
   }

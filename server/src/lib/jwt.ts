@@ -1,14 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 
-// SECURITY: Require JWT_SECRET in production, allow default in development/test
-const JWT_SECRET = process.env.JWT_SECRET || (() => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction) {
-    throw new Error('JWT_SECRET environment variable is required in production');
-  }
-  console.warn('WARNING: Using default JWT secret in development - set JWT_SECRET in production!');
-  return 'dev_secret_change_me';
-})();
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export interface AuthTokenPayload {

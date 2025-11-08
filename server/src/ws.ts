@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import url from 'url';
-import { verifySupabaseToken } from './lib/supabase.js';
+import { verifySupabaseToken } from '../../src/infrastructure/database/index.js';
 
 type RoomId = string;
 

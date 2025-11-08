@@ -11,14 +11,19 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.ts', 'tests/**/*.spec.ts'],
+    include: [
+      'tests/**/*.test.ts',
+      'tests/**/*.spec.ts',
+      'src/**/*.test.ts',
+      'src/**/*.spec.ts',
+    ],
     globals: true,
     coverage: {
       enabled: true,
       provider: 'v8',
       reporter: ['text', 'html'],
       reportsDirectory: 'coverage',
-      include: ['src/rules/**/*.ts'],
+      include: ['src/rules/**/*.ts', 'src/trpc/**/*.ts'],
     },
   },
 });
