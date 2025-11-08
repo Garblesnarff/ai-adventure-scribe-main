@@ -11,224 +11,10 @@ import { detectCombatFromText, type CombatDetectionResult, type DetectedEnemy, t
 import logger from '@/lib/logger';
 import { SessionStateService } from './session-state-service';
 import { AgentOrchestrator } from './crewai/agent-orchestrator';
-import type { RollRequest } from '@/components/game/DiceRollRequest';
 
 // In-flight request deduplication with 2s TTL
 const inFlight = new Map<string, { ts: number; promise: Promise<any> }>();
 const DEDUPE_MS = 2000;
-
-const PAYMENT_REQUIRED_PATTERN = /402|payment required/i;
-
-type FallbackRollRequest = RollRequest & {
-  skill?: string;
-  ability?: string;
-};
-
-const ROLL_KEYWORDS: Array<{
-  keywords: string[];
-  build: () => FallbackRollRequest;
-}> = [
-  {
-    keywords: ['attack', 'strike', 'swing', 'slash', 'stab', 'shoot', 'fire', 'charge', 'snipe'],
-    build: () => ({
-      type: 'attack',
-      formula: '1d20+attack_bonus',
-      purpose: 'Attack roll to resolve your strike',
-      ac: 13
-    })
-  },
-  {
-    keywords: ['stealth', 'sneak', 'hide', 'creep', 'quiet'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+dexterity_mod',
-      purpose: 'Stealth check to stay hidden',
-      dc: 14,
-      skill: 'stealth',
-      ability: 'dexterity'
-    })
-  },
-  {
-    keywords: ['persuade', 'convince', 'charm', 'negotiate', 'diplomacy', 'talk'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+charisma_mod',
-      purpose: 'Persuasion check to influence the NPC',
-      dc: 15,
-      skill: 'persuasion',
-      ability: 'charisma'
-    })
-  },
-  {
-    keywords: ['intimidate', 'threaten', 'menace', 'coerce'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+charisma_mod',
-      purpose: 'Intimidation check to cow your target',
-      dc: 15,
-      skill: 'intimidation',
-      ability: 'charisma'
-    })
-  },
-  {
-    keywords: ['investigate', 'inspect', 'search', 'study', 'analyze'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+intelligence_mod',
-      purpose: 'Investigation check to uncover details',
-      dc: 14,
-      skill: 'investigation',
-      ability: 'intelligence'
-    })
-  },
-  {
-    keywords: ['acrobatic', 'flip', 'tumble', 'dodge', 'leap'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+dexterity_mod',
-      purpose: 'Acrobatics check to keep your footing',
-      dc: 13,
-      skill: 'acrobatics',
-      ability: 'dexterity'
-    })
-  },
-  {
-    keywords: ['climb', 'heave', 'lift', 'push', 'force', 'shove', 'grapple'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+strength_mod',
-      purpose: 'Athletics check to power through the challenge',
-      dc: 15,
-      skill: 'athletics',
-      ability: 'strength'
-    })
-  },
-  {
-    keywords: ['perceive', 'spot', 'notice', 'scan', 'watch', 'listen', 'hear'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+wisdom_mod',
-      purpose: 'Perception check to notice hidden details',
-      dc: 13,
-      skill: 'perception',
-      ability: 'wisdom'
-    })
-  },
-  {
-    keywords: ['insight', 'sense motive', 'judge', 'read'],
-    build: () => ({
-      type: 'skill_check',
-      formula: '1d20+wisdom_mod',
-      purpose: 'Insight check to read intentions',
-      dc: 13,
-      skill: 'insight',
-      ability: 'wisdom'
-    })
-  }
-];
-
-function isPaymentRequiredError(error: unknown): boolean {
-  if (!error) {
-    return false;
-  }
-
-  const status = (error as any)?.status ?? (error as any)?.response?.status;
-  if (status === 402) {
-    return true;
-  }
-
-  const message = (error as any)?.message ?? (error as any)?.response?.data?.error ?? '';
-  return typeof message === 'string' && PAYMENT_REQUIRED_PATTERN.test(message);
-}
-
-function determineFallbackRoll(playerText: string, combatDetection: CombatDetectionResult): FallbackRollRequest | null {
-  if (!playerText) {
-    return combatDetection.isCombat
-      ? {
-          type: 'attack',
-          formula: '1d20+attack_bonus',
-          purpose: 'Attack roll as combat breaks out',
-          ac: 13
-        }
-      : null;
-  }
-
-  const lower = playerText.toLowerCase();
-  for (const mapping of ROLL_KEYWORDS) {
-    if (mapping.keywords.some(keyword => lower.includes(keyword))) {
-      return mapping.build();
-    }
-  }
-
-  if (combatDetection.isCombat) {
-    return {
-      type: 'attack',
-      formula: '1d20+attack_bonus',
-      purpose: 'Attack roll to press the fight',
-      ac: 13
-    };
-  }
-
-  return null;
-}
-
-function formatRollInstruction(roll: FallbackRollRequest): string {
-  const base = `Please roll ${roll.formula} for ${roll.purpose}`;
-  const target = roll.dc ? ` (DC ${roll.dc})` : roll.ac ? ` (AC ${roll.ac})` : '';
-  const adv = roll.advantage ? ' with advantage' : roll.disadvantage ? ' with disadvantage' : '';
-  return `${base}${target}${adv}.`;
-}
-
-function serializeRollForBlock(roll: FallbackRollRequest) {
-  const payload: Record<string, unknown> = {
-    type: roll.type,
-    formula: roll.formula,
-    purpose: roll.purpose
-  };
-
-  if (roll.dc !== undefined) payload.dc = roll.dc;
-  if (roll.ac !== undefined) payload.ac = roll.ac;
-  if (roll.advantage !== undefined) payload.advantage = roll.advantage;
-  if (roll.disadvantage !== undefined) payload.disadvantage = roll.disadvantage;
-  if (roll.skill) payload.skill = roll.skill;
-  if (roll.ability) payload.ability = roll.ability;
-
-  return payload;
-}
-
-function buildPaymentRequiredFallback(playerText: string, combatDetection: CombatDetectionResult) {
-  const roll = determineFallbackRoll(playerText, combatDetection);
-  const narration = `The Dungeon Master pauses for a heartbeat, collecting their thoughts before continuing the scene.`;
-  const tension = combatDetection.isCombat
-    ? `Steel clashes in your imagination as the unresolved action hangs in the air.`
-    : `The world around you seems to hold its breath, waiting for your next move.`;
-  const rollLine = roll ? formatRollInstruction(roll) : `No roll is required yet—choose your approach.`;
-
-  const options = [
-    'A. **Stay the course**, following through exactly as you intended.',
-    'B. **Adjust your tactics**, taking a more cautious, observant approach.',
-    'C. **Try something unexpected**, improvising a bold alternative.'
-  ];
-
-  const rollsBlock = `\n\n\`\`\`ROLL_REQUESTS_V1\n${JSON.stringify({ rolls: roll ? [serializeRollForBlock(roll)] : [] }, null, 2)}\n\`\`\`\n`;
-
-  const normalizedRoll: RollRequest | null = roll
-    ? {
-        type: roll.type,
-        formula: roll.formula,
-        purpose: roll.purpose,
-        dc: roll.dc,
-        ac: roll.ac,
-        advantage: roll.advantage,
-        disadvantage: roll.disadvantage
-      }
-    : null;
-
-  return {
-    text: `${narration}\n\n${tension}\n${rollLine}\n\n${options.join('\n')}${rollsBlock}`,
-    roll_requests: normalizedRoll ? [normalizedRoll] : []
-  };
-}
 
 function keyFor(sessionId: string | undefined, message: string, historyLen: number) {
   return `${sessionId || 'nosession'}|${message.slice(0, 256)}|${historyLen}`;
@@ -793,35 +579,6 @@ You MUST respond with JSON containing both display text AND pre-segmented narrat
 <voice_categories>hero_male, hero_female, villain_male, villain_female, merchant, guard, innkeeper, elder, child, creature, goblin, monster</voice_categories>
 </voice_optimization_format>`;
 
-          } else {
-            contextPrompt += `<roll_metadata_format>
-<title>CRITICAL: STRUCTURED ROLL METADATA</title>
-Whenever you request the PLAYER to roll dice, append your narrative with a fenced code block using this EXACT format:
-\`\`\`ROLL_REQUESTS_V1
-{
-  "rolls": [
-    {
-      "type": "check|save|attack|damage|initiative|skill_check",
-      "formula": "1d20+modifier",
-      "purpose": "Reason for the roll",
-      "dc": 12,
-      "ac": 15,
-      "advantage": false,
-      "disadvantage": false
-    }
-  ]
-}
-\`\`\`
-
-<rules>
-- The code fence label MUST be ROLL_REQUESTS_V1.
-- Include every player-facing roll request in the "rolls" array; exclude NPC or behind-the-screen rolls.
-- Use lower-case type keywords exactly as shown above.
-- Include DC or AC when relevant; omit properties that do not apply rather than writing descriptive text.
-- Keep the JSON strict: double quotes, no trailing commas.
-- If no player roll is required, output {"rolls": []} in the block.
-</rules>
-</roll_metadata_format>`;
           }
           
           contextPrompt += `<response_structure>
@@ -844,18 +601,12 @@ Whenever you request the PLAYER to roll dice, append your narrative with a fence
 
 <visual_prompt_rule>
 **OPTIONAL VISUAL PROMPT (for image generation):**
-If the scene would benefit from an illustration, append a fenced code block at the end of the response using this exact format:
-\`\`\`VISUAL_PROMPT
-Short art prompt focusing on key visual elements
-\`\`\`
+At the very end of the response, if the scene would benefit from an illustration, include a single concise line starting with:
+VISUAL PROMPT: <short art prompt focusing on key visual elements>
 Examples:
-\`\`\`VISUAL_PROMPT
-Moonlit forest clearing with ancient standing stones and swirling mist
-\`\`\`
-\`\`\`VISUAL_PROMPT
-Crumbling obsidian keep under stormy skies with lightning forks
-\`\`\`
-Do **not** include the visual prompt text in the narrative itself; keep it only inside the fenced block.
+- VISUAL PROMPT: Moonlit forest clearing with ancient standing stones and swirling mist
+- VISUAL PROMPT: Crumbling obsidian keep under stormy skies with lightning forks
+Keep this to a single line; do not include quotes or extra commentary.
 </visual_prompt_rule>
 
 <player_choice_generation>
@@ -1113,22 +864,6 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
         
     } catch (geminiError) {
       logger.error('Local Gemini API failed:', geminiError);
-      if (isPaymentRequiredError(geminiError)) {
-        logger.warn('Local Gemini API returned 402 Payment Required. Using fallback DM response.');
-        const fallback = buildPaymentRequiredFallback(params.message, combatDetection);
-        return {
-          ...fallback,
-          combatDetection: {
-            isCombat: combatDetection.isCombat,
-            confidence: combatDetection.confidence,
-            combatType: combatDetection.combatType,
-            shouldStartCombat: combatDetection.shouldStartCombat,
-            shouldEndCombat: combatDetection.shouldEndCombat,
-            enemies: combatDetection.enemies || [],
-            combatActions: combatDetection.combatActions || []
-          }
-        } as any;
-      }
       throw new Error('Failed to get DM response - AI service unavailable');
     }
     })(); // End of the async promise wrapper

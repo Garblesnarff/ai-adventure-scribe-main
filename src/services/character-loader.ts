@@ -9,7 +9,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Character, CharacterRace, CharacterClass, CharacterBackground } from '@/types/character';
-import { characterSpellService, SpellApiDisabledError } from './characterSpellApi';
+import { characterSpellService } from './characterSpellApi';
 import { convertSpellIdsToFrontend } from '@/utils/spell-id-mapping';
 import logger from '@/lib/logger';
 
@@ -80,54 +80,48 @@ export class CharacterLoaderService {
       });
 
       // Optional enhancement: Try to load additional spell data from API
-      if (characterSpellService.isEnabled()) {
-        try {
-          logger.info(`🔍 [CharacterLoader] Attempting to enhance with API data...`);
-          const spellData = await characterSpellService.getCharacterSpells(characterId);
+      try {
+        logger.info(`🔍 [CharacterLoader] Attempting to enhance with API data...`);
+        const spellData = await characterSpellService.getCharacterSpells(characterId);
 
-          if (spellData && (spellData.cantrips.length > 0 || spellData.spells.length > 0)) {
-            logger.info(`🎯 [CharacterLoader] Found API spell data:`, {
-              apiCantrips: spellData.cantrips.length,
-              apiSpells: spellData.spells.length
-            });
+        if (spellData && (spellData.cantrips.length > 0 || spellData.spells.length > 0)) {
+          logger.info(`🎯 [CharacterLoader] Found API spell data:`, {
+            apiCantrips: spellData.cantrips.length,
+            apiSpells: spellData.spells.length
+          });
 
-            // Convert database UUID spell IDs back to frontend kebab-case IDs
-            const cantripUUIDs = spellData.cantrips.map(c => c.spell_id);
-            const spellUUIDs = spellData.spells.map(s => s.spell_id);
+          // Convert database UUID spell IDs back to frontend kebab-case IDs
+          const cantripUUIDs = spellData.cantrips.map(c => c.spell_id);
+          const spellUUIDs = spellData.spells.map(s => s.spell_id);
 
-            const apiCantrips = convertSpellIdsToFrontend(cantripUUIDs);
-            const apiKnownSpells = convertSpellIdsToFrontend(spellUUIDs);
+          const apiCantrips = convertSpellIdsToFrontend(cantripUUIDs);
+          const apiKnownSpells = convertSpellIdsToFrontend(spellUUIDs);
 
-            // Merge API data with database data (prefer API data if available)
-            if (apiCantrips.length > 0) {
-              logger.info(`🔄 [CharacterLoader] Using API cantrips instead of database cantrips`);
-              cantrips = apiCantrips;
-            }
-            if (apiKnownSpells.length > 0) {
-              logger.info(`🔄 [CharacterLoader] Using API spells instead of database spells`);
-              knownSpells = apiKnownSpells;
-              // Update prepared spells if we got new known spells
-              if (preparedSpells.length === 0) {
-                preparedSpells = [...knownSpells];
-              }
-            }
-
-            logger.info(`✅ [CharacterLoader] Enhanced with API data:`, {
-              finalCantrips: cantrips.length,
-              finalKnownSpells: knownSpells.length,
-              finalPreparedSpells: preparedSpells.length
-            });
-          } else {
-            logger.info(`📝 [CharacterLoader] No API spell data found, using database data`);
+          // Merge API data with database data (prefer API data if available)
+          if (apiCantrips.length > 0) {
+            logger.info(`🔄 [CharacterLoader] Using API cantrips instead of database cantrips`);
+            cantrips = apiCantrips;
           }
-        } catch (spellError) {
-          if (!(spellError instanceof SpellApiDisabledError)) {
-            logger.warn(`⚠️ [CharacterLoader] API enhancement failed, using database data:`, spellError);
+          if (apiKnownSpells.length > 0) {
+            logger.info(`🔄 [CharacterLoader] Using API spells instead of database spells`);
+            knownSpells = apiKnownSpells;
+            // Update prepared spells if we got new known spells
+            if (preparedSpells.length === 0) {
+              preparedSpells = [...knownSpells];
+            }
           }
-          // Continue with database spell data - this is not a fatal error
+
+          logger.info(`✅ [CharacterLoader] Enhanced with API data:`, {
+            finalCantrips: cantrips.length,
+            finalKnownSpells: knownSpells.length,
+            finalPreparedSpells: preparedSpells.length
+          });
+        } else {
+          logger.info(`📝 [CharacterLoader] No API spell data found, using database data`);
         }
-      } else {
-        logger.info(`🛑 [CharacterLoader] Spell API enhancement disabled; using database spell data only`);
+      } catch (spellError) {
+        logger.warn(`⚠️ [CharacterLoader] API enhancement failed, using database data:`, spellError);
+        // Continue with database spell data - this is not a fatal error
       }
 
       // Construct complete character object
