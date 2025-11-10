@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import fetch from 'node-fetch';
 import { requireAuth } from '../../middleware/auth.js';
 import { planRateLimit } from '../../middleware/rate-limit.js';
-import { checkQuotaAndConsume } from '../../services/ai-usage-service.js';
+import { checkQuotaAndConsume, getQuotaStatus } from '../../services/ai-usage-service.js';
 import { getCircuitBreaker, CircuitOpenError } from '../../utils/circuit-breaker.js';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
@@ -90,6 +90,18 @@ export default function llmRouter() {
   router.use(requireAuth);
   // Plan-aware per-IP and per-user limiter
   router.use(planRateLimit('llm'));
+
+  router.get('/quota', async (req: Request, res: Response) => {
+    const userId = (req as any).user?.userId as string;
+    const plan = (req as any).user?.plan as string || 'free';
+
+    try {
+      const quotaStatus = await getQuotaStatus({ userId, plan, type: 'llm' });
+      return res.json(quotaStatus);
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to fetch quota status' });
+    }
+  });
 
   router.post('/generate', async (req: Request, res: Response) => {
     const {

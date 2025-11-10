@@ -24,8 +24,8 @@ import {
   RestType,
   SaveContext,
   SpellSlotOutcome,
-} from './state';
-import { AdvantageState, hashSeed, mulberry32, RNG, rollD20, rollDice } from './dice';
+} from './state.js';
+import { AdvantageState, hashSeed, mulberry32, RNG, rollD20, rollDice } from './dice.js';
 
 export function buildRNG(seed?: string | number): RNG {
   return mulberry32(hashSeed(seed));

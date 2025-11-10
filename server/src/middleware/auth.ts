@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getBearerToken, AuthTokenPayload } from '../lib/jwt.js';
-import { verifySupabaseToken, createPgClient } from '@/infrastructure/database/index.js';
+import { verifySupabaseToken, createPgClient } from '../../../src/infrastructure/database/index.js';
 
 declare global {
   namespace Express {

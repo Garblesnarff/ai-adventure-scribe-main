@@ -45,6 +45,11 @@ export const DMMessage: React.FC<DMMessageProps> = ({
   let cleanContent = removeRollRequestsFromMessage(displayContent);
   cleanContent = cleanContent.replace(/^[\t ]*VISUAL\s+PROMPT:.*$/gim, '').trim();
 
+  // Don't render if content is empty after removing roll requests
+  if (!cleanContent || cleanContent.length === 0) {
+    return null;
+  }
+
   const { content, charCount, paragraphCount } = useMemo(() => formatNarrative(cleanContent), [cleanContent]);
   const exceedsClampThreshold = charCount > 800 || paragraphCount > 4;
   const shouldClamp = exceedsClampThreshold && !isExpanded;

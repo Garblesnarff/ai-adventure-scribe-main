@@ -8,7 +8,7 @@ export type QuotaConfig = {
 
 const DEFAULT_QUOTAS: Record<string, QuotaConfig> = {
   free: {
-    daily: { llm: 3, image: 2, voice: 5 },
+    daily: { llm: 30, image: 5, voice: 10 },
   },
   pro: {
     daily: { llm: 100, image: 50, voice: 200 },
@@ -110,4 +110,60 @@ export async function checkQuotaAndConsume(opts: {
   const remaining = Math.max(0, limit - (used + units));
   const resetAt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)).toISOString();
   return { allowed: true, remaining, resetAt };
+}
+
+export async function getQuotaStatus(opts: {
+  orgId?: string | null;
+  userId: string;
+  plan: string;
+  type: UsageType;
+}): Promise<{ plan: string; limits: { daily: Record<UsageType, number> }; usage: number; remaining: number; resetAt: string }> {
+  const { userId, orgId, plan, type } = opts;
+  const quota = getPlanQuota(plan);
+  const limit = quota.daily[type];
+  const pkey = periodKey();
+  const scope = orgId || userId;
+  const key = `${scope}:${type}:${pkey}`;
+
+  let used = 0;
+
+  // Try Postgres if configured
+  if (process.env.DATABASE_URL) {
+    try {
+      const db = createPgClient();
+      const client = await db.connect();
+      try {
+        const { rows } = await client.query(
+          `SELECT COALESCE(SUM(units), 0) AS total FROM ai_usage WHERE (org_id = $1 OR user_id = $2) AND type = $3 AND period_start = $4`,
+          [orgId || null, userId, type, pkey]
+        );
+        used = Number(rows?.[0]?.total || 0);
+        client.release();
+        await db.end();
+      } catch (e) {
+        try { client.release(); } catch {}
+        try { await db.end(); } catch {}
+        // Fall through to memory
+      }
+    } catch {
+      // Fall through to memory
+    }
+  }
+
+  // Memory fallback if DB not used or failed
+  if (used === 0) {
+    const cur = memTotals.get(key);
+    used = cur && cur.period === pkey ? cur.units : 0;
+  }
+
+  const remaining = Math.max(0, limit - used);
+  const resetAt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0)).toISOString();
+
+  return {
+    plan,
+    limits: quota,
+    usage: used,
+    remaining,
+    resetAt
+  };
 }

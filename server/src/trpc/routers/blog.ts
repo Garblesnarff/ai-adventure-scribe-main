@@ -19,9 +19,9 @@
  * ```
  */
 
-import { router } from '../trpc';
-import { blogPostsRouter } from './blog-posts';
-import { blogTaxonomyRouter } from './blog-taxonomy';
+import { router } from '../trpc.js';
+import { blogPostsRouter } from './blog-posts.js';
+import { blogTaxonomyRouter } from './blog-taxonomy.js';
 
 /**
  * Blog router namespace

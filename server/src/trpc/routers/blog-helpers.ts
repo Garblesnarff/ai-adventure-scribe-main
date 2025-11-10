@@ -9,8 +9,8 @@
 
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
-import { blogAuthors, blogPostCategories, blogPostTags } from '../../../../db/schema';
-import type { Context } from '../context';
+import { blogAuthors, blogPostCategories, blogPostTags } from '../../../../db/schema.js';
+import type { Context } from '../context.js';
 
 /**
  * Resolve author ID for the current user

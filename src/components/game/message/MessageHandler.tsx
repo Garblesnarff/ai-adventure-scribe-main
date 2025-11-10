@@ -235,8 +235,8 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
 
           // Also send to AI for context (so DM knows what was rolled)
           const aiContextMessage = `Player rolled ${diceCommand.formula} and got ${rollResult.total}${diceCommand.label ? ` for ${diceCommand.label}` : ''}. ${rollResult.critical ? (rollResult.naturalRoll === 20 ? 'Critical success!' : 'Critical failure!') : ''}`;
-          
-          const aiResponseMessage = await getAIResponse([...messagesRef.current, diceRollMessage], sessionId); 
+
+          const aiResponseMessage = await getAIResponse([...messagesRef.current, diceRollMessage], sessionId, turnCountRef.current); 
           
           await sendMessage(aiResponseMessage);
           
@@ -308,7 +308,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       logger.info('[Memory Flow] Getting AI response for session:', sessionId);
       // Pass necessary context to getAIResponse. It fetches its own campaign/char details if needed.
       // Use ref to get current messages to avoid stale closure
-      const aiResponseMessage = await getAIResponse([...messagesRef.current, playerMessage], sessionId); 
+      const aiResponseMessage = await getAIResponse([...messagesRef.current, playerMessage], sessionId, turnCountRef.current); 
       const sanitizedAiResponseMessage: ChatMessage = {
         ...aiResponseMessage,
         text: sanitizeDMText(aiResponseMessage.text)

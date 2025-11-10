@@ -7,7 +7,7 @@
 
 import { pgTable, uuid, text, timestamp, jsonb, index, integer } from 'drizzle-orm/pg-core';
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { campaigns, gameSessions } from './game';
+import { campaigns, gameSessions } from './game.js';
 
 /**
  * NPCs Table

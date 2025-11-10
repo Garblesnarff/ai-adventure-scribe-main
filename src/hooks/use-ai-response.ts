@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGame } from '@/contexts/GameContext';
 import { useCombat } from '@/contexts/CombatContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Project Utilities
 import { selectRelevantMemories } from '@/utils/memory/selection';
@@ -100,6 +101,7 @@ export const useAIResponse = () => {
   const { toast } = useToast();
   const { processAiResponse, setGamePhase, state: gameState } = useGame();
   const { state: combatState } = useCombat();
+  const { userPlan } = useAuth();
   const lastSigRef = useRef<string>('');
 
   /**
@@ -166,13 +168,14 @@ export const useAIResponse = () => {
   /**
    * Calls the DM Agent to generate a response based on chat history and game context.
    * Now handles structured responses with narration segments for voice synthesis.
-   * 
+   *
    * @param {ChatMessage[]} messages - The full message history
    * @param {string} sessionId - The session ID
+   * @param {number} turnCount - The current turn count for memory degradation
    * @returns {Promise<EnhancedChatMessage>} The generated AI response with optional narration segments
    * @throws {Error} If the DM Agent call fails
    */
-  const getAIResponse = async (messages: ChatMessage[], sessionId: string): Promise<EnhancedChatMessage> => {
+  const getAIResponse = async (messages: ChatMessage[], sessionId: string, turnCount?: number): Promise<EnhancedChatMessage> => {
     try {
       logger.info('Getting AI response for session:', sessionId);
 
@@ -333,7 +336,9 @@ export const useAIResponse = () => {
       const result = await AIService.chatWithDM({
         message: latestMessage.text,
         context: aiContext,
-        conversationHistory: conversationHistory
+        conversationHistory: conversationHistory,
+        userPlan: userPlan || undefined,
+        turnCount: turnCount
       });
 
       // Extract response data
@@ -398,10 +403,11 @@ export const useAIResponse = () => {
         }
       });
 
-      // Process roll requests through GameContext for deduplication and proper queue management
+      // NOTE: Roll requests are returned in the message object and will be processed
+      // by MessageHandler AFTER the AI message is displayed to prevent premature response.
+      // Logging is done here for tracking purposes.
       if (rollRequests.length > 0) {
-        logger.info('🎲 Processing', rollRequests.length, 'roll requests through GameContext');
-        processAiResponse(rollRequests);
+        logger.info('🎲 Found', rollRequests.length, 'roll requests in AI response (will process after message display)');
 
         // Persist roll request events to session state (lightweight logging)
         try {

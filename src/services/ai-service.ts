@@ -11,10 +11,224 @@ import { detectCombatFromText, type CombatDetectionResult, type DetectedEnemy, t
 import logger from '@/lib/logger';
 import { SessionStateService } from './session-state-service';
 import { AgentOrchestrator } from './crewai/agent-orchestrator';
+import type { RollRequest } from '@/components/game/DiceRollRequest';
 
 // In-flight request deduplication with 2s TTL
 const inFlight = new Map<string, { ts: number; promise: Promise<any> }>();
 const DEDUPE_MS = 2000;
+
+const PAYMENT_REQUIRED_PATTERN = /402|payment required/i;
+
+type FallbackRollRequest = RollRequest & {
+  skill?: string;
+  ability?: string;
+};
+
+const ROLL_KEYWORDS: Array<{
+  keywords: string[];
+  build: () => FallbackRollRequest;
+}> = [
+  {
+    keywords: ['attack', 'strike', 'swing', 'slash', 'stab', 'shoot', 'fire', 'charge', 'snipe'],
+    build: () => ({
+      type: 'attack',
+      formula: '1d20+attack_bonus',
+      purpose: 'Attack roll to resolve your strike',
+      ac: 13
+    })
+  },
+  {
+    keywords: ['stealth', 'sneak', 'hide', 'creep', 'quiet'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+dexterity_mod',
+      purpose: 'Stealth check to stay hidden',
+      dc: 14,
+      skill: 'stealth',
+      ability: 'dexterity'
+    })
+  },
+  {
+    keywords: ['persuade', 'convince', 'charm', 'negotiate', 'diplomacy', 'talk'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+charisma_mod',
+      purpose: 'Persuasion check to influence the NPC',
+      dc: 15,
+      skill: 'persuasion',
+      ability: 'charisma'
+    })
+  },
+  {
+    keywords: ['intimidate', 'threaten', 'menace', 'coerce'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+charisma_mod',
+      purpose: 'Intimidation check to cow your target',
+      dc: 15,
+      skill: 'intimidation',
+      ability: 'charisma'
+    })
+  },
+  {
+    keywords: ['investigate', 'inspect', 'search', 'study', 'analyze'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+intelligence_mod',
+      purpose: 'Investigation check to uncover details',
+      dc: 14,
+      skill: 'investigation',
+      ability: 'intelligence'
+    })
+  },
+  {
+    keywords: ['acrobatic', 'flip', 'tumble', 'dodge', 'leap'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+dexterity_mod',
+      purpose: 'Acrobatics check to keep your footing',
+      dc: 13,
+      skill: 'acrobatics',
+      ability: 'dexterity'
+    })
+  },
+  {
+    keywords: ['climb', 'heave', 'lift', 'push', 'force', 'shove', 'grapple'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+strength_mod',
+      purpose: 'Athletics check to power through the challenge',
+      dc: 15,
+      skill: 'athletics',
+      ability: 'strength'
+    })
+  },
+  {
+    keywords: ['perceive', 'spot', 'notice', 'scan', 'watch', 'listen', 'hear'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+wisdom_mod',
+      purpose: 'Perception check to notice hidden details',
+      dc: 13,
+      skill: 'perception',
+      ability: 'wisdom'
+    })
+  },
+  {
+    keywords: ['insight', 'sense motive', 'judge', 'read'],
+    build: () => ({
+      type: 'skill_check',
+      formula: '1d20+wisdom_mod',
+      purpose: 'Insight check to read intentions',
+      dc: 13,
+      skill: 'insight',
+      ability: 'wisdom'
+    })
+  }
+];
+
+function isPaymentRequiredError(error: unknown): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const status = (error as any)?.status ?? (error as any)?.response?.status;
+  if (status === 402) {
+    return true;
+  }
+
+  const message = (error as any)?.message ?? (error as any)?.response?.data?.error ?? '';
+  return typeof message === 'string' && PAYMENT_REQUIRED_PATTERN.test(message);
+}
+
+function determineFallbackRoll(playerText: string, combatDetection: CombatDetectionResult): FallbackRollRequest | null {
+  if (!playerText) {
+    return combatDetection.isCombat
+      ? {
+          type: 'attack',
+          formula: '1d20+attack_bonus',
+          purpose: 'Attack roll as combat breaks out',
+          ac: 13
+        }
+      : null;
+  }
+
+  const lower = playerText.toLowerCase();
+  for (const mapping of ROLL_KEYWORDS) {
+    if (mapping.keywords.some(keyword => lower.includes(keyword))) {
+      return mapping.build();
+    }
+  }
+
+  if (combatDetection.isCombat) {
+    return {
+      type: 'attack',
+      formula: '1d20+attack_bonus',
+      purpose: 'Attack roll to press the fight',
+      ac: 13
+    };
+  }
+
+  return null;
+}
+
+function formatRollInstruction(roll: FallbackRollRequest): string {
+  const base = `Please roll ${roll.formula} for ${roll.purpose}`;
+  const target = roll.dc ? ` (DC ${roll.dc})` : roll.ac ? ` (AC ${roll.ac})` : '';
+  const adv = roll.advantage ? ' with advantage' : roll.disadvantage ? ' with disadvantage' : '';
+  return `${base}${target}${adv}.`;
+}
+
+function serializeRollForBlock(roll: FallbackRollRequest) {
+  const payload: Record<string, unknown> = {
+    type: roll.type,
+    formula: roll.formula,
+    purpose: roll.purpose
+  };
+
+  if (roll.dc !== undefined) payload.dc = roll.dc;
+  if (roll.ac !== undefined) payload.ac = roll.ac;
+  if (roll.advantage !== undefined) payload.advantage = roll.advantage;
+  if (roll.disadvantage !== undefined) payload.disadvantage = roll.disadvantage;
+  if (roll.skill) payload.skill = roll.skill;
+  if (roll.ability) payload.ability = roll.ability;
+
+  return payload;
+}
+
+function buildPaymentRequiredFallback(playerText: string, combatDetection: CombatDetectionResult) {
+  const roll = determineFallbackRoll(playerText, combatDetection);
+  const narration = `The Dungeon Master pauses for a heartbeat, collecting their thoughts before continuing the scene.`;
+  const tension = combatDetection.isCombat
+    ? `Steel clashes in your imagination as the unresolved action hangs in the air.`
+    : `The world around you seems to hold its breath, waiting for your next move.`;
+  const rollLine = roll ? formatRollInstruction(roll) : `No roll is required yet—choose your approach.`;
+
+  const options = [
+    'A. **Stay the course**, following through exactly as you intended.',
+    'B. **Adjust your tactics**, taking a more cautious, observant approach.',
+    'C. **Try something unexpected**, improvising a bold alternative.'
+  ];
+
+  const rollsBlock = `\n\n\`\`\`ROLL_REQUESTS_V1\n${JSON.stringify({ rolls: roll ? [serializeRollForBlock(roll)] : [] }, null, 2)}\n\`\`\`\n`;
+
+  const normalizedRoll: RollRequest | null = roll
+    ? {
+        type: roll.type,
+        formula: roll.formula,
+        purpose: roll.purpose,
+        dc: roll.dc,
+        ac: roll.ac,
+        advantage: roll.advantage,
+        disadvantage: roll.disadvantage
+      }
+    : null;
+
+  return {
+    text: `${narration}\n\n${tension}\n${rollLine}\n\n${options.join('\n')}${rollsBlock}`,
+    roll_requests: normalizedRoll ? [normalizedRoll] : []
+  };
+}
 
 function keyFor(sessionId: string | undefined, message: string, historyLen: number) {
   return `${sessionId || 'nosession'}|${message.slice(0, 256)}|${historyLen}`;
@@ -182,6 +396,8 @@ When combat is detected, you MUST:
     context: GameContext;
     conversationHistory?: ChatMessage[];
     onStream?: (chunk: string) => void;
+    userPlan?: 'free' | 'pro' | 'enterprise';
+    turnCount?: number;
   }): Promise<{ text: string; narrationSegments?: NarrationSegment[]; roll_requests?: import('@/components/game/DiceRollRequest').RollRequest[]; dice_rolls?: unknown[]; combatDetection?: CombatDetectionResult }> {
     // Decision about path (CrewAI vs Gemini) happens below
 
@@ -283,25 +499,36 @@ When combat is detected, you MUST:
 
           // Post-processing parity: memory extraction and world expansion
           if (params.context.sessionId) {
-            try {
-              const memoryContext = {
-                sessionId: params.context.sessionId,
-                campaignId: params.context.campaignId,
-                characterId: params.context.characterId,
-                currentMessage: params.message,
-                recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
-              };
-              const extractionResult = await MemoryManager.extractMemories(
-                memoryContext,
-                params.message,
-                finalText
-              );
-              if (extractionResult.memories.length > 0) {
-                await MemoryManager.saveMemories(extractionResult.memories);
-                logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`);
+            // Graceful degradation: free tier only extracts memories every 3rd turn
+            const shouldExtractMemory =
+              params.userPlan === 'pro' ||
+              params.userPlan === 'enterprise' ||
+              !params.userPlan || // Default to extracting if plan is unknown
+              (params.turnCount !== undefined && params.turnCount % 3 === 0);
+
+            if (shouldExtractMemory) {
+              try {
+                const memoryContext = {
+                  sessionId: params.context.sessionId,
+                  campaignId: params.context.campaignId,
+                  characterId: params.context.characterId,
+                  currentMessage: params.message,
+                  recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
+                };
+                const extractionResult = await MemoryManager.extractMemories(
+                  memoryContext,
+                  params.message,
+                  finalText
+                );
+                if (extractionResult.memories.length > 0) {
+                  await MemoryManager.saveMemories(extractionResult.memories);
+                  logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`);
+                }
+              } catch (memoryError) {
+                logger.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
               }
-            } catch (memoryError) {
-              logger.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
+            } else {
+              logger.info(`⏭️ Skipping memory extraction for free tier (turn ${params.turnCount}, next extraction on turn ${params.turnCount ? Math.ceil((params.turnCount + 1) / 3) * 3 : 'unknown'})`);
             }
 
             try {
@@ -354,6 +581,9 @@ You are a skilled D&D 5e Dungeon Master who creates immersive, mechanically-soun
 </persona>`;
 
           contextPrompt += `<rules_of_play>
+
+**CRITICAL: ALWAYS REQUEST DICE ROLLS FROM PLAYERS**
+
 <dice_rolling>
 <title>CRITICAL: ALWAYS REQUEST DICE ROLLS FROM PLAYERS</title>
 You MUST request dice rolls from players for uncertain outcomes. This maintains player agency and engagement.
@@ -398,6 +628,197 @@ You handle rolls for NPCs and the environment "behind the screen".
 ❌ "The result is 18" (without player action)
 </never_do_this>
 </dice_rolling>
+
+<critical_roll_first_rule>
+<title>CRITICAL: REQUEST ROLLS BEFORE NARRATING OUTCOMES</title>
+
+**If a player action has an UNCERTAIN outcome, you MUST send ONLY the roll request with NO narrative text.**
+
+<correct_flow>
+1. Receive player action that needs a roll
+2. Send ONLY the ROLL_REQUESTS_V1 code block - NO narrative text at all
+3. STOP - Wait for player to roll
+4. Receive roll result in next exchange
+5. THEN narrate outcome based on actual roll result
+6. May request another roll if needed, repeat process
+</correct_flow>
+
+<correct_examples>
+✅ Player: "I sneak past the guards"
+✅ AI Response (ONLY the code block, NO other text):
+\`\`\`ROLL_REQUESTS_V1
+{
+  "rolls": [
+    {
+      "type": "skill_check",
+      "formula": "1d20+dex",
+      "purpose": "Stealth check to avoid detection",
+      "dc": 14
+    }
+  ]
+}
+\`\`\`
+
+[NEXT EXCHANGE after player rolls 10]
+✅ AI: "You move carefully but a loose board creaks underfoot (rolled 10, failed DC 14). The guards turn toward the sound. One shouts 'Who's there?'"
+
+---
+
+✅ Player: "I maneuver into cover to see the threat"
+✅ AI Response (ONLY the code block, NO other text):
+\`\`\`ROLL_REQUESTS_V1
+{
+  "rolls": [
+    {
+      "type": "skill_check",
+      "formula": "1d20+4",
+      "purpose": "Stealth check to move into cover",
+      "dc": 13
+    },
+    {
+      "type": "skill_check",
+      "formula": "1d20+4",
+      "purpose": "Perception check to assess the threat",
+      "dc": 12
+    }
+  ]
+}
+\`\`\`
+
+[NEXT EXCHANGE after player rolls both dice]
+✅ AI: "You slip into cover (rolled 13, passed DC 13). From your vantage point, your perception (rolled 18) reveals two Omicron guards: one with a pulse rifle, one with an electro-baton."
+</correct_examples>
+
+<wrong_examples>
+❌ Player: "I sneak past the guards"
+❌ AI: "You attempt to move silently through the shadows.
+
+\`\`\`ROLL_REQUESTS_V1
+{\"rolls\": [{\"type\": \"skill_check\", ...}]}
+\`\`\`"
+
+[WRONG - Added narrative text before the roll! Should be ONLY the code block!]
+
+---
+
+❌ Player: "I maneuver into cover"
+❌ AI: "You duck behind the wall and peer out, seeing two guards approaching with weapons drawn.
+
+\`\`\`ROLL_REQUESTS_V1
+{\"rolls\": [{\"type\": \"skill_check\", ...}]}
+\`\`\`"
+
+[WRONG - Narrated the outcome before the roll! Should be ONLY the code block!]
+</wrong_examples>
+
+<when_outcome_is_uncertain>
+Send ONLY roll request code block (NO narrative) for:
+- Combat actions (attacks, maneuvers)
+- Stealth/hiding attempts
+- Perception/investigation attempts
+- Social checks (persuasion, intimidation, deception)
+- Physical challenges (climbing, jumping, forcing doors)
+- Saving throws
+- Any action where failure is possible
+
+Only narrate immediately for CERTAIN outcomes:
+- Simple movement with no obstacles
+- Talking to willing NPCs
+- Examining obvious features
+- Automatic successes
+</when_outcome_is_uncertain>
+</critical_roll_first_rule>
+
+<roll_requests_v1_format>
+<title>CRITICAL: STRUCTURED ROLL REQUESTS</title>
+**When requesting dice rolls for uncertain outcomes, send ONLY the ROLL_REQUESTS_V1 code block with NO additional text. DO NOT include any narrative - the code block should be your entire response. DO NOT narrate the outcome until you receive the roll result in the next exchange.**
+
+<format>
+Your response should contain ONLY this code block and nothing else:
+
+\`\`\`ROLL_REQUESTS_V1
+{
+  "rolls": [
+    {
+      "type": "check|save|attack|damage|initiative|skill_check",
+      "formula": "1d20+modifier",
+      "purpose": "Clear description of why this roll is needed",
+      "dc": 12,
+      "ac": 15,
+      "advantage": true,
+      "disadvantage": false
+    }
+  ]
+}
+\`\`\`
+</format>
+
+<field_requirements>
+- **type**: One of: "check", "save", "attack", "damage", "initiative", "skill_check"
+- **formula**: Exact dice notation (e.g., "1d20+3", "2d6+4", "1d20")
+- **purpose**: Brief explanation for the player (e.g., "Stealth check to sneak past guards")
+- **dc**: (Optional) Difficulty Class for checks/saves
+- **ac**: (Optional) Armor Class for attack rolls
+- **advantage**: (Optional) true if roll has advantage
+- **disadvantage**: (Optional) true if roll has disadvantage
+</field_requirements>
+
+<examples>
+Example 1 - Skill Check:
+\`\`\`ROLL_REQUESTS_V1
+{
+  "rolls": [
+    {
+      "type": "skill_check",
+      "formula": "1d20+2",
+      "purpose": "Perception check to spot hidden enemies",
+      "dc": 14
+    }
+  ]
+}
+\`\`\`
+
+Example 2 - Combat with Multiple Rolls:
+\`\`\`ROLL_REQUESTS_V1
+{
+  "rolls": [
+    {
+      "type": "initiative",
+      "formula": "1d20+2",
+      "purpose": "Roll initiative as combat begins"
+    },
+    {
+      "type": "attack",
+      "formula": "1d20+5",
+      "purpose": "Attack roll with longsword",
+      "ac": 13
+    }
+  ]
+}
+\`\`\`
+
+Example 3 - Saving Throw:
+\`\`\`ROLL_REQUESTS_V1
+{
+  "rolls": [
+    {
+      "type": "save",
+      "formula": "1d20+1",
+      "purpose": "Dexterity saving throw to dodge fireball",
+      "dc": 15
+    }
+  ]
+}
+\`\`\`
+</examples>
+
+<important_notes>
+- The code block MUST be at the very end of your response, after all narrative text
+- The code block enables automatic pop-up dice rollers for the player
+- If no rolls are needed, you can omit the code block entirely
+- Multiple rolls can be included in the "rolls" array when appropriate
+</important_notes>
+</roll_requests_v1_format>
 
 <dialogue>
 <title>CRITICAL: NPC DIALOGUE REQUIREMENTS</title>
@@ -805,27 +1226,38 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
         
         // Extract memories from this conversation exchange
         if (params.context.sessionId) {
-          try {
-            const memoryContext: MemoryContext = {
-              sessionId: params.context.sessionId,
-              campaignId: params.context.campaignId,
-              characterId: params.context.characterId,
-              currentMessage: params.message,
-              recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
-            };
-            
-            const extractionResult = await MemoryManager.extractMemories(
-              memoryContext,
-              params.message,
-              result.text
-            );
-            
-            if (extractionResult.memories.length > 0) {
-              await MemoryManager.saveMemories(extractionResult.memories);
-              logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories`);
+          // Graceful degradation: free tier only extracts memories every 3rd turn
+          const shouldExtractMemory =
+            params.userPlan === 'pro' ||
+            params.userPlan === 'enterprise' ||
+            !params.userPlan || // Default to extracting if plan is unknown
+            (params.turnCount !== undefined && params.turnCount % 3 === 0);
+
+          if (shouldExtractMemory) {
+            try {
+              const memoryContext: MemoryContext = {
+                sessionId: params.context.sessionId,
+                campaignId: params.context.campaignId,
+                characterId: params.context.characterId,
+                currentMessage: params.message,
+                recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
+              };
+
+              const extractionResult = await MemoryManager.extractMemories(
+                memoryContext,
+                params.message,
+                result.text
+              );
+
+              if (extractionResult.memories.length > 0) {
+                await MemoryManager.saveMemories(extractionResult.memories);
+                logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories`);
+              }
+            } catch (memoryError) {
+              logger.warn('Memory extraction failed (non-fatal):', memoryError);
             }
-          } catch (memoryError) {
-            logger.warn('Memory extraction failed (non-fatal):', memoryError);
+          } else {
+            logger.info(`⏭️ Skipping memory extraction for free tier (turn ${params.turnCount}, next extraction on turn ${params.turnCount ? Math.ceil((params.turnCount + 1) / 3) * 3 : 'unknown'})`);
           }
           
           // Expand world based on player action and AI response

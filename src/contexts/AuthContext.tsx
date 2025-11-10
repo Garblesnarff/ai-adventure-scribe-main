@@ -5,6 +5,7 @@ import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
 
 export type BlogRole = 'admin' | 'editor' | 'author' | 'contributor' | 'viewer';
+export type UserPlan = 'free' | 'pro' | 'enterprise';
 
 interface AuthContextType {
   user: User | null;
@@ -14,6 +15,9 @@ interface AuthContextType {
   blogRoleLoading: boolean;
   isBlogAdmin: boolean;
   refreshBlogRole: () => Promise<void>;
+  userPlan: UserPlan | null;
+  userPlanLoading: boolean;
+  refreshUserPlan: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -58,6 +62,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [blogRole, setBlogRole] = useState<BlogRole | null>(null);
   const [blogRoleLoading, setBlogRoleLoading] = useState(false);
+  const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
+  const [userPlanLoading, setUserPlanLoading] = useState(false);
   const hasBootstrapped = useRef(false);
 
   const setAuthState = useMemo(
@@ -70,6 +76,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!nextSession?.user) {
           setBlogRole(null);
           setBlogRoleLoading(false);
+          setUserPlan(null);
+          setUserPlanLoading(false);
         }
       },
     []
@@ -118,6 +126,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setBlogRoleLoading(false);
     }
   }, [user]);
+
+  const fetchUserPlan = useCallback(async () => {
+    if (!user || !session?.access_token) {
+      setUserPlan(null);
+      setUserPlanLoading(false);
+      return;
+    }
+
+    if (isOffline()) {
+      setUserPlanLoading(false);
+      return;
+    }
+
+    setUserPlanLoading(true);
+    try {
+      const response = await fetch('http://localhost:8888/v1/llm/quota', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user plan');
+      }
+
+      const data = await response.json();
+      setUserPlan((data.plan as UserPlan) || 'free');
+    } catch (error) {
+      logger.warn('Failed to load user plan', error);
+      setUserPlan('free'); // Default to free on error
+    } finally {
+      setUserPlanLoading(false);
+    }
+  }, [user, session]);
 
   useEffect(() => {
     // Get initial session
@@ -193,8 +236,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     fetchBlogRole();
     // Recompute role only when user.id changes, not when fetchBlogRole reference changes
-     
+
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchUserPlan();
+    // Recompute plan only when user.id or session changes
+  }, [user?.id, session?.access_token]);
 
   const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
@@ -231,6 +280,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     blogRoleLoading,
     isBlogAdmin: blogRole === 'admin',
     refreshBlogRole: fetchBlogRole,
+    userPlan,
+    userPlanLoading,
+    refreshUserPlan: fetchUserPlan,
     signUp,
     signIn,
     signOut,

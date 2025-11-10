@@ -10,8 +10,8 @@ import {
   RulesActionRequest,
   RulesActionResult,
   SpellSlotOutcome,
-} from './state';
-import { buildRNG } from './actions';
+} from './state.js';
+import { buildRNG } from './actions.js';
 import {
   resolveAbilityCheck,
   resolveAttack,
@@ -23,7 +23,7 @@ import {
   resolveRest,
   expendSpellSlot,
   resolveSavingThrow,
-} from './actions';
+} from './actions.js';
 
 export function resolveAction(input: RulesActionRequest): RulesActionResult {
   const rng = buildRNG(input.seed);

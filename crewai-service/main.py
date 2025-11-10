@@ -601,13 +601,28 @@ def generate_options(req: OptionsRequest):
         "X-Title": os.getenv("OPENROUTER_TITLE", "Infinite Realms (local)"),
     }
 
-    # Build prompts
-    system = (
-        "You craft exactly three concise, story-appropriate action options for a D&D scene. "
-        "Output must be ONLY three lines, each starting with a capital letter and period (A./B./C.), "
-        "formatted as: A. **Action Name**, brief description. Avoid dice prompts; avoid meta. "
-        "Vary approaches (social/stealth/combat/investigation) and ground in provided context."
-    )
+    # Detect combat state
+    is_combat = False
+    if req.state_section:
+        is_combat = "COMBAT: ACTIVE" in req.state_section or "COMBAT STATE - ACTIVE" in req.state_section
+
+    # Build prompts based on combat state
+    if is_combat:
+        system = (
+            "You craft exactly three tactical combat options for a D&D 5e battle. "
+            "Output must be ONLY three lines, each starting with a capital letter and period (A./B./C.), "
+            "formatted as: A. **Action Name**, brief tactical description. "
+            "Focus on: attacking specific targets, defensive maneuvers, tactical positioning, "
+            "using abilities/items/spells, helping allies, or strategic retreat. "
+            "Ground options in combat state, initiative order, and last action taken."
+        )
+    else:
+        system = (
+            "You craft exactly three concise, story-appropriate action options for a D&D scene. "
+            "Output must be ONLY three lines, each starting with a capital letter and period (A./B./C.), "
+            "formatted as: A. **Action Name**, brief description. Avoid dice prompts; avoid meta. "
+            "Vary approaches (social/stealth/combat/investigation) and ground in provided context."
+        )
 
     ctx_bits: List[str] = []
     if req.state_section:

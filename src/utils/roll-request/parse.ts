@@ -16,6 +16,43 @@ export interface ParsedRollRequest extends RollRequest {
 export function parseRollRequests(message: string): ParsedRollRequest[] {
   const requests: ParsedRollRequest[] = [];
 
+  // PRIORITY 1: Extract structured ROLL_REQUESTS_V1 code blocks
+  const codeBlockPattern = /```ROLL_REQUESTS_V1\s*\n([\s\S]*?)\n```/gi;
+  let codeBlockMatch: RegExpExecArray | null;
+
+  while ((codeBlockMatch = codeBlockPattern.exec(message)) !== null) {
+    try {
+      const jsonContent = codeBlockMatch[1].trim();
+      const parsed = JSON.parse(jsonContent);
+
+      if (parsed.rolls && Array.isArray(parsed.rolls)) {
+        parsed.rolls.forEach((roll: any) => {
+          if (roll.type && roll.formula && roll.purpose) {
+            requests.push({
+              type: roll.type as RollRequest['type'],
+              formula: roll.formula,
+              purpose: roll.purpose,
+              dc: roll.dc,
+              ac: roll.ac,
+              advantage: roll.advantage,
+              disadvantage: roll.disadvantage,
+              originalText: `ROLL_REQUESTS_V1: ${roll.purpose}`,
+              confidence: 1.0 // Structured data is highest confidence
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to parse ROLL_REQUESTS_V1 code block:', error);
+    }
+  }
+
+  // If we found structured rolls, return them immediately (no need for regex fallbacks)
+  if (requests.length > 0) {
+    return requests;
+  }
+
+  // PRIORITY 2: Fall back to regex pattern matching
   let match: RegExpExecArray | null;
 
   // Normalize message to improve regex robustness (strip basic markdown, collapse spaces)
@@ -60,6 +97,52 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
         ac,
         originalText: match[0],
         confidence: 0.95
+      });
+    }
+  });
+
+  // Spell attack detection
+  const spellAttackPatterns = [
+    /(?:i\s+)?cast\s+(?:a\s+)?([a-z\s]+?)(?:\s+at|\s+on|\s+to)/gi,
+    /(?:i\s+)?cast\s+([a-z\s]+?)$/gi,
+    /(?:use|fire|launch)\s+(?:my\s+)?([a-z\s]+?)(?:\s+spell|\s+cantrip)/gi,
+    /(?:make|roll)\s+(?:a\s+)?(?:ranged\s+)?spell\s+attack/gi,
+    /(?:melee\s+)?spell\s+attack\s+(?:roll|with)/gi
+  ];
+
+  const commonSpells = [
+    'fire bolt', 'ray of frost', 'eldritch blast', 'sacred flame', 'chill touch',
+    'firebolt', 'magic missile', 'shocking grasp', 'witch bolt', 'chromatic orb',
+    'guiding bolt', 'inflict wounds', 'spiritual weapon', 'scorching ray'
+  ];
+
+  spellAttackPatterns.forEach(pattern => {
+    while ((match = pattern.exec(text)) !== null) {
+      const spellName = match[1]?.trim().toLowerCase();
+      let purpose = 'Spell attack';
+
+      // Check if it's a known spell
+      if (spellName && commonSpells.some(spell => spellName.includes(spell))) {
+        const spell = commonSpells.find(s => spellName.includes(s));
+        purpose = `${spell?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} attack`;
+      } else if (spellName && spellName.length > 2) {
+        purpose = `${spellName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} spell attack`;
+      }
+
+      // Look for AC in context
+      const start = Math.max(0, match.index - 120);
+      const end = Math.min(text.length, match.index + (match[0]?.length || 0) + 200);
+      const windowText = text.slice(start, end);
+      const acMatch = acTail.exec(windowText);
+      const ac = acMatch ? parseInt(acMatch[2], 10) : undefined;
+
+      requests.push({
+        type: 'attack',
+        formula: '1d20+spell_attack_bonus',
+        purpose,
+        ac,
+        originalText: match[0],
+        confidence: 0.93
       });
     }
   });

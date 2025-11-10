@@ -6,13 +6,13 @@
  */
 
 // Export all blog tables and types
-export * from './blog';
+export * from './blog.js';
 
 // Export all game tables and types
-export * from './game';
+export * from './game.js';
 
 // Export all reference tables and types
-export * from './reference';
+export * from './reference.js';
 
 // Export all world-building tables and types
-export * from './world';
+export * from './world.js';

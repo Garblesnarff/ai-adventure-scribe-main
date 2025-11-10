@@ -13,6 +13,7 @@ import { Dice6, Sword, X } from 'lucide-react';
 import { usePendingRolls } from '@/hooks/use-pending-rolls';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { GamePanelControls } from './GamePanelControls';
+import { QuotaDisplay } from '../QuotaDisplay';
 
 /**
  * GameMainContent Component
@@ -105,6 +106,7 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
                     <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
                     <span className="font-display text-infinite-gold font-medium text-responsive-sm">Chapter {sessionData.turn_count ?? 0}</span>
                   </div>
+                  <QuotaDisplay />
                   <div className="hidden md:block h-4 w-px bg-white/20"></div>
                   {showSceneBlurb && (
                     <div className="flex-1 hidden xl:block">

@@ -66,39 +66,117 @@ function format(level: LogLevel, args: unknown[]): unknown[] {
 }
 
 /**
- * Formats metadata for better console readability
+ * Creates a replacer function for JSON.stringify that handles circular references
+ */
+function getCircularReplacer() {
+  const seen = new WeakSet();
+  return (_key: string, value: unknown) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+}
+
+/**
+ * Formats metadata for better console readability with circular reference handling
  */
 function formatMetadata(metadata?: LogMetadata): string {
   if (!metadata || Object.keys(metadata).length === 0) {
     return '';
   }
 
-  if (isDevelopment) {
-    // In development, pretty print the metadata
-    return '\n' + JSON.stringify(metadata, null, 2);
-  }
+  try {
+    if (isDevelopment) {
+      // In development, pretty print the metadata with circular reference handling
+      return '\n' + JSON.stringify(metadata, getCircularReplacer(), 2);
+    }
 
-  // In production, compact format
-  return JSON.stringify(metadata);
+    // In production, compact format with circular reference handling
+    return JSON.stringify(metadata, getCircularReplacer());
+  } catch (error) {
+    // Fallback if JSON.stringify still fails for any reason
+    return `[Unable to serialize metadata: ${error instanceof Error ? error.message : 'Unknown error'}]`;
+  }
 }
 
 /**
- * Handles error objects in metadata
+ * Checks if a value is a DOM node
+ */
+function isDOMNode(value: unknown): value is Node {
+  return typeof Node !== 'undefined' && value instanceof Node;
+}
+
+/**
+ * Checks if a value is a React element
+ */
+function isReactElement(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '$$typeof' in value &&
+    typeof (value as { $$typeof: unknown }).$$typeof === 'symbol'
+  );
+}
+
+/**
+ * Handles error objects, DOM nodes, and React elements in metadata
  */
 function processMetadata(metadata?: LogMetadata): LogMetadata | undefined {
   if (!metadata) return undefined;
 
   const processed = { ...metadata };
 
-  // Convert Error objects to structured data
+  // Convert Error objects, DOM nodes, and React elements to structured data
   Object.keys(processed).forEach(key => {
     const value = processed[key];
+
     if (value instanceof Error) {
+      // Handle Error objects
       processed[key] = {
         name: value.name,
         message: value.message,
         stack: isDevelopment ? value.stack : undefined,
       };
+    } else if (isDOMNode(value)) {
+      // Handle DOM nodes
+      const element = value as Element;
+      processed[key] = {
+        __type: 'DOMNode',
+        nodeType: value.nodeType,
+        nodeName: value.nodeName,
+        tagName: element.tagName || undefined,
+        id: (element as HTMLElement).id || undefined,
+        className: (element as HTMLElement).className || undefined,
+      };
+    } else if (isReactElement(value)) {
+      // Handle React elements
+      processed[key] = {
+        __type: 'ReactElement',
+        type: typeof (value as { type?: unknown }).type === 'function'
+          ? (value as { type: { name?: string } }).type.name || 'Component'
+          : (value as { type?: unknown }).type,
+      };
+    } else if (typeof value === 'object' && value !== null && 'current' in value) {
+      // Handle React refs (objects with 'current' property that might contain DOM nodes)
+      const ref = value as { current: unknown };
+      if (isDOMNode(ref.current)) {
+        const element = ref.current as Element;
+        processed[key] = {
+          __type: 'ReactRef',
+          current: {
+            __type: 'DOMNode',
+            nodeType: ref.current.nodeType,
+            nodeName: ref.current.nodeName,
+            tagName: element.tagName || undefined,
+            id: (element as HTMLElement).id || undefined,
+            className: (element as HTMLElement).className || undefined,
+          }
+        };
+      }
     }
   });
 

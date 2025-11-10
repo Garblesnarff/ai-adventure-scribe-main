@@ -7,15 +7,15 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, publicProcedure, protectedProcedure } from '../trpc';
+import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import {
   blogCategories,
   blogTags,
   blogPostCategories,
   blogPostTags,
-} from '../../../../db/schema';
+} from '../../../../db/schema.js';
 import { eq, sql } from 'drizzle-orm';
-import { blogCategorySchema, blogTagSchema } from './blog-schemas';
+import { blogCategorySchema, blogTagSchema } from './blog-schemas.js';
 
 export const blogTaxonomyRouter = router({
   /**

@@ -1,4 +1,4 @@
-import { Ability, AbilityScores } from './state';
+import { Ability, AbilityScores } from './state.js';
 
 // Deterministic RNG helpers
 export type RNG = () => number; // returns [0,1)

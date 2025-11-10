@@ -7,27 +7,27 @@
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { router, publicProcedure, protectedProcedure } from '../trpc';
+import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import {
   blogPosts,
   blogCategories,
   blogTags,
   blogPostCategories,
   blogPostTags,
-} from '../../../../db/schema';
+} from '../../../../db/schema.js';
 import { eq, and, or, ilike, desc, lte, SQL, sql } from 'drizzle-orm';
 import {
   blogListQuerySchema,
   blogPostInputSchema,
   blogPostUpdateSchema,
-} from './blog-schemas';
+} from './blog-schemas.js';
 import {
   resolveAuthorId,
   normalizeStatusFields,
   syncPostCategories,
   syncPostTags,
   canManagePost,
-} from './blog-helpers';
+} from './blog-helpers.js';
 
 /**
  * Fetch categories and tags for a post

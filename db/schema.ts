@@ -11,4 +11,4 @@
  * - schema/world.ts: World-building tables (NPCs, locations, quests, memories)
  */
 
-export * from './schema/index';
+export * from './schema/index.js';

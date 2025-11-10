@@ -8,6 +8,7 @@ import { useSessionValidator } from '../session/SessionValidator';
 import { parseDiceCommand } from '@/utils/diceCommandParser';
 import { rollDice } from '@/utils/diceUtils';
 import { useCharacter } from '@/contexts/CharacterContext';
+import { useGame } from '@/contexts/GameContext';
 import { checkSafetyCommands, processSafetyCommand } from '@/utils/safetyCommands';
 import logger from '@/lib/logger';
 import { sanitizeDMText } from '@/utils/chatSanitizer';
@@ -38,6 +39,7 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
   const { messages, sendMessage, queueStatus } = useMessageContext();
   const { extractMemories } = useMemoryContext();
   const { getAIResponse } = useAIResponse(); // getAIResponse returns the AI ChatMessage
+  const { processAiResponse } = useGame();
   const { toast } = useToast();
   const { state: characterState } = useCharacter();
   const character = characterState.character;
@@ -352,7 +354,13 @@ export const MessageHandler: React.FC<MessageHandlerProps> = ({
       }
       
       await sendMessage(sanitizedAiResponseMessage); // Adds AI message to UI and dialogue_history
-      
+
+      // Process roll requests AFTER AI message is displayed to prevent premature response
+      if (sanitizedAiResponseMessage.rollRequests && sanitizedAiResponseMessage.rollRequests.length > 0) {
+        logger.info('🎲 Processing', sanitizedAiResponseMessage.rollRequests.length, 'roll requests after AI message displayed');
+        processAiResponse(sanitizedAiResponseMessage.rollRequests);
+      }
+
       // Process AI response for combat detection and other features
       if (onAIResponse) {
         try {
