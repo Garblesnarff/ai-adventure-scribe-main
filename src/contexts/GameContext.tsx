@@ -59,6 +59,8 @@ type GameAction =
   | { type: 'COMPLETE_DICE_ROLL'; payload: { id: string; result: any } }
   | { type: 'CANCEL_DICE_ROLL'; payload: string }
   | { type: 'CLEAR_DICE_ROLL_QUEUE' }
+  | { type: 'SET_CURRENT_BATCH'; payload: string }
+  | { type: 'CLEAR_BATCH' }
   | { type: 'SET_COMBAT_STATE'; payload: { isInCombat: boolean; currentTurnPlayerId?: string } }
   | { type: 'SET_AI_RESPONSE'; payload: { rollRequests: DiceRollRequest[] } }
   | { type: 'ADD_PENDING_ACTION'; payload: string }
@@ -69,7 +71,9 @@ const initialState: GameState = {
   currentPhase: 'exploration',
   diceRollQueue: {
     pendingRolls: [],
-    isProcessingRoll: false
+    isProcessingRoll: false,
+    currentBatchId: undefined,
+    completedBatchRolls: []
   },
   isInCombat: false,
   pendingActions: []
@@ -85,6 +89,11 @@ export interface GameContextValue {
   completeDiceRoll: (rollId: string, result: any) => void;
   cancelDiceRoll: (rollId: string) => void;
   getCurrentDiceRoll: () => DiceRollRequest | null;
+
+  // Batch management
+  isBatchComplete: () => boolean;
+  getBatchResults: () => DiceRollRequest[];
+  clearBatch: () => void;
 
   // Game phase management
   setGamePhase: (phase: GamePhase) => void;
@@ -147,6 +156,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           : roll
       );
 
+      // Find the completed roll
+      const completedRoll = completedRolls.find(roll => roll.id === action.payload.id);
+
+      // If this roll is part of a batch, add to completedBatchRolls
+      const updatedBatchRolls = completedRoll?.batchId === state.diceRollQueue.currentBatchId && completedRoll
+        ? [...state.diceRollQueue.completedBatchRolls, completedRoll]
+        : state.diceRollQueue.completedBatchRolls;
+
       // Remove completed rolls after a short delay and set next current roll
       const remainingPendingRolls = completedRolls.filter(roll => roll.status === 'pending');
       const nextCurrentRollId = remainingPendingRolls.length > 0 ? remainingPendingRolls[0].id : undefined;
@@ -157,7 +174,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.diceRollQueue,
           pendingRolls: completedRolls,
           currentRollId: nextCurrentRollId,
-          isProcessingRoll: false
+          isProcessingRoll: false,
+          completedBatchRolls: updatedBatchRolls
         }
       };
     }
@@ -183,18 +201,42 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'SET_CURRENT_BATCH':
+      return {
+        ...state,
+        diceRollQueue: {
+          ...state.diceRollQueue,
+          currentBatchId: action.payload,
+          completedBatchRolls: []
+        }
+      };
+
+    case 'CLEAR_BATCH':
+      return {
+        ...state,
+        diceRollQueue: {
+          ...state.diceRollQueue,
+          currentBatchId: undefined,
+          completedBatchRolls: []
+        }
+      };
+
     case 'CLEAR_DICE_ROLL_QUEUE':
       // Change Detection: Check if queue is already empty
       // Comparison Strategy: Array length check and boolean primitive comparison
       if (state.diceRollQueue.pendingRolls.length === 0 &&
-          state.diceRollQueue.isProcessingRoll === false) {
+          state.diceRollQueue.isProcessingRoll === false &&
+          !state.diceRollQueue.currentBatchId &&
+          state.diceRollQueue.completedBatchRolls.length === 0) {
         return state; // Queue already cleared, return same reference to prevent re-render
       }
       return {
         ...state,
         diceRollQueue: {
           pendingRolls: [],
-          isProcessingRoll: false
+          isProcessingRoll: false,
+          currentBatchId: undefined,
+          completedBatchRolls: []
         }
       };
 
@@ -384,6 +426,40 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []); // Empty deps - uses stateRef to always get fresh state
 
   /**
+   * Check if all rolls in the current batch are complete
+   */
+  const isBatchComplete = useCallback((): boolean => {
+    const currentState = stateRef.current;
+    const { currentBatchId, pendingRolls, completedBatchRolls } = currentState.diceRollQueue;
+
+    if (!currentBatchId) return false;
+
+    // Count pending rolls that belong to the current batch
+    const pendingBatchRolls = pendingRolls.filter(
+      roll => roll.batchId === currentBatchId && roll.status === 'pending'
+    );
+
+    // Batch is complete when no pending rolls remain with this batchId
+    return pendingBatchRolls.length === 0 && completedBatchRolls.length > 0;
+  }, []);
+
+  /**
+   * Get all completed rolls from the current batch
+   */
+  const getBatchResults = useCallback((): DiceRollRequest[] => {
+    const currentState = stateRef.current;
+    return currentState.diceRollQueue.completedBatchRolls;
+  }, []);
+
+  /**
+   * Clear the current batch state
+   */
+  const clearBatch = useCallback(() => {
+    logger.info('🧹 Clearing batch state');
+    dispatch({ type: 'CLEAR_BATCH' });
+  }, []);
+
+  /**
    * Set the current game phase
    *
    * Fixed: Properly memoized with useCallback and empty dependencies.
@@ -405,6 +481,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   /**
    * Process AI response and extract dice roll requests with deduplication
+   * Enhanced with batch tracking for multi-roll scenarios
    *
    * Fixed: Properly memoized with requestDiceRoll dependency.
    * Since requestDiceRoll has stable reference (empty deps), this handler won't recreate unnecessarily.
@@ -414,6 +491,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     logger.info('🤖 Processing AI response with roll requests:', rollRequests);
 
     if (!rollRequests || !Array.isArray(rollRequests)) return;
+
+    // Generate batchId if multiple rolls are requested
+    const batchId = rollRequests.length > 1 ? uuidv4() : undefined;
+
+    if (batchId) {
+      logger.info('🎲 Creating batch with ID:', batchId);
+      dispatch({ type: 'SET_CURRENT_BATCH', payload: batchId });
+    }
 
     // Track this AI response
     const processedRollRequests: DiceRollRequest[] = [];
@@ -434,7 +519,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             advantage: request.advantage || false,
             disadvantage: request.disadvantage || false,
             ...parseRollFormula(request.formula)
-          }
+          },
+          batchId, // Assign batch ID
+          dc: request.dc, // Extract DC for skill checks and saves
+          ac: request.ac  // Extract AC for attack rolls
         };
 
         const dedupeKey = [
@@ -528,6 +616,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     completeDiceRoll,
     cancelDiceRoll,
     getCurrentDiceRoll,
+    isBatchComplete,
+    getBatchResults,
+    clearBatch,
     setGamePhase: throttledSetGamePhase,
     processAiResponse: throttledProcessAiResponse,
     updateCombatState: throttledUpdateCombatState

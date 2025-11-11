@@ -481,12 +481,17 @@ export interface DiceRollRequest {
   timestamp: Date;
   status: 'pending' | 'completed' | 'cancelled';
   result?: DiceRoll;
+  batchId?: string;  // Groups multiple rolls from same AI request for batching
+  dc?: number;       // Target DC for ability checks and saving throws
+  ac?: number;       // Target AC for attack rolls
 }
 
 export interface DiceRollQueue {
   pendingRolls: DiceRollRequest[];
   currentRollId?: string;
   isProcessingRoll: boolean;
+  currentBatchId?: string;              // Current active batch ID
+  completedBatchRolls: DiceRollRequest[]; // Completed rolls in current batch
 }
 
 // ===========================

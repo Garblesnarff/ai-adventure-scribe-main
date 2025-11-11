@@ -64,15 +64,65 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   hasMore,
   suppressEmptyState = false,
 }) => {
-  const { state, getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
+  const { state, getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll, isBatchComplete, getBatchResults, clearBatch } = useGame();
   const lastRollRef = useRef<LastRollMeta | null>(null);
 
+  /**
+   * Format a single dice roll with enhanced context for both AI and human readability
+   * Returns: "Stealth Check: 15 (nat 13+2) vs DC 13 ✓"
+   */
+  const formatDiceRoll = React.useCallback((roll: DiceRollRequest): string => {
+    if (!roll.result) return `${roll.description}: pending`;
+
+    const { result, rollConfig, requestType, dc, ac } = roll;
+    const total = result.total;
+    const nat = result.naturalRoll ?? total;
+    const modifier = rollConfig.modifier;
+
+    // Build base format: "Description: Total (nat Natural+Modifier)"
+    let formatted = `${roll.description}: ${total}`;
+
+    // Add natural roll and modifier breakdown if applicable
+    if (modifier !== 0 || nat !== total) {
+      formatted += ` (nat ${nat}`;
+      if (modifier > 0) formatted += `+${modifier}`;
+      else if (modifier < 0) formatted += `${modifier}`;
+      formatted += ')';
+    }
+
+    // Add advantage/disadvantage notation
+    if (rollConfig.advantage) formatted += ' [ADV]';
+    if (rollConfig.disadvantage) formatted += ' [DIS]';
+
+    // Add DC/AC comparison
+    if (dc !== undefined) {
+      formatted += ` vs DC ${dc}`;
+      formatted += total >= dc ? ' ✓' : ' ✗';
+    } else if (ac !== undefined && requestType === 'attack') {
+      formatted += ` vs AC ${ac}`;
+      formatted += total >= ac ? ' ✓' : ' ✗';
+    }
+
+    // Add critical indicators
+    if (nat === 20 && requestType === 'attack') {
+      formatted += ' CRITICAL HIT!';
+    } else if (nat === 1 && requestType === 'attack') {
+      formatted += ' Critical Miss';
+    }
+
+    return formatted;
+  }, []);
+
   // Subscribe to current dice roll from queue state
-  // This will re-compute when state.diceRollQueue.currentRollId changes,
+  // This will re-compute when state.diceRollQueue changes,
   // triggering a re-render and showing the next roll in the queue
   const currentRoll = React.useMemo(() => {
-    return getCurrentDiceRoll();
-  }, [state.diceRollQueue.currentRollId, getCurrentDiceRoll]);
+    if (!state.diceRollQueue.currentRollId) return null;
+
+    return state.diceRollQueue.pendingRolls.find(
+      roll => roll.id === state.diceRollQueue.currentRollId && roll.status === 'pending'
+    ) || null;
+  }, [state.diceRollQueue.currentRollId, state.diceRollQueue.pendingRolls]);
 
   // Group consecutive messages from the same sender
   const groupedMessages = useMemo(() => {
@@ -96,7 +146,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
     return groups;
   }, [messages]);
 
-  // Handle dice roll from queue
+  // Handle dice roll from queue with batching support
   const handleDiceRoll = React.useCallback(
     async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
       logger.info('[MessageListContainer] Handling dice roll from queue:', { formula, advantage, disadvantage });
@@ -123,32 +173,74 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
           disadvantage: disadvantage || false,
         });
 
+        // Complete the roll in context
         completeDiceRoll(currentRoll.id, rollResult);
 
-        const diceRollMessage: ChatMessage = {
-          text: `Rolled ${formula}${advantage ? ' with advantage' : disadvantage ? ' with disadvantage' : ''} = ${rollResult.total}`,
-          sender: 'player',
-          timestamp: new Date().toISOString(),
-          context: {
-            intent: 'dice_roll',
-            diceRoll: {
-              formula,
-              count,
-              dieType,
-              modifier,
-              advantage: advantage || false,
-              disadvantage: disadvantage || false,
-              results: rollResult.results,
-              keptResults: rollResult.keptResults,
-              total: rollResult.total,
-              naturalRoll: rollResult.naturalRoll,
-              critical: rollResult.critical,
-              timestamp: new Date().toISOString(),
-            },
-          },
-        };
+        // Check if this completes a batch
+        const batchComplete = isBatchComplete();
 
-        await onSendMessage(diceRollMessage);
+        if (batchComplete) {
+          // Get all completed rolls in the batch
+          const batchRolls = getBatchResults();
+          logger.info('[MessageListContainer] Batch complete! Sending all rolls:', batchRolls);
+
+          // Format all rolls together
+          const formattedRolls = batchRolls.map(formatDiceRoll).join('\n');
+
+          const batchMessage: ChatMessage = {
+            text: formattedRolls,
+            sender: 'player',
+            timestamp: new Date().toISOString(),
+            context: {
+              intent: 'dice_roll_batch',
+              diceRollBatch: batchRolls.map(roll => ({
+                formula: `${roll.rollConfig.count}d${roll.rollConfig.dieType}${roll.rollConfig.modifier >= 0 ? '+' : ''}${roll.rollConfig.modifier}`,
+                count: roll.rollConfig.count,
+                dieType: roll.rollConfig.dieType,
+                modifier: roll.rollConfig.modifier,
+                advantage: roll.rollConfig.advantage || false,
+                disadvantage: roll.rollConfig.disadvantage || false,
+                results: roll.result?.results || [],
+                keptResults: roll.result?.keptResults || [],
+                total: roll.result?.total || 0,
+                naturalRoll: roll.result?.naturalRoll,
+                critical: roll.result?.critical,
+                timestamp: new Date().toISOString(),
+              })),
+            },
+          };
+
+          await onSendMessage(batchMessage);
+          clearBatch();
+        } else if (!currentRoll.batchId) {
+          // Single roll (no batch) - send immediately with enhanced format
+          const formattedRoll = formatDiceRoll({ ...currentRoll, result: rollResult });
+
+          const diceRollMessage: ChatMessage = {
+            text: formattedRoll,
+            sender: 'player',
+            timestamp: new Date().toISOString(),
+            context: {
+              intent: 'dice_roll',
+              diceRoll: {
+                formula,
+                count,
+                dieType,
+                modifier,
+                advantage: advantage || false,
+                disadvantage: disadvantage || false,
+                results: rollResult.results,
+                keptResults: rollResult.keptResults,
+                total: rollResult.total,
+                naturalRoll: rollResult.naturalRoll,
+                critical: rollResult.critical,
+                timestamp: new Date().toISOString(),
+              },
+            },
+          };
+
+          await onSendMessage(diceRollMessage);
+        }
 
         // Capture last roll meta
         const mapKind = (t: string): LastRollMeta['kind'] => {
@@ -173,10 +265,10 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         });
       }
     },
-    [onSendMessage, getCurrentDiceRoll, completeDiceRoll]
+    [onSendMessage, getCurrentDiceRoll, completeDiceRoll, isBatchComplete, getBatchResults, clearBatch, formatDiceRoll]
   );
 
-  // Handle manual dice result input
+  // Handle manual dice result input with batching support
   const handleManualResult = React.useCallback(
     async (result: number) => {
       const currentRoll = getCurrentDiceRoll();
@@ -198,15 +290,43 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
 
         completeDiceRoll(currentRoll.id, { total: numericResult });
 
-        if (onSendFullMessage) {
-          await onSendFullMessage(`I rolled ${numericResult}`);
-        } else {
-          const playerMessage: ChatMessage = {
-            text: `I rolled ${numericResult}`,
-            sender: 'player',
-            timestamp: new Date().toISOString(),
-          };
-          await onSendMessage(playerMessage);
+        // Check if this completes a batch
+        const batchComplete = isBatchComplete();
+
+        if (batchComplete) {
+          // Get all completed rolls in the batch
+          const batchRolls = getBatchResults();
+          logger.info('[MessageListContainer] Batch complete (manual)! Sending all rolls:', batchRolls);
+
+          // Format all rolls together
+          const formattedRolls = batchRolls.map(formatDiceRoll).join('\n');
+
+          if (onSendFullMessage) {
+            await onSendFullMessage(formattedRolls);
+          } else {
+            const batchMessage: ChatMessage = {
+              text: formattedRolls,
+              sender: 'player',
+              timestamp: new Date().toISOString(),
+            };
+            await onSendMessage(batchMessage);
+          }
+
+          clearBatch();
+        } else if (!currentRoll.batchId) {
+          // Single roll (no batch) - send immediately with enhanced format
+          const formattedRoll = formatDiceRoll({ ...currentRoll, result: { total: numericResult } });
+
+          if (onSendFullMessage) {
+            await onSendFullMessage(formattedRoll);
+          } else {
+            const playerMessage: ChatMessage = {
+              text: formattedRoll,
+              sender: 'player',
+              timestamp: new Date().toISOString(),
+            };
+            await onSendMessage(playerMessage);
+          }
         }
       } catch (error) {
         handleAsyncError(error, {
@@ -215,7 +335,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         });
       }
     },
-    [onSendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]
+    [onSendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll, isBatchComplete, getBatchResults, clearBatch, formatDiceRoll]
   );
 
   return (
