@@ -34,13 +34,19 @@ export function extractPrimaryRollRequest(message: string): ParsedRollRequest | 
 }
 
 export function removeRollRequestsFromMessage(message: string): string {
-  const requests = parseRollRequests(message);
-  let cleanMessage = message;
+  if (!message) return message;
 
+  // FIRST: Remove all ROLL_REQUESTS_V1 code blocks (handles AI responses with only code blocks)
+  // Using flexible regex pattern that doesn't require specific newline positioning
+  let cleanMessage = message.replace(/```ROLL_REQUESTS_V1[\s\S]*?```/g, '');
+
+  // THEN: Parse remaining message for any regex-matched roll requests and remove them too
+  const requests = parseRollRequests(message);
   requests.forEach(request => {
     cleanMessage = cleanMessage.replace(request.originalText, '').trim();
   });
 
+  // Clean up extra whitespace and punctuation
   cleanMessage = cleanMessage
     .replace(/\s+/g, ' ')
     .replace(/\.\s*\./g, '.')
