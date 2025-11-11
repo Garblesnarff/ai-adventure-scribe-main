@@ -325,11 +325,15 @@ export function createCombatParticipantsFromDetection(
   
   // Add player character
   if (playerCharacter) {
+    // Calculate initiative modifier from dexterity
+    const dexModifier = playerCharacter.abilityScores?.dexterity?.modifier || 0;
+
     participants.push({
       id: `player-${playerCharacter.id}`,
       participantType: 'player',
       name: playerCharacter.name,
       characterId: playerCharacter.id,
+      initiative: dexModifier, // This will be added to d20 roll in startCombat
       armorClass: playerCharacter.armor_class || 10,
       maxHitPoints: playerCharacter.hit_points || 10,
       currentHitPoints: playerCharacter.hit_points || 10,
@@ -346,10 +350,16 @@ export function createCombatParticipantsFromDetection(
   // Add detected enemies
   for (let i = 0; i < enemies.length; i++) {
     const enemy = enemies[i];
+
+    // Estimate initiative modifier based on CR (higher CR = better dex)
+    // CR 0-2: +1, CR 3-5: +2, CR 6-10: +3, CR 11+: +4
+    const initiativeModifier = Math.min(4, Math.max(1, Math.floor((enemy.estimatedCR || 1) / 3) + 1));
+
     participants.push({
       id: `enemy-${enemy.name.toLowerCase()}-${i}`,
       participantType: 'monster',
       name: `${enemy.name} ${i > 0 ? i + 1 : ''}`.trim(),
+      initiative: initiativeModifier, // This will be added to d20 roll in startCombat
       armorClass: enemy.suggestedAC,
       maxHitPoints: enemy.suggestedHP,
       currentHitPoints: enemy.suggestedHP,
@@ -383,6 +393,11 @@ export interface PlayerCharacterLike {
   name: string;
   armor_class?: number;
   hit_points?: number;
+  abilityScores?: {
+    dexterity?: {
+      modifier: number;
+    };
+  };
 }
 
 /**

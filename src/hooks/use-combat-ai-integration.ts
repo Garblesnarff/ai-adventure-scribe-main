@@ -115,17 +115,21 @@ export const useCombatAIIntegration = ({
         if (sessionId) {
           await startCombat(sessionId, participants as Partial<CombatParticipant>[]);
 
-          // Create combat start message for UI log
+          // Create enhanced combat start message for UI log
+          // Note: After startCombat() completes, the actual initiative rolls are in the encounter state
+          const initiativeText = participants.length > 1
+            ? `${participants.length} combatants roll for initiative!`
+            : `${participants[0]?.name || 'Fighter'} prepares for combat!`;
+
           const combatStartMessage: ChatMessage = {
-            text: `Combat has begun! Initiative order established.`,
+            text: `⚔️ Combat has begun! ${initiativeText}\n\nInitiative order will be determined by d20 + DEX modifier.\nThe combat tracker will show turn order.`,
             sender: 'system',
             context: {
               combatData: {
                 type: 'initiative',
                 participants: participants.map(p => ({
                   name: p.name || 'Unknown',
-                  initiative: p.initiative || 0,
-                  roll: rollDice(20, 1, 0)
+                  initiativeModifier: p.initiative || 0
                 }))
               }
             },

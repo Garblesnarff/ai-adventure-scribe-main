@@ -64,8 +64,15 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   hasMore,
   suppressEmptyState = false,
 }) => {
-  const { getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
+  const { state, getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll } = useGame();
   const lastRollRef = useRef<LastRollMeta | null>(null);
+
+  // Subscribe to current dice roll from queue state
+  // This will re-compute when state.diceRollQueue.currentRollId changes,
+  // triggering a re-render and showing the next roll in the queue
+  const currentRoll = React.useMemo(() => {
+    return getCurrentDiceRoll();
+  }, [state.diceRollQueue.currentRollId, getCurrentDiceRoll]);
 
   // Group consecutive messages from the same sender
   const groupedMessages = useMemo(() => {
@@ -287,28 +294,23 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
       ))}
 
       {/* Global Dice Roll Request - Shows current roll from GameContext queue */}
-      {(() => {
-        const currentRoll = getCurrentDiceRoll();
-        if (!currentRoll) return null;
-
-        return (
-          <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}>
-            <DiceRollRequest
-              request={{
-                type: currentRoll.requestType as any,
-                formula: `${currentRoll.rollConfig.count}d${currentRoll.rollConfig.dieType}${currentRoll.rollConfig.modifier >= 0 ? '+' : ''}${currentRoll.rollConfig.modifier}`,
-                purpose: currentRoll.description,
-                advantage: currentRoll.rollConfig.advantage,
-                disadvantage: currentRoll.rollConfig.disadvantage,
-              }}
-              onRoll={handleDiceRoll}
-              onManualResult={handleManualResult}
-              onCancel={() => cancelDiceRoll(currentRoll.id)}
-              className="shadow-2xl animate-in slide-in-from-bottom-4 duration-300"
-            />
-          </div>
-        );
-      })()}
+      {currentRoll && (
+        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}>
+          <DiceRollRequest
+            request={{
+              type: currentRoll.requestType as any,
+              formula: `${currentRoll.rollConfig.count}d${currentRoll.rollConfig.dieType}${currentRoll.rollConfig.modifier >= 0 ? '+' : ''}${currentRoll.rollConfig.modifier}`,
+              purpose: currentRoll.description,
+              advantage: currentRoll.rollConfig.advantage,
+              disadvantage: currentRoll.rollConfig.disadvantage,
+            }}
+            onRoll={handleDiceRoll}
+            onManualResult={handleManualResult}
+            onCancel={() => cancelDiceRoll(currentRoll.id)}
+            className="shadow-2xl animate-in slide-in-from-bottom-4 duration-300"
+          />
+        </div>
+      )}
 
       {/* Loading state */}
       {!suppressEmptyState && messages?.length === 0 && (

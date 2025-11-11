@@ -11,6 +11,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './shared/components/error/ErrorBoundary';
 import { RouteLoading } from './shared/components/RouteLoading';
 import ProtectedRoute from './features/auth/components/ProtectedRoute';
+import { useTelemetry } from './hooks/use-telemetry';
 
 // Lazy load route page components for code splitting
 const Index = lazy(() => import('./pages/Index'));
@@ -45,6 +46,11 @@ const queryClient = new QueryClient({
  * Provides routing and global providers for the application
  */
 function App() {
+  // Enable global telemetry tracking with crash detection
+  useTelemetry({
+    enableCrashDetection: true,
+  });
+
   return (
     <ErrorBoundary level="app">
       <HelmetProvider>

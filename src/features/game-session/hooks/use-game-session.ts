@@ -42,6 +42,7 @@ import { supabase } from '@/integrations/supabase/client';
  // Project hooks
  // ============================
 import { useToast } from '@/hooks/use-toast';
+import { useTelemetry } from '@/hooks/use-telemetry';
 
  // ============================
  // Project types
@@ -96,6 +97,14 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
   const { toast } = useToast();
 
   const currentSessionId = sessionData?.id || null;
+
+  // Add session heartbeat tracking for active game sessions
+  // This monitors memory usage and session health every 30 seconds
+  useTelemetry({
+    sessionId: currentSessionId || undefined,
+    enableHeartbeat: !!currentSessionId,
+    heartbeatInterval: 30000, // 30 seconds
+  });
 
   /**
    * Validates that a session object has required properties.

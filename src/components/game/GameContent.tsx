@@ -300,6 +300,14 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
     setIsCombatDetected(!!combatAI.isInCombat);
   }, [combatAI.isInCombat]);
 
+  // Auto-open combat tracker when combat starts
+  React.useEffect(() => {
+    if (combatState.isInCombat && !showTracker) {
+      setShowTracker(true);
+      logger.info('⚔️ Combat started - auto-opening combat tracker');
+    }
+  }, [combatState.isInCombat, showTracker]);
+
   // Handle AI response with combat detection
   const innerHandleAIResponse = React.useCallback(async (message: any) => {
     try {

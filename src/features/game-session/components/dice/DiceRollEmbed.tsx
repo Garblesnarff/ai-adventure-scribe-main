@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Play, Volume2 } from 'lucide-react';
 import logger from '@/lib/logger';
+import telemetry from '@/lib/telemetry';
 
 interface DiceRollEmbedProps {
   expression: string;
@@ -150,6 +151,10 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
       e.preventDefault();
       __dice3dDead = true;
       setContextLost(true);
+
+      // Record WebGL context loss for crash correlation
+      telemetry.recordWebGLContextLoss();
+
       if (!__dice3dWarned) {
         __dice3dWarned = true;
         logger.warn('Dice 3D disabled after WebGL context loss; falling back to 2D/text for this session.');
