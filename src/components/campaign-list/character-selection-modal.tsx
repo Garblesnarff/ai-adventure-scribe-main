@@ -90,12 +90,16 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
    * Handles starting a game with the selected character
    */
   const startGameWithCharacter = (character: Character) => {
-    navigate(`/app/game/${campaignId}?character=${character.id}`);
     onClose();
-    toast({
-      title: "Starting Adventure!",
-      description: `Beginning your journey with ${character.name} in ${campaignName}.`,
-    });
+
+    // Use setTimeout to ensure modal closes before navigation
+    setTimeout(() => {
+      navigate(`/app/game/${campaignId}?character=${character.id}`);
+      toast({
+        title: "Starting Adventure!",
+        description: `Beginning your journey with ${character.name} in ${campaignName}.`,
+      });
+    }, 0);
   };
 
   /**
