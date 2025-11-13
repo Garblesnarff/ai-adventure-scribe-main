@@ -14,6 +14,9 @@ import blogRouter from './v1/blog.js';
 import observabilityRouter from './v1/observability.js';
 import adminRouter from './v1/admin.js';
 import combatRouter from './v1/combat.js';
+import restRouter from './v1/rest.js';
+import inventoryRouter from './v1/inventory.js';
+import spellSlotsRouter from './v1/spell-slots.js';
 
 export function registerRoutes(app: Express) {
   app.use('/v1/auth', authRouter());
@@ -32,4 +35,7 @@ export function registerRoutes(app: Express) {
   app.use('/v1/observability', observabilityRouter());
   app.use('/v1/admin', adminRouter());
   app.use('/v1/combat', combatRouter());
+  app.use('/v1/rest', restRouter());
+  app.use('/v1/characters', inventoryRouter());
+  app.use('/v1', spellSlotsRouter());
 }

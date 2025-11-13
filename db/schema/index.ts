@@ -19,3 +19,9 @@ export * from './world.js';
 
 // Export all combat tables and types
 export * from './combat.js';
+
+// Export all rest system tables and types
+export * from './rest.js';
+
+// Export all inventory tables and types
+export * from './inventory.js';
