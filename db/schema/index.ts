@@ -16,3 +16,6 @@ export * from './reference.js';
 
 // Export all world-building tables and types
 export * from './world.js';
+
+// Export all combat tables and types
+export * from './combat.js';

@@ -578,3 +578,98 @@ export interface ParsedMechanicalEffects {
   effects: MechanicalEffects;
   errors: string[];
 }
+
+// ==========================================
+// HP & Damage Tracking Types
+// Work Unit 1.2a
+// ==========================================
+
+/**
+ * Participant HP and status tracking
+ */
+export interface ParticipantStatus {
+  id: string;
+  participantId: string;
+  currentHp: number;
+  maxHp: number;
+  tempHp: number;
+  isConscious: boolean;
+  deathSavesSuccesses: number;
+  deathSavesFailures: number;
+  updatedAt: Date;
+}
+
+/**
+ * Damage log entry
+ */
+export interface DamageLogEntry {
+  id: string;
+  encounterId: string;
+  participantId: string;
+  damageAmount: number;
+  damageType: string;
+  sourceParticipantId: string | null;
+  sourceDescription: string | null;
+  roundNumber: number;
+  createdAt: Date;
+}
+
+/**
+ * Result of applying damage to a participant
+ */
+export interface DamageResult {
+  participantId: string;
+  originalDamage: number;
+  modifiedDamage: number;
+  tempHpLost: number;
+  hpLost: number;
+  newCurrentHp: number;
+  newTempHp: number;
+  isConscious: boolean;
+  isDead: boolean;
+  wasResisted: boolean;
+  wasVulnerable: boolean;
+  wasImmune: boolean;
+  massiveDamage: boolean;
+}
+
+/**
+ * Result of healing a participant
+ */
+export interface HealingResult {
+  participantId: string;
+  healingAmount: number;
+  healingApplied: number;
+  overheal: number;
+  newCurrentHp: number;
+  wasRevived: boolean;
+  isConscious: boolean;
+}
+
+/**
+ * Result of a death save roll
+ */
+export interface DeathSaveResult {
+  participantId: string;
+  roll: number;
+  isSuccess: boolean;
+  isCritical: boolean;
+  successes: number;
+  failures: number;
+  isStabilized: boolean;
+  isDead: boolean;
+  wasRevived: boolean;
+  newCurrentHp: number;
+}
+
+/**
+ * Options for applying damage
+ */
+export interface ApplyDamageOptions {
+  damageAmount: number;
+  damageType?: DamageType;
+  sourceParticipantId?: string;
+  sourceDescription?: string;
+  ignoreResistances?: boolean;
+  ignoreImmunities?: boolean;
+}
