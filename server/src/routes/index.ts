@@ -13,6 +13,7 @@ import encountersRouter from './v1/encounters.js';
 import blogRouter from './v1/blog.js';
 import observabilityRouter from './v1/observability.js';
 import adminRouter from './v1/admin.js';
+import combatRouter from './v1/combat.js';
 
 export function registerRoutes(app: Express) {
   app.use('/v1/auth', authRouter());
@@ -30,4 +31,5 @@ export function registerRoutes(app: Express) {
   app.use('/v1/personality', personalityRouter);
   app.use('/v1/observability', observabilityRouter());
   app.use('/v1/admin', adminRouter());
+  app.use('/v1/combat', combatRouter());
 }
