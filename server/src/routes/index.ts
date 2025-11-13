@@ -17,6 +17,8 @@ import combatRouter from './v1/combat.js';
 import restRouter from './v1/rest.js';
 import inventoryRouter from './v1/inventory.js';
 import spellSlotsRouter from './v1/spell-slots.js';
+import progressionRouter from './v1/progression.js';
+import classFeaturesRouter from './v1/class-features.js';
 
 export function registerRoutes(app: Express) {
   app.use('/v1/auth', authRouter());
@@ -38,4 +40,6 @@ export function registerRoutes(app: Express) {
   app.use('/v1/rest', restRouter());
   app.use('/v1/characters', inventoryRouter());
   app.use('/v1', spellSlotsRouter());
+  app.use('/v1/progression', progressionRouter());
+  app.use('/v1', classFeaturesRouter());
 }
