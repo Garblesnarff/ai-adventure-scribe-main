@@ -49,7 +49,10 @@ export default defineConfig({
       'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx',
       'src/data/appearance/appearanceOptions.test.ts',
       'src/data/appearance/physicalTraits.test.ts',
-      'src/engine/**/*.test.ts'
+      'src/engine/**/*.test.ts',
+      'src/agents/langgraph/nodes/__tests__/memory-retrieval.test.ts',
+      'src/agents/langgraph/nodes/__tests__/dice-roller.test.ts',
+      'src/agents/langgraph/adapters/__tests__/agent-adapter.test.ts'
     ],
     exclude: [
       'node_modules/**',
@@ -86,6 +89,9 @@ export default defineConfig({
         'src/agents/services/intent/PlayerIntentDetector.ts',
         'src/hooks/useSpellSelection.ts',
         'src/engine/**/*.ts',
+        'src/agents/langgraph/nodes/memory-retrieval.ts',
+        'src/agents/langgraph/nodes/dice-roller.ts',
+        'src/agents/langgraph/adapters/agent-adapter.ts',
       ],
       exclude: [
         '**/__tests__/**',

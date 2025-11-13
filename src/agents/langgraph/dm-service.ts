@@ -113,8 +113,7 @@ export class DMService {
         },
       });
 
-      // For now, return a placeholder response until graph is implemented
-      // This will be replaced in Work Unit 6.4 with actual graph invocation
+      // Invoke the LangGraph workflow
       const response = await this.invokeGraph({
         messages: [...previousMessages, userMessage],
         worldContext: context,

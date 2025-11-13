@@ -13,7 +13,9 @@
 import { StateGraph, END } from "@langchain/langgraph";
 import { DMState, dmStateChannels } from "./state";
 import { detectIntent } from "./nodes/intent-detector";
+import { retrieveMemories } from "./nodes/memory-retrieval";
 import { validateRules } from "./nodes/rules-validator";
+import { rollDice } from "./nodes/dice-roller";
 import { generateResponse } from "./nodes/response-generator";
 import { checkpointer } from "./checkpointer";
 import { LANGGRAPH_CONFIG } from "./config";
@@ -26,6 +28,16 @@ function shouldContinueAfterIntent(state: DMState): string {
     return "end_with_error";
   }
   if (!state.playerIntent) {
+    return "end_with_error";
+  }
+  return "retrieve_memories";
+}
+
+/**
+ * Conditional edge: Check for errors after memory retrieval
+ */
+function shouldContinueAfterMemoryRetrieval(state: DMState): string {
+  if (state.error) {
     return "end_with_error";
   }
   return "validate_rules";
@@ -45,9 +57,9 @@ function shouldContinueAfterValidation(state: DMState): string {
     return "generate_response";
   }
 
-  // If dice roll is required, pause for human input
+  // If dice roll is required, use automated rolling
   if (state.requiresDiceRoll) {
-    return "request_dice_roll";
+    return "roll_dice";
   }
 
   // Otherwise, proceed to response generation
@@ -55,11 +67,15 @@ function shouldContinueAfterValidation(state: DMState): string {
 }
 
 /**
- * Conditional edge: Check if dice roll was provided
+ * Conditional edge: Check if dice roll was completed
  */
 function shouldContinueAfterDiceRoll(state: DMState): string {
-  // For now, always proceed to response generation
-  // In the future, this could wait for actual dice roll results
+  // If there's an error, end
+  if (state.error) {
+    return "end_with_error";
+  }
+
+  // After automated dice roll, always proceed to response generation
   return "generate_response";
 }
 
@@ -100,16 +116,20 @@ async function handleError(state: DMState): Promise<Partial<DMState>> {
  * Graph flow with conditional edges:
  * 1. detect_intent - Analyze player input
  *    -> If error: end_with_error
- *    -> Else: validate_rules
- * 2. validate_rules - Check D&D 5E rules
+ *    -> Else: retrieve_memories
+ * 2. retrieve_memories - Fetch relevant context from memory
  *    -> If error: end_with_error
- *    -> If dice roll needed: request_dice_roll (human-in-the-loop)
+ *    -> Else: validate_rules
+ * 3. validate_rules - Check D&D 5E rules
+ *    -> If error: end_with_error
+ *    -> If dice roll needed: roll_dice (automated)
  *    -> Else: generate_response
- * 3. request_dice_roll - Pause for human dice roll input
- *    -> generate_response
- * 4. generate_response - Create narrative response
+ * 4. roll_dice - Execute automated dice rolls
+ *    -> If error: end_with_error
+ *    -> Else: generate_response
+ * 5. generate_response - Create narrative response
  *    -> END
- * 5. end_with_error - Handle errors
+ * 6. end_with_error - Handle errors
  *    -> END
  *
  * @returns Compiled graph ready for execution
@@ -122,8 +142,9 @@ function createDMGraph() {
 
   // Add nodes
   workflow.addNode("detect_intent", detectIntent);
+  workflow.addNode("retrieve_memories", retrieveMemories);
   workflow.addNode("validate_rules", validateRules);
-  workflow.addNode("request_dice_roll", requestDiceRoll);
+  workflow.addNode("roll_dice", rollDice);
   workflow.addNode("generate_response", generateResponse);
   workflow.addNode("end_with_error", handleError);
 
@@ -135,6 +156,15 @@ function createDMGraph() {
     "detect_intent",
     shouldContinueAfterIntent,
     {
+      retrieve_memories: "retrieve_memories",
+      end_with_error: "end_with_error",
+    }
+  );
+
+  workflow.addConditionalEdges(
+    "retrieve_memories",
+    shouldContinueAfterMemoryRetrieval,
+    {
       validate_rules: "validate_rules",
       end_with_error: "end_with_error",
     }
@@ -144,17 +174,18 @@ function createDMGraph() {
     "validate_rules",
     shouldContinueAfterValidation,
     {
-      request_dice_roll: "request_dice_roll",
+      roll_dice: "roll_dice",
       generate_response: "generate_response",
       end_with_error: "end_with_error",
     }
   );
 
   workflow.addConditionalEdges(
-    "request_dice_roll",
+    "roll_dice",
     shouldContinueAfterDiceRoll,
     {
       generate_response: "generate_response",
+      end_with_error: "end_with_error",
     }
   );
 
@@ -165,8 +196,7 @@ function createDMGraph() {
   // Compile the graph with checkpointing
   return workflow.compile({
     checkpointer,
-    // Interrupt before dice roll to allow human input
-    interruptBefore: ["request_dice_roll"],
+    interruptBefore: [], // No interrupts - fully automated
     interruptAfter: [], // Can add node names to pause after
   });
 }

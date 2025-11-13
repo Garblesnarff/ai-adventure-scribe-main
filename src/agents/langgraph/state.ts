@@ -27,16 +27,42 @@ export interface RuleCheckResult {
  * Dice roll request details
  */
 export interface DiceRollRequest {
+  /** Type of roll (check, save, attack, or damage) */
+  type: 'check' | 'save' | 'attack' | 'damage';
   /** Dice formula (e.g., "1d20+5", "2d6") */
   formula: string;
   /** Reason for the roll (e.g., "attack roll", "saving throw") */
   reason: string;
-  /** Difficulty class (DC) if applicable */
+  /** Difficulty class (DC) for checks and saves */
   dc?: number;
-  /** Advantage/disadvantage modifier */
-  modifier?: 'advantage' | 'disadvantage' | 'normal';
+  /** Armor class (AC) for attack rolls */
+  ac?: number;
+  /** Whether to roll with advantage */
+  advantage?: boolean;
+  /** Whether to roll with disadvantage */
+  disadvantage?: boolean;
   /** Skill or ability being tested */
   skill?: string;
+}
+
+/**
+ * Result of a dice roll
+ */
+export interface DiceRollResult {
+  /** Dice formula that was rolled */
+  formula: string;
+  /** Total result of the roll */
+  total: number;
+  /** Individual die rolls */
+  rolls: any[];
+  /** Whether the roll succeeded (against DC/AC) */
+  success: boolean;
+  /** Difficulty class if applicable */
+  dc?: number;
+  /** Armor class if applicable */
+  ac?: number;
+  /** Type of roll */
+  type: string;
 }
 
 /**
@@ -121,6 +147,8 @@ export interface DMState {
     stepCount: number;
     /** Total tokens used (for cost tracking) */
     tokensUsed?: number;
+    /** Last dice roll result */
+    lastDiceRoll?: DiceRollResult;
   };
 }
 
