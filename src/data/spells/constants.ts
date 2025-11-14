@@ -6,7 +6,7 @@ export const spellSchools = [
   'Evocation',
   'Illusion',
   'Necromancy',
-  'Transmutation'
+  'Transmutation',
 ] as const;
 
-export type SpellSchool = typeof spellSchools[number];
+export type SpellSchool = (typeof spellSchools)[number];

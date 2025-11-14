@@ -1,10 +1,12 @@
+import { Heart, Shield, PlusCircle, MinusCircle } from 'lucide-react';
 import React, { useState } from 'react';
-import { CombatParticipant } from '@/types/combat';
-import { Card, CardContent } from '@/components/ui/card';
+
+import type { CombatParticipant } from '@/types/combat';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Heart, Shield, PlusCircle, MinusCircle } from 'lucide-react';
 
 interface HPTrackerProps {
   participant: CombatParticipant;
@@ -24,7 +26,12 @@ const HPTracker: React.FC<HPTrackerProps> = ({
   const [damageAmount, setDamageAmount] = useState('');
   const [healAmount, setHealAmount] = useState('');
 
-  const { currentHitPoints = 0, maxHitPoints = 1, temporaryHitPoints = 0, armorClass = 10 } = participant;
+  const {
+    currentHitPoints = 0,
+    maxHitPoints = 1,
+    temporaryHitPoints = 0,
+    armorClass = 10,
+  } = participant;
   const hpPercent = maxHitPoints > 0 ? (currentHitPoints / maxHitPoints) * 100 : 0;
 
   const handleDamage = () => {
@@ -71,10 +78,12 @@ const HPTracker: React.FC<HPTrackerProps> = ({
             {showHPDetails ? (
               <span>
                 {currentHitPoints} / {maxHitPoints}
-                {temporaryHitPoints > 0 && <span className="text-blue-500"> + {temporaryHitPoints}</span>}
+                {temporaryHitPoints > 0 && (
+                  <span className="text-blue-500"> + {temporaryHitPoints}</span>
+                )}
               </span>
             ) : (
-               <span className="text-sm text-muted-foreground">Status Unknown</span>
+              <span className="text-sm text-muted-foreground">Status Unknown</span>
             )}
           </div>
           <Progress value={hpPercent} className="h-2" />

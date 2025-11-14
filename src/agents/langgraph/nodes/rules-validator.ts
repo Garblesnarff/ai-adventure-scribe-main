@@ -72,7 +72,7 @@ function parseValidation(text: string): RuleCheckResult | null {
  */
 function determineDiceRollRequirement(
   intent: string,
-  playerInput: string
+  playerInput: string,
 ): {
   needsRoll: boolean;
   formula?: string;

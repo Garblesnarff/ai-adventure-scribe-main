@@ -1,20 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useToast } from '@/components/ui/use-toast';
-import { useAutoScroll } from '@/hooks/use-auto-scroll';
-import { useSpellSelection } from '@/hooks/useSpellSelection';
-import SpellCategorySection from '@/components/spells/SpellCategorySection';
-import SpellFilterPanel, { SpellFilters } from '@/components/spells/SpellFilterPanel';
-import SpellSearchBar from '@/components/spells/SpellSearchBar';
-import { getSpellValidationRules } from '@/utils/spell-validation';
-import { CharacterClass, Spell } from '@/types/character';
 import {
   Wand2,
   Sparkles,
@@ -25,9 +8,29 @@ import {
   ChevronDown,
   AlertTriangle,
   CheckCircle,
-  Search
+  Search,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import type { CharacterClass } from '@/types/character';
+
+import SpellCategorySection from '@/components/spells/SpellCategorySection';
+import SpellFilterPanel, { SpellFilters } from '@/components/spells/SpellFilterPanel';
+import SpellSearchBar from '@/components/spells/SpellSearchBar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useSpellSelection } from '@/hooks/useSpellSelection';
 import logger from '@/lib/logger';
+import { Spell } from '@/types/character';
+import { getSpellValidationRules } from '@/utils/spell-validation';
 
 /**
  * Enhanced SpellSelection component for spellcasting classes during character creation
@@ -68,14 +71,14 @@ const SpellSelection: React.FC = () => {
     validation,
     canProceed,
     updateCharacterSpells,
-    refetchSpells
+    refetchSpells,
   } = useSpellSelection();
 
   const currentClass = character?.class as CharacterClass | undefined;
 
   // Get available schools for filtering
   const availableSchools = Array.from(
-    new Set([...availableCantrips, ...availableSpells].map(spell => spell.school))
+    new Set([...availableCantrips, ...availableSpells].map((spell) => spell.school)),
   ).sort();
 
   // Check if character has racial spells
@@ -90,7 +93,7 @@ const SpellSelection: React.FC = () => {
       selectedCantrips: selectedCantrips,
       selectedSpells: selectedSpells,
       cantripCount: selectedCantrips.length,
-      spellCount: selectedSpells.length
+      spellCount: selectedSpells.length,
     });
 
     if (canProceed && validation.valid) {
@@ -141,13 +144,8 @@ const SpellSelection: React.FC = () => {
       <div className="text-center space-y-4">
         <AlertTriangle className="w-16 h-16 mx-auto text-red-500" />
         <h2 className="text-2xl font-bold">Failed to Load Spells</h2>
-        <p className="text-muted-foreground">
-          {spellsError}
-        </p>
-        <Button
-          onClick={() => refetchSpells()}
-          variant="outline"
-        >
+        <p className="text-muted-foreground">{spellsError}</p>
+        <Button onClick={() => refetchSpells()} variant="outline">
           Try Again
         </Button>
       </div>
@@ -255,7 +253,9 @@ const SpellSelection: React.FC = () => {
             <Button variant="outline" className="lg:w-auto w-full">
               <Filter className="w-4 h-4 mr-2" />
               Filters
-              <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-4 h-4 ml-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`}
+              />
             </Button>
           </CollapsibleTrigger>
 
@@ -332,7 +332,8 @@ const SpellSelection: React.FC = () => {
                   data-[state=active]:bg-infinite-gold/30 data-[state=active]:text-infinite-gold-dark
                 `}
               >
-                {selectedCantrips.length}/{(spellcastingInfo?.cantripsKnown || 0) + totalRacialCantrips}
+                {selectedCantrips.length}/
+                {(spellcastingInfo?.cantripsKnown || 0) + totalRacialCantrips}
               </Badge>
             )}
           </TabsTrigger>
@@ -404,9 +405,10 @@ const SpellSelection: React.FC = () => {
               onToggleSpell={toggleCantrip}
               icon="cantrip"
               colorTheme="gold"
-              info={spellcastingInfo?.hasSpellbook ?
-                "As a Wizard, you also learn these cantrips in addition to your spellbook spells." :
-                undefined
+              info={
+                spellcastingInfo?.hasSpellbook
+                  ? 'As a Wizard, you also learn these cantrips in addition to your spellbook spells.'
+                  : undefined
               }
             />
           ) : hasRacialSpells ? (
@@ -431,17 +433,18 @@ const SpellSelection: React.FC = () => {
               spellsKnown,
               filteredSpellsCount: filteredSpells.length,
               availableSpellsCount: availableSpells.length,
-              filteredSpellNames: filteredSpells.slice(0, 3).map(s => s.name),
+              filteredSpellNames: filteredSpells.slice(0, 3).map((s) => s.name),
               spellcastingInfo,
-              willShowSpells: spellsKnown > 0
+              willShowSpells: spellsKnown > 0,
             });
 
             return spellsKnown > 0 ? (
               <SpellCategorySection
                 title="1st Level Spells"
-                description={spellcastingInfo?.hasSpellbook ?
-                  "These spells will be recorded in your spellbook. You can prepare some each day." :
-                  "These are the spells you know and can cast using spell slots."
+                description={
+                  spellcastingInfo?.hasSpellbook
+                    ? 'These spells will be recorded in your spellbook. You can prepare some each day.'
+                    : 'These are the spells you know and can cast using spell slots.'
                 }
                 spells={filteredSpells}
                 selectedSpells={selectedSpells}
@@ -449,9 +452,10 @@ const SpellSelection: React.FC = () => {
                 onToggleSpell={toggleSpell}
                 icon="spell"
                 colorTheme="purple"
-                info={spellcastingInfo?.hasSpellbook ?
-                  "As a Wizard, you can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day." :
-                  undefined
+                info={
+                  spellcastingInfo?.hasSpellbook
+                    ? 'As a Wizard, you can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day.'
+                    : undefined
                 }
               />
             ) : (
@@ -473,7 +477,9 @@ const SpellSelection: React.FC = () => {
                 <SpellCategorySection
                   title="Racial Cantrips"
                   description={`Cantrips granted by your ${character?.subrace?.name || character?.race?.name} heritage.`}
-                  spells={availableCantrips.filter(cantrip => racialSpells.cantrips.includes(cantrip.id))}
+                  spells={availableCantrips.filter((cantrip) =>
+                    racialSpells.cantrips.includes(cantrip.id),
+                  )}
                   selectedSpells={selectedCantrips}
                   maxSpells={racialSpells.cantrips.length}
                   onToggleSpell={toggleCantrip}
@@ -489,12 +495,14 @@ const SpellSelection: React.FC = () => {
                 <SpellCategorySection
                   title="Bonus Cantrip"
                   description={`Choose ${racialSpells.bonusCantrips} additional cantrip from the ${racialSpells.bonusCantripSource} spell list.`}
-                  spells={racialSpells.bonusCantripSource === 'wizard' ?
-                    filteredCantrips :
-                    availableCantrips.filter(cantrip =>
-                      racialSpells.bonusCantripSource &&
-                      cantrip.id.includes(racialSpells.bonusCantripSource)
-                    )
+                  spells={
+                    racialSpells.bonusCantripSource === 'wizard'
+                      ? filteredCantrips
+                      : availableCantrips.filter(
+                          (cantrip) =>
+                            racialSpells.bonusCantripSource &&
+                            cantrip.id.includes(racialSpells.bonusCantripSource),
+                        )
                   }
                   selectedSpells={selectedCantrips}
                   maxSpells={racialSpells.bonusCantrips}

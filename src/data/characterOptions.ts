@@ -1,38 +1,41 @@
-import { AbilityScores } from '@/types/character';
+import type { AbilityScores } from '@/types/character';
 
 export const races = [
   {
     id: 'dwarf',
     name: 'Dwarf',
-    description: 'Bold and hardy, dwarves are known as skilled warriors, miners, and workers of stone and metal.',
+    description:
+      'Bold and hardy, dwarves are known as skilled warriors, miners, and workers of stone and metal.',
     traits: ['Darkvision', 'Dwarven Resilience', 'Tool Proficiency'],
     abilityScoreIncrease: {
-      constitution: 2
+      constitution: 2,
     },
     speed: 25,
-    languages: ['Common', 'Dwarvish']
+    languages: ['Common', 'Dwarvish'],
   },
   {
     id: 'elf',
     name: 'Elf',
-    description: 'Elves are a magical people of otherworldly grace, living in the world but not entirely part of it.',
+    description:
+      'Elves are a magical people of otherworldly grace, living in the world but not entirely part of it.',
     traits: ['Darkvision', 'Keen Senses', 'Fey Ancestry', 'Trance'],
     abilityScoreIncrease: {
-      dexterity: 2
+      dexterity: 2,
     },
     speed: 30,
-    languages: ['Common', 'Elvish']
+    languages: ['Common', 'Elvish'],
   },
   {
     id: 'halfling',
     name: 'Halfling',
-    description: 'The diminutive halflings survive in a world full of larger creatures by avoiding notice or, barring that, avoiding offense.',
+    description:
+      'The diminutive halflings survive in a world full of larger creatures by avoiding notice or, barring that, avoiding offense.',
     traits: ['Lucky', 'Brave', 'Halfling Nimbleness'],
     abilityScoreIncrease: {
-      dexterity: 2
+      dexterity: 2,
     },
     speed: 25,
-    languages: ['Common', 'Halfling']
+    languages: ['Common', 'Halfling'],
   },
   {
     id: 'human',
@@ -45,23 +48,24 @@ export const races = [
       constitution: 1,
       intelligence: 1,
       wisdom: 1,
-      charisma: 1
+      charisma: 1,
     },
     speed: 30,
-    languages: ['Common', 'Choice of One']
+    languages: ['Common', 'Choice of One'],
   },
   {
     id: 'dragonborn',
     name: 'Dragonborn',
-    description: 'Dragonborn look very much like dragons standing erect in humanoid form, though they lack wings or a tail.',
+    description:
+      'Dragonborn look very much like dragons standing erect in humanoid form, though they lack wings or a tail.',
     traits: ['Draconic Ancestry', 'Breath Weapon', 'Damage Resistance'],
     abilityScoreIncrease: {
       strength: 2,
-      charisma: 1
+      charisma: 1,
     },
     speed: 30,
-    languages: ['Common', 'Draconic']
-  }
+    languages: ['Common', 'Draconic'],
+  },
 ];
 
 export const classes = [
@@ -72,8 +76,17 @@ export const classes = [
     hitDie: 10,
     primaryAbility: 'strength' as keyof AbilityScores,
     savingThrowProficiencies: ['strength', 'constitution'] as (keyof AbilityScores)[],
-    skillChoices: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
-    numSkillChoices: 2
+    skillChoices: [
+      'Acrobatics',
+      'Animal Handling',
+      'Athletics',
+      'History',
+      'Insight',
+      'Intimidation',
+      'Perception',
+      'Survival',
+    ],
+    numSkillChoices: 2,
   },
   {
     id: 'wizard',
@@ -83,7 +96,7 @@ export const classes = [
     primaryAbility: 'intelligence' as keyof AbilityScores,
     savingThrowProficiencies: ['intelligence', 'wisdom'] as (keyof AbilityScores)[],
     skillChoices: ['Arcana', 'History', 'Insight', 'Investigation', 'Medicine', 'Religion'],
-    numSkillChoices: 2
+    numSkillChoices: 2,
   },
   {
     id: 'rogue',
@@ -92,8 +105,20 @@ export const classes = [
     hitDie: 8,
     primaryAbility: 'dexterity' as keyof AbilityScores,
     savingThrowProficiencies: ['dexterity', 'intelligence'] as (keyof AbilityScores)[],
-    skillChoices: ['Acrobatics', 'Athletics', 'Deception', 'Insight', 'Intimidation', 'Investigation', 'Perception', 'Performance', 'Persuasion', 'Sleight of Hand', 'Stealth'],
-    numSkillChoices: 4
+    skillChoices: [
+      'Acrobatics',
+      'Athletics',
+      'Deception',
+      'Insight',
+      'Intimidation',
+      'Investigation',
+      'Perception',
+      'Performance',
+      'Persuasion',
+      'Sleight of Hand',
+      'Stealth',
+    ],
+    numSkillChoices: 4,
   },
   {
     id: 'cleric',
@@ -103,7 +128,7 @@ export const classes = [
     primaryAbility: 'wisdom' as keyof AbilityScores,
     savingThrowProficiencies: ['wisdom', 'charisma'] as (keyof AbilityScores)[],
     skillChoices: ['History', 'Insight', 'Medicine', 'Persuasion', 'Religion'],
-    numSkillChoices: 2
+    numSkillChoices: 2,
   },
   {
     id: 'bard',
@@ -113,6 +138,6 @@ export const classes = [
     primaryAbility: 'charisma' as keyof AbilityScores,
     savingThrowProficiencies: ['dexterity', 'charisma'] as (keyof AbilityScores)[],
     skillChoices: ['Any'],
-    numSkillChoices: 3
-  }
+    numSkillChoices: 3,
+  },
 ];

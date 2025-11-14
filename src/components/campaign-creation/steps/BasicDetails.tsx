@@ -1,13 +1,15 @@
+import { Loader2, Wand2, BookOpen, Sparkles, AlertCircle } from 'lucide-react';
 import React from 'react';
+
+import type { WizardStepProps } from '../wizard/types';
+
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Loader2, Wand2, BookOpen, Sparkles, AlertCircle } from 'lucide-react';
-import { useCampaign } from '@/contexts/CampaignContext';
-import { WizardStepProps } from '../wizard/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { useCampaign } from '@/contexts/CampaignContext';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
@@ -21,37 +23,41 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [touched, setTouched] = React.useState({
     name: false,
-    description: false
+    description: false,
   });
 
   const handleChange = (field: string, value: string) => {
     dispatch({
       type: 'UPDATE_CAMPAIGN',
-      payload: { [field]: value }
+      payload: { [field]: value },
     });
   };
 
   const handleBlur = (field: string) => {
-    setTouched(prev => ({
+    setTouched((prev) => ({
       ...prev,
-      [field]: true
+      [field]: true,
     }));
   };
 
   const getNameError = () => {
     if (touched.name && (!state.campaign?.name || !state.campaign.name.trim())) {
-      return "Campaign name is required";
+      return 'Campaign name is required';
     }
-    return "";
+    return '';
   };
 
   const generateDescription = async () => {
-    if (!state.campaign?.genre || !state.campaign?.difficulty_level || 
-        !state.campaign?.campaign_length || !state.campaign?.tone) {
+    if (
+      !state.campaign?.genre ||
+      !state.campaign?.difficulty_level ||
+      !state.campaign?.campaign_length ||
+      !state.campaign?.tone
+    ) {
       toast({
-        title: "Missing Information",
-        description: "Please complete the genre and parameters steps first.",
-        variant: "destructive",
+        title: 'Missing Information',
+        description: 'Please complete the genre and parameters steps first.',
+        variant: 'destructive',
       });
       return;
     }
@@ -63,23 +69,23 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
           genre: state.campaign.genre,
           difficulty: state.campaign.difficulty_level,
           length: state.campaign.campaign_length,
-          tone: state.campaign.tone
-        }
+          tone: state.campaign.tone,
+        },
       });
 
       if (error) throw error;
 
       handleChange('description', data.description);
       toast({
-        title: "Success",
-        description: "Campaign description generated successfully!",
+        title: 'Success',
+        description: 'Campaign description generated successfully!',
       });
     } catch (error) {
       logger.error('Error generating description:', error);
       toast({
-        title: "Error",
-        description: "Failed to generate campaign description. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to generate campaign description. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsGenerating(false);

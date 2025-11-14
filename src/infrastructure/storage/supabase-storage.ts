@@ -5,7 +5,6 @@
  * file upload, download, listing, and deletion.
  */
 
-import { supabase } from '@/integrations/supabase/client';
 import type {
   StorageUploadOptions,
   StorageListOptions,
@@ -13,6 +12,8 @@ import type {
   StoragePublicUrl,
   StorageUploadResult,
 } from './types';
+
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Get the Supabase storage client
@@ -32,15 +33,13 @@ export async function uploadFile(
   bucket: string,
   path: string,
   file: File | Blob,
-  options?: Partial<StorageUploadOptions>
+  options?: Partial<StorageUploadOptions>,
 ): Promise<StorageUploadResult> {
-  const { data, error } = await storageClient
-    .from(bucket)
-    .upload(path, file, {
-      cacheControl: options?.cacheControl || '3600',
-      upsert: options?.upsert ?? false,
-      contentType: options?.contentType,
-    });
+  const { data, error } = await storageClient.from(bucket).upload(path, file, {
+    cacheControl: options?.cacheControl || '3600',
+    upsert: options?.upsert ?? false,
+    contentType: options?.contentType,
+  });
 
   if (error) {
     throw new Error(error.message);
@@ -56,13 +55,8 @@ export async function uploadFile(
  * @param path - File path within the bucket
  * @returns File blob
  */
-export async function downloadFile(
-  bucket: string,
-  path: string
-): Promise<Blob> {
-  const { data, error } = await storageClient
-    .from(bucket)
-    .download(path);
+export async function downloadFile(bucket: string, path: string): Promise<Blob> {
+  const { data, error } = await storageClient.from(bucket).download(path);
 
   if (error) {
     throw new Error(error.message);
@@ -82,14 +76,12 @@ export async function downloadFile(
 export async function listFiles(
   bucket: string,
   path: string,
-  options?: StorageListOptions
+  options?: StorageListOptions,
 ): Promise<StorageFileMetadata[]> {
-  const { data, error } = await storageClient
-    .from(bucket)
-    .list(path, {
-      limit: options?.limit || 100,
-      offset: options?.offset || 0,
-    });
+  const { data, error } = await storageClient.from(bucket).list(path, {
+    limit: options?.limit || 100,
+    offset: options?.offset || 0,
+  });
 
   if (error) {
     throw new Error(error.message);
@@ -104,13 +96,8 @@ export async function listFiles(
  * @param bucket - Bucket name
  * @param paths - Array of file paths to delete
  */
-export async function deleteFiles(
-  bucket: string,
-  paths: string[]
-): Promise<void> {
-  const { error } = await storageClient
-    .from(bucket)
-    .remove(paths);
+export async function deleteFiles(bucket: string, paths: string[]): Promise<void> {
+  const { error } = await storageClient.from(bucket).remove(paths);
 
   if (error) {
     throw new Error(error.message);
@@ -124,13 +111,8 @@ export async function deleteFiles(
  * @param path - File path within the bucket
  * @returns Public URL data
  */
-export function getPublicUrl(
-  bucket: string,
-  path: string
-): StoragePublicUrl {
-  const { data } = storageClient
-    .from(bucket)
-    .getPublicUrl(path);
+export function getPublicUrl(bucket: string, path: string): StoragePublicUrl {
+  const { data } = storageClient.from(bucket).getPublicUrl(path);
 
   return data;
 }
@@ -146,7 +128,7 @@ export function getPublicUrl(
 export function buildEntityPath(
   entityType: 'campaign' | 'character',
   entityId: string,
-  filename: string
+  filename: string,
 ): string {
   const prefix = entityType === 'campaign' ? 'campaigns' : 'characters';
   return `${prefix}/${entityId}/${filename}`;
@@ -161,7 +143,7 @@ export function buildEntityPath(
  */
 export function buildTimestampedFilename(
   label: string = 'generated',
-  extension: string = 'png'
+  extension: string = 'png',
 ): string {
   const sanitizedLabel = label.replace(/[^a-z0-9-]/gi, '-');
   const timestamp = Date.now();

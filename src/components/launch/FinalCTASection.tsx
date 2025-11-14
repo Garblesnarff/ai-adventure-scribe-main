@@ -5,10 +5,12 @@
  * Features: Scarcity messaging, social proof, clear next steps
  */
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { ArrowRight, Users, Clock, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+
 import { WaitlistForm } from './WaitlistForm';
+
+import { Button } from '@/components/ui/button';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const FinalCTASection: React.FC = () => {
@@ -25,7 +27,7 @@ export const FinalCTASection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'final_cta_click', {
         event_category: 'conversion',
-        event_label: 'Final CTA - Request Early Access'
+        event_label: 'Final CTA - Request Early Access',
       });
     }
   };
@@ -59,9 +61,7 @@ export const FinalCTASection: React.FC = () => {
                 <ArrowRight className="w-7 h-7" />
               </Button>
 
-              <p className="text-gray-400 text-lg">
-                Be among the first pioneers shaping AI D&D
-              </p>
+              <p className="text-gray-400 text-lg">Be among the first pioneers shaping AI D&D</p>
             </div>
           ) : (
             <div className="max-w-2xl mx-auto">
@@ -142,12 +142,10 @@ export const FinalCTASection: React.FC = () => {
 
         {/* Final Urgency Message */}
         <div className="mt-16 text-center p-8 bg-gradient-to-r from-amber-900/20 to-purple-900/20 border border-amber-500/20 rounded-xl">
-          <p className="text-amber-400 text-lg font-semibold mb-2">
-            ⏰ Limited Time Opportunity
-          </p>
+          <p className="text-amber-400 text-lg font-semibold mb-2">⏰ Limited Time Opportunity</p>
           <p className="text-gray-300 text-base">
-            Beta access is extremely limited. The earlier you join our waitlist,
-            the sooner you'll get access to the AI Dungeon Master and secure your founding member perks.
+            Beta access is extremely limited. The earlier you join our waitlist, the sooner you'll
+            get access to the AI Dungeon Master and secure your founding member perks.
           </p>
         </div>
       </div>

@@ -1,13 +1,14 @@
+import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
+
 import CharacterWizard from '@/components/character-creation/character-wizard';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/error';
 import { CharacterCreationErrorFallback } from '@/components/error/CharacterCreationErrorFallback';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
+import { supabase } from '@/integrations/supabase/client';
 
 type CampaignTemplate = {
   id: string;
@@ -38,12 +39,19 @@ const CharacterCreateEntry: React.FC = () => {
   const [activeTemplateId, setActiveTemplateId] = React.useState<string | null>(null);
   const [cloneError, setCloneError] = React.useState<string | null>(null);
 
-  const { data: templates, isLoading, isError, error } = useQuery<CampaignTemplate[], Error>({
+  const {
+    data: templates,
+    isLoading,
+    isError,
+    error,
+  } = useQuery<CampaignTemplate[], Error>({
     queryKey: ['public-campaign-templates'],
     queryFn: async () => {
       const { data, error: queryError } = await supabase
         .from('campaigns')
-        .select('id, name, description, genre, tone, campaign_length, difficulty_level, thumbnail_url')
+        .select(
+          'id, name, description, genre, tone, campaign_length, difficulty_level, thumbnail_url',
+        )
         .eq('template', true)
         .eq('visibility', 'public')
         .order('published_at', { ascending: false, nullsLast: false })
@@ -93,7 +101,7 @@ const CharacterCreateEntry: React.FC = () => {
       if (cloneMutation.isPending) return;
       cloneMutation.mutate(templateId);
     },
-    [cloneMutation]
+    [cloneMutation],
   );
 
   // Legacy behavior: render wizard directly
@@ -114,7 +122,9 @@ const CharacterCreateEntry: React.FC = () => {
           <p className="text-muted-foreground mb-4">Select a campaign to create a character for.</p>
           {cloneError && <div className="mb-4 text-sm text-destructive">{cloneError}</div>}
           {isError ? (
-            <div className="text-sm text-destructive">Failed to load campaigns: {error?.message}</div>
+            <div className="text-sm text-destructive">
+              Failed to load campaigns: {error?.message}
+            </div>
           ) : isLoading ? (
             <div>Loading campaigns…</div>
           ) : templates && templates.length > 0 ? (
@@ -126,7 +136,9 @@ const CharacterCreateEntry: React.FC = () => {
                     <div className="space-y-1">
                       <div className="font-medium text-lg">{template.name}</div>
                       {template.description && (
-                        <div className="text-sm text-muted-foreground line-clamp-3">{template.description}</div>
+                        <div className="text-sm text-muted-foreground line-clamp-3">
+                          {template.description}
+                        </div>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -140,10 +152,7 @@ const CharacterCreateEntry: React.FC = () => {
                         .join(' • ')}
                     </div>
                     <div className="mt-auto flex justify-end">
-                      <Button
-                        onClick={() => handleSelect(template.id)}
-                        disabled={isCloning}
-                      >
+                      <Button onClick={() => handleSelect(template.id)} disabled={isCloning}>
                         {isCloning ? 'Cloning…' : 'Select'}
                       </Button>
                     </div>

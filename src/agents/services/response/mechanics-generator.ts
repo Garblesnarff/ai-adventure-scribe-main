@@ -1,16 +1,16 @@
 /**
  * MechanicsGenerator
- * 
+ *
  * Generates game mechanics details for the AI Dungeon Master, including
  * available actions, relevant rules, and contextual suggestions.
- * 
+ *
  * Main Class:
  * - MechanicsGenerator: Creates mechanics-related information for game responses.
- * 
+ *
  * Dependencies:
  * - Supabase client (`@/integrations/supabase/client`)
  * - CampaignContext type (from `@/types/dm`)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -21,13 +21,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { CampaignContext } from '@/types/dm';
 import { logger } from '../../../lib/logger';
 
-
 export class MechanicsGenerator {
   async generateMechanics(context: CampaignContext) {
     return {
       availableActions: ['Move', 'Interact', 'Attack', 'Cast Spell'], // These could be dynamic later
       relevantRules: await this.getRulesForContext(),
-      suggestions: this.generateActionSuggestions(context)
+      suggestions: this.generateActionSuggestions(context),
     };
   }
 
@@ -39,11 +38,15 @@ export class MechanicsGenerator {
       .limit(3);
 
     if (error) {
-      logger.error("Error fetching rules for context:", error);
-      return ["Error fetching rules."];
+      logger.error('Error fetching rules for context:', error);
+      return ['Error fetching rules.'];
     }
 
-    return rules?.map(rule => rule.rule_description as string) || ["No specific rules highlighted currently."];
+    return (
+      rules?.map((rule) => rule.rule_description as string) || [
+        'No specific rules highlighted currently.',
+      ]
+    );
   }
 
   private generateActionSuggestions(context: CampaignContext): string[] {
@@ -58,11 +61,11 @@ export class MechanicsGenerator {
       suggestions.push('Engage in witty banter.');
     }
     if (context.setting?.atmosphere?.toLowerCase().includes('tense')) {
-        suggestions.push('Be cautious and observant.');
+      suggestions.push('Be cautious and observant.');
     }
 
     if (suggestions.length === 0) {
-        suggestions.push('Consider your character\'s goals and surroundings.');
+      suggestions.push("Consider your character's goals and surroundings.");
     }
 
     return suggestions;

@@ -1,19 +1,22 @@
 /**
  * Voice Consistency Service
- * 
+ *
  * Manages persistent character-to-voice mappings across game sessions.
  * Ensures characters maintain the same voice throughout the campaign.
  * Provides context to AI for voice category assignments.
- * 
+ *
  * Dependencies:
  * - Supabase client (src/integrations/supabase/client.ts)
  * - Voice Mapper Service (src/services/voice-mapper.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
+import { VoiceMapper } from './voice-mapper';
+
+import type { VoiceConfig } from './voice-mapper';
+
 import { supabase } from '@/integrations/supabase/client';
-import { VoiceMapper, VoiceConfig } from './voice-mapper';
 import logger from '@/lib/logger';
 
 export interface CharacterVoiceMapping {
@@ -41,11 +44,14 @@ export interface VoiceAssignment {
 }
 
 export interface SessionVoiceContext {
-  knownCharacters: Record<string, {
-    voiceCategory: string;
-    appearances: number;
-    lastUsed: Date;
-  }>;
+  knownCharacters: Record<
+    string,
+    {
+      voiceCategory: string;
+      appearances: number;
+      lastUsed: Date;
+    }
+  >;
   availableVoiceCategories: string[];
 }
 
@@ -60,37 +66,38 @@ export class VoiceConsistencyService {
 
     try {
       const mappings = await this.getSessionMappings(sessionId);
-      
-      const knownCharacters: SessionVoiceContext['knownCharacters'] = {} as SessionVoiceContext['knownCharacters'];
-      mappings.forEach(mapping => {
+
+      const knownCharacters: SessionVoiceContext['knownCharacters'] =
+        {} as SessionVoiceContext['knownCharacters'];
+      mappings.forEach((mapping) => {
         knownCharacters[mapping.characterName] = {
           voiceCategory: mapping.voiceCategory,
           appearances: mapping.appearanceCount,
-          lastUsed: mapping.lastUsed
+          lastUsed: mapping.lastUsed,
         };
       });
 
       // Get available voice categories from VoiceMapper
       const allVoices = VoiceMapper.getAllVoices();
-      const availableVoiceCategories = Object.keys(allVoices).filter(key => key !== 'default');
+      const availableVoiceCategories = Object.keys(allVoices).filter((key) => key !== 'default');
 
       logger.debug('📋 Voice context:', {
         knownCharacters: Object.keys(knownCharacters),
-        availableCategories: availableVoiceCategories.length
+        availableCategories: availableVoiceCategories.length,
       });
 
       return {
         knownCharacters,
-        availableVoiceCategories
+        availableVoiceCategories,
       };
     } catch (error) {
       logger.error('Error getting session voice context:', error);
-      
+
       // Return minimal context on error
       const allVoices = VoiceMapper.getAllVoices();
       return {
         knownCharacters: {},
-        availableVoiceCategories: Object.keys(allVoices).filter(key => key !== 'default')
+        availableVoiceCategories: Object.keys(allVoices).filter((key) => key !== 'default'),
       };
     }
   }
@@ -99,21 +106,19 @@ export class VoiceConsistencyService {
    * Process voice assignments from AI response segments
    */
   async processVoiceAssignments(
-    sessionId: string, 
+    sessionId: string,
     segments: Array<{
       type: string;
       text: string;
       character?: string;
       voice_category?: string;
-    }>
+    }>,
   ): Promise<VoiceAssignment[]> {
     logger.info('🎪 Processing voice assignments for', segments.length, 'segments');
 
     const assignments: VoiceAssignment[] = [];
     const existingMappings = await this.getSessionMappings(sessionId);
-    const mappingLookup = new Map(
-      existingMappings.map(m => [m.characterName, m])
-    );
+    const mappingLookup = new Map(existingMappings.map((m) => [m.characterName, m]));
 
     for (const segment of segments) {
       if (!segment.character) {
@@ -122,7 +127,7 @@ export class VoiceConsistencyService {
           character: 'narrator',
           voiceCategory: 'narrator',
           voiceConfig: VoiceMapper.getNarratorVoice(),
-          isNewCharacter: false
+          isNewCharacter: false,
         });
         continue;
       }
@@ -132,13 +137,17 @@ export class VoiceConsistencyService {
 
       if (existingMapping) {
         // Use existing voice assignment
-        logger.debug(`♻️ Using existing voice for "${cleanCharacter}": ${existingMapping.voiceCategory}`);
-        
+        logger.debug(
+          `♻️ Using existing voice for "${cleanCharacter}": ${existingMapping.voiceCategory}`,
+        );
+
         assignments.push({
           character: cleanCharacter,
           voiceCategory: existingMapping.voiceCategory,
-          voiceConfig: VoiceMapper.getAllVoices()[existingMapping.voiceCategory] || VoiceMapper.getAllVoices().default,
-          isNewCharacter: false
+          voiceConfig:
+            VoiceMapper.getAllVoices()[existingMapping.voiceCategory] ||
+            VoiceMapper.getAllVoices().default,
+          isNewCharacter: false,
         });
 
         // Update usage
@@ -146,7 +155,8 @@ export class VoiceConsistencyService {
       } else {
         // New character - use AI's voice category assignment or fallback
         const voiceCategory = segment.voice_category || this.inferVoiceCategory(cleanCharacter);
-        const voiceConfig = VoiceMapper.getAllVoices()[voiceCategory] || VoiceMapper.getAllVoices().default;
+        const voiceConfig =
+          VoiceMapper.getAllVoices()[voiceCategory] || VoiceMapper.getAllVoices().default;
 
         logger.info(`✨ New character "${cleanCharacter}" assigned voice: ${voiceCategory}`);
 
@@ -154,12 +164,17 @@ export class VoiceConsistencyService {
           character: cleanCharacter,
           voiceCategory,
           voiceConfig,
-          isNewCharacter: true
+          isNewCharacter: true,
         });
 
         // Save new mapping
-        await this.saveCharacterVoiceMapping(sessionId, cleanCharacter, voiceCategory, voiceConfig.id);
-        
+        await this.saveCharacterVoiceMapping(
+          sessionId,
+          cleanCharacter,
+          voiceCategory,
+          voiceConfig.id,
+        );
+
         // Cache the new mapping
         mappingLookup.set(cleanCharacter, {
           id: '', // Will be set by database
@@ -170,14 +185,15 @@ export class VoiceConsistencyService {
           firstAppearance: new Date(),
           lastUsed: new Date(),
           appearanceCount: 1,
-          metadata: {}
+          metadata: {},
         });
       }
     }
 
-    logger.info('🎯 Voice assignments completed:', assignments.map(a => 
-      `${a.character}(${a.voiceCategory})`
-    ).join(', '));
+    logger.info(
+      '🎯 Voice assignments completed:',
+      assignments.map((a) => `${a.character}(${a.voiceCategory})`).join(', '),
+    );
 
     return assignments;
   }
@@ -208,13 +224,15 @@ export class VoiceConsistencyService {
    * Get voice mappings for a session (placeholder to avoid runtime errors in dev)
    * TODO: Implement proper lookup once schema and table are finalized
    */
-  private async getSessionMappings(sessionId: string): Promise<Array<{
-    id: string;
-    characterName: string;
-    voiceCategory: string;
-    lastUsed: Date;
-    appearanceCount: number;
-  }>> {
+  private async getSessionMappings(sessionId: string): Promise<
+    Array<{
+      id: string;
+      characterName: string;
+      voiceCategory: string;
+      lastUsed: Date;
+      appearanceCount: number;
+    }>
+  > {
     return [];
   }
 
@@ -226,19 +244,17 @@ export class VoiceConsistencyService {
     characterName: string,
     characterType: string,
     voiceId: string,
-    voiceProvider: string = 'elevenlabs'
+    voiceProvider: string = 'elevenlabs',
   ): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('character_voice_mappings')
-        .insert({
-          campaign_id: campaignId,
-          character_name: characterName,
-          character_type: characterType,
-          voice_id: voiceId,
-          voice_provider: voiceProvider,
-          voice_settings: {}
-        });
+      const { error } = await supabase.from('character_voice_mappings').insert({
+        campaign_id: campaignId,
+        character_name: characterName,
+        character_type: characterType,
+        voice_id: voiceId,
+        voice_provider: voiceProvider,
+        voice_settings: {},
+      });
 
       if (error) throw error;
 
@@ -256,7 +272,7 @@ export class VoiceConsistencyService {
       const { error } = await supabase
         .from('character_voice_mappings')
         .update({
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', mappingId);
 
@@ -286,7 +302,7 @@ export class VoiceConsistencyService {
    */
   private inferVoiceCategory(characterName: string): string {
     const name = characterName.toLowerCase();
-    
+
     // Check for character type keywords
     const keywords = {
       elder: ['wizard', 'sage', 'old', 'ancient', 'elder', 'master', 'thorne'],
@@ -296,11 +312,11 @@ export class VoiceConsistencyService {
       merchant: ['merchant', 'trader', 'shopkeeper', 'vendor'],
       child: ['child', 'kid', 'young', 'boy', 'girl'],
       monster: ['dragon', 'beast', 'creature', 'monster', 'giant'],
-      goblin: ['goblin', 'imp', 'sprite', 'kobold']
+      goblin: ['goblin', 'imp', 'sprite', 'kobold'],
     };
 
     for (const [category, keywordList] of Object.entries(keywords)) {
-      if (keywordList.some(keyword => name.includes(keyword))) {
+      if (keywordList.some((keyword) => name.includes(keyword))) {
         return category;
       }
     }
@@ -331,22 +347,22 @@ export class VoiceConsistencyService {
     recentCharacters: string[];
   }> {
     const mappings = await this.getSessionMappings(sessionId);
-    
+
     const voiceCategoryCounts: Record<string, number> = {};
-    mappings.forEach(mapping => {
-      voiceCategoryCounts[mapping.voiceCategory] = 
+    mappings.forEach((mapping) => {
+      voiceCategoryCounts[mapping.voiceCategory] =
         (voiceCategoryCounts[mapping.voiceCategory] || 0) + 1;
     });
 
     const recentCharacters = mappings
       .sort((a, b) => b.lastUsed.getTime() - a.lastUsed.getTime())
       .slice(0, 5)
-      .map(m => `${m.characterName}(${m.voiceCategory})`);
+      .map((m) => `${m.characterName}(${m.voiceCategory})`);
 
     return {
       totalCharacters: mappings.length,
       voiceCategoryCounts,
-      recentCharacters
+      recentCharacters,
     };
   }
 }

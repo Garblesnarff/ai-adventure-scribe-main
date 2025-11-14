@@ -1,11 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Edit3, Save, X, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+
+import type { Character } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Character } from '@/types/character';
 
 export interface EditableDescriptionProps {
   /** The current value of the description field */
@@ -93,7 +95,7 @@ const EditableDescription: React.FC<EditableDescriptionProps> = ({
   const handleSave = () => {
     onUpdate({
       ...character,
-      [field]: editValue
+      [field]: editValue,
     });
     setIsEditing(false);
   };
@@ -122,9 +124,7 @@ const EditableDescription: React.FC<EditableDescriptionProps> = ({
     <div className={cn('space-y-2', className)}>
       {/* Label and AI Badge Row */}
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium text-muted-foreground">
-          {label}
-        </Label>
+        <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
         <div className="flex items-center gap-2">
           {isAiGenerated && !isEditing && (
             <Badge
@@ -161,26 +161,16 @@ const EditableDescription: React.FC<EditableDescriptionProps> = ({
             placeholder={placeholder}
             className={cn(
               minHeight,
-              'resize-none transition-all duration-200 focus:ring-2 focus:ring-primary/20'
+              'resize-none transition-all duration-200 focus:ring-2 focus:ring-primary/20',
             )}
             rows={3}
           />
           <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              className="h-8 px-3"
-            >
+            <Button variant="outline" size="sm" onClick={handleCancel} className="h-8 px-3">
               <X className="w-3 h-3 mr-1" />
               Cancel
             </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleSave}
-              className="h-8 px-3"
-            >
+            <Button variant="default" size="sm" onClick={handleSave} className="h-8 px-3">
               <Save className="w-3 h-3 mr-1" />
               Save
             </Button>
@@ -195,18 +185,14 @@ const EditableDescription: React.FC<EditableDescriptionProps> = ({
             'relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors',
             minHeight,
             'hover:bg-accent/50 cursor-pointer group',
-            disabled && 'opacity-50 cursor-not-allowed hover:bg-background'
+            disabled && 'opacity-50 cursor-not-allowed hover:bg-background',
           )}
           onClick={handleEdit}
         >
           {value ? (
-            <div className="whitespace-pre-wrap break-words leading-relaxed">
-              {value}
-            </div>
+            <div className="whitespace-pre-wrap break-words leading-relaxed">{value}</div>
           ) : (
-            <div className="text-muted-foreground italic">
-              {placeholder}
-            </div>
+            <div className="text-muted-foreground italic">{placeholder}</div>
           )}
 
           {/* Hover Edit Indicator */}

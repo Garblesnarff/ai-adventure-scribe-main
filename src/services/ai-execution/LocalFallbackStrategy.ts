@@ -1,7 +1,7 @@
+import type { AIExecutionStrategy } from './AIExecutionStrategy';
+
 import logger from '@/lib/logger';
 import { AIService } from '@/services/ai-service';
-
-import type { AIExecutionStrategy } from './AIExecutionStrategy';
 
 interface DMRunPayload {
   task?: { description?: string };
@@ -38,18 +38,21 @@ export class LocalFallbackStrategy implements AIExecutionStrategy {
   private async executeDMAgent(payload: DMRunPayload | undefined) {
     // Check feature flag for combat DM narration
     const enableCombatNarration = import.meta.env.VITE_ENABLE_COMBAT_DM_NARRATION === 'true';
-    
+
     // For combat events, apply cooldown and feature flag logic
-    const isCombatEvent = payload?.task?.description?.includes('combat') || 
-                          payload?.task?.description?.includes('battle');
-    
+    const isCombatEvent =
+      payload?.task?.description?.includes('combat') ||
+      payload?.task?.description?.includes('battle');
+
     if (isCombatEvent && !enableCombatNarration) {
-      logger.info('[LocalFallbackStrategy] Combat DM narration disabled by feature flag, returning stub');
+      logger.info(
+        '[LocalFallbackStrategy] Combat DM narration disabled by feature flag, returning stub',
+      );
       return {
         response: '',
         narrationSegments: [],
         context: payload?.agentContext,
-        raw: {}
+        raw: {},
       };
     }
 
@@ -58,17 +61,19 @@ export class LocalFallbackStrategy implements AIExecutionStrategy {
       const sessionId = 'global'; // Could be enhanced to use actual session ID
       const now = Date.now();
       const lastTime = lastNarrationAt.get(sessionId) || 0;
-      
+
       if (now - lastTime < NARRATION_COOLDOWN_MS) {
-        logger.info('[LocalFallbackStrategy] Combat DM narration throttled by cooldown, returning stub');
+        logger.info(
+          '[LocalFallbackStrategy] Combat DM narration throttled by cooldown, returning stub',
+        );
         return {
           response: '',
           narrationSegments: [],
           context: payload?.agentContext,
-          raw: {}
+          raw: {},
         };
       }
-      
+
       lastNarrationAt.set(sessionId, now);
     }
 
@@ -81,20 +86,20 @@ export class LocalFallbackStrategy implements AIExecutionStrategy {
       characterId: agentContext?.characterDetails?.id || '',
       sessionId: '',
       campaignDetails: agentContext?.campaignDetails,
-      characterDetails: agentContext?.characterDetails
+      characterDetails: agentContext?.characterDetails,
     };
 
     const result = await AIService.chatWithDM({
       message: task?.description || '',
       context,
-      conversationHistory: []
+      conversationHistory: [],
     });
 
     return {
       response: result.text,
       narrationSegments: result.narrationSegments,
       context: agentContext,
-      raw: {}
+      raw: {},
     };
   }
 
@@ -104,7 +109,7 @@ export class LocalFallbackStrategy implements AIExecutionStrategy {
       isValid: true,
       suggestions: [],
       errors: [],
-      explanation: 'Local rules validation - action appears valid'
+      explanation: 'Local rules validation - action appears valid',
     };
   }
 }

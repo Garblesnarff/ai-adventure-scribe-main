@@ -1,15 +1,15 @@
 /**
  * Connection State Service
- * 
+ *
  * This file defines the ConnectionStateService class, a singleton service
  * responsible for monitoring and managing the application's overall connection state.
  * It listens to browser online/offline events, Supabase auth state changes,
  * and coordinates reconnection efforts using ReconnectionManager and ConnectionStateManager.
  * It also provides an EventEmitter for other parts of the app to subscribe to connection state changes.
- * 
+ *
  * Main Class:
  * - ConnectionStateService: Monitors and manages connection state.
- * 
+ *
  * Key Dependencies:
  * - Supabase client (`@/integrations/supabase/client`)
  * - EventEmitter (./event-emitter.ts)
@@ -19,7 +19,7 @@
  * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
  * - OfflineStateService (`../offline/offline-state-service.ts`)
  * - ConnectionState and ReconnectionConfig types (`./types.ts`)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -38,7 +38,6 @@ import { MessagePersistenceService } from '../storage/message-persistence-servic
 import { ConnectionState, ReconnectionConfig } from './types';
 import { logger } from '../../../../lib/logger';
 
-
 export class ConnectionStateService {
   private static instance: ConnectionStateService;
   private eventEmitter: EventEmitter;
@@ -47,24 +46,21 @@ export class ConnectionStateService {
 
   private constructor() {
     this.eventEmitter = new EventEmitter();
-    
+
     const config: ReconnectionConfig = {
       initialDelay: 1000,
       maxDelay: 30000,
       factor: 2,
-      jitter: true
+      jitter: true,
     };
 
-    this.reconnectionManager = new ReconnectionManager(
-      config,
-      this.eventEmitter
-    );
+    this.reconnectionManager = new ReconnectionManager(config, this.eventEmitter);
 
     this.stateManager = new ConnectionStateManager(
       this.eventEmitter,
       MessageQueueService.getInstance(),
       MessagePersistenceService.getInstance(),
-      OfflineStateService.getInstance()
+      OfflineStateService.getInstance(),
     );
 
     this.initializeListeners();

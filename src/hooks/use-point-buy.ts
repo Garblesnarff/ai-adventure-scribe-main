@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { AbilityScores } from '@/types/character';
+
+import type { AbilityScores } from '@/types/character';
+
 import { useCharacter } from '@/contexts/CharacterContext';
 import { calculateModifier, getPointCostDifference } from '@/utils/abilityScoreUtils';
 
@@ -18,7 +20,7 @@ export const usePointBuy = () => {
   useEffect(() => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { remainingAbilityPoints: remainingPoints }
+      payload: { remainingAbilityPoints: remainingPoints },
     });
   }, [remainingPoints, dispatch]);
 
@@ -27,10 +29,7 @@ export const usePointBuy = () => {
    * @param ability - The ability score to modify
    * @param increase - Whether to increase or decrease the score
    */
-  const handleScoreChange = (
-    ability: keyof AbilityScores,
-    increase: boolean
-  ) => {
+  const handleScoreChange = (ability: keyof AbilityScores, increase: boolean) => {
     const currentScore = state.character?.abilityScores[ability].score || 8;
     const targetScore = increase ? currentScore + 1 : currentScore - 1;
 
@@ -40,7 +39,7 @@ export const usePointBuy = () => {
 
     const pointDifference = getPointCostDifference(
       increase ? currentScore : targetScore,
-      increase ? targetScore : currentScore
+      increase ? targetScore : currentScore,
     );
 
     if (increase && remainingPoints < pointDifference) {
@@ -52,20 +51,20 @@ export const usePointBuy = () => {
       [ability]: {
         score: targetScore,
         modifier: calculateModifier(targetScore),
-        savingThrow: state.character?.abilityScores[ability].savingThrow || false
-      }
+        savingThrow: state.character?.abilityScores[ability].savingThrow || false,
+      },
     };
 
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { abilityScores: newScores }
+      payload: { abilityScores: newScores },
     });
 
-    setRemainingPoints(prev => prev + (increase ? -pointDifference : pointDifference));
+    setRemainingPoints((prev) => prev + (increase ? -pointDifference : pointDifference));
   };
 
   return {
     remainingPoints,
-    handleScoreChange
+    handleScoreChange,
   };
 };

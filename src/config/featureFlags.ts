@@ -5,9 +5,13 @@ const parseBoolean = (value: unknown): boolean => {
   return ['true', '1', 'yes', 'on', 'enabled'].includes(normalized);
 };
 
-const semanticMemoriesEnabled = parseBoolean((import.meta as any)?.env?.VITE_ENABLE_SEMANTIC_MEMORIES);
+const semanticMemoriesEnabled = parseBoolean(
+  (import.meta as any)?.env?.VITE_ENABLE_SEMANTIC_MEMORIES,
+);
 const worldBuilderEnabled = parseBoolean((import.meta as any)?.env?.VITE_ENABLE_WORLD_BUILDER);
-const campaignCharacterFlowEnabled = parseBoolean((import.meta as any)?.env?.VITE_ENABLE_CAMPAIGN_CHARACTER_FLOW);
+const campaignCharacterFlowEnabled = parseBoolean(
+  (import.meta as any)?.env?.VITE_ENABLE_CAMPAIGN_CHARACTER_FLOW,
+);
 
 export const featureFlags = {
   semanticMemories: semanticMemoriesEnabled,

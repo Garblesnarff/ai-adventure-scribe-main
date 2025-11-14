@@ -1,63 +1,63 @@
 /**
  * Combat Types for D&D 5e Tabletop Experience
- * 
+ *
  * These types represent the core mechanics of D&D 5e combat
  * as they would appear at a physical table, not as a video game.
  * Focus on turn-based mechanics, dice rolls, and DM oversight.
  */
 
-import { Equipment } from '@/data/equipmentOptions';
+import type { Equipment } from '@/data/equipmentOptions';
 
 // ===========================
 // Core Combat Types
 // ===========================
 
-export type CombatPhase = 
-  | 'initialization'    // Rolling initiative, starting combat
-  | 'active'           // Taking turns in initiative order
-  | 'conclusion';      // Combat ending, cleanup
+export type CombatPhase =
+  | 'initialization' // Rolling initiative, starting combat
+  | 'active' // Taking turns in initiative order
+  | 'conclusion'; // Combat ending, cleanup
 
-export type ParticipantType = 
-  | 'player'           // Player character
-  | 'npc'             // Friendly NPC
-  | 'monster';        // Enemy creature
+export type ParticipantType =
+  | 'player' // Player character
+  | 'npc' // Friendly NPC
+  | 'monster'; // Enemy creature
 
 export type ActionType =
-  | 'attack'          // Weapon or spell attack
+  | 'attack' // Weapon or spell attack
   | 'off_hand_attack' // Two-weapon fighting bonus action attack
-  | 'cast_spell'      // Casting a spell
-  | 'dash'            // Move extra distance
-  | 'dodge'           // Gain AC bonus
-  | 'help'            // Help another character
-  | 'hide'            // Attempt stealth
-  | 'ready'           // Ready an action
-  | 'search'          // Look for something
-  | 'use_object'      // Interact with item
-  | 'grapple'         // Special melee attack to grapple
-  | 'shove'           // Special melee attack to push/prone
-  | 'death_save'      // Roll death saving throw
+  | 'cast_spell' // Casting a spell
+  | 'dash' // Move extra distance
+  | 'dodge' // Gain AC bonus
+  | 'help' // Help another character
+  | 'hide' // Attempt stealth
+  | 'ready' // Ready an action
+  | 'search' // Look for something
+  | 'use_object' // Interact with item
+  | 'grapple' // Special melee attack to grapple
+  | 'shove' // Special melee attack to push/prone
+  | 'death_save' // Roll death saving throw
   | 'concentration_save' // Roll to maintain concentration
-  | 'bonus_action'    // Secondary action
-  | 'reaction'        // Response to trigger
+  | 'bonus_action' // Secondary action
+  | 'reaction' // Response to trigger
   | 'opportunity_attack' // Specific reaction type
-  | 'counterspell'    // Specific reaction type
+  | 'counterspell' // Specific reaction type
   | 'deflect_missiles' // Specific reaction type
-  | 'shield_spell'    // Shield reaction
+  | 'shield_spell' // Shield reaction
   | 'absorb_elements' // Absorb elements reaction
-  | 'hellish_rebuke'  // Hellish rebuke reaction
-  | 'divine_smite'    // Paladin's Divine Smite
+  | 'hellish_rebuke' // Hellish rebuke reaction
+  | 'divine_smite' // Paladin's Divine Smite
   | 'use_class_feature' // Use a class feature (rage, second wind, etc.)
-  | 'end_rage'        // End rage
-  | 'short_rest'      // Take a short rest
-  | 'long_rest';      // Take a long rest
+  | 'end_rage' // End rage
+  | 'short_rest' // Take a short rest
+  | 'long_rest'; // Take a long rest
 
-export type ReactionTrigger = 
-  | 'creature_leaves_reach'     // Opportunity attack
-  | 'spell_cast_in_range'       // Counterspell
-  | 'ranged_attack_hits'        // Deflect missiles
-  | 'creature_enters_reach'     // Polearm master
-  | 'damage_taken'              // Uncanny dodge, shield
-  | 'ally_attacked_nearby';     // Protection fighting style
+export type ReactionTrigger =
+  | 'creature_leaves_reach' // Opportunity attack
+  | 'spell_cast_in_range' // Counterspell
+  | 'ranged_attack_hits' // Deflect missiles
+  | 'creature_enters_reach' // Polearm master
+  | 'damage_taken' // Uncanny dodge, shield
+  | 'ally_attacked_nearby'; // Protection fighting style
 
 export interface ReactionOpportunity {
   id: string;
@@ -69,20 +69,42 @@ export interface ReactionOpportunity {
   expiresAtEndOfTurn?: boolean;
 }
 
-export type DamageType = 
-  | 'acid' | 'bludgeoning' | 'cold' | 'fire' | 'force'
-  | 'lightning' | 'necrotic' | 'piercing' | 'poison'
-  | 'psychic' | 'radiant' | 'slashing' | 'thunder';
+export type DamageType =
+  | 'acid'
+  | 'bludgeoning'
+  | 'cold'
+  | 'fire'
+  | 'force'
+  | 'lightning'
+  | 'necrotic'
+  | 'piercing'
+  | 'poison'
+  | 'psychic'
+  | 'radiant'
+  | 'slashing'
+  | 'thunder';
 
 // ===========================
 // D&D Conditions
 // ===========================
 
-export type ConditionName = 
-  | 'blinded' | 'charmed' | 'deafened' | 'frightened'
-  | 'grappled' | 'incapacitated' | 'invisible' | 'paralyzed'
-  | 'petrified' | 'poisoned' | 'prone' | 'restrained'
-  | 'stunned' | 'unconscious' | 'exhaustion' | 'surprised';
+export type ConditionName =
+  | 'blinded'
+  | 'charmed'
+  | 'deafened'
+  | 'frightened'
+  | 'grappled'
+  | 'incapacitated'
+  | 'invisible'
+  | 'paralyzed'
+  | 'petrified'
+  | 'poisoned'
+  | 'prone'
+  | 'restrained'
+  | 'stunned'
+  | 'unconscious'
+  | 'exhaustion'
+  | 'surprised';
 
 export interface Condition {
   name: ConditionName;
@@ -133,10 +155,15 @@ export interface VisionInfo {
 
 export type ObscurementLevel = 'clear' | 'lightly_obscured' | 'heavily_obscured';
 
-export type FightingStyleName = 
-  | 'defense' | 'dueling' | 'great_weapon_fighting' 
-  | 'protection' | 'archery' | 'two_weapon_fighting'
-  | 'blessed_warrior' | 'blind_fighting';
+export type FightingStyleName =
+  | 'defense'
+  | 'dueling'
+  | 'great_weapon_fighting'
+  | 'protection'
+  | 'archery'
+  | 'two_weapon_fighting'
+  | 'blessed_warrior'
+  | 'blind_fighting';
 
 export interface FightingStyle {
   name: FightingStyleName;
@@ -175,11 +202,20 @@ export interface WeaponProperties {
 // Racial Traits & Class Features
 // ===========================
 
-export type RacialTraitName = 
-  | 'lucky' | 'breath_weapon' | 'draconic_resistance' | 'relentless_endurance' 
-  | 'fey_ancestry' | 'trance' | 'stonecunning' | 'poison_resistance'
-  | 'hellish_resistance' | 'infernal_legacy' | 'natural_armor'
-  | 'brave' | 'halfling_nimbleness';
+export type RacialTraitName =
+  | 'lucky'
+  | 'breath_weapon'
+  | 'draconic_resistance'
+  | 'relentless_endurance'
+  | 'fey_ancestry'
+  | 'trance'
+  | 'stonecunning'
+  | 'poison_resistance'
+  | 'hellish_resistance'
+  | 'infernal_legacy'
+  | 'natural_armor'
+  | 'brave'
+  | 'halfling_nimbleness';
 
 export interface RacialTrait {
   name: RacialTraitName;
@@ -193,11 +229,21 @@ export interface RacialTrait {
   saveDC?: number; // For breath weapons, etc.
 }
 
-export type ClassFeatureName = 
-  | 'rage' | 'sneak_attack' | 'action_surge' | 'divine_smite' 
-  | 'deflect_missiles' | 'bardic_inspiration' | 'channel_divinity'
-  | 'eldritch_invocations' | 'metamagic' | 'hunters_mark'
-  | 'uncanny_dodge' | 'second_wind' | 'lay_on_hands' | 'ki';
+export type ClassFeatureName =
+  | 'rage'
+  | 'sneak_attack'
+  | 'action_surge'
+  | 'divine_smite'
+  | 'deflect_missiles'
+  | 'bardic_inspiration'
+  | 'channel_divinity'
+  | 'eldritch_invocations'
+  | 'metamagic'
+  | 'hunters_mark'
+  | 'uncanny_dodge'
+  | 'second_wind'
+  | 'lay_on_hands'
+  | 'ki';
 
 export interface ClassFeature {
   name: ClassFeatureName;
@@ -244,7 +290,7 @@ export interface CombatParticipant {
   characterId?: string;
   characterClass?: string;
   level?: number;
-  
+
   // Combat stats
   maxHitPoints: number;
   currentHitPoints: number;
@@ -252,48 +298,48 @@ export interface CombatParticipant {
   armorClass: number;
   initiative: number;
   speed: number;
-  
+
   // Turn tracking
   actionTaken: boolean;
   bonusActionTaken: boolean;
   reactionTaken: boolean;
   movementUsed: number;
-  
+
   // Reaction tracking
   reactionOpportunities: ReactionOpportunity[];
-  
+
   // Combat state
   conditions: Condition[];
   deathSaves: {
     successes: number;
     failures: number;
   };
-  
+
   // Weapon tracking
   mainHandWeapon?: Equipment;
   offHandWeapon?: Equipment;
-  
+
   // Class features
   classFeatures?: ClassFeature[];
   resources?: CharacterResources;
   isRaging?: boolean; // Track if Barbarian is currently raging
   activeConcentration?: string | null;
-  
+
   // Spellcasting
   spellSlots?: Record<SpellSlotLevel, SpellSlotConfig>;
   preparedSpells?: string[];
-  
+
   // Damage resistances, immunities, and vulnerabilities
   damageResistances: DamageType[];
   damageImmunities: DamageType[];
   damageVulnerabilities: DamageType[];
-  
+
   // Fighting styles
   fightingStyles?: FightingStyle[];
-  
+
   // Racial traits
   racialTraits?: RacialTrait[];
-  
+
   // Vision and stealth
   visionTypes?: VisionInfo[];
   obscurement?: ObscurementLevel;
@@ -332,15 +378,15 @@ export interface CombatAction {
   encounterId: string;
   participantId: string;
   targetParticipantId?: string;
-  
+
   // Turn tracking
   round: number;
   turnOrder: number;
-  
+
   // Action details
   actionType: ActionType;
   description: string;
-  
+
   // Spell-specific information
   spellName?: string;
   spellLevel?: number;
@@ -352,21 +398,21 @@ export interface CombatAction {
     materialCost?: number;
     materialConsumed?: boolean;
   };
-  
+
   // Dice rolls made
   attackRoll?: DiceRoll;
   damageRolls?: DiceRoll[];
   savingThrows?: DiceRoll[];
-  
+
   // Results
   hit?: boolean;
   damageDealt?: number;
   damageType?: DamageType;
   conditionsApplied?: Condition[];
-  
+
   // Narrative (from AI DM)
   dmNarration?: string;
-  
+
   timestamp: Date;
 }
 
@@ -377,29 +423,29 @@ export interface CombatAction {
 export interface CombatEncounter {
   id: string;
   sessionId: string;
-  
+
   // Status
   phase: CombatPhase;
   currentRound: number;
   currentTurnParticipantId?: string;
-  
+
   // Participants in initiative order
   participants: CombatParticipant[];
-  
+
   // Environmental factors
   location?: string;
   environmentalEffects?: string[];
   visibility?: 'clear' | 'dim' | 'dark' | 'bright';
   terrain?: string; // "difficult", "rough", etc.
-  
+
   // Combat log
   actions: CombatAction[];
-  
+
   // Time tracking (narrative, not real-time)
   roundsElapsed: number;
   startTime: Date;
   endTime?: Date;
-  
+
   // Metadata
   difficulty?: 'easy' | 'medium' | 'hard' | 'deadly';
   experienceAwarded?: number;
@@ -437,7 +483,7 @@ export interface CombatState {
 // Combat Events
 // ===========================
 
-export type CombatEvent = 
+export type CombatEvent =
   | { type: 'COMBAT_START'; encounter: CombatEncounter }
   | { type: 'COMBAT_END'; encounterId: string; reason: string }
   | { type: 'TURN_START'; participantId: string }
@@ -481,16 +527,16 @@ export interface DiceRollRequest {
   timestamp: Date;
   status: 'pending' | 'completed' | 'cancelled';
   result?: DiceRoll;
-  batchId?: string;  // Groups multiple rolls from same AI request for batching
-  dc?: number;       // Target DC for ability checks and saving throws
-  ac?: number;       // Target AC for attack rolls
+  batchId?: string; // Groups multiple rolls from same AI request for batching
+  dc?: number; // Target DC for ability checks and saving throws
+  ac?: number; // Target AC for attack rolls
 }
 
 export interface DiceRollQueue {
   pendingRolls: DiceRollRequest[];
   currentRollId?: string;
   isProcessingRoll: boolean;
-  currentBatchId?: string;              // Current active batch ID
+  currentBatchId?: string; // Current active batch ID
   completedBatchRolls: DiceRollRequest[]; // Completed rolls in current batch
 }
 
@@ -500,46 +546,56 @@ export interface DiceRollQueue {
 
 export interface CombatContextValue {
   state: CombatState;
-  
+
   // Combat management
-  startCombat: (sessionId: string, initialParticipants: Partial<CombatParticipant>[]) => Promise<void>;
+  startCombat: (
+    sessionId: string,
+    initialParticipants: Partial<CombatParticipant>[],
+  ) => Promise<void>;
   endCombat: () => Promise<void>;
-  
+
   // Turn management
   nextTurn: () => Promise<void>;
   rollInitiative: (participantId: string) => Promise<number>;
-  
+
   // Actions
   takeAction: (action: Partial<CombatAction>) => Promise<void>;
   dealDamage: (participantId: string, damage: number, damageType?: DamageType) => Promise<void>;
   healDamage: (participantId: string, healing: number) => Promise<void>;
-  
+
   // Conditions
   applyCondition: (participantId: string, condition: Condition) => Promise<void>;
   removeCondition: (participantId: string, conditionName: ConditionName) => Promise<void>;
-  
+
   // Death saves
   rollDeathSave: (participantId: string) => Promise<'success' | 'failure' | 'critical'>;
-  
+
   // Participants
   addParticipant: (participant: Partial<CombatParticipant>) => Promise<void>;
   removeParticipant: (participantId: string) => Promise<void>;
   updateParticipant: (participantId: string, updates: Partial<CombatParticipant>) => Promise<void>;
-  
+
   // Reaction management
   addReactionOpportunity: (opportunity: ReactionOpportunity) => void;
   removeReactionOpportunity: (opportunityId: string) => void;
   clearReactionOpportunities: () => void;
   setPendingReaction: (opportunityId: string, selectedReaction: ActionType) => void;
-  
+
   // Participant reaction opportunities
-  addParticipantReactionOpportunity: (participantId: string, opportunity: ReactionOpportunity) => void;
+  addParticipantReactionOpportunity: (
+    participantId: string,
+    opportunity: ReactionOpportunity,
+  ) => void;
   removeParticipantReactionOpportunity: (participantId: string, opportunityId: string) => void;
   clearParticipantReactionOpportunities: (participantId: string) => void;
-  
+
   // Movement actions
-  moveParticipant: (participantId: string, fromPosition: string, toPosition: string) => Promise<void>;
-  
+  moveParticipant: (
+    participantId: string,
+    fromPosition: string,
+    toPosition: string,
+  ) => Promise<void>;
+
   // Weapon management
   equipMainHandWeapon: (participantId: string, weapon: Equipment) => void;
   equipOffHandWeapon: (participantId: string, weapon: Equipment) => void;

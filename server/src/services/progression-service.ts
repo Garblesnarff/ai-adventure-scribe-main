@@ -33,6 +33,7 @@ import type {
   MAX_ABILITY_SCORE,
   MAX_LEVEL,
 } from '../types/progression.js';
+import { NotFoundError, ValidationError, BusinessLogicError } from '../lib/errors.js';
 
 /**
  * D&D 5E XP thresholds by level (PHB pg. 15)
@@ -251,7 +252,7 @@ export class ProgressionService {
     sessionId?: string
   ): Promise<AwardXPResult> {
     if (xp < 0) {
-      throw new Error('Cannot award negative XP');
+      throw new ValidationError('Cannot award negative XP', { xp });
     }
 
     // Get or create progression
@@ -351,11 +352,11 @@ export class ProgressionService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     if (!character.stats) {
-      throw new Error(`Character ${characterId} has no stats`);
+      throw new BusinessLogicError('Character has no stats', { characterId });
     }
 
     const className = character.class || 'Fighter';
@@ -408,11 +409,11 @@ export class ProgressionService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     if (!character.stats) {
-      throw new Error(`Character ${characterId} has no stats`);
+      throw new BusinessLogicError('Character has no stats', { characterId });
     }
 
     const progression = await db.query.levelProgression.findFirst({
@@ -420,14 +421,17 @@ export class ProgressionService {
     });
 
     if (!progression) {
-      throw new Error(`No progression found for character ${characterId}`);
+      throw new NotFoundError('Progression for character', characterId);
     }
 
     const oldLevel = progression.currentLevel;
     const newLevel = oldLevel + 1;
 
     if (newLevel > 20) {
-      throw new Error('Character is already at maximum level (20)');
+      throw new BusinessLogicError('Character is already at maximum level (20)', {
+        characterId,
+        currentLevel: oldLevel,
+      });
     }
 
     // Calculate HP increase
@@ -448,7 +452,10 @@ export class ProgressionService {
     if (abilityScoreImprovements && abilityScoreImprovements.length > 0) {
       const totalIncrease = abilityScoreImprovements.reduce((sum, asi) => sum + asi.increase, 0);
       if (totalIncrease > 2) {
-        throw new Error('Total ability score increase cannot exceed +2');
+        throw new ValidationError('Total ability score increase cannot exceed +2', {
+          totalIncrease,
+          abilityScoreImprovements,
+        });
       }
 
       for (const asi of abilityScoreImprovements) {
@@ -529,7 +536,7 @@ export class ProgressionService {
     reason?: string
   ): Promise<{ oldLevel: number; newLevel: number }> {
     if (level < 1 || level > 20) {
-      throw new Error('Level must be between 1 and 20');
+      throw new ValidationError('Level must be between 1 and 20', { level });
     }
 
     // Get current progression

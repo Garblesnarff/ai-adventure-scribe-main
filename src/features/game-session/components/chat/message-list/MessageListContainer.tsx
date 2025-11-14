@@ -1,11 +1,14 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { ChatMessage } from '@/types/game';
+
 import { MessageRenderer } from './MessageRenderer';
+
+import type { ChatMessage } from '@/types/game';
+
 import { DiceRollRequest } from '@/components/game/DiceRollRequest';
-import { useGame } from '@/contexts/GameContext';
 import { Z_INDEX } from '@/constants/z-index';
-import { rollDice } from '@/utils/diceUtils';
+import { useGame } from '@/contexts/GameContext';
 import logger from '@/lib/logger';
+import { rollDice } from '@/utils/diceUtils';
 import { handleAsyncError } from '@/utils/error-handler';
 
 interface MessageListContainerProps {
@@ -64,7 +67,15 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   hasMore,
   suppressEmptyState = false,
 }) => {
-  const { state, getCurrentDiceRoll, completeDiceRoll, cancelDiceRoll, isBatchComplete, getBatchResults, clearBatch } = useGame();
+  const {
+    state,
+    getCurrentDiceRoll,
+    completeDiceRoll,
+    cancelDiceRoll,
+    isBatchComplete,
+    getBatchResults,
+    clearBatch,
+  } = useGame();
   const lastRollRef = useRef<LastRollMeta | null>(null);
 
   /**
@@ -119,9 +130,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   const currentRoll = React.useMemo(() => {
     if (!state.diceRollQueue.currentRollId) return null;
 
-    return state.diceRollQueue.pendingRolls.find(
-      roll => roll.id === state.diceRollQueue.currentRollId && roll.status === 'pending'
-    ) || null;
+    return (
+      state.diceRollQueue.pendingRolls.find(
+        (roll) => roll.id === state.diceRollQueue.currentRollId && roll.status === 'pending',
+      ) || null
+    );
   }, [state.diceRollQueue.currentRollId, state.diceRollQueue.pendingRolls]);
 
   // Group consecutive messages from the same sender
@@ -131,7 +144,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
     }
 
     const groups: { sender: string; messages: ChatMessage[]; isPlayer: boolean }[] = [];
-    let currentGroup = { sender: messages[0].sender, messages: [messages[0]], isPlayer: messages[0].sender === 'player' };
+    let currentGroup = {
+      sender: messages[0].sender,
+      messages: [messages[0]],
+      isPlayer: messages[0].sender === 'player',
+    };
 
     for (let i = 1; i < messages.length; i++) {
       const message = messages[i];
@@ -139,7 +156,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         currentGroup.messages.push(message);
       } else {
         groups.push(currentGroup);
-        currentGroup = { sender: message.sender, messages: [message], isPlayer: message.sender === 'player' };
+        currentGroup = {
+          sender: message.sender,
+          messages: [message],
+          isPlayer: message.sender === 'player',
+        };
       }
     }
     groups.push(currentGroup);
@@ -149,7 +170,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   // Handle dice roll from queue with batching support
   const handleDiceRoll = React.useCallback(
     async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
-      logger.info('[MessageListContainer] Handling dice roll from queue:', { formula, advantage, disadvantage });
+      logger.info('[MessageListContainer] Handling dice roll from queue:', {
+        formula,
+        advantage,
+        disadvantage,
+      });
 
       const currentRoll = getCurrentDiceRoll();
       if (!currentRoll) {
@@ -193,7 +218,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
             timestamp: new Date().toISOString(),
             context: {
               intent: 'dice_roll_batch',
-              diceRollBatch: batchRolls.map(roll => ({
+              diceRollBatch: batchRolls.map((roll) => ({
                 formula: `${roll.rollConfig.count}d${roll.rollConfig.dieType}${roll.rollConfig.modifier >= 0 ? '+' : ''}${roll.rollConfig.modifier}`,
                 count: roll.rollConfig.count,
                 dieType: roll.rollConfig.dieType,
@@ -265,7 +290,15 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         });
       }
     },
-    [onSendMessage, getCurrentDiceRoll, completeDiceRoll, isBatchComplete, getBatchResults, clearBatch, formatDiceRoll]
+    [
+      onSendMessage,
+      getCurrentDiceRoll,
+      completeDiceRoll,
+      isBatchComplete,
+      getBatchResults,
+      clearBatch,
+      formatDiceRoll,
+    ],
   );
 
   // Handle manual dice result input with batching support
@@ -296,7 +329,10 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         if (batchComplete) {
           // Get all completed rolls in the batch
           const batchRolls = getBatchResults();
-          logger.info('[MessageListContainer] Batch complete (manual)! Sending all rolls:', batchRolls);
+          logger.info(
+            '[MessageListContainer] Batch complete (manual)! Sending all rolls:',
+            batchRolls,
+          );
 
           // Format all rolls together
           const formattedRolls = batchRolls.map(formatDiceRoll).join('\n');
@@ -315,7 +351,10 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
           clearBatch();
         } else if (!currentRoll.batchId) {
           // Single roll (no batch) - send immediately with enhanced format
-          const formattedRoll = formatDiceRoll({ ...currentRoll, result: { total: numericResult } });
+          const formattedRoll = formatDiceRoll({
+            ...currentRoll,
+            result: { total: numericResult },
+          });
 
           if (onSendFullMessage) {
             await onSendFullMessage(formattedRoll);
@@ -335,7 +374,16 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         });
       }
     },
-    [onSendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll, isBatchComplete, getBatchResults, clearBatch, formatDiceRoll]
+    [
+      onSendMessage,
+      onSendFullMessage,
+      getCurrentDiceRoll,
+      completeDiceRoll,
+      isBatchComplete,
+      getBatchResults,
+      clearBatch,
+      formatDiceRoll,
+    ],
   );
 
   return (
@@ -351,8 +399,13 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
       )}
 
       {groupedMessages.map((group, groupIndex) => (
-        <div key={`group-${groupIndex}`} className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}>
-          <div className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>
+        <div
+          key={`group-${groupIndex}`}
+          className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}
+        >
+          <div
+            className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}
+          >
             {/* Avatar for first message in group */}
             {!group.isPlayer ? (
               <div className="flex-shrink-0 mr-3 mb-2">
@@ -382,7 +435,9 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
               </div>
             )}
 
-            <div className={`flex flex-col ${group.isPlayer ? 'items-end' : 'items-start'} space-y-2 w-full`}>
+            <div
+              className={`flex flex-col ${group.isPlayer ? 'items-end' : 'items-start'} space-y-2 w-full`}
+            >
               {group.messages.map((message, msgIndex) => {
                 const messageId = message.id || message.timestamp || `${groupIndex}-${msgIndex}`;
                 return (
@@ -415,7 +470,9 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
 
       {/* Global Dice Roll Request - Shows current roll from GameContext queue */}
       {currentRoll && (
-        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}>
+        <div
+          className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}
+        >
           <DiceRollRequest
             request={{
               type: currentRoll.requestType as any,

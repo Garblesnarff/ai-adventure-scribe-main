@@ -5,6 +5,7 @@
  */
 
 import { combatAuditSystem } from './CombatAuditSystem';
+
 import logger from '@/lib/logger';
 
 export interface CombatPhase {
@@ -15,7 +16,14 @@ export interface CombatPhase {
 }
 
 export interface CombatValidationError {
-  type: 'missing_initiative' | 'missing_attack_roll' | 'missing_damage_roll' | 'missing_ac' | 'missing_dc' | 'missing_modifier' | 'wrong_sequence';
+  type:
+    | 'missing_initiative'
+    | 'missing_attack_roll'
+    | 'missing_damage_roll'
+    | 'missing_ac'
+    | 'missing_dc'
+    | 'missing_modifier'
+    | 'wrong_sequence';
   message: string;
   suggestion: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
@@ -51,8 +59,14 @@ export class CombatSequenceValidator {
   private combatPhases: Map<string, CombatPhase[]> = new Map();
   private activeCombats: Set<string> = new Set();
   private initiativeRolled: Set<string> = new Set();
-  private pendingAttacks: Map<string, { weaponName: string; targetAC?: number; timestamp: number }> = new Map();
-  private awaitingDamage: Map<string, { attackRollId: string; isCritical: boolean; weaponName: string }> = new Map();
+  private pendingAttacks: Map<
+    string,
+    { weaponName: string; targetAC?: number; timestamp: number }
+  > = new Map();
+  private awaitingDamage: Map<
+    string,
+    { attackRollId: string; isCritical: boolean; weaponName: string }
+  > = new Map();
   private turnOrders: Map<string, TurnOrder> = new Map();
   private initiativeEntries: Map<string, InitiativeEntry[]> = new Map();
 
@@ -82,7 +96,7 @@ export class CombatSequenceValidator {
     actorName: string,
     initiative: number,
     dexModifier: number,
-    isPlayer: boolean = true
+    isPlayer: boolean = true,
   ): void {
     // Mark combat as active when first initiative entry is added
     this.activeCombats.add(combatId);
@@ -96,7 +110,7 @@ export class CombatSequenceValidator {
     const entries = this.initiativeEntries.get(combatId)!;
 
     // Remove existing entry for this actor (in case of re-roll)
-    const filteredEntries = entries.filter(e => e.actorId !== actorId);
+    const filteredEntries = entries.filter((e) => e.actorId !== actorId);
 
     filteredEntries.push({
       actorId,
@@ -104,7 +118,7 @@ export class CombatSequenceValidator {
       initiative,
       dexModifier,
       isPlayer,
-      hasActed: false
+      hasActed: false,
     });
 
     this.initiativeEntries.set(combatId, filteredEntries);
@@ -120,8 +134,8 @@ export class CombatSequenceValidator {
       data: {
         formula: `1d20+${dexModifier}`,
         result: initiative,
-        description: `Initiative roll: ${initiative} (dex modifier: ${dexModifier > 0 ? '+' : ''}${dexModifier})`
-      }
+        description: `Initiative roll: ${initiative} (dex modifier: ${dexModifier > 0 ? '+' : ''}${dexModifier})`,
+      },
     });
 
     logger.info(`🎲 Initiative recorded for ${actorName}: ${initiative}`);
@@ -149,7 +163,7 @@ export class CombatSequenceValidator {
       entries: sortedEntries,
       currentTurnIndex: 0,
       round: 1,
-      isInitiativeComplete: true
+      isInitiativeComplete: true,
     };
 
     this.turnOrders.set(combatId, turnOrder);
@@ -199,7 +213,7 @@ export class CombatSequenceValidator {
       turnOrder.round++;
 
       // Reset hasActed for new round
-      turnOrder.entries.forEach(entry => entry.hasActed = false);
+      turnOrder.entries.forEach((entry) => (entry.hasActed = false));
 
       logger.info(`🔄 Round ${turnOrder.round} begins`);
     }
@@ -224,14 +238,19 @@ export class CombatSequenceValidator {
     const entries = this.initiativeEntries.get(combatId);
     if (!entries) return false;
 
-    const rolledActors = new Set(entries.map(e => e.actorId));
-    return expectedActors.every(actorId => rolledActors.has(actorId));
+    const rolledActors = new Set(entries.map((e) => e.actorId));
+    return expectedActors.every((actorId) => rolledActors.has(actorId));
   }
 
   /**
    * Record an attack roll request
    */
-  recordAttackRequest(combatId: string, actorId: string, weaponName: string, targetAC?: number): string {
+  recordAttackRequest(
+    combatId: string,
+    actorId: string,
+    weaponName: string,
+    targetAC?: number,
+  ): string {
     const attackId = `${combatId}_${actorId}_${Date.now()}`;
     this.pendingAttacks.set(attackId, { weaponName, targetAC, timestamp: Date.now() });
     this.addPhase(combatId, 'attack', actorId, `Attack with ${weaponName}`);
@@ -242,7 +261,13 @@ export class CombatSequenceValidator {
   /**
    * Record an attack roll result
    */
-  recordAttackResult(attackId: string, result: number, targetAC?: number, actorId?: string, actorName?: string): boolean {
+  recordAttackResult(
+    attackId: string,
+    result: number,
+    targetAC?: number,
+    actorId?: string,
+    actorName?: string,
+  ): boolean {
     const attack = this.pendingAttacks.get(attackId);
     if (!attack) return false;
 
@@ -256,7 +281,7 @@ export class CombatSequenceValidator {
       this.awaitingDamage.set(attackId, {
         attackRollId: attackId,
         isCritical,
-        weaponName: attack.weaponName
+        weaponName: attack.weaponName,
       });
     }
 
@@ -275,8 +300,8 @@ export class CombatSequenceValidator {
           targetAC: actualAC,
           success: isHit,
           critical: isCritical,
-          description: `Attack with ${attack.weaponName}: ${result} vs AC ${actualAC} = ${isHit ? 'HIT' : 'MISS'}${isCritical ? ' (CRITICAL!)' : ''}`
-        }
+          description: `Attack with ${attack.weaponName}: ${result} vs AC ${actualAC} = ${isHit ? 'HIT' : 'MISS'}${isCritical ? ' (CRITICAL!)' : ''}`,
+        },
       });
     }
 
@@ -288,7 +313,13 @@ export class CombatSequenceValidator {
   /**
    * Record damage roll
    */
-  recordDamageRoll(attackId: string, damage: number, formula?: string, actorId?: string, actorName?: string): void {
+  recordDamageRoll(
+    attackId: string,
+    damage: number,
+    formula?: string,
+    actorId?: string,
+    actorName?: string,
+  ): void {
     const damageInfo = this.awaitingDamage.get(attackId);
 
     // Record damage action for audit if we have actor info
@@ -304,8 +335,8 @@ export class CombatSequenceValidator {
           formula: formula || 'dice+modifier',
           result: damage,
           critical: damageInfo.isCritical,
-          description: `${damageInfo.isCritical ? 'Critical d' : 'D'}amage with ${damageInfo.weaponName}: ${damage}${formula ? ` (${formula})` : ''}`
-        }
+          description: `${damageInfo.isCritical ? 'Critical d' : 'D'}amage with ${damageInfo.weaponName}: ${damage}${formula ? ` (${formula})` : ''}`,
+        },
       });
     }
 
@@ -325,8 +356,9 @@ export class CombatSequenceValidator {
       errors.push({
         type: 'missing_attack_roll',
         message: 'Damage roll requested without preceding attack roll',
-        suggestion: 'Request attack roll first: "Make an attack roll with your [weapon] (1d20+bonus) against AC [number]"',
-        severity: 'critical'
+        suggestion:
+          'Request attack roll first: "Make an attack roll with your [weapon] (1d20+bonus) against AC [number]"',
+        severity: 'critical',
       });
     }
 
@@ -335,20 +367,25 @@ export class CombatSequenceValidator {
       errors.push({
         type: 'missing_initiative',
         message: 'Combat started without initiative roll',
-        suggestion: 'Request initiative first: "Combat begins! Roll initiative (1d20+dex modifier)"',
-        severity: 'critical'
+        suggestion:
+          'Request initiative first: "Combat begins! Roll initiative (1d20+dex modifier)"',
+        severity: 'critical',
       });
     }
 
     // Check for actions attempted before turn order is established
     if (combatId && this.activeCombats.has(combatId)) {
       const turnOrder = this.turnOrders.get(combatId);
-      if (!turnOrder?.isInitiativeComplete && (this.detectsAttackRequest(response) || this.detectsSkillCheck(response))) {
+      if (
+        !turnOrder?.isInitiativeComplete &&
+        (this.detectsAttackRequest(response) || this.detectsSkillCheck(response))
+      ) {
         errors.push({
           type: 'wrong_sequence',
           message: 'Action attempted before initiative order is established',
-          suggestion: 'Complete initiative phase first: "Roll initiative (1d20+dex modifier) to determine turn order"',
-          severity: 'critical'
+          suggestion:
+            'Complete initiative phase first: "Roll initiative (1d20+dex modifier) to determine turn order"',
+          severity: 'critical',
         });
       }
     }
@@ -359,7 +396,7 @@ export class CombatSequenceValidator {
         type: 'missing_ac',
         message: 'Attack roll requested without target AC',
         suggestion: 'Include target AC: "Make an attack roll against AC [number]"',
-        severity: 'high'
+        severity: 'high',
       });
     }
 
@@ -369,7 +406,7 @@ export class CombatSequenceValidator {
         type: 'missing_dc',
         message: 'Skill check requested without DC',
         suggestion: 'Include DC: "Make a [skill] check (DC [number])"',
-        severity: 'high'
+        severity: 'high',
       });
     }
 
@@ -379,7 +416,7 @@ export class CombatSequenceValidator {
         type: 'missing_modifier',
         message: 'Damage roll missing ability modifier',
         suggestion: 'Include modifier: "Roll 1d8+STR modifier" or "Roll 1d6+3"',
-        severity: 'medium'
+        severity: 'medium',
       });
     }
 
@@ -388,7 +425,7 @@ export class CombatSequenceValidator {
       errors,
       warnings,
       requiredNextAction: this.determineNextAction(combatId),
-      suggestedResponse: this.generateSuggestedResponse(errors)
+      suggestedResponse: this.generateSuggestedResponse(errors),
     };
   }
 
@@ -431,13 +468,18 @@ export class CombatSequenceValidator {
   }
 
   // Private helper methods
-  private addPhase(combatId: string, phase: CombatPhase['phase'], actorId: string, context: string): void {
+  private addPhase(
+    combatId: string,
+    phase: CombatPhase['phase'],
+    actorId: string,
+    context: string,
+  ): void {
     const phases = this.combatPhases.get(combatId) || [];
     phases.push({
       phase,
       timestamp: Date.now(),
       actorId,
-      context
+      context,
     });
     this.combatPhases.set(combatId, phases);
   }
@@ -446,9 +488,9 @@ export class CombatSequenceValidator {
     const damagePatterns = [
       /roll\s+\d*d\d+(?:\+\d+)?\s+(?:for\s+)?damage/gi,
       /roll\s+damage/gi,
-      /\d*d\d+(?:\+\d+)?\s+damage/gi
+      /\d*d\d+(?:\+\d+)?\s+damage/gi,
     ];
-    return damagePatterns.some(pattern => pattern.test(response));
+    return damagePatterns.some((pattern) => pattern.test(response));
   }
 
   private detectsCombatStart(response: string): boolean {
@@ -456,27 +498,23 @@ export class CombatSequenceValidator {
       /combat\s+begins/gi,
       /initiative/gi,
       /roll\s+for\s+initiative/gi,
-      /battle\s+starts/gi
+      /battle\s+starts/gi,
     ];
-    return combatPatterns.some(pattern => pattern.test(response));
+    return combatPatterns.some((pattern) => pattern.test(response));
   }
 
   private detectsAttackRequest(response: string): boolean {
     const attackPatterns = [
       /make\s+an?\s+attack\s+roll/gi,
       /roll\s+(?:to\s+)?attack/gi,
-      /attack\s+roll/gi
+      /attack\s+roll/gi,
     ];
-    return attackPatterns.some(pattern => pattern.test(response));
+    return attackPatterns.some((pattern) => pattern.test(response));
   }
 
   private detectsSkillCheck(response: string): boolean {
-    const skillPatterns = [
-      /make\s+a\s+\w+\s+check/gi,
-      /roll\s+a\s+\w+\s+check/gi,
-      /\w+\s+check/gi
-    ];
-    return skillPatterns.some(pattern => pattern.test(response));
+    const skillPatterns = [/make\s+a\s+\w+\s+check/gi, /roll\s+a\s+\w+\s+check/gi, /\w+\s+check/gi];
+    return skillPatterns.some((pattern) => pattern.test(response));
   }
 
   private detectsDamageRequest(response: string): boolean {
@@ -580,7 +618,7 @@ export class CombatSequenceValidator {
 
     if (auditReport.violations.length > 0) {
       logger.warn(`⚠️ Rule violations detected: ${auditReport.violations.length}`);
-      const criticalViolations = auditReport.violations.filter(v => v.severity === 'critical');
+      const criticalViolations = auditReport.violations.filter((v) => v.severity === 'critical');
       if (criticalViolations.length > 0) {
         logger.error(`🚨 Critical violations: ${criticalViolations.length}`);
       }
@@ -597,7 +635,10 @@ export class CombatSequenceValidator {
   /**
    * Validate combat state for a specific action
    */
-  validateCombatState(combatId: string, action: 'attack' | 'damage' | 'save'): { valid: boolean; reason?: string } {
+  validateCombatState(
+    combatId: string,
+    action: 'attack' | 'damage' | 'save',
+  ): { valid: boolean; reason?: string } {
     if (!this.activeCombats.has(combatId)) {
       return { valid: false, reason: 'Combat not active' };
     }

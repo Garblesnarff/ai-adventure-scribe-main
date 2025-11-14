@@ -1,6 +1,8 @@
 import React from 'react';
-import { ErrorBoundary, CampaignErrorFallback } from '@/components/error';
+
 import CampaignHub from './CampaignHub';
+
+import { ErrorBoundary, CampaignErrorFallback } from '@/components/error';
 
 /**
  * CampaignHubWithErrorBoundary Component
@@ -26,12 +28,7 @@ const CampaignHubWithErrorBoundary: React.FC = () => {
   return (
     <ErrorBoundary
       level="feature"
-      fallback={
-        <CampaignErrorFallback
-          reset={handleReset}
-          showReturnToCampaigns={true}
-        />
-      }
+      fallback={<CampaignErrorFallback reset={handleReset} showReturnToCampaigns={true} />}
     >
       <CampaignHub key={resetKey} />
     </ErrorBoundary>

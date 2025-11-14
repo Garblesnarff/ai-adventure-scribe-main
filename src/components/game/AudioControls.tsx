@@ -1,11 +1,13 @@
+import { Mic, MicOff } from 'lucide-react';
 import React from 'react';
-import { TooltipProvider } from "@/components/ui/tooltip";
+
+import { SpeakingIndicator } from './audio/SpeakingIndicator';
 import { VolumeButton } from './audio/VolumeButton';
 import { VolumeSlider } from './audio/VolumeSlider';
-import { SpeakingIndicator } from './audio/SpeakingIndicator';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Mic, MicOff } from 'lucide-react';
+
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import logger from '@/lib/logger';
 
 interface AudioControlsProps {
@@ -38,7 +40,7 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
       isSpeaking,
       volume,
       isMuted,
-      isVoiceEnabled
+      isVoiceEnabled,
     });
   }, []);
 
@@ -47,7 +49,7 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
       isSpeaking,
       volume,
       isMuted,
-      isVoiceEnabled
+      isVoiceEnabled,
     });
   }, [isSpeaking, volume, isMuted, isVoiceEnabled]);
 
@@ -55,18 +57,11 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
     <TooltipProvider>
       <div className="flex items-center gap-4 p-4 mb-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl border-2 border-primary/20 hover:border-primary/40 transition-all duration-200">
         <div className="flex items-center gap-2">
-          <VolumeButton
-            isMuted={isMuted}
-            isSpeaking={isSpeaking}
-            onToggleMute={onToggleMute}
-          />
-          <VolumeSlider
-            volume={volume}
-            onVolumeChange={onVolumeChange}
-          />
+          <VolumeButton isMuted={isMuted} isSpeaking={isSpeaking} onToggleMute={onToggleMute} />
+          <VolumeSlider volume={volume} onVolumeChange={onVolumeChange} />
           <SpeakingIndicator isSpeaking={isSpeaking} />
         </div>
-        
+
         <div className="flex items-center gap-2 ml-4 border-l pl-4 border-primary/20">
           <Switch
             id="voice-mode"
@@ -74,17 +69,13 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
             onCheckedChange={onToggleVoice}
             className={`${isVoiceEnabled ? 'bg-primary' : 'bg-input'}`}
           />
-          <Label 
-            htmlFor="voice-mode" 
+          <Label
+            htmlFor="voice-mode"
             className={`text-sm font-medium flex items-center gap-2 ${
               isVoiceEnabled ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
-            {isVoiceEnabled ? (
-              <Mic className="h-4 w-4" />
-            ) : (
-              <MicOff className="h-4 w-4" />
-            )}
+            {isVoiceEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
             Voice Mode
           </Label>
         </div>

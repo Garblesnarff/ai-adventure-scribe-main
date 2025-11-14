@@ -1,7 +1,9 @@
-import { Character, Spell } from '@/types/character';
-import { spellApi } from '@/services/spellApi';
 import { getSpellcastingInfo } from './spell-validation';
+
+import type { Character, Spell } from '@/types/character';
+
 import logger from '@/lib/logger';
+import { spellApi } from '@/services/spellApi';
 
 /**
  * D&D 5E Spell Preparation Utilities
@@ -34,7 +36,9 @@ export interface SpellPreparationLimits {
 /**
  * Get spell preparation type for a class
  */
-export function getSpellPreparationType(className: string): 'known' | 'prepared' | 'spellbook' | 'none' {
+export function getSpellPreparationType(
+  className: string,
+): 'known' | 'prepared' | 'spellbook' | 'none' {
   const preparedCasters = ['cleric', 'druid', 'paladin', 'ranger'];
   const knownCasters = ['bard', 'sorcerer', 'warlock', 'eldritch knight', 'arcane trickster'];
 
@@ -64,7 +68,7 @@ export function calculateSpellPreparationLimits(character: Character): SpellPrep
     return {
       cantripsKnown: 0,
       maxSpellLevel: 0,
-      ritualSpells: []
+      ritualSpells: [],
     };
   }
 
@@ -73,7 +77,7 @@ export function calculateSpellPreparationLimits(character: Character): SpellPrep
     return {
       cantripsKnown: 0,
       maxSpellLevel: 0,
-      ritualSpells: []
+      ritualSpells: [],
     };
   }
 
@@ -95,7 +99,7 @@ export function calculateSpellPreparationLimits(character: Character): SpellPrep
 
   const limits: SpellPreparationLimits = {
     cantripsKnown: spellcastingInfo.cantripsKnown,
-    maxSpellLevel
+    maxSpellLevel,
   };
 
   if (preparationType === 'prepared') {
@@ -122,7 +126,7 @@ export async function validateSpellPreparation(
   character: Character,
   preparedSpells: string[],
   knownSpells: string[] = [],
-  spellbookSpells: string[] = []
+  spellbookSpells: string[] = [],
 ): Promise<{ valid: boolean; errors: string[]; warnings: string[] }> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -141,61 +145,66 @@ export async function validateSpellPreparation(
     // Get available spells for the class
     const { spells: availableSpells } = await spellApi.getClassSpells(
       character.class?.name || '',
-      character.level || 1
+      character.level || 1,
     );
-    const availableSpellIds = availableSpells.map(s => s.id);
+    const availableSpellIds = availableSpells.map((s) => s.id);
 
     if (preparationType === 'prepared') {
       // Validate prepared spells count
       if (limits.spellsPrepared && preparedSpells.length > limits.spellsPrepared) {
-        errors.push(`Can only prepare ${limits.spellsPrepared} spells, but ${preparedSpells.length} are prepared`);
+        errors.push(
+          `Can only prepare ${limits.spellsPrepared} spells, but ${preparedSpells.length} are prepared`,
+        );
       }
 
       // Validate each prepared spell is available to the class
-      preparedSpells.forEach(spellId => {
+      preparedSpells.forEach((spellId) => {
         if (!availableSpellIds.includes(spellId)) {
           errors.push(`Spell ${spellId} is not available to ${character.class?.name}`);
         }
       });
-
     } else if (preparationType === 'known') {
       // Validate known spells count
       if (limits.spellsKnown && knownSpells.length > limits.spellsKnown) {
-        errors.push(`Can only know ${limits.spellsKnown} spells, but ${knownSpells.length} are known`);
+        errors.push(
+          `Can only know ${limits.spellsKnown} spells, but ${knownSpells.length} are known`,
+        );
       }
 
       // Validate each known spell is available to the class
-      knownSpells.forEach(spellId => {
+      knownSpells.forEach((spellId) => {
         if (!availableSpellIds.includes(spellId)) {
           errors.push(`Spell ${spellId} is not available to ${character.class?.name}`);
         }
       });
-
     } else if (preparationType === 'spellbook') {
       // Wizard: Validate spellbook and prepared spells
       if (limits.spellsKnown && spellbookSpells.length > limits.spellsKnown) {
-        errors.push(`Spellbook can only contain ${limits.spellsKnown} spells, but ${spellbookSpells.length} are recorded`);
+        errors.push(
+          `Spellbook can only contain ${limits.spellsKnown} spells, but ${spellbookSpells.length} are recorded`,
+        );
       }
 
       if (limits.spellsPrepared && preparedSpells.length > limits.spellsPrepared) {
-        errors.push(`Can only prepare ${limits.spellsPrepared} spells, but ${preparedSpells.length} are prepared`);
+        errors.push(
+          `Can only prepare ${limits.spellsPrepared} spells, but ${preparedSpells.length} are prepared`,
+        );
       }
 
       // Prepared spells must be in spellbook
-      preparedSpells.forEach(spellId => {
+      preparedSpells.forEach((spellId) => {
         if (!spellbookSpells.includes(spellId)) {
           errors.push(`Cannot prepare spell ${spellId} - not in spellbook`);
         }
       });
 
       // Spellbook spells must be available to wizard
-      spellbookSpells.forEach(spellId => {
+      spellbookSpells.forEach((spellId) => {
         if (!availableSpellIds.includes(spellId)) {
           errors.push(`Spell ${spellId} cannot be added to wizard spellbook`);
         }
       });
     }
-
   } catch (error) {
     logger.error('Failed to validate spell preparation:', error);
     errors.push('Failed to validate spell preparation - could not fetch spell data');
@@ -216,16 +225,13 @@ export async function getAvailableRitualSpells(character: Character): Promise<Sp
     const allSpells = await spellApi.getAllSpells({ ritual: true });
     const { spells: classSpells } = await spellApi.getClassSpells(
       character.class.name,
-      character.level || 1
+      character.level || 1,
     );
 
-    const classSpellIds = classSpells.map(s => s.id);
+    const classSpellIds = classSpells.map((s) => s.id);
 
     // Filter to only ritual spells available to the class
-    return allSpells.filter(spell =>
-      spell.ritual && classSpellIds.includes(spell.id)
-    );
-
+    return allSpells.filter((spell) => spell.ritual && classSpellIds.includes(spell.id));
   } catch (error) {
     logger.error('Failed to fetch ritual spells:', error);
     return [];
@@ -250,7 +256,7 @@ export function getSpellPreparationInfo(character: Character): SpellPreparationI
       className: characterClass?.name || 'Unknown',
       preparationType: 'none',
       ritualCasting: false,
-      spellcastingAbility: 'intelligence'
+      spellcastingAbility: 'intelligence',
     };
   }
 
@@ -263,6 +269,6 @@ export function getSpellPreparationInfo(character: Character): SpellPreparationI
     spellsKnown: limits.spellsKnown,
     spellsPrepared: limits.spellsPrepared,
     ritualCasting: characterClass.spellcasting.ritualCasting || false,
-    spellcastingAbility: characterClass.spellcasting.ability
+    spellcastingAbility: characterClass.spellcasting.ability,
   };
 }

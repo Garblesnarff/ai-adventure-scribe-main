@@ -1,15 +1,18 @@
+import { Sword, Sparkles, Users, Lightbulb, Award } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+
+import type { Feat } from '@/data/featOptions';
+import type { AbilityScores } from '@/types/character';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { feats, getFeatsByCategory, Feat } from '@/data/featOptions';
-import { AbilityScores } from '@/types/character';
-import { Sword, Sparkles, Users, Lightbulb, Award } from 'lucide-react';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { feats, getFeatsByCategory } from '@/data/featOptions';
 
 /**
  * FeatSelection component for choosing feats during character creation
@@ -28,7 +31,7 @@ const FeatSelection: React.FC = () => {
     constitution: 0,
     intelligence: 0,
     wisdom: 0,
-    charisma: 0
+    charisma: 0,
   });
 
   const currentLevel = character?.level || 1;
@@ -40,19 +43,23 @@ const FeatSelection: React.FC = () => {
    * Handle ASI (Ability Score Improvement) selection
    */
   const handleAbilityIncrease = (ability: string, change: number) => {
-    const currentScore = character?.abilityScores?.[ability as keyof typeof character.abilityScores]?.score || 10;
+    const currentScore =
+      character?.abilityScores?.[ability as keyof typeof character.abilityScores]?.score || 10;
     const currentIncrease = abilityIncreases[ability];
     const newIncrease = Math.max(0, Math.min(2, currentIncrease + change));
-    
+
     // Can't exceed 20 or use more than 2 points total
-    const totalIncreases = Object.values({...abilityIncreases, [ability]: newIncrease}).reduce((sum, val) => sum + val, 0);
+    const totalIncreases = Object.values({ ...abilityIncreases, [ability]: newIncrease }).reduce(
+      (sum, val) => sum + val,
+      0,
+    );
     if (currentScore + newIncrease > 20 || totalIncreases > 2) {
       return;
     }
 
-    setAbilityIncreases(prev => ({
+    setAbilityIncreases((prev) => ({
       ...prev,
-      [ability]: newIncrease
+      [ability]: newIncrease,
     }));
   };
 
@@ -85,7 +92,7 @@ const FeatSelection: React.FC = () => {
 
       dispatch({
         type: 'UPDATE_CHARACTER',
-        payload: { abilityScores: updatedAbilityScores as AbilityScores }
+        payload: { abilityScores: updatedAbilityScores as AbilityScores },
       });
 
       toast({
@@ -104,8 +111,8 @@ const FeatSelection: React.FC = () => {
 
       // Apply feat to character
       const currentFeats = character?.feats || [];
-      const feat = feats.find(f => f.id === selectedFeat);
-      
+      const feat = feats.find((f) => f.id === selectedFeat);
+
       if (feat) {
         // Apply ASI from feat if it has one
         if (feat.abilityScoreIncrease) {
@@ -122,15 +129,15 @@ const FeatSelection: React.FC = () => {
 
           dispatch({
             type: 'UPDATE_CHARACTER',
-            payload: { 
+            payload: {
               feats: [...currentFeats, selectedFeat],
-              abilityScores: updatedAbilityScores as AbilityScores
-            }
+              abilityScores: updatedAbilityScores as AbilityScores,
+            },
           });
         } else {
           dispatch({
             type: 'UPDATE_CHARACTER',
-            payload: { feats: [...currentFeats, selectedFeat] }
+            payload: { feats: [...currentFeats, selectedFeat] },
           });
         }
 
@@ -170,7 +177,7 @@ const FeatSelection: React.FC = () => {
   };
 
   const getFeatCard = (feat: Feat) => (
-    <Card 
+    <Card
       key={feat.id}
       className={`cursor-pointer transition-all hover:shadow-md border-2 ${
         selectedFeat === feat.id ? 'border-primary bg-primary/5' : 'border-muted'
@@ -211,19 +218,18 @@ const FeatSelection: React.FC = () => {
     </Card>
   );
 
-  return (
-    !canChooseFeat ? (
-      <div className="text-center space-y-4">
-        <Award className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">No Feat Selection</h2>
-        <p className="text-muted-foreground">
-          Feats become available at levels 4, 8, 12, 16, and 19.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Your character is currently level {currentLevel}.
-        </p>
-      </div>
-    ) : (
+  return !canChooseFeat ? (
+    <div className="text-center space-y-4">
+      <Award className="w-16 h-16 mx-auto text-muted-foreground" />
+      <h2 className="text-2xl font-bold">No Feat Selection</h2>
+      <p className="text-muted-foreground">
+        Feats become available at levels 4, 8, 12, 16, and 19.
+      </p>
+      <p className="text-sm text-muted-foreground">
+        Your character is currently level {currentLevel}.
+      </p>
+    </div>
+  ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Ability Score Improvement</h2>
@@ -245,7 +251,8 @@ const FeatSelection: React.FC = () => {
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="asi" id="asi" />
               <Label htmlFor="asi">
-                <strong>Ability Score Improvement</strong> - Increase two different ability scores by 1 each, or one ability score by 2
+                <strong>Ability Score Improvement</strong> - Increase two different ability scores
+                by 1 each, or one ability score by 2
               </Label>
             </div>
             <div className="flex items-center space-x-2">
@@ -264,7 +271,8 @@ const FeatSelection: React.FC = () => {
           <CardHeader>
             <CardTitle>Ability Score Improvement</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Distribute 2 points among your ability scores. You can increase two different scores by 1 each, or one score by 2.
+              Distribute 2 points among your ability scores. You can increase two different scores
+              by 1 each, or one score by 2.
             </p>
           </CardHeader>
           <CardContent>
@@ -272,13 +280,17 @@ const FeatSelection: React.FC = () => {
               {Object.entries(character?.abilityScores || {}).map(([ability, score]) => {
                 const increase = abilityIncreases[ability] || 0;
                 const newScore = score.score + increase;
-                
+
                 return (
-                  <div key={ability} className="flex items-center justify-between p-3 border rounded">
+                  <div
+                    key={ability}
+                    className="flex items-center justify-between p-3 border rounded"
+                  >
                     <div>
                       <div className="font-medium capitalize">{ability}</div>
                       <div className="text-sm text-muted-foreground">
-                        {score.score} → {newScore} ({newScore >= 10 ? '+' : ''}{Math.floor((newScore - 10) / 2)})
+                        {score.score} → {newScore} ({newScore >= 10 ? '+' : ''}
+                        {Math.floor((newScore - 10) / 2)})
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -295,7 +307,11 @@ const FeatSelection: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleAbilityIncrease(ability, 1)}
-                        disabled={increase === 2 || newScore >= 20 || Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0) >= 2}
+                        disabled={
+                          increase === 2 ||
+                          newScore >= 20 ||
+                          Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0) >= 2
+                        }
                       >
                         +
                       </Button>
@@ -306,7 +322,8 @@ const FeatSelection: React.FC = () => {
             </div>
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Points remaining: {2 - Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0)}
+                Points remaining:{' '}
+                {2 - Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0)}
               </p>
             </div>
           </CardContent>
@@ -373,7 +390,6 @@ const FeatSelection: React.FC = () => {
         </Button>
       </div>
     </div>
-    )
   );
 };
 

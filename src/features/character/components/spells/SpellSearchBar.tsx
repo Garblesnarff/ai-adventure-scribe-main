@@ -1,7 +1,8 @@
-import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface SpellSearchBarProps {
   value: string;
@@ -21,8 +22,8 @@ interface SpellSearchBarProps {
 const SpellSearchBar: React.FC<SpellSearchBarProps> = ({
   value,
   onChange,
-  placeholder = "Search spells by name, description, or school...",
-  className = ''
+  placeholder = 'Search spells by name, description, or school...',
+  className = '',
 }) => {
   const handleClear = () => {
     onChange('');

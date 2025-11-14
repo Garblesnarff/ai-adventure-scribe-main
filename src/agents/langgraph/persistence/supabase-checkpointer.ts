@@ -53,7 +53,7 @@ export class SupabaseCheckpointer extends BaseCheckpointSaver {
   async put(
     config: { configurable?: { thread_id?: string } },
     checkpoint: Checkpoint,
-    metadata: CheckpointMetadata
+    metadata: CheckpointMetadata,
   ): Promise<void> {
     const threadId = config.configurable?.thread_id;
     if (!threadId) {
@@ -70,11 +70,9 @@ export class SupabaseCheckpointer extends BaseCheckpointSaver {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from(this.tableName)
-        .upsert(checkpointRow, {
-          onConflict: 'thread_id,checkpoint_id',
-        });
+      const { error } = await supabase.from(this.tableName).upsert(checkpointRow, {
+        onConflict: 'thread_id,checkpoint_id',
+      });
 
       if (error) {
         logger.error('[SupabaseCheckpointer] Failed to save checkpoint:', error);
@@ -97,9 +95,7 @@ export class SupabaseCheckpointer extends BaseCheckpointSaver {
    * @param config - Configuration with thread_id
    * @returns The latest checkpoint or undefined if none exists
    */
-  async get(
-    config: { configurable?: { thread_id?: string } }
-  ): Promise<Checkpoint | undefined> {
+  async get(config: { configurable?: { thread_id?: string } }): Promise<Checkpoint | undefined> {
     const threadId = config.configurable?.thread_id;
     if (!threadId) {
       return undefined;
@@ -146,7 +142,7 @@ export class SupabaseCheckpointer extends BaseCheckpointSaver {
    */
   async list(
     config: { configurable?: { thread_id?: string } },
-    limit?: number
+    limit?: number,
   ): Promise<Array<{ checkpoint: Checkpoint; metadata: CheckpointMetadata }>> {
     const threadId = config.configurable?.thread_id;
     if (!threadId) {
@@ -175,7 +171,7 @@ export class SupabaseCheckpointer extends BaseCheckpointSaver {
         return [];
       }
 
-      return data.map(row => ({
+      return data.map((row) => ({
         checkpoint: this.deserializeCheckpoint(row.state),
         metadata: row.metadata,
       }));
@@ -221,10 +217,7 @@ export class SupabaseCheckpointer extends BaseCheckpointSaver {
    */
   async deleteThread(threadId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from(this.tableName)
-        .delete()
-        .eq('thread_id', threadId);
+      const { error } = await supabase.from(this.tableName).delete().eq('thread_id', threadId);
 
       if (error) {
         logger.error('[SupabaseCheckpointer] Failed to delete thread:', error);

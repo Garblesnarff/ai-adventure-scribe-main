@@ -1,23 +1,49 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+
+import type { BlogCategory } from '@/types/blog';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { slugify } from '@/utils/slug';
+import { Textarea } from '@/components/ui/textarea';
 import {
   useBlogCategories,
   useCreateBlogCategory,
   useDeleteBlogCategory,
   useUpdateBlogCategory,
 } from '@/hooks/blog/useBlogTaxonomy';
-import type { BlogCategory } from '@/types/blog';
+import { slugify } from '@/utils/slug';
 
 interface CategoryFormValues {
   title: string;
@@ -58,7 +84,10 @@ export const BlogCategoryManager: React.FC = () => {
     if (createForm.formState.dirtyFields.slug) {
       return;
     }
-    createForm.setValue('slug', slugify(createTitleValue), { shouldDirty: false, shouldTouch: false });
+    createForm.setValue('slug', slugify(createTitleValue), {
+      shouldDirty: false,
+      shouldTouch: false,
+    });
   }, [createTitleValue, createForm]);
 
   React.useEffect(() => {
@@ -92,7 +121,7 @@ export const BlogCategoryManager: React.FC = () => {
         onError: (error: any) => {
           toast.error(error.message || 'Failed to create category');
         },
-      }
+      },
     );
   };
 
@@ -122,7 +151,7 @@ export const BlogCategoryManager: React.FC = () => {
           setEditTarget(null);
         },
         onError: (error: any) => toast.error(error.message || 'Failed to update category'),
-      }
+      },
     );
   };
 
@@ -200,11 +229,16 @@ export const BlogCategoryManager: React.FC = () => {
             {isLoading ? (
               <p className="text-sm text-muted-foreground">Loading categories…</p>
             ) : categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No categories yet. Create one to get started.</p>
+              <p className="text-sm text-muted-foreground">
+                No categories yet. Create one to get started.
+              </p>
             ) : (
               <ul className="space-y-3">
                 {categories.map((category) => (
-                  <li key={category.id} className="flex items-start justify-between rounded-md border border-border p-3">
+                  <li
+                    key={category.id}
+                    className="flex items-start justify-between rounded-md border border-border p-3"
+                  >
                     <div>
                       <p className="font-medium">{category.title}</p>
                       <p className="text-xs text-muted-foreground">/{category.slug}</p>
@@ -223,7 +257,11 @@ export const BlogCategoryManager: React.FC = () => {
                         }}
                       >
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" onClick={() => openEditDialog(category)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(category)}
+                          >
                             Edit
                           </Button>
                         </DialogTrigger>
@@ -232,7 +270,10 @@ export const BlogCategoryManager: React.FC = () => {
                             <DialogTitle>Edit Category</DialogTitle>
                           </DialogHeader>
                           <Form {...editForm}>
-                            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
+                            <form
+                              onSubmit={editForm.handleSubmit(handleEdit)}
+                              className="space-y-4"
+                            >
                               <FormField
                                 control={editForm.control}
                                 name="title"
@@ -301,12 +342,16 @@ export const BlogCategoryManager: React.FC = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete category?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will remove the category from all posts. You can re-create it later if needed.
+                              This will remove the category from all posts. You can re-create it
+                              later if needed.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(category)} disabled={deleteCategory.isPending}>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(category)}
+                              disabled={deleteCategory.isPending}
+                            >
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>

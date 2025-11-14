@@ -1,17 +1,18 @@
+import { Loader2, Sparkles, TestTube } from 'lucide-react';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { Loader2, Sparkles, TestTube } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
-  
+
   // Check if we're in development mode
   const isDevelopment = import.meta.env.VITE_ENVIRONMENT === 'development';
   const testEmail = import.meta.env.VITE_DEV_TEST_EMAIL || 'test@example.com';
@@ -34,7 +35,7 @@ const AuthPage: React.FC = () => {
 
     try {
       const { error } = await signIn(signInData.email, signInData.password);
-      
+
       if (error) {
         toast.error(error.message);
       } else {
@@ -49,7 +50,7 @@ const AuthPage: React.FC = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (signUpData.password !== signUpData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -64,7 +65,7 @@ const AuthPage: React.FC = () => {
 
     try {
       const { error } = await signUp(signUpData.email, signUpData.password);
-      
+
       if (error) {
         toast.error(error.message);
       } else {
@@ -79,10 +80,10 @@ const AuthPage: React.FC = () => {
 
   const handleTestAccountLogin = async () => {
     setLoading(true);
-    
+
     try {
       const { error } = await signIn(testEmail, testPassword);
-      
+
       if (error) {
         toast.error(`Test account login failed: ${error.message}`);
       } else {
@@ -163,10 +164,16 @@ const AuthPage: React.FC = () => {
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-purple-900/30">
-                <TabsTrigger value="signin" className="text-white data-[state=active]:bg-purple-600">
+                <TabsTrigger
+                  value="signin"
+                  className="text-white data-[state=active]:bg-purple-600"
+                >
                   Sign In
                 </TabsTrigger>
-                <TabsTrigger value="signup" className="text-white data-[state=active]:bg-purple-600">
+                <TabsTrigger
+                  value="signup"
+                  className="text-white data-[state=active]:bg-purple-600"
+                >
                   Sign Up
                 </TabsTrigger>
               </TabsList>
@@ -174,7 +181,9 @@ const AuthPage: React.FC = () => {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-white">Email</Label>
+                    <Label htmlFor="signin-email" className="text-white">
+                      Email
+                    </Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -186,7 +195,9 @@ const AuthPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-white">Password</Label>
+                    <Label htmlFor="signin-password" className="text-white">
+                      Password
+                    </Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -211,7 +222,9 @@ const AuthPage: React.FC = () => {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-white">Email</Label>
+                    <Label htmlFor="signup-email" className="text-white">
+                      Email
+                    </Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -223,7 +236,9 @@ const AuthPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-white">Password</Label>
+                    <Label htmlFor="signup-password" className="text-white">
+                      Password
+                    </Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -235,13 +250,17 @@ const AuthPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-confirm-password" className="text-white">Confirm Password</Label>
+                    <Label htmlFor="signup-confirm-password" className="text-white">
+                      Confirm Password
+                    </Label>
                     <Input
                       id="signup-confirm-password"
                       type="password"
                       placeholder="••••••••"
                       value={signUpData.confirmPassword}
-                      onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+                      onChange={(e) =>
+                        setSignUpData({ ...signUpData, confirmPassword: e.target.value })
+                      }
                       className="bg-white/10 border-purple-500/30 text-white placeholder:text-purple-300"
                       required
                     />

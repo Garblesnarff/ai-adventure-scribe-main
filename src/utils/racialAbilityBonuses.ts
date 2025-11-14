@@ -1,11 +1,17 @@
-import { CharacterRace } from '@/types/character';
+import type { CharacterRace } from '@/types/character';
 
 /**
  * Utility functions for calculating and applying racial ability score bonuses
  * Implements D&D 5E racial ability score increase rules
  */
 
-export type AbilityScoreName = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
+export type AbilityScoreName =
+  | 'strength'
+  | 'dexterity'
+  | 'constitution'
+  | 'intelligence'
+  | 'wisdom'
+  | 'charisma';
 
 export interface RacialBonus {
   ability: AbilityScoreName;
@@ -28,7 +34,7 @@ export function calculateRacialBonuses(
   racialAbilityChoices?: {
     halfElf?: [string, string];
     variantHuman?: [string, string];
-  }
+  },
 ): RacialBonus[] {
   const bonuses: RacialBonus[] = [];
 
@@ -40,7 +46,7 @@ export function calculateRacialBonuses(
       const abilityKey = ability.toLowerCase() as AbilityScoreName;
       bonuses.push({
         ability: abilityKey,
-        bonus: bonus as number
+        bonus: bonus as number,
       });
     });
   }
@@ -51,7 +57,7 @@ export function calculateRacialBonuses(
       const abilityKey = ability.toLowerCase() as AbilityScoreName;
       bonuses.push({
         ability: abilityKey,
-        bonus: bonus as number
+        bonus: bonus as number,
       });
     });
   }
@@ -61,7 +67,7 @@ export function calculateRacialBonuses(
     racialAbilityChoices.halfElf.forEach((ability) => {
       bonuses.push({
         ability: ability as AbilityScoreName,
-        bonus: 1
+        bonus: 1,
       });
     });
   }
@@ -71,7 +77,7 @@ export function calculateRacialBonuses(
     racialAbilityChoices.variantHuman.forEach((ability) => {
       bonuses.push({
         ability: ability as AbilityScoreName,
-        bonus: 1
+        bonus: 1,
       });
     });
   }
@@ -89,10 +95,10 @@ export function calculateRacialBonuses(
  */
 export function getTotalRacialBonus(
   ability: AbilityScoreName,
-  racialBonuses: RacialBonus[]
+  racialBonuses: RacialBonus[],
 ): number {
   return racialBonuses
-    .filter(bonus => bonus.ability === ability)
+    .filter((bonus) => bonus.ability === ability)
     .reduce((sum, bonus) => sum + bonus.bonus, 0);
 }
 
@@ -106,7 +112,7 @@ export function getTotalRacialBonus(
  */
 export function applyRacialBonuses(
   baseScores: Record<AbilityScoreName, number>,
-  racialBonuses: RacialBonus[]
+  racialBonuses: RacialBonus[],
 ): Record<AbilityScoreName, number> {
   const finalScores = { ...baseScores };
 

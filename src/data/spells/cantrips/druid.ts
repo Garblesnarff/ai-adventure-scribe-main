@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const druidCantrips: Spell[] = [
-{
+  {
     id: 'druidcraft',
     name: 'Druidcraft',
     level: 0,
@@ -12,7 +12,8 @@ export const druidCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'Whispering to the spirits of nature, you create one of several minor effects: predict weather, make a flower bloom, create a sensory effect, or light/snuff a small flame.'
+    description:
+      'Whispering to the spirits of nature, you create one of several minor effects: predict weather, make a flower bloom, create a sensory effect, or light/snuff a small flame.',
   },
   {
     id: 'guidance-druid',
@@ -25,8 +26,9 @@ export const druidCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice.',
-    concentration: true
+    description:
+      'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice.',
+    concentration: true,
   },
   {
     id: 'mending-druid',
@@ -41,7 +43,8 @@ export const druidCantrips: Spell[] = [
     material: true,
     materialDescription: 'two lodestones',
     duration: 'Instantaneous',
-    description: 'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.'
+    description:
+      'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.',
   },
   {
     id: 'poison-spray-druid',
@@ -54,8 +57,9 @@ export const druidCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The creature must succeed on a Constitution saving throw or take 1d12 poison damage.',
-    damage: '1d12'
+    description:
+      'You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The creature must succeed on a Constitution saving throw or take 1d12 poison damage.',
+    damage: '1d12',
   },
   {
     id: 'produce-flame',
@@ -68,8 +72,9 @@ export const druidCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '10 minutes',
-    description: 'A flickering flame appears in your hand. The flame remains there for the duration and harms neither you nor your equipment. The flame sheds bright light in a 10-foot radius and dim light for an additional 10 feet.',
-    damage: '1d8'
+    description:
+      'A flickering flame appears in your hand. The flame remains there for the duration and harms neither you nor your equipment. The flame sheds bright light in a 10-foot radius and dim light for an additional 10 feet.',
+    damage: '1d8',
   },
   {
     id: 'resistance-druid',
@@ -84,8 +89,9 @@ export const druidCantrips: Spell[] = [
     material: true,
     materialDescription: 'a miniature cloak',
     duration: 'Concentration, up to 1 minute',
-    description: 'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice.',
-    concentration: true
+    description:
+      'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice.',
+    concentration: true,
   },
   {
     id: 'thorn-whip',
@@ -100,7 +106,8 @@ export const druidCantrips: Spell[] = [
     material: true,
     materialDescription: 'the stem of a thorny plant',
     duration: 'Instantaneous',
-    description: 'You create a long, vine-like whip covered in thorns that lashes out at your command toward a creature in range. Make a melee spell attack against the target.',
-    damage: '1d6'
+    description:
+      'You create a long, vine-like whip covered in thorns that lashes out at your command toward a creature in range. Make a melee spell attack against the target.',
+    damage: '1d6',
   },
 ];

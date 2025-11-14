@@ -1,8 +1,12 @@
-import React, { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render } from '@testing-library/react';
+import React from 'react';
+
+import type { Character } from '@/types/character';
+import type { RenderOptions } from '@testing-library/react';
+import type { ReactElement } from 'react';
+
 import { CharacterProvider } from '@/contexts/CharacterContext';
-import { Character } from '@/types/character';
 
 /**
  * Test Utilities for D&D Spell Selection System
@@ -30,11 +34,11 @@ export const mockWizardCharacter: Character = {
       spellsKnown: 6,
       ritualCasting: true,
       spellbook: true,
-      pactMagic: false
+      pactMagic: false,
     },
     classFeatures: [],
     armorProficiencies: [],
-    weaponProficiencies: []
+    weaponProficiencies: [],
   },
   race: {
     id: 'human',
@@ -43,9 +47,9 @@ export const mockWizardCharacter: Character = {
     abilityScoreIncrease: {},
     speed: 30,
     traits: [],
-    languages: ['Common']
+    languages: ['Common'],
   },
-  level: 1
+  level: 1,
 };
 
 export const mockClericCharacter: Character = {
@@ -66,11 +70,11 @@ export const mockClericCharacter: Character = {
       spellsKnown: undefined,
       ritualCasting: true,
       spellbook: false,
-      pactMagic: false
+      pactMagic: false,
     },
     classFeatures: [],
     armorProficiencies: [],
-    weaponProficiencies: []
+    weaponProficiencies: [],
   },
   race: {
     id: 'human',
@@ -79,9 +83,9 @@ export const mockClericCharacter: Character = {
     abilityScoreIncrease: {},
     speed: 30,
     traits: [],
-    languages: ['Common']
+    languages: ['Common'],
   },
-  level: 1
+  level: 1,
 };
 
 export const mockFighterCharacter: Character = {
@@ -94,12 +98,21 @@ export const mockFighterCharacter: Character = {
     hitDie: 10,
     primaryAbility: 'strength',
     savingThrowProficiencies: ['strength', 'constitution'],
-    skillChoices: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
+    skillChoices: [
+      'Acrobatics',
+      'Animal Handling',
+      'Athletics',
+      'History',
+      'Insight',
+      'Intimidation',
+      'Perception',
+      'Survival',
+    ],
     numSkillChoices: 2,
     // No spellcasting at level 1
     classFeatures: [],
     armorProficiencies: [],
-    weaponProficiencies: []
+    weaponProficiencies: [],
   },
   race: {
     id: 'human',
@@ -108,9 +121,9 @@ export const mockFighterCharacter: Character = {
     abilityScoreIncrease: {},
     speed: 30,
     traits: [],
-    languages: ['Common']
+    languages: ['Common'],
   },
-  level: 1
+  level: 1,
 };
 
 export const mockHighElfCharacter: Character = {
@@ -123,11 +136,20 @@ export const mockHighElfCharacter: Character = {
     hitDie: 10,
     primaryAbility: 'strength',
     savingThrowProficiencies: ['strength', 'constitution'],
-    skillChoices: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
+    skillChoices: [
+      'Acrobatics',
+      'Animal Handling',
+      'Athletics',
+      'History',
+      'Insight',
+      'Intimidation',
+      'Perception',
+      'Survival',
+    ],
     numSkillChoices: 2,
     classFeatures: [],
     armorProficiencies: [],
-    weaponProficiencies: []
+    weaponProficiencies: [],
   },
   race: {
     id: 'elf',
@@ -136,7 +158,7 @@ export const mockHighElfCharacter: Character = {
     abilityScoreIncrease: { dexterity: 2 },
     speed: 30,
     traits: [],
-    languages: ['Common', 'Elvish']
+    languages: ['Common', 'Elvish'],
   },
   subrace: {
     id: 'high-elf',
@@ -146,10 +168,10 @@ export const mockHighElfCharacter: Character = {
     traits: [],
     bonusCantrip: {
       source: 'wizard',
-      count: 1
-    }
+      count: 1,
+    },
   },
-  level: 1
+  level: 1,
 };
 
 // Mock spell data
@@ -167,7 +189,7 @@ export const mockWizardSpells = [
     somatic: true,
     material: false,
     concentration: false,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'shield',
@@ -182,7 +204,7 @@ export const mockWizardSpells = [
     somatic: true,
     material: false,
     concentration: false,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'detect-magic',
@@ -197,8 +219,8 @@ export const mockWizardSpells = [
     somatic: true,
     material: false,
     concentration: true,
-    ritual: true
-  }
+    ritual: true,
+  },
 ];
 
 export const mockWizardCantrips = [
@@ -215,7 +237,7 @@ export const mockWizardCantrips = [
     somatic: true,
     material: false,
     concentration: true,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'prestidigitation',
@@ -230,7 +252,7 @@ export const mockWizardCantrips = [
     somatic: true,
     material: false,
     concentration: false,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'minor-illusion',
@@ -245,8 +267,8 @@ export const mockWizardCantrips = [
     somatic: true,
     material: true,
     concentration: false,
-    ritual: false
-  }
+    ritual: false,
+  },
 ];
 
 export const mockClericSpells = [
@@ -263,7 +285,7 @@ export const mockClericSpells = [
     somatic: true,
     material: false,
     concentration: false,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'healing-word',
@@ -278,7 +300,7 @@ export const mockClericSpells = [
     somatic: false,
     material: false,
     concentration: false,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'bless',
@@ -293,8 +315,8 @@ export const mockClericSpells = [
     somatic: true,
     material: true,
     concentration: true,
-    ritual: false
-  }
+    ritual: false,
+  },
 ];
 
 export const mockClericCantrips = [
@@ -311,7 +333,7 @@ export const mockClericCantrips = [
     somatic: true,
     material: false,
     concentration: true,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'light',
@@ -326,7 +348,7 @@ export const mockClericCantrips = [
     somatic: false,
     material: true,
     concentration: false,
-    ritual: false
+    ritual: false,
   },
   {
     id: 'sacred-flame',
@@ -341,8 +363,8 @@ export const mockClericCantrips = [
     somatic: true,
     material: false,
     concentration: false,
-    ritual: false
-  }
+    ritual: false,
+  },
 ];
 
 // Custom render function with providers
@@ -362,9 +384,7 @@ const AllProviders = ({ children, initialCharacter = null }: AllProvidersProps) 
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CharacterProvider initialCharacter={initialCharacter}>
-        {children}
-      </CharacterProvider>
+      <CharacterProvider initialCharacter={initialCharacter}>{children}</CharacterProvider>
     </QueryClientProvider>
   );
 };
@@ -373,17 +393,12 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   initialCharacter?: Character | null;
 }
 
-const customRender = (
-  ui: ReactElement,
-  options: CustomRenderOptions = {}
-) => {
+const customRender = (ui: ReactElement, options: CustomRenderOptions = {}) => {
   const { initialCharacter, ...renderOptions } = options;
 
   return render(ui, {
     wrapper: ({ children }) => (
-      <AllProviders initialCharacter={initialCharacter}>
-        {children}
-      </AllProviders>
+      <AllProviders initialCharacter={initialCharacter}>{children}</AllProviders>
     ),
     ...renderOptions,
   });
@@ -405,7 +420,7 @@ export const createApiSpellMock = (spell: any) => ({
   components_somatic: spell.somatic,
   components_material: spell.material,
   material_components: spell.materialComponents || '',
-  damage_effect: spell.damage ? 'damage' : null
+  damage_effect: spell.damage ? 'damage' : null,
 });
 
 // Test assertion helpers
@@ -415,9 +430,9 @@ export const expectValidationError = (validation: any, errorType: string, messag
     expect.arrayContaining([
       expect.objectContaining({
         type: errorType,
-        ...(message && { message: expect.stringContaining(message) })
-      })
-    ])
+        ...(message && { message: expect.stringContaining(message) }),
+      }),
+    ]),
   );
 };
 

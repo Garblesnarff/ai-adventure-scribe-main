@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  validateMulticlassSpellSelection,
-  calculateMulticlassCasterLevel,
-  getEnhancedSpellcastingInfo
-} from '@/utils/spell-validation';
-import { spellApi } from '@/services/spellApi';
+
+import type { Character } from '@/types/character';
+
 import {
   mockWizard,
   mockCleric,
@@ -14,9 +11,14 @@ import {
   mockRanger,
   mockFighter,
   mockHuman,
-  createMockCharacter
+  createMockCharacter,
 } from '@/__tests__/helpers/spell-test-helpers';
-import { Character } from '@/types/character';
+import { spellApi } from '@/services/spellApi';
+import {
+  validateMulticlassSpellSelection,
+  calculateMulticlassCasterLevel,
+  getEnhancedSpellcastingInfo,
+} from '@/utils/spell-validation';
 
 /**
  * Multiclass Spell Validation Edge Cases
@@ -38,8 +40,8 @@ vi.mock('@/services/spellApi', () => ({
   spellApi: {
     calculateMulticlassCasterLevel: vi.fn(),
     getClassSpells: vi.fn(),
-    validateSpellForClass: vi.fn()
-  }
+    validateSpellForClass: vi.fn(),
+  },
 }));
 
 describe('Multiclass Spell Validation Edge Cases', () => {
@@ -52,7 +54,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       // Wizard 3 / Cleric 2 = 5 caster levels
       const classLevels = [
         { className: 'Wizard', level: 3 },
-        { className: 'Cleric', level: 2 }
+        { className: 'Cleric', level: 2 },
       ];
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
@@ -61,9 +63,9 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           caster_level: 5,
           spell_slots_1: 4,
           spell_slots_2: 3,
-          spell_slots_3: 2
+          spell_slots_3: 2,
         },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const result = await calculateMulticlassCasterLevel(classLevels);
@@ -79,7 +81,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       // Wizard 4 / Paladin 4 = 6 caster levels (4 + 2)
       const classLevels = [
         { className: 'Wizard', level: 4 },
-        { className: 'Paladin', level: 4 }
+        { className: 'Paladin', level: 4 },
       ];
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
@@ -88,9 +90,9 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           caster_level: 6,
           spell_slots_1: 4,
           spell_slots_2: 3,
-          spell_slots_3: 3
+          spell_slots_3: 3,
         },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const result = await calculateMulticlassCasterLevel(classLevels);
@@ -103,7 +105,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       // Wizard 6 / Ranger 6 = 8 caster levels (6 + 2)
       const classLevels = [
         { className: 'Wizard', level: 6 },
-        { className: 'Ranger', level: 6 }
+        { className: 'Ranger', level: 6 },
       ];
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
@@ -113,9 +115,9 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           spell_slots_1: 4,
           spell_slots_2: 3,
           spell_slots_3: 3,
-          spell_slots_4: 2
+          spell_slots_4: 2,
         },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const result = await calculateMulticlassCasterLevel(classLevels);
@@ -128,7 +130,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       // Wizard 5 / Warlock 3 = 5 regular + separate pact magic
       const classLevels = [
         { className: 'Wizard', level: 5 },
-        { className: 'Warlock', level: 3 }
+        { className: 'Warlock', level: 3 },
       ];
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
@@ -137,12 +139,12 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           caster_level: 5,
           spell_slots_1: 4,
           spell_slots_2: 3,
-          spell_slots_3: 2
+          spell_slots_3: 2,
         },
         pactMagicSlots: {
           level: 2,
-          slots: 2
-        }
+          slots: 2,
+        },
       });
 
       const result = await calculateMulticlassCasterLevel(classLevels);
@@ -150,7 +152,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       expect(result.totalCasterLevel).toBe(5);
       expect(result.pactMagicSlots).toEqual({
         level: 2,
-        slots: 2
+        slots: 2,
       });
     });
 
@@ -159,7 +161,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       const classLevels = [
         { className: 'Wizard', level: 3 },
         { className: 'Cleric', level: 3 },
-        { className: 'Paladin', level: 4 }
+        { className: 'Paladin', level: 4 },
       ];
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
@@ -169,9 +171,9 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           spell_slots_1: 4,
           spell_slots_2: 3,
           spell_slots_3: 3,
-          spell_slots_4: 2
+          spell_slots_4: 2,
         },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const result = await calculateMulticlassCasterLevel(classLevels);
@@ -188,22 +190,26 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Multiclass', mockWizard, mockHuman),
         classLevels: [
           { className: 'Wizard', level: 3 },
-          { className: 'Cleric', level: 2 }
-        ]
+          { className: 'Cleric', level: 2 },
+        ],
       };
 
       // Mock enhanced spellcasting info
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 5,
         spellSlots: { caster_level: 5, spell_slots_1: 4, spell_slots_2: 3, spell_slots_3: 2 },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       // Try to select spells that would be invalid for the primary class
       const invalidCantrips = ['mage-hand', 'prestidigitation', 'guidance']; // guidance should still be cleric-only
       const invalidSpells = ['magic-missile', 'cure-wounds']; // cure-wounds should still be cleric-only
 
-      const result = await validateMulticlassSpellSelection(wizardCleric, invalidCantrips, invalidSpells);
+      const result = await validateMulticlassSpellSelection(
+        wizardCleric,
+        invalidCantrips,
+        invalidSpells,
+      );
 
       expect(result.valid).toBe(true); // Basic multiclass validation passes
       expect(result.warnings).toContain('Multiclass caster level: 5');
@@ -215,14 +221,14 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Low Level Multiclass', mockWizard, mockHuman),
         classLevels: [
           { className: 'Wizard', level: 2 },
-          { className: 'Cleric', level: 2 }
-        ]
+          { className: 'Cleric', level: 2 },
+        ],
       };
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 4,
         spellSlots: { caster_level: 4, spell_slots_1: 4, spell_slots_2: 3 },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       // Should not be able to learn 2nd level wizard spells as a 2nd level wizard
@@ -230,7 +236,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       const result = await validateMulticlassSpellSelection(
         lowLevelMulticlass,
         ['mage-hand', 'prestidigitation'],
-        ['magic-missile'] // Only 1st level spells should be allowed
+        ['magic-missile'], // Only 1st level spells should be allowed
       );
 
       expect(result.valid).toBe(true); // Validation should pass for appropriate level spells
@@ -242,20 +248,20 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Sorlock', mockSorcerer, mockHuman),
         classLevels: [
           { className: 'Sorcerer', level: 5 },
-          { className: 'Warlock', level: 3 }
-        ]
+          { className: 'Warlock', level: 3 },
+        ],
       };
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 5,
         spellSlots: { caster_level: 5, spell_slots_1: 4, spell_slots_2: 3, spell_slots_3: 2 },
-        pactMagicSlots: { level: 2, slots: 2 }
+        pactMagicSlots: { level: 2, slots: 2 },
       });
 
       const result = await validateMulticlassSpellSelection(
         sorcererWarlock,
         ['prestidigitation', 'mage-hand'],
-        ['magic-missile', 'counterspell']
+        ['magic-missile', 'counterspell'],
       );
 
       expect(result.valid).toBe(true);
@@ -270,14 +276,14 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Test Multiclass', mockWizard, mockHuman),
         classLevels: [
           { className: 'Wizard', level: 4 },
-          { className: 'Cleric', level: 1 }
-        ]
+          { className: 'Cleric', level: 1 },
+        ],
       };
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 5,
         spellSlots: { caster_level: 5, spell_slots_1: 4, spell_slots_2: 3, spell_slots_3: 2 },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const enhancedInfo = await getEnhancedSpellcastingInfo(multiclassCharacter);
@@ -304,26 +310,22 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Invalid', mockFighter, mockHuman),
         classLevels: [
           { className: 'Fighter', level: 10 },
-          { className: 'InvalidClass', level: 5 }
-        ]
+          { className: 'InvalidClass', level: 5 },
+        ],
       };
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockRejectedValue(
-        new Error('Invalid class combination')
+        new Error('Invalid class combination'),
       );
 
-      const result = await validateMulticlassSpellSelection(
-        invalidMulticlass,
-        [],
-        []
-      );
+      const result = await validateMulticlassSpellSelection(invalidMulticlass, [], []);
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'LEVEL_REQUIREMENT',
-          message: 'Failed to calculate multiclass spell requirements'
-        })
+          message: 'Failed to calculate multiclass spell requirements',
+        }),
       );
     });
 
@@ -332,25 +334,25 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Network Test', mockWizard, mockHuman),
         classLevels: [
           { className: 'Wizard', level: 3 },
-          { className: 'Cleric', level: 2 }
-        ]
+          { className: 'Cleric', level: 2 },
+        ],
       };
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockRejectedValue(
-        new Error('Network error')
+        new Error('Network error'),
       );
 
       const result = await validateMulticlassSpellSelection(
         multiclassCharacter,
         ['mage-hand'],
-        ['magic-missile']
+        ['magic-missile'],
       );
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
         expect.objectContaining({
-          type: 'LEVEL_REQUIREMENT'
-        })
+          type: 'LEVEL_REQUIREMENT',
+        }),
       );
     });
 
@@ -360,7 +362,7 @@ describe('Multiclass Spell Validation Edge Cases', () => {
       const result = await validateMulticlassSpellSelection(
         singleClassCharacter,
         ['mage-hand', 'prestidigitation', 'light'],
-        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
       );
 
       expect(result.valid).toBe(true);
@@ -370,13 +372,13 @@ describe('Multiclass Spell Validation Edge Cases', () => {
     it('should handle empty class levels array', async () => {
       const emptyMulticlass: Character = {
         ...createMockCharacter('Empty', mockWizard, mockHuman),
-        classLevels: []
+        classLevels: [],
       };
 
       const result = await validateMulticlassSpellSelection(
         emptyMulticlass,
         ['mage-hand'],
-        ['magic-missile']
+        ['magic-missile'],
       );
 
       // Should fall back to regular validation
@@ -386,13 +388,13 @@ describe('Multiclass Spell Validation Edge Cases', () => {
     it('should handle null/undefined multiclass data', async () => {
       const nullMulticlass: Character = {
         ...createMockCharacter('Null', mockWizard, mockHuman),
-        classLevels: undefined as any
+        classLevels: undefined as any,
       };
 
       const result = await validateMulticlassSpellSelection(
         nullMulticlass,
         ['mage-hand'],
-        ['magic-missile']
+        ['magic-missile'],
       );
 
       // Should fall back to regular validation
@@ -406,21 +408,21 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Pallock', mockPaladin, mockHuman),
         classLevels: [
           { className: 'Paladin', level: 6 },
-          { className: 'Warlock', level: 2 }
-        ]
+          { className: 'Warlock', level: 2 },
+        ],
       };
 
       // Paladin 6 contributes 3 caster levels, Warlock has separate pact magic
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 3,
         spellSlots: { caster_level: 3, spell_slots_1: 4, spell_slots_2: 2 },
-        pactMagicSlots: { level: 1, slots: 2 }
+        pactMagicSlots: { level: 1, slots: 2 },
       });
 
       const result = await validateMulticlassSpellSelection(
         paladinWarlock,
         [],
-        ['bless'] // 1st level paladin spell
+        ['bless'], // 1st level paladin spell
       );
 
       expect(result.valid).toBe(true);
@@ -433,21 +435,21 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Nature Warrior', mockRanger, mockHuman),
         classLevels: [
           { className: 'Ranger', level: 5 },
-          { className: 'Druid', level: 3 }
-        ]
+          { className: 'Druid', level: 3 },
+        ],
       };
 
       // Ranger 5 contributes 1 caster level, Druid 3 contributes 3 = 4 total
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 4,
         spellSlots: { caster_level: 4, spell_slots_1: 4, spell_slots_2: 3 },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const result = await validateMulticlassSpellSelection(
         rangerDruid,
         ['druidcraft'],
-        ['cure-wounds', 'goodberry'] // Should be able to access druid spells
+        ['cure-wounds', 'goodberry'], // Should be able to access druid spells
       );
 
       expect(result.valid).toBe(true);
@@ -461,8 +463,8 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           { className: 'Wizard', level: 5 },
           { className: 'Cleric', level: 3 },
           { className: 'Paladin', level: 6 },
-          { className: 'Warlock', level: 2 }
-        ]
+          { className: 'Warlock', level: 2 },
+        ],
       };
 
       // 5 + 3 + 3 + 0 = 11 caster levels, plus separate pact magic
@@ -475,15 +477,15 @@ describe('Multiclass Spell Validation Edge Cases', () => {
           spell_slots_3: 3,
           spell_slots_4: 3,
           spell_slots_5: 2,
-          spell_slots_6: 1
+          spell_slots_6: 1,
         },
-        pactMagicSlots: { level: 1, slots: 2 }
+        pactMagicSlots: { level: 1, slots: 2 },
       });
 
       const result = await validateMulticlassSpellSelection(
         complexMulticlass,
         ['mage-hand', 'guidance'],
-        ['magic-missile', 'cure-wounds', 'bless']
+        ['magic-missile', 'cure-wounds', 'bless'],
       );
 
       expect(result.valid).toBe(true);
@@ -498,22 +500,23 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Timeout Test', mockWizard, mockHuman),
         classLevels: [
           { className: 'Wizard', level: 10 },
-          { className: 'Cleric', level: 10 }
-        ]
+          { className: 'Cleric', level: 10 },
+        ],
       };
 
       // Mock a timeout scenario
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockImplementation(
-        () => new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 5000);
-        })
+        () =>
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), 5000);
+          }),
       );
 
       const startTime = Date.now();
       const result = await validateMulticlassSpellSelection(
         multiclassCharacter,
         ['mage-hand'],
-        ['magic-missile']
+        ['magic-missile'],
       );
       const endTime = Date.now();
 
@@ -527,16 +530,15 @@ describe('Multiclass Spell Validation Edge Cases', () => {
         ...createMockCharacter('Cache Test', mockWizard, mockHuman),
         classLevels: [
           { className: 'Wizard', level: 3 },
-          { className: 'Cleric', level: 2 }
-        ]
+          { className: 'Cleric', level: 2 },
+        ],
       };
 
-      const mockCalculation = vi.mocked(spellApi.calculateMulticlassCasterLevel)
-        .mockResolvedValue({
-          totalCasterLevel: 5,
-          spellSlots: { caster_level: 5 },
-          pactMagicSlots: null
-        });
+      const mockCalculation = vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
+        totalCasterLevel: 5,
+        spellSlots: { caster_level: 5 },
+        pactMagicSlots: null,
+      });
 
       // Multiple calls should potentially use cached results
       await validateMulticlassSpellSelection(multiclassCharacter, [], []);

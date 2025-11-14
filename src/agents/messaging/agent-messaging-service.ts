@@ -1,10 +1,10 @@
 /**
  * Agent Messaging Service
- * 
+ *
  * Provides a centralized service for handling inter-agent communication.
  * Manages message queuing, processing, persistence, recovery, offline state,
  * connection status, and synchronization. This service is designed as a singleton.
- * 
+ *
  * Key functionalities:
  * - Enqueuing messages for sending.
  * - Processing the message queue.
@@ -12,12 +12,12 @@
  * - Recovering messages after interruptions.
  * - Managing online/offline state.
  * - Synchronizing messages (e.g., with a backend or other clients).
- * 
+ *
  * Dependencies:
  * - Various messaging sub-services (Queue, Processing, Persistence, Recovery, Offline, Connection, Sync).
  * - Message types from './types'.
  * - useToast hook for notifications.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -73,7 +73,7 @@ export class AgentMessagingService {
   private async initializeService(): Promise<void> {
     try {
       await this.recoveryService.recoverMessages();
-      
+
       this.connectionService.onConnectionStateChanged((state) => {
         if (state.status === 'connected') {
           this.startQueueProcessor();
@@ -133,7 +133,7 @@ export class AgentMessagingService {
     receiver: string,
     type: MessageType,
     content: any,
-    priority: MessagePriority = MessagePriority.MEDIUM
+    priority: MessagePriority = MessagePriority.MEDIUM,
   ): Promise<boolean> {
     try {
       const message = await this.processingService.createMessage(
@@ -141,21 +141,21 @@ export class AgentMessagingService {
         receiver,
         type,
         content,
-        priority
+        priority,
       );
 
       await this.persistenceService.persistMessage(message);
       const enqueued = await this.queueService.enqueue(message);
-      
+
       if (enqueued && this.offlineService.isOnline()) {
         await this.synchronizationService.synchronizeMessage(message);
       }
-      
+
       if (!enqueued) {
         this.notifier.notify({
           level: 'warning',
           title: 'Message queue is full',
-          description: 'Unable to enqueue message due to capacity limits.'
+          description: 'Unable to enqueue message due to capacity limits.',
         });
       }
 
@@ -165,7 +165,7 @@ export class AgentMessagingService {
       this.notifier.notify({
         level: 'error',
         title: 'Message dispatch failed',
-        description: error instanceof Error ? error.message : 'Unknown error'
+        description: error instanceof Error ? error.message : 'Unknown error',
       });
       return false;
     }
@@ -187,7 +187,7 @@ export class AgentMessagingService {
       metrics: this.queueService.getMetrics(),
       offlineState: this.offlineService.getState(),
       telemetry: this.diagnostics.getSnapshot(),
-      deadLetter: this.diagnostics.getDeadLetterQueue()
+      deadLetter: this.diagnostics.getDeadLetterQueue(),
     };
   }
 

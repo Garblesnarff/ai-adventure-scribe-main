@@ -1,6 +1,7 @@
+import { Calendar, Clock, User, Home } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, User, Home } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,10 +61,15 @@ const BlogIndex: React.FC = () => {
             <span>Infinite Realms Chronicles</span>
           </div>
           <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-amber-50 lg:text-6xl">
-            Tales from the <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">Infinite Realms</span>
+            Tales from the{' '}
+            <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
+              Infinite Realms
+            </span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-300">
-            Dive into updates, guides, and stories from your AI-powered fantasy RPG adventures. Discover new features, learn advanced techniques, and explore the ever-expanding multiverse.
+            Dive into updates, guides, and stories from your AI-powered fantasy RPG adventures.
+            Discover new features, learn advanced techniques, and explore the ever-expanding
+            multiverse.
           </p>
         </div>
       </header>
@@ -80,7 +86,11 @@ const BlogIndex: React.FC = () => {
             </li>
             <li>
               <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clipRule="evenodd"
+                />
               </svg>
             </li>
             <li>
@@ -99,7 +109,8 @@ const BlogIndex: React.FC = () => {
             </div>
             <h2 className="mt-6 text-2xl font-bold text-slate-100">The Quest Begins Soon</h2>
             <p className="mt-2 text-slate-400">
-              Our scribes are preparing the next chapter. Check back soon for the latest tales from the Infinite Realms.
+              Our scribes are preparing the next chapter. Check back soon for the latest tales from
+              the Infinite Realms.
             </p>
           </div>
         ) : (
@@ -120,7 +131,9 @@ const BlogIndex: React.FC = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-80" />
                       {post.categories && post.categories.length > 0 && (
                         <span className="absolute right-4 top-4 rounded-full border border-amber-600/40 bg-amber-950/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-200 backdrop-blur-sm">
-                          {post.categories[0].name || post.categories[0].title || post.categories[0].slug}
+                          {post.categories[0].name ||
+                            post.categories[0].title ||
+                            post.categories[0].slug}
                         </span>
                       )}
                     </div>
@@ -132,7 +145,7 @@ const BlogIndex: React.FC = () => {
                         {new Date(post.publishedAt || post.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
-                          year: 'numeric'
+                          year: 'numeric',
                         })}
                       </time>
                     </div>
@@ -144,9 +157,7 @@ const BlogIndex: React.FC = () => {
                     </h2>
 
                     {post.excerpt && (
-                      <p className="text-sm leading-relaxed text-slate-300">
-                        {post.excerpt}
-                      </p>
+                      <p className="text-sm leading-relaxed text-slate-300">{post.excerpt}</p>
                     )}
 
                     {post.tags && post.tags.length > 0 && (

@@ -5,6 +5,7 @@ This guide describes the standardized error handling system implemented across a
 ## Table of Contents
 
 - [Overview](#overview)
+- [Implementation Status](#implementation-status)
 - [Error Hierarchy](#error-hierarchy)
 - [Error Codes](#error-codes)
 - [Usage Guide](#usage-guide)
@@ -22,6 +23,41 @@ The application uses a centralized error handling system that provides:
 - **Automatic error logging** with context
 - **Proper HTTP status codes** for all error types
 - **Detailed error information** for debugging (development only)
+
+## Implementation Status
+
+**Completion: 100% ✅**
+
+All services have been standardized to use custom error classes. The following services have been updated:
+
+### Recently Completed Services (Work Unit 4.1)
+- ✅ **InventoryService** (8 errors converted)
+  - Item management errors
+  - Consumable/ammunition usage errors
+  - Encumbrance calculation errors
+- ✅ **CharacterService** (1 error converted)
+  - Character creation errors
+- ✅ **SessionService** (4 errors converted)
+  - Session lifecycle errors
+  - Message management errors
+- ✅ **ClassFeaturesService** (8 errors converted)
+  - Feature grant/usage errors
+  - Subclass selection errors
+- ✅ **CombatAttackService** (7 errors converted)
+  - Attack resolution errors
+  - Spell attack errors
+- ✅ **ProgressionService** (10 errors converted)
+  - XP and leveling errors
+  - Ability score improvement errors
+
+### Previously Completed Services
+- ✅ **CombatHPService**
+- ✅ **CombatInitiativeService**
+- ✅ **ConditionsService**
+- ✅ **RestService**
+- ✅ **SpellSlotsService**
+
+**Total Conversions: 38 generic errors converted to custom error types**
 
 ## Error Hierarchy
 
@@ -86,9 +122,14 @@ Used when user lacks permission for an action.
 ```typescript
 import { ForbiddenError } from '../lib/errors.js';
 
-// Example usage
+// Example: User role check
 if (user.role !== 'admin') {
   throw new ForbiddenError('Admin access required');
+}
+
+// Example: Resource ownership (InventoryService)
+if (item.characterId !== input.characterId) {
+  throw new ForbiddenError('Item does not belong to this character');
 }
 ```
 
@@ -103,13 +144,29 @@ Used when a requested resource doesn't exist.
 ```typescript
 import { NotFoundError } from '../lib/errors.js';
 
-// Example usage
+// Example: Simple resource lookup
 if (!character) {
   throw new NotFoundError('Character', characterId);
 }
 
-if (!encounter) {
-  throw new NotFoundError('Combat encounter', encounterId);
+// Example: Combat encounter (CombatAttackService)
+if (!targetStats) {
+  throw new NotFoundError('Target stats', targetId);
+}
+
+// Example: Inventory item (InventoryService)
+if (!item) {
+  throw new NotFoundError('Inventory item', input.itemId);
+}
+
+// Example: Ammunition lookup (InventoryService)
+if (items.length === 0) {
+  throw new NotFoundError(`Ammunition "${ammoType}"`, characterId);
+}
+
+// Example: Class feature (ClassFeaturesService)
+if (!feature) {
+  throw new NotFoundError('Feature', featureId);
 }
 ```
 
@@ -124,10 +181,26 @@ Used when an operation conflicts with existing data.
 ```typescript
 import { ConflictError } from '../lib/errors.js';
 
-// Example usage
+// Example: Duplicate user email
 const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
 if (existing) {
   throw new ConflictError('Email already registered', { email });
+}
+
+// Example: Feature already granted (ClassFeaturesService)
+if (existing) {
+  throw new ConflictError(`Feature ${feature.featureName} already granted to character`, {
+    featureId,
+    characterId,
+  });
+}
+
+// Example: Subclass already chosen (ClassFeaturesService)
+if (existing) {
+  throw new ConflictError(
+    `Character already has subclass ${existing.subclassName} for ${className}. Subclass choices are permanent.`,
+    { existingSubclass: existing.subclassName, className }
+  );
 }
 ```
 
@@ -135,6 +208,7 @@ if (existing) {
 - Duplicate key violations
 - Conflicting state changes
 - Race conditions
+- Permanent choices already made
 
 #### BusinessLogicError (422)
 Used when request is valid but violates business rules.
@@ -142,7 +216,7 @@ Used when request is valid but violates business rules.
 ```typescript
 import { BusinessLogicError } from '../lib/errors.js';
 
-// Example usage
+// Example: Spell slots (SpellSlotsService)
 if (usedSlots > totalSlots) {
   throw new BusinessLogicError('Cannot use more spell slots than available', {
     used: usedSlots,
@@ -150,8 +224,38 @@ if (usedSlots > totalSlots) {
   });
 }
 
+// Example: Death saves (CombatHPService)
 if (!status.isConscious) {
   throw new BusinessLogicError('Cannot roll death save for conscious participant', { participantId });
+}
+
+// Example: Insufficient quantity (InventoryService)
+if (item.quantity < quantityToUse) {
+  throw new BusinessLogicError(
+    `Insufficient quantity. Available: ${item.quantity}, Requested: ${quantityToUse}`,
+    { available: item.quantity, requested: quantityToUse, itemId: input.itemId }
+  );
+}
+
+// Example: Character level cap (ProgressionService)
+if (newLevel > 20) {
+  throw new BusinessLogicError('Character is already at maximum level (20)', {
+    characterId,
+    currentLevel: oldLevel,
+  });
+}
+
+// Example: Subclass level requirement (ClassFeaturesService)
+if (level < requiredLevel) {
+  throw new BusinessLogicError(
+    `${className} chooses subclass at level ${requiredLevel}. Character is level ${level}.`,
+    { className, requiredLevel, characterLevel: level }
+  );
+}
+
+// Example: Character has no stats (ProgressionService)
+if (!character.stats) {
+  throw new BusinessLogicError('Character has no stats', { characterId });
 }
 ```
 
@@ -160,6 +264,7 @@ if (!status.isConscious) {
 - Invalid state transitions
 - D&D 5E rule violations
 - Game mechanics violations
+- Resource constraints
 
 #### InternalServerError (500)
 Used when an unexpected error occurs.
@@ -167,13 +272,23 @@ Used when an unexpected error occurs.
 ```typescript
 import { InternalServerError } from '../lib/errors.js';
 
-// Example usage
-if (!updated) {
-  throw new InternalServerError('Failed to update database record');
+// Example: Database insert failure (InventoryService)
+if (!item) {
+  throw new InternalServerError('Failed to create inventory item');
 }
 
-catch (error) {
-  throw new InternalServerError('Database operation failed', { error });
+// Example: Database update failure (SessionService)
+if (!updated) {
+  throw new InternalServerError('Failed to update session state');
+}
+
+// Example: Cascading operation failure (CombatAttackService)
+try {
+  const hpResult = await CombatHPService.applyDamage(targetId, damageData);
+  // ...
+} catch (error) {
+  console.error('Failed to apply damage to HP:', error);
+  throw new InternalServerError('Attack succeeded but damage application failed', { error });
 }
 ```
 
@@ -182,6 +297,7 @@ catch (error) {
 - Third-party API failures
 - Unexpected system errors
 - Programming errors
+- Cascading operation failures
 
 ## Error Codes
 

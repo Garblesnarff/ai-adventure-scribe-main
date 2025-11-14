@@ -3,10 +3,11 @@
  * Displays dice roll results in chat with visual flair
  */
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Dice6, Plus, Minus, ArrowUp, ArrowDown } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface DiceRollData {
@@ -38,7 +39,7 @@ interface DiceRollMessageProps {
 export const DiceRollMessage: React.FC<DiceRollMessageProps> = ({
   data,
   playerName,
-  className
+  className,
 }) => {
   const {
     formula,
@@ -52,7 +53,7 @@ export const DiceRollMessage: React.FC<DiceRollMessageProps> = ({
     total,
     naturalRoll,
     critical,
-    label
+    label,
   } = data;
 
   // Determine result styling
@@ -69,14 +70,12 @@ export const DiceRollMessage: React.FC<DiceRollMessageProps> = ({
   const formatIndividualRolls = () => {
     if (advantage || disadvantage) {
       const kept = keptResults || results.slice(0, 1);
-      const dropped = results.filter(r => !kept.includes(r));
-      
+      const dropped = results.filter((r) => !kept.includes(r));
+
       return (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-green-600 font-medium">
-              Kept: [{kept.join(', ')}]
-            </span>
+            <span className="text-xs text-green-600 font-medium">Kept: [{kept.join(', ')}]</span>
             {dropped.length > 0 && (
               <span className="text-xs text-red-400 line-through">
                 Dropped: [{dropped.join(', ')}]
@@ -92,7 +91,7 @@ export const DiceRollMessage: React.FC<DiceRollMessageProps> = ({
         </div>
       );
     }
-    
+
     return null;
   };
 
@@ -129,18 +128,14 @@ export const DiceRollMessage: React.FC<DiceRollMessageProps> = ({
         {/* Formula Display */}
         <div className="flex items-center justify-center gap-2 mb-3">
           <div className="text-center">
-            <div className="text-lg font-mono font-medium text-slate-700">
-              {formula}
-            </div>
+            <div className="text-lg font-mono font-medium text-slate-700">{formula}</div>
             <div className="text-xs text-muted-foreground">Formula</div>
           </div>
-          
+
           <div className="text-xl text-slate-400">=</div>
-          
+
           <div className="text-center">
-            <div className={cn('text-2xl font-bold', getResultColor())}>
-              {total}
-            </div>
+            <div className={cn('text-2xl font-bold', getResultColor())}>{total}</div>
             <div className="text-xs text-muted-foreground">Total</div>
           </div>
         </div>
@@ -156,9 +151,7 @@ export const DiceRollMessage: React.FC<DiceRollMessageProps> = ({
                 Critical Success! (Natural {naturalRoll})
               </Badge>
             ) : (
-              <Badge variant="destructive">
-                Critical Failure! (Natural {naturalRoll})
-              </Badge>
+              <Badge variant="destructive">Critical Failure! (Natural {naturalRoll})</Badge>
             )}
           </div>
         )}

@@ -16,10 +16,11 @@
  * - hero_cta_secondary: "Watch Demo" clicked
  */
 
+import { ArrowRight, Play, Zap, Shield, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play, Zap, Shield, Sparkles } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export const HeroSection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'hero_cta_primary', {
         event_category: 'engagement',
-        event_label: 'Start Playing in 30 Seconds'
+        event_label: 'Start Playing in 30 Seconds',
       });
     }
   };
@@ -59,7 +60,7 @@ export const HeroSection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'hero_cta_secondary', {
         event_category: 'engagement',
-        event_label: 'Watch a Player Betray Their Party'
+        event_label: 'Watch a Player Betray Their Party',
       });
     }
   };
@@ -102,7 +103,10 @@ export const HeroSection: React.FC = () => {
 
           {/* Subheadline - Focus on IMMEDIATE value, not future benefits */}
           <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-300 mb-10 leading-relaxed max-w-4xl mx-auto animate-fade-in-up animation-delay-100 w-full px-2">
-            The AI DM that <span className="text-amber-400 font-semibold">remembers everything</span>, adapts to your playstyle, and builds a world that exists <span className="text-purple-400 font-semibold">only for you</span>.
+            The AI DM that{' '}
+            <span className="text-amber-400 font-semibold">remembers everything</span>, adapts to
+            your playstyle, and builds a world that exists{' '}
+            <span className="text-purple-400 font-semibold">only for you</span>.
           </p>
 
           {/* Social Proof - Immediate trust indicators */}

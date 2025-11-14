@@ -10,25 +10,25 @@
  * @module agents/langgraph/dm-graph
  */
 
-import { StateGraph, END } from "@langchain/langgraph";
-import { DMState, dmStateChannels } from "./state";
-import { detectIntent } from "./nodes/intent-detector";
-import { validateRules } from "./nodes/rules-validator";
-import { generateResponse } from "./nodes/response-generator";
-import { checkpointer } from "./checkpointer";
-import { LANGGRAPH_CONFIG } from "./config";
+import { StateGraph, END } from '@langchain/langgraph';
+import { DMState, dmStateChannels } from './state';
+import { detectIntent } from './nodes/intent-detector';
+import { validateRules } from './nodes/rules-validator';
+import { generateResponse } from './nodes/response-generator';
+import { checkpointer } from './checkpointer';
+import { LANGGRAPH_CONFIG } from './config';
 
 /**
  * Conditional edge: Check for errors after intent detection
  */
 function shouldContinueAfterIntent(state: DMState): string {
   if (state.error) {
-    return "end_with_error";
+    return 'end_with_error';
   }
   if (!state.playerIntent) {
-    return "end_with_error";
+    return 'end_with_error';
   }
-  return "validate_rules";
+  return 'validate_rules';
 }
 
 /**
@@ -37,21 +37,21 @@ function shouldContinueAfterIntent(state: DMState): string {
 function shouldContinueAfterValidation(state: DMState): string {
   // If there's an error, end
   if (state.error) {
-    return "end_with_error";
+    return 'end_with_error';
   }
 
   // If validation failed, still generate response (DM explains why it's invalid)
   if (state.rulesValidation && !state.rulesValidation.isValid) {
-    return "generate_response";
+    return 'generate_response';
   }
 
   // If dice roll is required, pause for human input
   if (state.requiresDiceRoll) {
-    return "request_dice_roll";
+    return 'request_dice_roll';
   }
 
   // Otherwise, proceed to response generation
-  return "generate_response";
+  return 'generate_response';
 }
 
 /**
@@ -60,7 +60,7 @@ function shouldContinueAfterValidation(state: DMState): string {
 function shouldContinueAfterDiceRoll(state: DMState): string {
   // For now, always proceed to response generation
   // In the future, this could wait for actual dice roll results
-  return "generate_response";
+  return 'generate_response';
 }
 
 /**
@@ -121,52 +121,40 @@ function createDMGraph() {
   });
 
   // Add nodes
-  workflow.addNode("detect_intent", detectIntent);
-  workflow.addNode("validate_rules", validateRules);
-  workflow.addNode("request_dice_roll", requestDiceRoll);
-  workflow.addNode("generate_response", generateResponse);
-  workflow.addNode("end_with_error", handleError);
+  workflow.addNode('detect_intent', detectIntent);
+  workflow.addNode('validate_rules', validateRules);
+  workflow.addNode('request_dice_roll', requestDiceRoll);
+  workflow.addNode('generate_response', generateResponse);
+  workflow.addNode('end_with_error', handleError);
 
   // Set entry point
-  workflow.setEntryPoint("detect_intent");
+  workflow.setEntryPoint('detect_intent');
 
   // Add conditional edges
-  workflow.addConditionalEdges(
-    "detect_intent",
-    shouldContinueAfterIntent,
-    {
-      validate_rules: "validate_rules",
-      end_with_error: "end_with_error",
-    }
-  );
+  workflow.addConditionalEdges('detect_intent', shouldContinueAfterIntent, {
+    validate_rules: 'validate_rules',
+    end_with_error: 'end_with_error',
+  });
 
-  workflow.addConditionalEdges(
-    "validate_rules",
-    shouldContinueAfterValidation,
-    {
-      request_dice_roll: "request_dice_roll",
-      generate_response: "generate_response",
-      end_with_error: "end_with_error",
-    }
-  );
+  workflow.addConditionalEdges('validate_rules', shouldContinueAfterValidation, {
+    request_dice_roll: 'request_dice_roll',
+    generate_response: 'generate_response',
+    end_with_error: 'end_with_error',
+  });
 
-  workflow.addConditionalEdges(
-    "request_dice_roll",
-    shouldContinueAfterDiceRoll,
-    {
-      generate_response: "generate_response",
-    }
-  );
+  workflow.addConditionalEdges('request_dice_roll', shouldContinueAfterDiceRoll, {
+    generate_response: 'generate_response',
+  });
 
   // Add edges to END
-  workflow.addEdge("generate_response", END);
-  workflow.addEdge("end_with_error", END);
+  workflow.addEdge('generate_response', END);
+  workflow.addEdge('end_with_error', END);
 
   // Compile the graph with checkpointing
   return workflow.compile({
     checkpointer,
     // Interrupt before dice roll to allow human input
-    interruptBefore: ["request_dice_roll"],
+    interruptBefore: ['request_dice_roll'],
     interruptAfter: [], // Can add node names to pause after
   });
 }
@@ -197,7 +185,7 @@ export const dmGraph = createDMGraph();
 export async function invokeDMGraph(
   playerInput: string,
   worldContext: any,
-  threadId: string
+  threadId: string,
 ): Promise<DMState> {
   const initialState: DMState = {
     messages: [],
@@ -244,11 +232,7 @@ export async function invokeDMGraph(
  * @param threadId - Session ID for checkpoint persistence
  * @returns Async iterator of state updates
  */
-export async function* streamDMGraph(
-  playerInput: string,
-  worldContext: any,
-  threadId: string
-) {
+export async function* streamDMGraph(playerInput: string, worldContext: any, threadId: string) {
   const initialState: DMState = {
     messages: [],
     playerInput,

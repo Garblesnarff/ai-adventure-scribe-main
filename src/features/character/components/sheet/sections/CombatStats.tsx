@@ -1,7 +1,9 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Swords } from 'lucide-react';
-import { Character } from '@/types/character';
+import React from 'react';
+
+import type { Character } from '@/types/character';
+
+import { Card } from '@/components/ui/card';
 
 interface CombatStatsProps {
   character: Character;
@@ -15,22 +17,27 @@ interface CombatStatsProps {
 const CombatStats = ({ character }: CombatStatsProps) => {
   // Armor Class calculation with unarmored defense support
   let armorClass = 10 + character.abilityScores.dexterity.modifier;
-  
+
   // Check for unarmored defense (Barbarian/monk without armor)
-  const hasUnarmoredDefense = character.class && 
-    (character.class.name.toLowerCase() === 'barbarian' || 
-     character.class.name.toLowerCase() === 'monk');
-  
+  const hasUnarmoredDefense =
+    character.class &&
+    (character.class.name.toLowerCase() === 'barbarian' ||
+      character.class.name.toLowerCase() === 'monk');
+
   const isWearingArmor = character.equippedArmor !== undefined && character.equippedArmor !== '';
-  
+
   // If character has unarmored defense and is not wearing armor, use unarmored AC
   if (hasUnarmoredDefense && !isWearingArmor) {
     switch (character.class!.name.toLowerCase()) {
       case 'barbarian':
-        armorClass = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.constitution.modifier;
+        armorClass =
+          10 +
+          character.abilityScores.dexterity.modifier +
+          character.abilityScores.constitution.modifier;
         break;
       case 'monk':
-        armorClass = 10 + character.abilityScores.dexterity.modifier + character.abilityScores.wisdom.modifier;
+        armorClass =
+          10 + character.abilityScores.dexterity.modifier + character.abilityScores.wisdom.modifier;
         break;
     }
   }

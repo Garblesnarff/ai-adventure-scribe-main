@@ -25,7 +25,7 @@ export interface GenerateImageParams {
 
 export interface AppendMessageImageParams {
   messageId: string;
-  image: { url: string; prompt?: string; model?: string; quality?: 'low'|'medium'|'high' };
+  image: { url: string; prompt?: string; model?: string; quality?: 'low' | 'medium' | 'high' };
 }
 
 class LlmApiClient {
@@ -36,7 +36,9 @@ class LlmApiClient {
       throw new Error('API unavailable');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const token = session?.access_token;
 
     try {
@@ -62,19 +64,23 @@ class LlmApiClient {
   }
 
   async generateText(params: GenerateTextParams): Promise<string> {
-    const preferredProvider = params.provider || (import.meta.env.VITE_LLM_PROVIDER as 'openrouter' | 'gemini' | undefined) || 'openrouter';
+    const preferredProvider =
+      params.provider ||
+      (import.meta.env.VITE_LLM_PROVIDER as 'openrouter' | 'gemini' | undefined) ||
+      'openrouter';
 
-    const makeReq = async (provider: 'openrouter' | 'gemini') => this.fetchWithAuth('/v1/llm/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        prompt: params.prompt,
-        model: params.model,
-        maxTokens: params.maxTokens,
-        temperature: params.temperature,
-        history: params.history,
-        provider,
-      }),
-    });
+    const makeReq = async (provider: 'openrouter' | 'gemini') =>
+      this.fetchWithAuth('/v1/llm/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          prompt: params.prompt,
+          model: params.model,
+          maxTokens: params.maxTokens,
+          temperature: params.temperature,
+          history: params.history,
+          provider,
+        }),
+      });
 
     try {
       const res = await makeReq(preferredProvider);
@@ -114,15 +120,18 @@ class LlmApiClient {
   }
 
   async appendMessageImage(params: AppendMessageImageParams): Promise<void> {
-    const res = await this.fetchWithAuth(`/v1/images/message/${encodeURIComponent(params.messageId)}/images`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        url: params.image.url,
-        prompt: params.image.prompt,
-        model: params.image.model,
-        quality: params.image.quality,
-      }),
-    });
+    const res = await this.fetchWithAuth(
+      `/v1/images/message/${encodeURIComponent(params.messageId)}/images`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          url: params.image.url,
+          prompt: params.image.prompt,
+          model: params.image.model,
+          quality: params.image.quality,
+        }),
+      },
+    );
     await res.json().catch(() => ({}));
   }
 }

@@ -1,36 +1,31 @@
 /**
  * Spell Casting Panel Component
- * 
+ *
  * Displays spell component information during combat spell casting.
  * Shows verbal, somatic, and material components with descriptions.
  * Integrates with CombatContext to show real-time spell casting information.
- * 
+ *
  * Dependencies:
  * - useCombat from '@/contexts/CombatContext'
  * - shadcn/ui components for UI
  * - Spell types from '@/types/character'
  * - Spell utilities from '@/utils/spellComponents'
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
+import { Volume2, Hand, Package, Zap, BookOpen, Clock } from 'lucide-react';
 import React from 'react';
-import { useCombat } from '@/contexts/CombatContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { Spell } from '@/types/character';
+
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Volume2, 
-  Hand, 
-  Package,
-  Zap,
-  BookOpen,
-  Clock
-} from 'lucide-react';
-import { Spell } from '@/types/character';
+import { useCombat } from '@/contexts/CombatContext';
+import logger from '@/lib/logger';
 import { spellApi } from '@/services/spellApi';
 import { consumeMaterialComponents } from '@/utils/spellComponents';
-import logger from '@/lib/logger';
 
 // ===========================
 // Props Interface
@@ -47,7 +42,7 @@ interface SpellCastingPanelProps {
 const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
   selectedSpellName,
   selectedSpellLevel,
-  className = ''
+  className = '',
 }) => {
   const { state } = useCombat();
   const { activeEncounter } = state;
@@ -58,9 +53,10 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
   React.useEffect(() => {
     if (selectedSpellName) {
       setIsLoadingSpell(true);
-      spellApi.getSpellByName(selectedSpellName)
-        .then(spell => setSelectedSpell(spell))
-        .catch(error => {
+      spellApi
+        .getSpellByName(selectedSpellName)
+        .then((spell) => setSelectedSpell(spell))
+        .catch((error) => {
           logger.error('Failed to fetch spell:', error);
           setSelectedSpell(null);
         })
@@ -69,7 +65,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
       setSelectedSpell(null);
     }
   }, [selectedSpellName]);
-  
+
   if (!activeEncounter) {
     return (
       <Card className={`w-full ${className}`}>
@@ -84,7 +80,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
   }
 
   const currentParticipant = activeEncounter.participants.find(
-    p => p.id === activeEncounter.currentTurnParticipantId
+    (p) => p.id === activeEncounter.currentTurnParticipantId,
   );
 
   if (!currentParticipant) {
@@ -103,10 +99,14 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
   // Get component icons
   const getComponentIcon = (componentType: 'verbal' | 'somatic' | 'material') => {
     switch (componentType) {
-      case 'verbal': return <Volume2 className="w-4 h-4" />;
-      case 'somatic': return <Hand className="w-4 h-4" />;
-      case 'material': return <Package className="w-4 h-4" />;
-      default: return null;
+      case 'verbal':
+        return <Volume2 className="w-4 h-4" />;
+      case 'somatic':
+        return <Hand className="w-4 h-4" />;
+      case 'material':
+        return <Package className="w-4 h-4" />;
+      default:
+        return null;
     }
   };
 
@@ -117,9 +117,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
           <Zap className="w-5 h-5 text-purple-500" />
           <CardTitle className="text-purple-700">Spell Casting</CardTitle>
         </div>
-        <p className="text-sm text-gray-600">
-          {currentParticipant.name}'s Spell Casting
-        </p>
+        <p className="text-sm text-gray-600">{currentParticipant.name}'s Spell Casting</p>
       </CardHeader>
 
       <CardContent>
@@ -134,9 +132,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
             <div className="p-3 bg-muted rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-bold text-lg">{selectedSpell.name}</h3>
-                <Badge variant="outline">
-                  Level {selectedSpell.level}
-                </Badge>
+                <Badge variant="outline">Level {selectedSpell.level}</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
                 {selectedSpell.school} • {selectedSpell.casting_time} • {selectedSpell.range}
@@ -156,7 +152,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                 <BookOpen className="w-4 h-4" />
                 Components Required
               </h4>
-              
+
               <div className="space-y-3">
                 {/* Verbal Component */}
                 {selectedSpell.components_verbal !== undefined && (
@@ -167,7 +163,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                       </div>
                       <span>Verbal (V)</span>
                     </div>
-                    <Badge variant={selectedSpell.components_verbal ? "default" : "secondary"}>
+                    <Badge variant={selectedSpell.components_verbal ? 'default' : 'secondary'}>
                       {selectedSpell.components_verbal ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
@@ -182,7 +178,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                       </div>
                       <span>Somatic (S)</span>
                     </div>
-                    <Badge variant={selectedSpell.components_somatic ? "default" : "secondary"}>
+                    <Badge variant={selectedSpell.components_somatic ? 'default' : 'secondary'}>
                       {selectedSpell.components_somatic ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
@@ -198,7 +194,7 @@ const SpellCastingPanel: React.FC<SpellCastingPanelProps> = ({
                         </div>
                         <span>Material (M)</span>
                       </div>
-                      <Badge variant={selectedSpell.components_material ? "default" : "secondary"}>
+                      <Badge variant={selectedSpell.components_material ? 'default' : 'secondary'}>
                         {selectedSpell.components_material ? 'Required' : 'Not Required'}
                       </Badge>
                     </div>

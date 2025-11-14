@@ -15,10 +15,11 @@
  * - Identity: "Become a legend"
  */
 
+import { ArrowRight, Sparkles, Users } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Users } from 'lucide-react';
 
 export const FinalCTASection: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export const FinalCTASection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'final_cta_click', {
         event_category: 'conversion',
-        event_label: 'Bottom Page CTA'
+        event_label: 'Bottom Page CTA',
       });
     }
   };
@@ -65,8 +66,8 @@ export const FinalCTASection: React.FC = () => {
 
             {/* Subheadline - Paint the picture of regret */}
             <p className="text-xl sm:text-2xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
-              Somewhere out there is a world waiting for you. NPCs who need you.
-              A villain who's planning. A legend that won't write itself.
+              Somewhere out there is a world waiting for you. NPCs who need you. A villain who's
+              planning. A legend that won't write itself.
             </p>
 
             {/* Stats - Social proof */}

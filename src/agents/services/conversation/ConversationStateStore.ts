@@ -23,7 +23,7 @@ export class ConversationStateStore {
     if (cached && cached.expiresAt > Date.now()) {
       return {
         ...cached.state,
-        dialogueHistory: [...cached.state.dialogueHistory]
+        dialogueHistory: [...cached.state.dialogueHistory],
       };
     }
 
@@ -32,7 +32,7 @@ export class ConversationStateStore {
     if (fromStore) {
       this.cache.set(sessionId, {
         state: fromStore,
-        expiresAt: Date.now() + this.ttl
+        expiresAt: Date.now() + this.ttl,
       });
     }
     return fromStore;
@@ -43,19 +43,19 @@ export class ConversationStateStore {
       currentNPC: state.currentNPC,
       dialogueHistory: [...state.dialogueHistory],
       playerChoices: [...state.playerChoices],
-      lastResponse: state.lastResponse ?? null
+      lastResponse: state.lastResponse ?? null,
     };
 
     this.cache.set(sessionId, {
       state: {
         ...state,
-        dialogueHistory: [...state.dialogueHistory]
+        dialogueHistory: [...state.dialogueHistory],
       },
-      expiresAt: Date.now() + this.ttl
+      expiresAt: Date.now() + this.ttl,
     });
 
     await SessionStateService.updateState(sessionId, {
-      conversation: snapshot
+      conversation: snapshot,
     } as Partial<SessionStatePayload>);
   }
 
@@ -64,7 +64,7 @@ export class ConversationStateStore {
       currentNPC: snapshot.currentNPC,
       dialogueHistory: [...snapshot.dialogueHistory],
       playerChoices: [...snapshot.playerChoices],
-      lastResponse: snapshot.lastResponse ?? null
+      lastResponse: snapshot.lastResponse ?? null,
     };
   }
 }

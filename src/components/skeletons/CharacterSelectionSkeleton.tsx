@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+
 import { Skeleton } from '@/components/ui/skeleton';
 
 /**
@@ -18,7 +19,10 @@ export const CharacterSelectionSkeleton: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="bg-card rounded-lg shadow-md overflow-hidden border-2 border-border/60">
+        <div
+          key={i}
+          className="bg-card rounded-lg shadow-md overflow-hidden border-2 border-border/60"
+        >
           {/* Character Background */}
           <Skeleton className="h-32 w-full" />
 

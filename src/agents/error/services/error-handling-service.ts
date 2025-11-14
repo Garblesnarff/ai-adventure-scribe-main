@@ -1,13 +1,13 @@
 /**
  * Error Handling Service
- * 
+ *
  * This file defines the ErrorHandlingService class, a singleton service responsible
  * for centralized error management across the application. It integrates various
  * error handling strategies like circuit breaking, retries, recovery, and error tracking.
- * 
+ *
  * Main Class:
  * - ErrorHandlingService: Orchestrates error handling mechanisms.
- * 
+ *
  * Key Dependencies:
  * - CircuitBreakerService (./circuit-breaker-service.ts)
  * - RetryService (./retry-service.ts)
@@ -15,7 +15,7 @@
  * - ErrorTrackingService (./error-tracking-service.ts)
  * - Error types from '../types'.
  * - useToast hook from '@/hooks/use-toast'.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -65,7 +65,7 @@ export class ErrorHandlingService {
 
   public async handleOperation<T>(
     operation: () => Promise<T>,
-    config: OperationConfig
+    config: OperationConfig,
   ): Promise<T> {
     try {
       if (this.circuitBreaker.isOpen(config.context)) {
@@ -76,7 +76,7 @@ export class ErrorHandlingService {
         operation,
         config.context,
         undefined,
-        config.retryConfig
+        config.retryConfig,
       );
 
       this.circuitBreaker.recordSuccess(config.context);
@@ -89,7 +89,7 @@ export class ErrorHandlingService {
 
   public async handleDatabaseOperation<T>(
     operation: () => Promise<T>,
-    config: OperationConfig
+    config: OperationConfig,
   ): Promise<T> {
     return this.handleOperation(operation, {
       ...config,
@@ -97,8 +97,8 @@ export class ErrorHandlingService {
       retryConfig: {
         maxRetries: 3,
         initialDelay: 1000,
-        ...config.retryConfig
-      }
+        ...config.retryConfig,
+      },
     });
   }
 
@@ -106,7 +106,7 @@ export class ErrorHandlingService {
     error: Error,
     category: ErrorCategory,
     context: string,
-    metadata?: ErrorMetadata
+    metadata?: ErrorMetadata,
   ): Promise<void> {
     logger.error(`[ErrorHandlingService] Error in ${context}:`, error);
 
@@ -125,9 +125,11 @@ export class ErrorHandlingService {
 
     if (shouldRetry) {
       return this.retryService.handleRetry(
-        async () => { throw error; },
+        async () => {
+          throw error;
+        },
         context,
-        metadata
+        metadata,
       );
     }
 
@@ -143,9 +145,9 @@ export class ErrorHandlingService {
     if (severity >= ErrorSeverity.MEDIUM) {
       const { toast } = useToast();
       toast({
-        title: "Error",
+        title: 'Error',
         description: this.getUserFriendlyMessage(error, category),
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   }
@@ -166,7 +168,7 @@ export class ErrorHandlingService {
   private shouldRetryError(
     error: Error,
     category: ErrorCategory,
-    severity: ErrorSeverity
+    severity: ErrorSeverity,
   ): boolean {
     // Don't retry validation errors
     if (category === ErrorCategory.VALIDATION) {
@@ -185,13 +187,13 @@ export class ErrorHandlingService {
   private getUserFriendlyMessage(error: Error, category: ErrorCategory): string {
     switch (category) {
       case ErrorCategory.NETWORK:
-        return "Connection error. Please check your internet connection.";
+        return 'Connection error. Please check your internet connection.';
       case ErrorCategory.DATABASE:
-        return "Database error. Please try again later.";
+        return 'Database error. Please try again later.';
       case ErrorCategory.VALIDATION:
         return error.message;
       default:
-        return "An unexpected error occurred. Please try again.";
+        return 'An unexpected error occurred. Please try again.';
     }
   }
 }

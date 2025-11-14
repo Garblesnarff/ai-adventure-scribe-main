@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { useToast } from '@/hooks/use-toast';
 import logger from '@/lib/logger';
 import { handleAsyncError } from '@/utils/error-handler';
@@ -33,28 +34,25 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       const VOICE_ID = 'T0GKiSwCb51L7pv1sshd';
       const API_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
-      
+
       const voiceSettings: VoiceSettings = {
         stability: 0.5,
-        similarity_boost: 0.75
+        similarity_boost: 0.75,
       };
 
-      const response = await fetch(
-        `${API_URL}/${VOICE_ID}/stream`,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
-          },
-          body: JSON.stringify({
-            text,
-            voice_settings: voiceSettings,
-            model_id: 'eleven_turbo_v2_5'
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/${VOICE_ID}/stream`, {
+        method: 'POST',
+        headers: {
+          Accept: 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text,
+          voice_settings: voiceSettings,
+          model_id: 'eleven_turbo_v2_5',
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -81,7 +79,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           userMessage: 'Failed to play audio',
           logLevel: 'warn',
           showToast: false,
-          context: { location: 'AudioPlayer.playAudio.play' }
+          context: { location: 'AudioPlayer.playAudio.play' },
         });
         throw new Error('Failed to play audio');
       }
@@ -93,7 +91,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           audioRef.current = null;
         }
       };
-
     } catch (error) {
       setIsSpeaking(false);
       handleAsyncError(error, {
@@ -102,11 +99,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         onError: () => {
           // Use the legacy toast for consistency with existing UI
           toast({
-            title: "Voice Error",
+            title: 'Voice Error',
             description: error instanceof Error ? error.message : 'Failed to process voice',
-            variant: "destructive",
+            variant: 'destructive',
           });
-        }
+        },
       });
     }
   };

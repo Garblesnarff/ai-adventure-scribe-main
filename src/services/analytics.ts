@@ -17,9 +17,13 @@ function basePayload(extra?: AnalyticsPayload): AnalyticsPayload {
   };
 }
 
-function detectArtStyle(input?: { characterTheme?: string | null | undefined; campaignGenre?: string | null | undefined }): string {
+function detectArtStyle(input?: {
+  characterTheme?: string | null | undefined;
+  campaignGenre?: string | null | undefined;
+}): string {
   if (!input) return 'unknown';
-  if (input.characterTheme && String(input.characterTheme).trim()) return String(input.characterTheme);
+  if (input.characterTheme && String(input.characterTheme).trim())
+    return String(input.characterTheme);
   if (input.campaignGenre && String(input.campaignGenre).trim()) return String(input.campaignGenre);
   return 'unknown';
 }
@@ -68,7 +72,10 @@ export const analytics = {
     });
   },
 
-  aiRegenerateClicked(kind: 'description' | 'avatar' | 'design_sheet', info: { campaignId?: string; artStyle?: string } = {}): void {
+  aiRegenerateClicked(
+    kind: 'description' | 'avatar' | 'design_sheet',
+    info: { campaignId?: string; artStyle?: string } = {},
+  ): void {
     this.track('ai_regenerate_clicked', {
       kind,
       campaignId: info.campaignId || 'unknown',

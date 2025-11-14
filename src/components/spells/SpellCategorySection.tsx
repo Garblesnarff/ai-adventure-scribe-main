@@ -1,10 +1,13 @@
+import { Sparkles, Wand2, Users, Info } from 'lucide-react';
 import React from 'react';
+
+import SpellCard from './SpellCard';
+
+import type { Spell } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Spell } from '@/types/character';
-import SpellCard from './SpellCard';
-import { Sparkles, Wand2, Users, Info } from 'lucide-react';
 import logger from '@/lib/logger';
 
 interface SpellCategorySectionProps {
@@ -41,7 +44,7 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
   showProgress = true,
   info,
   className = '',
-  colorTheme = 'purple'
+  colorTheme = 'purple',
 }) => {
   const selectedCount = selectedSpells.length;
   const progressPercentage = maxSpells > 0 ? (selectedCount / maxSpells) * 100 : 0;
@@ -53,10 +56,10 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
     spellCount: spells.length,
     selectedCount,
     maxSpells,
-    spellNames: spells.slice(0, 3).map(s => s.name),
+    spellNames: spells.slice(0, 3).map((s) => s.name),
     selectedSpells,
     isComplete,
-    isOverLimit
+    isOverLimit,
   });
 
   const getIcon = () => {
@@ -86,7 +89,7 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
               <CardTitle className="flex items-center gap-2 text-lg">
                 {title}
                 <Badge
-                  variant={isOverLimit ? "destructive" : isComplete ? "default" : "secondary"}
+                  variant={isOverLimit ? 'destructive' : isComplete ? 'default' : 'secondary'}
                   className="text-xs"
                 >
                   {selectedCount}/{maxSpells}
@@ -109,13 +112,16 @@ const SpellCategorySection: React.FC<SpellCategorySectionProps> = ({
             <Progress
               value={Math.min(progressPercentage, 100)}
               className="h-2"
-              style={{
-                '--progress-bg': getProgressColor()
-              } as React.CSSProperties}
+              style={
+                {
+                  '--progress-bg': getProgressColor(),
+                } as React.CSSProperties
+              }
             />
             {isOverLimit && (
               <p className="text-xs text-destructive">
-                Too many spells selected. Please deselect {selectedCount - maxSpells} spell{selectedCount - maxSpells > 1 ? 's' : ''}.
+                Too many spells selected. Please deselect {selectedCount - maxSpells} spell
+                {selectedCount - maxSpells > 1 ? 's' : ''}.
               </p>
             )}
           </div>

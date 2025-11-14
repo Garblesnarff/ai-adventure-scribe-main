@@ -7,13 +7,8 @@
  * @module narration-service-impl
  */
 
-import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { MemoryManager } from '../memory-manager';
-import type { Memory, MemoryContext } from '../memory-manager';
 import { voiceConsistencyService } from '../voice-consistency-service';
-import type { SessionVoiceContext } from '../voice-consistency-service';
-import logger from '@/lib/logger';
-
 import {
   buildDMPersonaPrompt,
   buildGameContextPrompt,
@@ -22,7 +17,13 @@ import {
   buildOpeningScenePrompt,
 } from './shared/prompts';
 import { getGeminiManager, addEquipmentContext } from './shared/utils';
+
+import type { Memory, MemoryContext } from '../memory-manager';
+import type { SessionVoiceContext } from '../voice-consistency-service';
 import type { ChatMessage, GameContext, AIResponse, NarrationSegment } from './shared/types';
+
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
+import logger from '@/lib/logger';
 
 /**
  * Generate response using Gemini API
@@ -36,7 +37,7 @@ export async function generateGeminiResponse(
   },
   relevantMemories: Memory[],
   voiceContext: SessionVoiceContext | null,
-  combatDetection: any
+  combatDetection: any,
 ): Promise<AIResponse> {
   logger.info('Using local Gemini API for chat...');
   const geminiManager = getGeminiManager();
@@ -242,7 +243,7 @@ function parseStructuredResponse(rawResponse: string): AIResponse {
  */
 async function processVoiceAssignments(
   sessionId: string,
-  segments: NarrationSegment[]
+  segments: NarrationSegment[],
 ): Promise<void> {
   try {
     const normalizedSegments = segments.map((segment) => ({
@@ -251,8 +252,8 @@ async function processVoiceAssignments(
         segment.type === 'dm'
           ? 'narration'
           : segment.type === 'character'
-          ? 'dialogue'
-          : (segment.type as string),
+            ? 'dialogue'
+            : (segment.type as string),
     }));
 
     await voiceConsistencyService.processVoiceAssignments(sessionId, normalizedSegments);
@@ -267,7 +268,7 @@ async function processVoiceAssignments(
  */
 async function postProcessMemoriesAndWorld(
   params: { message: string; context: GameContext; conversationHistory?: ChatMessage[] },
-  responseText: string
+  responseText: string,
 ): Promise<void> {
   try {
     const memoryContext: MemoryContext = {
@@ -281,7 +282,7 @@ async function postProcessMemoriesAndWorld(
     const extractionResult = await MemoryManager.extractMemories(
       memoryContext,
       params.message,
-      responseText
+      responseText,
     );
 
     if (extractionResult.memories.length > 0) {
@@ -298,7 +299,7 @@ async function postProcessMemoriesAndWorld(
       params.context.sessionId!,
       params.context.characterId,
       params.message,
-      responseText
+      responseText,
     );
 
     if (
@@ -307,7 +308,7 @@ async function postProcessMemoriesAndWorld(
         0
     ) {
       logger.info(
-        `🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`
+        `🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`,
       );
     }
   } catch (worldError) {

@@ -9,10 +9,7 @@ interface TypingIndicatorProps {
  * TypingIndicator Component
  * Shows a typing animation when someone is composing a message
  */
-export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
-  isVisible,
-  sender = 'DM'
-}) => {
+export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ isVisible, sender = 'DM' }) => {
   if (!isVisible) return null;
 
   return (

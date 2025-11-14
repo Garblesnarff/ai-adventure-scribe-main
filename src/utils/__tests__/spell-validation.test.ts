@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
+import type { Character, CharacterClass, CharacterRace, Subrace } from '@/types/character';
+
 import {
   validateSpellSelection,
   validateCharacterSpellSelection,
@@ -6,9 +9,8 @@ import {
   getRacialSpells,
   getMaxSpellCounts,
   isSpellValidForClass,
-  getSpellValidationRules
+  getSpellValidationRules,
 } from '@/utils/spell-validation';
-import { Character, CharacterClass, CharacterRace, Subrace } from '@/types/character';
 
 // Helper function to create mock characters
 function createMockCharacter(
@@ -18,7 +20,7 @@ function createMockCharacter(
   subrace?: Subrace,
   level: number = 1,
   cantrips?: string[],
-  knownSpells?: string[]
+  knownSpells?: string[],
 ): Character {
   return {
     id: `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
@@ -33,10 +35,22 @@ function createMockCharacter(
       strength: { score: 10, modifier: 0, savingThrow: false },
       dexterity: { score: 14, modifier: 2, savingThrow: false },
       constitution: { score: 13, modifier: 1, savingThrow: false },
-      intelligence: { score: 15, modifier: 2, savingThrow: characterClass.savingThrowProficiencies.includes('intelligence') },
-      wisdom: { score: 12, modifier: 1, savingThrow: characterClass.savingThrowProficiencies.includes('wisdom') },
-      charisma: { score: 8, modifier: -1, savingThrow: characterClass.savingThrowProficiencies.includes('charisma') }
-    }
+      intelligence: {
+        score: 15,
+        modifier: 2,
+        savingThrow: characterClass.savingThrowProficiencies.includes('intelligence'),
+      },
+      wisdom: {
+        score: 12,
+        modifier: 1,
+        savingThrow: characterClass.savingThrowProficiencies.includes('wisdom'),
+      },
+      charisma: {
+        score: 8,
+        modifier: -1,
+        savingThrow: characterClass.savingThrowProficiencies.includes('charisma'),
+      },
+    },
   };
 }
 
@@ -78,11 +92,11 @@ describe('Spell Validation System', () => {
         cantripsKnown: 3,
         spellsKnown: 6,
         ritualCasting: true,
-        spellbook: true
+        spellbook: true,
       },
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockCleric = {
@@ -97,11 +111,11 @@ describe('Spell Validation System', () => {
       spellcasting: {
         ability: 'wisdom',
         cantripsKnown: 3,
-        ritualCasting: true
+        ritualCasting: true,
       },
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockBard = {
@@ -116,11 +130,11 @@ describe('Spell Validation System', () => {
       spellcasting: {
         ability: 'charisma',
         cantripsKnown: 2,
-        spellsKnown: 4
+        spellsKnown: 4,
       },
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockWarlock = {
@@ -130,17 +144,25 @@ describe('Spell Validation System', () => {
       hitDie: 8,
       primaryAbility: 'charisma',
       savingThrowProficiencies: ['wisdom', 'charisma'],
-      skillChoices: ['Arcana', 'Deception', 'History', 'Intimidation', 'Investigation', 'Nature', 'Religion'],
+      skillChoices: [
+        'Arcana',
+        'Deception',
+        'History',
+        'Intimidation',
+        'Investigation',
+        'Nature',
+        'Religion',
+      ],
       numSkillChoices: 2,
       spellcasting: {
         ability: 'charisma',
         cantripsKnown: 2,
         spellsKnown: 2,
-        ritualCasting: false
+        ritualCasting: false,
       },
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockFighter = {
@@ -150,11 +172,20 @@ describe('Spell Validation System', () => {
       hitDie: 10,
       primaryAbility: 'strength',
       savingThrowProficiencies: ['strength', 'constitution'],
-      skillChoices: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
+      skillChoices: [
+        'Acrobatics',
+        'Animal Handling',
+        'Athletics',
+        'History',
+        'Insight',
+        'Intimidation',
+        'Perception',
+        'Survival',
+      ],
       numSkillChoices: 2,
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockRace = {
@@ -164,7 +195,7 @@ describe('Spell Validation System', () => {
       abilityScoreIncrease: {},
       speed: 30,
       traits: [],
-      languages: ['Common']
+      languages: ['Common'],
     };
 
     mockHighElfSubrace = {
@@ -175,8 +206,8 @@ describe('Spell Validation System', () => {
       traits: ['Elf Weapon Training', 'Cantrip'],
       bonusCantrip: {
         source: 'wizard',
-        count: 1
-      }
+        count: 1,
+      },
     };
 
     mockTieflingSubrace = {
@@ -185,7 +216,7 @@ describe('Spell Validation System', () => {
       description: 'Fiendish heritage',
       abilityScoreIncrease: { charisma: 2, intelligence: 1 },
       traits: ['Infernal Legacy'],
-      cantrips: ['thaumaturgy']
+      cantrips: ['thaumaturgy'],
     };
   });
 
@@ -199,7 +230,7 @@ describe('Spell Validation System', () => {
         hasSpellbook: true,
         isPactMagic: false,
         ritualCasting: true,
-        spellcastingAbility: 'intelligence'
+        spellcastingAbility: 'intelligence',
       });
     });
 
@@ -212,7 +243,7 @@ describe('Spell Validation System', () => {
         hasSpellbook: false,
         isPactMagic: false,
         ritualCasting: true,
-        spellcastingAbility: 'wisdom'
+        spellcastingAbility: 'wisdom',
       });
     });
 
@@ -225,7 +256,7 @@ describe('Spell Validation System', () => {
         hasSpellbook: false,
         isPactMagic: false,
         ritualCasting: false,
-        spellcastingAbility: 'charisma'
+        spellcastingAbility: 'charisma',
       });
     });
 
@@ -243,7 +274,7 @@ describe('Spell Validation System', () => {
         hasSpellbook: false,
         isPactMagic: true,
         ritualCasting: false,
-        spellcastingAbility: 'charisma'
+        spellcastingAbility: 'charisma',
       });
     });
   });
@@ -255,7 +286,7 @@ describe('Spell Validation System', () => {
         cantrips: [],
         spells: [],
         bonusCantrips: 0,
-        bonusCantripSource: undefined
+        bonusCantripSource: undefined,
       });
     });
 
@@ -265,7 +296,7 @@ describe('Spell Validation System', () => {
         cantrips: [],
         spells: [],
         bonusCantrips: 1,
-        bonusCantripSource: 'wizard'
+        bonusCantripSource: 'wizard',
       });
     });
 
@@ -275,7 +306,7 @@ describe('Spell Validation System', () => {
         cantrips: ['thaumaturgy'],
         spells: [],
         bonusCantrips: 0,
-        bonusCantripSource: undefined
+        bonusCantripSource: undefined,
       });
     });
 
@@ -291,7 +322,7 @@ describe('Spell Validation System', () => {
         name: 'Drow',
         description: 'Dark elf',
         abilityScoreIncrease: {},
-        traits: []
+        traits: [],
       };
       const racialSpells = getRacialSpells('Elf', drowSubrace);
       expect(racialSpells.cantrips).toContain('dancing-lights');
@@ -317,23 +348,23 @@ describe('Spell Validation System', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
 
       clericCharacter = {
         ...wizardCharacter,
-        class: mockCleric
+        class: mockCleric,
       };
 
       fighterCharacter = {
         ...wizardCharacter,
-        class: mockFighter
+        class: mockFighter,
       };
 
       highElfWizard = {
         ...wizardCharacter,
-        subrace: mockHighElfSubrace
+        subrace: mockHighElfSubrace,
       };
     });
 
@@ -342,7 +373,7 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         expect(result.valid).toBe(true);
@@ -353,7 +384,7 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'], // 4 instead of 3
-          ['magic-missile', 'shield', 'detect-magic']
+          ['magic-missile', 'shield', 'detect-magic'],
         );
 
         expect(result.valid).toBe(false);
@@ -361,8 +392,8 @@ describe('Spell Validation System', () => {
           expect.objectContaining({
             type: 'COUNT_MISMATCH',
             expected: 3,
-            actual: 4
-          })
+            actual: 4,
+          }),
         );
       });
 
@@ -370,7 +401,7 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation'], // 2 instead of 3
-          ['magic-missile', 'shield', 'detect-magic']
+          ['magic-missile', 'shield', 'detect-magic'],
         );
 
         expect(result.valid).toBe(false);
@@ -378,8 +409,8 @@ describe('Spell Validation System', () => {
           expect.objectContaining({
             type: 'COUNT_MISMATCH',
             expected: 3,
-            actual: 2
-          })
+            actual: 2,
+          }),
         );
       });
 
@@ -387,15 +418,15 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'guidance'], // guidance is cleric cantrip
-          ['magic-missile', 'shield', 'detect-magic']
+          ['magic-missile', 'shield', 'detect-magic'],
         );
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
           expect.objectContaining({
             type: 'INVALID_SPELL',
-            spellId: 'guidance'
-          })
+            spellId: 'guidance',
+          }),
         );
       });
 
@@ -403,19 +434,31 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          Array(7).fill('magic-missile') // 7 instead of 6, but this would be caught by unique validation
+          Array(7).fill('magic-missile'), // 7 instead of 6, but this would be caught by unique validation
         );
 
-        const spells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray', 'comprehend-languages'];
-        const result2 = validateSpellSelection(wizardCharacter, ['mage-hand', 'prestidigitation', 'light'], spells);
+        const spells = [
+          'magic-missile',
+          'shield',
+          'detect-magic',
+          'burning-hands',
+          'sleep',
+          'color-spray',
+          'comprehend-languages',
+        ];
+        const result2 = validateSpellSelection(
+          wizardCharacter,
+          ['mage-hand', 'prestidigitation', 'light'],
+          spells,
+        );
 
         expect(result2.valid).toBe(false);
         expect(result2.errors).toContainEqual(
           expect.objectContaining({
             type: 'COUNT_MISMATCH',
             expected: 6,
-            actual: 7
-          })
+            actual: 7,
+          }),
         );
       });
 
@@ -423,11 +466,11 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'cure-wounds', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'cure-wounds', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
-          expect.objectContaining({ type: 'INVALID_SPELL', spellId: 'cure-wounds' })
+          expect.objectContaining({ type: 'INVALID_SPELL', spellId: 'cure-wounds' }),
         );
       });
 
@@ -444,18 +487,22 @@ describe('Spell Validation System', () => {
             constitution: { score: 13, modifier: 1, savingThrow: false },
             intelligence: { score: 12, modifier: 1, savingThrow: false },
             wisdom: { score: 10, modifier: 0, savingThrow: false },
-            charisma: { score: 16, modifier: 3, savingThrow: true }
-          }
+            charisma: { score: 16, modifier: 3, savingThrow: true },
+          },
         };
 
         const result = validateSpellSelection(
           warlockCharacter,
           ['eldritch-blast', 'prestidigitation'],
-          ['unseen-servant', 'illusory-script']
+          ['unseen-servant', 'illusory-script'],
         );
         expect(result.valid).toBe(true);
-        expect(result.warnings).toContain('As a Warlock, you use Pact Magic. Your spell slots recharge on a short rest.');
-        expect(result.warnings).not.toContain('Your class can cast spells as rituals if they have the ritual tag, without expending a spell slot.');
+        expect(result.warnings).toContain(
+          'As a Warlock, you use Pact Magic. Your spell slots recharge on a short rest.',
+        );
+        expect(result.warnings).not.toContain(
+          'Your class can cast spells as rituals if they have the ritual tag, without expending a spell slot.',
+        );
       });
     });
 
@@ -464,7 +511,7 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           highElfWizard,
           ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'], // 3 class + 1 racial
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         expect(result.valid).toBe(true);
@@ -475,28 +522,28 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           highElfWizard,
           ['mage-hand', 'prestidigitation', 'light', 'guidance'], // guidance not wizard cantrip
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
           expect.objectContaining({
             type: 'INVALID_SPELL',
-            spellId: 'guidance'
-          })
+            spellId: 'guidance',
+          }),
         );
       });
 
       it('should validate Tiefling racial cantrip', () => {
         const tieflingCharacter = {
           ...wizardCharacter,
-          subrace: mockTieflingSubrace
+          subrace: mockTieflingSubrace,
         };
 
         const result = validateSpellSelection(
           tieflingCharacter,
           ['mage-hand', 'prestidigitation', 'light', 'thaumaturgy'], // 3 class + 1 racial
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         expect(result.valid).toBe(true);
@@ -506,31 +553,23 @@ describe('Spell Validation System', () => {
 
     describe('Non-Spellcaster Validation', () => {
       it('should reject spells for non-spellcasters', () => {
-        const result = validateSpellSelection(
-          fighterCharacter,
-          ['mage-hand'],
-          ['magic-missile']
-        );
+        const result = validateSpellSelection(fighterCharacter, ['mage-hand'], ['magic-missile']);
 
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
           expect.objectContaining({
-            type: 'LEVEL_REQUIREMENT'
-          })
+            type: 'LEVEL_REQUIREMENT',
+          }),
         );
       });
 
       it('should allow racial spells for non-spellcasters', () => {
         const tieflingFighter = {
           ...fighterCharacter,
-          subrace: mockTieflingSubrace
+          subrace: mockTieflingSubrace,
         };
 
-        const result = validateSpellSelection(
-          tieflingFighter,
-          ['thaumaturgy'],
-          []
-        );
+        const result = validateSpellSelection(tieflingFighter, ['thaumaturgy'], []);
 
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
@@ -539,13 +578,13 @@ describe('Spell Validation System', () => {
       it('should validate High Elf Fighter with wizard cantrip', () => {
         const highElfFighter = {
           ...fighterCharacter,
-          subrace: mockHighElfSubrace
+          subrace: mockHighElfSubrace,
         };
 
         const result = validateSpellSelection(
           highElfFighter,
           ['prestidigitation'], // wizard cantrip allowed
-          []
+          [],
         );
 
         expect(result.valid).toBe(true);
@@ -555,7 +594,7 @@ describe('Spell Validation System', () => {
       it('should reject incorrect number of racial cantrips for non-spellcaster', () => {
         const tieflingFighter = {
           ...fighterCharacter,
-          subrace: mockTieflingSubrace
+          subrace: mockTieflingSubrace,
         };
 
         const tooMany = validateSpellSelection(tieflingFighter, ['thaumaturgy', 'guidance'], []);
@@ -572,25 +611,17 @@ describe('Spell Validation System', () => {
       it('should handle missing character gracefully', () => {
         // The validation function should handle null characters without crashing
         expect(() => {
-          validateSpellSelection(
-            null as any,
-            ['mage-hand'],
-            ['magic-missile']
-          );
+          validateSpellSelection(null as any, ['mage-hand'], ['magic-missile']);
         }).not.toThrow();
       });
 
       it('should handle missing class gracefully', () => {
         const characterWithoutClass = {
           ...wizardCharacter,
-          class: undefined
+          class: undefined,
         };
 
-        const result = validateSpellSelection(
-          characterWithoutClass as any,
-          ['mage-hand'],
-          []
-        );
+        const result = validateSpellSelection(characterWithoutClass as any, ['mage-hand'], []);
 
         expect(result.valid).toBe(false);
       });
@@ -598,13 +629,13 @@ describe('Spell Validation System', () => {
       it('should handle missing race gracefully', () => {
         const characterWithoutRace = {
           ...wizardCharacter,
-          race: undefined
+          race: undefined,
         };
 
         const result = validateSpellSelection(
           characterWithoutRace as any,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         expect(result.valid).toBe(true); // Should still validate class spells
@@ -614,11 +645,11 @@ describe('Spell Validation System', () => {
         const result = validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         expect(result.warnings).toContain(
-          'As a Wizard, these spells will be recorded in your spellbook. You can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day.'
+          'As a Wizard, these spells will be recorded in your spellbook. You can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day.',
         );
       });
     });
@@ -630,7 +661,7 @@ describe('Spell Validation System', () => {
         const counts = getMaxSpellCounts(mockWizard, 1);
         expect(counts).toEqual({
           cantrips: 3,
-          spells: 6
+          spells: 6,
         });
       });
 
@@ -638,7 +669,7 @@ describe('Spell Validation System', () => {
         const counts = getMaxSpellCounts(mockFighter, 1);
         expect(counts).toEqual({
           cantrips: 0,
-          spells: 0
+          spells: 0,
         });
       });
 
@@ -703,15 +734,15 @@ describe('Spell Validation System', () => {
         const characterWithSpells = {
           ...mockWizardChar,
           cantrips: ['mage-hand', 'prestidigitation', 'light'],
-          knownSpells: ['magic-missile', 'shield']
+          knownSpells: ['magic-missile', 'shield'],
         };
 
         const result = validateCharacterSpellSelection(characterWithSpells as any);
         expect(result.valid).toBe(false); // Not enough spells (needs 6)
         expect(result.errors).toContainEqual(
           expect.objectContaining({
-            type: 'COUNT_MISMATCH'
-          })
+            type: 'COUNT_MISMATCH',
+          }),
         );
       });
     });

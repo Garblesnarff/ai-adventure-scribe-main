@@ -1,7 +1,10 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import logger from '@/lib/logger';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import React, { Component } from 'react';
+
+import type { ErrorInfo, ReactNode } from 'react';
+
+import { Button } from '@/components/ui/button';
+import logger from '@/lib/logger';
 
 /**
  * Props for the ErrorBoundary component
@@ -69,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
       componentStack: errorInfo.componentStack,
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
 
     // Call custom error handler if provided
@@ -114,9 +117,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {import.meta.env.DEV && this.state.error?.stack && (
               <details className="mb-4 p-3 bg-muted rounded text-xs">
                 <summary className="cursor-pointer font-medium mb-2">Error Details</summary>
-                <pre className="whitespace-pre-wrap overflow-x-auto">
-                  {this.state.error.stack}
-                </pre>
+                <pre className="whitespace-pre-wrap overflow-x-auto">{this.state.error.stack}</pre>
               </details>
             )}
 

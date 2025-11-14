@@ -1,7 +1,8 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, ArrowRight, CheckCircle, Sparkles } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface StepNavigationProps {
   currentStep: number;
@@ -39,9 +40,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
               style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
             />
           </div>
-          <span className="font-medium">
-            {Math.round(((currentStep + 1) / totalSteps) * 100)}%
-          </span>
+          <span className="font-medium">{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
         </div>
       </div>
 
@@ -74,15 +73,11 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
                     isActive
                       ? 'bg-primary text-primary-foreground scale-110'
                       : isCompleted
-                      ? 'bg-green-500 text-white'
-                      : 'bg-muted text-muted-foreground'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-muted text-muted-foreground'
                   }`}
                 >
-                  {isCompleted ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    stepIndex + 1
-                  )}
+                  {isCompleted ? <CheckCircle className="w-4 h-4" /> : stepIndex + 1}
                 </div>
               );
             })}

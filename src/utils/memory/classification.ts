@@ -1,7 +1,8 @@
-import { MemoryType } from '@/components/game/memory/types';
+import { calculateImportance } from './importance';
 import { CLASSIFICATION_PATTERNS } from './patterns';
 import { splitIntoSegments } from './segmentation';
-import { calculateImportance } from './importance';
+
+import type { MemoryType } from '@/components/game/memory/types';
 
 /**
  * Interface for classified memory segment
@@ -20,14 +21,14 @@ export const classifySegment = (content: string): MemoryType => {
   const lowerContent = content.toLowerCase();
 
   // Initialize scores
-  Object.keys(CLASSIFICATION_PATTERNS).forEach(type => {
+  Object.keys(CLASSIFICATION_PATTERNS).forEach((type) => {
     scores.set(type as MemoryType, 0);
   });
 
   // Calculate scores for each type
   Object.entries(CLASSIFICATION_PATTERNS).forEach(([type, { patterns, contextPatterns }]) => {
     // Check for exact pattern matches
-    patterns.forEach(pattern => {
+    patterns.forEach((pattern) => {
       const regex = new RegExp(`\\b${pattern}\\b`, 'i');
       if (regex.test(lowerContent)) {
         const currentScore = scores.get(type as MemoryType) || 0;
@@ -36,7 +37,7 @@ export const classifySegment = (content: string): MemoryType => {
     });
 
     // Check for context pattern matches
-    contextPatterns.forEach(pattern => {
+    contextPatterns.forEach((pattern) => {
       if (pattern.test(content)) {
         const currentScore = scores.get(type as MemoryType) || 0;
         scores.set(type as MemoryType, currentScore + 2);
@@ -65,14 +66,14 @@ export const processContent = (content: string): MemorySegment[] => {
   const segments = splitIntoSegments(content, {
     maxLength: 100,
     minLength: 20,
-    preserveQuotes: true
+    preserveQuotes: true,
   });
-  
+
   if (!content || content.trim().length === 0) return [];
-  
+
   // Fallback: if nothing met minLength, keep the whole content as a single segment
   const effectiveSegments = segments.length === 0 ? [content] : segments;
-  
+
   const mapToImportanceType = (type: MemoryType): string => {
     switch (type) {
       case 'npc':
@@ -94,23 +95,23 @@ export const processContent = (content: string): MemorySegment[] => {
     }
   };
 
-  return effectiveSegments.map(segment => {
+  return effectiveSegments.map((segment) => {
     const type = classifySegment(segment);
     let importance = calculateImportance({
       content: segment,
-      type: mapToImportanceType(type)
+      type: mapToImportanceType(type),
     });
     const baseImportance = CLASSIFICATION_PATTERNS[type]?.importance ?? 3;
     importance = Math.max(importance, baseImportance);
-    
+
     // Normalize importance score from 1-10 range to 1-5 range
     // calculateImportance returns 1-10 for internal weighting, but the database expects 1-5
     const normalizedImportance = Math.min(5, Math.max(1, Math.round(importance / 2)));
-    
+
     return {
       content: segment.trim(),
       type,
-      importance: normalizedImportance
+      importance: normalizedImportance,
     };
   });
 };

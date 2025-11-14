@@ -1,10 +1,11 @@
+import { Sparkles, User, AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
+
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { Sparkles, User, AlertCircle } from 'lucide-react';
+import { useCharacter } from '@/contexts/CharacterContext';
 
 /**
  * Character name validation rules per D&D 5E conventions
@@ -30,7 +31,10 @@ function validateCharacterName(name: string): { isValid: boolean; error?: string
   }
 
   if (!NAME_PATTERN.test(name)) {
-    return { isValid: false, error: 'Name can only contain letters, spaces, hyphens, and apostrophes' };
+    return {
+      isValid: false,
+      error: 'Name can only contain letters, spaces, hyphens, and apostrophes',
+    };
   }
 
   return { isValid: true };
@@ -52,7 +56,7 @@ const BasicInfo: React.FC = () => {
   const handleNameChange = (name: string) => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { name }
+      payload: { name },
     });
 
     // Clear error on change
@@ -71,9 +75,9 @@ const BasicInfo: React.FC = () => {
     if (!validation.isValid) {
       setNameError(validation.error || 'Invalid name');
       toast({
-        title: "Invalid Name",
+        title: 'Invalid Name',
         description: validation.error,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } else {
       setNameError(null);
@@ -124,14 +128,18 @@ const BasicInfo: React.FC = () => {
               aria-describedby={nameError ? 'name-error' : undefined}
             />
             {nameError && (
-              <div id="name-error" className="flex items-center space-x-2 text-red-500 text-sm" role="alert">
+              <div
+                id="name-error"
+                className="flex items-center space-x-2 text-red-500 text-sm"
+                role="alert"
+              >
                 <AlertCircle className="w-4 h-4" />
                 <span>{nameError}</span>
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Choose a name that fits your character's background and personality.
-              You can always change it later.
+              Choose a name that fits your character's background and personality. You can always
+              change it later.
             </p>
           </div>
         </div>
@@ -146,7 +154,8 @@ const BasicInfo: React.FC = () => {
           <div className="flex-1">
             <p className="font-medium text-infinite-teal mb-1">✨ What's Next?</p>
             <p className="text-sm text-muted-foreground">
-              After choosing your name, you'll select your race, class, ability scores, background, and equipment to bring your character to life.
+              After choosing your name, you'll select your race, class, ability scores, background,
+              and equipment to bring your character to life.
             </p>
           </div>
         </div>

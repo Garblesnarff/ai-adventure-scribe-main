@@ -1,27 +1,28 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useCharacter } from '@/contexts/CharacterContext';
+
+import { GameLoadingOverlay, GameLayout } from './game-content';
+
+import type { Campaign as CampaignType } from '@/types/campaign';
+
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCampaign } from '@/contexts/CampaignContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Campaign as CampaignType } from '@/types/campaign';
-import { characterLoaderService } from '@/services/character-loader';
-import { MemoryProvider } from '@/contexts/MemoryContext';
-import { MessageProvider } from '@/contexts/MessageContext';
+import { useCharacter } from '@/contexts/CharacterContext';
 import { VoiceProvider } from '@/contexts/VoiceContext';
 import { useGameSession } from '@/hooks/use-game-session';
 import { CombatProvider, useCombat } from '@/contexts/CombatContext';
 import { GameProvider } from '@/contexts/GameContext';
+import { MemoryProvider, useMemoryContext } from '@/contexts/MemoryContext';
+import { MessageProvider, useMessageContext } from '@/contexts/MessageContext';
 import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
 import { useInitialGreeting } from '@/hooks/use-initial-greeting';
-import { useMessageContext } from '@/contexts/MessageContext';
-import { useMemoryContext } from '@/contexts/MemoryContext';
-import logger from '@/lib/logger';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { handleAsyncError } from '@/utils/error-handler';
+import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
+import { characterLoaderService } from '@/services/character-loader';
 import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
-import { GameLoadingOverlay, GameLayout } from './game-content';
+import { handleAsyncError } from '@/utils/error-handler';
 
 /**
  * GameContent Component
@@ -38,15 +39,15 @@ const GameContent: React.FC = () => {
   const { dispatch: campaignDispatch } = useCampaign();
 
   // Initialize game session
-  const {
-    sessionData,
-    sessionId,
-    sessionState,
-    updateGameSessionState,
-  } = useGameSession(campaignIdFromParams, characterIdFromParams || undefined);
+  const { sessionData, sessionId, sessionState, updateGameSessionState } = useGameSession(
+    campaignIdFromParams,
+    characterIdFromParams || undefined,
+  );
 
   const [isLoading, setIsLoading] = useState(true);
-  const [loadingPhase, setLoadingPhase] = useState<'initial' | 'data' | 'session' | 'greeting'>('initial');
+  const [loadingPhase, setLoadingPhase] = useState<'initial' | 'data' | 'session' | 'greeting'>(
+    'initial',
+  );
   const [error, setError] = useState<string | null>(null);
   const [combatMode, setCombatMode] = useState(false);
   const { user } = useAuth();
@@ -57,7 +58,7 @@ const GameContent: React.FC = () => {
   useEffect(() => {
     const loadGameData = async () => {
       if (!characterIdFromParams || !campaignIdFromParams) {
-        setError("Character ID or Campaign ID is missing from URL parameters.");
+        setError('Character ID or Campaign ID is missing from URL parameters.');
         setIsLoading(false);
         setLoadingPhase('initial');
         return;
@@ -71,7 +72,8 @@ const GameContent: React.FC = () => {
         // Load character with all spell data populated
         logger.info(`🔄 [GameContent] Loading character ${characterIdFromParams} with spells`);
 
-        const loadedCharacter = await characterLoaderService.loadCharacterWithSpells(characterIdFromParams);
+        const loadedCharacter =
+          await characterLoaderService.loadCharacterWithSpells(characterIdFromParams);
 
         if (!loadedCharacter) {
           throw new Error('Character not found or failed to load.');
@@ -83,7 +85,7 @@ const GameContent: React.FC = () => {
           cantrips: loadedCharacter.cantrips?.length || 0,
           knownSpells: loadedCharacter.knownSpells?.length || 0,
           preparedSpells: loadedCharacter.preparedSpells?.length || 0,
-          ritualSpells: loadedCharacter.ritualSpells?.length || 0
+          ritualSpells: loadedCharacter.ritualSpells?.length || 0,
         });
 
         characterDispatch({ type: 'SET_CHARACTER', payload: loadedCharacter });
@@ -103,18 +105,20 @@ const GameContent: React.FC = () => {
           throw new Error('Campaign not found.');
         }
 
-        campaignDispatch({ type: 'UPDATE_CAMPAIGN', payload: campaignData as unknown as Partial<CampaignType> });
+        campaignDispatch({
+          type: 'UPDATE_CAMPAIGN',
+          payload: campaignData as unknown as Partial<CampaignType>,
+        });
 
         // Derive DM role: env override or campaign owner
         try {
-          const envVal = String(((import.meta as any)?.env?.VITE_FORCE_DM) || '');
+          const envVal = String((import.meta as any)?.env?.VITE_FORCE_DM || '');
           const forceDM = ['true', '1', 'yes', 'on'].includes(envVal.toLowerCase());
           const ownerId = (campaignData as any)?.user_id;
           setIsDM(Boolean(forceDM || (user?.id && ownerId && user.id === ownerId)));
         } catch (e) {
           setIsDM(false);
         }
-
       } catch (err: any) {
         const errorMessage = err.message || 'Failed to load game data';
         setError(errorMessage);
@@ -123,8 +127,8 @@ const GameContent: React.FC = () => {
           context: {
             location: 'GameContent.loadGameData',
             campaignId: campaignIdFromParams,
-            characterId: characterIdFromParams
-          }
+            characterId: characterIdFromParams,
+          },
         });
       } finally {
         setIsLoading(false);
@@ -143,12 +147,15 @@ const GameContent: React.FC = () => {
   }, []);
 
   const handleAIResponse = useCallback(async (message: any) => {
-    logger.info('🎯 AI response received in outer component:', message.text?.substring(0, 100) + '...');
+    logger.info(
+      '🎯 AI response received in outer component:',
+      message.text?.substring(0, 100) + '...',
+    );
   }, []);
 
   // Combine loading states
   const combinedIsLoading = isLoading || sessionState === 'loading';
-  const combinedError = error || (sessionState === 'error' ? "Error with game session." : null);
+  const combinedError = error || (sessionState === 'error' ? 'Error with game session.' : null);
 
   // Loading state
   if (combinedIsLoading) {
@@ -172,7 +179,10 @@ const GameContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center p-10 max-w-md">
-          <div className="text-muted-foreground mb-4">Initializing your infinite story... If this persists, check campaign/character selection.</div>
+          <div className="text-muted-foreground mb-4">
+            Initializing your infinite story... If this persists, check campaign/character
+            selection.
+          </div>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
@@ -244,17 +254,26 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   const getDefaultLeftCollapsed = () => typeof window !== 'undefined' && window.innerWidth < 1200;
   const getDefaultRightCollapsed = () => typeof window !== 'undefined' && window.innerWidth < 1440;
 
-  const [isLeftCollapsed, setIsLeftCollapsed] = useLocalStorage('ui:leftPanelCollapsed', getDefaultLeftCollapsed());
-  const [isRightCollapsed, setIsRightCollapsed] = useLocalStorage('ui:rightPanelCollapsed', getDefaultRightCollapsed());
+  const [isLeftCollapsed, setIsLeftCollapsed] = useLocalStorage(
+    'ui:leftPanelCollapsed',
+    getDefaultLeftCollapsed(),
+  );
+  const [isRightCollapsed, setIsRightCollapsed] = useLocalStorage(
+    'ui:rightPanelCollapsed',
+    getDefaultRightCollapsed(),
+  );
   const [isCombatDetected, setIsCombatDetected] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
 
   // Safety state
-  const [lastSafetyCommand] = useState<{
-    type: 'x_card' | 'veil' | 'pause' | 'resume';
-    timestamp: string;
-    autoTriggered?: boolean;
-  } | undefined>();
+  const [lastSafetyCommand] = useState<
+    | {
+        type: 'x_card' | 'veil' | 'pause' | 'resume';
+        timestamp: string;
+        autoTriggered?: boolean;
+      }
+    | undefined
+  >();
   const [contentWarnings] = useState<string[]>([]);
   const [comfortLevel] = useState<'pg' | 'pg13' | 'r' | 'custom'>('pg13');
   const [showSafetyInfo] = useState(false);
@@ -267,7 +286,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   const combatAI = useCombatAIIntegration({
     sessionId,
     characterId: characterIdForHandler || undefined,
-    campaignId: campaignIdForHandler || undefined
+    campaignId: campaignIdForHandler || undefined,
   });
   const { state: combatState } = useCombat();
   const prevInCombatRef = React.useRef(combatState.isInCombat);
@@ -289,7 +308,7 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
           userMessage: 'Failed to save greeting memory',
           logLevel: 'warn',
           showToast: false,
-          context: { location: 'GameContent.onMemoryCreated' }
+          context: { location: 'GameContent.onMemoryCreated' },
         });
       }
     },
@@ -301,40 +320,45 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
   }, [combatAI.isInCombat]);
 
   // Handle AI response with combat detection
-  const innerHandleAIResponse = React.useCallback(async (message: any) => {
-    try {
-      logger.info('🎯 Processing AI response for combat detection:', message.text?.substring(0, 100) + '...');
+  const innerHandleAIResponse = React.useCallback(
+    async (message: any) => {
+      try {
+        logger.info(
+          '🎯 Processing AI response for combat detection:',
+          message.text?.substring(0, 100) + '...',
+        );
 
-      if (message.combatDetection) {
-        logger.info('⚔️ Combat detection data found in AI response');
-        const result = await combatAI.processDMResponse(message, characterState.character);
+        if (message.combatDetection) {
+          logger.info('⚔️ Combat detection data found in AI response');
+          const result = await combatAI.processDMResponse(message, characterState.character);
 
-        // Send combat messages to chat
-        if (result.combatMessages && result.combatMessages.length > 0) {
-          for (const m of result.combatMessages) {
-            try {
-              await sendMessage(m);
-            } catch (e) {
-              handleAsyncError(e, {
-                userMessage: 'Failed to send combat message',
-                logLevel: 'warn',
-                showToast: false,
-                context: { location: 'GameContent.onAIResponseWithCombat.sendCombatMessage' }
-              });
+          // Send combat messages to chat
+          if (result.combatMessages && result.combatMessages.length > 0) {
+            for (const m of result.combatMessages) {
+              try {
+                await sendMessage(m);
+              } catch (e) {
+                handleAsyncError(e, {
+                  userMessage: 'Failed to send combat message',
+                  logLevel: 'warn',
+                  showToast: false,
+                  context: { location: 'GameContent.onAIResponseWithCombat.sendCombatMessage' },
+                });
+              }
             }
           }
         }
+
+        await handleAIResponse(message);
+      } catch (error) {
+        handleAsyncError(error, {
+          userMessage: 'Failed to process AI response for combat',
+          context: { location: 'GameContent.onAIResponseWithCombat' },
+        });
       }
-
-      await handleAIResponse(message);
-
-    } catch (error) {
-      handleAsyncError(error, {
-        userMessage: 'Failed to process AI response for combat',
-        context: { location: 'GameContent.onAIResponseWithCombat' }
-      });
-    }
-  }, [combatAI, characterState, handleAIResponse, sendMessage]);
+    },
+    [combatAI, characterState, handleAIResponse, sendMessage],
+  );
 
   // Handle combat end
   React.useEffect(() => {
@@ -343,10 +367,11 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
       const rounds = enc?.currentRound || enc?.roundsElapsed || 1;
       const participants = (enc?.participants || []).map((p: any) => ({
         name: p.name,
-        damageDealt: (enc?.actions || []).filter((a: any) => a.participantId === p.id && a.damageDealt)
+        damageDealt: (enc?.actions || [])
+          .filter((a: any) => a.participantId === p.id && a.damageDealt)
           .reduce((s: number, a: any) => s + (a.damageDealt || 0), 0),
         damageTaken: Math.max(0, (p.maxHitPoints || 0) - (p.currentHitPoints || 0)),
-        status: p.isDead ? 'dead' : p.isUnconscious ? 'unconscious' : 'ok'
+        status: p.isDead ? 'dead' : p.isUnconscious ? 'unconscious' : 'ok',
       }));
       const totalDamage = participants.reduce((s, x) => s + x.damageDealt, 0);
       sendMessage({
@@ -355,9 +380,9 @@ const GameContentInner: React.FC<GameContentInnerProps> = ({
         context: {
           combatData: {
             type: 'summary',
-            summary: { rounds, totalDamage, participants, outcome: 'Combat concluded' }
-          }
-        }
+            summary: { rounds, totalDamage, participants, outcome: 'Combat concluded' },
+          },
+        },
       });
       setShowTracker(false);
     }

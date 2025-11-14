@@ -1,4 +1,11 @@
+import { CheckCircle2, Circle, Zap, Award } from 'lucide-react';
 import React, { useState } from 'react';
+
+import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -7,12 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle2, Circle, Zap, Award } from 'lucide-react';
-import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
 
 interface VariantHumanChoiceProps {
   isOpen: boolean;
@@ -38,62 +40,70 @@ const FEAT_OPTIONS = [
   {
     id: 'alert',
     name: 'Alert',
-    description: '+5 to initiative, can\'t be surprised while conscious, enemies don\'t gain advantage from being hidden.',
-    category: 'combat'
+    description:
+      "+5 to initiative, can't be surprised while conscious, enemies don't gain advantage from being hidden.",
+    category: 'combat',
   },
   {
     id: 'athlete',
     name: 'Athlete',
-    description: '+1 STR or DEX, stand from prone with 5ft movement, climbing doesn\'t cost extra, running jumps with 5ft start.',
-    category: 'utility'
+    description:
+      "+1 STR or DEX, stand from prone with 5ft movement, climbing doesn't cost extra, running jumps with 5ft start.",
+    category: 'utility',
   },
   {
     id: 'lucky',
     name: 'Lucky',
-    description: '3 luck points. Spend to roll extra d20 for attack, ability check, or saving throw (or when attacked).',
-    category: 'utility'
+    description:
+      '3 luck points. Spend to roll extra d20 for attack, ability check, or saving throw (or when attacked).',
+    category: 'utility',
   },
   {
     id: 'magic-initiate',
     name: 'Magic Initiate',
-    description: 'Learn 2 cantrips and one 1st-level spell from a chosen class. Cast the 1st-level spell once per long rest.',
-    category: 'magic'
+    description:
+      'Learn 2 cantrips and one 1st-level spell from a chosen class. Cast the 1st-level spell once per long rest.',
+    category: 'magic',
   },
   {
     id: 'martial-adept',
     name: 'Martial Adept',
-    description: 'Learn 2 maneuvers from Battle Master. Gain one d6 superiority die (regain on short/long rest).',
-    category: 'combat'
+    description:
+      'Learn 2 maneuvers from Battle Master. Gain one d6 superiority die (regain on short/long rest).',
+    category: 'combat',
   },
   {
     id: 'observant',
     name: 'Observant',
     description: '+1 INT or WIS. Read lips. +5 to passive Perception and Investigation.',
-    category: 'utility'
+    category: 'utility',
   },
   {
     id: 'resilient',
     name: 'Resilient',
-    description: '+1 to chosen ability score. Gain proficiency in saving throws using that ability.',
-    category: 'defense'
+    description:
+      '+1 to chosen ability score. Gain proficiency in saving throws using that ability.',
+    category: 'defense',
   },
   {
     id: 'sharpshooter',
     name: 'Sharpshooter',
-    description: 'Ignore half/three-quarters cover. No disadvantage at long range. -5 attack for +10 damage.',
-    category: 'combat'
+    description:
+      'Ignore half/three-quarters cover. No disadvantage at long range. -5 attack for +10 damage.',
+    category: 'combat',
   },
   {
     id: 'tough',
     name: 'Tough',
     description: '+2 HP per level (including current and future levels).',
-    category: 'defense'
+    category: 'defense',
   },
   {
     id: 'war-caster',
     name: 'War Caster',
-    description: 'Advantage on Concentration checks. Cast spells as opportunity attacks. Cast with hands full.',
-    category: 'magic'
+    description:
+      'Advantage on Concentration checks. Cast spells as opportunity attacks. Cast with hands full.',
+    category: 'magic',
   },
 ];
 
@@ -116,17 +126,15 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
   currentChoices,
 }) => {
   const [selectedAbilities, setSelectedAbilities] = useState<AbilityScoreName[]>(
-    currentChoices?.abilities ? [...currentChoices.abilities] : []
+    currentChoices?.abilities ? [...currentChoices.abilities] : [],
   );
-  const [selectedFeat, setSelectedFeat] = useState<string | null>(
-    currentChoices?.feat || null
-  );
+  const [selectedFeat, setSelectedFeat] = useState<string | null>(currentChoices?.feat || null);
   const [featCategory, setFeatCategory] = useState('all');
 
   const toggleAbility = (ability: AbilityScoreName) => {
     if (selectedAbilities.includes(ability)) {
       // Deselect
-      setSelectedAbilities(selectedAbilities.filter(a => a !== ability));
+      setSelectedAbilities(selectedAbilities.filter((a) => a !== ability));
     } else if (selectedAbilities.length < 2) {
       // Select (only if less than 2 selected)
       setSelectedAbilities([...selectedAbilities, ability]);
@@ -143,9 +151,10 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
   const isSelected = (ability: AbilityScoreName) => selectedAbilities.includes(ability);
   const canConfirm = selectedAbilities.length === 2 && selectedFeat !== null;
 
-  const filteredFeats = featCategory === 'all'
-    ? FEAT_OPTIONS
-    : FEAT_OPTIONS.filter(feat => feat.category === featCategory);
+  const filteredFeats =
+    featCategory === 'all'
+      ? FEAT_OPTIONS
+      : FEAT_OPTIONS.filter((feat) => feat.category === featCategory);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -155,7 +164,9 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
           <DialogDescription className="text-base">
             Your human adaptability grants you +1 to two abilities of your choice and one feat.
             <br />
-            <span className="font-semibold text-foreground">Choose two abilities and one feat:</span>
+            <span className="font-semibold text-foreground">
+              Choose two abilities and one feat:
+            </span>
           </DialogDescription>
         </DialogHeader>
 
@@ -185,8 +196,8 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
                       selected
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50'
                         : disabled
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/20'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/20'
                     }`}
                     onClick={() => !disabled && toggleAbility(ability.name)}
                   >
@@ -200,12 +211,13 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
                           )}
                           <h4 className="font-semibold capitalize">{ability.label}</h4>
                         </div>
-                        <p className="text-sm text-muted-foreground ml-7">
-                          {ability.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground ml-7">{ability.description}</p>
                       </div>
                       {selected && (
-                        <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700 border-blue-300">
+                        <Badge
+                          variant="outline"
+                          className="ml-2 bg-blue-100 text-blue-700 border-blue-300"
+                        >
                           +1
                         </Badge>
                       )}
@@ -231,7 +243,7 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
               {FEAT_CATEGORIES.map((category) => (
                 <Button
                   key={category.id}
-                  variant={featCategory === category.id ? "default" : "outline"}
+                  variant={featCategory === category.id ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFeatCategory(category.id)}
                 >
@@ -268,9 +280,7 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
                             {feat.category}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground ml-7">
-                          {feat.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground ml-7">{feat.description}</p>
                       </div>
                     </div>
                   </Card>
@@ -283,7 +293,7 @@ export const VariantHumanChoice: React.FC<VariantHumanChoiceProps> = ({
               {!selectedFeat && 'Select one feat to gain at 1st level'}
               {selectedFeat && (
                 <span className="text-green-600 font-medium">
-                  ✓ {FEAT_OPTIONS.find(f => f.id === selectedFeat)?.name} selected
+                  ✓ {FEAT_OPTIONS.find((f) => f.id === selectedFeat)?.name} selected
                 </span>
               )}
             </div>

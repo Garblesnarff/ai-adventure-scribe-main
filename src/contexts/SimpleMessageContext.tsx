@@ -1,12 +1,14 @@
 /**
  * Simple Message Context
- * 
+ *
  * Provides a simple MessageContext for SimpleGameChat to work with VoiceHandler
  */
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { ChatMessage } from '@/services/ai-service';
-import { ChatMessage as GameChatMessage } from '@/types/game';
+import React, { createContext, useContext } from 'react';
+
+import type { ChatMessage } from '@/services/ai-service';
+import type { ChatMessage as GameChatMessage } from '@/types/game';
+import type { ReactNode } from 'react';
 
 interface SimpleMessageContextType {
   messages: GameChatMessage[];
@@ -20,7 +22,7 @@ const SimpleMessageContext = createContext<SimpleMessageContextType | undefined>
 /**
  * Simple provider component for managing message-related state from SimpleGameChat
  */
-export const SimpleMessageProvider: React.FC<{ 
+export const SimpleMessageProvider: React.FC<{
   messages: ChatMessage[];
   isLoading: boolean;
   sendMessage: (message: ChatMessage) => Promise<void>;
@@ -28,14 +30,17 @@ export const SimpleMessageProvider: React.FC<{
   children: ReactNode;
 }> = ({ messages, isLoading, sendMessage, queueStatus = 'idle', children }) => {
   // Transform messages from ai-service format to VoiceHandler-compatible format
-  const transformedMessages: GameChatMessage[] = messages.map(msg => ({
+  const transformedMessages: GameChatMessage[] = messages.map((msg) => ({
     text: msg.content, // Transform content -> text
-    sender: (msg.role === 'assistant' ? 'dm' : msg.role === 'user' ? 'player' : 'system') as 'dm' | 'player' | 'system', // Transform role -> sender
+    sender: (msg.role === 'assistant' ? 'dm' : msg.role === 'user' ? 'player' : 'system') as
+      | 'dm'
+      | 'player'
+      | 'system', // Transform role -> sender
     id: msg.id,
     timestamp: msg.timestamp.toISOString(),
     context: {
       emotion: 'neutral' as const,
-      intent: (msg.role === 'user' ? 'query' : 'response') as 'query' | 'response'
+      intent: (msg.role === 'user' ? 'query' : 'response') as 'query' | 'response',
     },
     // Pass through narrationSegments for voice segmentation, preserving original types for VoiceDirector
     narrationSegments: msg.narrationSegments,
@@ -48,11 +53,7 @@ export const SimpleMessageProvider: React.FC<{
     queueStatus,
   };
 
-  return (
-    <SimpleMessageContext.Provider value={value}>
-      {children}
-    </SimpleMessageContext.Provider>
-  );
+  return <SimpleMessageContext.Provider value={value}>{children}</SimpleMessageContext.Provider>;
 };
 
 /**

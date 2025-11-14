@@ -5,8 +5,9 @@
  * Features: Clear steps, beta positioning, waitlist integration
  */
 
-import React from 'react';
 import { ArrowRight, UserPlus, Mail, Gamepad2 } from 'lucide-react';
+import React from 'react';
+
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const HowItWorksSection: React.FC = () => {
@@ -20,9 +21,7 @@ export const HowItWorksSection: React.FC = () => {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
             {howItWorks.headline}
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            {howItWorks.subtitle}
-          </p>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">{howItWorks.subtitle}</p>
         </div>
 
         {/* Steps */}
@@ -37,12 +36,8 @@ export const HowItWorksSection: React.FC = () => {
 
                 {/* Step Content */}
                 <div className="text-center">
-                  <h3 className="text-2xl font-bold text-white mb-4">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-400 leading-relaxed">
-                    {step.description}
-                  </p>
+                  <h3 className="text-2xl font-bold text-white mb-4">{step.title}</h3>
+                  <p className="text-gray-400 leading-relaxed">{step.description}</p>
                 </div>
 
                 {/* Arrow (except for last step) */}
@@ -98,9 +93,7 @@ export const HowItWorksSection: React.FC = () => {
 
           {/* Call to Action */}
           <div className="mt-16 text-center">
-            <p className="text-gray-400 text-lg mb-6">
-              Ready to begin your adventure?
-            </p>
+            <p className="text-gray-400 text-lg mb-6">Ready to begin your adventure?</p>
             <div className="inline-flex items-center gap-2 text-amber-400 text-sm">
               <ArrowRight className="w-4 h-4" />
               <span>Join the waitlist to get started</span>

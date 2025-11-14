@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createApp } from '../src/app.js';
+
 import type { BlogPost } from '../src/services/blog-service.js';
 
 const mockFetchPublishedBlogPosts = vi.fn<[], Promise<BlogPost[]>>();

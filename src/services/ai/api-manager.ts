@@ -8,6 +8,7 @@
  */
 
 import { getGeminiManager } from './shared/utils';
+
 import type { GeminiApiManager } from '@/infrastructure/ai';
 
 /**

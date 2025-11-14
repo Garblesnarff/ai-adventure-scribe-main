@@ -16,7 +16,7 @@ export class AgentNotificationService {
       const { level, title, description } = notification;
       // eslint-disable-next-line no-console
       console[level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'info'](
-        `[AgentNotification] ${title}${description ? ` - ${description}` : ''}`
+        `[AgentNotification] ${title}${description ? ` - ${description}` : ''}`,
       );
       return;
     }

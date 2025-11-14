@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const warlockLevel1Spells: Spell[] = [
-{
+  {
     id: 'arms-of-hadar',
     name: 'Arms of Hadar',
     level: 1,
@@ -12,8 +12,9 @@ export const warlockLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You invoke the power of Hadar, the Dark Hunger. Tendrils of dark energy erupt from you and batter all creatures within 10 feet of you.',
-    damage: '2d6'
+    description:
+      'You invoke the power of Hadar, the Dark Hunger. Tendrils of dark energy erupt from you and batter all creatures within 10 feet of you.',
+    damage: '2d6',
   },
   {
     id: 'charm-person-warlock',
@@ -26,7 +27,7 @@ export const warlockLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You attempt to charm a humanoid you can see within range.'
+    description: 'You attempt to charm a humanoid you can see within range.',
   },
   {
     id: 'comprehend-languages-warlock',
@@ -41,8 +42,9 @@ export const warlockLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of soot and salt',
     duration: '1 hour',
-    description: 'For the duration, you understand the literal meaning of any spoken language that you hear.',
-    ritual: true
+    description:
+      'For the duration, you understand the literal meaning of any spoken language that you hear.',
+    ritual: true,
   },
   {
     id: 'expeditious-retreat-warlock',
@@ -56,7 +58,7 @@ export const warlockLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 10 minutes',
     description: 'This spell allows you to move at an incredible pace.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'hellish-rebuke',
@@ -69,8 +71,9 @@ export const warlockLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You point your finger, and the creature that damaged you is momentarily surrounded by hellish flames.',
-    damage: '2d10'
+    description:
+      'You point your finger, and the creature that damaged you is momentarily surrounded by hellish flames.',
+    damage: '2d10',
   },
   {
     id: 'hex',
@@ -86,7 +89,7 @@ export const warlockLevel1Spells: Spell[] = [
     materialDescription: 'the petrified eye of a newt',
     duration: 'Concentration, up to 1 hour',
     description: 'You place a curse on a creature that you can see within range.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'protection-from-evil-and-good-warlock',
@@ -102,7 +105,8 @@ export const warlockLevel1Spells: Spell[] = [
     materialDescription: 'holy water or powdered silver and iron, which the spell consumes',
     materialConsumed: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
-    concentration: true
+    description:
+      'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
+    concentration: true,
   },
 ];

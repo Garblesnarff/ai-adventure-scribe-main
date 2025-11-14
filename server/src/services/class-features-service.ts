@@ -36,6 +36,7 @@ import type {
   SUBCLASS_CHOICE_LEVELS,
   AVAILABLE_SUBCLASSES,
 } from '../types/class-features.js';
+import { NotFoundError, ConflictError, ValidationError, BusinessLogicError } from '../lib/errors.js';
 
 /**
  * Subclass choice level mapping
@@ -158,7 +159,7 @@ export class ClassFeaturesService {
     // Verify feature exists
     const feature = await this.getFeatureById(featureId);
     if (!feature) {
-      throw new Error(`Feature ${featureId} not found`);
+      throw new NotFoundError('Feature', featureId);
     }
 
     // Check if feature is already granted
@@ -170,7 +171,10 @@ export class ClassFeaturesService {
     });
 
     if (existing) {
-      throw new Error(`Feature ${feature.featureName} already granted to character`);
+      throw new ConflictError(`Feature ${feature.featureName} already granted to character`, {
+        featureId,
+        characterId,
+      });
     }
 
     // Grant the feature
@@ -218,7 +222,7 @@ export class ClassFeaturesService {
     });
 
     if (!characterFeature) {
-      throw new Error(`Feature not found for character`);
+      throw new NotFoundError('Feature for character', characterId);
     }
 
     return characterFeature.usesRemaining;
@@ -360,13 +364,17 @@ export class ClassFeaturesService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     // Verify subclass is valid for the class
     const validSubclasses = AVAILABLE_SUBCLASSES[className];
     if (!validSubclasses || !validSubclasses.includes(subclassName)) {
-      throw new Error(`${subclassName} is not a valid subclass for ${className}`);
+      throw new ValidationError(`${subclassName} is not a valid subclass for ${className}`, {
+        className,
+        subclassName,
+        validSubclasses,
+      });
     }
 
     // Check if subclass already set for this class
@@ -378,16 +386,18 @@ export class ClassFeaturesService {
     });
 
     if (existing) {
-      throw new Error(
-        `Character already has subclass ${existing.subclassName} for ${className}. Subclass choices are permanent.`
+      throw new ConflictError(
+        `Character already has subclass ${existing.subclassName} for ${className}. Subclass choices are permanent.`,
+        { existingSubclass: existing.subclassName, className }
       );
     }
 
     // Verify level is appropriate for subclass choice
     const requiredLevel = this.getSubclassChoiceLevel(className);
     if (level < requiredLevel) {
-      throw new Error(
-        `${className} chooses subclass at level ${requiredLevel}. Character is level ${level}.`
+      throw new BusinessLogicError(
+        `${className} chooses subclass at level ${requiredLevel}. Character is level ${level}.`,
+        { className, requiredLevel, characterLevel: level }
       );
     }
 
@@ -553,7 +563,7 @@ export class ClassFeaturesService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     // Get subclass if character has one

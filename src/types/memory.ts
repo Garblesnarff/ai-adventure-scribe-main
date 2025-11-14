@@ -1,4 +1,4 @@
-import { Memory, MemoryType } from '@/components/game/memory/types';
+import type { Memory, MemoryType } from '@/components/game/memory/types';
 
 /**
  * Interface for memory with relevance scoring

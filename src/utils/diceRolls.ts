@@ -38,12 +38,7 @@ export const roll4d6DropLowest = (): number => {
  * @returns Object containing total, individual rolls, dropped roll, and kept rolls
  */
 export const roll4d6DropLowestDetailed = (): Roll4d6Result => {
-  const rolls: [number, number, number, number] = [
-    rollDie(6),
-    rollDie(6),
-    rollDie(6),
-    rollDie(6)
-  ];
+  const rolls: [number, number, number, number] = [rollDie(6), rollDie(6), rollDie(6), rollDie(6)];
 
   const sortedRolls = [...rolls].sort((a, b) => b - a);
   const dropped = sortedRolls[3]; // Lowest roll
@@ -79,12 +74,12 @@ export const generateAbilityScores = (): number[] => {
  */
 export const generateAbilityScoresDetailed = (): AbilityScoreRollResult => {
   const details = Array.from({ length: 6 }, roll4d6DropLowestDetailed);
-  const scores = details.map(detail => detail.total);
+  const scores = details.map((detail) => detail.total);
 
   return {
     scores,
     details,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 };
 
@@ -114,7 +109,7 @@ export const rerollSingleScore = (currentScores: number[], index: number): numbe
 export const rerollSingleScoreDetailed = (
   currentScores: number[],
   currentDetails: Roll4d6Result[],
-  index: number
+  index: number,
 ): AbilityScoreRollResult => {
   if (index < 0 || index > 5) {
     throw new Error('Invalid score index. Must be between 0 and 5.');
@@ -129,7 +124,7 @@ export const rerollSingleScoreDetailed = (
   return {
     scores: newScores,
     details: newDetails,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 };
 

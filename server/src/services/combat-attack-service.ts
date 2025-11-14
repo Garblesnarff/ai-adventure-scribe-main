@@ -32,6 +32,7 @@ import type {
   CreateWeaponAttackInput,
   DamageType,
 } from '../types/combat.js';
+import { NotFoundError, ValidationError, InternalServerError } from '../lib/errors.js';
 
 export class CombatAttackService {
   constructor() {
@@ -217,7 +218,7 @@ export class CombatAttackService {
     // Get target's AC and resistances
     const targetStats = await this.getCreatureStats(targetId);
     if (!targetStats) {
-      throw new Error(`Target stats not found for ID: ${targetId}`);
+      throw new NotFoundError('Target stats', targetId);
     }
 
     // Get weapon if provided
@@ -225,7 +226,7 @@ export class CombatAttackService {
     if (weaponId) {
       weapon = await this.getWeaponAttack(weaponId);
       if (!weapon) {
-        throw new Error(`Weapon not found for ID: ${weaponId}`);
+        throw new NotFoundError('Weapon', weaponId);
       }
     }
 
@@ -315,7 +316,7 @@ export class CombatAttackService {
       };
     } catch (error) {
       console.error('Failed to apply damage to HP:', error);
-      throw new Error('Attack succeeded but damage application failed');
+      throw new InternalServerError('Attack succeeded but damage application failed', { error });
     }
   }
 
@@ -415,7 +416,7 @@ export class CombatAttackService {
             });
           } catch (error) {
             console.error('Failed to apply spell attack damage to HP:', error);
-            throw new Error('Spell attack succeeded but damage application failed');
+            throw new InternalServerError('Spell attack succeeded but damage application failed', { error });
           }
         }
       } else if (saveDC !== undefined && saveRolls) {
@@ -471,7 +472,7 @@ export class CombatAttackService {
             });
           } catch (error) {
             console.error('Failed to apply spell save damage to HP:', error);
-            throw new Error('Spell save resolved but damage application failed');
+            throw new InternalServerError('Spell save resolved but damage application failed', { error });
           }
         }
       }
@@ -557,7 +558,7 @@ export class CombatAttackService {
   private rollDamageDice(damageDice: string, isCritical: boolean): number {
     const match = /^(\d+)d(\d+)$/i.exec(damageDice.trim());
     if (!match) {
-      throw new Error(`Invalid dice notation: ${damageDice}`);
+      throw new ValidationError(`Invalid dice notation: ${damageDice}`, { damageDice });
     }
 
     const count = parseInt(match[1], 10);

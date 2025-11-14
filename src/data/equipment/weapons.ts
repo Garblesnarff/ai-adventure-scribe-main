@@ -14,7 +14,7 @@ export const weapons: Equipment[] = [
     attackBonus: 0,
     weaponProperties: { light: true },
     properties: ['Light'],
-    description: 'A simple wooden club.'
+    description: 'A simple wooden club.',
   },
   {
     id: 'dagger',
@@ -29,7 +29,7 @@ export const weapons: Equipment[] = [
     weaponProperties: { finesse: true, light: true, thrown: true },
     range: { normal: 20, long: 60 },
     properties: ['Finesse', 'Light', 'Thrown (20/60)'],
-    description: 'A sharp, lightweight blade.'
+    description: 'A sharp, lightweight blade.',
   },
   {
     id: 'handaxe',
@@ -44,7 +44,7 @@ export const weapons: Equipment[] = [
     weaponProperties: { light: true, thrown: true },
     range: { normal: 20, long: 60 },
     properties: ['Light', 'Thrown (20/60)'],
-    description: 'A small axe for one-handed use.'
+    description: 'A small axe for one-handed use.',
   },
   {
     id: 'mace',
@@ -58,7 +58,7 @@ export const weapons: Equipment[] = [
     attackBonus: 0,
     weaponProperties: {},
     properties: [],
-    description: 'A simple wooden club.'
+    description: 'A simple wooden club.',
   },
 
   // Simple Ranged Weapons
@@ -75,7 +75,7 @@ export const weapons: Equipment[] = [
     weaponProperties: { ammunition: true, loading: true, twoHanded: true },
     range: { normal: 80, long: 320 },
     properties: ['Ammunition (80/320)', 'Loading', 'Two-handed'],
-    description: 'A mechanical bow that fires bolts.'
+    description: 'A mechanical bow that fires bolts.',
   },
   {
     id: 'shortbow',
@@ -90,7 +90,7 @@ export const weapons: Equipment[] = [
     weaponProperties: { ammunition: true, twoHanded: true },
     range: { normal: 80, long: 320 },
     properties: ['Ammunition (80/320)', 'Two-handed'],
-    description: 'A smaller bow for easier handling.'
+    description: 'A smaller bow for easier handling.',
   },
 
   // Martial Melee Weapons
@@ -106,7 +106,7 @@ export const weapons: Equipment[] = [
     attackBonus: 0,
     weaponProperties: { versatile: true },
     properties: ['Versatile (1d10)'],
-    description: 'A classic knightly sword.'
+    description: 'A classic knightly sword.',
   },
   {
     id: 'rapier',
@@ -120,7 +120,7 @@ export const weapons: Equipment[] = [
     attackBonus: 0,
     weaponProperties: { finesse: true },
     properties: ['Finesse'],
-    description: 'A slender, sharply pointed sword.'
+    description: 'A slender, sharply pointed sword.',
   },
   {
     id: 'scimitar',
@@ -134,7 +134,7 @@ export const weapons: Equipment[] = [
     attackBonus: 0,
     weaponProperties: { finesse: true, light: true },
     properties: ['Finesse', 'Light'],
-    description: 'A curved, single-edged blade.'
+    description: 'A curved, single-edged blade.',
   },
   {
     id: 'greatsword',
@@ -148,7 +148,7 @@ export const weapons: Equipment[] = [
     attackBonus: 0,
     weaponProperties: { heavy: true, twoHanded: true },
     properties: ['Heavy', 'Two-handed'],
-    description: 'A massive two-handed sword.'
+    description: 'A massive two-handed sword.',
   },
 
   // Martial Ranged Weapons
@@ -165,7 +165,7 @@ export const weapons: Equipment[] = [
     weaponProperties: { ammunition: true, heavy: true, twoHanded: true },
     range: { normal: 150, long: 600 },
     properties: ['Ammunition (150/600)', 'Heavy', 'Two-handed'],
-    description: 'A tall bow with great range and power.'
+    description: 'A tall bow with great range and power.',
   },
   {
     id: 'heavy-crossbow',
@@ -180,6 +180,6 @@ export const weapons: Equipment[] = [
     weaponProperties: { ammunition: true, heavy: true, loading: true, twoHanded: true },
     range: { normal: 100, long: 400 },
     properties: ['Ammunition (100/400)', 'Heavy', 'Loading', 'Two-handed'],
-    description: 'A powerful crossbow requiring significant strength.'
-  }
+    description: 'A powerful crossbow requiring significant strength.',
+  },
 ];

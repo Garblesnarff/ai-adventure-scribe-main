@@ -1,28 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
-import { Character, Spell } from '@/types/character';
-import DiceRoller from '@/components/ui/dice-roller';
-import { metamagicOptions } from '@/data/spellcastingFeatures';
-import { spellApi } from '@/services/spellApi';
-import { 
-  Wand2, 
-  Heart, 
-  Sparkles, 
-  BookOpen, 
-  Clock, 
-  Zap, 
+import {
+  Wand2,
+  Heart,
+  Sparkles,
+  BookOpen,
+  Clock,
+  Zap,
   Star,
   Crown,
   Scroll,
   Circle,
-  Target
+  Target,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import type { Character, Spell } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DiceRoller from '@/components/ui/dice-roller';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { metamagicOptions } from '@/data/spellcastingFeatures';
 import logger from '@/lib/logger';
+import { spellApi } from '@/services/spellApi';
 
 interface EnhancedSpellsTabProps {
   character: Character;
@@ -82,13 +84,13 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
   const [pactSlots, setPactSlots] = useState({
     current: character?.pactSlots?.current || 0,
     maximum: character?.pactSlots?.maximum || 0,
-    level: character?.pactSlots?.level || 1
+    level: character?.pactSlots?.level || 1,
   });
 
   // Sorcery points management
   const [sorceryPoints, setSorceryPoints] = useState({
     current: character?.sorceryPoints?.current || 0,
-    maximum: character?.sorceryPoints?.maximum || 0
+    maximum: character?.sorceryPoints?.maximum || 0,
   });
 
   // Check for spellcasting features
@@ -98,29 +100,41 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
   const canCastRituals = characterClass?.spellcasting?.ritualCasting || false;
 
   // Get spells (only if not loading)
-  const knownCantrips = !isLoadingSpells ? (character?.cantrips || []).map(cantripId =>
-    allSpells.find((spell: Spell) => spell.id === cantripId)
-  ).filter(Boolean) : [];
+  const knownCantrips = !isLoadingSpells
+    ? (character?.cantrips || [])
+        .map((cantripId) => allSpells.find((spell: Spell) => spell.id === cantripId))
+        .filter(Boolean)
+    : [];
 
-  const knownSpells = !isLoadingSpells ? (character?.knownSpells || []).map(spellId =>
-    allSpells.find((spell: Spell) => spell.id === spellId)
-  ).filter(Boolean) : [];
+  const knownSpells = !isLoadingSpells
+    ? (character?.knownSpells || [])
+        .map((spellId) => allSpells.find((spell: Spell) => spell.id === spellId))
+        .filter(Boolean)
+    : [];
 
-  const preparedSpells = !isLoadingSpells ? (character?.preparedSpells || []).map(spellId =>
-    allSpells.find((spell: Spell) => spell.id === spellId)
-  ).filter(Boolean) : [];
+  const preparedSpells = !isLoadingSpells
+    ? (character?.preparedSpells || [])
+        .map((spellId) => allSpells.find((spell: Spell) => spell.id === spellId))
+        .filter(Boolean)
+    : [];
 
-  const pactMagicSpells = !isLoadingSpells ? (character?.pactMagicSpells || []).map(spellId =>
-    allSpells.find((spell: Spell) => spell.id === spellId)
-  ).filter(Boolean) : [];
+  const pactMagicSpells = !isLoadingSpells
+    ? (character?.pactMagicSpells || [])
+        .map((spellId) => allSpells.find((spell: Spell) => spell.id === spellId))
+        .filter(Boolean)
+    : [];
 
-  const ritualSpells = !isLoadingSpells ? allSpells.filter((spell: Spell) =>
-    spell.ritual &&
-    (character?.ritualSpells?.includes(spell.id) || preparedSpells.some(p => p?.id === spell.id))
-  ) : [];
+  const ritualSpells = !isLoadingSpells
+    ? allSpells.filter(
+        (spell: Spell) =>
+          spell.ritual &&
+          (character?.ritualSpells?.includes(spell.id) ||
+            preparedSpells.some((p) => p?.id === spell.id)),
+      )
+    : [];
 
-  const availableMetamagic = metamagicOptions.filter(option =>
-    character?.metamagicOptions?.includes(option.id)
+  const availableMetamagic = metamagicOptions.filter((option) =>
+    character?.metamagicOptions?.includes(option.id),
   );
 
   /**
@@ -128,7 +142,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
    */
   const consumeSpellSlot = (level: number) => {
     if (spellSlots[level] && spellSlots[level].used < spellSlots[level].total) {
-      setSpellSlots(prev => ({
+      setSpellSlots((prev) => ({
         ...prev,
         [level]: {
           ...prev[level],
@@ -140,7 +154,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
 
   const restoreSpellSlot = (level: number) => {
     if (spellSlots[level] && spellSlots[level].used > 0) {
-      setSpellSlots(prev => ({
+      setSpellSlots((prev) => ({
         ...prev,
         [level]: {
           ...prev[level],
@@ -151,25 +165,25 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
   };
 
   const longRest = () => {
-    setSpellSlots(prev => {
+    setSpellSlots((prev) => {
       const restored = { ...prev };
-      Object.keys(restored).forEach(level => {
+      Object.keys(restored).forEach((level) => {
         restored[parseInt(level)].used = 0;
       });
       return restored;
     });
 
-    setSorceryPoints(prev => ({
+    setSorceryPoints((prev) => ({
       ...prev,
-      current: prev.maximum
+      current: prev.maximum,
     }));
   };
 
   const shortRest = () => {
     if (hasPactMagic) {
-      setPactSlots(prev => ({
+      setPactSlots((prev) => ({
         ...prev,
-        current: prev.maximum
+        current: prev.maximum,
       }));
     }
   };
@@ -179,9 +193,9 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
    */
   const consumePactSlot = () => {
     if (pactSlots.current > 0) {
-      setPactSlots(prev => ({
+      setPactSlots((prev) => ({
         ...prev,
-        current: prev.current - 1
+        current: prev.current - 1,
       }));
     }
   };
@@ -191,9 +205,9 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
    */
   const spendSorceryPoints = (amount: number) => {
     if (sorceryPoints.current >= amount) {
-      setSorceryPoints(prev => ({
+      setSorceryPoints((prev) => ({
         ...prev,
-        current: prev.current - amount
+        current: prev.current - amount,
       }));
     }
   };
@@ -203,9 +217,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
       <div className="text-center space-y-4">
         <Wand2 className="w-16 h-16 mx-auto text-muted-foreground animate-pulse" />
         <h2 className="text-2xl font-bold">Loading Spells...</h2>
-        <p className="text-muted-foreground">
-          Fetching spell data from the library.
-        </p>
+        <p className="text-muted-foreground">Fetching spell data from the library.</p>
       </div>
     );
   }
@@ -224,7 +236,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
 
   const getSpellCard = (spell: Spell | undefined, showPreparedBadge = false) => {
     if (!spell) return null;
-    
+
     return (
       <div key={spell?.id} className="p-3 border rounded-lg">
         <div className="flex items-start justify-between">
@@ -234,9 +246,21 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
               <Badge variant="outline" className="text-xs">
                 Level {spell?.level}
               </Badge>
-              {spell?.ritual && <Badge variant="secondary" className="text-xs">Ritual</Badge>}
-              {spell?.concentration && <Badge variant="secondary" className="text-xs">Concentration</Badge>}
-              {showPreparedBadge && <Badge variant="default" className="text-xs">Prepared</Badge>}
+              {spell?.ritual && (
+                <Badge variant="secondary" className="text-xs">
+                  Ritual
+                </Badge>
+              )}
+              {spell?.concentration && (
+                <Badge variant="secondary" className="text-xs">
+                  Concentration
+                </Badge>
+              )}
+              {showPreparedBadge && (
+                <Badge variant="default" className="text-xs">
+                  Prepared
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mb-2">
               {spell?.school} • {spell?.castingTime} • {spell?.range}
@@ -244,18 +268,18 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
             <p className="text-sm">{spell?.description}</p>
           </div>
           <div className="flex flex-col gap-2">
-            {spell?.damage && (
-              <DiceRoller
-                dice={spell.damage}
-                label="Damage"
-              />
-            )}
+            {spell?.damage && <DiceRoller dice={spell.damage} label="Damage" />}
             {spell?.level > 0 && (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => hasPactMagic ? consumePactSlot() : consumeSpellSlot(spell.level)}
-                disabled={hasPactMagic ? pactSlots.current === 0 : !spellSlots[spell.level] || spellSlots[spell.level].used >= spellSlots[spell.level].total}
+                onClick={() => (hasPactMagic ? consumePactSlot() : consumeSpellSlot(spell.level))}
+                disabled={
+                  hasPactMagic
+                    ? pactSlots.current === 0
+                    : !spellSlots[spell.level] ||
+                      spellSlots[spell.level].used >= spellSlots[spell.level].total
+                }
               >
                 Cast
               </Button>
@@ -292,7 +316,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
         </Card>
       </div>
 
-      <Tabs defaultValue={hasPactMagic ? "pact" : "spells"}>
+      <Tabs defaultValue={hasPactMagic ? 'pact' : 'spells'}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="spells">Spells</TabsTrigger>
           <TabsTrigger value="cantrips">Cantrips</TabsTrigger>
@@ -320,9 +344,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
                   <div className="space-y-3">
                     {Object.entries(spellSlots).map(([level, slots]) => (
                       <div key={level} className="flex items-center gap-4">
-                        <div className="w-16 text-sm font-medium">
-                          Level {level}
-                        </div>
+                        <div className="w-16 text-sm font-medium">Level {level}</div>
                         <div className="flex-1">
                           <div className="flex gap-1 mb-1">
                             {Array.from({ length: slots.total }).map((_, i) => (
@@ -333,8 +355,8 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
                                     ? 'bg-gray-300 border-gray-400'
                                     : 'bg-purple-500 border-purple-600'
                                 }`}
-                                onClick={() => 
-                                  i < slots.used 
+                                onClick={() =>
+                                  i < slots.used
                                     ? restoreSpellSlot(parseInt(level))
                                     : consumeSpellSlot(parseInt(level))
                                 }
@@ -362,8 +384,8 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {(preparedSpells.length > 0 ? preparedSpells : knownSpells).map((spell) => 
-                    getSpellCard(spell, preparedSpells.length > 0)
+                  {(preparedSpells.length > 0 ? preparedSpells : knownSpells).map((spell) =>
+                    getSpellCard(spell, preparedSpells.length > 0),
                   )}
                 </div>
               </CardContent>
@@ -405,9 +427,7 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-4">
-                    <div className="text-sm font-medium">
-                      Level {pactSlots.level} Slots
-                    </div>
+                    <div className="text-sm font-medium">Level {pactSlots.level} Slots</div>
                     <div className="flex-1">
                       <div className="flex gap-1 mb-1">
                         {Array.from({ length: pactSlots.maximum }).map((_, i) => (
@@ -463,8 +483,8 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
                 <CardContent>
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <Progress 
-                        value={(sorceryPoints.current / sorceryPoints.maximum) * 100} 
+                      <Progress
+                        value={(sorceryPoints.current / sorceryPoints.maximum) * 100}
                         className="w-full h-4"
                       />
                       <div className="text-sm text-muted-foreground mt-1">
@@ -539,7 +559,9 @@ const EnhancedSpellsTab: React.FC<EnhancedSpellsTabProps> = ({ character, onUpda
                             <Badge variant="outline" className="text-xs">
                               Level {spell.level}
                             </Badge>
-                            <Badge variant="secondary" className="text-xs">Ritual</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              Ritual
+                            </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground mb-2">
                             {spell.school} • {spell.castingTime} (+10 min as ritual) • {spell.range}

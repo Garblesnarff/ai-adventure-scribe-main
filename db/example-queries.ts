@@ -5,9 +5,10 @@
  * These are examples only - not meant to be executed directly.
  */
 
+import { eq, and, desc, like, sql } from 'drizzle-orm';
+
 import { db } from './client';
 import { blogPosts, blogAuthors, blogCategories, blogPostCategories, type BlogPost, type NewBlogPost } from './schema';
-import { eq, and, desc, like, sql } from 'drizzle-orm';
 
 /**
  * Example 1: Select all published blog posts

@@ -1,4 +1,4 @@
-import { Character, AbilityScores } from '@/types/character';
+import type { Character, AbilityScores } from '@/types/character';
 
 /**
  * Transforms ability scores for database storage
@@ -9,11 +9,11 @@ import { Character, AbilityScores } from '@/types/character';
  */
 export const transformAbilityScoresForStorage = (
   abilityScores: AbilityScores,
-  characterId: string
+  characterId: string,
 ) => {
   // Calculate base armor class (10 + dexterity modifier)
   const baseArmorClass = 10 + (abilityScores.dexterity.modifier || 0);
-  
+
   // Calculate base hit points (we'll use constitution modifier + 8 for level 1)
   const baseHitPoints = 8 + (abilityScores.constitution.modifier || 0);
 
@@ -42,7 +42,7 @@ export const transformEquipmentForStorage = (character: Character, characterId: 
     return [];
   }
 
-  return character.inventory.map(item => ({
+  return character.inventory.map((item) => ({
     character_id: characterId,
     item_name: item.itemId, // This should be the item name, not the ID
     item_type: 'equipment',

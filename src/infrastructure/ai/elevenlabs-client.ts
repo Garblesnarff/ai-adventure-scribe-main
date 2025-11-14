@@ -8,8 +8,9 @@
  * - VITE_ELEVENLABS_API_KEY: ElevenLabs API key
  */
 
-import logger from '@/lib/logger';
 import type { TTSRequest, VoiceSettings } from './types';
+
+import logger from '@/lib/logger';
 
 export class ElevenLabsClient {
   private readonly baseUrl = 'https://api.elevenlabs.io/v1';
@@ -33,24 +34,23 @@ export class ElevenLabsClient {
     try {
       const apiKey = this.getApiKey();
 
-      logger.debug(`[ElevenLabsClient] Generating speech for voice ${request.voiceId} (${request.text.length} chars)`);
-
-      const response = await fetch(
-        `${this.baseUrl}/text-to-speech/${request.voiceId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
-          },
-          body: JSON.stringify({
-            text: request.text,
-            model_id: request.modelId || this.defaultModel,
-            voice_settings: request.voiceSettings || this.getDefaultVoiceSettings(),
-          }),
-        }
+      logger.debug(
+        `[ElevenLabsClient] Generating speech for voice ${request.voiceId} (${request.text.length} chars)`,
       );
+
+      const response = await fetch(`${this.baseUrl}/text-to-speech/${request.voiceId}`, {
+        method: 'POST',
+        headers: {
+          Accept: 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text: request.text,
+          model_id: request.modelId || this.defaultModel,
+          voice_settings: request.voiceSettings || this.getDefaultVoiceSettings(),
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -78,22 +78,19 @@ export class ElevenLabsClient {
 
       logger.debug(`[ElevenLabsClient] Streaming speech for voice ${request.voiceId}`);
 
-      const response = await fetch(
-        `${this.baseUrl}/text-to-speech/${request.voiceId}/stream`,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json',
-            'xi-api-key': apiKey,
-          },
-          body: JSON.stringify({
-            text: request.text,
-            model_id: request.modelId || this.defaultModel,
-            voice_settings: request.voiceSettings || this.getDefaultVoiceSettings(),
-          }),
-        }
-      );
+      const response = await fetch(`${this.baseUrl}/text-to-speech/${request.voiceId}/stream`, {
+        method: 'POST',
+        headers: {
+          Accept: 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text: request.text,
+          model_id: request.modelId || this.defaultModel,
+          voice_settings: request.voiceSettings || this.getDefaultVoiceSettings(),
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -119,7 +116,7 @@ export class ElevenLabsClient {
       stability: 0.5,
       similarity_boost: 0.75,
       style: 0.2,
-      use_speaker_boost: true
+      use_speaker_boost: true,
     };
   }
 

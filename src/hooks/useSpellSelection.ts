@@ -1,17 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import logger from '@/lib/logger';
+
+import type { SpellFilters } from '@/components/spells/SpellFilterPanel';
+import type { Spell, Character } from '@/types/character';
+import type { SpellValidationResult } from '@/utils/spell-validation';
+
 import { useCharacter } from '@/contexts/CharacterContext';
-import { Spell, Character } from '@/types/character';
-import { spellApi } from '@/services/spellApi';
+import logger from '@/lib/logger';
 import { characterSpellService } from '@/services/characterSpellApi';
+import { spellApi } from '@/services/spellApi';
 import {
   validateSpellSelection,
   getSpellcastingInfo,
   getRacialSpells,
-  SpellValidationResult,
-  validateSpellSelectionAsync
+  validateSpellSelectionAsync,
 } from '@/utils/spell-validation';
-import { SpellFilters } from '@/components/spells/SpellFilterPanel';
 
 interface UseSpellSelectionReturn {
   // Character and class info
@@ -89,13 +91,13 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     components: {
       verbal: false,
       somatic: false,
-      material: false
+      material: false,
     },
     properties: {
       concentration: false,
       ritual: false,
-      damage: false
-    }
+      damage: false,
+    },
   });
 
   // Initialize from character data
@@ -104,7 +106,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       logger.debug('🎯 [useSpellSelection] Initializing spell selection from character:', {
         characterId: character.id,
         cantrips: character.cantrips,
-        knownSpells: character.knownSpells
+        knownSpells: character.knownSpells,
       });
       setSelectedCantrips(character.cantrips || []);
       setSelectedSpells(character.knownSpells || []);
@@ -121,7 +123,9 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   // Spell fetching function
   const fetchSpells = async () => {
     if (!isSpellcaster || !currentClass?.name) {
-      logger.debug('🚫 [useSpellSelection] Not a spellcaster or no class name, skipping spell fetch');
+      logger.debug(
+        '🚫 [useSpellSelection] Not a spellcaster or no class name, skipping spell fetch',
+      );
       setAvailableCantrips([]);
       setAvailableSpells([]);
       return;
@@ -134,20 +138,23 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       className: currentClass.name,
       characterLevel: character?.level || 1,
       isSpellcaster,
-      spellcastingInfo
+      spellcastingInfo,
     });
 
     try {
-      const { cantrips, spells } = await spellApi.getClassSpells(currentClass.name, character?.level || 1);
-      
+      const { cantrips, spells } = await spellApi.getClassSpells(
+        currentClass.name,
+        character?.level || 1,
+      );
+
       logger.debug('✅ [useSpellSelection] Spells fetched successfully:', {
         className: currentClass.name,
         cantripsFound: cantrips.length,
         spellsFound: spells.length,
-        cantripNames: cantrips.slice(0, 3).map(c => c.name),
-        spellNames: spells.slice(0, 3).map(s => s.name)
+        cantripNames: cantrips.slice(0, 3).map((c) => c.name),
+        spellNames: spells.slice(0, 3).map((s) => s.name),
       });
-      
+
       setAvailableCantrips(cantrips);
       setAvailableSpells(spells);
     } catch (error) {
@@ -176,7 +183,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
   // Spell filtering function
   const filterSpells = (spells: Spell[], searchTerm: string, filters: SpellFilters): Spell[] => {
-    return spells.filter(spell => {
+    return spells.filter((spell) => {
       // Search term filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -218,12 +225,15 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
   // Selection actions
   const toggleCantrip = (cantripId: string) => {
-    setSelectedCantrips(prev => {
+    setSelectedCantrips((prev) => {
       if (prev.includes(cantripId)) {
-        return prev.filter(id => id !== cantripId);
+        return prev.filter((id) => id !== cantripId);
       } else {
         // Check if we've reached the limit
-        const maxCantrips = (spellcastingInfo?.cantripsKnown || 0) + racialSpells.cantrips.length + racialSpells.bonusCantrips;
+        const maxCantrips =
+          (spellcastingInfo?.cantripsKnown || 0) +
+          racialSpells.cantrips.length +
+          racialSpells.bonusCantrips;
         if (prev.length >= maxCantrips) {
           return prev; // Don't add if at limit
         }
@@ -234,13 +244,13 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
   const toggleSpell = (spellId: string) => {
     logger.debug('🪄 [useSpellSelection] toggleSpell called:', spellId);
-    setSelectedSpells(prev => {
+    setSelectedSpells((prev) => {
       const isRemoving = prev.includes(spellId);
       const maxSpells = spellcastingInfo?.spellsKnown || 0;
 
       let newSelection: string[];
       if (isRemoving) {
-        newSelection = prev.filter(id => id !== spellId);
+        newSelection = prev.filter((id) => id !== spellId);
       } else {
         // Check if we've reached the limit
         if (prev.length >= maxSpells) {
@@ -255,7 +265,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
         spellId,
         previousCount: prev.length,
         newCount: newSelection.length,
-        newSelection
+        newSelection,
       });
 
       return newSelection;
@@ -268,7 +278,11 @@ export function useSpellSelection(): UseSpellSelectionReturn {
   };
 
   // Validation
-  const [validation, setValidation] = useState<ReturnType<typeof validateSpellSelection>>({ valid: false, errors: [], warnings: [] });
+  const [validation, setValidation] = useState<ReturnType<typeof validateSpellSelection>>({
+    valid: false,
+    errors: [],
+    warnings: [],
+  });
   const [isValidating, setIsValidating] = useState(false);
 
   // Perform async validation when character, selections, or available spells change
@@ -283,8 +297,8 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
       setIsValidating(true);
 
-      const availableCantripIds = availableCantrips.map(c => c.id);
-      const availableSpellIds = availableSpells.map(s => s.id);
+      const availableCantripIds = availableCantrips.map((c) => c.id);
+      const availableSpellIds = availableSpells.map((s) => s.id);
 
       try {
         const result = await validateSpellSelectionAsync(
@@ -292,7 +306,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
           selectedCantrips,
           selectedSpells,
           availableCantripIds,
-          availableSpellIds
+          availableSpellIds,
         );
         if (mounted) setValidation(result);
       } catch (error) {
@@ -303,7 +317,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
           selectedCantrips,
           selectedSpells,
           availableCantripIds,
-          availableSpellIds
+          availableSpellIds,
         );
         if (mounted) setValidation(result);
       } finally {
@@ -313,7 +327,9 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
     runValidation();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [character, selectedCantrips, selectedSpells, availableCantrips, availableSpells]);
 
   const canProceed = validation.valid && !isValidating;
@@ -337,7 +353,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       // Save to database first
       await characterSpellService.saveCharacterSpells(character.id, {
         spells: allSpells,
-        className: character.class?.name || ''
+        className: character.class?.name || '',
       });
 
       // Then update local context
@@ -363,8 +379,11 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       // Only log when there are actual changes to reduce noise
       const currentCantrips = character.cantrips || [];
       const currentSpells = character.knownSpells || [];
-      const cantripsChanged = JSON.stringify([...selectedCantrips].sort()) !== JSON.stringify([...currentCantrips].sort());
-      const spellsChanged = JSON.stringify([...selectedSpells].sort()) !== JSON.stringify([...currentSpells].sort());
+      const cantripsChanged =
+        JSON.stringify([...selectedCantrips].sort()) !==
+        JSON.stringify([...currentCantrips].sort());
+      const spellsChanged =
+        JSON.stringify([...selectedSpells].sort()) !== JSON.stringify([...currentSpells].sort());
 
       if (cantripsChanged || spellsChanged) {
         logger.debug('🔄 [useSpellSelection] Auto-saving spell selections to character context:', {
@@ -372,7 +391,7 @@ export function useSpellSelection(): UseSpellSelectionReturn {
           cantrips: selectedCantrips,
           knownSpells: selectedSpells,
           cantripCount: selectedCantrips.length,
-          spellCount: selectedSpells.length
+          spellCount: selectedSpells.length,
         });
         dispatch({
           type: 'UPDATE_CHARACTER',
@@ -426,6 +445,6 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     isSavingSpells,
 
     // Retry functionality
-    refetchSpells: fetchSpells
+    refetchSpells: fetchSpells,
   };
 }

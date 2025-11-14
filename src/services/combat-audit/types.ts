@@ -10,7 +10,14 @@ export interface CombatAction {
   timestamp: number;
   actorId: string;
   actorName: string;
-  actionType: 'initiative' | 'attack_roll' | 'damage_roll' | 'save' | 'skill_check' | 'spell_cast' | 'movement';
+  actionType:
+    | 'initiative'
+    | 'attack_roll'
+    | 'damage_roll'
+    | 'save'
+    | 'skill_check'
+    | 'spell_cast'
+    | 'movement';
   phase: 'pre-combat' | 'initiative' | 'turn' | 'reaction' | 'post-combat';
   data: {
     formula?: string;

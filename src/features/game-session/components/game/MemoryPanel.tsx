@@ -1,24 +1,27 @@
+import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lucide-react';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
+import { useParams } from 'react-router-dom';
+
+import { CombatSummary } from './CombatSummary';
+import { CompactCharacterHeader } from './CompactCharacterHeader';
+import { MemoryCard } from './memory/MemoryCard';
+import { MemoryFilter } from './memory/MemoryFilter';
+
+import type { MemoryType } from './memory/types';
+import type { ExtendedGameSession } from '@/hooks/use-game-session';
+
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useMemoryContext } from '@/contexts/MemoryContext';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { useCombat } from '@/contexts/CombatContext';
 import { useCampaign } from '@/contexts/CampaignContext';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { MemoryType } from './memory/types';
-import { List, ChevronDown, ChevronUp, User, Sword, Menu, ChevronLeft } from 'lucide-react';
-import { MemoryCard } from './memory/MemoryCard';
-import { MemoryFilter } from './memory/MemoryFilter';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useMemoryContext } from '@/contexts/MemoryContext';
+import { useCombat } from '@/contexts/CombatContext';
 import { useMemoryFiltering } from '@/hooks/memory/useMemoryFiltering';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Textarea } from '@/components/ui/textarea';
-import { CompactCharacterHeader } from './CompactCharacterHeader';
-import { CombatSummary } from './CombatSummary';
-import { ExtendedGameSession } from '@/hooks/use-game-session';
-import { useParams } from 'react-router-dom';
 import { analytics } from '@/services/analytics';
 import { Z_INDEX } from '@/constants/z-index';
 
@@ -38,12 +41,12 @@ interface GameSidePanelProps extends MemoryPanelProps {
  * Main component for displaying and managing game memories and session notes
  * Provides filtering, sorting, and collapsible functionality
  */
-export const GameSidePanel: React.FC<GameSidePanelProps> = ({ 
-  sessionData, 
-  updateGameSessionState, 
+export const GameSidePanel: React.FC<GameSidePanelProps> = ({
+  sessionData,
+  updateGameSessionState,
   combatMode,
   isCollapsed,
-  onToggle 
+  onToggle,
 }) => {
   // Get contexts
   const { memories = [], isLoading: memoriesLoading } = useMemoryContext();
@@ -52,7 +55,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const { state: campaignState } = useCampaign();
   const { id: routeCampaignId } = useParams<{ id: string }>();
   const isInCombat = combatMode || combatState.isInCombat;
-  
+
   // Refs for resizable functionality
   const panelRef = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
@@ -68,13 +71,15 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const [panelState, setPanelState] = useLocalStorage<GameSidePanelState>('gameSidePanelState', {
     isExpanded: true,
     activeTab: 'character',
-    panelWidth: '340px'
+    panelWidth: '340px',
   });
 
   // Local state
   const [isExpanded, setIsExpanded] = useState(panelState.isExpanded);
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'character' | 'memory' | 'combat'>(panelState.activeTab);
+  const [activeTab, setActiveTab] = useState<'character' | 'memory' | 'combat'>(
+    panelState.activeTab,
+  );
   const [localSessionNotes, setLocalSessionNotes] = useState('');
   const [panelWidth, setPanelWidth] = useState(panelState.panelWidth);
 
@@ -99,7 +104,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
       return {
         isExpanded,
         activeTab,
-        panelWidth
+        panelWidth,
       };
     });
   }, [isExpanded, activeTab, panelWidth, setPanelState]);
@@ -123,12 +128,12 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
       return;
     }
 
-  let newWidth = e.clientX - containerRect.left;
-  // Enforce new constraints 280-400px
-  newWidth = Math.max(280, Math.min(400, newWidth));
+    let newWidth = e.clientX - containerRect.left;
+    // Enforce new constraints 280-400px
+    newWidth = Math.max(280, Math.min(400, newWidth));
 
-  setPanelWidth(`${newWidth}px`);
-  panelRef.current.style.width = `${newWidth}px`;
+    setPanelWidth(`${newWidth}px`);
+    panelRef.current.style.width = `${newWidth}px`;
   }, []);
 
   const stopDrag = useCallback(() => {
@@ -150,8 +155,8 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   const isMobile = window.innerWidth < 1024; // lg breakpoint
 
   // Get filtered and sorted memories using custom hook (must be called unconditionally)
-  const sortedMemories = useMemoryFiltering(memories, { 
-    types: selectedType ? [selectedType as MemoryType] : undefined 
+  const sortedMemories = useMemoryFiltering(memories, {
+    types: selectedType ? [selectedType as MemoryType] : undefined,
   });
 
   // Sync local notes from session state (unconditional hook)
@@ -187,7 +192,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[80vw] max-w-sm p-0">
-              <GameSidePanelContent 
+              <GameSidePanelContent
                 sessionData={sessionData}
                 updateGameSessionState={updateGameSessionState}
                 combatMode={combatMode}
@@ -213,11 +218,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                 isMobileDrawerOpen={true}
               />
               <SheetClose asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute left-4 top-4"
-                >
+                <Button variant="ghost" size="sm" className="absolute left-4 top-4">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </SheetClose>
@@ -263,7 +264,6 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
     }
   };
 
-
   const handleTabChange = (value: 'character' | 'memory' | 'combat') => {
     setActiveTab(value);
     // Auto-expand when switching tabs
@@ -276,8 +276,8 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   };
 
   return (
-    <div 
-      ref={panelRef} 
+    <div
+      ref={panelRef}
       className="h-full bg-white shadow-sm border-0 flex flex-col resize-x lg:resize-x-none min-w-[280px] max-w-[400px]"
       style={{ width: panelWidth, minWidth: '280px', maxWidth: '400px' }}
     >
@@ -287,12 +287,14 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
         className="absolute left-0 top-0 w-1 h-full bg-border hover:bg-primary cursor-col-resize z-10 hidden lg:block"
         onMouseDown={startDrag}
       />
-      
-      <Card className={`h-full glass-strong shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-3xl hover-glow bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm ${
-        isInCombat
-          ? 'border-red-400/60 bg-gradient-to-b from-red-900/15 to-card/95'
-          : 'border-infinite-purple/40 bg-gradient-to-b from-infinite-purple/8 to-card/95'
-      }`}>
+
+      <Card
+        className={`h-full glass-strong shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-3xl hover-glow bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm ${
+          isInCombat
+            ? 'border-red-400/60 bg-gradient-to-b from-red-900/15 to-card/95'
+            : 'border-infinite-purple/40 bg-gradient-to-b from-infinite-purple/8 to-card/95'
+        }`}
+      >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="flex gap-1 flex-shrink-0">
@@ -361,20 +363,29 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
             </Button>
           </div>
         </div>
-        
+
         {isExpanded && (
           <div className="flex-grow flex flex-col overflow-hidden">
-            <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as any)} className="flex flex-col h-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => handleTabChange(value as any)}
+              className="flex flex-col h-full"
+            >
               <TabsContent value="character" className="flex-1 p-0 mt-0 border-0 bg-background">
                 <div style={{ maxHeight: '72vh', overflow: 'auto' }}>
                   <CompactCharacterHeader />
                 </div>
               </TabsContent>
-              
-              <TabsContent value="memory" className="flex-1 mt-0 border-0 flex flex-col overflow-hidden bg-background">
+
+              <TabsContent
+                value="memory"
+                className="flex-1 mt-0 border-0 flex flex-col overflow-hidden bg-background"
+              >
                 {/* Compact Session Notes Section */}
                 <div className="p-4 border-b border-border">
-                  <h4 className="font-display font-semibold mb-2 text-foreground text-sm">📝 Session Notes</h4>
+                  <h4 className="font-display font-semibold mb-2 text-foreground text-sm">
+                    📝 Session Notes
+                  </h4>
                   <Textarea
                     value={localSessionNotes}
                     onChange={(e) => setLocalSessionNotes(e.target.value)}
@@ -393,15 +404,16 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
 
                 {/* Memories Section */}
                 <div className="p-4 border-b flex-shrink-0">
-                  <MemoryFilter 
-                    selectedType={selectedType}
-                    onTypeSelect={setSelectedType}
-                  />
+                  <MemoryFilter selectedType={selectedType} onTypeSelect={setSelectedType} />
                 </div>
-                
+
                 <ScrollArea className="flex-1 p-4" style={{ maxHeight: '56vh' }}>
-                  {memoriesLoading && <p className="text-xs text-muted-foreground">Loading memories...</p>}
-                  {!memoriesLoading && sortedMemories.length === 0 && <p className="text-xs text-muted-foreground">No memories logged yet.</p>}
+                  {memoriesLoading && (
+                    <p className="text-xs text-muted-foreground">Loading memories...</p>
+                  )}
+                  {!memoriesLoading && sortedMemories.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No memories logged yet.</p>
+                  )}
                   <div className="space-y-2">
                     {sortedMemories.map((memory) => (
                       <MemoryCard key={memory.id} memory={memory} />
@@ -473,7 +485,7 @@ const GameSidePanelContent: React.FC<{
   startDrag,
   handleDrag,
   stopDrag,
-  isMobileDrawerOpen
+  isMobileDrawerOpen,
 }) => {
   // Mobile content uses the passed-in state and handlers
   const handleSaveNotes = () => {

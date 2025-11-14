@@ -1,9 +1,10 @@
+import { Sword, Users, Home, LogOut, FileText } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sword, Users, Home, LogOut, FileText } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 import { Z_INDEX } from '@/constants/z-index';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Main navigation component that provides consistent navigation across the application
@@ -12,7 +13,7 @@ import { Z_INDEX } from '@/constants/z-index';
 const Navigation: React.FC = () => {
   const location = useLocation();
   const { user, signOut, isBlogAdmin } = useAuth();
-  
+
   /**
    * Helper function to determine if a path is active
    * @param path - The path to check
@@ -30,7 +31,10 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav id="app-nav" className={`bg-infinite-dark/95 backdrop-blur supports-[backdrop-filter]:bg-infinite-dark/60 sticky top-0 z-[${Z_INDEX.STICKY}] w-full border-b border-infinite-purple/30`}>
+    <nav
+      id="app-nav"
+      className={`bg-infinite-dark/95 backdrop-blur supports-[backdrop-filter]:bg-infinite-dark/60 sticky top-0 z-[${Z_INDEX.STICKY}] w-full border-b border-infinite-purple/30`}
+    >
       <div className="container mx-auto px-4">
         <div className="flex h-14 items-center justify-between">
           {/* Logo/Home */}
@@ -73,12 +77,10 @@ const Navigation: React.FC = () => {
                 </Link>
               )}
             </div>
-            
+
             {/* User Info and Sign Out */}
             <div className="flex items-center space-x-2 border-l border-border pl-4">
-              <span className="text-sm text-muted-foreground">
-                {user?.email}
-              </span>
+              <span className="text-sm text-muted-foreground">{user?.email}</span>
               <Button
                 onClick={handleSignOut}
                 variant="ghost"

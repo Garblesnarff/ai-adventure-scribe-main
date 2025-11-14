@@ -1,8 +1,9 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import CampaignGallery from '@/components/gallery/CampaignGallery';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CampaignOverviewProps {
   campaign?: {
@@ -119,7 +120,9 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign, onStartNe
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-infinite-purple to-infinite-gold flex items-center justify-center">
                 <span className="text-white font-bold text-lg">📜</span>
               </div>
-              <h2 className="text-2xl font-bold dark:text-white text-gray-900">Campaign Overview</h2>
+              <h2 className="text-2xl font-bold dark:text-white text-gray-900">
+                Campaign Overview
+              </h2>
             </div>
 
             <div className="prose prose-lg max-w-none">
@@ -139,19 +142,25 @@ const CampaignOverview: React.FC<CampaignOverviewProps> = ({ campaign, onStartNe
               {campaign.tone && (
                 <div className="text-center p-3 rounded-lg bg-white/10 border border-border/40">
                   <div className="dark:text-gray-200 text-gray-700 font-semibold text-sm">Tone</div>
-                  <div className="dark:text-white text-gray-900 font-medium text-sm">{campaign.tone}</div>
+                  <div className="dark:text-white text-gray-900 font-medium text-sm">
+                    {campaign.tone}
+                  </div>
                 </div>
               )}
               {campaign.campaign_length && (
                 <div className="text-center p-3 rounded-lg bg-brand-secondary/10 border border-brand-secondary/20">
                   <div className="text-brand-secondary font-semibold text-sm">Length</div>
-                  <div className="dark:text-white text-gray-900 text-sm">{campaign.campaign_length}</div>
+                  <div className="dark:text-white text-gray-900 text-sm">
+                    {campaign.campaign_length}
+                  </div>
                 </div>
               )}
               {campaign.difficulty_level && (
                 <div className="text-center p-3 rounded-lg bg-brand-accent/10 border border-brand-accent/20">
                   <div className="text-brand-accent font-semibold text-sm">Difficulty</div>
-                  <div className="dark:text-white text-gray-900 text-sm">{campaign.difficulty_level}</div>
+                  <div className="dark:text-white text-gray-900 text-sm">
+                    {campaign.difficulty_level}
+                  </div>
                 </div>
               )}
             </div>

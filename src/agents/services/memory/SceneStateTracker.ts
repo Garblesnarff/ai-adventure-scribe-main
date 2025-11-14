@@ -23,7 +23,7 @@ export class SceneStateTracker {
         currentLocation: '',
         activeNPCs: [],
         environmentDetails: { atmosphere: '', timeOfDay: '', sensoryDetails: [] },
-        playerState: { lastAction: '' }
+        playerState: { lastAction: '' },
       };
     }
 
@@ -48,25 +48,25 @@ export class SceneStateTracker {
     if (!this.state) return null;
     return {
       ...this.state,
-      activeNPCs: this.state.activeNPCs.map(npc => ({ ...npc }))
+      activeNPCs: this.state.activeNPCs.map((npc) => ({ ...npc })),
     };
   }
 
   private updateActiveNPCs(npcs: string[]): void {
     if (!this.state) return;
     for (const npc of npcs) {
-      if (!this.state.activeNPCs.find(n => n.name === npc)) {
+      if (!this.state.activeNPCs.find((n) => n.name === npc)) {
         this.state.activeNPCs.push({
           id: npc.toLowerCase().replace(/\s+/g, '_'),
           name: npc,
-          status: 'present'
+          status: 'present',
         });
       }
     }
 
-    this.state.activeNPCs = this.state.activeNPCs.map(npc => ({
+    this.state.activeNPCs = this.state.activeNPCs.map((npc) => ({
       ...npc,
-      status: npcs.includes(npc.name) ? 'present' : 'departed'
+      status: npcs.includes(npc.name) ? 'present' : 'departed',
     }));
   }
 }

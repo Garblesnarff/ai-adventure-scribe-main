@@ -8,6 +8,7 @@
 import { eq, and, isNull, desc, asc, sql } from 'drizzle-orm';
 import { db } from '../../../src/infrastructure/database/index.js';
 import { gameSessions, dialogueHistory, type GameSession, type NewGameSession, type DialogueHistory, type NewDialogueHistory } from '../../../db/schema/index.js';
+import { InternalServerError } from '../lib/errors.js';
 
 /**
  * Message with pagination metadata
@@ -43,7 +44,7 @@ export class SessionService {
       })
       .returning();
 
-    if (!session) throw new Error('Failed to create session');
+    if (!session) throw new InternalServerError('Failed to create session');
     return session;
   }
 
@@ -142,7 +143,7 @@ export class SessionService {
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
-    if (!updated) throw new Error('Failed to complete session');
+    if (!updated) throw new InternalServerError('Failed to complete session');
     return updated;
   }
 
@@ -173,7 +174,7 @@ export class SessionService {
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
-    if (!updated) throw new Error('Failed to update session state');
+    if (!updated) throw new InternalServerError('Failed to update session state');
     return updated;
   }
 
@@ -200,7 +201,7 @@ export class SessionService {
       })
       .returning();
 
-    if (!msg) throw new Error('Failed to add message');
+    if (!msg) throw new InternalServerError('Failed to add message');
     return msg;
   }
 

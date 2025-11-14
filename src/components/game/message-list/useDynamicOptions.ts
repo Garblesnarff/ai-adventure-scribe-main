@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChatMessage } from '@/types/game';
-import { parseMessageOptions } from '@/utils/parseMessageOptions';
+
+import type { ChatMessage } from '@/types/game';
+
 import { handleAsyncError } from '@/utils/error-handler';
+import { parseMessageOptions } from '@/utils/parseMessageOptions';
 
 const DYNAMIC_OPTIONS_FETCH_DELAY_MS = 10000;
 
@@ -34,7 +36,9 @@ export const useDynamicOptions = ({
   isInCombat,
   lastRollRef,
 }: UseDynamicOptionsProps) => {
-  const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(null);
+  const [dynamicOptions, setDynamicOptions] = useState<{ key: string; lines: string[] } | null>(
+    null,
+  );
   const optionsTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -84,8 +88,10 @@ export const useDynamicOptions = ({
           if (dcMatch && !last_roll.dc) last_roll.dc = parseInt(dcMatch[1], 10);
           if (acMatch && !last_roll.ac) last_roll.ac = parseInt(acMatch[1], 10);
           if (typeof last_roll.success === 'undefined') {
-            if (typeof last_roll.dc === 'number') last_roll.success = last_roll.result >= last_roll.dc;
-            if (typeof last_roll.ac === 'number') last_roll.success = last_roll.result >= last_roll.ac;
+            if (typeof last_roll.dc === 'number')
+              last_roll.success = last_roll.result >= last_roll.dc;
+            if (typeof last_roll.ac === 'number')
+              last_roll.success = last_roll.result >= last_roll.ac;
           }
         }
 
@@ -118,7 +124,8 @@ export const useDynamicOptions = ({
           'Explore another angle',
         ];
         const isGeneric =
-          opts.length > 0 && opts.filter((o) => genericPhrases.some((p) => o.includes(p))).length >= 2;
+          opts.length > 0 &&
+          opts.filter((o) => genericPhrases.some((p) => o.includes(p))).length >= 2;
         const hasPending = !!getCurrentDiceRoll();
 
         if (opts.length && !(isGeneric && hasPending)) {

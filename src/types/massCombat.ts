@@ -1,10 +1,10 @@
 /**
  * Mass Combat Types for D&D 5e
- * 
+ *
  * Data models for handling mass combat between armies and groups
  */
 
-export type ArmyType = 
+export type ArmyType =
   | 'infantry'
   | 'cavalry'
   | 'archers'
@@ -14,7 +14,7 @@ export type ArmyType =
   | 'levies'
   | 'elite_troops';
 
-export type TerrainType = 
+export type TerrainType =
   | 'open_field'
   | 'forest'
   | 'hills'
@@ -25,13 +25,7 @@ export type TerrainType =
   | 'coastal'
   | 'desert';
 
-export type WeatherCondition = 
-  | 'clear'
-  | 'rain'
-  | 'snow'
-  | 'fog'
-  | 'wind'
-  | 'storm';
+export type WeatherCondition = 'clear' | 'rain' | 'snow' | 'fog' | 'wind' | 'storm';
 
 export interface ArmyUnit {
   id: string;
@@ -183,11 +177,11 @@ export const commonArmyUnits: ArmyUnit[] = [
         damage: '1d6+2',
         damageType: 'piercing',
         range: 10,
-        targetsMultiple: false
-      }
+        targetsMultiple: false,
+      },
     ],
     damageThreshold: 5,
-    morale: 10
+    morale: 10,
   },
   {
     id: 'cavalry_1',
@@ -204,11 +198,11 @@ export const commonArmyUnits: ArmyUnit[] = [
         damage: '1d12+4',
         damageType: 'piercing',
         range: 10,
-        targetsMultiple: false
-      }
+        targetsMultiple: false,
+      },
     ],
     damageThreshold: 10,
-    morale: 12
+    morale: 12,
   },
   {
     id: 'archers_1',
@@ -225,11 +219,11 @@ export const commonArmyUnits: ArmyUnit[] = [
         damage: '1d8+2',
         damageType: 'piercing',
         range: 150,
-        targetsMultiple: true
-      }
+        targetsMultiple: true,
+      },
     ],
     damageThreshold: 4,
-    morale: 8
+    morale: 8,
   },
   {
     id: 'siege_1',
@@ -247,12 +241,12 @@ export const commonArmyUnits: ArmyUnit[] = [
         damageType: 'piercing',
         range: 120,
         targetsMultiple: false,
-        specialProperties: ['Siege weapon']
-      }
+        specialProperties: ['Siege weapon'],
+      },
     ],
     damageThreshold: 25,
-    morale: 5
-  }
+    morale: 5,
+  },
 ];
 
 // Common battlefields
@@ -271,9 +265,9 @@ export const commonBattlefields: Battlefield[] = [
         type: 'natural',
         position: { x: 500, y: 500 },
         size: { width: 100, height: 100 },
-        effect: 'Provides advantage to ranged attacks for units on hill'
-      }
-    ]
+        effect: 'Provides advantage to ranged attacks for units on hill',
+      },
+    ],
   },
   {
     id: 'forest_1',
@@ -289,10 +283,10 @@ export const commonBattlefields: Battlefield[] = [
         type: 'natural',
         position: { x: 400, y: 400 },
         size: { width: 300, height: 300 },
-        effect: 'Provides half cover to units, reduces movement speed by half'
-      }
-    ]
-  }
+        effect: 'Provides half cover to units, reduces movement speed by half',
+      },
+    ],
+  },
 ];
 
 // Common tactical maneuvers
@@ -303,7 +297,7 @@ export const commonTacticalManeuvers: TacticalManeuver[] = [
     description: 'Position forces to attack from the side or rear',
     requiredCommanderLevel: 5,
     effect: 'Grants advantage on attack rolls for one round',
-    cooldownRounds: 3
+    cooldownRounds: 3,
   },
   {
     id: 'charge_1',
@@ -311,7 +305,7 @@ export const commonTacticalManeuvers: TacticalManeuver[] = [
     description: 'Lead mounted units in a devastating charge',
     requiredCommanderLevel: 3,
     effect: 'Doubles damage for cavalry units on next attack',
-    cooldownRounds: 2
+    cooldownRounds: 2,
   },
   {
     id: 'rally_1',
@@ -319,6 +313,6 @@ export const commonTacticalManeuvers: TacticalManeuver[] = [
     description: 'Boost morale of nearby units',
     requiredCommanderLevel: 4,
     effect: 'Restores 2 morale points to all friendly units within 100 feet',
-    cooldownRounds: 4
-  }
+    cooldownRounds: 4,
+  },
 ];

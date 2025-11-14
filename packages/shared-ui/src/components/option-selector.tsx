@@ -5,24 +5,27 @@
  * character and campaign creation.
  */
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Sparkles, Loader2 } from 'lucide-react';
-import {
+import React from 'react';
+
+import type {
   EnhancementOption,
   OptionSelection,
-  OptionType,
+  OptionType} from '@/types/enhancement-options';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import logger from '@/lib/logger';
+import {
   validateOptionSelection
 } from '@/types/enhancement-options';
-import logger from '@/lib/logger';
 
 interface OptionSelectorProps<T extends OptionType = OptionType> {
   option: EnhancementOption<T>;

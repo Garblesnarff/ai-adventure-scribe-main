@@ -1,7 +1,9 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Book } from 'lucide-react';
-import { Character } from '@/types/character';
+import React from 'react';
+
+import type { Character } from '@/types/character';
+
+import { Card } from '@/components/ui/card';
 
 interface EquipmentProps {
   character: Character;
@@ -20,7 +22,9 @@ const Equipment = ({ character }: EquipmentProps) => {
       </div>
       <ul className="list-disc list-inside space-y-1">
         {character.equipment.map((item, index) => (
-          <li key={index} className="text-gray-700">{item}</li>
+          <li key={index} className="text-gray-700">
+            {item}
+          </li>
         ))}
       </ul>
     </Card>

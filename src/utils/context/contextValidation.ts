@@ -1,17 +1,18 @@
-import { GameContext } from '@/types/game';
-import { Campaign } from '@/types/campaign';
-import { Memory } from '@/types/memory';
+import type { GameContext } from '@/types/game';
+import type { Memory } from '@/types/memory';
+
 import logger from '@/lib/logger';
+import { Campaign } from '@/types/campaign';
 
 /**
  * Validates campaign setting data
  */
 export const validateCampaignSetting = (setting: unknown) => {
-  const s = (setting && typeof setting === 'object') ? (setting as Record<string, unknown>) : {};
+  const s = setting && typeof setting === 'object' ? (setting as Record<string, unknown>) : {};
   return {
     era: typeof s.era === 'string' ? s.era : 'unspecified',
     location: typeof s.location === 'string' ? s.location : 'unknown',
-    atmosphere: typeof s.atmosphere === 'string' ? s.atmosphere : 'neutral'
+    atmosphere: typeof s.atmosphere === 'string' ? s.atmosphere : 'neutral',
   };
 };
 
@@ -19,13 +20,14 @@ export const validateCampaignSetting = (setting: unknown) => {
  * Validates thematic elements data
  */
 export const validateThematicElements = (elements: unknown) => {
-  const e = (elements && typeof elements === 'object') ? (elements as Record<string, unknown>) : {};
-  const toStringArray = (v: unknown): string[] => Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  const e = elements && typeof elements === 'object' ? (elements as Record<string, unknown>) : {};
+  const toStringArray = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
   return {
     mainThemes: toStringArray(e.mainThemes),
     recurringMotifs: toStringArray(e.recurringMotifs),
     keyLocations: toStringArray(e.keyLocations),
-    importantNPCs: toStringArray(e.importantNPCs)
+    importantNPCs: toStringArray(e.importantNPCs),
   };
 };
 
@@ -57,15 +59,16 @@ export const validateGameContext = (context: GameContext): boolean => {
 
   // Character context is optional but if present must be complete
   if (context.character) {
-    if (!context.character.basic?.name || 
-        !context.character.basic?.class || 
-        !context.character.basic?.race) {
+    if (
+      !context.character.basic?.name ||
+      !context.character.basic?.class ||
+      !context.character.basic?.race
+    ) {
       logger.error('[Context] Incomplete character data');
       return false;
     }
 
-    if (!context.character.stats?.health || 
-        context.character.stats.armorClass === undefined) {
+    if (!context.character.stats?.health || context.character.stats.armorClass === undefined) {
       logger.error('[Context] Missing character stats');
       return false;
     }

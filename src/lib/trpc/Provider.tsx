@@ -13,10 +13,14 @@
  * @module lib/trpc/Provider
  */
 
-import { useState, useMemo, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
+import { useState, useMemo } from 'react';
+
 import { trpc } from './client';
+
+import type { ReactNode } from 'react';
+
 import { useAuth } from '@/contexts/AuthContext';
 import logger from '@/lib/logger';
 
@@ -31,8 +35,7 @@ interface TRPCProviderProps {
  * Configuration for the API endpoint
  * Uses environment variable or defaults to /api/trpc
  */
-const API_URL =
-  (import.meta as any).env?.VITE_TRPC_API_URL || '/api/trpc';
+const API_URL = (import.meta as any).env?.VITE_TRPC_API_URL || '/api/trpc';
 
 /**
  * TRPCProvider Component
@@ -77,7 +80,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
             },
           },
         },
-      })
+      }),
   );
 
   /**
@@ -124,9 +127,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </trpc.Provider>
   );
 }

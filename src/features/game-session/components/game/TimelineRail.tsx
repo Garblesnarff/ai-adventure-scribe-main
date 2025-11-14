@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { useMessageContext } from '@/contexts/MessageContext';
 import logger from '@/lib/logger';
 
@@ -40,7 +41,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
 
     // Check if elements exist
     if (rootRef.current) {
-      anchors.forEach(anchor => {
+      anchors.forEach((anchor) => {
         const element = rootRef.current!.querySelector(`#${CSS.escape(anchor)}`);
         logger.debug(`[TimelineRail] Element ${anchor}:`, element);
       });
@@ -67,14 +68,21 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
         const scrollHeight = root.scrollHeight - root.clientHeight;
         const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
 
-        const indicator = railRef.current?.querySelector('.scroll-position-indicator') as HTMLElement | null;
+        const indicator = railRef.current?.querySelector(
+          '.scroll-position-indicator',
+        ) as HTMLElement | null;
         if (indicator) {
           const railHeight = root.clientHeight - 32;
-          const indicatorPosition = Math.max(0, Math.min(railHeight, scrollPercentage * railHeight));
+          const indicatorPosition = Math.max(
+            0,
+            Math.min(railHeight, scrollPercentage * railHeight),
+          );
           indicator.style.transform = `translateY(${indicatorPosition}px)`;
 
           // Absorb effect: detect overlap between indicator and beads
-          const dots = Array.from(railRef.current?.querySelectorAll<HTMLButtonElement>('.timeline-dot') || []);
+          const dots = Array.from(
+            railRef.current?.querySelectorAll<HTMLButtonElement>('.timeline-dot') || [],
+          );
           const indicatorCenter = indicatorPosition + 9; // indicator height ~18px
           const threshold = 10; // px threshold for overlap detection
 
@@ -144,7 +152,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible?.target?.id) setCurrentId(visible.target.id);
       },
-      { root, threshold: [0.6] }
+      { root, threshold: [0.6] },
     );
 
     els.forEach((el) => io.observe(el));
@@ -159,11 +167,11 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
 
     // Calculate the element's position relative to the scroll container
     const elementTop = el.offsetTop - root.offsetTop;
-    const middlePosition = elementTop - (root.clientHeight / 2) + (el.clientHeight / 2);
+    const middlePosition = elementTop - root.clientHeight / 2 + el.clientHeight / 2;
 
     root.scrollTo({
       top: middlePosition,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
   };
 
@@ -178,7 +186,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
           style={{
             boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)',
             top: '0px',
-            transform: 'translateY(0px)'
+            transform: 'translateY(0px)',
           }}
         />
 
@@ -190,7 +198,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
             aria-label={`Jump to DM message ${i + 1}`}
             onClick={() => scrollTo(id)}
             data-anchor-id={id}
-            style={{ top: `${(i + 1) / (anchors.length + 1) * 100}%` }}
+            style={{ top: `${((i + 1) / (anchors.length + 1)) * 100}%` }}
           />
         ))}
       </div>

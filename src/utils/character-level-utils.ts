@@ -53,7 +53,8 @@ export async function getCampaignPartyLevel(campaignId: string): Promise<PartyLe
     // Get all characters in the campaign
     const { data: characters, error } = await supabase
       .from('campaign_characters')
-      .select(`
+      .select(
+        `
         character_id,
         characters (
           id,
@@ -61,7 +62,8 @@ export async function getCampaignPartyLevel(campaignId: string): Promise<PartyLe
           level,
           class
         )
-      `)
+      `,
+      )
       .eq('campaign_id', campaignId);
 
     if (error || !characters || characters.length === 0) {
@@ -71,20 +73,20 @@ export async function getCampaignPartyLevel(campaignId: string): Promise<PartyLe
 
     // Extract character data and filter out null characters
     const validCharacters = characters
-      .map(cc => cc.characters)
-      .filter(char => char && char.level && char.level > 0)
-      .map(char => ({
+      .map((cc) => cc.characters)
+      .filter((char) => char && char.level && char.level > 0)
+      .map((char) => ({
         id: char.id,
         name: char.name || 'Unknown',
         level: char.level || 1,
-        class: char.class || undefined
+        class: char.class || undefined,
       }));
 
     if (validCharacters.length === 0) {
       return getDefaultPartyLevel();
     }
 
-    const levels = validCharacters.map(char => char.level);
+    const levels = validCharacters.map((char) => char.level);
     const averageLevel = Math.round(levels.reduce((sum, level) => sum + level, 0) / levels.length);
     const minLevel = Math.min(...levels);
     const maxLevel = Math.max(...levels);
@@ -94,7 +96,7 @@ export async function getCampaignPartyLevel(campaignId: string): Promise<PartyLe
       minLevel,
       maxLevel,
       partySize: validCharacters.length,
-      characters: validCharacters
+      characters: validCharacters,
     };
   } catch (error) {
     logger.error('Error getting campaign party level:', error);
@@ -117,31 +119,31 @@ export function getContentDifficultyLevel(partyInfo: PartyLevelInfo): {
     return {
       difficulty: 'easy',
       recommendedLevel: avgLevel,
-      description: 'New adventurers, simple challenges'
+      description: 'New adventurers, simple challenges',
     };
   } else if (avgLevel <= 5) {
     return {
       difficulty: 'moderate',
       recommendedLevel: avgLevel,
-      description: 'Local heroes, regional threats'
+      description: 'Local heroes, regional threats',
     };
   } else if (avgLevel <= 10) {
     return {
       difficulty: 'moderate',
       recommendedLevel: avgLevel,
-      description: 'Seasoned adventurers, significant threats'
+      description: 'Seasoned adventurers, significant threats',
     };
   } else if (avgLevel <= 15) {
     return {
       difficulty: 'hard',
       recommendedLevel: avgLevel,
-      description: 'Champions, world-threatening challenges'
+      description: 'Champions, world-threatening challenges',
     };
   } else {
     return {
       difficulty: 'deadly',
       recommendedLevel: avgLevel,
-      description: 'Legendary heroes, cosmic threats'
+      description: 'Legendary heroes, cosmic threats',
     };
   }
 }
@@ -155,14 +157,17 @@ function getDefaultPartyLevel(): PartyLevelInfo {
     minLevel: 3,
     maxLevel: 3,
     partySize: 4,
-    characters: []
+    characters: [],
   };
 }
 
 /**
  * Quick function to get just the average party level for simple use cases
  */
-export async function getAveragePartyLevel(campaignId?: string, sessionId?: string): Promise<number> {
+export async function getAveragePartyLevel(
+  campaignId?: string,
+  sessionId?: string,
+): Promise<number> {
   try {
     if (sessionId) {
       const partyInfo = await getSessionPartyLevel(sessionId);

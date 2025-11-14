@@ -1,9 +1,12 @@
 import React from 'react';
-import { useCampaign } from '@/contexts/CampaignContext';
-import { WizardStepProps } from '../../wizard/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import CampaignNameInput from './components/CampaignNameInput';
+
 import CampaignDescriptionInput from './components/CampaignDescriptionInput';
+import CampaignNameInput from './components/CampaignNameInput';
+
+import type { WizardStepProps } from '../../wizard/types';
+
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCampaign } from '@/contexts/CampaignContext';
 
 /**
  * Basic campaign details component
@@ -15,7 +18,7 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
   const { state, dispatch } = useCampaign();
   const [touched, setTouched] = React.useState({
     name: false,
-    description: false
+    description: false,
   });
 
   /**
@@ -26,7 +29,7 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
   const handleChange = (field: string, value: string) => {
     dispatch({
       type: 'UPDATE_CAMPAIGN',
-      payload: { [field]: value }
+      payload: { [field]: value },
     });
   };
 
@@ -35,9 +38,9 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
    * @param field - Field name to mark as touched
    */
   const handleBlur = (field: string) => {
-    setTouched(prev => ({
+    setTouched((prev) => ({
       ...prev,
-      [field]: true
+      [field]: true,
     }));
   };
 
@@ -47,9 +50,9 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
    */
   const getNameError = () => {
     if (touched.name && (!state.campaign?.name || !state.campaign.name.trim())) {
-      return "Campaign name is required";
+      return 'Campaign name is required';
     }
-    return "";
+    return '';
   };
 
   if (isLoading) {
@@ -83,7 +86,7 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
           genre: state.campaign?.genre,
           difficulty_level: state.campaign?.difficulty_level,
           campaign_length: state.campaign?.campaign_length,
-          tone: state.campaign?.tone
+          tone: state.campaign?.tone,
         }}
       />
     </div>

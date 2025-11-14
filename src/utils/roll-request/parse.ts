@@ -3,7 +3,7 @@
  * Parses DM messages to detect and extract dice roll requests
  */
 
-import { RollRequest } from '@/components/game/DiceRollRequest';
+import type { RollRequest } from '@/components/game/DiceRollRequest';
 
 export interface ParsedRollRequest extends RollRequest {
   originalText: string;
@@ -37,7 +37,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
               advantage: roll.advantage,
               disadvantage: roll.disadvantage,
               originalText: `ROLL_REQUESTS_V1: ${roll.purpose}`,
-              confidence: 1.0 // Structured data is highest confidence
+              confidence: 1.0, // Structured data is highest confidence
             });
           }
         });
@@ -65,20 +65,22 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     .trim();
 
   // Common skill regex used across multiple patterns
-  const skillRegex = '(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\\s+of\\s+hand|animal\\s+handling)';
+  const skillRegex =
+    '(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\\s+of\\s+hand|animal\\s+handling)';
 
   // Enhanced attack roll detection (without explicit dice)
   const attackPatterns = [
     /(?:please\s+)?(?:make\s+an?|roll\s+an?)\s*attack\s*(?:roll)?/gi,
     /roll\s+to\s+(?:attack|hit)/gi,
-    /(?:make\s+an?|roll\s+(?:for\s+)?)\s*attack(?:\s+roll)?/gi
+    /(?:make\s+an?|roll\s+(?:for\s+)?)\s*attack(?:\s+roll)?/gi,
   ];
 
   // Weapon hint and AC patterns used around attack phrases
-  const weaponHint = /\b(?:with|using|wielding|firing|shooting|from)\s+(?:your|my|the)?\s*([A-Za-z][\w' -]{2,40})/i;
+  const weaponHint =
+    /\b(?:with|using|wielding|firing|shooting|from)\s+(?:your|my|the)?\s*([A-Za-z][\w' -]{2,40})/i;
   const acTail = /(ac|armor\s*class)\s*[:=]?\s*(\d{1,2})/i;
 
-  attackPatterns.forEach(pattern => {
+  attackPatterns.forEach((pattern) => {
     while ((match = pattern.exec(text)) !== null) {
       // Look around the match to extract context (weapon, AC)
       const start = Math.max(0, match.index - 120);
@@ -96,7 +98,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
         purpose: weaponName ? `${weaponName} attack` : 'Attack roll',
         ac,
         originalText: match[0],
-        confidence: 0.95
+        confidence: 0.95,
       });
     }
   });
@@ -107,26 +109,43 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     /(?:i\s+)?cast\s+([a-z\s]+?)$/gi,
     /(?:use|fire|launch)\s+(?:my\s+)?([a-z\s]+?)(?:\s+spell|\s+cantrip)/gi,
     /(?:make|roll)\s+(?:a\s+)?(?:ranged\s+)?spell\s+attack/gi,
-    /(?:melee\s+)?spell\s+attack\s+(?:roll|with)/gi
+    /(?:melee\s+)?spell\s+attack\s+(?:roll|with)/gi,
   ];
 
   const commonSpells = [
-    'fire bolt', 'ray of frost', 'eldritch blast', 'sacred flame', 'chill touch',
-    'firebolt', 'magic missile', 'shocking grasp', 'witch bolt', 'chromatic orb',
-    'guiding bolt', 'inflict wounds', 'spiritual weapon', 'scorching ray'
+    'fire bolt',
+    'ray of frost',
+    'eldritch blast',
+    'sacred flame',
+    'chill touch',
+    'firebolt',
+    'magic missile',
+    'shocking grasp',
+    'witch bolt',
+    'chromatic orb',
+    'guiding bolt',
+    'inflict wounds',
+    'spiritual weapon',
+    'scorching ray',
   ];
 
-  spellAttackPatterns.forEach(pattern => {
+  spellAttackPatterns.forEach((pattern) => {
     while ((match = pattern.exec(text)) !== null) {
       const spellName = match[1]?.trim().toLowerCase();
       let purpose = 'Spell attack';
 
       // Check if it's a known spell
-      if (spellName && commonSpells.some(spell => spellName.includes(spell))) {
-        const spell = commonSpells.find(s => spellName.includes(s));
-        purpose = `${spell?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} attack`;
+      if (spellName && commonSpells.some((spell) => spellName.includes(spell))) {
+        const spell = commonSpells.find((s) => spellName.includes(s));
+        purpose = `${spell
+          ?.split(' ')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')} attack`;
       } else if (spellName && spellName.length > 2) {
-        purpose = `${spellName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} spell attack`;
+        purpose = `${spellName
+          .split(' ')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')} spell attack`;
       }
 
       // Look for AC in context
@@ -142,18 +161,15 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
         purpose,
         ac,
         originalText: match[0],
-        confidence: 0.93
+        confidence: 0.93,
       });
     }
   });
 
   // Initiative (enhanced)
-  const initiativePatterns = [
-    /roll\s+initiative.*?\(([^)]+)\)/gi,
-    /roll\s+initiative/gi
-  ];
+  const initiativePatterns = [/roll\s+initiative.*?\(([^)]+)\)/gi, /roll\s+initiative/gi];
 
-  initiativePatterns.forEach(pattern => {
+  initiativePatterns.forEach((pattern) => {
     while ((match = pattern.exec(text)) !== null) {
       const formula = match[1] ? normalizeFormula(match[1]) : '1d20+dex';
       requests.push({
@@ -161,13 +177,14 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
         formula,
         purpose: 'Initiative roll for combat order',
         originalText: match[0],
-        confidence: 0.95
+        confidence: 0.95,
       });
     }
   });
 
   // Skill/Ability checks and saves with explicit dice
-  const checkPattern = /make\s+an?\s+(constitution|dexterity|strength|intelligence|wisdom|charisma|[\w\s]+)\s+(check|save|saving\s+throw).*?\(([^)]+)(?:,\s*DC\s+(\d+))?\)/gi;
+  const checkPattern =
+    /make\s+an?\s+(constitution|dexterity|strength|intelligence|wisdom|charisma|[\w\s]+)\s+(check|save|saving\s+throw).*?\(([^)]+)(?:,\s*DC\s+(\d+))?\)/gi;
   while ((match = checkPattern.exec(text)) !== null) {
     const ability = match[1].toLowerCase();
     const type = match[2].toLowerCase();
@@ -183,12 +200,13 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       purpose,
       dc,
       originalText: match[0],
-      confidence: 0.9
+      confidence: 0.9,
     });
   }
 
   // "Roll for <skill> (DC 14)" without explicit dice
-  const rollForSkillPattern = /(?:please\s+)?roll\s+for\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)(?:\s*\(?:(?:dc|DC)\s*(\d+)\)?)?/gi;
+  const rollForSkillPattern =
+    /(?:please\s+)?roll\s+for\s+(perception|stealth|investigation|insight|persuasion|deception|intimidation|athletics|acrobatics|arcana|history|medicine|nature|religion|survival|performance|sleight\s+of\s+hand|animal\s+handling)(?:\s*\(?:(?:dc|DC)\s*(\d+)\)?)?/gi;
   while ((match = rollForSkillPattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
     const dc = match[2] ? parseInt(match[2]) : undefined;
@@ -198,7 +216,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
       dc,
       originalText: match[0],
-      confidence: 0.92
+      confidence: 0.92,
     });
   }
 
@@ -217,14 +235,14 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
       dc,
       originalText: match[0],
-      confidence: 0.9
+      confidence: 0.9,
     });
   }
 
   // "Roll an <skill> check" (optional DC)
   const rollSkillCheckPattern = new RegExp(
     `(?:please\\s+)?roll\\s+an?\\s+${skillRegex}\\s+check(?:\\s*\\(?\\s*(?:dc|DC)\\s*(\\d+)\\s*\\)?)?`,
-    'gi'
+    'gi',
   );
   while ((match = rollSkillCheckPattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
@@ -241,14 +259,14 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
       dc,
       originalText: match[0],
-      confidence: 0.95
+      confidence: 0.95,
     });
   }
 
   // Polite/requested forms: "Give me an Investigation check (DC 15)", "Perform a Stealth check"
   const requestSkillCheckPattern = new RegExp(
     `(?:please\\s+)?(?:i\\s+need\\s+|give\\s+me\\s+|perform\\s+)?an?\\s*${skillRegex}\\s+check(?:\\s*\\(?\\s*(?:dc|DC)\\s*(\\d+)\\s*\\)?)?`,
-    'gi'
+    'gi',
   );
   while ((match = requestSkillCheckPattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
@@ -264,14 +282,14 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
       dc,
       originalText: match[0],
-      confidence: 0.93
+      confidence: 0.93,
     });
   }
 
   // Simple form without the word "check": "Roll Investigation (DC 12)"
   const rollSkillSimplePattern = new RegExp(
     `(?:please\\s+)?roll\\s+${skillRegex}(?:\\s*\\(?\\s*(?:dc|DC)\\s*(\\d+)\\s*\\)?)?`,
-    'gi'
+    'gi',
   );
   while ((match = rollSkillSimplePattern.exec(text)) !== null) {
     const skill = match[1].toLowerCase();
@@ -287,7 +305,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       purpose: `${skill.charAt(0).toUpperCase() + skill.slice(1)} check`,
       dc,
       originalText: match[0],
-      confidence: 0.92
+      confidence: 0.92,
     });
   }
 
@@ -299,7 +317,7 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
     /now\s+roll\s+damage/gi,
     /roll\s+(?:your\s+)?(?:weapon\s+)?damage/gi,
     /(?:that\s+hits|you\s+hit).*?roll\s+damage/gi,
-    /critical\s+hit.*?roll.*?damage/gi
+    /critical\s+hit.*?roll.*?damage/gi,
   ];
 
   damagePatterns.forEach((pattern, index) => {
@@ -320,9 +338,10 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
   });
 
   // Generic roll requests with explicit dice
-  const genericPattern = /(?:please\s+)?roll\s+([\dd+\s-]+)(?:\s+for\s+(.+?))?(?:\s+\((?:[^)]*?\b(?:dc|DC)\s*(\d+)|[^)]*?\bAC\s*(\d+))\))?/gi;
+  const genericPattern =
+    /(?:please\s+)?roll\s+([\dd+\s-]+)(?:\s+for\s+(.+?))?(?:\s+\((?:[^)]*?\b(?:dc|DC)\s*(\d+)|[^)]*?\bAC\s*(\d+))\))?/gi;
   while ((match = genericPattern.exec(text)) !== null) {
-    if (requests.some(r => r.originalText.includes(match[0]))) continue;
+    if (requests.some((r) => r.originalText.includes(match[0]))) continue;
 
     const formula = match[1].trim();
     const purpose = match[2] || 'Dice roll';
@@ -342,13 +361,17 @@ export function parseRollRequests(message: string): ParsedRollRequest[] {
       dc,
       ac,
       originalText: match[0],
-      confidence: 0.7
+      confidence: 0.7,
     });
   }
 
   const uniqueRequests = requests
-    .filter((request, index, self) => index === self.findIndex(r => r.formula === request.formula && r.purpose === request.purpose))
-    .filter(r => r.confidence > 0.5)
+    .filter(
+      (request, index, self) =>
+        index ===
+        self.findIndex((r) => r.formula === request.formula && r.purpose === request.purpose),
+    )
+    .filter((r) => r.confidence > 0.5)
     .sort((a, b) => b.confidence - a.confidence);
 
   return uniqueRequests;
@@ -367,9 +390,16 @@ export function normalizeFormula(formula: string): string {
 
   if (!/^\d*d\d+/.test(normalized)) {
     if (/^[+-]?\d+$/.test(normalized)) {
-      normalized = '1d20' + (normalized.startsWith('+') || normalized.startsWith('-') ? '' : '+') + normalized;
-    } else if (normalized.includes('dex') || normalized.includes('str') || normalized.includes('con') || 
-               normalized.includes('int') || normalized.includes('wis') || normalized.includes('cha')) {
+      normalized =
+        '1d20' + (normalized.startsWith('+') || normalized.startsWith('-') ? '' : '+') + normalized;
+    } else if (
+      normalized.includes('dex') ||
+      normalized.includes('str') ||
+      normalized.includes('con') ||
+      normalized.includes('int') ||
+      normalized.includes('wis') ||
+      normalized.includes('cha')
+    ) {
       normalized = '1d20+modifier';
     } else {
       normalized = '1d20';

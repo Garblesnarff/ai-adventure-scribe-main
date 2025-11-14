@@ -1,7 +1,7 @@
 [
   { "id": "srd:goblin", "name": "Goblin", "cr": 0.25, "xp": 50, "tags": ["forest", "caves"] },
-  { "id": "srd:wolf",   "name": "Wolf",   "cr": 0.25, "xp": 50, "tags": ["forest", "plains"] },
-  { "id": "srd:orc",    "name": "Orc",    "cr": 0.5,  "xp": 100, "tags": ["hills", "forest"] },
+  { "id": "srd:wolf", "name": "Wolf", "cr": 0.25, "xp": 50, "tags": ["forest", "plains"] },
+  { "id": "srd:orc", "name": "Orc", "cr": 0.5, "xp": 100, "tags": ["hills", "forest"] },
   { "id": "srd:bandit", "name": "Bandit", "cr": 0.125, "xp": 25, "tags": ["road"] },
-  { "id": "srd:ogre",   "name": "Ogre",   "cr": 2,    "xp": 450, "tags": ["hills", "caves"] }
+  { "id": "srd:ogre", "name": "Ogre", "cr": 2, "xp": 450, "tags": ["hills", "caves"] }
 ]

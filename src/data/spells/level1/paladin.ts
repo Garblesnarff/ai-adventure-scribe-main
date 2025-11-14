@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const paladinLevel1Spells: Spell[] = [
-{
+  {
     id: 'bless-paladin',
     name: 'Bless',
     level: 1,
@@ -15,7 +15,7 @@ export const paladinLevel1Spells: Spell[] = [
     materialDescription: 'a sprinkling of holy water',
     duration: 'Concentration, up to 1 minute',
     description: 'You bless up to three creatures of your choice within range.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'command-paladin',
@@ -27,7 +27,7 @@ export const paladinLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: '1 round',
-    description: 'You speak a one-word command to a creature you can see within range.'
+    description: 'You speak a one-word command to a creature you can see within range.',
   },
   {
     id: 'compelled-duel',
@@ -40,7 +40,7 @@ export const paladinLevel1Spells: Spell[] = [
     verbal: true,
     duration: 'Concentration, up to 1 minute',
     description: 'You attempt to compel a creature to duel you.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'cure-wounds-paladin',
@@ -53,8 +53,9 @@ export const paladinLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
-    damage: '1d8'
+    description:
+      'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
+    damage: '1d8',
   },
   {
     id: 'detect-evil-and-good-paladin',
@@ -67,8 +68,9 @@ export const paladinLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you.',
-    concentration: true
+    description:
+      'For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you.',
+    concentration: true,
   },
   {
     id: 'detect-magic-paladin',
@@ -83,7 +85,7 @@ export const paladinLevel1Spells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'detect-poison-and-disease-paladin',
@@ -98,9 +100,10 @@ export const paladinLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a yew leaf',
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
+    description:
+      'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'divine-favor',
@@ -113,8 +116,9 @@ export const paladinLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 radiant damage.',
-    concentration: true
+    description:
+      'Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 radiant damage.',
+    concentration: true,
   },
   {
     id: 'heroism-paladin',
@@ -128,7 +132,7 @@ export const paladinLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'A willing creature you touch is imbued with bravery.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'protection-from-evil-and-good-paladin',
@@ -144,8 +148,9 @@ export const paladinLevel1Spells: Spell[] = [
     materialDescription: 'holy water or powdered silver and iron, which the spell consumes',
     materialConsumed: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
-    concentration: true
+    description:
+      'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
+    concentration: true,
   },
   {
     id: 'purify-food-and-drink-paladin',
@@ -158,7 +163,8 @@ export const paladinLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease.',
-    ritual: true
+    description:
+      'All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease.',
+    ritual: true,
   },
 ];

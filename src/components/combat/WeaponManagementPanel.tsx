@@ -1,16 +1,24 @@
 /**
  * Weapon Management Panel Component
- * 
+ *
  * Allows players to equip and manage their weapons during combat
  */
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sword, X } from 'lucide-react';
+import React, { useState } from 'react';
+
+import type { Equipment } from '@/data/equipmentOptions';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCombat } from '@/contexts/CombatContext';
-import { Equipment } from '@/data/equipmentOptions';
 
 interface WeaponManagementPanelProps {
   participantId: string;
@@ -23,33 +31,34 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
   participantId,
   inventory,
   mainHandWeapon,
-  offHandWeapon
+  offHandWeapon,
 }) => {
-  const { equipMainHandWeapon, equipOffHandWeapon, unequipMainHandWeapon, unequipOffHandWeapon } = useCombat();
-  
+  const { equipMainHandWeapon, equipOffHandWeapon, unequipMainHandWeapon, unequipOffHandWeapon } =
+    useCombat();
+
   const [selectedMainHand, setSelectedMainHand] = useState<string>(mainHandWeapon?.id || '');
   const [selectedOffHand, setSelectedOffHand] = useState<string>(offHandWeapon?.id || '');
-  
-  const weapons = inventory.filter(item => item.category === 'weapon');
-  
+
+  const weapons = inventory.filter((item) => item.category === 'weapon');
+
   const handleEquipMainHand = () => {
     if (!selectedMainHand) return;
-    
-    const weapon = weapons.find(w => w.id === selectedMainHand);
+
+    const weapon = weapons.find((w) => w.id === selectedMainHand);
     if (weapon) {
       equipMainHandWeapon(participantId, weapon);
     }
   };
-  
+
   const handleEquipOffHand = () => {
     if (!selectedOffHand) return;
-    
-    const weapon = weapons.find(w => w.id === selectedOffHand);
+
+    const weapon = weapons.find((w) => w.id === selectedOffHand);
     if (weapon) {
       equipOffHandWeapon(participantId, weapon);
     }
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -64,9 +73,9 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
           <div className="flex justify-between items-center">
             <label className="text-sm font-medium">Main Hand</label>
             {mainHandWeapon && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   unequipMainHandWeapon(participantId);
                   setSelectedMainHand('');
@@ -76,7 +85,7 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
               </Button>
             )}
           </div>
-          
+
           {mainHandWeapon ? (
             <div className="p-2 bg-muted rounded">
               <div className="font-medium">{mainHandWeapon.name}</div>
@@ -96,7 +105,7 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
                   <SelectValue placeholder="Select weapon" />
                 </SelectTrigger>
                 <SelectContent>
-                  {weapons.map(weapon => (
+                  {weapons.map((weapon) => (
                     <SelectItem key={weapon.id} value={weapon.id}>
                       {weapon.name}
                     </SelectItem>
@@ -109,15 +118,15 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Off-Hand Weapon */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <label className="text-sm font-medium">Off-Hand</label>
             {offHandWeapon && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   unequipOffHandWeapon(participantId);
                   setSelectedOffHand('');
@@ -127,7 +136,7 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
               </Button>
             )}
           </div>
-          
+
           {offHandWeapon ? (
             <div className="p-2 bg-muted rounded">
               <div className="font-medium">{offHandWeapon.name}</div>
@@ -148,13 +157,14 @@ const WeaponManagementPanel: React.FC<WeaponManagementPanelProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {weapons
-                    .filter(weapon => 
-                      weapon.weaponProperties?.light || 
-                      weapon.weaponProperties?.finesse ||
-                      weapon.name.toLowerCase().includes('dagger') ||
-                      weapon.name.toLowerCase().includes('hand')
+                    .filter(
+                      (weapon) =>
+                        weapon.weaponProperties?.light ||
+                        weapon.weaponProperties?.finesse ||
+                        weapon.name.toLowerCase().includes('dagger') ||
+                        weapon.name.toLowerCase().includes('hand'),
                     )
-                    .map(weapon => (
+                    .map((weapon) => (
                       <SelectItem key={weapon.id} value={weapon.id}>
                         {weapon.name}
                       </SelectItem>

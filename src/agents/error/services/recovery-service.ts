@@ -1,18 +1,18 @@
 /**
  * Recovery Service
- * 
+ *
  * This file defines the RecoveryService class, a singleton service responsible
- * for attempting to recover from critical errors within the application. 
+ * for attempting to recover from critical errors within the application.
  * It includes logic to validate system state, restore previous states, and log
  * recovery attempts, successes, and failures.
- * 
+ *
  * Main Class:
  * - RecoveryService: Manages error recovery procedures.
- * 
+ *
  * Key Dependencies:
  * - Supabase client (`@/integrations/supabase/client`)
  * - ErrorMetadata type from '../types'.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -22,7 +22,6 @@ import { supabase } from '@/integrations/supabase/client';
 // Project Types
 import { ErrorMetadata } from '../types';
 import { logger } from '../../../lib/logger';
-
 
 export class RecoveryService {
   private static instance: RecoveryService;
@@ -40,23 +39,23 @@ export class RecoveryService {
   public async attemptRecovery(
     context: string,
     error: Error,
-    metadata?: ErrorMetadata
+    metadata?: ErrorMetadata,
   ): Promise<boolean> {
     logger.info(`[RecoveryService] Attempting recovery for ${context}`);
-    
+
     // Log recovery attempt
     this.logRecoveryAttempt(context, error);
-    
+
     try {
       // Validate system state
       await this.validateSystemState(context);
-      
+
       // Attempt state restoration
       await this.restoreState(context, metadata);
-      
+
       // Log successful recovery
       await this.logRecoverySuccess(context, error, metadata);
-      
+
       return true;
     } catch (recoveryError) {
       logger.error('[RecoveryService] Recovery failed:', recoveryError);
@@ -69,7 +68,7 @@ export class RecoveryService {
     // Check database connection
     const { error: dbError } = await supabase.from('agent_states').select('id').limit(1);
     if (dbError) throw new Error('Database connection validation failed');
-    
+
     // Add more validation as needed
   }
 
@@ -113,14 +112,14 @@ export class RecoveryService {
     }
     this.recoveryLog.get(context)!.push({
       timestamp: Date.now(),
-      error
+      error,
     });
   }
 
   private async logRecoverySuccess(
     context: string,
     error: Error,
-    metadata?: ErrorMetadata
+    metadata?: ErrorMetadata,
   ): Promise<void> {
     await supabase.from('agent_communications').insert({
       message_type: 'recovery_success',
@@ -128,8 +127,8 @@ export class RecoveryService {
         context,
         error: error.message,
         metadata,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -137,7 +136,7 @@ export class RecoveryService {
     context: string,
     originalError: Error,
     recoveryError: Error,
-    metadata?: ErrorMetadata
+    metadata?: ErrorMetadata,
   ): Promise<void> {
     await supabase.from('agent_communications').insert({
       message_type: 'recovery_failure',
@@ -146,8 +145,8 @@ export class RecoveryService {
         originalError: originalError.message,
         recoveryError: recoveryError.message,
         metadata,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 }

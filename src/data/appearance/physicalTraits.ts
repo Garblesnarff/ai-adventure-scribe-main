@@ -82,7 +82,13 @@ const RACE_DICE: Record<string, HeightWeightDice> = {
 };
 
 export function calculateRange(diceConfig: HeightWeightDice): HeightWeightRange {
-  const { baseHeightInches, heightModifier, baseWeightPounds, weightModifierDice, weightMultiplierDice } = diceConfig;
+  const {
+    baseHeightInches,
+    heightModifier,
+    baseWeightPounds,
+    weightModifierDice,
+    weightMultiplierDice,
+  } = diceConfig;
   const heightModifierMin = heightModifier.count;
   const heightModifierMax = heightModifier.count * heightModifier.sides;
 
@@ -105,7 +111,7 @@ export function calculateRange(diceConfig: HeightWeightDice): HeightWeightRange 
 }
 
 export const RACE_HEIGHT_WEIGHT: Record<string, HeightWeightRange> = Object.fromEntries(
-  Object.entries(RACE_DICE).map(([raceId, dice]) => [raceId, calculateRange(dice)])
+  Object.entries(RACE_DICE).map(([raceId, dice]) => [raceId, calculateRange(dice)]),
 );
 
 export function getHeightWeightRange(raceId?: string): HeightWeightRange | undefined {

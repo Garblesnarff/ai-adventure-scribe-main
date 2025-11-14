@@ -1,18 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  validateSpellSelection,
-  validateMulticlassSpellSelection,
-  getSpellcastingInfo,
-  getRacialSpells
-} from '@/utils/spell-validation';
-import { spellApi } from '@/services/spellApi';
+
 import {
   mockWizard,
   mockCleric,
   mockHuman,
   createMockCharacter,
-  generateLargeSpellDataset
+  generateLargeSpellDataset,
 } from '@/__tests__/helpers/spell-test-helpers';
+import { spellApi } from '@/services/spellApi';
+import {
+  validateSpellSelection,
+  validateMulticlassSpellSelection,
+  getSpellcastingInfo,
+  getRacialSpells,
+} from '@/utils/spell-validation';
 
 /**
  * Spell Validation Performance Tests
@@ -32,8 +33,8 @@ vi.mock('@/services/spellApi', () => ({
   spellApi: {
     calculateMulticlassCasterLevel: vi.fn(),
     getClassSpells: vi.fn(),
-    validateSpellForClass: vi.fn()
-  }
+    validateSpellForClass: vi.fn(),
+  },
 }));
 
 describe('Spell Validation Performance Tests', () => {
@@ -50,7 +51,7 @@ describe('Spell Validation Performance Tests', () => {
       const result = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation', 'light'],
-        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
       );
 
       const endTime = performance.now();
@@ -68,7 +69,7 @@ describe('Spell Validation Performance Tests', () => {
       const result = validateSpellSelection(
         clericCharacter,
         ['guidance', 'thaumaturgy', 'sacred-flame'],
-        ['cure-wounds']
+        ['cure-wounds'],
       );
 
       const endTime = performance.now();
@@ -88,7 +89,7 @@ describe('Spell Validation Performance Tests', () => {
         validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
       }
 
@@ -107,8 +108,14 @@ describe('Spell Validation Performance Tests', () => {
       const wizardCharacter = createMockCharacter('Large Dataset Wizard', mockWizard, mockHuman);
 
       // Mock a large spell validation scenario
-      const cantrips = largeSpellDataset.filter(s => s.level === 0).slice(0, 3).map(s => s.id);
-      const spells = largeSpellDataset.filter(s => s.level === 1).slice(0, 6).map(s => s.id);
+      const cantrips = largeSpellDataset
+        .filter((s) => s.level === 0)
+        .slice(0, 3)
+        .map((s) => s.id);
+      const spells = largeSpellDataset
+        .filter((s) => s.level === 1)
+        .slice(0, 6)
+        .map((s) => s.id);
 
       const startTime = performance.now();
 
@@ -125,8 +132,12 @@ describe('Spell Validation Performance Tests', () => {
       const wizardCharacter = createMockCharacter('Large Selection Wizard', mockWizard, mockHuman);
 
       // Create artificially large selections (beyond normal game limits)
-      const manyCantrips = Array(50).fill(0).map((_, i) => `cantrip-${i}`);
-      const manySpells = Array(100).fill(0).map((_, i) => `spell-${i}`);
+      const manyCantrips = Array(50)
+        .fill(0)
+        .map((_, i) => `cantrip-${i}`);
+      const manySpells = Array(100)
+        .fill(0)
+        .map((_, i) => `spell-${i}`);
 
       const startTime = performance.now();
 
@@ -166,15 +177,15 @@ describe('Spell Validation Performance Tests', () => {
         classLevels: [
           { className: 'Wizard', level: 5 },
           { className: 'Cleric', level: 3 },
-          { className: 'Paladin', level: 2 }
-        ]
+          { className: 'Paladin', level: 2 },
+        ],
       };
 
       // Mock the API call to return quickly
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockResolvedValue({
         totalCasterLevel: 8,
         spellSlots: { caster_level: 8 },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       });
 
       const startTime = performance.now();
@@ -182,7 +193,7 @@ describe('Spell Validation Performance Tests', () => {
       const result = await validateMulticlassSpellSelection(
         multiclassCharacter,
         ['mage-hand', 'prestidigitation', 'light'],
-        ['magic-missile', 'shield']
+        ['magic-missile', 'shield'],
       );
 
       const endTime = performance.now();
@@ -193,28 +204,26 @@ describe('Spell Validation Performance Tests', () => {
     });
 
     it('should handle multiple multiclass calculations in parallel', async () => {
-      const multiclassCharacters = Array(10).fill(0).map((_, i) => ({
-        ...createMockCharacter(`Multiclass ${i}`, mockWizard, mockHuman),
-        classLevels: [
-          { className: 'Wizard', level: i + 1 },
-          { className: 'Cleric', level: i + 1 }
-        ]
-      }));
+      const multiclassCharacters = Array(10)
+        .fill(0)
+        .map((_, i) => ({
+          ...createMockCharacter(`Multiclass ${i}`, mockWizard, mockHuman),
+          classLevels: [
+            { className: 'Wizard', level: i + 1 },
+            { className: 'Cleric', level: i + 1 },
+          ],
+        }));
 
       vi.mocked(spellApi.calculateMulticlassCasterLevel).mockImplementation(async () => ({
         totalCasterLevel: 5,
         spellSlots: { caster_level: 5 },
-        pactMagicSlots: null
+        pactMagicSlots: null,
       }));
 
       const startTime = performance.now();
 
-      const promises = multiclassCharacters.map(character =>
-        validateMulticlassSpellSelection(
-          character,
-          ['mage-hand'],
-          ['magic-missile']
-        )
+      const promises = multiclassCharacters.map((character) =>
+        validateMulticlassSpellSelection(character, ['mage-hand'], ['magic-missile']),
       );
 
       const results = await Promise.all(promises);
@@ -223,7 +232,7 @@ describe('Spell Validation Performance Tests', () => {
       const executionTime = endTime - startTime;
 
       expect(results).toHaveLength(10);
-      expect(results.every(r => r.valid)).toBe(true);
+      expect(results.every((r) => r.valid)).toBe(true);
       expect(executionTime).toBeLessThan(200); // 10 multiclass calculations in under 200ms
     });
   });
@@ -240,7 +249,7 @@ describe('Spell Validation Performance Tests', () => {
         validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
 
         // Force garbage collection periodically if available
@@ -259,19 +268,19 @@ describe('Spell Validation Performance Tests', () => {
     });
 
     it('should handle large character datasets without excessive memory usage', () => {
-      const characters = Array(100).fill(0).map((_, i) =>
-        createMockCharacter(`Character ${i}`, mockWizard, mockHuman)
-      );
+      const characters = Array(100)
+        .fill(0)
+        .map((_, i) => createMockCharacter(`Character ${i}`, mockWizard, mockHuman));
 
       const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
 
       const startTime = performance.now();
 
-      characters.forEach(character => {
+      characters.forEach((character) => {
         validateSpellSelection(
           character,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
       });
 
@@ -298,7 +307,15 @@ describe('Spell Validation Performance Tests', () => {
       const result = validateSpellSelection(
         wizardCharacter,
         ['invalid1', 'invalid2', 'invalid3', 'invalid4', 'invalid5'], // Too many, all invalid
-        ['invalid-spell-1', 'invalid-spell-2', 'invalid-spell-3', 'invalid-spell-4', 'invalid-spell-5', 'invalid-spell-6', 'invalid-spell-7'] // Too many, all invalid
+        [
+          'invalid-spell-1',
+          'invalid-spell-2',
+          'invalid-spell-3',
+          'invalid-spell-4',
+          'invalid-spell-5',
+          'invalid-spell-6',
+          'invalid-spell-7',
+        ], // Too many, all invalid
       );
 
       const endTime = performance.now();
@@ -315,11 +332,19 @@ describe('Spell Validation Performance Tests', () => {
       const testCases = [
         { character: null, cantrips: [], spells: [] },
         { character: undefined, cantrips: null, spells: null },
-        { character: createMockCharacter('Test', mockWizard, mockHuman), cantrips: undefined, spells: undefined }
+        {
+          character: createMockCharacter('Test', mockWizard, mockHuman),
+          cantrips: undefined,
+          spells: undefined,
+        },
       ];
 
-      testCases.forEach(testCase => {
-        validateSpellSelection(testCase.character as any, testCase.cantrips as any, testCase.spells as any);
+      testCases.forEach((testCase) => {
+        validateSpellSelection(
+          testCase.character as any,
+          testCase.cantrips as any,
+          testCase.spells as any,
+        );
       });
 
       const endTime = performance.now();
@@ -332,27 +357,33 @@ describe('Spell Validation Performance Tests', () => {
       // Create a character with complex nested structure
       const complexCharacter = {
         ...createMockCharacter('Complex Wizard', mockWizard, mockHuman),
-        classLevels: Array(20).fill(0).map((_, i) => ({
-          className: `Class-${i}`,
-          level: i + 1,
-          subclassFeatures: Array(10).fill(0).map((_, j) => ({
-            name: `Feature-${j}`,
-            description: 'A'.repeat(1000) // Large description
-          }))
-        })),
+        classLevels: Array(20)
+          .fill(0)
+          .map((_, i) => ({
+            className: `Class-${i}`,
+            level: i + 1,
+            subclassFeatures: Array(10)
+              .fill(0)
+              .map((_, j) => ({
+                name: `Feature-${j}`,
+                description: 'A'.repeat(1000), // Large description
+              })),
+          })),
         customData: {
           // Add some complex nested data
           deeply: {
             nested: {
               data: {
-                structure: Array(100).fill(0).map((_, i) => ({
-                  id: i,
-                  value: 'x'.repeat(100)
-                }))
-              }
-            }
-          }
-        }
+                structure: Array(100)
+                  .fill(0)
+                  .map((_, i) => ({
+                    id: i,
+                    value: 'x'.repeat(100),
+                  })),
+              },
+            },
+          },
+        },
       };
 
       const startTime = performance.now();
@@ -360,7 +391,7 @@ describe('Spell Validation Performance Tests', () => {
       const result = validateSpellSelection(
         complexCharacter,
         ['mage-hand', 'prestidigitation', 'light'],
-        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
       );
 
       const endTime = performance.now();
@@ -373,18 +404,20 @@ describe('Spell Validation Performance Tests', () => {
 
   describe('Concurrent Validation Performance', () => {
     it('should handle concurrent validations efficiently', async () => {
-      const characters = Array(20).fill(0).map((_, i) =>
-        createMockCharacter(`Concurrent ${i}`, mockWizard, mockHuman)
-      );
+      const characters = Array(20)
+        .fill(0)
+        .map((_, i) => createMockCharacter(`Concurrent ${i}`, mockWizard, mockHuman));
 
       const startTime = performance.now();
 
-      const promises = characters.map(character =>
-        Promise.resolve(validateSpellSelection(
-          character,
-          ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
-        ))
+      const promises = characters.map((character) =>
+        Promise.resolve(
+          validateSpellSelection(
+            character,
+            ['mage-hand', 'prestidigitation', 'light'],
+            ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
+          ),
+        ),
       );
 
       const results = await Promise.all(promises);
@@ -393,7 +426,7 @@ describe('Spell Validation Performance Tests', () => {
       const executionTime = endTime - startTime;
 
       expect(results).toHaveLength(20);
-      expect(results.every(r => r.valid)).toBe(true);
+      expect(results.every((r) => r.valid)).toBe(true);
       expect(executionTime).toBeLessThan(100); // 20 concurrent validations in under 100ms
     });
 
@@ -411,7 +444,7 @@ describe('Spell Validation Performance Tests', () => {
         validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
       }
 
@@ -457,7 +490,7 @@ describe('Spell Validation Performance Tests', () => {
         validateSpellSelection(
           wizardCharacter,
           ['mage-hand', 'prestidigitation', 'light'],
-          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray']
+          ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'],
         );
       }
 

@@ -5,29 +5,29 @@
  * more interesting and unique during the campaign creation process.
  */
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Sparkles, Info, CheckCircle, Globe } from 'lucide-react';
-import { useCampaign } from '@/contexts/CampaignContext';
+import React from 'react';
+
+import type { OptionSelection } from '@/types/enhancement-options';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EnhancementPanel } from '@/components/ui/enhancement-panel';
+import { Separator } from '@/components/ui/separator';
+import { useCampaign } from '@/contexts/CampaignContext';
 import {
   EnhancementOption,
-  OptionSelection,
   CAMPAIGN_ENHANCEMENTS,
-  checkOptionAvailability
+  checkOptionAvailability,
 } from '@/types/enhancement-options';
 
 interface CampaignEnhancementsProps {
   isOptional?: boolean;
 }
 
-export default function CampaignEnhancements({
-  isOptional = true
-}: CampaignEnhancementsProps) {
+export default function CampaignEnhancements({ isOptional = true }: CampaignEnhancementsProps) {
   const { state, dispatch } = useCampaign();
   const [selections, setSelections] = React.useState<OptionSelection[]>([]);
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -43,7 +43,7 @@ export default function CampaignEnhancements({
   React.useEffect(() => {
     dispatch({
       type: 'UPDATE_CAMPAIGN',
-      payload: { enhancementSelections: selections }
+      payload: { enhancementSelections: selections },
     });
   }, [selections, dispatch]);
 
@@ -57,11 +57,11 @@ export default function CampaignEnhancements({
       hooks: [] as string[],
       worldLaws: [] as string[],
       npcs: [] as string[],
-      locations: [] as string[]
+      locations: [] as string[],
     };
 
-    selections.forEach(selection => {
-      const option = CAMPAIGN_ENHANCEMENTS.find(o => o.id === selection.optionId);
+    selections.forEach((selection) => {
+      const option = CAMPAIGN_ENHANCEMENTS.find((o) => o.id === selection.optionId);
       if (option?.campaignEffects) {
         const camp = option.campaignEffects;
 
@@ -77,7 +77,7 @@ export default function CampaignEnhancements({
     // Apply effects to campaign
     dispatch({
       type: 'UPDATE_CAMPAIGN',
-      payload: { enhancementEffects: effects }
+      payload: { enhancementEffects: effects },
     });
   }, [selections, dispatch]);
 
@@ -87,9 +87,9 @@ export default function CampaignEnhancements({
 
     try {
       // Simulate AI generation delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const option = CAMPAIGN_ENHANCEMENTS.find(o => o.id === optionId);
+      const option = CAMPAIGN_ENHANCEMENTS.find((o) => o.id === optionId);
       if (!option) throw new Error('Option not found');
 
       // Mock AI-generated content based on campaign
@@ -102,7 +102,7 @@ export default function CampaignEnhancements({
         `A series of seemingly unconnected events across the realm all point to a ${campaignTone === 'gritty' ? 'dark conspiracy' : 'grand mystery'} involving the balance of magic itself`,
         `The ${campaignGenre === 'horror' ? 'nightmares' : 'dreams'} of the people have started manifesting in reality, but no one knows why or how to stop it`,
         `Ancient artifacts are appearing in random locations, each containing fragments of a larger truth about the world's ${campaignTone === 'humorous' ? 'absurd' : 'hidden'} history`,
-        `Time itself seems to be fracturing in certain locations, creating ${campaignTone === 'serious' ? 'dangerous temporal anomalies' : 'whimsical chronological hiccups'}`
+        `Time itself seems to be fracturing in certain locations, creating ${campaignTone === 'serious' ? 'dangerous temporal anomalies' : 'whimsical chronological hiccups'}`,
       ];
 
       return mockMysteries[Math.floor(Math.random() * mockMysteries.length)];
@@ -115,7 +115,7 @@ export default function CampaignEnhancements({
     const campaign = state.campaign;
     if (!campaign) return [];
 
-    return CAMPAIGN_ENHANCEMENTS.filter(option => {
+    return CAMPAIGN_ENHANCEMENTS.filter((option) => {
       // Recommend options based on campaign genre/tone
       if (campaign.genre === 'horror' && option.tags.includes('mystery')) return true;
       if (campaign.tone === 'serious' && option.tags.includes('plot')) return true;
@@ -128,10 +128,12 @@ export default function CampaignEnhancements({
   const getSelectionSummary = () => {
     if (selections.length === 0) return null;
 
-    const categories = new Set(selections.map(s => {
-      const option = CAMPAIGN_ENHANCEMENTS.find(o => o.id === s.optionId);
-      return option?.tags[0] || 'other';
-    }));
+    const categories = new Set(
+      selections.map((s) => {
+        const option = CAMPAIGN_ENHANCEMENTS.find((o) => o.id === s.optionId);
+        return option?.tags[0] || 'other';
+      }),
+    );
 
     return Array.from(categories);
   };
@@ -150,9 +152,9 @@ export default function CampaignEnhancements({
             {isOptional && <Badge variant="secondary">Optional</Badge>}
           </CardTitle>
           <CardDescription>
-            Add unique elements, mysteries, and world features that make your campaign memorable and provide
-            rich material for storytelling. These enhancements give you plot hooks, atmosphere, and
-            mechanical elements to create an engaging experience.
+            Add unique elements, mysteries, and world features that make your campaign memorable and
+            provide rich material for storytelling. These enhancements give you plot hooks,
+            atmosphere, and mechanical elements to create an engaging experience.
           </CardDescription>
         </CardHeader>
 
@@ -166,7 +168,7 @@ export default function CampaignEnhancements({
                 </span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {summary.map(category => (
+                {summary.map((category) => (
                   <Badge key={category} variant="outline" className="capitalize">
                     {category}
                   </Badge>
@@ -183,8 +185,8 @@ export default function CampaignEnhancements({
           <Info className="h-4 w-4" />
           <AlertDescription>
             <strong>Recommended for your {state.campaign?.genre} campaign:</strong>{' '}
-            {recommended.map(opt => opt.name).join(', ')}.
-            These enhancements complement your campaign theme and provide excellent story material.
+            {recommended.map((opt) => opt.name).join(', ')}. These enhancements complement your
+            campaign theme and provide excellent story material.
           </AlertDescription>
         </Alert>
       )}
@@ -209,8 +211,8 @@ export default function CampaignEnhancements({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {selections.map(selection => {
-              const option = CAMPAIGN_ENHANCEMENTS.find(o => o.id === selection.optionId);
+            {selections.map((selection) => {
+              const option = CAMPAIGN_ENHANCEMENTS.find((o) => o.id === selection.optionId);
               if (!option) return null;
 
               return (
@@ -247,8 +249,9 @@ export default function CampaignEnhancements({
             <div className="mt-4 p-3 bg-muted rounded-md">
               <h4 className="font-medium text-sm mb-2">For the Dungeon Master:</h4>
               <p className="text-sm text-muted-foreground">
-                These enhancements provide story hooks, atmosphere cues, and mechanical considerations
-                for your campaign. Use them as inspiration for sessions, plot development, and world-building.
+                These enhancements provide story hooks, atmosphere cues, and mechanical
+                considerations for your campaign. Use them as inspiration for sessions, plot
+                development, and world-building.
               </p>
             </div>
           </CardContent>
@@ -260,9 +263,9 @@ export default function CampaignEnhancements({
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <strong>Optional Step:</strong> You can skip enhancements and create a standard campaign,
-            or add them later. However, selecting enhancements now will give you and your players
-            a richer, more unique world to explore.
+            <strong>Optional Step:</strong> You can skip enhancements and create a standard
+            campaign, or add them later. However, selecting enhancements now will give you and your
+            players a richer, more unique world to explore.
           </AlertDescription>
         </Alert>
       )}

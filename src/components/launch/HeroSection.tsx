@@ -13,10 +13,12 @@
  * - Enhanced hover states with scale and glow
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, Zap, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+
 import { WaitlistForm } from './WaitlistForm';
+
+import { Button } from '@/components/ui/button';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const HeroSection: React.FC = () => {
@@ -50,7 +52,7 @@ export const HeroSection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'hero_cta_click', {
         event_category: 'engagement',
-        event_label: 'Request Early Access'
+        event_label: 'Request Early Access',
       });
     }
   };
@@ -69,7 +71,7 @@ export const HeroSection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'hero_secondary_cta', {
         event_category: 'engagement',
-        event_label: 'Learn More'
+        event_label: 'Learn More',
       });
     }
   };
@@ -116,8 +118,16 @@ export const HeroSection: React.FC = () => {
           {/* Main Headline */}
           <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-white mb-6 leading-tight animate-fade-in-up">
             {hero.headline.split(' ').map((word, index) => (
-              <span key={index} className={index >= 2 ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-purple-400 to-amber-500 animate-gradient" : ""}>
-                {word}{index < hero.headline.split(' ').length - 1 ? " " : ""}
+              <span
+                key={index}
+                className={
+                  index >= 2
+                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-purple-400 to-amber-500 animate-gradient'
+                    : ''
+                }
+              >
+                {word}
+                {index < hero.headline.split(' ').length - 1 ? ' ' : ''}
                 {index === 1 && <br className="hidden sm:block" />}
               </span>
             ))}

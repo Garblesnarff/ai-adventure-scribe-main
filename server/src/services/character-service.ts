@@ -11,6 +11,7 @@
 import { db } from '../../../db/client.js';
 import { characters, characterStats, campaigns, type Character, type NewCharacter } from '../../../db/schema/index.js';
 import { eq, and, desc } from 'drizzle-orm';
+import { InternalServerError } from '../lib/errors.js';
 
 export class CharacterService {
   /**
@@ -102,7 +103,7 @@ export class CharacterService {
       })
       .returning();
 
-    if (!character) throw new Error('Failed to create character');
+    if (!character) throw new InternalServerError('Failed to create character');
     return character;
   }
 

@@ -1,16 +1,19 @@
+import { Users, Award, Settings, Eye } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+
+import type { Feat } from '@/data/featOptions';
+import type { AbilityScores } from '@/types/character';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { feats, getFeatsByCategory, Feat } from '@/data/featOptions';
-import { AbilityScores } from '@/types/character';
-import { Users, Award, Settings, Eye } from 'lucide-react';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { feats, getFeatsByCategory } from '@/data/featOptions';
 
 /**
  * VariantHumanSelection component for customizing Variant Human and Custom Lineage
@@ -35,20 +38,62 @@ const VariantHumanSelection: React.FC = () => {
 
   // Note: No early returns before hooks to satisfy rules-of-hooks
 
-  const availableAbilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  const availableAbilities = [
+    'strength',
+    'dexterity',
+    'constitution',
+    'intelligence',
+    'wisdom',
+    'charisma',
+  ];
   const availableSkills = [
-    'Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History',
-    'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception',
-    'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'
+    'Acrobatics',
+    'Animal Handling',
+    'Arcana',
+    'Athletics',
+    'Deception',
+    'History',
+    'Insight',
+    'Intimidation',
+    'Investigation',
+    'Medicine',
+    'Nature',
+    'Perception',
+    'Performance',
+    'Persuasion',
+    'Religion',
+    'Sleight of Hand',
+    'Stealth',
+    'Survival',
   ];
   const availableLanguages = [
-    'Dwarvish', 'Elvish', 'Giant', 'Gnomish', 'Halfling', 'Infernal', 'Orc',
-    'Abyssal', 'Celestial', 'Deep Speech', 'Draconic', 'Sylvan', 'Undercommon'
+    'Dwarvish',
+    'Elvish',
+    'Giant',
+    'Gnomish',
+    'Halfling',
+    'Infernal',
+    'Orc',
+    'Abyssal',
+    'Celestial',
+    'Deep Speech',
+    'Draconic',
+    'Sylvan',
+    'Undercommon',
   ];
   const availableTools = [
-    'Smith\'s Tools', 'Carpenter\'s Tools', 'Cobbler\'s Tools', 'Cook\'s Utensils',
-    'Jeweler\'s Tools', 'Leatherworker\'s Tools', 'Mason\'s Tools', 'Painter\'s Supplies',
-    'Potter\'s Tools', 'Tinker\'s Tools', 'Weaver\'s Tools', 'Woodcarver\'s Tools'
+    "Smith's Tools",
+    "Carpenter's Tools",
+    "Cobbler's Tools",
+    "Cook's Utensils",
+    "Jeweler's Tools",
+    "Leatherworker's Tools",
+    "Mason's Tools",
+    "Painter's Supplies",
+    "Potter's Tools",
+    "Tinker's Tools",
+    "Weaver's Tools",
+    "Woodcarver's Tools",
   ];
 
   /**
@@ -58,14 +103,14 @@ const VariantHumanSelection: React.FC = () => {
     if (isVariantHuman) {
       // Variant Human: Choose 2 different abilities
       if (selectedAbilities.includes(ability)) {
-        setSelectedAbilities(selectedAbilities.filter(a => a !== ability));
+        setSelectedAbilities(selectedAbilities.filter((a) => a !== ability));
       } else if (selectedAbilities.length < 2) {
         setSelectedAbilities([...selectedAbilities, ability]);
       }
     } else if (isCustomLineage) {
       // Custom Lineage: Choose 1 ability for +2, or 2 abilities for +1 each
       if (selectedAbilities.includes(ability)) {
-        setSelectedAbilities(selectedAbilities.filter(a => a !== ability));
+        setSelectedAbilities(selectedAbilities.filter((a) => a !== ability));
       } else {
         setSelectedAbilities([ability]);
       }
@@ -115,7 +160,7 @@ const VariantHumanSelection: React.FC = () => {
 
     // Apply ability score increases
     const updatedAbilityScores = { ...character?.abilityScores };
-    selectedAbilities.forEach(ability => {
+    selectedAbilities.forEach((ability) => {
       if (updatedAbilityScores?.[ability as keyof typeof updatedAbilityScores]) {
         const current = updatedAbilityScores[ability as keyof typeof updatedAbilityScores];
         if (current) {
@@ -131,8 +176,8 @@ const VariantHumanSelection: React.FC = () => {
 
     // Apply feat
     const currentFeats = character?.feats || [];
-    const feat = feats.find(f => f.id === selectedFeat);
-    
+    const feat = feats.find((f) => f.id === selectedFeat);
+
     if (feat?.abilityScoreIncrease) {
       // Apply ASI from feat
       Object.entries(feat.abilityScoreIncrease).forEach(([ability, increase]) => {
@@ -155,11 +200,11 @@ const VariantHumanSelection: React.FC = () => {
     // Apply language or tool proficiency
     let languages = character?.languages || [];
     let toolProficiencies = character?.toolProficiencies || [];
-    
+
     if (selectedLanguage && !languages.includes(selectedLanguage)) {
       languages = [...languages, selectedLanguage];
     }
-    
+
     if (selectedTool && !toolProficiencies.includes(selectedTool)) {
       toolProficiencies = [...toolProficiencies, selectedTool];
     }
@@ -172,8 +217,8 @@ const VariantHumanSelection: React.FC = () => {
         feats: [...currentFeats, selectedFeat],
         skillProficiencies,
         toolProficiencies,
-        languages
-      }
+        languages,
+      },
     });
 
     toast({
@@ -186,7 +231,9 @@ const VariantHumanSelection: React.FC = () => {
   useEffect(() => {
     const requiredSelections = [
       selectedFeat,
-      ...(isVariantHuman ? [selectedAbilities.length === 2, selectedSkill] : [selectedAbilities.length === 1])
+      ...(isVariantHuman
+        ? [selectedAbilities.length === 2, selectedSkill]
+        : [selectedAbilities.length === 1]),
     ];
 
     if (requiredSelections.every(Boolean)) {
@@ -195,7 +242,7 @@ const VariantHumanSelection: React.FC = () => {
   }, [selectedAbilities, selectedFeat, selectedSkill, selectedLanguage, selectedTool]);
 
   const getFeatCard = (feat: Feat) => (
-    <Card 
+    <Card
       key={feat.id}
       className={`cursor-pointer transition-all hover:shadow-md border-2 ${
         selectedFeat === feat.id ? 'border-primary bg-primary/5' : 'border-muted'
@@ -214,19 +261,16 @@ const VariantHumanSelection: React.FC = () => {
     </Card>
   );
 
-  return (
-    (!isVariantHuman && !isCustomLineage) ? (
-      <div className="text-center space-y-4">
-        <Users className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Standard Human</h2>
-        <p className="text-muted-foreground">
-          Your standard human receives +1 to all ability scores.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          No additional customization needed.
-        </p>
-      </div>
-    ) : (
+  return !isVariantHuman && !isCustomLineage ? (
+    <div className="text-center space-y-4">
+      <Users className="w-16 h-16 mx-auto text-muted-foreground" />
+      <h2 className="text-2xl font-bold">Standard Human</h2>
+      <p className="text-muted-foreground">
+        Your standard human receives +1 to all ability scores.
+      </p>
+      <p className="text-sm text-muted-foreground">No additional customization needed.</p>
+    </div>
+  ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">
@@ -245,15 +289,14 @@ const VariantHumanSelection: React.FC = () => {
             Ability Score Increases
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {isVariantHuman 
+            {isVariantHuman
               ? 'Choose 2 different ability scores to increase by 1 each'
-              : 'Choose 1 ability score to increase by 2'
-            }
+              : 'Choose 1 ability score to increase by 2'}
           </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {availableAbilities.map(ability => (
+            {availableAbilities.map((ability) => (
               <div
                 key={ability}
                 className={`p-3 border rounded cursor-pointer transition-colors ${
@@ -264,14 +307,13 @@ const VariantHumanSelection: React.FC = () => {
                 onClick={() => handleAbilitySelection(ability)}
               >
                 <div className="font-medium capitalize">{ability}</div>
-                <div className="text-sm text-muted-foreground">
-                  {isVariantHuman ? '+1' : '+2'}
-                </div>
+                <div className="text-sm text-muted-foreground">{isVariantHuman ? '+1' : '+2'}</div>
               </div>
             ))}
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            Selected: {selectedAbilities.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ')}
+            Selected:{' '}
+            {selectedAbilities.map((a) => a.charAt(0).toUpperCase() + a.slice(1)).join(', ')}
           </p>
         </CardContent>
       </Card>
@@ -283,9 +325,7 @@ const VariantHumanSelection: React.FC = () => {
             <Award className="w-5 h-5" />
             Choose a Feat
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Select a feat to gain at 1st level
-          </p>
+          <p className="text-sm text-muted-foreground">Select a feat to gain at 1st level</p>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all">
@@ -335,20 +375,17 @@ const VariantHumanSelection: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Skill Proficiency</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Choose one skill to gain proficiency in
-            </p>
+            <p className="text-sm text-muted-foreground">Choose one skill to gain proficiency in</p>
           </CardHeader>
           <CardContent>
-            <RadioGroup
-              value={selectedSkill}
-              onValueChange={setSelectedSkill}
-            >
+            <RadioGroup value={selectedSkill} onValueChange={setSelectedSkill}>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {availableSkills.map(skill => (
+                {availableSkills.map((skill) => (
                   <div key={skill} className="flex items-center space-x-2">
                     <RadioGroupItem value={skill} id={skill} />
-                    <Label htmlFor={skill} className="text-sm">{skill}</Label>
+                    <Label htmlFor={skill} className="text-sm">
+                      {skill}
+                    </Label>
                   </div>
                 ))}
               </div>
@@ -368,15 +405,14 @@ const VariantHumanSelection: React.FC = () => {
         <CardContent className="space-y-4">
           <div>
             <Label className="text-sm font-medium">Language</Label>
-            <RadioGroup
-              value={selectedLanguage}
-              onValueChange={setSelectedLanguage}
-            >
+            <RadioGroup value={selectedLanguage} onValueChange={setSelectedLanguage}>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {availableLanguages.map(language => (
+                {availableLanguages.map((language) => (
                   <div key={language} className="flex items-center space-x-2">
                     <RadioGroupItem value={language} id={`lang-${language}`} />
-                    <Label htmlFor={`lang-${language}`} className="text-sm">{language}</Label>
+                    <Label htmlFor={`lang-${language}`} className="text-sm">
+                      {language}
+                    </Label>
                   </div>
                 ))}
               </div>
@@ -385,15 +421,14 @@ const VariantHumanSelection: React.FC = () => {
 
           <div>
             <Label className="text-sm font-medium">Tool Proficiency</Label>
-            <RadioGroup
-              value={selectedTool}
-              onValueChange={setSelectedTool}
-            >
+            <RadioGroup value={selectedTool} onValueChange={setSelectedTool}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {availableTools.map(tool => (
+                {availableTools.map((tool) => (
                   <div key={tool} className="flex items-center space-x-2">
                     <RadioGroupItem value={tool} id={`tool-${tool}`} />
-                    <Label htmlFor={`tool-${tool}`} className="text-sm">{tool}</Label>
+                    <Label htmlFor={`tool-${tool}`} className="text-sm">
+                      {tool}
+                    </Label>
                   </div>
                 ))}
               </div>
@@ -452,7 +487,6 @@ const VariantHumanSelection: React.FC = () => {
         </Button>
       </div>
     </div>
-    )
   );
 };
 

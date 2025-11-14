@@ -42,6 +42,7 @@ import {
   ENCUMBRANCE_THRESHOLDS,
   SPEED_PENALTIES,
 } from '../types/inventory.js';
+import { NotFoundError, BusinessLogicError, ForbiddenError, InternalServerError } from '../lib/errors.js';
 
 export class InventoryService {
   // ==========================================
@@ -109,7 +110,7 @@ export class InventoryService {
     const [item] = await db.insert(inventoryItems).values(itemData).returning();
 
     if (!item) {
-      throw new Error('Failed to create inventory item');
+      throw new InternalServerError('Failed to create inventory item');
     }
 
     return item;
@@ -187,17 +188,20 @@ export class InventoryService {
     const item = await this.getItemById(input.itemId);
 
     if (!item) {
-      throw new Error('Item not found');
+      throw new NotFoundError('Inventory item', input.itemId);
     }
 
     if (item.characterId !== input.characterId) {
-      throw new Error('Item does not belong to this character');
+      throw new ForbiddenError('Item does not belong to this character');
     }
 
     const quantityToUse = input.quantity ?? 1;
 
     if (item.quantity < quantityToUse) {
-      throw new Error(`Insufficient quantity. Available: ${item.quantity}, Requested: ${quantityToUse}`);
+      throw new BusinessLogicError(
+        `Insufficient quantity. Available: ${item.quantity}, Requested: ${quantityToUse}`,
+        { available: item.quantity, requested: quantityToUse, itemId: input.itemId }
+      );
     }
 
     // Log the usage
@@ -253,7 +257,7 @@ export class InventoryService {
     });
 
     if (items.length === 0) {
-      throw new Error(`Ammunition "${ammoType}" not found in inventory`);
+      throw new NotFoundError(`Ammunition "${ammoType}"`, characterId);
     }
 
     const item = items[0];
@@ -293,7 +297,7 @@ export class InventoryService {
       const updated = await this.updateItem(item.id, {
         quantity: item.quantity + count,
       });
-      if (!updated) throw new Error('Failed to update ammunition');
+      if (!updated) throw new InternalServerError('Failed to update ammunition');
       return updated;
     } else {
       // Create new ammunition entry
@@ -379,7 +383,7 @@ export class InventoryService {
     });
 
     if (!stats) {
-      throw new Error('Character stats not found');
+      throw new NotFoundError('Character stats', characterId);
     }
 
     // Base carrying capacity is STR × 15
@@ -402,7 +406,7 @@ export class InventoryService {
     });
 
     if (!stats) {
-      throw new Error('Character stats not found');
+      throw new NotFoundError('Character stats', characterId);
     }
 
     const currentWeight = await this.calculateTotalWeight(characterId);

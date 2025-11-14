@@ -1,10 +1,12 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Character } from '@/types/character';
 import { Star, Users, Zap, BookOpen } from 'lucide-react';
-import FightingStylesDisplay from '@/components/character-sheet/sections/FightingStylesDisplay';
+import React from 'react';
+
+import type { Character } from '@/types/character';
+
 import ClassFeatureTracker from '@/components/character-sheet/sections/ClassFeatureTracker';
+import FightingStylesDisplay from '@/components/character-sheet/sections/FightingStylesDisplay';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface FeaturesTabProps {
   character: Character;
@@ -33,12 +35,14 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
     {
       name: 'Darkvision',
       source: 'race',
-      description: 'You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light.',
+      description:
+        'You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light.',
     },
     {
       name: 'Fey Ancestry',
       source: 'race',
-      description: 'You have advantage on saving throws against being charmed, and magic cannot put you to sleep.',
+      description:
+        'You have advantage on saving throws against being charmed, and magic cannot put you to sleep.',
     },
     // Class Features
     {
@@ -51,7 +55,8 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
       name: 'Second Wind',
       source: 'class',
       level: 1,
-      description: 'You can use a bonus action to regain hit points equal to 1d10 + your fighter level.',
+      description:
+        'You can use a bonus action to regain hit points equal to 1d10 + your fighter level.',
       uses: { total: 1, used: 0, recharge: 'short' },
     },
     {
@@ -71,36 +76,47 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
     {
       name: 'Guild Membership',
       source: 'background',
-      description: 'As an established member of a guild, you can rely on certain benefits that membership provides.',
+      description:
+        'As an established member of a guild, you can rely on certain benefits that membership provides.',
     },
   ];
 
   const getFeatureIcon = (source: string) => {
     switch (source) {
-      case 'race': return <Users className="w-4 h-4 text-green-600" />;
-      case 'class': return <Star className="w-4 h-4 text-blue-600" />;
-      case 'background': return <BookOpen className="w-4 h-4 text-purple-600" />;
-      case 'feat': return <Zap className="w-4 h-4 text-orange-600" />;
-      default: return <Star className="w-4 h-4" />;
+      case 'race':
+        return <Users className="w-4 h-4 text-green-600" />;
+      case 'class':
+        return <Star className="w-4 h-4 text-blue-600" />;
+      case 'background':
+        return <BookOpen className="w-4 h-4 text-purple-600" />;
+      case 'feat':
+        return <Zap className="w-4 h-4 text-orange-600" />;
+      default:
+        return <Star className="w-4 h-4" />;
     }
   };
 
   const getSourceColor = (source: string) => {
     switch (source) {
-      case 'race': return 'bg-green-100 text-green-800';
-      case 'class': return 'bg-blue-100 text-blue-800';
-      case 'background': return 'bg-purple-100 text-purple-800';
-      case 'feat': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'race':
+        return 'bg-green-100 text-green-800';
+      case 'class':
+        return 'bg-blue-100 text-blue-800';
+      case 'background':
+        return 'bg-purple-100 text-purple-800';
+      case 'feat':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   // Group features by source
   const featuresBySource = {
-    race: features.filter(f => f.source === 'race'),
-    class: features.filter(f => f.source === 'class'),
-    background: features.filter(f => f.source === 'background'),
-    feat: features.filter(f => f.source === 'feat'),
+    race: features.filter((f) => f.source === 'race'),
+    class: features.filter((f) => f.source === 'class'),
+    background: features.filter((f) => f.source === 'background'),
+    feat: features.filter((f) => f.source === 'feat'),
   };
 
   return (
@@ -154,8 +170,8 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
                     {character.class?.name} {feature.level && `${feature.level}`}
                   </Badge>
                   {feature.uses && (
-                    <Badge 
-                      variant={feature.uses.used >= feature.uses.total ? "destructive" : "outline"}
+                    <Badge
+                      variant={feature.uses.used >= feature.uses.total ? 'destructive' : 'outline'}
                       className="ml-auto"
                     >
                       {feature.uses.total - feature.uses.used} / {feature.uses.total}
@@ -165,9 +181,14 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
                 <p className="text-sm text-muted-foreground">{feature.description}</p>
                 {feature.uses && (
                   <div className="text-xs text-muted-foreground mt-1">
-                    Recharge: {feature.uses.recharge === 'short' ? 'Short Rest' : 
-                               feature.uses.recharge === 'long' ? 'Long Rest' : 
-                               feature.uses.recharge === 'dawn' ? 'Dawn' : 'Manual'}
+                    Recharge:{' '}
+                    {feature.uses.recharge === 'short'
+                      ? 'Short Rest'
+                      : feature.uses.recharge === 'long'
+                        ? 'Long Rest'
+                        : feature.uses.recharge === 'dawn'
+                          ? 'Dawn'
+                          : 'Manual'}
                   </div>
                 )}
               </div>
@@ -242,7 +263,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
                 <Badge variant="outline">Shields</Badge>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-medium mb-2">Weapons</h4>
               <div className="flex flex-wrap gap-1">
@@ -250,7 +271,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
                 <Badge variant="outline">Martial Weapons</Badge>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-medium mb-2">Languages</h4>
               <div className="flex flex-wrap gap-1">
@@ -258,7 +279,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ character, onUpdate }) => {
                 <Badge variant="outline">Elvish</Badge>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-medium mb-2">Tools</h4>
               <div className="flex flex-wrap gap-1">

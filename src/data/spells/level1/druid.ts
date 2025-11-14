@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const druidLevel1Spells: Spell[] = [
-{
+  {
     id: 'animal-friendship-druid',
     name: 'Animal Friendship',
     level: 1,
@@ -14,7 +14,7 @@ export const druidLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a morsel of food',
     duration: '24 hours',
-    description: 'This spell lets you convince a beast that you mean it no harm.'
+    description: 'This spell lets you convince a beast that you mean it no harm.',
   },
   {
     id: 'charm-person-druid',
@@ -27,7 +27,7 @@ export const druidLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You attempt to charm a humanoid you can see within range.'
+    description: 'You attempt to charm a humanoid you can see within range.',
   },
   {
     id: 'create-or-destroy-water-druid',
@@ -36,13 +36,15 @@ export const druidLevel1Spells: Spell[] = [
     school: 'Transmutation',
     castingTime: '1 action',
     range: '30 feet',
-    components: 'V, S, M (a drop of water if creating water or a few grains of sand if destroying it)',
+    components:
+      'V, S, M (a drop of water if creating water or a few grains of sand if destroying it)',
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a drop of water if creating water or a few grains of sand if destroying it',
+    materialDescription:
+      'a drop of water if creating water or a few grains of sand if destroying it',
     duration: 'Instantaneous',
-    description: 'You either create or destroy water.'
+    description: 'You either create or destroy water.',
   },
   {
     id: 'cure-wounds-druid',
@@ -55,8 +57,9 @@ export const druidLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
-    damage: '1d8'
+    description:
+      'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
+    damage: '1d8',
   },
   {
     id: 'detect-magic-druid',
@@ -71,7 +74,7 @@ export const druidLevel1Spells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'detect-poison-and-disease-druid',
@@ -86,9 +89,10 @@ export const druidLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a yew leaf',
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
+    description:
+      'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'entangle',
@@ -101,8 +105,9 @@ export const druidLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'Grasping weeds and vines sprout from the ground in a 20-foot square starting from a point within range.',
-    concentration: true
+    description:
+      'Grasping weeds and vines sprout from the ground in a 20-foot square starting from a point within range.',
+    concentration: true,
   },
   {
     id: 'faerie-fire-druid',
@@ -114,8 +119,9 @@ export const druidLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'Each object in a 20-foot cube within range is outlined in blue, green, or violet light (your choice).',
-    concentration: true
+    description:
+      'Each object in a 20-foot cube within range is outlined in blue, green, or violet light (your choice).',
+    concentration: true,
   },
   {
     id: 'fog-cloud-druid',
@@ -129,7 +135,7 @@ export const druidLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 1 hour',
     description: 'You create a 20-foot-radius sphere of fog centered on a point within range.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'goodberry',
@@ -144,7 +150,8 @@ export const druidLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a sprig of mistletoe',
     duration: '24 hours',
-    description: 'Up to ten berries appear in your hand and are infused with magic for the duration. A creature can use its action to eat one berry.'
+    description:
+      'Up to ten berries appear in your hand and are infused with magic for the duration. A creature can use its action to eat one berry.',
   },
   {
     id: 'healing-word-druid',
@@ -156,8 +163,9 @@ export const druidLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Instantaneous',
-    description: 'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
-    damage: '1d4'
+    description:
+      'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
+    damage: '1d4',
   },
   {
     id: 'jump-druid',
@@ -166,13 +174,14 @@ export const druidLevel1Spells: Spell[] = [
     school: 'Transmutation',
     castingTime: '1 action',
     range: 'Touch',
-    components: 'V, S, M (a grasshopper\'s hind leg)',
+    components: "V, S, M (a grasshopper's hind leg)",
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a grasshopper\'s hind leg',
+    materialDescription: "a grasshopper's hind leg",
     duration: '1 minute',
-    description: 'You touch a creature. The creature\'s jump distance is tripled until the spell ends.'
+    description:
+      "You touch a creature. The creature's jump distance is tripled until the spell ends.",
   },
   {
     id: 'longstrider-druid',
@@ -187,7 +196,8 @@ export const druidLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of dirt',
     duration: '1 hour',
-    description: 'You touch a creature. The target\'s speed increases by 10 feet until the spell ends.'
+    description:
+      "You touch a creature. The target's speed increases by 10 feet until the spell ends.",
   },
   {
     id: 'purify-food-and-drink-druid',
@@ -200,8 +210,9 @@ export const druidLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease.',
-    ritual: true
+    description:
+      'All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease.',
+    ritual: true,
   },
   {
     id: 'speak-with-animals-druid',
@@ -214,8 +225,9 @@ export const druidLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '10 minutes',
-    description: 'You gain the ability to comprehend and verbally communicate with beasts for the duration.',
-    ritual: true
+    description:
+      'You gain the ability to comprehend and verbally communicate with beasts for the duration.',
+    ritual: true,
   },
   {
     id: 'thunderwave-druid',
@@ -229,6 +241,6 @@ export const druidLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Instantaneous',
     description: 'A wave of thunderous force sweeps out from you.',
-    damage: '2d8'
+    damage: '2d8',
   },
 ];

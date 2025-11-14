@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { ChatMessage } from '@/types/game';
+
+import type { ChatMessage } from '@/types/game';
+
 import logger from '@/lib/logger';
+import { llmApiClient } from '@/services/llm-api-client';
+import { generateSceneImage } from '@/services/scene-image-generator';
+import { handleAsyncError } from '@/utils/error-handler';
 import { parseMessageOptions } from '@/utils/parseMessageOptions';
 import { removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
-import { generateSceneImage } from '@/services/scene-image-generator';
-import { llmApiClient } from '@/services/llm-api-client';
-import { handleAsyncError } from '@/utils/error-handler';
 
 interface UseImageGenerationProps {
   sessionId?: string;
@@ -27,19 +29,24 @@ export const useImageGeneration = ({
   messages,
 }: UseImageGenerationProps) => {
   const [generatingFor, setGeneratingFor] = useState<Set<string>>(new Set());
-  const [imageByMessage, setImageByMessage] = useState<Record<string, { url: string; prompt: string }>>({});
+  const [imageByMessage, setImageByMessage] = useState<
+    Record<string, { url: string; prompt: string }>
+  >({});
   const [genErrorByMessage, setGenErrorByMessage] = useState<Record<string, string>>({});
   const lastGenRef = useRef<number>(0);
 
   // Env flags
-  const AUTO = String(((import.meta as any)?.env?.VITE_DM_AUTO_IMAGE ?? 'false')).toLowerCase();
+  const AUTO = String((import.meta as any)?.env?.VITE_DM_AUTO_IMAGE ?? 'false').toLowerCase();
   const isAuto = ['1', 'true', 'yes', 'on'].includes(AUTO);
-  const MAX = Number.parseInt(String(((import.meta as any)?.env?.VITE_DM_IMAGE_MAX_PER_SESSION ?? '3')));
+  const MAX = Number.parseInt(
+    String((import.meta as any)?.env?.VITE_DM_IMAGE_MAX_PER_SESSION ?? '3'),
+  );
 
   // Helpers for per-session caps
   const capKey = (sid: string) => `dm-img-cap:${sid}`;
   const trigKey = (sid: string, mid: string) => `dm-img-trig:${sid}:${mid}`;
-  const getCap = (sid?: string) => (sid ? Number.parseInt(localStorage.getItem(capKey(sid)) || '0') : 0);
+  const getCap = (sid?: string) =>
+    sid ? Number.parseInt(localStorage.getItem(capKey(sid)) || '0') : 0;
   const incCap = (sid?: string) => {
     if (!sid) return;
     const v = getCap(sid) + 1;
@@ -86,18 +93,26 @@ export const useImageGeneration = ({
                 subrace: character.subrace as any,
                 class: character.class as any,
                 appearance: character.appearance || undefined,
-                personality_notes: character.personalityNotes || character.personality_notes || undefined,
+                personality_notes:
+                  character.personalityNotes || character.personality_notes || undefined,
                 avatar_url: character.avatar_url || undefined,
                 image_url: character.image_url || undefined,
                 theme: character.theme || undefined,
               }
             : null,
           quality: (import.meta as any)?.env?.VITE_DM_IMAGE_QUALITY || 'low',
-          model: (import.meta as any)?.env?.VITE_DM_IMAGE_MODEL || 'google/gemini-2.5-flash-image-preview',
-          storage: routeCampaignId ? { entityType: 'campaign', entityId: routeCampaignId, label } : { label },
+          model:
+            (import.meta as any)?.env?.VITE_DM_IMAGE_MODEL ||
+            'google/gemini-2.5-flash-image-preview',
+          storage: routeCampaignId
+            ? { entityType: 'campaign', entityId: routeCampaignId, label }
+            : { label },
         });
 
-        setImageByMessage((prev) => ({ ...prev, [messageId]: { url: res.url, prompt: res.prompt } }));
+        setImageByMessage((prev) => ({
+          ...prev,
+          [messageId]: { url: res.url, prompt: res.prompt },
+        }));
 
         if (message.id) {
           try {
@@ -141,7 +156,7 @@ export const useImageGeneration = ({
         });
       }
     },
-    [character, campaign, routeCampaignId, sessionId]
+    [character, campaign, routeCampaignId, sessionId],
   );
 
   // Auto-generate on DM-suggested imageRequests

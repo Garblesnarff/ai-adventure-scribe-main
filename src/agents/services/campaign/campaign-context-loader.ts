@@ -1,12 +1,12 @@
 /**
  * CampaignContextLoader
- * 
+ *
  * Loads campaign context data from Supabase, including detailed parsing for thematic elements.
- * 
+ *
  * Dependencies:
  * - Supabase client (src/integrations/supabase/client.ts)
  * - CampaignContext type (src/types/dm.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -25,7 +25,7 @@ interface ThematicElements {
 export class CampaignContextLoader {
   /**
    * Loads and parses campaign context by campaign ID.
-   * 
+   *
    * @param {string} campaignId - The campaign ID
    * @returns {Promise<CampaignContext>} The campaign context
    * @throws {Error} If the campaign is not found or there's a database error
@@ -33,14 +33,16 @@ export class CampaignContextLoader {
   async loadCampaignContext(campaignId: string): Promise<CampaignContext> {
     const { data: campaign, error } = await supabase
       .from('campaigns')
-      .select(`
+      .select(
+        `
         name, 
         description, 
         genre,
         tone,
         setting_details, // Assuming this contains era, location, atmosphere as JSON
         thematic_elements
-      `)
+      `,
+      )
       .eq('id', campaignId)
       .single();
 
@@ -57,16 +59,24 @@ export class CampaignContextLoader {
       mainThemes: [],
       recurringMotifs: [],
       keyLocations: [],
-      importantNPCs: []
+      importantNPCs: [],
     };
-    
+
     if (campaign.thematic_elements && typeof campaign.thematic_elements === 'object') {
       const rawElements = campaign.thematic_elements as any; // Cast to any for parsing
       thematicElements = {
-        mainThemes: Array.isArray(rawElements?.mainThemes) ? rawElements.mainThemes.filter(String) : [],
-        recurringMotifs: Array.isArray(rawElements?.recurringMotifs) ? rawElements.recurringMotifs.filter(String) : [],
-        keyLocations: Array.isArray(rawElements?.keyLocations) ? rawElements.keyLocations.filter(String) : [],
-        importantNPCs: Array.isArray(rawElements?.importantNPCs) ? rawElements.importantNPCs.filter(String) : []
+        mainThemes: Array.isArray(rawElements?.mainThemes)
+          ? rawElements.mainThemes.filter(String)
+          : [],
+        recurringMotifs: Array.isArray(rawElements?.recurringMotifs)
+          ? rawElements.recurringMotifs.filter(String)
+          : [],
+        keyLocations: Array.isArray(rawElements?.keyLocations)
+          ? rawElements.keyLocations.filter(String)
+          : [],
+        importantNPCs: Array.isArray(rawElements?.importantNPCs)
+          ? rawElements.importantNPCs.filter(String)
+          : [],
       };
     }
 
@@ -74,7 +84,7 @@ export class CampaignContextLoader {
     let setting = {
       era: 'medieval',
       location: 'unknown',
-      atmosphere: 'mysterious'
+      atmosphere: 'mysterious',
     };
 
     if (campaign.setting_details && typeof campaign.setting_details === 'object') {
@@ -82,10 +92,9 @@ export class CampaignContextLoader {
       setting = {
         era: rawSetting.era || 'medieval',
         location: rawSetting.location || 'unknown',
-        atmosphere: rawSetting.atmosphere || 'mysterious'
+        atmosphere: rawSetting.atmosphere || 'mysterious',
       };
     }
-
 
     // Construct the CampaignContext, ensuring alignment with the imported type
     // The CampaignContext type from '@/types/dm' must match this structure.
@@ -98,7 +107,7 @@ export class CampaignContextLoader {
       genre: campaign.genre || 'fantasy',
       tone: campaign.tone || 'serious',
       setting: setting,
-      thematicElements: thematicElements
+      thematicElements: thematicElements,
     };
   }
 }

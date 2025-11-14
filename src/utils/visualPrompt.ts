@@ -6,7 +6,8 @@ export interface VisualPromptExtraction {
 const VISUAL_PROMPT_FENCE = /```\s*VISUAL[_\-\s]*PROMPT\s*\n([\s\S]*?)```/i;
 const VISUAL_PROMPT_FENCE_GLOBAL = /```\s*VISUAL[_\-\s]*PROMPT\s*\n([\s\S]*?)```/gi;
 const VISUAL_PROMPT_INLINE = /(?:^|\n)[ \t]*VISUAL[ _\-]*PROMPT\s*:?[ \t]*(.+?)(?:\r?\n|$)/i;
-const VISUAL_PROMPT_INLINE_GLOBAL = /(?:^|\n)[ \t]*VISUAL[ _\-]*PROMPT\s*:?[ \t]*(.+?)(?:\r?\n|$)/gi;
+const VISUAL_PROMPT_INLINE_GLOBAL =
+  /(?:^|\n)[ \t]*VISUAL[ _\-]*PROMPT\s*:?[ \t]*(.+?)(?:\r?\n|$)/gi;
 
 const normalizeWhitespace = (text: string) =>
   text

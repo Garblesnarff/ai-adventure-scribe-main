@@ -5,13 +5,13 @@ export enum MessageType {
   RESULT = 'RESULT',
   QUERY = 'QUERY',
   RESPONSE = 'RESPONSE',
-  STATE_UPDATE = 'STATE_UPDATE'
+  STATE_UPDATE = 'STATE_UPDATE',
 }
 
 export enum MessagePriority {
   HIGH = 'HIGH',
   MEDIUM = 'MEDIUM',
-  LOW = 'LOW'
+  LOW = 'LOW',
 }
 
 export interface MessageDeliveryStatus {

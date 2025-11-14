@@ -5,7 +5,7 @@ const options: swaggerJsdoc.Options = {
     openapi: '3.0.0',
     info: {
       title: 'AI Adventure Scribe API',
-      version: '1.0.0',
+      version: '1.1.0',
       description: `
         D&D 5E Mechanics API - Complete REST API for D&D 5th Edition game mechanics including:
         - **Combat System**: Initiative, turn order, attacks, damage, conditions
@@ -246,6 +246,58 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Class Features',
         description: 'Class feature library, usage tracking, and subclasses',
+      },
+      {
+        name: 'Characters',
+        description: 'Character creation, management, and spells',
+      },
+      {
+        name: 'Campaigns',
+        description: 'Campaign creation and management',
+      },
+      {
+        name: 'Sessions',
+        description: 'Game session tracking and management',
+      },
+      {
+        name: 'Spells',
+        description: 'Spell library and progression tables',
+      },
+      {
+        name: 'AI',
+        description: 'AI-powered narrative generation',
+      },
+      {
+        name: 'Images',
+        description: 'AI image generation',
+      },
+      {
+        name: 'LLM',
+        description: 'Large language model chat interactions',
+      },
+      {
+        name: 'Personality',
+        description: 'Random personality traits, ideals, bonds, and flaws',
+      },
+      {
+        name: 'Encounters',
+        description: 'Encounter difficulty tracking and telemetry',
+      },
+      {
+        name: 'Admin',
+        description: 'Administrative operations (admin only)',
+      },
+      {
+        name: 'Billing',
+        description: 'Stripe payment and subscription management',
+      },
+      {
+        name: 'Observability',
+        description: 'Frontend error and metric reporting',
+      },
+      {
+        name: 'Blog',
+        description: 'Blog post management and publishing',
       },
     ],
   },

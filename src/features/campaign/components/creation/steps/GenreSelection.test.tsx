@@ -1,7 +1,8 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import GenreSelection from './GenreSelection';
+import React from 'react';
 import { vi } from 'vitest';
+
+import GenreSelection from './GenreSelection';
 
 // Mock CampaignContext
 const mockDispatch = vi.fn();
@@ -10,7 +11,7 @@ const mockCampaignState = {
     genre: '',
     name: 'Test Campaign', // Add other required fields if validation runs
     setting: {},
-  }
+  },
 };
 
 vi.mock('@/contexts/CampaignContext', () => ({

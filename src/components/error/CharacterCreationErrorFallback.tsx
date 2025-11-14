@@ -1,7 +1,8 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, RotateCcw, Save } from 'lucide-react';
+import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
 
 /**
  * Props for the CharacterCreationErrorFallback component
@@ -38,7 +39,7 @@ interface CharacterCreationErrorFallbackProps {
 export const CharacterCreationErrorFallback: React.FC<CharacterCreationErrorFallbackProps> = ({
   error,
   reset,
-  showReturnToCharacters = true
+  showReturnToCharacters = true,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -77,32 +78,27 @@ export const CharacterCreationErrorFallback: React.FC<CharacterCreationErrorFall
         {/* Error Description */}
         <div className="mb-6 p-4 bg-muted/50 rounded border border-muted">
           <p className="text-sm text-foreground mb-2">
-            Don't worry - you can restart the character creation wizard or return to your character list. Any progress may need to be re-entered.
+            Don't worry - you can restart the character creation wizard or return to your character
+            list. Any progress may need to be re-entered.
           </p>
 
           <div className="flex items-start gap-2 mt-3 p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded">
             <Save className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-blue-700 dark:text-blue-300">
-              <strong>Tip:</strong> Consider taking screenshots of your character details before restarting, so you don't lose your creative choices.
+              <strong>Tip:</strong> Consider taking screenshots of your character details before
+              restarting, so you don't lose your creative choices.
             </p>
           </div>
 
           {error && (
-            <p className="text-xs text-muted-foreground mt-2 font-mono">
-              Error: {error.message}
-            </p>
+            <p className="text-xs text-muted-foreground mt-2 font-mono">Error: {error.message}</p>
           )}
         </div>
 
         {/* Recovery Options */}
         <div className="space-y-2">
           {reset && (
-            <Button
-              onClick={reset}
-              variant="default"
-              className="w-full"
-              size="lg"
-            >
+            <Button onClick={reset} variant="default" className="w-full" size="lg">
               <RotateCcw className="h-4 w-4 mr-2" />
               Restart Character Creation
             </Button>
@@ -120,22 +116,12 @@ export const CharacterCreationErrorFallback: React.FC<CharacterCreationErrorFall
             </Button>
           )}
 
-          <Button
-            onClick={handleReturnHome}
-            variant="outline"
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleReturnHome} variant="outline" className="w-full" size="lg">
             <Home className="h-4 w-4 mr-2" />
             Return to Home
           </Button>
 
-          <Button
-            onClick={handleReload}
-            variant="ghost"
-            className="w-full"
-            size="sm"
-          >
+          <Button onClick={handleReload} variant="ghost" className="w-full" size="sm">
             Reload Page
           </Button>
         </div>
@@ -146,9 +132,7 @@ export const CharacterCreationErrorFallback: React.FC<CharacterCreationErrorFall
             <summary className="cursor-pointer font-medium mb-2 text-muted-foreground">
               Error Stack (Development Only)
             </summary>
-            <pre className="whitespace-pre-wrap overflow-x-auto text-xs">
-              {error.stack}
-            </pre>
+            <pre className="whitespace-pre-wrap overflow-x-auto text-xs">{error.stack}</pre>
           </details>
         )}
       </div>

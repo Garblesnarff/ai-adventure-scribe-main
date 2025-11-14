@@ -1,13 +1,15 @@
+import { Upload, Image as ImageIcon, X, Plus, FolderOpen } from 'lucide-react';
 import React, { useState, useCallback, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
+import { logger } from '../../lib/logger';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Image as ImageIcon, X, Plus, FolderOpen } from 'lucide-react';
-import { useBlogMedia, useUploadBlogMedia } from '@/hooks/blog/useBlogMedia';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { logger } from '../../lib/logger';
+import { useBlogMedia, useUploadBlogMedia } from '@/hooks/blog/useBlogMedia';
 
 interface MediaFile extends File {
   preview?: string;
@@ -23,41 +25,44 @@ export const BlogMediaManager: React.FC = () => {
   const uploadMedia = useUploadBlogMedia(uploadPath);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || !isBlogAdmin) return;
+  const handleFileUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || !isBlogAdmin) return;
 
-    for (const file of Array.from(files)) {
-      const fileKey = `${file.name}-${file.size}-${file.lastModified}`;
-      setUploadingFiles(prev => new Set(prev).add(fileKey));
+      for (const file of Array.from(files)) {
+        const fileKey = `${file.name}-${file.size}-${file.lastModified}`;
+        setUploadingFiles((prev) => new Set(prev).add(fileKey));
 
-      try {
-        await uploadMedia.mutateAsync({
-          file,
-          filename: `${uploadPath}/${file.name}`,
-          contentType: file.type,
-          prefix: uploadPath,
-        });
+        try {
+          await uploadMedia.mutateAsync({
+            file,
+            filename: `${uploadPath}/${file.name}`,
+            contentType: file.type,
+            prefix: uploadPath,
+          });
 
-        toast.success(`Uploaded ${file.name}`);
-        refetch(); // Refresh media list
-      } catch (error) {
-        logger.error('Upload error:', error);
-        toast.error(`Failed to upload ${file.name}`);
-      } finally {
-        setUploadingFiles(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(fileKey);
-          return newSet;
-        });
+          toast.success(`Uploaded ${file.name}`);
+          refetch(); // Refresh media list
+        } catch (error) {
+          logger.error('Upload error:', error);
+          toast.error(`Failed to upload ${file.name}`);
+        } finally {
+          setUploadingFiles((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(fileKey);
+            return newSet;
+          });
+        }
       }
-    }
 
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [isBlogAdmin, uploadMedia, uploadPath, refetch]);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    [isBlogAdmin, uploadMedia, uploadPath, refetch],
+  );
 
   if (!isBlogAdmin) {
     return (
@@ -116,9 +121,7 @@ export const BlogMediaManager: React.FC = () => {
               <label htmlFor="media-upload" className="cursor-pointer">
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <div>
-                  <p className="text-sm font-medium">
-                    Click to select images, or drag and drop
-                  </p>
+                  <p className="text-sm font-medium">Click to select images, or drag and drop</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Maximum file size: 10MB per image
                   </p>
@@ -139,12 +142,7 @@ export const BlogMediaManager: React.FC = () => {
                 {mediaAssets?.length || 0} assets in /{uploadPath}
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
               <FolderOpen className="h-4 w-4 mr-2" />
               Refresh
             </Button>

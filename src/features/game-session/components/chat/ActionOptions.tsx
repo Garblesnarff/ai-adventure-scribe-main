@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Sword, MessageCircle, Eye, Zap, User } from 'lucide-react';
-import { ActionOption, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
+import React, { useState, useEffect } from 'react';
+
+import type { ActionOption } from '@/utils/parseMessageOptions';
+
+import { Button } from '@/components/ui/button';
 import logger from '@/lib/logger';
+import { createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
 
 interface ActionOptionsProps {
   options: ActionOption[];
@@ -19,26 +22,48 @@ function getOptionIcon(text: string): React.ComponentType<{ className?: string }
   const lowerText = text.toLowerCase();
 
   // Combat/Action keywords
-  if (lowerText.includes('attack') || lowerText.includes('fight') || lowerText.includes('weapon') ||
-      lowerText.includes('sword') || lowerText.includes('strike')) {
+  if (
+    lowerText.includes('attack') ||
+    lowerText.includes('fight') ||
+    lowerText.includes('weapon') ||
+    lowerText.includes('sword') ||
+    lowerText.includes('strike')
+  ) {
     return Sword;
   }
 
   // Social/Dialogue keywords
-  if (lowerText.includes('speak') || lowerText.includes('talk') || lowerText.includes('say') ||
-      lowerText.includes('ask') || lowerText.includes('converse') || lowerText.includes('greet')) {
+  if (
+    lowerText.includes('speak') ||
+    lowerText.includes('talk') ||
+    lowerText.includes('say') ||
+    lowerText.includes('ask') ||
+    lowerText.includes('converse') ||
+    lowerText.includes('greet')
+  ) {
     return MessageCircle;
   }
 
   // Investigation/Observation keywords
-  if (lowerText.includes('look') || lowerText.includes('observe') || lowerText.includes('examine') ||
-      lowerText.includes('search') || lowerText.includes('investigate') || lowerText.includes('peer')) {
+  if (
+    lowerText.includes('look') ||
+    lowerText.includes('observe') ||
+    lowerText.includes('examine') ||
+    lowerText.includes('search') ||
+    lowerText.includes('investigate') ||
+    lowerText.includes('peer')
+  ) {
     return Eye;
   }
 
   // Magic/Ability keywords
-  if (lowerText.includes('cast') || lowerText.includes('spell') || lowerText.includes('magic') ||
-      lowerText.includes('ability') || lowerText.includes('power')) {
+  if (
+    lowerText.includes('cast') ||
+    lowerText.includes('spell') ||
+    lowerText.includes('magic') ||
+    lowerText.includes('ability') ||
+    lowerText.includes('power')
+  ) {
     return Zap;
   }
 
@@ -55,7 +80,7 @@ export const ActionOptions: React.FC<ActionOptionsProps> = ({
   onOptionSelect,
   delay = 10000, // 10 seconds default
   disabled = false,
-  className = ''
+  className = '',
 }) => {
   const [visible, setVisible] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -133,7 +158,7 @@ export const ActionOptions: React.FC<ActionOptionsProps> = ({
                     ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                   style={{
-                    animationDelay: `${index * 100}ms`
+                    animationDelay: `${index * 100}ms`,
                   }}
                 >
                   <div className="flex-shrink-0 mt-0.5">
@@ -141,12 +166,8 @@ export const ActionOptions: React.FC<ActionOptionsProps> = ({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm mb-1">
-                      Option {option.number}
-                    </div>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {option.text}
-                    </div>
+                    <div className="font-medium text-sm mb-1">Option {option.number}</div>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap">{option.text}</div>
                   </div>
 
                   {isSelected && (

@@ -1,7 +1,10 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
+
 import { MEMORY_CATEGORIES } from './memoryConstants';
-import { Memory } from './types';
+
+import type { Memory } from './types';
+
+import { Card } from '@/components/ui/card';
 
 interface MemoryCardProps {
   memory: Memory;
@@ -13,8 +16,8 @@ interface MemoryCardProps {
  * @param {Memory} memory - The memory object to display
  */
 export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
-  const category = MEMORY_CATEGORIES.find(cat => cat.type === memory.type);
-  
+  const category = MEMORY_CATEGORIES.find((cat) => cat.type === memory.type);
+
   return (
     <Card className="p-3 bg-white/50 hover:bg-white/80 transition-colors">
       <div className="flex items-start gap-2">

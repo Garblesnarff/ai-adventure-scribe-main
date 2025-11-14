@@ -6,34 +6,35 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 // Prefer anon key for the standard client; fall back to service role if anon is not set (dev convenience)
 const SUPABASE_CLIENT_KEY = SUPABASE_ANON_KEY || SUPABASE_SERVICE_ROLE_KEY;
 export const supabase = createClient(SUPABASE_URL, SUPABASE_CLIENT_KEY);
-export const supabaseService = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY);
+export const supabaseService = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY,
+);
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || '';
 export async function verifySupabaseToken(token) {
-    if (JWT_SECRET) {
-        try {
-            const decoded = jwt.verify(token, JWT_SECRET);
-            if (decoded?.sub) {
-                return {
-                    userId: decoded.sub,
-                    email: decoded.email,
-                };
-            }
-        }
-        catch {
-            // Fall through and attempt verification via Supabase service client
-        }
-    }
+  if (JWT_SECRET) {
     try {
-        const { data, error } = await supabaseService.auth.getUser(token);
-        if (error || !data?.user) {
-            return null;
-        }
+      const decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded?.sub) {
         return {
-            userId: data.user.id,
-            email: data.user.email ?? undefined,
+          userId: decoded.sub,
+          email: decoded.email,
         };
+      }
+    } catch {
+      // Fall through and attempt verification via Supabase service client
     }
-    catch {
-        return null;
+  }
+  try {
+    const { data, error } = await supabaseService.auth.getUser(token);
+    if (error || !data?.user) {
+      return null;
     }
+    return {
+      userId: data.user.id,
+      email: data.user.email ?? undefined,
+    };
+  } catch {
+    return null;
+  }
 }

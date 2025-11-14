@@ -1,5 +1,8 @@
-import { useState, useEffect, RefObject, useRef } from 'react';
-import { ChatMessage } from '@/types/game';
+import { useState, useEffect, useRef } from 'react';
+
+import type { ChatMessage } from '@/types/game';
+import type { RefObject } from 'react';
+
 import logger from '@/lib/logger';
 
 const SCROLL_THRESHOLD = 100; // px from top to trigger load more
@@ -14,7 +17,7 @@ export const useScrollBehavior = (
   messages: ChatMessage[],
   hasMore?: boolean,
   loadMore?: () => void,
-  isFetchingMore?: boolean
+  isFetchingMore?: boolean,
 ) => {
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);

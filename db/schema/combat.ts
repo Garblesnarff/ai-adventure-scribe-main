@@ -7,11 +7,13 @@
  * This schema matches the unified migration: 20251112_01_add_combat_system_unified.sql
  */
 
+import { relations } from 'drizzle-orm';
 import { pgTable, uuid, text, timestamp, integer, boolean, index, jsonb, unique } from 'drizzle-orm/pg-core';
-import { InferSelectModel, InferInsertModel, relations } from 'drizzle-orm';
-import { gameSessions } from './game.js';
-import { characters } from './game.js';
+
+import { gameSessions , characters } from './game.js';
 import { npcs } from './world.js';
+
+import type { InferSelectModel, InferInsertModel} from 'drizzle-orm';
 
 /**
  * Combat Encounters Table

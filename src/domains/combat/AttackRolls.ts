@@ -6,6 +6,7 @@
  */
 
 import type { DiceRoll } from './types';
+
 import { rollDie } from '@/utils/diceRolls';
 
 /**
@@ -16,7 +17,7 @@ export function rollAttack(
   options?: {
     advantage?: boolean;
     disadvantage?: boolean;
-  }
+  },
 ): { roll: DiceRoll; hit: boolean; targetAC?: number } {
   const hasAdvantage = options?.advantage && !options?.disadvantage;
   const hasDisadvantage = options?.disadvantage && !options?.advantage;
@@ -81,10 +82,7 @@ export function doesAttackHit(attackRoll: DiceRoll, targetAC: number): boolean {
 /**
  * Roll damage dice
  */
-export function rollDamage(
-  diceExpression: string,
-  isCritical: boolean = false
-): DiceRoll {
+export function rollDamage(diceExpression: string, isCritical: boolean = false): DiceRoll {
   const match = diceExpression.match(/(\d+)d(\d+)(?:\+(\d+))?/);
 
   if (!match) {

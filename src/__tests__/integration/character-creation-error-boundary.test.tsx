@@ -5,12 +5,13 @@
  * and displays appropriate fallback UI when errors occur.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import CharacterCreateEntry from '@/pages/CharacterCreateEntry';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import CharacterWizard from '@/components/character-creation/character-wizard';
+import CharacterCreateEntry from '@/pages/CharacterCreateEntry';
 
 // Mock feature flag (default OFF for direct wizard rendering)
 vi.mock('@/config/featureFlags', () => ({
@@ -68,7 +69,7 @@ describe('Character Creation ErrorBoundary Protection', () => {
         <MemoryRouter>
           <CharacterWizard />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     // Verify the component renders (wrapped in ErrorBoundary)
@@ -83,7 +84,7 @@ describe('Character Creation ErrorBoundary Protection', () => {
             <Route path="/app/characters/create" element={<CharacterCreateEntry />} />
           </Routes>
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     // Verify the component renders (wrapped in ErrorBoundary)
@@ -110,7 +111,7 @@ describe('Character Creation ErrorBoundary Protection', () => {
         <MemoryRouter>
           <CharacterWizard />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     // Verify ErrorBoundary fallback is displayed
@@ -142,7 +143,7 @@ describe('Character Creation ErrorBoundary Protection', () => {
         <MemoryRouter>
           <CharacterWizard />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     // Check for user-friendly error messaging

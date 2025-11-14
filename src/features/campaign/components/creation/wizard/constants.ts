@@ -1,8 +1,9 @@
 import BasicDetails from '../steps/basic-details';
-import GenreSelection from '../steps/GenreSelection';
-import CampaignParameters from '../steps/CampaignParameters';
 import CampaignEnhancements from '../steps/CampaignEnhancements';
-import { WizardStep } from './types';
+import CampaignParameters from '../steps/CampaignParameters';
+import GenreSelection from '../steps/GenreSelection';
+
+import type { WizardStep } from './types';
 
 /**
  * Array of steps in the campaign creation process

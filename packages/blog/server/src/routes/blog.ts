@@ -1,10 +1,6 @@
-import { Router, Request, Response } from 'express';
-import { supabaseService } from '../../lib/supabase.js';
-import { requireAuth } from '../../middleware/auth.js';
-import { requireBlogAdmin } from '../../middleware/blog-admin.js';
-import { requireBlogAuthor, canManagePost, getBlogRole } from '../../middleware/blog-author.js';
+import { Router } from 'express';
+
 import { mapBlogCategory, mapBlogPost, mapBlogTag } from './blog/mappers.js';
-import type { BlogPostRow, BlogCategoryRow, BlogTagRow, BlogCategory, BlogTag } from './blog/types.js';
 import {
   blogCategorySchema,
   blogCategoryUpdateSchema,
@@ -18,6 +14,13 @@ import {
   blogTagSchema,
   blogTagUpdateSchema,
 } from './blog/schemas.js';
+import { supabaseService } from '../../lib/supabase.js';
+import { requireAuth } from '../../middleware/auth.js';
+import { requireBlogAdmin } from '../../middleware/blog-admin.js';
+import { requireBlogAuthor, canManagePost, getBlogRole } from '../../middleware/blog-author.js';
+
+import type { BlogPostRow, BlogCategoryRow, BlogTagRow, BlogCategory, BlogTag } from './blog/types.js';
+import type { Request, Response } from 'express';
 
 const BLOG_POST_SELECT = `
   id,

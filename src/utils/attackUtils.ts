@@ -5,10 +5,11 @@
  * and multi-attack mechanics based on character equipment and stats.
  */
 
-import { Equipment } from '@/data/equipmentOptions';
+import type { Equipment } from '@/data/equipmentOptions';
+import type { CombatParticipant, CombatAction, DamageType, DiceRoll } from '@/types/combat';
+
 import { calculateProficiencyBonus } from '@/utils/character-calculations';
 import { rollAttack, rollDamage, calculateDamage } from '@/utils/diceUtils';
-import { CombatParticipant, CombatAction, DamageType, DiceRoll } from '@/types/combat';
 
 export interface AttackResolution {
   hit: boolean;
@@ -50,7 +51,7 @@ export function resolveAttack(
     spellAttack?: boolean;
     divineSmiteLevel?: number;
     sneakAttack?: boolean;
-  } = {}
+  } = {},
 ): AttackResolution {
   const level = attacker.level || 1;
   const profBonus = calculateProficiencyBonus(level);
@@ -89,7 +90,7 @@ export function resolveAttack(
   let hasDisadvantage = options.disadvantage || false;
 
   // Check attacker conditions for advantage/disadvantage
-  attacker.conditions.forEach(condition => {
+  attacker.conditions.forEach((condition) => {
     switch (condition.name) {
       case 'invisible':
         hasAdvantage = true; // Attacker has advantage
@@ -104,7 +105,7 @@ export function resolveAttack(
   });
 
   // Check target conditions for advantage/disadvantage
-  target.conditions.forEach(condition => {
+  target.conditions.forEach((condition) => {
     switch (condition.name) {
       case 'prone':
         // melee advantage, but only if weapon is melee
@@ -133,7 +134,7 @@ export function resolveAttack(
   // Roll attack
   const roll = rollAttack(attackBonus, {
     advantage: hasAdvantage,
-    disadvantage: hasDisadvantage
+    disadvantage: hasDisadvantage,
   });
 
   // Determine if attack hits
@@ -156,7 +157,7 @@ export function resolveAttack(
     criticalHit,
     criticalFail,
     advantage: hasAdvantage,
-    disadvantage: hasDisadvantage
+    disadvantage: hasDisadvantage,
   };
 }
 
@@ -170,7 +171,7 @@ export function calculateAttackDamage(
   options: {
     divineSmiteLevel?: number;
     sneakAttack?: boolean;
-  } = {}
+  } = {},
 ): DamageCalculation {
   let damageRolls: DiceRoll[] = [];
   let baseDamage = 0;
@@ -179,16 +180,20 @@ export function calculateAttackDamage(
   if (!weapon) {
     // Unarmed strike
     damageRolls = rollDamage('1d4', criticalHit, {});
-    baseDamage = damageRolls.reduce((sum, roll) =>
-      sum + roll.results.reduce((rSum, r) => rSum + r, 0) +
-      roll.modifier * roll.count, 0);
+    baseDamage = damageRolls.reduce(
+      (sum, roll) =>
+        sum + roll.results.reduce((rSum, r) => rSum + r, 0) + roll.modifier * roll.count,
+      0,
+    );
     damageType = 'bludgeoning';
   } else if (weapon.damage) {
     // Weapon damage
     damageRolls = rollDamage(weapon.damage.dice, criticalHit, {});
-    baseDamage = damageRolls.reduce((sum, roll) =>
-      sum + roll.results.reduce((rSum, r) => rSum + r, 0) +
-      roll.modifier * roll.count, 0);
+    baseDamage = damageRolls.reduce(
+      (sum, roll) =>
+        sum + roll.results.reduce((rSum, r) => rSum + r, 0) + roll.modifier * roll.count,
+      0,
+    );
     damageType = weapon.damage.type;
 
     // Add ability modifiers
@@ -239,7 +244,7 @@ export function calculateAttackDamage(
     damageType,
     attacker.damageResistances || [],
     attacker.damageImmunities || [],
-    attacker.damageVulnerabilities || []
+    attacker.damageVulnerabilities || [],
   );
 
   return {
@@ -249,7 +254,7 @@ export function calculateAttackDamage(
     damageType,
     resistances: attacker.damageResistances || [],
     vulnerabilities: attacker.damageVulnerabilities || [],
-    immunities: attacker.damageImmunities || []
+    immunities: attacker.damageImmunities || [],
   };
 }
 
@@ -266,7 +271,7 @@ export function performAttack(
     spellAttack?: boolean;
     divineSmiteLevel?: number;
     sneakAttack?: boolean;
-  } = {}
+  } = {},
 ): FullAttackResult {
   // Resolve the attack
   const resolution = resolveAttack(weapon, attacker, target, options);
@@ -275,7 +280,7 @@ export function performAttack(
   if (!resolution.hit && !resolution.criticalHit && !resolution.criticalFail) {
     return {
       resolution,
-      damage: null
+      damage: null,
     };
   }
 
@@ -288,23 +293,26 @@ export function performAttack(
     damage.damageType,
     target.damageResistances || [],
     target.damageImmunities || [],
-    target.damageVulnerabilities || []
+    target.damageVulnerabilities || [],
   );
 
   // Apply temporary HP first
   const tempHpToReduce = Math.min(target.temporaryHitPoints, damageToDeal);
   const remainingDamage = damageToDeal - tempHpToReduce;
   const newTempHp = target.temporaryHitPoints - tempHpToReduce;
-  const newHp = remainingDamage > 0 ? Math.max(0, target.currentHitPoints - remainingDamage) : target.currentHitPoints;
+  const newHp =
+    remainingDamage > 0
+      ? Math.max(0, target.currentHitPoints - remainingDamage)
+      : target.currentHitPoints;
 
   return {
     resolution,
     damage: {
       ...damage,
-      totalAfterResistance: damageToDeal
+      totalAfterResistance: damageToDeal,
     },
     targetReducedHp: newHp,
-    totalDamageDealt: damageToDeal
+    totalDamageDealt: damageToDeal,
   };
 }
 
@@ -314,17 +322,17 @@ export function performAttack(
 export function getNumberOfAttacks(
   cfg: { specific?: Record<string, unknown> } | null | undefined,
   characterClass: string,
-  level: number
+  level: number,
 ): number {
   // Martial classes with Extra Attack
   if (['fighter', 'paladin', 'ranger', 'barbarian'].includes(characterClass.toLowerCase())) {
-    if (level >= 11) return 3;      // Level 11: Three attacks
-    if (level >= 5) return 2;       // Level 5: Two attacks
+    if (level >= 11) return 3; // Level 11: Three attacks
+    if (level >= 5) return 2; // Level 5: Two attacks
   }
 
   // Other classes with Extra Attack
   if (['rogue', 'monk'].includes(characterClass.toLowerCase())) {
-    if (level >= 5) return 2;       // Level 5: Two attacks
+    if (level >= 5) return 2; // Level 5: Two attacks
   }
 
   // Eldritch Knight and Arcane Trickster
@@ -343,15 +351,17 @@ export function getNumberOfAttacks(
 export function canUseSneakAttack(
   attacker: CombatParticipant,
   target: CombatParticipant,
-  allParticipants: CombatParticipant[] = []
+  allParticipants: CombatParticipant[] = [],
 ): boolean {
   // Must be a rogue
   if (attacker.characterClass?.toLowerCase() !== 'rogue') return false;
 
   // Basic condition: advantage on the attack roll.
-  const hasAdvantage = attacker.conditions.some(c => c.name === 'invisible') ||
-                       target.conditions.some(c =>
-                         ['prone', 'stunned', 'paralyzed', 'unconscious'].includes(c.name));
+  const hasAdvantage =
+    attacker.conditions.some((c) => c.name === 'invisible') ||
+    target.conditions.some((c) =>
+      ['prone', 'stunned', 'paralyzed', 'unconscious'].includes(c.name),
+    );
 
   if (hasAdvantage) return true;
 
@@ -362,10 +372,11 @@ export function canUseSneakAttack(
   // A full implementation requires iterating through `allParticipants` and calculating
   // the distance between each of the attacker's allies and the target.
   // For now, we'll simulate this by checking if any other non-incapacitated ally exists.
-  const isAllyNearby = allParticipants.some(p =>
-    p.id !== attacker.id &&
-    p.participantType === attacker.participantType &&
-    !p.conditions.some(c => c.name === 'incapacitated')
+  const isAllyNearby = allParticipants.some(
+    (p) =>
+      p.id !== attacker.id &&
+      p.participantType === attacker.participantType &&
+      !p.conditions.some((c) => c.name === 'incapacitated'),
   );
 
   return isAllyNearby;
@@ -378,12 +389,12 @@ export function canUseSneakAttack(
 function getAbilityModifier(participant: CombatParticipant, ability: string): number {
   // Default ability scores for basic combat
   const defaultAbilityScores: { [key: string]: number } = {
-    strength: 14,     // Average human
+    strength: 14, // Average human
     dexterity: 14,
     constitution: 14,
     intelligence: 12,
     wisdom: 12,
-    charisma: 12
+    charisma: 12,
   };
 
   // For spells, override with known ability scores based on class
@@ -392,16 +403,16 @@ function getAbilityModifier(participant: CombatParticipant, ability: string): nu
       case 'wizard':
       case 'artificer':
       case 'arcane_trickster':
-        return Math.floor((participant.level || 3)); // Intellect bonus approximation
+        return Math.floor(participant.level || 3); // Intellect bonus approximation
       case 'sorcerer':
       case 'bard':
       case 'warlock':
       case 'paladin':
-        return Math.floor((participant.level || 3)); // Charisma bonus approximation
+        return Math.floor(participant.level || 3); // Charisma bonus approximation
       case 'cleric':
       case 'druid':
       case 'ranger':
-        return Math.floor((participant.level || 3)); // Wisdom bonus approximation
+        return Math.floor(participant.level || 3); // Wisdom bonus approximation
       default:
         return 3; // Default +3 bonus
     }
@@ -459,10 +470,12 @@ export function createCombatActionFromAttack(
   attacker: CombatParticipant,
   target: CombatParticipant,
   weapon: Equipment | null,
-  result: FullAttackResult
+  result: FullAttackResult,
 ): CombatAction {
   const isSpellAttack = !!(
-    weapon && typeof weapon === 'object' && 'isSpell' in (weapon as Record<string, unknown>) &&
+    weapon &&
+    typeof weapon === 'object' &&
+    'isSpell' in (weapon as Record<string, unknown>) &&
     (weapon as Record<string, unknown>).isSpell === true
   );
   const attackType = isSpellAttack ? 'cast_spell' : 'attack';
@@ -481,7 +494,7 @@ export function createCombatActionFromAttack(
     hit: result.resolution.hit,
     damageDealt: result.totalDamageDealt || 0,
     damageType: result.damage?.damageType || 'piercing',
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 }
 
@@ -492,7 +505,7 @@ function generateAttackDescription(
   attacker: CombatParticipant,
   target: CombatParticipant,
   weapon: Equipment | null,
-  result: FullAttackResult
+  result: FullAttackResult,
 ): string {
   const weaponName = weapon?.name || 'unarmed strike';
 

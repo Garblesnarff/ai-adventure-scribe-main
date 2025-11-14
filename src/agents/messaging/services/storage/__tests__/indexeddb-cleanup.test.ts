@@ -139,8 +139,8 @@ describe('IndexedDBService - Cleanup Functionality', () => {
       ];
 
       // Store multiple messages - cleanup should only run once
-      const promises = messages.map(msg => service.storeMessage(msg));
-      expect(promises.every(p => p instanceof Promise)).toBe(true);
+      const promises = messages.map((msg) => service.storeMessage(msg));
+      expect(promises.every((p) => p instanceof Promise)).toBe(true);
     });
   });
 });

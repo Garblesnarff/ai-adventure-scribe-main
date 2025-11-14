@@ -5,24 +5,29 @@
  * and campaign creation with filtering and AI integration.
  */
 
+import { Search, Filter, Sparkles, RotateCcw, Grid, List, Eye } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
+import { OptionSelector } from './option-selector';
+
+import type {
+  EnhancementOption,
+  OptionSelection} from '@/types/enhancement-options';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Filter, Sparkles, RotateCcw, Grid, List, Eye } from 'lucide-react';
 import {
-  EnhancementOption,
-  OptionSelection,
   EnhancementPackage,
   checkOptionAvailability,
   CHARACTER_ENHANCEMENTS,
   CAMPAIGN_ENHANCEMENTS
 } from '@/types/enhancement-options';
-import { OptionSelector } from './option-selector';
+
 
 interface EnhancementPanelProps {
   category: 'character' | 'campaign';

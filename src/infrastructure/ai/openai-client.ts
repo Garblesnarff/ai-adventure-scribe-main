@@ -8,16 +8,20 @@
  * - VITE_OPENAI_API_KEY: OpenAI API key (server-side only)
  */
 
+import type { EmbeddingResponse } from './types';
+
 import { llmApiClient } from '@/infrastructure/api';
 import logger from '@/lib/logger';
-import type { EmbeddingResponse } from './types';
 
 export class OpenAIClient {
   /**
    * Generate embeddings for text using OpenAI's embedding model
    * Used for semantic memory retrieval and similarity search
    */
-  async generateEmbedding(text: string, model: string = 'text-embedding-3-small'): Promise<EmbeddingResponse> {
+  async generateEmbedding(
+    text: string,
+    model: string = 'text-embedding-3-small',
+  ): Promise<EmbeddingResponse> {
     try {
       logger.debug(`[OpenAIClient] Generating embedding for text (${text.length} chars)`);
 
@@ -26,7 +30,7 @@ export class OpenAIClient {
       const embedding = await llmApiClient.generateEmbedding({
         text,
         model,
-        provider: 'openai'
+        provider: 'openai',
       });
 
       return {
@@ -34,8 +38,8 @@ export class OpenAIClient {
         model,
         usage: {
           prompt_tokens: Math.ceil(text.length / 4), // Approximate
-          total_tokens: Math.ceil(text.length / 4)
-        }
+          total_tokens: Math.ceil(text.length / 4),
+        },
       };
     } catch (error) {
       logger.error('[OpenAIClient] Failed to generate embedding:', error);
@@ -46,11 +50,14 @@ export class OpenAIClient {
   /**
    * Batch generate embeddings for multiple texts
    */
-  async generateEmbeddings(texts: string[], model: string = 'text-embedding-3-small'): Promise<EmbeddingResponse[]> {
+  async generateEmbeddings(
+    texts: string[],
+    model: string = 'text-embedding-3-small',
+  ): Promise<EmbeddingResponse[]> {
     logger.debug(`[OpenAIClient] Generating embeddings for ${texts.length} texts`);
 
     // Process in parallel
-    const promises = texts.map(text => this.generateEmbedding(text, model));
+    const promises = texts.map((text) => this.generateEmbedding(text, model));
     return Promise.all(promises);
   }
 }

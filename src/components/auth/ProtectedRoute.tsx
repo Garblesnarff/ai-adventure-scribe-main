@@ -1,7 +1,9 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import AuthPage from './AuthPage';
 import { Loader2 } from 'lucide-react';
+import React from 'react';
+
+import AuthPage from './AuthPage';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

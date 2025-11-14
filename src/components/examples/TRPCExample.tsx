@@ -7,14 +7,15 @@
  * @module components/examples/TRPCExample
  */
 
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { trpc } from '@/infrastructure/api';
 import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { trpc } from '@/infrastructure/api';
 
 /**
  * TRPCExample Component
@@ -30,12 +31,7 @@ export function TRPCExample() {
   const [content, setContent] = useState('');
 
   // Query: Fetch all blog posts
-  const {
-    data: posts,
-    isLoading,
-    error,
-    refetch,
-  } = trpc.blog.getPosts.useQuery();
+  const { data: posts, isLoading, error, refetch } = trpc.blog.getPosts.useQuery();
 
   // Mutation: Create a new blog post
   const utils = trpc.useUtils();
@@ -91,7 +87,7 @@ export function TRPCExample() {
       // Optimistically remove from cache
       utils.blog.getPosts.setData(
         undefined,
-        (old) => old?.filter((post) => post.id !== variables.id) || []
+        (old) => old?.filter((post) => post.id !== variables.id) || [],
       );
 
       return { previousPosts };
@@ -166,9 +162,7 @@ export function TRPCExample() {
 
             <div className="flex gap-2">
               <Button type="submit" disabled={createPost.isPending}>
-                {createPost.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {createPost.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Post
               </Button>
               <Button
@@ -247,9 +241,7 @@ export function TRPCExample() {
           <CardTitle>Type Safety Demonstration</CardTitle>
         </CardHeader>
         <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-          <p>
-            This component demonstrates several tRPC patterns:
-          </p>
+          <p>This component demonstrates several tRPC patterns:</p>
           <ul>
             <li>
               <strong>Type-safe queries:</strong> The <code>getPosts</code> query automatically
@@ -273,8 +265,8 @@ export function TRPCExample() {
             </li>
           </ul>
           <p className="text-sm text-muted-foreground mt-4">
-            Note: This example will only work once the backend tRPC router is implemented (Work
-            Unit 3.1).
+            Note: This example will only work once the backend tRPC router is implemented (Work Unit
+            3.1).
           </p>
         </CardContent>
       </Card>

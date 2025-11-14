@@ -10,4 +10,3 @@ export function createClient(): Pool {
 }
 
 export type Db = Pool;
-

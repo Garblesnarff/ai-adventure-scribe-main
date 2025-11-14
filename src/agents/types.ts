@@ -35,5 +35,5 @@ export interface AgentTask {
 export enum AgentType {
   DungeonMaster = 'dungeon_master',
   Narrator = 'narrator',
-  RulesInterpreter = 'rules_interpreter'
+  RulesInterpreter = 'rules_interpreter',
 }

@@ -1,7 +1,9 @@
-import React from 'react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'; // Added waitFor
-import { useCampaignSave } from './useCampaignSave';
+import React from 'react';
 import { vi } from 'vitest';
+
+import { useCampaignSave } from './useCampaignSave';
+
 import type { Campaign } from '@/types/campaign';
 
 // Mock Supabase Client
@@ -40,22 +42,26 @@ vi.mock('@/components/ui/use-toast', () => ({
 // Helper Test Component
 let hookResult: any; // To store the hook's return value
 
-const TestComponent: React.FC<{ campaignDataToSave?: Partial<Campaign> }> = ({ campaignDataToSave }) => {
+const TestComponent: React.FC<{ campaignDataToSave?: Partial<Campaign> }> = ({
+  campaignDataToSave,
+}) => {
   const { saveCampaign, isSaving } = useCampaignSave();
   hookResult = { saveCampaign, isSaving }; // Store for access outside component scope
 
   return (
     <div>
       <div data-testid="isSaving">{isSaving.toString()}</div>
-      <button onClick={async () => {
-        if (campaignDataToSave) {
-          try {
-            await saveCampaign(campaignDataToSave);
-          } catch (e) {
-            // Error handling can be tested by checking mocks or error messages if displayed
+      <button
+        onClick={async () => {
+          if (campaignDataToSave) {
+            try {
+              await saveCampaign(campaignDataToSave);
+            } catch (e) {
+              // Error handling can be tested by checking mocks or error messages if displayed
+            }
           }
-        }
-      }}>
+        }}
+      >
         Save
       </button>
     </div>
@@ -105,7 +111,6 @@ describe('useCampaignSave', () => {
     expect(screen.getByTestId('isSaving').textContent).toBe('false');
   });
 
-
   it('saveCampaign should return campaign ID on successful insert', async () => {
     mockSupabaseSingle.mockResolvedValueOnce({ data: { id: 'campaign-xyz' }, error: null });
     render(<TestComponent />);
@@ -129,8 +134,9 @@ describe('useCampaignSave', () => {
     render(<TestComponent />);
 
     await act(async () => {
-      await expect(hookResult.saveCampaign({ name: 'Error Campaign' }))
-        .rejects.toThrow(supabaseError.message);
+      await expect(hookResult.saveCampaign({ name: 'Error Campaign' })).rejects.toThrow(
+        supabaseError.message,
+      );
     });
     expect(screen.getByTestId('isSaving').textContent).toBe('false');
   });
@@ -140,8 +146,9 @@ describe('useCampaignSave', () => {
     render(<TestComponent />);
 
     await act(async () => {
-      await expect(hookResult.saveCampaign({ name: 'No Data Campaign' }))
-        .rejects.toThrow('No data returned from insert');
+      await expect(hookResult.saveCampaign({ name: 'No Data Campaign' })).rejects.toThrow(
+        'No data returned from insert',
+      );
     });
     expect(screen.getByTestId('isSaving').textContent).toBe('false');
   });
@@ -162,7 +169,6 @@ describe('useCampaignSave', () => {
     mockSupabaseInsert.mockClear();
     mockSupabaseSingle.mockClear(); // ensure it's clean for the next resolve
     mockSupabaseSingle.mockResolvedValueOnce({ data: { id: 'campaign-def' }, error: null });
-
 
     // Test with provided setting_details
     const myDetails = { world: 'Mystara' };

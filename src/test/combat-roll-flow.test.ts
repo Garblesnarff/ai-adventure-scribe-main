@@ -4,11 +4,16 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { rollStateManager } from '../services/combat/rollStateManager';
-import { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } from '../utils/rollRequestParser';
-import { DiceEngine } from '../services/dice/DiceEngine';
-import { combatSequenceValidator } from '../services/combat/CombatSequenceValidator';
+
 import { combatAuditSystem } from '../services/combat/CombatAuditSystem';
+import { combatSequenceValidator } from '../services/combat/CombatSequenceValidator';
+import { rollStateManager } from '../services/combat/rollStateManager';
+import { DiceEngine } from '../services/dice/DiceEngine';
+import {
+  parseRollRequests,
+  detectsSuccessfulAttack,
+  detectsCriticalHit,
+} from '../utils/rollRequestParser';
 
 describe('Combat Roll Flow Integration', () => {
   beforeEach(() => {
@@ -19,7 +24,7 @@ describe('Combat Roll Flow Integration', () => {
 
   describe('Attack Roll Detection', () => {
     it('should detect attack roll requests', () => {
-      const message = "Make an attack roll with your longsword (1d20+5) against AC 13";
+      const message = 'Make an attack roll with your longsword (1d20+5) against AC 13';
       const requests = parseRollRequests(message);
 
       expect(requests).toHaveLength(1);
@@ -28,7 +33,7 @@ describe('Combat Roll Flow Integration', () => {
     });
 
     it('should detect natural language attack requests', () => {
-      const message = "Please roll an attack roll with your dagger";
+      const message = 'Please roll an attack roll with your dagger';
       const requests = parseRollRequests(message);
 
       expect(requests).toHaveLength(1);
@@ -38,27 +43,27 @@ describe('Combat Roll Flow Integration', () => {
 
   describe('Damage Roll Detection', () => {
     it('should detect explicit damage roll requests', () => {
-      const message = "Roll damage for your longsword (1d8+3)";
+      const message = 'Roll damage for your longsword (1d8+3)';
       const requests = parseRollRequests(message);
 
       expect(requests.length).toBeGreaterThan(0);
-      const damageRequests = requests.filter(r => r.type === 'damage');
+      const damageRequests = requests.filter((r) => r.type === 'damage');
       expect(damageRequests.length).toBeGreaterThan(0);
       expect(damageRequests[0].formula).toBe('1d8+3');
     });
 
     it('should detect critical damage requests', () => {
-      const message = "Natural 20! Critical hit! Roll critical damage (2d6+2)";
+      const message = 'Natural 20! Critical hit! Roll critical damage (2d6+2)';
       const requests = parseRollRequests(message);
 
       expect(requests.length).toBeGreaterThan(0);
-      const damageRequests = requests.filter(r => r.type === 'damage');
+      const damageRequests = requests.filter((r) => r.type === 'damage');
       expect(damageRequests.length).toBeGreaterThan(0);
       expect(damageRequests[0].purpose).toBe('Critical damage roll');
     });
 
     it('should detect contextual damage requests', () => {
-      const message = "That hits! Now roll damage";
+      const message = 'That hits! Now roll damage';
       const requests = parseRollRequests(message);
 
       expect(requests).toHaveLength(1);
@@ -69,27 +74,22 @@ describe('Combat Roll Flow Integration', () => {
   describe('Success Detection', () => {
     it('should detect successful attacks', () => {
       const messages = [
-        "That hits!",
-        "18 hits AC 13",
-        "Your blade strikes true",
-        "Critical hit!",
-        "Natural 20!"
+        'That hits!',
+        '18 hits AC 13',
+        'Your blade strikes true',
+        'Critical hit!',
+        'Natural 20!',
       ];
 
-      messages.forEach(message => {
+      messages.forEach((message) => {
         expect(detectsSuccessfulAttack(message)).toBe(true);
       });
     });
 
     it('should detect critical hits', () => {
-      const messages = [
-        "Critical hit!",
-        "Natural 20!",
-        "Nat 20",
-        "crit"
-      ];
+      const messages = ['Critical hit!', 'Natural 20!', 'Nat 20', 'crit'];
 
-      messages.forEach(message => {
+      messages.forEach((message) => {
         expect(detectsCriticalHit(message)).toBe(true);
       });
     });
@@ -103,7 +103,7 @@ describe('Combat Roll Flow Integration', () => {
         weaponName: 'longsword',
         targetAC: 13,
         context: 'Attack with longsword',
-        actorId: 'player'
+        actorId: 'player',
       });
 
       expect(rollStateManager.getPendingRolls()).toHaveLength(1);
@@ -123,7 +123,7 @@ describe('Combat Roll Flow Integration', () => {
         weaponName: 'shortsword',
         targetAC: 15,
         context: 'Attack with shortsword',
-        actorId: 'player'
+        actorId: 'player',
       });
 
       // Simulate critical hit (natural 20)
@@ -141,7 +141,7 @@ describe('Combat Roll Flow Integration', () => {
         weaponName: 'longsword',
         targetAC: 13,
         context: 'Attack with longsword',
-        actorId: 'player'
+        actorId: 'player',
       });
 
       // Hit
@@ -163,9 +163,9 @@ describe('Combat Roll Flow Integration', () => {
           constitution: { score: 12, modifier: 1, savingThrow: false },
           intelligence: { score: 10, modifier: 0, savingThrow: false },
           wisdom: { score: 10, modifier: 0, savingThrow: false },
-          charisma: { score: 10, modifier: 0, savingThrow: false }
+          charisma: { score: 10, modifier: 0, savingThrow: false },
         },
-        level: 3
+        level: 3,
       };
 
       expect(DiceEngine.getWeaponDamageFormula('longsword', testCharacter)).toBe('1d8+3');
@@ -182,8 +182,8 @@ describe('Combat Roll Flow Integration', () => {
           constitution: { score: 12, modifier: 1, savingThrow: false },
           intelligence: { score: 10, modifier: 0, savingThrow: false },
           wisdom: { score: 10, modifier: 0, savingThrow: false },
-          charisma: { score: 10, modifier: 0, savingThrow: false }
-        }
+          charisma: { score: 10, modifier: 0, savingThrow: false },
+        },
       };
 
       // Finesse weapons should use the higher modifier automatically
@@ -202,8 +202,8 @@ describe('Combat Roll Flow Integration', () => {
           constitution: { score: 12, modifier: 1, savingThrow: false },
           intelligence: { score: 10, modifier: 0, savingThrow: false },
           wisdom: { score: 10, modifier: 0, savingThrow: false },
-          charisma: { score: 10, modifier: 0, savingThrow: false }
-        }
+          charisma: { score: 10, modifier: 0, savingThrow: false },
+        },
       };
 
       const normalDamage = DiceEngine.createDamageRollRequest('longsword', false, testCharacter);
@@ -223,9 +223,9 @@ describe('Combat Roll Flow Integration', () => {
           constitution: { score: 12, modifier: 1, savingThrow: false },
           intelligence: { score: 10, modifier: 0, savingThrow: false },
           wisdom: { score: 10, modifier: 0, savingThrow: false },
-          charisma: { score: 10, modifier: 0, savingThrow: false }
+          charisma: { score: 10, modifier: 0, savingThrow: false },
         },
-        level: 3
+        level: 3,
       };
 
       const attackRoll = DiceEngine.createAttackRollRequest('longsword', testCharacter);
@@ -240,9 +240,9 @@ describe('Combat Roll Flow Integration', () => {
           constitution: { score: 12, modifier: 1, savingThrow: false },
           intelligence: { score: 10, modifier: 0, savingThrow: false },
           wisdom: { score: 10, modifier: 0, savingThrow: false },
-          charisma: { score: 10, modifier: 0, savingThrow: false }
+          charisma: { score: 10, modifier: 0, savingThrow: false },
         },
-        level: 3
+        level: 3,
       };
 
       const finessAttack = DiceEngine.createAttackRollRequest('rapier', dexChar);
@@ -260,7 +260,7 @@ describe('Combat Roll Flow Integration', () => {
   describe('Complete Combat Flow Simulation', () => {
     it('should simulate a complete attack -> damage sequence', () => {
       // 1. DM requests attack roll
-      const dmMessage = "Make an attack roll with your longsword (1d20+5) against AC 13";
+      const dmMessage = 'Make an attack roll with your longsword (1d20+5) against AC 13';
       const attackRequests = parseRollRequests(dmMessage);
       expect(attackRequests[0].type).toBe('attack');
 
@@ -270,7 +270,7 @@ describe('Combat Roll Flow Integration', () => {
         weaponName: 'longsword',
         targetAC: 13,
         context: 'Attack with longsword',
-        actorId: 'player'
+        actorId: 'player',
       });
 
       // 3. Player rolls and hits
@@ -279,7 +279,8 @@ describe('Combat Roll Flow Integration', () => {
       expect(rollStateManager.isAwaitingDamage()).toBe(true);
 
       // 4. DM responds with hit confirmation and damage request
-      const dmResponse = "16 hits! Your longsword strikes true. Roll damage for your longsword (1d8+3)";
+      const dmResponse =
+        '16 hits! Your longsword strikes true. Roll damage for your longsword (1d8+3)';
 
       // Should detect successful attack
       expect(detectsSuccessfulAttack(dmResponse)).toBe(true);
@@ -287,7 +288,7 @@ describe('Combat Roll Flow Integration', () => {
       // Should detect damage roll request
       const damageRequests = parseRollRequests(dmResponse);
       expect(damageRequests.length).toBeGreaterThan(0);
-      const onlyDamageRequests = damageRequests.filter(r => r.type === 'damage');
+      const onlyDamageRequests = damageRequests.filter((r) => r.type === 'damage');
       expect(onlyDamageRequests.length).toBeGreaterThan(0);
 
       // 5. Record damage roll
@@ -302,7 +303,7 @@ describe('Combat Roll Flow Integration', () => {
         weaponName: 'shortsword',
         targetAC: 15,
         context: 'Attack with shortsword',
-        actorId: 'player'
+        actorId: 'player',
       });
 
       // Critical hit!
@@ -311,7 +312,7 @@ describe('Combat Roll Flow Integration', () => {
       expect(rollStateManager.isAwaitingCriticalDamage()).toBe(true);
 
       // DM response
-      const dmResponse = "Natural 20! Critical hit! Roll critical damage (2d6+2)";
+      const dmResponse = 'Natural 20! Critical hit! Roll critical damage (2d6+2)';
 
       expect(detectsCriticalHit(dmResponse)).toBe(true);
 
@@ -454,15 +455,15 @@ describe('Combat Roll Flow Integration', () => {
           result: 18,
           targetAC: 15,
           success: true,
-          description: 'Attack with longsword'
-        }
+          description: 'Attack with longsword',
+        },
       });
 
       // Check for initiative violation
       const violations = combatAuditSystem.getViolations(combatId);
       expect(violations.length).toBeGreaterThan(0);
 
-      const initiativeViolation = violations.find(v => v.violationType === 'missing_initiative');
+      const initiativeViolation = violations.find((v) => v.violationType === 'missing_initiative');
       expect(initiativeViolation).toBeTruthy();
       expect(initiativeViolation?.severity).toBe('critical');
       expect(initiativeViolation?.description).toContain('without rolling initiative');
@@ -483,8 +484,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d20+3',
           result: 15,
-          description: 'Initiative roll'
-        }
+          description: 'Initiative roll',
+        },
       });
 
       // Try to roll damage without attack
@@ -497,12 +498,12 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d8+3',
           result: 7,
-          description: 'Damage roll'
-        }
+          description: 'Damage roll',
+        },
       });
 
       const violations = combatAuditSystem.getViolations(combatId);
-      const damageViolation = violations.find(v => v.violationType === 'damage_without_attack');
+      const damageViolation = violations.find((v) => v.violationType === 'damage_without_attack');
       expect(damageViolation).toBeTruthy();
       expect(damageViolation?.severity).toBe('critical');
     });
@@ -522,8 +523,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d20+3',
           result: 15,
-          description: 'Initiative roll'
-        }
+          description: 'Initiative roll',
+        },
       });
 
       // Attack without specifying AC
@@ -538,8 +539,8 @@ describe('Combat Roll Flow Integration', () => {
           result: 18,
           // targetAC missing
           success: true,
-          description: 'Attack with longsword'
-        }
+          description: 'Attack with longsword',
+        },
       });
 
       // Saving throw without DC
@@ -554,17 +555,17 @@ describe('Combat Roll Flow Integration', () => {
           result: 14,
           // dc missing
           success: true,
-          description: 'Dexterity save'
-        }
+          description: 'Dexterity save',
+        },
       });
 
       const violations = combatAuditSystem.getViolations(combatId);
 
-      const acViolation = violations.find(v => v.violationType === 'missing_ac');
+      const acViolation = violations.find((v) => v.violationType === 'missing_ac');
       expect(acViolation).toBeTruthy();
       expect(acViolation?.severity).toBe('high');
 
-      const dcViolation = violations.find(v => v.violationType === 'missing_dc');
+      const dcViolation = violations.find((v) => v.violationType === 'missing_dc');
       expect(dcViolation).toBeTruthy();
       expect(dcViolation?.severity).toBe('high');
     });
@@ -584,8 +585,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d20+5',
           result: 18,
-          description: 'Valid attack roll'
-        }
+          description: 'Valid attack roll',
+        },
       });
 
       // Invalid formula - should create violation
@@ -598,12 +599,12 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: 'invalid-dice-format',
           result: 7,
-          description: 'Invalid damage roll'
-        }
+          description: 'Invalid damage roll',
+        },
       });
 
       const violations = combatAuditSystem.getViolations(combatId);
-      const formulaViolation = violations.find(v => v.violationType === 'invalid_formula');
+      const formulaViolation = violations.find((v) => v.violationType === 'invalid_formula');
       expect(formulaViolation).toBeTruthy();
       expect(formulaViolation?.severity).toBe('medium');
     });
@@ -623,8 +624,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d20+5',
           result: 18,
-          description: 'Attack without initiative'
-        }
+          description: 'Attack without initiative',
+        },
       });
 
       // Generate report
@@ -638,8 +639,8 @@ describe('Combat Roll Flow Integration', () => {
       expect(report.recommendations.length).toBeGreaterThan(0);
 
       // Check that recommendations include initiative guidance
-      const hasInitiativeRecommendation = report.recommendations.some(r =>
-        r.includes('initiative')
+      const hasInitiativeRecommendation = report.recommendations.some((r) =>
+        r.includes('initiative'),
       );
       expect(hasInitiativeRecommendation).toBe(true);
     });
@@ -659,8 +660,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d20+3',
           result: 15,
-          description: 'Initiative roll'
-        }
+          description: 'Initiative roll',
+        },
       });
 
       combatAuditSystem.recordAction({
@@ -674,8 +675,8 @@ describe('Combat Roll Flow Integration', () => {
           result: 18,
           targetAC: 15,
           success: true,
-          description: 'Attack with longsword'
-        }
+          description: 'Attack with longsword',
+        },
       });
 
       combatAuditSystem.recordAction({
@@ -687,8 +688,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d8+3',
           result: 7,
-          description: 'Damage roll'
-        }
+          description: 'Damage roll',
+        },
       });
 
       const report = combatAuditSystem.generateAuditReport(combatId);
@@ -715,8 +716,8 @@ describe('Combat Roll Flow Integration', () => {
         data: {
           formula: '1d20+5',
           result: 18,
-          description: 'Attack without initiative'
-        }
+          description: 'Attack without initiative',
+        },
       });
 
       const violations = combatAuditSystem.getViolations(combatId);

@@ -1,10 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { processContent } from '@/utils/memoryClassification';
-import { Memory, MemoryType, isValidMemoryType } from '@/components/game/memory/types';
-import logger from '@/lib/logger';
+
+import type { Memory } from '@/components/game/memory/types';
+
+import { MemoryType, isValidMemoryType } from '@/components/game/memory/types';
 import { isSemanticMemoriesEnabled } from '@/config/featureFlags';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
+import { processContent } from '@/utils/memoryClassification';
 
 const MIN_SEGMENT_LENGTH = 50;
 const MAX_SEGMENTS_PER_MESSAGE = 3;
@@ -21,13 +24,13 @@ export const useMemoryCreation = (sessionId: string | null) => {
 
     try {
       logger.info('[Memory Creation] Starting embedding generation for text:', text);
-      
+
       const { data, error } = await supabase.functions.invoke('generate-embedding', {
         body: { text },
       });
 
       if (error) throw error;
-      
+
       if (!data?.embedding) {
         throw new Error('Invalid embedding format received from API');
       }
@@ -39,7 +42,9 @@ export const useMemoryCreation = (sessionId: string | null) => {
     }
   };
 
-  const validateMemory = (memory: Partial<Memory>): { isValid: boolean; processedMemory: Partial<Memory> } => {
+  const validateMemory = (
+    memory: Partial<Memory>,
+  ): { isValid: boolean; processedMemory: Partial<Memory> } => {
     const processedMemory = { ...memory };
 
     if (!memory.content || typeof memory.content !== 'string') {
@@ -54,7 +59,11 @@ export const useMemoryCreation = (sessionId: string | null) => {
 
     // Clamp importance score to valid range (1-5) instead of rejecting
     if (memory.importance && (memory.importance < 1 || memory.importance > 5)) {
-      logger.warn('[Memory Creation] Invalid importance score:', memory.importance, 'clamping to valid range');
+      logger.warn(
+        '[Memory Creation] Invalid importance score:',
+        memory.importance,
+        'clamping to valid range',
+      );
       processedMemory.importance = Math.max(1, Math.min(5, memory.importance));
     }
 
@@ -66,7 +75,7 @@ export const useMemoryCreation = (sessionId: string | null) => {
       if (!sessionId) throw new Error('No active session');
 
       logger.info('[Memory Creation] Starting memory creation process:', memory);
-      
+
       const validation = validateMemory(memory);
       if (!validation.isValid) {
         throw new Error('Invalid memory data');
@@ -74,23 +83,25 @@ export const useMemoryCreation = (sessionId: string | null) => {
 
       const validatedMemory = validation.processedMemory;
       const embedding = await generateEmbedding(validatedMemory.content!);
-      
+
       logger.info('[Memory Creation] Inserting memory into database:', {
         ...validatedMemory,
         session_id: sessionId,
-        embedding
+        embedding,
       });
 
       const { data, error } = await supabase
         .from('memories')
-        .insert([{ 
-          ...validatedMemory,
-          session_id: sessionId,
-          embedding: embedding ?? null,
-          metadata: validatedMemory.metadata || {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
+        .insert([
+          {
+            ...validatedMemory,
+            session_id: sessionId,
+            embedding: embedding ?? null,
+            metadata: validatedMemory.metadata || {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ])
         .select()
         .single();
 
@@ -105,9 +116,9 @@ export const useMemoryCreation = (sessionId: string | null) => {
     onError: (error) => {
       logger.error('[Memory Creation] Error in memory creation mutation:', error);
       toast({
-        title: "Error",
-        description: "Failed to create memory: " + error.message,
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to create memory: ' + error.message,
+        variant: 'destructive',
       });
     },
   });
@@ -117,7 +128,7 @@ export const useMemoryCreation = (sessionId: string | null) => {
       if (!sessionId) throw new Error('No active session');
 
       logger.info('[Memory Creation] Processing content for memory extraction:', content);
-      
+
       const memorySegments = processContent(content);
       const filteredSegments: typeof memorySegments = [];
       const seenContent = new Set<string>();

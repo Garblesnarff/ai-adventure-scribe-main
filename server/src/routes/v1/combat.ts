@@ -158,8 +158,56 @@ export default function combatRouter() {
   });
 
   /**
-   * POST /v1/combat/:encounterId/roll-initiative
-   * Roll initiative for a participant
+   * @openapi
+   * /v1/combat/{encounterId}/roll-initiative:
+   *   post:
+   *     summary: Roll initiative for a participant
+   *     description: Sets or updates the initiative roll for a combat participant
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - participantId
+   *             properties:
+   *               participantId:
+   *                 type: string
+   *                 format: uuid
+   *               roll:
+   *                 type: integer
+   *                 minimum: 1
+   *                 maximum: 20
+   *               modifier:
+   *                 type: integer
+   *           examples:
+   *             manualRoll:
+   *               summary: Manual initiative roll
+   *               value:
+   *                 participantId: "participant-123"
+   *                 roll: 15
+   *                 modifier: 2
+   *     responses:
+   *       200:
+   *         description: Initiative rolled successfully
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/:encounterId/roll-initiative', async (req: Request, res: Response) => {
     const { encounterId } = req.params;
@@ -221,8 +269,33 @@ export default function combatRouter() {
   });
 
   /**
-   * POST /v1/combat/:encounterId/next-turn
-   * Advance to the next turn
+   * @openapi
+   * /v1/combat/{encounterId}/next-turn:
+   *   post:
+   *     summary: Advance to the next turn
+   *     description: Progresses combat to the next participant's turn or starts a new round
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     responses:
+   *       200:
+   *         description: Turn advanced successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/CombatState'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/:encounterId/next-turn', async (req: Request, res: Response) => {
     const { encounterId } = req.params;
@@ -266,8 +339,53 @@ export default function combatRouter() {
   });
 
   /**
-   * PATCH /v1/combat/:encounterId/reorder
-   * Manually adjust initiative order
+   * @openapi
+   * /v1/combat/{encounterId}/reorder:
+   *   patch:
+   *     summary: Manually adjust initiative order
+   *     description: Allows the DM to manually change a participant's initiative value
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - participantId
+   *               - newInitiative
+   *             properties:
+   *               participantId:
+   *                 type: string
+   *                 format: uuid
+   *               newInitiative:
+   *                 type: number
+   *           example:
+   *             participantId: "participant-123"
+   *             newInitiative: 18
+   *     responses:
+   *       200:
+   *         description: Initiative reordered successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/CombatState'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.patch('/:encounterId/reorder', async (req: Request, res: Response) => {
     const { encounterId } = req.params;
@@ -322,8 +440,40 @@ export default function combatRouter() {
   });
 
   /**
-   * POST /v1/combat/:encounterId/end
-   * End a combat encounter
+   * @openapi
+   * /v1/combat/{encounterId}/end:
+   *   post:
+   *     summary: End a combat encounter
+   *     description: Marks the encounter as complete and performs cleanup
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     responses:
+   *       200:
+   *         description: Combat ended successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 id:
+   *                   type: string
+   *                   format: uuid
+   *                 status:
+   *                   type: string
+   *                   enum: [completed]
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/:encounterId/end', async (req: Request, res: Response) => {
     const { encounterId } = req.params;
@@ -578,8 +728,62 @@ export default function combatRouter() {
   });
 
   /**
-   * POST /v1/combat/:encounterId/spell-attack
-   * Resolve a spell attack against one or more targets
+   * @openapi
+   * /v1/combat/{encounterId}/spell-attack:
+   *   post:
+   *     summary: Resolve a spell attack against targets
+   *     description: Processes spell attacks against one or more targets with saving throws and damage
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - casterId
+   *               - targetIds
+   *               - spellName
+   *             properties:
+   *               casterId:
+   *                 type: string
+   *                 format: uuid
+   *               targetIds:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                   format: uuid
+   *               spellName:
+   *                 type: string
+   *               spellLevel:
+   *                 type: integer
+   *               saveDC:
+   *                 type: integer
+   *               saveAbility:
+   *                 type: string
+   *           example:
+   *             casterId: "char-123"
+   *             targetIds: ["npc-456", "npc-789"]
+   *             spellName: "Fireball"
+   *             saveDC: 15
+   *             saveAbility: "dex"
+   *     responses:
+   *       200:
+   *         description: Spell attack resolved successfully
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/:encounterId/spell-attack', async (req: Request, res: Response) => {
     const { encounterId } = req.params;

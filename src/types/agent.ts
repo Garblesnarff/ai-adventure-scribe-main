@@ -1,5 +1,5 @@
-import { Campaign } from './campaign';
-import { MemoryContext } from './memory';
+import type { Campaign } from './campaign';
+import type { MemoryContext } from './memory';
 
 /**
  * Interface for agent execution results
@@ -26,7 +26,7 @@ export interface AgentTask {
 export enum AgentType {
   DungeonMaster = 'dungeon_master',
   Narrator = 'narrator',
-  RulesInterpreter = 'rules_interpreter'
+  RulesInterpreter = 'rules_interpreter',
 }
 
 /**
@@ -58,7 +58,13 @@ export interface AgentContext {
  * Interface for rule conditions
  */
 export interface RuleCondition {
-  type: 'ability_score' | 'class_requirement' | 'race_requirement' | 'level_requirement' | 'equipment_requirement' | 'resource_requirement';
+  type:
+    | 'ability_score'
+    | 'class_requirement'
+    | 'race_requirement'
+    | 'level_requirement'
+    | 'equipment_requirement'
+    | 'resource_requirement';
   data: {
     ability?: string;
     minimum?: number;

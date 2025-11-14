@@ -1,23 +1,22 @@
 /**
  * Conversation State Manager
- * 
+ *
  * This file defines the ConversationStateManager class, responsible for managing
  * the state of a conversation within the game. This includes tracking the
  * current NPC involved in a dialogue, the history of the conversation, available
  * player choices, and the last response from the AI/NPC.
- * 
+ *
  * Main Class:
  * - ConversationStateManager: Manages and provides access to conversation state.
- * 
+ *
  * Key Dependencies:
  * - DialogueHistory type (from `@/types/dialogue`).
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
 // Project Types
 import { DialogueHistory } from '@/types/dialogue';
-
 
 export interface ConversationState {
   currentNPC: string | null;
@@ -36,28 +35,28 @@ export class ConversationStateManager {
           currentNPC: null,
           dialogueHistory: [],
           playerChoices: [],
-          lastResponse: null
+          lastResponse: null,
         };
   }
 
   public hydrate(state: ConversationState): void {
     this.state = {
       ...state,
-      dialogueHistory: [...state.dialogueHistory]
+      dialogueHistory: [...state.dialogueHistory],
     };
   }
 
   public updateState(playerMessage: string, response: any): void {
     // Update dialogue history
-    this.state.dialogueHistory.push({ 
-      speaker: 'player', 
-      text: playerMessage 
+    this.state.dialogueHistory.push({
+      speaker: 'player',
+      text: playerMessage,
     });
 
     if (response.characters?.dialogue) {
       this.state.dialogueHistory.push({
         speaker: response.characters.activeNPCs[0] || 'NPC',
-        text: response.characters.dialogue
+        text: response.characters.dialogue,
       });
     }
 
@@ -74,7 +73,7 @@ export class ConversationStateManager {
   public getState(): ConversationState {
     return {
       ...this.state,
-      dialogueHistory: [...this.state.dialogueHistory]
+      dialogueHistory: [...this.state.dialogueHistory],
     };
   }
 

@@ -7,9 +7,11 @@
  * @author AI Dungeon Master Team
  */
 
-import { Spell, Character } from '@/types/character';
-import { allSpells } from '@/data/spellOptions';
 import { REVERSE_SPELL_ID_MAPPING } from './spell-id-mapping';
+
+import type { Spell, Character } from '@/types/character';
+
+import { allSpells } from '@/data/spellOptions';
 import logger from '@/lib/logger';
 
 /**
@@ -31,13 +33,13 @@ export function getSpellById(spellId: string, createFallback: boolean = true): S
 
   try {
     // First try direct lookup by kebab-case ID
-    const spell = allSpells.find(spell => spell?.id === spellId);
+    const spell = allSpells.find((spell) => spell?.id === spellId);
     if (spell) return spell;
 
     // If not found, check if it's a UUID that needs mapping to kebab-case
     const kebabId = REVERSE_SPELL_ID_MAPPING[spellId];
     if (kebabId) {
-      const mappedSpell = allSpells.find(spell => spell?.id === kebabId);
+      const mappedSpell = allSpells.find((spell) => spell?.id === kebabId);
       if (mappedSpell) return mappedSpell;
     }
 
@@ -46,7 +48,7 @@ export function getSpellById(spellId: string, createFallback: boolean = true): S
       directLookup: !!spell,
       uuidMapping: kebabId,
       availableSpellCount: allSpells?.length || 0,
-      createFallback
+      createFallback,
     });
 
     // Return a fallback spell if requested
@@ -81,23 +83,25 @@ export function getSpellsByIds(spellIds: string[], createFallback: boolean = tru
 
   try {
     const spells = spellIds
-      .filter(id => id && typeof id === 'string') // Filter out invalid IDs
-      .map(id => getSpellById(id, createFallback))
+      .filter((id) => id && typeof id === 'string') // Filter out invalid IDs
+      .map((id) => getSpellById(id, createFallback))
       .filter((spell): spell is Spell => spell !== null);
 
     const foundCount = spells.length;
     const requestedCount = spellIds.length;
-    const validIdCount = spellIds.filter(id => id && typeof id === 'string').length;
+    const validIdCount = spellIds.filter((id) => id && typeof id === 'string').length;
 
     if (foundCount < validIdCount) {
-      const foundIds = spells.map(s => s.id);
-      const missingIds = spellIds.filter(id => id && typeof id === 'string' && !foundIds.includes(id));
+      const foundIds = spells.map((s) => s.id);
+      const missingIds = spellIds.filter(
+        (id) => id && typeof id === 'string' && !foundIds.includes(id),
+      );
 
       logger.info(`[SpellLookup] Found ${foundCount}/${validIdCount} spells`, {
         requested: spellIds,
         found: foundIds,
         missing: missingIds,
-        createFallback
+        createFallback,
       });
     } else {
       logger.info(`[SpellLookup] Successfully found all ${foundCount} spells`);
@@ -122,7 +126,10 @@ export function getCharacterSpells(character: any): {
   ritualSpells: CharacterSpellDisplay[];
   allSpells: CharacterSpellDisplay[];
 } {
-  type CharacterWithSpells = Pick<Character, 'name' | 'cantrips' | 'knownSpells' | 'preparedSpells' | 'ritualSpells'>;
+  type CharacterWithSpells = Pick<
+    Character,
+    'name' | 'cantrips' | 'knownSpells' | 'preparedSpells' | 'ritualSpells'
+  >;
   const c = character as CharacterWithSpells | null;
   // Validate character input
   if (!c || typeof c !== 'object') {
@@ -132,7 +139,7 @@ export function getCharacterSpells(character: any): {
       knownSpells: [],
       preparedSpells: [],
       ritualSpells: [],
-      allSpells: []
+      allSpells: [],
     };
   }
 
@@ -142,35 +149,35 @@ export function getCharacterSpells(character: any): {
       knownSpells: c?.knownSpells?.length || 0,
       preparedSpells: c?.preparedSpells?.length || 0,
       ritualSpells: c?.ritualSpells?.length || 0,
-      characterName: c?.name || 'Unknown'
+      characterName: c?.name || 'Unknown',
     });
 
     // Get spells from each category with error handling
-    const cantrips = getSpellsByIds(c?.cantrips || [], true).map(spell => ({
+    const cantrips = getSpellsByIds(c?.cantrips || [], true).map((spell) => ({
       ...spell,
-      source_feature: 'Class Cantrips'
+      source_feature: 'Class Cantrips',
     }));
 
-    const knownSpells = getSpellsByIds(c?.knownSpells || [], true).map(spell => ({
+    const knownSpells = getSpellsByIds(c?.knownSpells || [], true).map((spell) => ({
       ...spell,
-      source_feature: 'Known Spells'
+      source_feature: 'Known Spells',
     }));
 
-    const preparedSpells = getSpellsByIds(c?.preparedSpells || [], true).map(spell => ({
+    const preparedSpells = getSpellsByIds(c?.preparedSpells || [], true).map((spell) => ({
       ...spell,
       is_prepared: true,
-      source_feature: 'Prepared Spells'
+      source_feature: 'Prepared Spells',
     }));
 
-    const ritualSpells = getSpellsByIds(c?.ritualSpells || [], true).map(spell => ({
+    const ritualSpells = getSpellsByIds(c?.ritualSpells || [], true).map((spell) => ({
       ...spell,
-      source_feature: 'Ritual Spells'
+      source_feature: 'Ritual Spells',
     }));
 
     // Combine all spells, avoiding duplicates
     const allSpellsMap = new Map<string, CharacterSpellDisplay>();
 
-    [...cantrips, ...knownSpells, ...preparedSpells, ...ritualSpells].forEach(spell => {
+    [...cantrips, ...knownSpells, ...preparedSpells, ...ritualSpells].forEach((spell) => {
       if (!spell?.id) {
         logger.warn('[SpellLookup] Skipping spell without valid ID:', spell);
         return;
@@ -186,7 +193,7 @@ export function getCharacterSpells(character: any): {
         allSpellsMap.set(spell.id, {
           ...existingSpell,
           is_prepared: existingSpell.is_prepared || spell.is_prepared,
-          source_feature: sources.join(', ')
+          source_feature: sources.join(', '),
         });
       } else {
         allSpellsMap.set(spell.id, spell);
@@ -201,7 +208,7 @@ export function getCharacterSpells(character: any): {
       preparedSpellsFound: preparedSpells.length,
       ritualSpellsFound: ritualSpells.length,
       totalUniqueSpells: allSpells.length,
-      spellNames: allSpells.map(s => s?.name || 'Unknown').slice(0, 10) // Limit log size
+      spellNames: allSpells.map((s) => s?.name || 'Unknown').slice(0, 10), // Limit log size
     });
 
     return {
@@ -209,7 +216,7 @@ export function getCharacterSpells(character: any): {
       knownSpells,
       preparedSpells,
       ritualSpells,
-      allSpells
+      allSpells,
     };
   } catch (error) {
     logger.error('[SpellLookup] Error processing character spells:', error);
@@ -220,7 +227,7 @@ export function getCharacterSpells(character: any): {
       knownSpells: [],
       preparedSpells: [],
       ritualSpells: [],
-      allSpells: []
+      allSpells: [],
     };
   }
 }
@@ -233,7 +240,7 @@ export function getCharacterSpells(character: any): {
 export function createFallbackSpell(spellId: string): Spell {
   return {
     id: spellId,
-    name: spellId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    name: spellId.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
     level: 0,
     school: 'Unknown',
     castingTime: 'Unknown',
@@ -245,7 +252,7 @@ export function createFallbackSpell(spellId: string): Spell {
     duration: 'Unknown',
     description: 'Spell data not available. This spell may need to be added to the spell database.',
     concentration: false,
-    ritual: false
+    ritual: false,
   };
 }
 
@@ -266,7 +273,7 @@ export function getAllSpells(): Spell[] {
 export function searchSpells(query: string, level?: number): Spell[] {
   const searchTerm = query.toLowerCase();
 
-  return allSpells.filter(spell => {
+  return allSpells.filter((spell) => {
     const matchesQuery =
       spell.name.toLowerCase().includes(searchTerm) ||
       spell.school.toLowerCase().includes(searchTerm) ||

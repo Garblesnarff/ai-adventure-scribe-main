@@ -6,19 +6,59 @@
  */
 
 // Core D&D types for type safety
-export type AbilityScore = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
-export type DamageType = 'acid' | 'bludgeoning' | 'cold' | 'fire' | 'force' | 'lightning' | 'necrotic' | 'piercing' | 'poison' | 'psychic' | 'radiant' | 'slashing' | 'thunder';
-export type SkillName = 'Acrobatics' | 'Animal Handling' | 'Arcana' | 'Athletics' | 'Deception' | 'History' | 'Insight' | 'Intimidation' | 'Investigation' | 'Medicine' | 'Nature' | 'Perception' | 'Performance' | 'Persuasion' | 'Religion' | 'Sleight of Hand' | 'Stealth' | 'Survival';
+export type AbilityScore =
+  | 'strength'
+  | 'dexterity'
+  | 'constitution'
+  | 'intelligence'
+  | 'wisdom'
+  | 'charisma';
+export type DamageType =
+  | 'acid'
+  | 'bludgeoning'
+  | 'cold'
+  | 'fire'
+  | 'force'
+  | 'lightning'
+  | 'necrotic'
+  | 'piercing'
+  | 'poison'
+  | 'psychic'
+  | 'radiant'
+  | 'slashing'
+  | 'thunder';
+export type SkillName =
+  | 'Acrobatics'
+  | 'Animal Handling'
+  | 'Arcana'
+  | 'Athletics'
+  | 'Deception'
+  | 'History'
+  | 'Insight'
+  | 'Intimidation'
+  | 'Investigation'
+  | 'Medicine'
+  | 'Nature'
+  | 'Perception'
+  | 'Performance'
+  | 'Persuasion'
+  | 'Religion'
+  | 'Sleight of Hand'
+  | 'Stealth'
+  | 'Survival';
 
 // Discriminated union for option values
 export type OptionType = 'single' | 'multiple' | 'number' | 'text';
 
-type OptionValue<T extends OptionType> =
-  T extends 'single' ? string :
-  T extends 'multiple' ? string[] :
-  T extends 'number' ? number :
-  T extends 'text' ? string :
-  never;
+type OptionValue<T extends OptionType> = T extends 'single'
+  ? string
+  : T extends 'multiple'
+    ? string[]
+    : T extends 'number'
+      ? number
+      : T extends 'text'
+        ? string
+        : never;
 
 export interface EnhancementOption<T extends OptionType = OptionType> {
   id: string;
@@ -136,12 +176,12 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
       'Never removes a specific piece of jewelry',
       'Draws sketches of everything they see',
       'Counts everything they encounter',
-      'Always eats food in a specific order'
+      'Always eats food in a specific order',
     ],
     mechanicalEffects: {
-      traits: ['Enhanced roleplay opportunities', 'Inspiration trigger potential']
+      traits: ['Enhanced roleplay opportunities', 'Inspiration trigger potential'],
     },
-    max: 3
+    max: 3,
   },
   {
     id: 'ai-generated-quirk',
@@ -152,12 +192,13 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
     icon: '🤖',
     tags: ['personality', 'ai-generated', 'unique'],
     aiGenerated: true,
-    aiGenerationPrompt: 'Generate a single, interesting but not debilitating personality quirk for a {characterClass} {characterRace}. The quirk should be memorable and provide roleplay opportunities without hindering gameplay.',
+    aiGenerationPrompt:
+      'Generate a single, interesting but not debilitating personality quirk for a {characterClass} {characterRace}. The quirk should be memorable and provide roleplay opportunities without hindering gameplay.',
     aiContext: {
       useCharacterRace: true,
       useCharacterClass: true,
-      useCharacterBackground: true
-    }
+      useCharacterBackground: true,
+    },
   },
   {
     id: 'secrets',
@@ -177,8 +218,8 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
       'Is cursed in some way',
       'Is actually from another plane/world',
       'Has a secret twin or doppelganger',
-      'Was raised by a different species'
-    ]
+      'Was raised by a different species',
+    ],
   },
   {
     id: 'combat-specialties',
@@ -196,13 +237,13 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
       'Protective bodyguard style',
       'Battlefield controller',
       'Stealth assassin methods',
-      'Berserker rage fighter'
+      'Berserker rage fighter',
     ],
     mechanicalEffects: {
       skillBonus: ['Intimidation', 'Athletics'],
       traits: ['Combat preference noted'],
-      initiative: 1
-    }
+      initiative: 1,
+    },
   },
   {
     id: 'social-connections',
@@ -220,12 +261,12 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
       'Friends with local tavern keepers',
       'Has ties to noble families',
       'Knows underground information brokers',
-      'Connected to religious organizations'
+      'Connected to religious organizations',
     ],
     mechanicalEffects: {
-      skillBonus: ['Persuasion', 'Investigation']
+      skillBonus: ['Persuasion', 'Investigation'],
     },
-    max: 2
+    max: 2,
   },
   {
     id: 'personal-goals',
@@ -245,8 +286,8 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
       'Trying to break a family curse',
       'Pursuing forbidden knowledge',
       'Building a legacy',
-      'Protecting the innocent'
-    ]
+      'Protecting the innocent',
+    ],
   },
   {
     id: 'special-training',
@@ -264,14 +305,14 @@ export const CHARACTER_ENHANCEMENTS: EnhancementOption[] = [
       'Social etiquette',
       'Criminal techniques',
       'Artistic expression',
-      'Religious studies'
+      'Religious studies',
     ],
     mechanicalEffects: {
       expertise: ['Athletics'], // Will be context-dependent
-      skillBonus: ['Acrobatics']
+      skillBonus: ['Acrobatics'],
     },
-    requiresLevel: 3
-  }
+    requiresLevel: 3,
+  },
 ];
 
 // Predefined campaign enhancement options
@@ -294,12 +335,12 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
       'The gods have gone silent',
       'A powerful artifact has been shattered',
       'Dreams are becoming reality',
-      'The dead refuse to stay buried'
+      'The dead refuse to stay buried',
     ],
     campaignEffects: {
-      hooks: ['Plot thread available', 'Story complication ready']
+      hooks: ['Plot thread available', 'Story complication ready'],
     },
-    max: 3
+    max: 3,
   },
   {
     id: 'world-features',
@@ -319,13 +360,13 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
       'The dead sometimes return as helpful spirits',
       'Dreams can become physical reality',
       'Music has magical properties',
-      'Colors affect emotions and magic'
+      'Colors affect emotions and magic',
     ],
     campaignEffects: {
       atmosphere: ['Unique world element', 'Special rules consideration'],
-      worldLaws: ['Modified physics', 'Altered magic rules']
+      worldLaws: ['Modified physics', 'Altered magic rules'],
     },
-    max: 2
+    max: 2,
   },
   {
     id: 'social-dynamics',
@@ -343,16 +384,16 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
       'Class struggle between nobles and commoners',
       'Racial tensions due to historical conflicts',
       'Competing schools of magical thought',
-      'Ideological split over technology adoption'
+      'Ideological split over technology adoption',
     ],
     campaignEffects: {
       themes: ['Social conflict', 'Political complexity'],
       factionReputation: [
         { factionId: 'mages_guild', change: -1 },
-        { factionId: 'common_folk', change: 1 }
-      ]
+        { factionId: 'common_folk', change: 1 },
+      ],
     },
-    max: 2
+    max: 2,
   },
   {
     id: 'central-mystery',
@@ -372,8 +413,8 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
       'Why do nightmares become real in this town?',
       'What lies beneath the sealed chamber?',
       'Why do the stars seem to be moving?',
-      'What happened to make the river run backwards?'
-    ]
+      'What happened to make the river run backwards?',
+    ],
   },
   {
     id: 'ai-generated-mystery',
@@ -384,11 +425,12 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
     icon: '🤖',
     tags: ['mystery', 'ai-generated', 'unique'],
     aiGenerated: true,
-    aiGenerationPrompt: 'Generate an intriguing central mystery for a {campaignTheme} campaign. The mystery should be solvable through investigation and provide multiple avenues for exploration.',
+    aiGenerationPrompt:
+      'Generate an intriguing central mystery for a {campaignTheme} campaign. The mystery should be solvable through investigation and provide multiple avenues for exploration.',
     aiContext: {
       useCampaignTheme: true,
-      additionalContext: 'Consider the campaign setting and tone'
-    }
+      additionalContext: 'Consider the campaign setting and tone',
+    },
   },
   {
     id: 'tone-modifiers',
@@ -408,12 +450,12 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
       'Character development takes priority',
       'Epic scale conflicts drive the story',
       'Political intrigue adds complexity',
-      'Environmental storytelling is emphasized'
+      'Environmental storytelling is emphasized',
     ],
     campaignEffects: {
-      atmosphere: ['Tone guidance', 'Narrative emphasis']
+      atmosphere: ['Tone guidance', 'Narrative emphasis'],
     },
-    max: 4
+    max: 4,
   },
   {
     id: 'economic-factors',
@@ -431,37 +473,39 @@ export const CAMPAIGN_ENHANCEMENTS: EnhancementOption[] = [
       'Economic inequality drives conflict',
       'Trade routes are dangerous but profitable',
       'Currency varies by region',
-      'Resources are controlled by guilds'
+      'Resources are controlled by guilds',
     ],
     campaignEffects: {
       economicFactors: ['Trade considerations', 'Wealth distribution'],
-      startingGoldModifier: 0.75 // Less starting gold due to scarcity
+      startingGoldModifier: 0.75, // Less starting gold due to scarcity
     },
-    max: 2
-  }
+    max: 2,
+  },
 ];
 
 // Helper functions for option validation
 export function validateOptionSelection<T extends OptionType>(
   option: EnhancementOption<T>,
-  selection: OptionSelection<T>
+  selection: OptionSelection<T>,
 ): boolean {
   switch (option.type) {
     case 'multiple': {
       const values = selection.value as string[];
-      return Array.isArray(values) &&
-             values.length <= (option.max || Infinity) &&
-             values.every(v => option.options?.includes(v));
+      return (
+        Array.isArray(values) &&
+        values.length <= (option.max || Infinity) &&
+        values.every((v) => option.options?.includes(v))
+      );
     }
     case 'single': {
-      return typeof selection.value === 'string' &&
-             (option.options?.includes(selection.value as string) ?? true);
+      return (
+        typeof selection.value === 'string' &&
+        (option.options?.includes(selection.value as string) ?? true)
+      );
     }
     case 'number': {
       const num = selection.value as number;
-      return typeof num === 'number' &&
-             num >= (option.min || 0) &&
-             num <= (option.max || Infinity);
+      return typeof num === 'number' && num >= (option.min || 0) && num <= (option.max || Infinity);
     }
     case 'text':
       return typeof selection.value === 'string';
@@ -474,7 +518,7 @@ export function checkOptionAvailability(
   option: EnhancementOption,
   character?: any,
   campaign?: any,
-  selectedOptions: string[] = []
+  selectedOptions: string[] = [],
 ): boolean {
   // Check level requirements
   if (option.requiresLevel && character?.level < option.requiresLevel) {
@@ -502,12 +546,12 @@ export function checkOptionAvailability(
   }
 
   // Check exclusions
-  if (option.excludesWith?.some(id => selectedOptions.includes(id))) {
+  if (option.excludesWith?.some((id) => selectedOptions.includes(id))) {
     return false;
   }
 
   // Check mutual exclusions
-  if (option.mutuallyExclusiveWith?.some(id => selectedOptions.includes(id))) {
+  if (option.mutuallyExclusiveWith?.some((id) => selectedOptions.includes(id))) {
     return false;
   }
 

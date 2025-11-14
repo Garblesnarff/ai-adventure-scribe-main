@@ -13,10 +13,11 @@
  * Messaging Rule: Every word must trigger emotion (urgency, FOMO, or identity)
  */
 
+import { Check, X, Zap, Crown, Lock } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
-import { Check, X, Zap, Crown, Lock } from 'lucide-react';
 
 export const PricingSection: React.FC = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export const PricingSection: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'pricing_tier_selected', {
         event_category: 'conversion',
-        event_label: tier
+        event_label: tier,
       });
     }
   };
@@ -206,9 +207,7 @@ export const PricingSection: React.FC = () => {
             <span className="text-purple-400">Cancel anytime</span> "{' '}
             <span className="text-purple-400">14-day money-back guarantee</span>
           </p>
-          <p className="text-sm text-gray-500">
-            = Secure payment powered by Stripe
-          </p>
+          <p className="text-sm text-gray-500">= Secure payment powered by Stripe</p>
         </div>
       </div>
     </section>

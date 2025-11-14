@@ -1,9 +1,11 @@
-import type { ChatMessage, GameContext } from '@/services/ai-service';
-import type { SessionStatePayload } from '@/types/session-state';
+import { z } from 'zod';
+
 import { CrewAIClient, type CrewAIResponse } from './crewai-client';
 import { StateAdapter } from './state-adapter';
-import { z } from 'zod';
 import { logger } from '../../lib/logger';
+
+import type { ChatMessage, GameContext } from '@/services/ai-service';
+import type { SessionStatePayload } from '@/types/session-state';
 
 export interface OrchestratorParams {
   message: string;
@@ -53,7 +55,10 @@ export class AgentOrchestrator {
 
     const parsed = responseSchema.safeParse(raw);
     if (!parsed.success) {
-      logger.warn('CrewAI response validation failed; using safe defaults:', parsed.error?.errors?.[0]);
+      logger.warn(
+        'CrewAI response validation failed; using safe defaults:',
+        parsed.error?.errors?.[0],
+      );
       return { text: String((raw as any)?.text || ''), narration_segments: [], roll_requests: [] };
     }
     return parsed.data as CrewAIResponse;

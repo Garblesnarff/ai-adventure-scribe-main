@@ -1,6 +1,9 @@
 const primary = (import.meta.env.VITE_GEMINI_TEXT_MODEL || '').trim();
 const fallback = (import.meta.env.VITE_GEMINI_TEXT_FALLBACK || '').trim();
-const variantRaw = (import.meta.env.VITE_GEMINI_MODEL_VARIANTS || '').split(',').map(v => v.trim()).filter(Boolean);
+const variantRaw = (import.meta.env.VITE_GEMINI_MODEL_VARIANTS || '')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
 
 const DEFAULT_PRIMARY = 'gemini-2.5-flash-lite';
 const DEFAULT_FALLBACK = 'gemini-2.0-flash-lite';

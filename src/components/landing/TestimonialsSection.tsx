@@ -13,35 +13,38 @@
  * - "My NPC remembered I saved them 3 sessions ago and..." 
  * - "I stayed up until 4 AM because..." 
  *
- * Format: Specific moment ’ Emotional reaction ’ Character name
+ * Format: Specific moment ï¿½ Emotional reaction ï¿½ Character name
  */
 
-import React from 'react';
 import { Star, Quote } from 'lucide-react';
+import React from 'react';
 
 export const TestimonialsSection: React.FC = () => {
   const testimonials = [
     {
-      quote: "I told a lie to an NPC in session 2 to get past a guard. Session 8, that same NPC saw through my disguise because the AI remembered I was a liar. I literally had chills.",
-      author: "Marcus T.",
-      character: "Playing a Chaotic Neutral Rogue",
-      highlight: "the AI remembered I was a liar",
-      color: "purple"
+      quote:
+        'I told a lie to an NPC in session 2 to get past a guard. Session 8, that same NPC saw through my disguise because the AI remembered I was a liar. I literally had chills.',
+      author: 'Marcus T.',
+      character: 'Playing a Chaotic Neutral Rogue',
+      highlight: 'the AI remembered I was a liar',
+      color: 'purple',
     },
     {
-      quote: "My character died protecting a village. Three sessions later, I rolled a new character and CHILDREN IN THAT VILLAGE had statues of my old hero. I'm not crying, you're crying.",
-      author: "Sarah K.",
-      character: "Playing a Paladin (RIP) ’ New Bard",
-      highlight: "CHILDREN IN THAT VILLAGE had statues",
-      color: "amber"
+      quote:
+        "My character died protecting a village. Three sessions later, I rolled a new character and CHILDREN IN THAT VILLAGE had statues of my old hero. I'm not crying, you're crying.",
+      author: 'Sarah K.',
+      character: 'Playing a Paladin (RIP) ï¿½ New Bard',
+      highlight: 'CHILDREN IN THAT VILLAGE had statues',
+      color: 'amber',
     },
     {
-      quote: "I stayed up until 4 AM because I HAD to know if the merchant I saved would remember me. They did. They gave me a family heirloom. My wife thinks I'm insane.",
-      author: "James R.",
-      character: "Playing a Lawful Good Fighter",
-      highlight: "stayed up until 4 AM",
-      color: "purple"
-    }
+      quote:
+        "I stayed up until 4 AM because I HAD to know if the merchant I saved would remember me. They did. They gave me a family heirloom. My wife thinks I'm insane.",
+      author: 'James R.',
+      character: 'Playing a Lawful Good Fighter',
+      highlight: 'stayed up until 4 AM',
+      color: 'purple',
+    },
   ];
 
   return (
@@ -73,11 +76,13 @@ export const TestimonialsSection: React.FC = () => {
             >
               {/* Quote Icon */}
               <div className="absolute -top-4 left-8">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  testimonial.color === 'amber'
-                    ? 'bg-gradient-to-br from-amber-500 to-amber-600'
-                    : 'bg-gradient-to-br from-purple-500 to-purple-600'
-                } shadow-lg`}>
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    testimonial.color === 'amber'
+                      ? 'bg-gradient-to-br from-amber-500 to-amber-600'
+                      : 'bg-gradient-to-br from-purple-500 to-purple-600'
+                  } shadow-lg`}
+                >
                   <Quote className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -85,27 +90,34 @@ export const TestimonialsSection: React.FC = () => {
               {/* Rating */}
               <div className="flex gap-1 mb-4 mt-4">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${
-                    testimonial.color === 'amber' ? 'text-amber-400 fill-amber-400' : 'text-purple-400 fill-purple-400'
-                  }`} />
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${
+                      testimonial.color === 'amber'
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-purple-400 fill-purple-400'
+                    }`}
+                  />
                 ))}
               </div>
 
               {/* Quote */}
-              <p className="text-gray-300 leading-relaxed mb-6">
-                "{testimonial.quote}"
-              </p>
+              <p className="text-gray-300 leading-relaxed mb-6">"{testimonial.quote}"</p>
 
               {/* Highlight - The "holy shit" moment */}
-              <div className={`p-3 rounded-lg mb-4 ${
-                testimonial.color === 'amber'
-                  ? 'bg-amber-500/10 border border-amber-500/20'
-                  : 'bg-purple-500/10 border border-purple-500/20'
-              }`}>
-                <p className={`text-sm font-semibold ${
-                  testimonial.color === 'amber' ? 'text-amber-400' : 'text-purple-400'
-                }`}>
-                  =¡ The moment: <span className="text-white">"{testimonial.highlight}"</span>
+              <div
+                className={`p-3 rounded-lg mb-4 ${
+                  testimonial.color === 'amber'
+                    ? 'bg-amber-500/10 border border-amber-500/20'
+                    : 'bg-purple-500/10 border border-purple-500/20'
+                }`}
+              >
+                <p
+                  className={`text-sm font-semibold ${
+                    testimonial.color === 'amber' ? 'text-amber-400' : 'text-purple-400'
+                  }`}
+                >
+                  =ï¿½ The moment: <span className="text-white">"{testimonial.highlight}"</span>
                 </p>
               </div>
 

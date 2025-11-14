@@ -1,10 +1,11 @@
+import { ArrowRight, Play, Trash2, User, Sword, Shield, Star, AlertTriangle } from 'lucide-react';
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Play, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+
+import CampaignSelectionModal from './campaign-selection-modal';
+
+import type { Character } from '@/types/character';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,13 +18,14 @@ import {
   AlertDialogPortal,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { User, Sword, Shield, Star, AlertTriangle } from 'lucide-react';
-import CampaignSelectionModal from './campaign-selection-modal';
-import { Character } from '@/types/character';
-import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import logger from '@/lib/logger';
 import { Z_INDEX } from '@/constants/z-index';
+import { useCharacterImageHotLoading } from '@/hooks/use-image-hot-loading';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 /**
  * Props interface for CharacterCard component
@@ -79,7 +81,7 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
     hasImage,
     error: imageError,
     connectionStatus,
-    retryCount
+    retryCount,
   } = useCharacterImageHotLoading(character.id);
 
   /**
@@ -96,20 +98,17 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
    */
   const handleDelete = useCallback(async () => {
     try {
-      const { error } = await supabase
-        .from('characters')
-        .delete()
-        .eq('id', character.id);
+      const { error } = await supabase.from('characters').delete().eq('id', character.id);
 
       if (error) throw error;
 
       toast({
-        title: "Character Deleted",
-        description: "The character has been successfully removed.",
+        title: 'Character Deleted',
+        description: 'The character has been successfully removed.',
       });
 
       setShowDeleteDialog(false);
-      
+
       // Call parent callback to refresh character list
       if (onDelete) {
         onDelete();
@@ -117,23 +116,32 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
     } catch (error) {
       logger.error('Error deleting character:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete character. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete character. Please try again.',
+        variant: 'destructive',
       });
       setShowDeleteDialog(false);
     }
   }, [character.id, toast, onDelete]);
 
   // Generate avatar background color based on name
-  const getAvatarColor = useMemo(() => (name: string) => {
-    const colors = ['bg-infinite-purple', 'bg-infinite-gold', 'bg-infinite-teal', 'bg-destructive', 'bg-secondary'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  }, []);
+  const getAvatarColor = useMemo(
+    () => (name: string) => {
+      const colors = [
+        'bg-infinite-purple',
+        'bg-infinite-gold',
+        'bg-infinite-teal',
+        'bg-destructive',
+        'bg-secondary',
+      ];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
+    },
+    [],
+  );
 
   // Get first initial
   const getInitial = useMemo(() => (name: string) => name.charAt(0).toUpperCase(), []);
@@ -182,10 +190,12 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
       onMouseLeave={handleMouseLeave}
     >
       {/* Glow effect on hover - uses OVERLAY_EFFECT for visual effects */}
-      <div className={`absolute inset-0 z-[${Z_INDEX.OVERLAY_EFFECT}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
+      <div
+        className={`absolute inset-0 z-[${Z_INDEX.OVERLAY_EFFECT}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+      >
         <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
       </div>
-      
+
       {/* Hero / background area */}
       <div
         className="character-hero group flex items-end p-4 cursor-pointer h-full w-full bg-cover bg-center bg-no-repeat filter sepia-[0.1] relative overflow-hidden transition-all duration-700 ease-out group-hover:scale-[1.02] group-hover:brightness-110 rounded-sm"
@@ -193,11 +203,15 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
           // Character access is now properly restricted by RLS, so navigation should work
           navigate(`/app/character/${character.id}`);
         }}
-        style={resolvedBackgroundImage ? {
-          backgroundImage: `url(${resolvedBackgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center'
-        } : undefined}
+        style={
+          resolvedBackgroundImage
+            ? {
+                backgroundImage: `url(${resolvedBackgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center center',
+              }
+            : undefined
+        }
       >
         {/* Loading overlay for image generation */}
         {imageLoading && !hasImage && (
@@ -222,14 +236,18 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
         {imageError && !imageLoading && !hasImage && (
           <div className="absolute inset-0 bg-gradient-to-br from-destructive/20 via-infinite-dark/40 to-destructive/20 backdrop-blur-sm flex items-center justify-center">
             <div className="text-center">
-              <div className="text-xs text-destructive font-medium mb-1">Image generation failed</div>
+              <div className="text-xs text-destructive font-medium mb-1">
+                Image generation failed
+              </div>
               <div className="text-xs text-muted-foreground">Using default background</div>
             </div>
           </div>
         )}
         {/* Overlay and popup for character details */}
         <div className="character-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-        <div className={`hover-popup ${isHovered ? `opacity-100 scale-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}>
+        <div
+          className={`hover-popup ${isHovered ? `opacity-100 scale-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 scale-95 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-out`}
+        >
           <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border max-w-xs">
             {/* Avatar Display */}
             {character.avatar_url && (
@@ -242,7 +260,9 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
               </div>
             )}
 
-            <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : character.name}</div>
+            <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">
+              {imageLoading ? <Skeleton className="h-6 w-48" /> : character.name}
+            </div>
 
             {imageLoading ? (
               <Skeleton className="h-4 w-full" />
@@ -255,8 +275,9 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                       <Shield className="w-3 h-3 text-infinite-purple" />
                       {character.subrace
                         ? `${typeof character.subrace === 'string' ? character.subrace : character.subrace.name} (${typeof character.race === 'string' ? character.race : character.race.name})`
-                        : (typeof character.race === 'string' ? character.race : character.race.name)
-                      }
+                        : typeof character.race === 'string'
+                          ? character.race
+                          : character.race.name}
                     </span>
                   )}
                   {character.class && (
@@ -279,27 +300,45 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">STR</span>
-                      <span>{character.character_stats?.strength || 10} ({formatModifier(character.character_stats?.strength || 10)})</span>
+                      <span>
+                        {character.character_stats?.strength || 10} (
+                        {formatModifier(character.character_stats?.strength || 10)})
+                      </span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">INT</span>
-                      <span>{character.character_stats?.intelligence || 10} ({formatModifier(character.character_stats?.intelligence || 10)})</span>
+                      <span>
+                        {character.character_stats?.intelligence || 10} (
+                        {formatModifier(character.character_stats?.intelligence || 10)})
+                      </span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">DEX</span>
-                      <span>{character.character_stats?.dexterity || 10} ({formatModifier(character.character_stats?.dexterity || 10)})</span>
+                      <span>
+                        {character.character_stats?.dexterity || 10} (
+                        {formatModifier(character.character_stats?.dexterity || 10)})
+                      </span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">WIS</span>
-                      <span>{character.character_stats?.wisdom || 10} ({formatModifier(character.character_stats?.wisdom || 10)})</span>
+                      <span>
+                        {character.character_stats?.wisdom || 10} (
+                        {formatModifier(character.character_stats?.wisdom || 10)})
+                      </span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">CON</span>
-                      <span>{character.character_stats?.constitution || 10} ({formatModifier(character.character_stats?.constitution || 10)})</span>
+                      <span>
+                        {character.character_stats?.constitution || 10} (
+                        {formatModifier(character.character_stats?.constitution || 10)})
+                      </span>
                     </div>
                     <div className="flex justify-between items-center bg-secondary/20 px-2 py-1 rounded">
                       <span className="font-medium">CHA</span>
-                      <span>{character.character_stats?.charisma || 10} ({formatModifier(character.character_stats?.charisma || 10)})</span>
+                      <span>
+                        {character.character_stats?.charisma || 10} (
+                        {formatModifier(character.character_stats?.charisma || 10)})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -308,45 +347,64 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
                 <div className="flex items-center gap-4 text-xs text-foreground mb-4 bg-accent/10 px-3 py-2 rounded">
                   {character.character_stats?.max_hit_points && (
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">HP:</span> {character.character_stats.current_hit_points || character.character_stats.max_hit_points}/{character.character_stats.max_hit_points}
+                      <span className="font-medium">HP:</span>{' '}
+                      {character.character_stats.current_hit_points ||
+                        character.character_stats.max_hit_points}
+                      /{character.character_stats.max_hit_points}
                     </span>
                   )}
                   {character.character_stats?.armor_class && (
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">AC:</span> {character.character_stats.armor_class}
+                      <span className="font-medium">AC:</span>{' '}
+                      {character.character_stats.armor_class}
                     </span>
                   )}
                   <span className="flex items-center gap-1">
-                    <span className="font-medium">Prof:</span> +{getProficiencyBonus(character.level)}
+                    <span className="font-medium">Prof:</span> +
+                    {getProficiencyBonus(character.level)}
                   </span>
                 </div>
               </>
             )}
 
             <div className="flex items-center gap-2 justify-end">
-              <Button size="sm" className="bg-infinite-gold text-infinite-dark flex items-center gap-2 hover:bg-infinite-purple" onClick={(e) => { e.stopPropagation(); setShowCampaignModal(true); }}>
+              <Button
+                size="sm"
+                className="bg-infinite-gold text-infinite-dark flex items-center gap-2 hover:bg-infinite-purple"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCampaignModal(true);
+                }}
+              >
                 <Play className="w-4 h-4" />
                 Play
               </Button>
-              <Button size="sm" variant="outline" className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark" onClick={(e) => {
-                e.stopPropagation();
-                // Character access is now properly restricted by RLS, so navigation should work
-                navigate(`/app/character/${character.id}`);
-              }}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-infinite-teal text-infinite-teal hover:bg-infinite-teal hover:text-infinite-dark"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Character access is now properly restricted by RLS, so navigation should work
+                  navigate(`/app/character/${character.id}`);
+                }}
+              >
                 View Details
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-infinite-dark/20"
-                onClick={(e) => { e.stopPropagation(); handleDeleteClick(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick();
+                }}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </div>
-
       </div>
 
       <CampaignSelectionModal
@@ -362,16 +420,23 @@ const CharacterCardComponent = ({ character, onDelete }: CharacterCardProps) => 
             <AlertDialogHeader className="flex flex-col space-y-2 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
-                <AlertDialogTitle className="text-lg font-semibold text-foreground">Delete Character</AlertDialogTitle>
+                <AlertDialogTitle className="text-lg font-semibold text-foreground">
+                  Delete Character
+                </AlertDialogTitle>
               </div>
               <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
-                Are you sure you want to delete <span className="font-semibold text-foreground">"{character.name}"</span>?{" "}
-                <span className="text-destructive font-medium">This action cannot be undone</span> and will permanently remove the character from your account.
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-foreground">"{character.name}"</span>?{' '}
+                <span className="text-destructive font-medium">This action cannot be undone</span>{' '}
+                and will permanently remove the character from your account.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2">
               <AlertDialogCancel className="bg-white hover:bg-gray-50">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
                 Permanently Delete
               </AlertDialogAction>
             </AlertDialogFooter>

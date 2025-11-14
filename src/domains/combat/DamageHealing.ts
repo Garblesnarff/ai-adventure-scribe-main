@@ -12,6 +12,7 @@ import type {
   HealingOptions,
   HealingResult,
 } from './types';
+
 import { calculateDamage } from '@/utils/diceUtils';
 
 /**
@@ -19,7 +20,7 @@ import { calculateDamage } from '@/utils/diceUtils';
  */
 export function calculateDamageWithResistances(
   participant: CombatParticipant,
-  options: ApplyDamageOptions
+  options: ApplyDamageOptions,
 ): DamageCalculationResult {
   const { damage, damageType, ignoreResistances, ignoreImmunities } = options;
 
@@ -34,7 +35,7 @@ export function calculateDamageWithResistances(
       damageType,
       participant.damageResistances,
       participant.damageImmunities,
-      participant.damageVulnerabilities
+      participant.damageVulnerabilities,
     );
 
     wasImmune = finalDamage === 0 && damage > 0;
@@ -67,7 +68,7 @@ export function calculateDamageWithResistances(
  */
 export function applyDamage(
   participant: CombatParticipant,
-  options: ApplyDamageOptions
+  options: ApplyDamageOptions,
 ): { participant: CombatParticipant; result: DamageCalculationResult } {
   const result = calculateDamageWithResistances(participant, options);
 
@@ -85,7 +86,7 @@ export function applyDamage(
  */
 export function applyHealing(
   participant: CombatParticipant,
-  options: HealingOptions
+  options: HealingOptions,
 ): { participant: CombatParticipant; result: HealingResult } {
   const maxHP = options.maxHPOverride ?? participant.maxHitPoints;
   const wasAtMaxHP = participant.currentHitPoints >= maxHP;
@@ -119,7 +120,7 @@ export function applyHealing(
  */
 export function applyTemporaryHP(
   participant: CombatParticipant,
-  tempHP: number
+  tempHP: number,
 ): CombatParticipant {
   return {
     ...participant,

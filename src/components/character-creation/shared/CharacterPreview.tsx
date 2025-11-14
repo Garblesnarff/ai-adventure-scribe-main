@@ -1,20 +1,11 @@
+import { Sword, Shield, Heart, Brain, Users, Eye, Sparkles, Crown, Star } from 'lucide-react';
 import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Sword,
-  Shield,
-  Heart,
-  Brain,
-  Users,
-  Eye,
-  Sparkles,
-  Crown,
-  Star
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { useCharacter } from '@/contexts/CharacterContext';
 
 /**
  * Real-time character preview component
@@ -44,13 +35,20 @@ const CharacterPreview: React.FC = () => {
 
   const getAbilityIcon = (ability: string) => {
     switch (ability.toLowerCase()) {
-      case 'strength': return <Sword className="w-4 h-4" />;
-      case 'dexterity': return <Eye className="w-4 h-4" />;
-      case 'constitution': return <Heart className="w-4 h-4" />;
-      case 'intelligence': return <Brain className="w-4 h-4" />;
-      case 'wisdom': return <Crown className="w-4 h-4" />;
-      case 'charisma': return <Users className="w-4 h-4" />;
-      default: return <Star className="w-4 h-4" />;
+      case 'strength':
+        return <Sword className="w-4 h-4" />;
+      case 'dexterity':
+        return <Eye className="w-4 h-4" />;
+      case 'constitution':
+        return <Heart className="w-4 h-4" />;
+      case 'intelligence':
+        return <Brain className="w-4 h-4" />;
+      case 'wisdom':
+        return <Crown className="w-4 h-4" />;
+      case 'charisma':
+        return <Users className="w-4 h-4" />;
+      default:
+        return <Star className="w-4 h-4" />;
     }
   };
 
@@ -98,8 +96,7 @@ const CharacterPreview: React.FC = () => {
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   {character.subrace
                     ? `${character.subrace.name} (${character.race.name})`
-                    : character.race.name
-                  }
+                    : character.race.name}
                 </Badge>
               )}
               {character.class && (
@@ -126,15 +123,21 @@ const CharacterPreview: React.FC = () => {
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(character.abilityScores || {}).map(([ability, data]) => (
-              <div key={ability} className="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-blue-100 dark:border-blue-900">
+              <div
+                key={ability}
+                className="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-blue-100 dark:border-blue-900"
+              >
                 <div className="flex items-center space-x-2">
                   {getAbilityIcon(ability)}
                   <span className="text-xs font-medium capitalize">{ability}</span>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-sm">{data.score}</div>
-                  <div className={`text-xs ${data.modifier >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {data.modifier >= 0 ? '+' : ''}{data.modifier}
+                  <div
+                    className={`text-xs ${data.modifier >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {data.modifier >= 0 ? '+' : ''}
+                    {data.modifier}
                   </div>
                 </div>
               </div>
@@ -171,12 +174,17 @@ const CharacterPreview: React.FC = () => {
             </h4>
             <div className="space-y-2">
               {character.alignment && (
-                <Badge className={`w-full justify-center ${getAlignmentColor(character.alignment)}`}>
+                <Badge
+                  className={`w-full justify-center ${getAlignmentColor(character.alignment)}`}
+                >
                   {character.alignment}
                 </Badge>
               )}
               {character.personalityTraits?.slice(0, 2).map((trait, index) => (
-                <div key={index} className="text-xs p-2 bg-white/50 dark:bg-gray-800/50 rounded border border-blue-100 dark:border-blue-900">
+                <div
+                  key={index}
+                  className="text-xs p-2 bg-white/50 dark:bg-gray-800/50 rounded border border-blue-100 dark:border-blue-900"
+                >
                   {trait}
                 </div>
               ))}
@@ -194,13 +202,15 @@ const CharacterPreview: React.FC = () => {
             <div className="space-y-2">
               {character.skillProficiencies?.length && (
                 <div className="text-xs">
-                  <span className="font-medium">Skills:</span> {character.skillProficiencies.slice(0, 3).join(', ')}
+                  <span className="font-medium">Skills:</span>{' '}
+                  {character.skillProficiencies.slice(0, 3).join(', ')}
                   {character.skillProficiencies.length > 3 && '...'}
                 </div>
               )}
               {character.languages?.length && (
                 <div className="text-xs">
-                  <span className="font-medium">Languages:</span> {character.languages.slice(0, 3).join(', ')}
+                  <span className="font-medium">Languages:</span>{' '}
+                  {character.languages.slice(0, 3).join(', ')}
                   {character.languages.length > 3 && '...'}
                 </div>
               )}

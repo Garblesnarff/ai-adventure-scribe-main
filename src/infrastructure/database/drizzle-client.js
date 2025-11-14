@@ -12,16 +12,16 @@ import * as schema from '../../../db/schema/index.js';
  * Configured via DATABASE_URL environment variable
  */
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
-    max: Number(process.env.PGPOOL_MAX || 10),
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : undefined,
+  max: Number(process.env.PGPOOL_MAX || 10),
 });
 /**
  * Drizzle database instance with unified schema
  * Use this for type-safe queries
  */
 export const db = drizzle(pool, {
-    schema,
+  schema,
 });
 /**
  * Raw PostgreSQL pool for direct queries if needed

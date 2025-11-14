@@ -86,7 +86,7 @@ export class MemoryRepository {
       query_embedding: embedding,
       session_id: sessionId,
       match_threshold: threshold,
-      match_count: limit
+      match_count: limit,
     });
     if (error) {
       const code = (error as { code?: string }).code;
@@ -101,7 +101,7 @@ export class MemoryRepository {
         code === '42883' ||
         code === '42P01' ||
         status === 404 ||
-        message.includes('match_memories') && message.includes('not') && message.includes('exist')
+        (message.includes('match_memories') && message.includes('not') && message.includes('exist'))
       ) {
         // Function missing or table not in cache yet; treat as no results.
         return [];
@@ -111,22 +111,22 @@ export class MemoryRepository {
     return data || [];
   }
 
-  async updateMemoryScores(memoryId: string, updates: { importance?: number; narrative_weight?: number }): Promise<void> {
-    const { error } = await supabase
-      .from('memories')
-      .update(updates)
-      .eq('id', memoryId);
+  async updateMemoryScores(
+    memoryId: string,
+    updates: { importance?: number; narrative_weight?: number },
+  ): Promise<void> {
+    const { error } = await supabase.from('memories').update(updates).eq('id', memoryId);
     if (error) throw error;
   }
 
   async insertCommunication(payload: any): Promise<void> {
-    const { error } = await supabase
-      .from('agent_communications')
-      .insert(payload);
+    const { error } = await supabase.from('agent_communications').insert(payload);
     if (error) throw error;
   }
 
-  async fetchMemoryById(memoryId: string): Promise<{ importance?: number; narrative_weight?: number } | null> {
+  async fetchMemoryById(
+    memoryId: string,
+  ): Promise<{ importance?: number; narrative_weight?: number } | null> {
     const { data, error } = await supabase
       .from('memories')
       .select('importance, narrative_weight')
@@ -139,13 +139,15 @@ export class MemoryRepository {
   async invokeEmbedding(text: string): Promise<string | null> {
     if (!isSemanticMemoriesEnabled()) {
       if (!hasLoggedSemanticDisabled) {
-        logger.debug('[MemoryRepository] Semantic memories disabled; skipping embedding generation.');
+        logger.debug(
+          '[MemoryRepository] Semantic memories disabled; skipping embedding generation.',
+        );
         hasLoggedSemanticDisabled = true;
       }
       return null;
     }
     const { data, error } = await supabase.functions.invoke('generate-embedding', {
-      body: { text }
+      body: { text },
     });
     if (error) return null;
     return (data as any).embedding ?? null;
@@ -162,7 +164,7 @@ export class MemoryRepository {
       importance: dbMemory.importance || 0,
       category: metadata.category || 'general',
       context,
-      metadata: dbMemory.metadata || {}
+      metadata: dbMemory.metadata || {},
     };
   }
 }

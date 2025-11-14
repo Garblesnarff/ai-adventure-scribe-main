@@ -29,7 +29,7 @@ export function canTakeTurn(participant: CombatParticipant): boolean {
  */
 export function findNextValidParticipant(
   participants: CombatParticipant[],
-  currentIndex: number
+  currentIndex: number,
 ): { index: number; participant: CombatParticipant | undefined; wrappedAround: boolean } {
   if (participants.length === 0) {
     return { index: -1, participant: undefined, wrappedAround: false };
@@ -78,14 +78,17 @@ export function findNextValidParticipant(
 export function advanceTurn(
   participants: CombatParticipant[],
   currentParticipantId: string | undefined,
-  currentRound: number
+  currentRound: number,
 ): TurnAdvancementResult {
   const currentIndex = currentParticipantId
-    ? participants.findIndex(p => p.id === currentParticipantId)
+    ? participants.findIndex((p) => p.id === currentParticipantId)
     : -1;
 
-  const { index: nextIndex, participant: nextParticipant, wrappedAround } =
-    findNextValidParticipant(participants, currentIndex);
+  const {
+    index: nextIndex,
+    participant: nextParticipant,
+    wrappedAround,
+  } = findNextValidParticipant(participants, currentIndex);
 
   // Calculate new round number
   const newRound = wrappedAround ? currentRound + 1 : currentRound;
@@ -127,9 +130,7 @@ export function resetTurnState(participant: CombatParticipant): CombatParticipan
 /**
  * Reset turn state for all participants (used at start of round)
  */
-export function resetAllTurnStates(
-  participants: CombatParticipant[]
-): CombatParticipant[] {
+export function resetAllTurnStates(participants: CombatParticipant[]): CombatParticipant[] {
   return participants.map(resetTurnState);
 }
 
@@ -138,10 +139,10 @@ export function resetAllTurnStates(
  */
 export function getCurrentParticipant(
   participants: CombatParticipant[],
-  currentParticipantId: string | undefined
+  currentParticipantId: string | undefined,
 ): CombatParticipant | undefined {
   if (!currentParticipantId) return undefined;
-  return participants.find(p => p.id === currentParticipantId);
+  return participants.find((p) => p.id === currentParticipantId);
 }
 
 /**
@@ -149,10 +150,10 @@ export function getCurrentParticipant(
  */
 export function getCurrentParticipantIndex(
   participants: CombatParticipant[],
-  currentParticipantId: string | undefined
+  currentParticipantId: string | undefined,
 ): number {
   if (!currentParticipantId) return -1;
-  return participants.findIndex(p => p.id === currentParticipantId);
+  return participants.findIndex((p) => p.id === currentParticipantId);
 }
 
 /**
@@ -160,7 +161,7 @@ export function getCurrentParticipantIndex(
  */
 export function isParticipantsTurn(
   currentParticipantId: string | undefined,
-  participantId: string
+  participantId: string,
 ): boolean {
   return currentParticipantId === participantId;
 }
@@ -170,9 +171,9 @@ export function isParticipantsTurn(
  */
 export function getTurnOrderNumber(
   participants: CombatParticipant[],
-  participantId: string
+  participantId: string,
 ): number {
-  const index = participants.findIndex(p => p.id === participantId);
+  const index = participants.findIndex((p) => p.id === participantId);
   return index === -1 ? 0 : index + 1;
 }
 
@@ -182,7 +183,7 @@ export function getTurnOrderNumber(
  */
 export function processEndOfTurnEffects(
   participants: CombatParticipant[],
-  currentParticipantId: string
+  currentParticipantId: string,
 ): Map<string, Partial<CombatParticipant>> {
   const updates = new Map<string, Partial<CombatParticipant>>();
 
@@ -190,11 +191,11 @@ export function processEndOfTurnEffects(
     // Decrement condition durations for the current participant
     if (participant.id === currentParticipantId) {
       const updatedConditions = participant.conditions
-        .map(condition => ({
+        .map((condition) => ({
           ...condition,
           duration: condition.duration > 0 ? condition.duration - 1 : condition.duration,
         }))
-        .filter(condition => condition.duration !== 0); // Remove expired conditions
+        .filter((condition) => condition.duration !== 0); // Remove expired conditions
 
       if (updatedConditions.length !== participant.conditions.length) {
         updates.set(participant.id, { conditions: updatedConditions });
@@ -210,7 +211,7 @@ export function processEndOfTurnEffects(
  * Returns updated state for each participant
  */
 export function processStartOfTurnEffects(
-  participant: CombatParticipant
+  participant: CombatParticipant,
 ): Partial<CombatParticipant> {
   const updates: Partial<CombatParticipant> = {};
 

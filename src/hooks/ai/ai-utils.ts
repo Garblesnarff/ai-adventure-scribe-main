@@ -1,25 +1,27 @@
 /**
  * AI Utilities
- * 
+ *
  * Helper functions for formatting DM tasks, fetching game context, and selecting memories.
- * 
+ *
  * Dependencies:
  * - Supabase client (src/integrations/supabase/client.ts)
  * - ChatMessage and Memory types (src/types/game.ts, src/components/game/memory/types.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
+import type { Memory } from '@/components/game/memory/types';
+import type { Campaign } from '@/types/campaign';
+import type { Character } from '@/types/character';
+import type { ChatMessage } from '@/types/game';
+
+import { isValidMemoryType } from '@/components/game/memory/types';
 import { supabase } from '@/integrations/supabase/client';
-import { ChatMessage } from '@/types/game';
-import { Campaign } from '@/types/campaign';
-import { Character } from '@/types/character';
-import { Memory, isValidMemoryType } from '@/components/game/memory/types';
 import logger from '@/lib/logger';
 
 /**
  * Formats chat messages into a task object for the DM Agent.
- * 
+ *
  * @param {ChatMessage[]} messages - The full message history
  * @param {ChatMessage} latestMessage - The latest player message
  * @returns {object} The formatted task object
@@ -32,28 +34,30 @@ export function formatDMTask(messages: ChatMessage[], latestMessage: ChatMessage
     context: {
       messageHistory: messages,
       playerIntent: latestMessage.context?.intent || 'query',
-      playerEmotion: latestMessage.context?.emotion || 'neutral'
-    }
+      playerEmotion: latestMessage.context?.emotion || 'neutral',
+    },
   };
 }
 
 /**
  * Fetches campaign and character details for the DM Agent context.
- * 
+ *
  * @param {string} sessionId - The session ID
  * @returns {Promise<{campaign: Partial<Campaign>, character: Partial<Character>} | null>} The game context or null if failed
  */
 export async function fetchGameContext(
-  sessionId: string
+  sessionId: string,
 ): Promise<{ campaign: Partial<Campaign>; character: Partial<Character> } | null> {
   try {
     const { data: sessionData, error: sessionError } = await supabase
       .from('game_sessions')
-      .select(`
+      .select(
+        `
         *,
         campaigns:campaign_id (*),
         characters:character_id (*)
-      `)
+      `,
+      )
       .eq('id', sessionId)
       .single();
 
@@ -69,7 +73,7 @@ export async function fetchGameContext(
 
     return {
       campaign: (sessionData.campaigns || {}) as Partial<Campaign>,
-      character: (sessionData.characters || {}) as Partial<Character>
+      character: (sessionData.characters || {}) as Partial<Character>,
     };
   } catch (error) {
     logger.error('Error in fetchGameContext:', error);
@@ -79,7 +83,7 @@ export async function fetchGameContext(
 
 /**
  * Fetches and validates memories for a session.
- * 
+ *
  * @param {string} sessionId - The session ID
  * @returns {Promise<Memory[]>} Array of validated memories
  */
@@ -96,7 +100,7 @@ export async function fetchMemories(sessionId: string): Promise<Memory[]> {
     }
     return {
       ...memory,
-      type: isValidMemoryType(memory.type) ? memory.type : 'general'
+      type: isValidMemoryType(memory.type) ? memory.type : 'general',
     };
   });
 }

@@ -1,16 +1,16 @@
 /**
  * Retry Service
- * 
+ *
  * This file defines the RetryService class, responsible for handling retry
  * logic for operations that might fail transiently. It implements an exponential
  * backoff strategy and configurable maximum retries.
- * 
+ *
  * Main Class:
  * - RetryService: Provides a method to execute an operation with retry capabilities.
- * 
+ *
  * Key Dependencies:
  * - ErrorMetadata type from '../types'.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -30,7 +30,7 @@ export class RetryService {
     maxRetries: 3,
     initialDelay: 1000,
     maxDelay: 30000,
-    backoffFactor: 2
+    backoffFactor: 2,
   };
 
   private retryAttempts: Map<string, number> = new Map();
@@ -39,7 +39,7 @@ export class RetryService {
     operation: () => Promise<any>,
     context: string,
     metadata?: ErrorMetadata,
-    config: Partial<RetryConfig> = {}
+    config: Partial<RetryConfig> = {},
   ): Promise<any> {
     const retryConfig = { ...this.defaultConfig, ...config };
     let attempts = this.retryAttempts.get(context) || 0;
@@ -52,7 +52,7 @@ export class RetryService {
       } catch (error) {
         attempts++;
         this.retryAttempts.set(context, attempts);
-        
+
         if (attempts === retryConfig.maxRetries) {
           throw error;
         }
@@ -70,7 +70,7 @@ export class RetryService {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   public clearRetryAttempts(context: string): void {

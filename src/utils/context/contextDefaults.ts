@@ -1,4 +1,4 @@
-import { GameContext } from '@/types/game';
+import type { GameContext } from '@/types/game';
 
 /**
  * Creates a default context with fallback values

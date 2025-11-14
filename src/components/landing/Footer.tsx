@@ -11,10 +11,11 @@
  * - Brand tagline (reinforces identity)
  */
 
+import { Mail, Twitter, MessageCircle, Heart } from 'lucide-react';
 import React, { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, Twitter, MessageCircle, Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -26,12 +27,12 @@ export const Footer: React.FC = () => {
     setIsSubmitting(true);
 
     // TODO: Integrate with newsletter service (ConvertKit, Mailchimp, etc.)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     if (window.gtag) {
       window.gtag('event', 'newsletter_signup', {
         event_category: 'engagement',
-        event_label: 'Footer Newsletter'
+        event_label: 'Footer Newsletter',
       });
     }
 
@@ -92,12 +93,18 @@ export const Footer: React.FC = () => {
             <h4 className="text-white font-semibold mb-4">Product</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#benefits" className="text-gray-400 hover:text-purple-400 transition-colors">
+                <a
+                  href="#benefits"
+                  className="text-gray-400 hover:text-purple-400 transition-colors"
+                >
                   Features
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="text-gray-400 hover:text-purple-400 transition-colors">
+                <a
+                  href="#pricing"
+                  className="text-gray-400 hover:text-purple-400 transition-colors"
+                >
                   Pricing
                 </a>
               </li>
@@ -107,7 +114,10 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="/roadmap" className="text-gray-400 hover:text-purple-400 transition-colors">
+                <a
+                  href="/roadmap"
+                  className="text-gray-400 hover:text-purple-400 transition-colors"
+                >
                   Roadmap
                 </a>
               </li>
@@ -129,7 +139,10 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="/privacy" className="text-gray-400 hover:text-purple-400 transition-colors">
+                <a
+                  href="/privacy"
+                  className="text-gray-400 hover:text-purple-400 transition-colors"
+                >
                   Privacy Policy
                 </a>
               </li>

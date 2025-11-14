@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const bardCantrips: Spell[] = [
-{
+  {
     id: 'blade-ward',
     name: 'Blade Ward',
     level: 0,
@@ -12,7 +12,8 @@ export const bardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 round',
-    description: 'You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks.'
+    description:
+      'You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks.',
   },
   {
     id: 'friends',
@@ -26,8 +27,9 @@ export const bardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a small amount of makeup applied to the face as this spell is cast',
     duration: 'Concentration, up to 1 minute',
-    description: 'For the duration, you have advantage on all Charisma checks directed at one creature of your choice that isn\'t hostile toward you.',
-    concentration: true
+    description:
+      "For the duration, you have advantage on all Charisma checks directed at one creature of your choice that isn't hostile toward you.",
+    concentration: true,
   },
   {
     id: 'mage-hand-bard',
@@ -40,8 +42,9 @@ export const bardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
-    concentration: true
+    description:
+      'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
+    concentration: true,
   },
   {
     id: 'mending-bard',
@@ -56,7 +59,8 @@ export const bardCantrips: Spell[] = [
     material: true,
     materialDescription: 'two lodestones',
     duration: 'Instantaneous',
-    description: 'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.'
+    description:
+      'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.',
   },
   {
     id: 'message-bard',
@@ -71,7 +75,8 @@ export const bardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a short piece of copper wire',
     duration: '1 round',
-    description: 'You point your finger toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear.'
+    description:
+      'You point your finger toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear.',
   },
   {
     id: 'minor-illusion-bard',
@@ -85,7 +90,8 @@ export const bardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: '1 minute',
-    description: 'You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again.'
+    description:
+      'You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again.',
   },
   {
     id: 'prestidigitation-bard',
@@ -98,7 +104,8 @@ export const bardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Up to 1 hour',
-    description: 'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.'
+    description:
+      'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.',
   },
   {
     id: 'true-strike-bard',
@@ -110,8 +117,9 @@ export const bardCantrips: Spell[] = [
     components: 'S',
     somatic: true,
     duration: 'Concentration, up to 1 round',
-    description: 'You extend your hand and point a finger at a target in range. Your magic grants you a brief insight into the target\'s defenses.',
-    concentration: true
+    description:
+      "You extend your hand and point a finger at a target in range. Your magic grants you a brief insight into the target's defenses.",
+    concentration: true,
   },
   {
     id: 'vicious-mockery',
@@ -123,7 +131,8 @@ export const bardCantrips: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Instantaneous',
-    description: 'You unleash a string of insults laced with subtle enchantments at a creature you can see within range. If the target can hear you, it must succeed on a Wisdom saving throw or take 1d4 psychic damage and have disadvantage on the next attack roll it makes before the end of its next turn.',
-    damage: '1d4'
+    description:
+      'You unleash a string of insults laced with subtle enchantments at a creature you can see within range. If the target can hear you, it must succeed on a Wisdom saving throw or take 1d4 psychic damage and have disadvantage on the next attack roll it makes before the end of its next turn.',
+    damage: '1d4',
   },
 ];

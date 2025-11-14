@@ -14,7 +14,7 @@ export class MessageDiagnosticsService {
     delivered: 0,
     failed: 0,
     retried: 0,
-    deadLetter: 0
+    deadLetter: 0,
   };
   private deadLetterQueue: QueuedMessage[] = [];
 

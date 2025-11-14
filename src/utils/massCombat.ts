@@ -1,23 +1,24 @@
 /**
  * Mass Combat Utilities for D&D 5e
- * 
+ *
  * Functions for handling mass combat calculations, army management, and battle resolution
  */
 
-import { 
-  Army, 
-  ArmyUnit, 
+import type {
+  Army,
+  ArmyUnit,
   ArmyAttack,
-  Battlefield, 
-  CombatRound, 
+  Battlefield,
+  CombatRound,
   MassCombatResult,
   CasualtyReport,
   ArmyStatus,
   CombatEvent,
   TacticalManeuver,
   ArmyCommander,
-  ControlZone
+  ControlZone,
 } from '@/types/massCombat';
+
 import { rollDice } from '@/utils/diceUtils';
 
 /**
@@ -25,7 +26,7 @@ import { rollDice } from '@/utils/diceUtils';
  */
 export function calculateArmyStrength(army: Army): number {
   return army.units.reduce((total, unit) => {
-    return total + (unit.size * unit.hitPoints);
+    return total + unit.size * unit.hitPoints;
   }, 0);
 }
 
@@ -38,7 +39,7 @@ export function calculateArmyDamage(attack: ArmyAttack, targetUnit: ArmyUnit): n
   const diceCount = parseInt(diceParts[0]) || 0;
   const diceSides = parseInt(diceParts[1]) || 0;
   let modifier = 0;
-  
+
   // Extract modifier if present
   if (diceParts[1].includes('+')) {
     const modParts = diceParts[1].split('+');
@@ -47,15 +48,15 @@ export function calculateArmyDamage(attack: ArmyAttack, targetUnit: ArmyUnit): n
     const modParts = diceParts[1].split('-');
     modifier = -(parseInt(modParts[1]) || 0);
   }
-  
+
   // Roll damage
   const damageRoll = rollDice(diceSides, diceCount, modifier);
   let damage = damageRoll.total;
-  
+
   // Apply armor protection
   const armorProtection = Math.max(0, targetUnit.armorClass - 10);
   damage = Math.max(1, damage - armorProtection);
-  
+
   return damage;
 }
 
@@ -65,63 +66,67 @@ export function calculateArmyDamage(attack: ArmyAttack, targetUnit: ArmyUnit): n
 export function resolveArmyAttack(
   attacker: ArmyUnit,
   defender: ArmyUnit,
-  attack: ArmyAttack
+  attack: ArmyAttack,
 ): { damage: number; casualties: number; description: string } {
   // Roll to hit
   const toHitRoll = rollDice(20, 1, attack.attackBonus);
   const hits = toHitRoll.total >= defender.armorClass;
-  
+
   if (!hits) {
     return {
       damage: 0,
       casualties: 0,
-      description: `${attacker.name} attacks ${defender.name} but misses.`
+      description: `${attacker.name} attacks ${defender.name} but misses.`,
     };
   }
-  
+
   // Calculate damage
   const damage = calculateArmyDamage(attack, defender);
-  
+
   // Calculate casualties
   const casualties = Math.floor(damage / defender.hitPoints);
   const survivingUnits = Math.max(0, defender.size - casualties);
-  
+
   // Update defender
   const updatedDefender = {
     ...defender,
-    size: survivingUnits
+    size: survivingUnits,
   };
-  
+
   return {
     damage,
     casualties,
-    description: `${attacker.name} hits ${defender.name} for ${damage} damage, causing ${casualties} casualties.`
+    description: `${attacker.name} hits ${defender.name} for ${damage} damage, causing ${casualties} casualties.`,
   };
 }
 
 /**
  * Check army morale after taking casualties
  */
-export function checkArmyMorale(army: Army, casualties: number): { 
-  breaks: boolean; 
-  moraleChange: number; 
-  description: string 
+export function checkArmyMorale(
+  army: Army,
+  casualties: number,
+): {
+  breaks: boolean;
+  moraleChange: number;
+  description: string;
 } {
   // Calculate morale check DC based on casualties
-  const casualtyPercentage = (casualties / army.units.reduce((sum, unit) => sum + unit.size, 0)) * 100;
+  const casualtyPercentage =
+    (casualties / army.units.reduce((sum, unit) => sum + unit.size, 0)) * 100;
   const moraleDC = 10 + Math.floor(casualtyPercentage / 10);
-  
+
   // Roll morale check
   const armyMorale = army.units.reduce((sum, unit) => sum + unit.morale, 0) / army.units.length;
   const moraleRoll = rollDice(20, 1, Math.floor(armyMorale / 2));
-  
+
   const breaks = moraleRoll.total < moraleDC;
   const moraleChange = breaks ? -2 : 1;
-  
-  const description = breaks 
+
+  const description = breaks
     ? `${army.name}'s army breaks and begins to rout!`
     : `${army.name}'s army stands firm despite casualties.`;
-  
+
   return { breaks, moraleChange, description };
 }
 
@@ -130,26 +135,25 @@ export function checkArmyMorale(army: Army, casualties: number): {
  */
 export function moveArmy(army: Army, newX: number, newY: number, battlefield: Battlefield): Army {
   // Check if movement is within battlefield bounds
-  const withinBounds = (
-    newX >= 0 && 
-    newX <= battlefield.dimensions.width && 
-    newY >= 0 && 
-    newY <= battlefield.dimensions.height
-  );
-  
+  const withinBounds =
+    newX >= 0 &&
+    newX <= battlefield.dimensions.width &&
+    newY >= 0 &&
+    newY <= battlefield.dimensions.height;
+
   if (!withinBounds) {
     return army; // No movement if outside bounds
   }
-  
+
   // Calculate distance
   const dx = newX - army.position.x;
   const dy = newY - army.position.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  
+
   // Update army position
   return {
     ...army,
-    position: { x: newX, y: newY }
+    position: { x: newX, y: newY },
   };
 }
 
@@ -159,11 +163,11 @@ export function moveArmy(army: Army, newX: number, newY: number, battlefield: Ba
 export function simulateCombatRound(
   armies: Army[],
   battlefield: Battlefield,
-  roundNumber: number
+  roundNumber: number,
 ): CombatRound {
   const events: CombatEvent[] = [];
   const armyStatus: ArmyStatus[] = [];
-  
+
   // Process each army's turn
   for (const army of armies) {
     // Skip destroyed or routing armies
@@ -173,58 +177,58 @@ export function simulateCombatRound(
         morale: army.units.reduce((sum, unit) => sum + unit.morale, 0) / army.units.length,
         supplies: army.supplies || 0,
         position: army.position,
-        status: army.status
+        status: army.status,
       });
       continue;
     }
-    
+
     // Army takes actions
     const roundEvents: CombatEvent[] = [];
-    
+
     // Each unit in the army can act
     for (const unit of army.units) {
       // Skip destroyed units
       if (unit.size <= 0) continue;
-      
+
       // Find a target (simplified - in a real implementation, this would be more complex)
-      const enemyArmies = armies.filter(a => a.faction !== army.faction && a.status === 'active');
+      const enemyArmies = armies.filter((a) => a.faction !== army.faction && a.status === 'active');
       if (enemyArmies.length === 0) continue;
-      
+
       const targetArmy = enemyArmies[0]; // Simplified target selection
-      const targetUnit = targetArmy.units.find(u => u.size > 0); // First available unit
-      
+      const targetUnit = targetArmy.units.find((u) => u.size > 0); // First available unit
+
       if (!targetUnit) continue;
-      
+
       // Attack with each attack option
       for (const attack of unit.attacks) {
         const result = resolveArmyAttack(unit, targetUnit, attack);
-        
+
         roundEvents.push({
           id: `attack-${Date.now()}-${Math.random()}`,
           type: 'attack',
           description: result.description,
-          affectedArmies: [army.id, targetArmy.id]
+          affectedArmies: [army.id, targetArmy.id],
         });
       }
     }
-    
+
     // Update army status
     armyStatus.push({
       armyId: army.id,
       morale: army.units.reduce((sum, unit) => sum + unit.morale, 0) / army.units.length,
       supplies: army.supplies || 0,
       position: army.position,
-      status: army.status
+      status: army.status,
     });
-    
+
     // Add events to main events array
     events.push(...roundEvents);
   }
-  
+
   return {
     roundNumber,
     events,
-    armyStatus
+    armyStatus,
   };
 }
 
@@ -234,37 +238,36 @@ export function simulateCombatRound(
 export function isBattleEnded(armies: Army[]): { ended: boolean; victor: string | null } {
   // Group armies by faction
   const factions: Record<string, Army[]> = {};
-  
-  armies.forEach(army => {
+
+  armies.forEach((army) => {
     if (!factions[army.faction]) {
       factions[army.faction] = [];
     }
     factions[army.faction].push(army);
   });
-  
+
   // Count active armies per faction
   const activeFactions: string[] = [];
-  
-  Object.keys(factions).forEach(faction => {
-    const activeArmies = factions[faction].filter(army => 
-      army.status === 'active' && 
-      army.units.some(unit => unit.size > 0)
+
+  Object.keys(factions).forEach((faction) => {
+    const activeArmies = factions[faction].filter(
+      (army) => army.status === 'active' && army.units.some((unit) => unit.size > 0),
     );
-    
+
     if (activeArmies.length > 0) {
       activeFactions.push(faction);
     }
   });
-  
+
   // Battle ends when only one faction remains or no factions remain
   if (activeFactions.length === 0) {
     return { ended: true, victor: null }; // Draw
   }
-  
+
   if (activeFactions.length === 1) {
     return { ended: true, victor: activeFactions[0] }; // Victory
   }
-  
+
   return { ended: false, victor: null }; // Battle continues
 }
 
@@ -275,13 +278,13 @@ export function calculateCasualties(army: Army, initialArmy: Army): CasualtyRepo
   const initialCount = initialArmy.units.reduce((sum, unit) => sum + unit.size, 0);
   const currentCount = army.units.reduce((sum, unit) => sum + unit.size, 0);
   const losses = initialCount - currentCount;
-  
+
   return {
     armyId: army.id,
     unitType: army.units[0]?.type || 'infantry', // Simplified
     initialCount,
     losses,
-    survivors: currentCount
+    survivors: currentCount,
   };
 }
 
@@ -291,20 +294,20 @@ export function calculateCasualties(army: Army, initialArmy: Army): CasualtyRepo
 export function executeTacticalManeuver(
   maneuver: TacticalManeuver,
   commander: ArmyCommander,
-  army: Army
+  army: Army,
 ): { success: boolean; effect: string; description: string } {
   // Check if commander has required level
   if (commander.level < maneuver.requiredCommanderLevel) {
     return {
       success: false,
       effect: '',
-      description: `${commander.name} is not experienced enough to execute ${maneuver.name}.`
+      description: `${commander.name} is not experienced enough to execute ${maneuver.name}.`,
     };
   }
-  
+
   // Apply maneuver effect (simplified)
   let effectDescription = '';
-  
+
   switch (maneuver.id) {
     case 'flank_1':
       effectDescription = 'Units gain advantage on next attack roll.';
@@ -318,11 +321,11 @@ export function executeTacticalManeuver(
     default:
       effectDescription = 'Tactical maneuver executed successfully.';
   }
-  
+
   return {
     success: true,
     effect: effectDescription,
-    description: `${commander.name} executes ${maneuver.name}: ${effectDescription}`
+    description: `${commander.name} executes ${maneuver.name}: ${effectDescription}`,
   };
 }
 
@@ -332,7 +335,7 @@ export function executeTacticalManeuver(
 export function resupplyArmy(army: Army, supplies: number): Army {
   return {
     ...army,
-    supplies: (army.supplies || 0) + supplies
+    supplies: (army.supplies || 0) + supplies,
   };
 }
 
@@ -340,7 +343,7 @@ export function resupplyArmy(army: Army, supplies: number): Army {
  * Calculate strategic points from controlling zones
  */
 export function calculateStrategicPoints(army: Army, controlZones: ControlZone[]): number {
-  const controlledZones = controlZones.filter(zone => zone.controllingArmyId === army.id);
+  const controlledZones = controlZones.filter((zone) => zone.controllingArmyId === army.id);
   return controlledZones.reduce((sum, zone) => sum + zone.strategicValue, 0);
 }
 
@@ -353,6 +356,6 @@ export function createDefaultCombatResult(): MassCombatResult {
     survivingArmies: [],
     casualtyReports: [],
     battleLog: [],
-    strategicPoints: 0
+    strategicPoints: 0,
   };
 }

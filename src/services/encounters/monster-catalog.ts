@@ -1,4 +1,4 @@
-import { MonsterDef } from '@/types/encounters';
+import type { MonsterDef } from '@/types/encounters';
 
 // Minimal default catalog; replace with SRD JSON loader later
 export const defaultMonsters: MonsterDef[] = [

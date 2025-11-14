@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import type { ResolvedAssets } from '../../lib/manifest.js';
 import type { SiteConfig } from '../../config/site.js';
+import type { ResolvedAssets } from '../../lib/manifest.js';
+import type { ReactNode } from 'react';
 
 export interface BaseMeta {
   title: string;

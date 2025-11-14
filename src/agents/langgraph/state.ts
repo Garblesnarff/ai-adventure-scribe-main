@@ -7,7 +7,7 @@
  * @module agents/langgraph/state
  */
 
-import { BaseMessage } from "@langchain/core/messages";
+import { BaseMessage } from '@langchain/core/messages';
 
 /**
  * Result of D&D 5E rules validation
@@ -133,8 +133,7 @@ export interface DMState {
 export const dmStateChannels = {
   messages: {
     // Append new messages to the array
-    reducer: (current: BaseMessage[], update: BaseMessage[]) =>
-      [...current, ...update],
+    reducer: (current: BaseMessage[], update: BaseMessage[]) => [...current, ...update],
     default: () => [] as BaseMessage[],
   },
   playerInput: {
@@ -171,7 +170,7 @@ export const dmStateChannels = {
     reducer: (current: any, update: any) => ({ ...current, ...update }),
     default: () => ({
       timestamp: new Date(),
-      stepCount: 0
+      stepCount: 0,
     }),
   },
 };

@@ -56,7 +56,14 @@ export interface DescriptionPromptOptions {
 
 export interface ImagePromptOptions {
   style: 'portrait' | 'action' | 'full-body' | 'character-sheet' | 'expression-sheet';
-  artStyle: 'fantasy-art' | 'anime' | 'realistic' | 'comic-book' | 'watercolor' | 'sketch' | 'oil-painting';
+  artStyle:
+    | 'fantasy-art'
+    | 'anime'
+    | 'realistic'
+    | 'comic-book'
+    | 'watercolor'
+    | 'sketch'
+    | 'oil-painting';
   theme: string;
 }
 
@@ -108,15 +115,19 @@ const appendPhysicalTraitsDescriptionPrompt = (parts: string[], data: CharacterP
   if (lines.length === 0) return;
 
   parts.push('\nPhysical Traits (MANDATORY):');
-  lines.forEach(line => parts.push(`- ${line}`));
-  parts.push('IMPORTANT: The APPEARANCE section must exactly match these mandatory physical traits, including measurements and colors. Do not invent alternatives.');
+  lines.forEach((line) => parts.push(`- ${line}`));
+  parts.push(
+    'IMPORTANT: The APPEARANCE section must exactly match these mandatory physical traits, including measurements and colors. Do not invent alternatives.',
+  );
 };
 
 const appendPhysicalTraitsImagePrompt = (parts: string[], data: CharacterPromptData) => {
   const lines = buildPhysicalTraitLines(data);
   if (lines.length === 0) return;
 
-  parts.push(`exact physical traits: ${lines.join('; ')}. strictly follow these measurements and colors without deviation.`);
+  parts.push(
+    `exact physical traits: ${lines.join('; ')}. strictly follow these measurements and colors without deviation.`,
+  );
 };
 
 const sanitize = (value: Maybe<string>): string | undefined => {
@@ -126,15 +137,21 @@ const sanitize = (value: Maybe<string>): string | undefined => {
 
 const listFrom = (values: Maybe<string[] | string>): string[] => {
   if (!values) return [];
-  if (Array.isArray(values)) return values.filter(item => typeof item === 'string' && item.trim()).map(item => item.trim());
-  return values.split(/[;,]/).map(item => item.trim()).filter(Boolean);
+  if (Array.isArray(values))
+    return values
+      .filter((item) => typeof item === 'string' && item.trim())
+      .map((item) => item.trim());
+  return values
+    .split(/[;,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 };
 
 const extractCharacterDetails = (characterData: CharacterPromptData): ExtractedDetails => {
   const details: ExtractedDetails = {
     physicalFeatures: [],
     equipment: [],
-    distinguishingMarks: []
+    distinguishingMarks: [],
   };
 
   if (characterData.appearance) {
@@ -168,41 +185,51 @@ const extractCharacterDetails = (characterData: CharacterPromptData): ExtractedD
   }
 
   const traits = buildPhysicalTraitLines(characterData);
-  traits.forEach(trait => details.physicalFeatures.push(trait.toLowerCase()));
+  traits.forEach((trait) => details.physicalFeatures.push(trait.toLowerCase()));
 
   return details;
 };
 
 const getRacePrompt = (race: string): string => {
   const raceMap: Record<string, string> = {
-    'human': 'human features with varied skin tones and expressive face',
-    'elf': 'elven features with pointed ears, graceful build, and ethereal beauty',
-    'dwarf': 'dwarven features with stocky build, beard, and sturdy appearance',
-    'halfling': 'halfling features with small stature and cheerful expression',
-    'dragonborn': 'dragonborn features with draconic scales and proud bearing',
-    'gnome': 'gnomish features with small size and mischievous expression',
+    human: 'human features with varied skin tones and expressive face',
+    elf: 'elven features with pointed ears, graceful build, and ethereal beauty',
+    dwarf: 'dwarven features with stocky build, beard, and sturdy appearance',
+    halfling: 'halfling features with small stature and cheerful expression',
+    dragonborn: 'dragonborn features with draconic scales and proud bearing',
+    gnome: 'gnomish features with small size and mischievous expression',
     'half-elf': 'half-elf features blending human and elven traits',
     'half-orc': 'half-orc features with tusks and muscular build',
-    'tiefling': 'tiefling features with horns, tail, and infernal heritage',
-    'celestialborn': 'celestialborn features with divine radiance',
-    'elementalborn': 'elementalborn features with elemental manifestations',
-    'catfolk': 'catfolk features with feline characteristics and agility',
-    'ravenfolk': 'ravenfolk features with avian characteristics',
-    'lizardfolk': 'lizardfolk features with reptilian scales',
-    'tortle': 'tortle features with turtle shell and wise expression',
+    tiefling: 'tiefling features with horns, tail, and infernal heritage',
+    celestialborn: 'celestialborn features with divine radiance',
+    elementalborn: 'elementalborn features with elemental manifestations',
+    catfolk: 'catfolk features with feline characteristics and agility',
+    ravenfolk: 'ravenfolk features with avian characteristics',
+    lizardfolk: 'lizardfolk features with reptilian scales',
+    tortle: 'tortle features with turtle shell and wise expression',
     'high elf': 'high elven features with pointed ears, refined bearing, and arcane elegance',
-    'wood elf': 'wood elven features with pointed ears, natural grace, and forest-dwelling appearance',
+    'wood elf':
+      'wood elven features with pointed ears, natural grace, and forest-dwelling appearance',
     'dark elf': 'dark elven features with pointed ears, pale or dark skin, and mysterious aura',
-    'drow': 'drow features with pointed ears, dark skin, white hair, and underground nobility',
-    'mountain dwarf': 'mountain dwarven features with stocky build, thick beard, and hardy mountain appearance',
-    'hill dwarf': 'hill dwarven features with stocky build, well-groomed beard, and pastoral strength',
-    'lightfoot halfling': 'lightfoot halfling features with small stature, nimble build, and wandering spirit',
-    'stout halfling': 'stout halfling features with small but robust build and determined expression',
-    'variant human': 'human features with varied skin tones, expressive face, and adaptable appearance',
-    'forest gnome': 'forest gnomish features with small size, nature-connected appearance, and woodland charm',
-    'rock gnome': 'rock gnomish features with small size, tinker-focused hands, and inventive expression',
-    'asmodeus tiefling': 'tiefling features with prominent horns, forked tail, and regal infernal heritage',
-    'zariel tiefling': 'tiefling features with warrior-like horns, strong tail, and martial infernal bearing'
+    drow: 'drow features with pointed ears, dark skin, white hair, and underground nobility',
+    'mountain dwarf':
+      'mountain dwarven features with stocky build, thick beard, and hardy mountain appearance',
+    'hill dwarf':
+      'hill dwarven features with stocky build, well-groomed beard, and pastoral strength',
+    'lightfoot halfling':
+      'lightfoot halfling features with small stature, nimble build, and wandering spirit',
+    'stout halfling':
+      'stout halfling features with small but robust build and determined expression',
+    'variant human':
+      'human features with varied skin tones, expressive face, and adaptable appearance',
+    'forest gnome':
+      'forest gnomish features with small size, nature-connected appearance, and woodland charm',
+    'rock gnome':
+      'rock gnomish features with small size, tinker-focused hands, and inventive expression',
+    'asmodeus tiefling':
+      'tiefling features with prominent horns, forked tail, and regal infernal heritage',
+    'zariel tiefling':
+      'tiefling features with warrior-like horns, strong tail, and martial infernal bearing',
   };
 
   return raceMap[race.toLowerCase()] || `${race.toLowerCase()} racial features`;
@@ -210,20 +237,20 @@ const getRacePrompt = (race: string): string => {
 
 const getClassPrompt = (characterClass: string): string => {
   const classMap: Record<string, string> = {
-    'barbarian': 'wearing animal pelts and tribal markings',
-    'bard': 'wearing colorful clothing with artistic accessories',
-    'cleric': 'wearing religious vestments with holy symbol',
-    'druid': 'wearing natural materials in earth tones',
-    'fighter': 'wearing practical armor with martial equipment',
-    'monk': 'wearing simple robes for martial arts',
-    'paladin': 'wearing shining armor with holy symbols',
-    'ranger': 'wearing leather armor with nature camouflage',
-    'rogue': 'wearing dark clothing with stealth tools',
-    'sorcerer': 'with innate magic aura and arcane symbols',
-    'warlock': 'with eldritch energy and occult accessories',
-    'wizard': 'wearing scholarly robes with spellbook',
-    'artificer': 'with mechanical gadgets and crafting tools',
-    'blood hunter': 'with scarred appearance and hunter gear'
+    barbarian: 'wearing animal pelts and tribal markings',
+    bard: 'wearing colorful clothing with artistic accessories',
+    cleric: 'wearing religious vestments with holy symbol',
+    druid: 'wearing natural materials in earth tones',
+    fighter: 'wearing practical armor with martial equipment',
+    monk: 'wearing simple robes for martial arts',
+    paladin: 'wearing shining armor with holy symbols',
+    ranger: 'wearing leather armor with nature camouflage',
+    rogue: 'wearing dark clothing with stealth tools',
+    sorcerer: 'with innate magic aura and arcane symbols',
+    warlock: 'with eldritch energy and occult accessories',
+    wizard: 'wearing scholarly robes with spellbook',
+    artificer: 'with mechanical gadgets and crafting tools',
+    'blood hunter': 'with scarred appearance and hunter gear',
   };
 
   return classMap[characterClass.toLowerCase()] || `${characterClass.toLowerCase()} class attire`;
@@ -239,7 +266,7 @@ const getAlignmentPrompt = (alignment: string): string => {
     'chaotic neutral': 'unpredictable and wild expression',
     'lawful evil': 'controlled and calculating expression',
     'neutral evil': 'selfish and opportunistic expression',
-    'chaotic evil': 'malevolent and destructive expression'
+    'chaotic evil': 'malevolent and destructive expression',
   };
 
   return alignmentMap[alignment.toLowerCase()] || 'balanced expression';
@@ -248,23 +275,39 @@ const getAlignmentPrompt = (alignment: string): string => {
 const extractEnhancementVisuals = (enhancementSelections: EnhancementSelection[]): string[] => {
   const visualElements: string[] = [];
 
-  enhancementSelections.forEach(selection => {
-    const value = Array.isArray(selection.value) ? selection.value.join(' ') : String(selection.value);
+  enhancementSelections.forEach((selection) => {
+    const value = Array.isArray(selection.value)
+      ? selection.value.join(' ')
+      : String(selection.value);
     const combined = `${value} ${selection.customValue || ''}`.toLowerCase();
 
     if (combined.includes('scar')) visualElements.push('distinctive scars');
     if (combined.includes('tattoo')) visualElements.push('meaningful tattoos');
     if (combined.includes('piercing')) visualElements.push('piercings');
-    if (combined.includes('jewelry') || combined.includes('ring') || combined.includes('necklace')) visualElements.push('distinctive jewelry');
-    if (combined.includes('weapon') || combined.includes('sword') || combined.includes('axe') || combined.includes('bow')) visualElements.push('special weapon');
-    if (combined.includes('armor') || combined.includes('shield')) visualElements.push('unique armor');
-    if (combined.includes('cloak') || combined.includes('cape') || combined.includes('robe')) visualElements.push('distinctive clothing');
-    if (combined.includes('mark') || combined.includes('brand') || combined.includes('symbol')) visualElements.push('mystical markings');
-    if (combined.includes('aura') || combined.includes('glow') || combined.includes('magic')) visualElements.push('magical aura');
+    if (combined.includes('jewelry') || combined.includes('ring') || combined.includes('necklace'))
+      visualElements.push('distinctive jewelry');
+    if (
+      combined.includes('weapon') ||
+      combined.includes('sword') ||
+      combined.includes('axe') ||
+      combined.includes('bow')
+    )
+      visualElements.push('special weapon');
+    if (combined.includes('armor') || combined.includes('shield'))
+      visualElements.push('unique armor');
+    if (combined.includes('cloak') || combined.includes('cape') || combined.includes('robe'))
+      visualElements.push('distinctive clothing');
+    if (combined.includes('mark') || combined.includes('brand') || combined.includes('symbol'))
+      visualElements.push('mystical markings');
+    if (combined.includes('aura') || combined.includes('glow') || combined.includes('magic'))
+      visualElements.push('magical aura');
     if (combined.includes('eye') || combined.includes('gaze')) visualElements.push('striking eyes');
-    if (combined.includes('hair') || combined.includes('beard')) visualElements.push('distinctive hair');
-    if (combined.includes('posture') || combined.includes('stance')) visualElements.push('unique posture');
-    if (combined.includes('familiar') || combined.includes('companion') || combined.includes('pet')) visualElements.push('animal companion');
+    if (combined.includes('hair') || combined.includes('beard'))
+      visualElements.push('distinctive hair');
+    if (combined.includes('posture') || combined.includes('stance'))
+      visualElements.push('unique posture');
+    if (combined.includes('familiar') || combined.includes('companion') || combined.includes('pet'))
+      visualElements.push('animal companion');
   });
 
   return [...new Set(visualElements)];
@@ -275,9 +318,11 @@ const extractVisualPersonalityTraits = (personalityText: Maybe<string>): string[
   const notes = personalityText.toLowerCase();
   const visualTraits: string[] = [];
 
-  if (notes.includes('tourettes') || notes.includes('tics')) visualTraits.push('subtle facial tics');
+  if (notes.includes('tourettes') || notes.includes('tics'))
+    visualTraits.push('subtle facial tics');
   if (notes.includes('fidgety') || notes.includes('restless')) visualTraits.push('fidgety posture');
-  if (notes.includes('anxious') || notes.includes('nervous')) visualTraits.push('anxious expression');
+  if (notes.includes('anxious') || notes.includes('nervous'))
+    visualTraits.push('anxious expression');
 
   if (notes.includes('confident') || notes.includes('bold')) visualTraits.push('confident stance');
   if (notes.includes('proud') || notes.includes('arrogant')) visualTraits.push('proud bearing');
@@ -293,31 +338,35 @@ const extractVisualPersonalityTraits = (personalityText: Maybe<string>): string[
 
 const extractWeaponsFromClass = (characterClass: string): string[] => {
   const classWeaponsMap: Record<string, string[]> = {
-    'barbarian': ['greataxe', 'battleaxe'],
-    'fighter': ['longsword', 'shield'],
-    'paladin': ['longsword', 'mace', 'shield'],
-    'ranger': ['longbow', 'shortsword'],
-    'rogue': ['rapier', 'dagger'],
-    'bard': ['rapier', 'dagger'],
-    'cleric': ['mace', 'shield'],
-    'druid': ['quarterstaff', 'scimitar'],
-    'monk': ['quarterstaff', 'unarmed strikes'],
-    'sorcerer': ['light crossbow', 'dagger'],
-    'warlock': ['light crossbow', 'eldritch blast'],
-    'wizard': ['quarterstaff', 'dagger'],
-    'artificer': ['hand crossbow', 'simple weapon'],
-    'blood hunter': ['greatsword', 'hand crossbow']
+    barbarian: ['greataxe', 'battleaxe'],
+    fighter: ['longsword', 'shield'],
+    paladin: ['longsword', 'mace', 'shield'],
+    ranger: ['longbow', 'shortsword'],
+    rogue: ['rapier', 'dagger'],
+    bard: ['rapier', 'dagger'],
+    cleric: ['mace', 'shield'],
+    druid: ['quarterstaff', 'scimitar'],
+    monk: ['quarterstaff', 'unarmed strikes'],
+    sorcerer: ['light crossbow', 'dagger'],
+    warlock: ['light crossbow', 'eldritch blast'],
+    wizard: ['quarterstaff', 'dagger'],
+    artificer: ['hand crossbow', 'simple weapon'],
+    'blood hunter': ['greatsword', 'hand crossbow'],
   };
 
   const weapons = classWeaponsMap[characterClass.toLowerCase()] || ['appropriate weapons'];
   return weapons;
 };
 
-const extractWeaponsFromEnhancements = (enhancementSelections: EnhancementSelection[]): string[] => {
+const extractWeaponsFromEnhancements = (
+  enhancementSelections: EnhancementSelection[],
+): string[] => {
   const weapons: string[] = [];
 
-  enhancementSelections.forEach(selection => {
-    const value = Array.isArray(selection.value) ? selection.value.join(' ') : String(selection.value);
+  enhancementSelections.forEach((selection) => {
+    const value = Array.isArray(selection.value)
+      ? selection.value.join(' ')
+      : String(selection.value);
     const combined = `${value} ${selection.customValue || ''}`.toLowerCase();
 
     if (combined.includes('sword') || combined.includes('blade')) weapons.push('sword');
@@ -325,7 +374,8 @@ const extractWeaponsFromEnhancements = (enhancementSelections: EnhancementSelect
     if (combined.includes('bow') || combined.includes('arrow')) weapons.push('bow');
     if (combined.includes('dagger') || combined.includes('knife')) weapons.push('dagger');
     if (combined.includes('mace') || combined.includes('hammer')) weapons.push('mace');
-    if (combined.includes('staff') || combined.includes('quarterstaff')) weapons.push('quarterstaff');
+    if (combined.includes('staff') || combined.includes('quarterstaff'))
+      weapons.push('quarterstaff');
     if (combined.includes('crossbow')) weapons.push('crossbow');
     if (combined.includes('spear') || combined.includes('lance')) weapons.push('spear');
   });
@@ -336,14 +386,26 @@ const extractWeaponsFromEnhancements = (enhancementSelections: EnhancementSelect
 const summarizeOutfit = (outfitParts: string[]): string => {
   if (outfitParts.length === 0) return '';
 
-  const armorTypes = outfitParts.filter(part =>
-    part.includes('armor') || part.includes('chainmail') || part.includes('plate') || part.includes('leather')
+  const armorTypes = outfitParts.filter(
+    (part) =>
+      part.includes('armor') ||
+      part.includes('chainmail') ||
+      part.includes('plate') ||
+      part.includes('leather'),
   );
-  const clothingTypes = outfitParts.filter(part =>
-    part.includes('robe') || part.includes('cloak') || part.includes('vestments') || part.includes('clothing')
+  const clothingTypes = outfitParts.filter(
+    (part) =>
+      part.includes('robe') ||
+      part.includes('cloak') ||
+      part.includes('vestments') ||
+      part.includes('clothing'),
   );
-  const accessories = outfitParts.filter(part =>
-    part.includes('symbol') || part.includes('focus') || part.includes('instrument') || part.includes('book')
+  const accessories = outfitParts.filter(
+    (part) =>
+      part.includes('symbol') ||
+      part.includes('focus') ||
+      part.includes('instrument') ||
+      part.includes('book'),
   );
 
   const summaryParts: string[] = [];
@@ -358,17 +420,21 @@ const summarizeOutfit = (outfitParts: string[]): string => {
 const summarizeWeapons = (weaponParts: string[]): string => {
   if (weaponParts.length === 0) return '';
 
-  const primaryWeapons = weaponParts.filter(w =>
-    w.includes('sword') || w.includes('axe') || w.includes('staff') || w.includes('bow')
+  const primaryWeapons = weaponParts.filter(
+    (w) => w.includes('sword') || w.includes('axe') || w.includes('staff') || w.includes('bow'),
   );
-  const summary = primaryWeapons.length > 0
-    ? `armed with ${primaryWeapons.join(' and ')}`
-    : `armed with ${weaponParts[0]}`;
+  const summary =
+    primaryWeapons.length > 0
+      ? `armed with ${primaryWeapons.join(' and ')}`
+      : `armed with ${weaponParts[0]}`;
 
   return summary;
 };
 
-const buildCharacterDescriptionSegment = (characterData: CharacterPromptData, extracted: ExtractedDetails): string => {
+const buildCharacterDescriptionSegment = (
+  characterData: CharacterPromptData,
+  extracted: ExtractedDetails,
+): string => {
   const descParts: string[] = [];
 
   const raceDescription = characterData.subrace
@@ -417,7 +483,9 @@ const buildCharacterDescriptionSegment = (characterData: CharacterPromptData, ex
     descParts.push(getAlignmentPrompt(characterData.alignment));
   }
 
-  const personalityVisuals = extractVisualPersonalityTraits(characterData.personality_notes || characterData.personality_traits);
+  const personalityVisuals = extractVisualPersonalityTraits(
+    characterData.personality_notes || characterData.personality_traits,
+  );
   if (personalityVisuals.length > 0) {
     descParts.push(personalityVisuals.join(', '));
   }
@@ -425,7 +493,11 @@ const buildCharacterDescriptionSegment = (characterData: CharacterPromptData, ex
   return descParts.join(', ');
 };
 
-const buildCharacterConcept = (characterData: CharacterPromptData, extracted: ExtractedDetails, theme: string): string => {
+const buildCharacterConcept = (
+  characterData: CharacterPromptData,
+  extracted: ExtractedDetails,
+  theme: string,
+): string => {
   const conceptParts: string[] = [];
 
   if (characterData.race && characterData.class) {
@@ -467,7 +539,9 @@ const buildCharacterConcept = (characterData: CharacterPromptData, extracted: Ex
   const weaponSummary = summarizeWeapons(weaponParts);
   if (weaponSummary) conceptParts.push(weaponSummary);
 
-  const personalityVisuals = extractVisualPersonalityTraits(characterData.personality_traits || characterData.personality_notes);
+  const personalityVisuals = extractVisualPersonalityTraits(
+    characterData.personality_traits || characterData.personality_notes,
+  );
   if (personalityVisuals.length > 0) conceptParts.push(...personalityVisuals);
 
   if (extracted.distinguishingMarks.length > 0) conceptParts.push(...extracted.distinguishingMarks);
@@ -479,12 +553,12 @@ const buildCharacterConcept = (characterData: CharacterPromptData, extracted: Ex
 const getArtStylePrompt = (artStyle: ImagePromptOptions['artStyle']): string => {
   const styleMap: Record<ImagePromptOptions['artStyle'], string> = {
     'fantasy-art': 'fantasy art style, detailed digital painting, epic fantasy aesthetic',
-    'anime': 'anime art style, cel-shaded, Japanese animation style, vibrant colors',
-    'realistic': 'photorealistic style, highly detailed, lifelike rendering',
+    anime: 'anime art style, cel-shaded, Japanese animation style, vibrant colors',
+    realistic: 'photorealistic style, highly detailed, lifelike rendering',
     'comic-book': 'comic book art style, bold lines, dynamic shading, superhero aesthetic',
-    'watercolor': 'watercolor painting style, soft washes, artistic brushstrokes',
-    'sketch': 'pencil sketch style, hand-drawn, artistic line work, monochromatic',
-    'oil-painting': 'oil painting style, classical art, rich textures, masterwork quality'
+    watercolor: 'watercolor painting style, soft washes, artistic brushstrokes',
+    sketch: 'pencil sketch style, hand-drawn, artistic line work, monochromatic',
+    'oil-painting': 'oil painting style, classical art, rich textures, masterwork quality',
   };
 
   return styleMap[artStyle];
@@ -492,20 +566,22 @@ const getArtStylePrompt = (artStyle: ImagePromptOptions['artStyle']): string => 
 
 export const buildCharacterDescriptionPrompt = (
   characterData: CharacterPromptData,
-  options: DescriptionPromptOptions = {}
+  options: DescriptionPromptOptions = {},
 ): string => {
   const {
     enhanceExisting = false,
     includeBackstory = true,
     includePersonality = true,
     includeAppearance = true,
-    tone = 'heroic'
+    tone = 'heroic',
   } = options;
 
   const promptParts: string[] = [];
 
   if (enhanceExisting && characterData.description) {
-    promptParts.push('Enhance and expand the following D&D character description with rich details:');
+    promptParts.push(
+      'Enhance and expand the following D&D character description with rich details:',
+    );
     promptParts.push(`Current description: "${characterData.description}"`);
   } else {
     promptParts.push('Create a detailed D&D character description for the following character:');
@@ -548,12 +624,14 @@ export const buildCharacterDescriptionPrompt = (
     flaws.length > 0 ||
     personalityNotes
   ) {
-    promptParts.push('(IMPORTANT: Use the provided personality traits, ideals, bonds, and flaws EXACTLY as given. These are the character\'s defining characteristics and should be incorporated prominently into the description and personality section)');
+    promptParts.push(
+      "(IMPORTANT: Use the provided personality traits, ideals, bonds, and flaws EXACTLY as given. These are the character's defining characteristics and should be incorporated prominently into the description and personality section)",
+    );
   }
 
   if (characterData.enhancementSelections && characterData.enhancementSelections.length > 0) {
     promptParts.push('\nCharacter Enhancements:');
-    characterData.enhancementSelections.forEach(selection => {
+    characterData.enhancementSelections.forEach((selection) => {
       if (Array.isArray(selection.value)) {
         promptParts.push(`- ${selection.value.join(', ')}`);
       } else {
@@ -561,15 +639,20 @@ export const buildCharacterDescriptionPrompt = (
       }
       if (selection.customValue) promptParts.push(`  Note: ${selection.customValue}`);
     });
-    promptParts.push('(These enhancements are core parts of the character\'s identity and should be prominently featured in the description, personality, and backstory)');
+    promptParts.push(
+      "(These enhancements are core parts of the character's identity and should be prominently featured in the description, personality, and backstory)",
+    );
   }
 
   if (characterData.enhancementEffects) {
     const effects = characterData.enhancementEffects;
     if (effects.traits?.length) promptParts.push(`Special Traits: ${effects.traits.join(', ')}`);
-    if (effects.languages?.length) promptParts.push(`Additional Languages: ${effects.languages.join(', ')}`);
-    if (effects.equipment?.length) promptParts.push(`Special Equipment: ${effects.equipment.join(', ')}`);
-    if (effects.skillBonus?.length) promptParts.push(`Skill Bonuses: ${effects.skillBonus.join(', ')}`);
+    if (effects.languages?.length)
+      promptParts.push(`Additional Languages: ${effects.languages.join(', ')}`);
+    if (effects.equipment?.length)
+      promptParts.push(`Special Equipment: ${effects.equipment.join(', ')}`);
+    if (effects.skillBonus?.length)
+      promptParts.push(`Skill Bonuses: ${effects.skillBonus.join(', ')}`);
   }
 
   if (characterData.ability_scores) {
@@ -587,44 +670,60 @@ export const buildCharacterDescriptionPrompt = (
 
   promptParts.push(`Tone: Write in a ${tone} style appropriate for D&D fantasy setting.`);
 
-  promptParts.push('\nPlease provide the following sections with EXACT formatting using bold markdown headers:');
+  promptParts.push(
+    '\nPlease provide the following sections with EXACT formatting using bold markdown headers:',
+  );
   promptParts.push('');
   promptParts.push('**DESCRIPTION:** A comprehensive overview of the character (2-3 sentences)');
   promptParts.push('');
 
   if (includeAppearance) {
-    promptParts.push('**APPEARANCE:** Detailed physical description including height, build, facial features, hair, eyes, scars, tattoos, and clothing style (3-4 sentences)');
+    promptParts.push(
+      '**APPEARANCE:** Detailed physical description including height, build, facial features, hair, eyes, scars, tattoos, and clothing style (3-4 sentences)',
+    );
     promptParts.push('');
   }
 
   if (includePersonality) {
-    promptParts.push('**PERSONALITY:** Character traits, mannerisms, speech patterns, motivations, fears, and quirks (3-4 sentences)');
+    promptParts.push(
+      '**PERSONALITY:** Character traits, mannerisms, speech patterns, motivations, fears, and quirks (3-4 sentences)',
+    );
     promptParts.push('');
   }
 
   if (includeBackstory) {
-    promptParts.push('**BACKSTORY:** Brief background story explaining how they became who they are, their origins, and what drives them to adventure (3-4 sentences)');
+    promptParts.push(
+      '**BACKSTORY:** Brief background story explaining how they became who they are, their origins, and what drives them to adventure (3-4 sentences)',
+    );
     promptParts.push('');
   }
 
-  promptParts.push('IMPORTANT: Always start each section with the bold header format shown above (e.g., **DESCRIPTION:**). Include all four section headers even if some sections are brief.');
+  promptParts.push(
+    'IMPORTANT: Always start each section with the bold header format shown above (e.g., **DESCRIPTION:**). Include all four section headers even if some sections are brief.',
+  );
 
   promptParts.push('\nGuidelines:');
   promptParts.push('- Use D&D 5E lore and terminology');
-  promptParts.push('- Make the character feel authentic to their SPECIFIED race and subrace (if provided)');
+  promptParts.push(
+    '- Make the character feel authentic to their SPECIFIED race and subrace (if provided)',
+  );
   promptParts.push('- Include specific details that make the character unique');
   promptParts.push('- Ensure the personality matches their background and alignment');
   promptParts.push('- Create hooks for future roleplay and storytelling');
-  promptParts.push('- NEVER assume details not explicitly provided (e.g., do not assume Hill Dwarf if only Dwarf is specified)');
+  promptParts.push(
+    '- NEVER assume details not explicitly provided (e.g., do not assume Hill Dwarf if only Dwarf is specified)',
+  );
   promptParts.push('- Only use the specific subrace if explicitly provided in the character data');
-  promptParts.push('- Base descriptions strictly on the provided information without making assumptions');
+  promptParts.push(
+    '- Base descriptions strictly on the provided information without making assumptions',
+  );
 
   return promptParts.join('\n');
 };
 
 export const buildCharacterImagePrompt = (
   characterData: CharacterPromptData,
-  options: ImagePromptOptions
+  options: ImagePromptOptions,
 ): string => {
   const { style, artStyle, theme } = options;
   const promptParts: string[] = [];
@@ -632,21 +731,31 @@ export const buildCharacterImagePrompt = (
 
   switch (style) {
     case 'portrait':
-      promptParts.push('D&D character portrait, head and shoulders view, facing forward or at slight angle');
+      promptParts.push(
+        'D&D character portrait, head and shoulders view, facing forward or at slight angle',
+      );
       break;
     case 'action':
-      promptParts.push('Dynamic D&D character action pose, showing character in combat or using abilities');
+      promptParts.push(
+        'Dynamic D&D character action pose, showing character in combat or using abilities',
+      );
       break;
     case 'full-body':
-      promptParts.push('Full body D&D character portrait, standing pose, complete outfit and equipment visible');
+      promptParts.push(
+        'Full body D&D character portrait, standing pose, complete outfit and equipment visible',
+      );
       break;
     case 'character-sheet': {
       const characterConcept = buildCharacterConcept(characterData, extracted, theme);
-      promptParts.push(`Character design sheet for ${characterConcept}, detailed with front, back, and side views, including close-up sketches of facial features and accessories, annotated with design notes and labeled components, drawn in blueprint style with glowing trim in ${theme}. Detailed line work on the face and hands, detailed anatomy of the character, detailed lines around the edges. Detailed character sketches with flat color and detailed line art illustration. Professional concept art style.`);
+      promptParts.push(
+        `Character design sheet for ${characterConcept}, detailed with front, back, and side views, including close-up sketches of facial features and accessories, annotated with design notes and labeled components, drawn in blueprint style with glowing trim in ${theme}. Detailed line work on the face and hands, detailed anatomy of the character, detailed lines around the edges. Detailed character sketches with flat color and detailed line art illustration. Professional concept art style.`,
+      );
       break;
     }
     case 'expression-sheet':
-      promptParts.push('D&D character expression sheet, same character with multiple facial expressions, happy, serious, angry, surprised, consistent character');
+      promptParts.push(
+        'D&D character expression sheet, same character with multiple facial expressions, happy, serious, angry, surprised, consistent character',
+      );
       break;
   }
 
@@ -657,12 +766,16 @@ export const buildCharacterImagePrompt = (
   }
 
   if (style === 'character-sheet' || style === 'expression-sheet') {
-    promptParts.push('Clean white background, organized layout, professional character reference, consistent character design across all views');
+    promptParts.push(
+      'Clean white background, organized layout, professional character reference, consistent character design across all views',
+    );
   } else {
     promptParts.push('Clean background, character as main focus, professional composition');
   }
 
-  promptParts.push('High detail, sharp focus, excellent lighting, rich colors, digital illustration quality');
+  promptParts.push(
+    'High detail, sharp focus, excellent lighting, rich colors, digital illustration quality',
+  );
 
   appendPhysicalTraitsImagePrompt(promptParts, characterData);
 
@@ -672,15 +785,19 @@ export const buildCharacterImagePrompt = (
 const mapAbilityScores = (character: Character): AbilityScoreRecord | null => {
   if (!character.abilityScores) return null;
   const record: AbilityScoreRecord = {};
-  (Object.entries(character.abilityScores) as Array<[string, { score?: number }]>).forEach(([key, ability]) => {
-    if (typeof ability?.score === 'number' && Number.isFinite(ability.score)) {
-      record[key] = ability.score;
-    }
-  });
+  (Object.entries(character.abilityScores) as Array<[string, { score?: number }]>).forEach(
+    ([key, ability]) => {
+      if (typeof ability?.score === 'number' && Number.isFinite(ability.score)) {
+        record[key] = ability.score;
+      }
+    },
+  );
   return Object.keys(record).length > 0 ? record : null;
 };
 
-export const toCharacterPromptData = (character: Character | null | undefined): CharacterPromptData => {
+export const toCharacterPromptData = (
+  character: Character | null | undefined,
+): CharacterPromptData => {
   if (!character) {
     return { name: 'Unnamed Character' };
   }
@@ -709,6 +826,6 @@ export const toCharacterPromptData = (character: Character | null | undefined): 
     weight: character.weight ?? null,
     eyes: character.eyes ?? null,
     skin: character.skin ?? null,
-    hair: character.hair ?? null
+    hair: character.hair ?? null,
   };
 };

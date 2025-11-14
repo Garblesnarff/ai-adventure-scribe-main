@@ -1,38 +1,26 @@
 /**
  * Attack Selection Panel Component
- * 
+ *
  * Provides an interface for selecting and executing weapon attacks in combat.
  * Shows available weapons, calculates attack bonuses, and handles attack execution.
  */
 
+import { Sword, Shield, Target, Zap, AlertTriangle } from 'lucide-react';
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
+import type { CombatParticipant, CombatEncounter } from '@/types/combat';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Sword, 
-  Shield, 
-  Target,
-  Zap,
-  AlertTriangle
-} from 'lucide-react';
-import { 
-  CombatParticipant, 
-  CombatEncounter,
-  Weapon 
-} from '@/types/combat';
-import { 
-  getWeaponAttackBonus, 
+import { Weapon } from '@/types/combat';
+import {
+  getWeaponAttackBonus,
   getWeaponDamageBonus,
   rollAttack,
   checkHit,
-  calculateAttackDamage
+  calculateAttackDamage,
 } from '@/utils/attackUtils';
 import { rollDice } from '@/utils/diceUtils';
 
@@ -51,14 +39,16 @@ interface AttackSelectionPanelProps {
 // Attack Selection Component
 // ===========================
 
-const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({ 
-  attacker, 
+const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
+  attacker,
   targets,
   encounter,
-  onAttackComplete 
+  onAttackComplete,
 }) => {
   const [selectedTarget, setSelectedTarget] = useState<CombatParticipant | null>(null);
-  const [selectedWeapon, setSelectedWeapon] = useState<'mainHand' | 'offHand' | 'unarmed' | null>(null);
+  const [selectedWeapon, setSelectedWeapon] = useState<'mainHand' | 'offHand' | 'unarmed' | null>(
+    null,
+  );
   const [attackResult, setAttackResult] = useState<{
     attackRoll: number;
     hit: boolean;
@@ -72,7 +62,7 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
   // Get available weapons
   const getAvailableWeapons = () => {
     const weapons = [];
-    
+
     if (attacker.mainHandWeapon) {
       weapons.push({
         id: 'mainHand',
@@ -80,10 +70,10 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
         damage: attacker.mainHandWeapon.damage,
         damageType: attacker.mainHandWeapon.damageType,
         properties: attacker.mainHandWeapon.properties,
-        attackBonus: attacker.mainHandWeapon.attackBonus
+        attackBonus: attacker.mainHandWeapon.attackBonus,
       });
     }
-    
+
     if (attacker.offHandWeapon) {
       weapons.push({
         id: 'offHand',
@@ -91,10 +81,10 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
         damage: attacker.offHandWeapon.damage,
         damageType: attacker.offHandWeapon.damageType,
         properties: attacker.offHandWeapon.properties,
-        attackBonus: attacker.offHandWeapon.attackBonus
+        attackBonus: attacker.offHandWeapon.attackBonus,
       });
     }
-    
+
     // Unarmed strike
     weapons.push({
       id: 'unarmed',
@@ -102,9 +92,9 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
       damage: '1',
       damageType: 'bludgeoning' as any,
       properties: {},
-      attackBonus: 0
+      attackBonus: 0,
     });
-    
+
     return weapons;
   };
 
@@ -125,7 +115,7 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
   // Execute attack
   const handleAttack = async () => {
     if (!selectedTarget || !selectedWeapon) return;
-    
+
     // Get selected weapon
     let weapon;
     if (selectedWeapon === 'mainHand' && attacker.mainHandWeapon) {
@@ -139,35 +129,36 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
         damage: '1',
         damageType: 'bludgeoning',
         properties: {},
-        attackBonus: 0
+        attackBonus: 0,
       };
     }
-    
+
     // Determine if this is an off-hand attack
     const isOffHand = selectedWeapon === 'offHand';
-    
+
     // Determine if this is a ranged attack
-    const isRanged = weapon.properties.thrown || 
-                     weapon.name.toLowerCase().includes('bow') || 
-                     weapon.name.toLowerCase().includes('crossbow');
-    
+    const isRanged =
+      weapon.properties.thrown ||
+      weapon.name.toLowerCase().includes('bow') ||
+      weapon.name.toLowerCase().includes('crossbow');
+
     // Roll attack
     const attackRollResult = rollAttack(attacker, selectedTarget, weapon, isOffHand, isRanged);
-    
+
     // Check if hit
     const hitResult = checkHit(
-      attackRollResult.roll.total, 
-      selectedTarget.armorClass, 
-      attackRollResult.roll.naturalRoll
+      attackRollResult.roll.total,
+      selectedTarget.armorClass,
+      attackRollResult.roll.naturalRoll,
     );
-    
+
     // Calculate damage if hit
     let damage = 0;
     let damageType: any = 'bludgeoning';
     let damageDescription = '';
     const sneakAttackDamage = 0;
     const sneakAttackDescription = '';
-    
+
     if (hitResult.hit) {
       const damageResult = calculateAttackDamage(
         weapon,
@@ -175,41 +166,38 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
         attackRollResult.roll.critical || false,
         {
           // Pass any additional options as needed
-        }
+        },
       );
-      
+
       damage = damageResult.totalAfterResistance;
       damageType = damageResult.damageType;
       damageDescription = `${damage} ${damageType} damage`;
     }
-    
+
     // Create action description
     let actionDescription = `${attacker.name} attacks ${selectedTarget.name} with ${weapon.name}`;
     if (attackRollResult.roll.critical) {
       actionDescription += ' (CRITICAL HIT!)';
     }
-    
+
     const action = {
       participantId: attacker.id,
       targetParticipantId: selectedTarget.id,
       actionType: 'attack' as const,
       description: actionDescription,
       attackRoll: attackRollResult.roll,
-      damageRolls: hitResult.hit ? [
-        (calculateAttackDamage(
-          weapon,
-          attacker,
-          attackRollResult.roll.critical || false,
-          {
-            // Pass any additional options as needed
-          }
-        ).rolls)
-      ] : [],
+      damageRolls: hitResult.hit
+        ? [
+            calculateAttackDamage(weapon, attacker, attackRollResult.roll.critical || false, {
+              // Pass any additional options as needed
+            }).rolls,
+          ]
+        : [],
       hit: hitResult.hit,
       damageDealt: hitResult.hit ? damage : 0,
       damageType: hitResult.hit ? damageType : undefined,
     };
-    
+
     // Add sneak attack info to description if applicable
     if (hitResult.hit && sneakAttackDamage > 0) {
       action.description += ` [${damageDescription} + ${sneakAttackDescription}]`;
@@ -225,12 +213,12 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
       fumble: hitResult.fumble,
       damage,
       damageType,
-      description: action.description
+      description: action.description,
     });
-    
+
     // Record action in combat log
-    await encounter.dispatchCombatLogEvent({type: 'addAction', data: action});
-    
+    await encounter.dispatchCombatLogEvent({ type: 'addAction', data: action });
+
     // If there's an onAttackComplete callback, call it
     if (onAttackComplete) {
       onAttackComplete();
@@ -297,7 +285,7 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {targets
-              .filter(target => target.id !== attacker.id && target.currentHitPoints > 0)
+              .filter((target) => target.id !== attacker.id && target.currentHitPoints > 0)
               .map((target) => (
                 <Button
                   key={target.id}
@@ -342,10 +330,7 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
             <Zap className="w-4 h-4 mr-2" />
             Execute Attack
           </Button>
-          <Button
-            variant="outline"
-            onClick={resetSelection}
-          >
+          <Button variant="outline" onClick={resetSelection}>
             Reset
           </Button>
         </div>
@@ -378,15 +363,16 @@ const AttackSelectionPanel: React.FC<AttackSelectionPanelProps> = ({
                   </Badge>
                 )}
               </div>
-              
+
               <p className="text-sm mb-2">{attackResult.description}</p>
-              
+
               {attackResult.hit && (
                 <div className="text-sm">
-                  <span className="font-medium">Damage:</span> {attackResult.damage} {attackResult.damageType}
+                  <span className="font-medium">Damage:</span> {attackResult.damage}{' '}
+                  {attackResult.damageType}
                 </div>
               )}
-              
+
               <div className="text-sm mt-2">
                 <span className="font-medium">Roll:</span> {attackResult.attackRoll}
               </div>

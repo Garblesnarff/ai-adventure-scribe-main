@@ -1,11 +1,8 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 
 interface VolumeButtonProps {
   isMuted: boolean;
@@ -33,10 +30,11 @@ export const VolumeButton: React.FC<VolumeButtonProps> = ({
             isSpeaking ? 'animate-pulse ring-2 ring-primary shadow-lg shadow-primary/50' : ''
           }`}
         >
-          {isMuted ? 
-            <VolumeX className="h-4 w-4 text-primary" /> : 
+          {isMuted ? (
+            <VolumeX className="h-4 w-4 text-primary" />
+          ) : (
             <Volume2 className="h-4 w-4 text-primary" />
-          }
+          )}
         </Button>
       </TooltipTrigger>
       <TooltipContent>

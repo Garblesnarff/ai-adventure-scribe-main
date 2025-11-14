@@ -13,26 +13,28 @@ export const useAutoScroll = () => {
     // Small delay to allow UI updates to complete
     setTimeout(() => {
       // Look for the step navigation container
-      const navigationElement = document.querySelector('[data-testid="step-navigation"]') ||
-                               document.querySelector('.flex.justify-between') ||
-                               // Fallback: look for navigation buttons containing specific text
-                               Array.from(document.querySelectorAll('button')).find(btn =>
-                                 btn.textContent?.includes('Continue') ||
-                                 btn.textContent?.includes('Complete') ||
-                                 btn.textContent?.includes('Next')
-                               );
+      const navigationElement =
+        document.querySelector('[data-testid="step-navigation"]') ||
+        document.querySelector('.flex.justify-between') ||
+        // Fallback: look for navigation buttons containing specific text
+        Array.from(document.querySelectorAll('button')).find(
+          (btn) =>
+            btn.textContent?.includes('Continue') ||
+            btn.textContent?.includes('Complete') ||
+            btn.textContent?.includes('Next'),
+        );
 
       if (navigationElement) {
         navigationElement.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
-          inline: 'nearest'
+          inline: 'nearest',
         });
       } else {
         // Fallback: scroll to bottom of the page
         window.scrollTo({
           top: document.documentElement.scrollHeight,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
     }, 150);
@@ -43,9 +45,9 @@ export const useAutoScroll = () => {
    * Useful when navigating to new wizard steps
    */
   const scrollToTop = useCallback(() => {
-    window.scrollTo({ 
-      top: 0, 
-      behavior: 'smooth' 
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
     });
   }, []);
 
@@ -55,9 +57,9 @@ export const useAutoScroll = () => {
    */
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
-      window.scrollTo({ 
-        top: document.documentElement.scrollHeight, 
-        behavior: 'smooth' 
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth',
       });
     }, 100);
   }, []);
@@ -67,22 +69,25 @@ export const useAutoScroll = () => {
    * @param selector - CSS selector for the target element
    * @param options - ScrollIntoViewOptions for customizing scroll behavior
    */
-  const scrollToElement = useCallback((
-    selector: string, 
-    options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest' }
-  ) => {
-    setTimeout(() => {
-      const element = document.querySelector(selector);
-      if (element) {
-        element.scrollIntoView(options);
-      }
-    }, 100);
-  }, []);
+  const scrollToElement = useCallback(
+    (
+      selector: string,
+      options: ScrollIntoViewOptions = { behavior: 'smooth', block: 'nearest' },
+    ) => {
+      setTimeout(() => {
+        const element = document.querySelector(selector);
+        if (element) {
+          element.scrollIntoView(options);
+        }
+      }, 100);
+    },
+    [],
+  );
 
   return {
     scrollToNavigation,
     scrollToTop,
     scrollToBottom,
-    scrollToElement
+    scrollToElement,
   };
 };

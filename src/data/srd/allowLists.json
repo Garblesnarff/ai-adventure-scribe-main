@@ -685,12 +685,8 @@
     "Young White Dragon",
     "Zombie"
   ],
-  "backgrounds": [
-    "Acolyte"
-  ],
-  "feats": [
-    "Grappler"
-  ],
+  "backgrounds": ["Acolyte"],
+  "feats": ["Grappler"],
   "races": [
     "Dragonborn",
     "Dwarf",
@@ -702,12 +698,7 @@
     "Human",
     "Tiefling"
   ],
-  "subraces": [
-    "High Elf",
-    "Hill Dwarf",
-    "Lightfoot Halfling",
-    "Rock Gnome"
-  ],
+  "subraces": ["High Elf", "Hill Dwarf", "Lightfoot Halfling", "Rock Gnome"],
   "weapons": [],
   "armor": [],
   "languages": [
