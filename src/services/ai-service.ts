@@ -12,6 +12,8 @@ import logger from '@/lib/logger';
 import { SessionStateService } from './session-state-service';
 import { AgentOrchestrator } from './crewai/agent-orchestrator';
 import type { RollRequest } from '@/components/game/DiceRollRequest';
+import { PassiveSkillsService, getCharacterPassiveScores } from './passive-skills-service';
+import type { Character } from '@/types/character';
 
 // In-flight request deduplication with 2s TTL
 const inFlight = new Map<string, { ts: number; promise: Promise<any> }>();
@@ -892,6 +894,44 @@ ${classEquipment.weapons.join(', ')} | ${classEquipment.armor}
 **CRITICAL: USE EXACT WEAPON DICE from equipment list above for damage roll requests!**
 </equipment>`;
 
+            // Add passive skills for automatic scene awareness
+            try {
+              // Convert the character data to match Character interface
+              const characterForPassive: Character = {
+                id: char.id,
+                name: char.name,
+                level: char.level,
+                abilityScores: char.character_stats?.[0] ? {
+                  strength: { score: char.character_stats[0].strength || 10, modifier: Math.floor((char.character_stats[0].strength || 10 - 10) / 2), savingThrow: false },
+                  dexterity: { score: char.character_stats[0].dexterity || 10, modifier: Math.floor((char.character_stats[0].dexterity || 10 - 10) / 2), savingThrow: false },
+                  constitution: { score: char.character_stats[0].constitution || 10, modifier: Math.floor((char.character_stats[0].constitution || 10 - 10) / 2), savingThrow: false },
+                  intelligence: { score: char.character_stats[0].intelligence || 10, modifier: Math.floor((char.character_stats[0].intelligence || 10 - 10) / 2), savingThrow: false },
+                  wisdom: { score: char.character_stats[0].wisdom || 10, modifier: Math.floor((char.character_stats[0].wisdom || 10 - 10) / 2), savingThrow: false },
+                  charisma: { score: char.character_stats[0].charisma || 10, modifier: Math.floor((char.character_stats[0].charisma || 10 - 10) / 2), savingThrow: false },
+                } : undefined,
+                skillProficiencies: char.skill_proficiencies?.split(',').map(s => s.trim()) || [],
+              };
+              const passiveScores = getCharacterPassiveScores(characterForPassive);
+              contextPrompt += `
+
+<passive_skills>
+**D&D 5E PASSIVE SKILLS (Automatic Checks)**
+Passive Perception: ${passiveScores.perception} (notices hidden objects, creatures, traps without rolling)
+Passive Insight: ${passiveScores.insight} (senses deception, motives, emotional states automatically)
+Passive Investigation: ${passiveScores.investigation} (spots clues, patterns, logical inconsistencies passively)
+
+**DM GUIDANCE: Use these passive scores to proactively reveal information:**
+- If a scene has hidden elements with DC ≤ passive score, reveal them automatically
+- Example: "Your keen awareness (Passive Perception ${passiveScores.perception}) notices subtle scuff marks on the floor"
+- Example: "Something about their story doesn't add up (Passive Insight ${passiveScores.insight})"
+- Example: "The patterns in the dust suggest recent activity (Passive Investigation ${passiveScores.investigation})"
+- Use passive checks for things the character would naturally notice without actively searching
+- Reserve active checks (d20 rolls) for deliberate investigation or difficult perception tasks
+</passive_skills>`;
+            } catch (passiveSkillError) {
+              logger.warn('Failed to calculate passive skills (non-fatal):', passiveSkillError);
+            }
+
             contextPrompt += `
 </character_details>`;
           }
@@ -1054,11 +1094,6 @@ Examples:
 Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for player action or decision.
 </final_prompt>
 </response_structure>`;
-
-          // TODO: Implement Passive Skills. When a character enters a new scene, check their passive skills (e.g., Perception, Insight).
-          // If a skill is high enough to notice something hidden, proactively provide a small piece of information.
-          // For example: "As you enter the chamber, your keen eyes (Passive Perception) notice subtle scuff marks near the base of the statue."
-          // This will require adding passive skill calculation to the character details and modifying the prompt to use it.
 
           if (voiceContext) {
               contextPrompt += `\n**REMEMBER: Always respond in the JSON format with narration_segments for voice synthesis!**`;
