@@ -1,4 +1,5 @@
 import { featureFlags } from '@/config/featureFlags';
+import { logger } from '@/lib/logger';
 
 // Minimal type for analytics payloads
 export type AnalyticsPayload = Record<string, any>;
@@ -74,6 +75,38 @@ export const analytics = {
       campaignId: info.campaignId || 'unknown',
       art_style: info.artStyle || 'unknown',
     });
+  },
+
+  /**
+   * Track which character creation flow is being used
+   * @param flow - 'legacy' for direct character creation, 'new' for campaign-based flow
+   * @param info - Additional context (campaignId, userId)
+   */
+  async trackCharacterCreationFlow(
+    flow: 'legacy' | 'new',
+    info: { campaignId?: string; userId?: string } = {}
+  ): Promise<void> {
+    // Track to analytics providers
+    this.track('character_creation_flow', {
+      flow,
+      campaignId: info.campaignId || 'none',
+      timestamp: new Date().toISOString(),
+    });
+
+    // Track to database for metrics (client-side call)
+    try {
+      // Import supabase client dynamically to avoid circular dependencies
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      await supabase.from('character_creation_metrics').insert({
+        flow,
+        campaign_id: info.campaignId || null,
+        user_id: info.userId || null,
+      });
+    } catch (error) {
+      // Silently fail - analytics should not break the app
+      logger.warn('Failed to track character creation flow to database', { error });
+    }
   },
 
   detectArtStyle,
