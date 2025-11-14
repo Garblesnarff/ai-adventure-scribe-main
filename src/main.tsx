@@ -2,6 +2,8 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { v4 as uuidv4 } from 'uuid';
+import { initializeAnalytics } from './utils/analytics';
+import { validateEnvironment } from './utils/env-validation';
 
 // Basic frontend observability: request-id propagation and error reporting
 (function setupObservability() {
@@ -72,5 +74,11 @@ import { v4 as uuidv4 } from 'uuid';
     }
   });
 })();
+
+// Validate environment configuration
+validateEnvironment();
+
+// Initialize Google Analytics
+initializeAnalytics();
 
 createRoot(document.getElementById('root')!).render(<App />);
