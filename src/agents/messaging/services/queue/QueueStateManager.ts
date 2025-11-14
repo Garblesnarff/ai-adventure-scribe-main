@@ -16,8 +16,8 @@
  * @author AI Dungeon Master Team
  */
 
-// Project Services (assuming kebab-case filenames)
-import { IndexedDBService } from '../storage/indexed-db-service';
+// Project Services
+import { IndexedDBService } from '../storage/IndexedDBService';
 
 // Project Types
 import { QueuedMessage } from '../../types';

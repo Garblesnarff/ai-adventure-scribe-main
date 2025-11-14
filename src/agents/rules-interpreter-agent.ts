@@ -28,8 +28,8 @@ import { MessagePriority, MessageType } from './messaging/types';
 // Services
 import { AgentMessagingService } from './messaging/agent-messaging-service';
 import { ErrorHandlingService } from './error/services/error-handling-service'; // Assuming kebab-case
-import { ValidationResultsProcessor } from './rules/services/validation-results-processor';
-import { ValidationService } from './rules/services/validation-service';
+import { ValidationResultsProcessor } from './rules/services/ValidationResultsProcessor';
+import { ValidationService } from './rules/services/ValidationService';
 import { validateEncounterSpec } from './rules/validators/encounter-validator';
 import { EncounterSpec, MonsterDef } from '@/types/encounters';
 

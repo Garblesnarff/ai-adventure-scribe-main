@@ -20,11 +20,11 @@
  * @author AI Dungeon Master Team
  */
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { EventEmitter } from './event-emitter';
-import { MessageQueueService } from '../message-queue-service';
-import { OfflineStateService } from '../offline/offline-state-service';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { EventEmitter } from './EventEmitter';
+import { MessageQueueService } from '../MessageQueueService';
+import { OfflineStateService } from '../offline/OfflineStateService';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';

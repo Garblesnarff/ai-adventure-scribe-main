@@ -20,12 +20,12 @@
  * @author AI Dungeon Master Team
  */
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { MessageQueueService } from '../message-queue-service';
-import { QueueStateManager } from '../queue/queue-state-manager';
-import { MessageRecoveryService } from '../recovery/message-recovery-service';
-import { IndexedDBService } from '../storage/indexed-db-service';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { MessageQueueService } from '../MessageQueueService';
+import { QueueStateManager } from '../queue/QueueStateManager';
+import { MessageRecoveryService } from '../recovery/MessageRecoveryService';
+import { IndexedDBService } from '../storage/IndexedDBService';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';
