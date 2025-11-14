@@ -13,7 +13,7 @@ import {
   characterStats,
   levelProgression,
   experienceEvents,
-} from '../../../../db/schema.js';
+} from '../../../../db/schema/index.js';
 import { eq } from 'drizzle-orm';
 
 describe('ProgressionService', () => {

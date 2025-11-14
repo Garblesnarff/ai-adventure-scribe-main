@@ -17,8 +17,66 @@ export default function restRouter() {
   router.use(planRateLimit('default'));
 
   /**
-   * POST /v1/characters/:characterId/rest/short
-   * Take a short rest (1 hour, spend hit dice to recover HP)
+   * @openapi
+   * /v1/rest/characters/{characterId}/short:
+   *   post:
+   *     summary: Take a short rest
+   *     description: Character rests for 1 hour and can spend hit dice to recover HP
+   *     tags:
+   *       - Rest
+   *     parameters:
+   *       - in: path
+   *         name: characterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               hitDiceToSpend:
+   *                 type: integer
+   *                 minimum: 0
+   *                 description: Number of hit dice to spend during the rest
+   *               sessionId:
+   *                 type: string
+   *                 format: uuid
+   *               notes:
+   *                 type: string
+   *           examples:
+   *             withHitDice:
+   *               summary: Short rest with hit dice
+   *               value:
+   *                 hitDiceToSpend: 2
+   *                 sessionId: "session-123"
+   *                 notes: "Rested after goblin fight"
+   *     responses:
+   *       200:
+   *         description: Short rest completed successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 hpRestored:
+   *                   type: integer
+   *                 hitDiceSpent:
+   *                   type: integer
+   *                 hitDiceRemaining:
+   *                   type: integer
+   *                 featuresRestored:
+   *                   type: array
+   *                   items:
+   *                     type: string
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/characters/:characterId/short', async (req: Request, res: Response) => {
     const { characterId } = req.params;

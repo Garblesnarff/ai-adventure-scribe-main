@@ -5,7 +5,7 @@
  * consumables, weight/encumbrance, and attunement tracking.
  */
 
-import { InventoryItem, ConsumableUsageLog } from '../../../db/schema.js';
+import { InventoryItem, ConsumableUsageLog } from '../../../db/schema/index.js';
 
 /**
  * Item type discriminator

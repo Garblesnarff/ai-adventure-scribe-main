@@ -5,6 +5,256 @@
  */
 
 /**
+ * @openapi
+ * components:
+ *   schemas:
+ *     CombatEncounter:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         sessionId:
+ *           type: string
+ *           format: uuid
+ *         startedAt:
+ *           type: string
+ *           format: date-time
+ *         endedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         currentRound:
+ *           type: integer
+ *           minimum: 1
+ *         currentTurnOrder:
+ *           type: integer
+ *           minimum: 0
+ *         status:
+ *           type: string
+ *           enum: [active, paused, completed]
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     CombatParticipant:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         encounterId:
+ *           type: string
+ *           format: uuid
+ *         characterId:
+ *           type: string
+ *           format: uuid
+ *           nullable: true
+ *         npcId:
+ *           type: string
+ *           format: uuid
+ *           nullable: true
+ *         name:
+ *           type: string
+ *         initiative:
+ *           type: integer
+ *         initiativeModifier:
+ *           type: integer
+ *         turnOrder:
+ *           type: integer
+ *         isActive:
+ *           type: boolean
+ *         hpCurrent:
+ *           type: integer
+ *           nullable: true
+ *         hpMax:
+ *           type: integer
+ *           nullable: true
+ *         conditions:
+ *           type: array
+ *           items:
+ *             type: string
+ *
+ *     CombatState:
+ *       type: object
+ *       properties:
+ *         encounter:
+ *           $ref: '#/components/schemas/CombatEncounter'
+ *         participants:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/CombatParticipant'
+ *         turnOrder:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               participant:
+ *                 $ref: '#/components/schemas/CombatParticipant'
+ *               isCurrent:
+ *                 type: boolean
+ *               hasGone:
+ *                 type: boolean
+ *         currentParticipant:
+ *           allOf:
+ *             - $ref: '#/components/schemas/CombatParticipant'
+ *           nullable: true
+ *
+ *     AttackResult:
+ *       type: object
+ *       properties:
+ *         hit:
+ *           type: boolean
+ *         targetAC:
+ *           type: integer
+ *         totalAttackRoll:
+ *           type: integer
+ *         damage:
+ *           type: integer
+ *         damageType:
+ *           type: string
+ *           enum: [acid, bludgeoning, cold, fire, force, lightning, necrotic, piercing, poison, psychic, radiant, slashing, thunder]
+ *         finalDamage:
+ *           type: integer
+ *         targetNewHp:
+ *           type: integer
+ *         targetIsConscious:
+ *           type: boolean
+ *         targetIsDead:
+ *           type: boolean
+ *         isCritical:
+ *           type: boolean
+ *         effectiveResistance:
+ *           type: boolean
+ *         effectiveVulnerability:
+ *           type: boolean
+ *         effectiveImmunity:
+ *           type: boolean
+ *
+ *     ParticipantCondition:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         participantId:
+ *           type: string
+ *           format: uuid
+ *         conditionId:
+ *           type: string
+ *           format: uuid
+ *         conditionName:
+ *           type: string
+ *         durationType:
+ *           type: string
+ *           enum: [rounds, minutes, hours, until_save, permanent]
+ *         durationValue:
+ *           type: integer
+ *           nullable: true
+ *         saveDc:
+ *           type: integer
+ *           nullable: true
+ *         saveAbility:
+ *           type: string
+ *           enum: [strength, dexterity, constitution, intelligence, wisdom, charisma]
+ *           nullable: true
+ *         appliedAtRound:
+ *           type: integer
+ *         expiresAtRound:
+ *           type: integer
+ *           nullable: true
+ *         sourceDescription:
+ *           type: string
+ *           nullable: true
+ *         isActive:
+ *           type: boolean
+ *
+ *     DamageResult:
+ *       type: object
+ *       properties:
+ *         participantId:
+ *           type: string
+ *           format: uuid
+ *         originalDamage:
+ *           type: integer
+ *         modifiedDamage:
+ *           type: integer
+ *         tempHpLost:
+ *           type: integer
+ *         hpLost:
+ *           type: integer
+ *         newCurrentHp:
+ *           type: integer
+ *         newTempHp:
+ *           type: integer
+ *         isConscious:
+ *           type: boolean
+ *         isDead:
+ *           type: boolean
+ *         wasResisted:
+ *           type: boolean
+ *         wasVulnerable:
+ *           type: boolean
+ *         wasImmune:
+ *           type: boolean
+ *         massiveDamage:
+ *           type: boolean
+ *
+ *     HealingResult:
+ *       type: object
+ *       properties:
+ *         participantId:
+ *           type: string
+ *           format: uuid
+ *         healingAmount:
+ *           type: integer
+ *         healingApplied:
+ *           type: integer
+ *         overheal:
+ *           type: integer
+ *         newCurrentHp:
+ *           type: integer
+ *         wasRevived:
+ *           type: boolean
+ *         isConscious:
+ *           type: boolean
+ *
+ *     DeathSaveResult:
+ *       type: object
+ *       properties:
+ *         participantId:
+ *           type: string
+ *           format: uuid
+ *         roll:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 20
+ *         isSuccess:
+ *           type: boolean
+ *         isCritical:
+ *           type: boolean
+ *         successes:
+ *           type: integer
+ *           minimum: 0
+ *           maximum: 3
+ *         failures:
+ *           type: integer
+ *           minimum: 0
+ *           maximum: 3
+ *         isStabilized:
+ *           type: boolean
+ *         isDead:
+ *           type: boolean
+ *         wasRevived:
+ *           type: boolean
+ *         newCurrentHp:
+ *           type: integer
+ */
+
+/**
  * Combat encounter status
  */
 export type CombatStatus = 'active' | 'paused' | 'completed';
@@ -259,6 +509,8 @@ export interface AttackResult {
   effectiveImmunity: boolean;
   finalDamage: number;
   targetNewHp?: number;
+  targetIsConscious?: boolean;
+  targetIsDead?: boolean;
   isCritical: boolean;
   isNaturalOne: boolean;
   isNaturalTwenty: boolean;
@@ -406,8 +658,8 @@ export interface MechanicalEffects {
   cannot_attack_charmer?: boolean;
   social_checks_by_charmer?: AdvantageType;
 
-  // Additional custom effects
-  [key: string]: any;
+  // Additional custom effects (allow for extensibility)
+  [key: string]: string | number | boolean | undefined;
 }
 
 /**

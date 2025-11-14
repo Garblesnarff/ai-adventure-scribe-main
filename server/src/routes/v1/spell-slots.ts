@@ -25,8 +25,47 @@ export default function spellSlotsRouter() {
   router.use(planRateLimit('default'));
 
   /**
-   * GET /v1/characters/:characterId/spell-slots
-   * Get all spell slots for a character
+   * @openapi
+   * /v1/characters/{characterId}/spell-slots:
+   *   get:
+   *     summary: Get all spell slots for a character
+   *     description: Retrieves current and maximum spell slots for all levels (1-9)
+   *     tags:
+   *       - Spell Slots
+   *     parameters:
+   *       - in: path
+   *         name: characterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Character ID
+   *     responses:
+   *       200:
+   *         description: Spell slots retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 type: object
+   *                 properties:
+   *                   level:
+   *                     type: integer
+   *                     minimum: 1
+   *                     maximum: 9
+   *                   current:
+   *                     type: integer
+   *                     minimum: 0
+   *                   max:
+   *                     type: integer
+   *                     minimum: 0
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.get('/characters/:characterId/spell-slots', async (req: Request, res: Response) => {
     const { characterId } = req.params;

@@ -15,7 +15,7 @@ import {
   characterStats,
   type RestEvent,
   type CharacterHitDice,
-} from '../../../db/schema.js';
+} from '../../../db/schema/index.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type {
   RestType,
@@ -26,6 +26,7 @@ import type {
   HitDieType,
   HIT_DICE_BY_CLASS,
 } from '../types/rest.js';
+import { NotFoundError, ValidationError, BusinessLogicError } from '../lib/errors.js';
 
 /**
  * Hit dice by class mapping
@@ -147,7 +148,7 @@ export class RestService {
     preRolledValues?: number[]
   ): Promise<SpendHitDiceResult> {
     if (count < 0) {
-      throw new Error('Cannot spend negative hit dice');
+      throw new ValidationError('Cannot spend negative hit dice', { count });
     }
 
     if (count === 0) {
@@ -168,11 +169,11 @@ export class RestService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     if (!character.stats) {
-      throw new Error(`Character ${characterId} has no stats`);
+      throw new BusinessLogicError('Character has no stats', { characterId });
     }
 
     const conModifier = this.calculateConModifier(character.stats.constitution);
@@ -185,8 +186,9 @@ export class RestService {
     );
 
     if (count > availableCount) {
-      throw new Error(
-        `Cannot spend ${count} hit dice. Only ${availableCount} available.`
+      throw new BusinessLogicError(
+        `Cannot spend ${count} hit dice. Only ${availableCount} available.`,
+        { requested: count, available: availableCount }
       );
     }
 
@@ -359,7 +361,7 @@ export class RestService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     // Spend hit dice if requested
@@ -421,7 +423,7 @@ export class RestService {
     });
 
     if (!character) {
-      throw new Error(`Character ${characterId} not found`);
+      throw new NotFoundError('Character', characterId);
     }
 
     // Note: HP restoration would be handled by updating character's current HP

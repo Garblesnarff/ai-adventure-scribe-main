@@ -21,8 +21,72 @@ export default function progressionRouter() {
   router.use(planRateLimit('default'));
 
   /**
-   * POST /v1/characters/:characterId/experience/award
-   * Award XP to a character
+   * @openapi
+   * /v1/progression/characters/{characterId}/experience/award:
+   *   post:
+   *     summary: Award experience points to a character
+   *     description: Adds XP to a character and checks for level-up eligibility
+   *     tags:
+   *       - Progression
+   *     parameters:
+   *       - in: path
+   *         name: characterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - xp
+   *               - source
+   *             properties:
+   *               xp:
+   *                 type: integer
+   *                 minimum: 0
+   *                 description: Amount of XP to award
+   *               source:
+   *                 type: string
+   *                 enum: [combat, quest, roleplay, milestone, other]
+   *               description:
+   *                 type: string
+   *               sessionId:
+   *                 type: string
+   *                 format: uuid
+   *           examples:
+   *             combatXP:
+   *               summary: XP from combat encounter
+   *               value:
+   *                 xp: 450
+   *                 source: "combat"
+   *                 description: "Defeated goblin war band"
+   *                 sessionId: "session-123"
+   *     responses:
+   *       200:
+   *         description: XP awarded successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 totalXP:
+   *                   type: integer
+   *                 currentLevel:
+   *                   type: integer
+   *                 canLevelUp:
+   *                   type: boolean
+   *                 xpForNextLevel:
+   *                   type: integer
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/characters/:characterId/experience/award', async (req: Request, res: Response) => {
     const { characterId } = req.params;

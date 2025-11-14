@@ -6,7 +6,7 @@
  */
 
 import { eq, and, asc, desc, sql } from 'drizzle-orm';
-import { db } from '../../../src/infrastructure/database/index.js';
+import { db } from '../../../db/client.js';
 import {
   combatEncounters,
   combatParticipants,
@@ -14,7 +14,7 @@ import {
   type NewCombatEncounter,
   type CombatParticipant,
   type NewCombatParticipant,
-} from '../../../db/combat-schema.js';
+} from '../../../db/schema/index.js';
 import type {
   CombatState,
   CreateParticipantInput,
@@ -23,6 +23,7 @@ import type {
   AdvanceTurnResult,
   ReorderInitiativeInput,
 } from '../types/combat.js';
+import { NotFoundError, InternalServerError, BusinessLogicError } from '../lib/errors.js';
 
 /**
  * Roll a d20 for initiative
@@ -60,7 +61,7 @@ export class CombatInitiativeService {
       .returning();
 
     if (!encounter) {
-      throw new Error('Failed to create combat encounter');
+      throw new InternalServerError('Failed to create combat encounter');
     }
 
     // Add participants
@@ -105,7 +106,7 @@ export class CombatInitiativeService {
       .returning();
 
     if (!participant) {
-      throw new Error('Failed to add combat participant');
+      throw new InternalServerError('Failed to add combat participant');
     }
 
     return participant;
@@ -134,7 +135,7 @@ export class CombatInitiativeService {
     });
 
     if (!participant) {
-      throw new Error('Participant not found');
+      throw new NotFoundError('Participant', participantId);
     }
 
     // Use provided roll or roll d20
@@ -153,7 +154,7 @@ export class CombatInitiativeService {
       .returning();
 
     if (!updated) {
-      throw new Error('Failed to update initiative');
+      throw new InternalServerError('Failed to update initiative');
     }
 
     // Recalculate turn order
@@ -209,11 +210,11 @@ export class CombatInitiativeService {
     });
 
     if (!encounter) {
-      throw new Error('Encounter not found');
+      throw new NotFoundError('Combat encounter', encounterId);
     }
 
     if (encounter.status !== 'active') {
-      throw new Error('Encounter is not active');
+      throw new BusinessLogicError('Encounter is not active', { status: encounter.status });
     }
 
     // Get current participant
@@ -229,7 +230,7 @@ export class CombatInitiativeService {
     });
 
     if (participants.length === 0) {
-      throw new Error('No active participants in combat');
+      throw new BusinessLogicError('No active participants in combat');
     }
 
     // Calculate next turn
@@ -270,7 +271,7 @@ export class CombatInitiativeService {
     });
 
     if (!encounter) {
-      throw new Error('Encounter not found');
+      throw new NotFoundError('Combat encounter', encounterId);
     }
 
     const participants = await db.query.combatParticipants.findMany({
@@ -329,7 +330,7 @@ export class CombatInitiativeService {
       .returning();
 
     if (!updated) {
-      throw new Error('Failed to end combat encounter');
+      throw new InternalServerError('Failed to end combat encounter');
     }
 
     return updated;
@@ -346,7 +347,7 @@ export class CombatInitiativeService {
     });
 
     if (!encounter) {
-      throw new Error('Encounter not found');
+      throw new NotFoundError('Combat encounter', encounterId);
     }
 
     const participants = await db.query.combatParticipants.findMany({
@@ -418,7 +419,7 @@ export class CombatInitiativeService {
       .returning();
 
     if (!updated) {
-      throw new Error('Failed to update participant HP');
+      throw new InternalServerError('Failed to update participant HP');
     }
 
     return updated;

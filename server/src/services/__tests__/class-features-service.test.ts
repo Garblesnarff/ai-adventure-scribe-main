@@ -14,7 +14,7 @@ import {
   characterFeatures,
   characterSubclasses,
   featureUsageLog,
-} from '../../../../db/schema.js';
+} from '../../../../db/schema/index.js';
 import { eq, and } from 'drizzle-orm';
 
 describe('ClassFeaturesService', () => {

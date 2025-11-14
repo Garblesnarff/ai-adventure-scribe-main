@@ -27,6 +27,7 @@ import type {
   ClassSpellcasting,
   WarlockPactMagic,
 } from '../types/spell-slots.js';
+import { NotFoundError, ValidationError, BusinessLogicError, InternalServerError } from '../lib/errors.js';
 
 /**
  * D&D 5E Full Caster Spell Slot Progression (PHB pg. 114)
@@ -123,12 +124,12 @@ export class SpellSlotsService {
    */
   static calculateSpellSlots(className: ClassName, level: number): SpellSlotCalculation {
     if (level < 1 || level > 20) {
-      throw new Error('Level must be between 1 and 20');
+      throw new ValidationError('Level must be between 1 and 20', { level });
     }
 
     const classInfo = CLASS_SPELLCASTING[className];
     if (!classInfo) {
-      throw new Error(`Unknown class: ${className}`);
+      throw new ValidationError(`Unknown class: ${className}`, { className });
     }
 
     const casterType = classInfo.casterType;
@@ -275,7 +276,7 @@ export class SpellSlotsService {
       .order('spell_level', { ascending: true });
 
     if (error) {
-      throw new Error(`Failed to fetch spell slots: ${error.message}`);
+      throw new InternalServerError(`Failed to fetch spell slots: ${error.message}`, { error });
     }
 
     const slots: SpellSlot[] = (data || []).map((row) => ({
@@ -310,16 +311,16 @@ export class SpellSlotsService {
 
     // Validate spell levels
     if (spellLevel < 0 || spellLevel > 9) {
-      throw new Error('Spell level must be between 0 and 9');
+      throw new ValidationError('Spell level must be between 0 and 9', { spellLevel });
     }
 
     if (slotLevelUsed < 1 || slotLevelUsed > 9) {
-      throw new Error('Slot level must be between 1 and 9');
+      throw new ValidationError('Slot level must be between 1 and 9', { slotLevelUsed });
     }
 
     // Check if upcasting is valid
     if (spellLevel > 0 && slotLevelUsed < spellLevel) {
-      throw new Error(`Cannot use a level ${slotLevelUsed} slot for a level ${spellLevel} spell`);
+      throw new ValidationError(`Cannot use a level ${slotLevelUsed} slot for a level ${spellLevel} spell`, { spellLevel, slotLevelUsed });
     }
 
     const wasUpcast = spellLevel > 0 && slotLevelUsed > spellLevel;
@@ -333,12 +334,16 @@ export class SpellSlotsService {
       .single();
 
     if (fetchError || !slotData) {
-      throw new Error(`Character does not have level ${slotLevelUsed} spell slots`);
+      throw new NotFoundError(`Level ${slotLevelUsed} spell slots for character`, characterId);
     }
 
     // Check if slot is available
     if (slotData.used_slots >= slotData.total_slots) {
-      throw new Error(`No available level ${slotLevelUsed} spell slots`);
+      throw new BusinessLogicError(`No available level ${slotLevelUsed} spell slots`, {
+        level: slotLevelUsed,
+        used: slotData.used_slots,
+        total: slotData.total_slots
+      });
     }
 
     // Use the slot
@@ -350,7 +355,7 @@ export class SpellSlotsService {
       .single();
 
     if (updateError || !updatedSlot) {
-      throw new Error(`Failed to use spell slot: ${updateError?.message}`);
+      throw new InternalServerError(`Failed to use spell slot: ${updateError?.message}`, { updateError });
     }
 
     // Log the usage
@@ -367,7 +372,7 @@ export class SpellSlotsService {
       .single();
 
     if (logError || !logEntry) {
-      throw new Error(`Failed to log spell usage: ${logError?.message}`);
+      throw new InternalServerError(`Failed to log spell usage: ${logError?.message}`, { logError });
     }
 
     const slot: SpellSlot = {
@@ -462,7 +467,7 @@ export class SpellSlotsService {
     // Filter by specific level if provided
     if (level !== undefined) {
       if (level < 1 || level > 9) {
-        throw new Error('Spell level must be between 1 and 9');
+        throw new ValidationError('Spell level must be between 1 and 9', { level });
       }
       query = query.eq('spell_level', level);
     }
@@ -470,7 +475,7 @@ export class SpellSlotsService {
     const { data: slots, error: fetchError } = await query;
 
     if (fetchError) {
-      throw new Error(`Failed to fetch spell slots: ${fetchError.message}`);
+      throw new InternalServerError(`Failed to fetch spell slots: ${fetchError.message}`, { fetchError });
     }
 
     if (!slots || slots.length === 0) {
@@ -511,7 +516,7 @@ export class SpellSlotsService {
         .eq('id', slot.id);
 
       if (updateError) {
-        throw new Error(`Failed to restore spell slots: ${updateError.message}`);
+        throw new InternalServerError(`Failed to restore spell slots: ${updateError.message}`, { updateError });
       }
 
       slotsRestored.push({
@@ -552,7 +557,7 @@ export class SpellSlotsService {
     const { data, error, count } = await dbQuery;
 
     if (error) {
-      throw new Error(`Failed to fetch usage history: ${error.message}`);
+      throw new InternalServerError(`Failed to fetch usage history: ${error.message}`, { error });
     }
 
     const entries: SpellSlotUsageLog[] = (data || []).map((row) => ({
@@ -608,7 +613,7 @@ export class SpellSlotsService {
       const { error } = await supabaseService.from('character_spell_slots').insert(insertData);
 
       if (error) {
-        throw new Error(`Failed to initialize spell slots: ${error.message}`);
+        throw new InternalServerError(`Failed to initialize spell slots: ${error.message}`, { error });
       }
     }
 

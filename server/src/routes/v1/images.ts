@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { requireAuth } from '../../middleware/auth.js';
 import { planRateLimit } from '../../middleware/rate-limit.js';
 import { supabaseService } from '../../lib/supabase.js';
-import { checkQuotaAndConsume } from '../../services/ai-usage-service.js';
+import { AIUsageService } from '../../services/ai-usage-service.js';
 import { getCircuitBreaker, CircuitOpenError } from '../../utils/circuit-breaker.js';
 
 /*
@@ -29,7 +29,7 @@ export default function imagesRouter() {
     // Quota check
     const userId = (req as any).user?.userId as string;
     const plan = (req as any).user?.plan as string || 'free';
-    const quota = await checkQuotaAndConsume({ userId, plan, type: 'image', units: 1 });
+    const quota = await AIUsageService.checkQuotaAndConsume({ userId, plan, type: 'image', units: 1 });
     if (!quota.allowed) {
       res.setHeader('Retry-After', String(Math.max(1, Math.ceil((new Date(quota.resetAt).getTime() - Date.now()) / 1000))));
       return res.status(402).json({ error: 'AI quota exceeded', remaining: quota.remaining, resetAt: quota.resetAt });

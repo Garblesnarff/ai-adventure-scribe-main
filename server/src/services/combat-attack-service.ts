@@ -11,8 +11,15 @@
  * @module server/services/combat-attack-service
  */
 
-import { Pool } from 'pg';
-import { createClient } from '../lib/db.js';
+import { db } from '../../../db/client.js';
+import {
+  weaponAttacks,
+  creatureStats,
+  type WeaponAttack,
+  type CreatureStats,
+} from '../../../db/schema/index.js';
+import { eq, or, desc } from 'drizzle-orm';
+import { CombatHPService } from './combat-hp-service.js';
 import type {
   AttackRollInput,
   AttackResult,
@@ -22,17 +29,13 @@ import type {
   DamageCalculationResult,
   SpellAttackInput,
   SpellAttackResult,
-  CreatureStats,
-  WeaponAttack,
   CreateWeaponAttackInput,
   DamageType,
 } from '../types/combat.js';
 
 export class CombatAttackService {
-  private db: Pool;
-
-  constructor(db?: Pool) {
-    this.db = db || createClient();
+  constructor() {
+    // No database client needed - using global db instance
   }
 
   /**
@@ -281,25 +284,39 @@ export class CombatAttackService {
       damageRoll,
     });
 
-    // TODO: Apply damage to target HP (integrate with HP service from Work Unit 1.2a)
-    // const newHp = await this.applyDamage(targetId, damageCalc.finalDamage);
+    // Apply damage to target HP
+    try {
+      const hpResult = await CombatHPService.applyDamage(targetId, {
+        damageAmount: damageCalc.finalDamage,
+        damageType: weapon.damageType,
+        sourceParticipantId: attackerId,
+        sourceDescription: weapon.name || 'attack',
+        ignoreResistances: true, // Already applied in damage calculation
+        ignoreImmunities: true,  // Already applied in damage calculation
+      });
 
-    return {
-      hit: true,
-      targetAC: targetStats.armorClass,
-      totalAttackRoll: hitCheck.totalAttackRoll,
-      damage: damageCalc.baseDamage,
-      damageType: weapon.damageType,
-      damageBeforeResistances: damageCalc.damageBeforeResistances,
-      effectiveResistance: damageCalc.effectiveResistance,
-      effectiveVulnerability: damageCalc.effectiveVulnerability,
-      effectiveImmunity: damageCalc.effectiveImmunity,
-      finalDamage: damageCalc.finalDamage,
-      // targetNewHp: newHp, // TODO: Add when HP service is available
-      isCritical: isCrit,
-      isNaturalOne: hitCheck.isNaturalOne,
-      isNaturalTwenty: hitCheck.isNaturalTwenty,
-    };
+      return {
+        hit: true,
+        targetAC: targetStats.armorClass,
+        totalAttackRoll: hitCheck.totalAttackRoll,
+        damage: damageCalc.baseDamage,
+        damageType: weapon.damageType,
+        damageBeforeResistances: damageCalc.damageBeforeResistances,
+        effectiveResistance: damageCalc.effectiveResistance,
+        effectiveVulnerability: damageCalc.effectiveVulnerability,
+        effectiveImmunity: damageCalc.effectiveImmunity,
+        finalDamage: damageCalc.finalDamage,
+        targetNewHp: hpResult.newCurrentHp,
+        targetIsConscious: hpResult.isConscious,
+        targetIsDead: hpResult.isDead,
+        isCritical: isCrit,
+        isNaturalOne: hitCheck.isNaturalOne,
+        isNaturalTwenty: hitCheck.isNaturalTwenty,
+      };
+    } catch (error) {
+      console.error('Failed to apply damage to HP:', error);
+      throw new Error('Attack succeeded but damage application failed');
+    }
   }
 
   /**
@@ -367,21 +384,39 @@ export class CombatAttackService {
             damageRoll,
           });
 
-          results.push({
-            hit: true,
-            targetAC: targetStats.armorClass,
-            totalAttackRoll: hitCheck.totalAttackRoll,
-            damage: damageCalc.baseDamage,
-            damageType,
-            damageBeforeResistances: damageCalc.damageBeforeResistances,
-            effectiveResistance: damageCalc.effectiveResistance,
-            effectiveVulnerability: damageCalc.effectiveVulnerability,
-            effectiveImmunity: damageCalc.effectiveImmunity,
-            finalDamage: damageCalc.finalDamage,
-            isCritical: hitCheck.isCritical || isCritical,
-            isNaturalOne: hitCheck.isNaturalOne,
-            isNaturalTwenty: hitCheck.isNaturalTwenty,
-          });
+          // Apply damage to target HP
+          try {
+            const hpResult = await CombatHPService.applyDamage(targetId, {
+              damageAmount: damageCalc.finalDamage,
+              damageType,
+              sourceParticipantId: casterId,
+              sourceDescription: spellName,
+              ignoreResistances: true, // Already applied in damage calculation
+              ignoreImmunities: true,  // Already applied in damage calculation
+            });
+
+            results.push({
+              hit: true,
+              targetAC: targetStats.armorClass,
+              totalAttackRoll: hitCheck.totalAttackRoll,
+              damage: damageCalc.baseDamage,
+              damageType,
+              damageBeforeResistances: damageCalc.damageBeforeResistances,
+              effectiveResistance: damageCalc.effectiveResistance,
+              effectiveVulnerability: damageCalc.effectiveVulnerability,
+              effectiveImmunity: damageCalc.effectiveImmunity,
+              finalDamage: damageCalc.finalDamage,
+              targetNewHp: hpResult.newCurrentHp,
+              targetIsConscious: hpResult.isConscious,
+              targetIsDead: hpResult.isDead,
+              isCritical: hitCheck.isCritical || isCritical,
+              isNaturalOne: hitCheck.isNaturalOne,
+              isNaturalTwenty: hitCheck.isNaturalTwenty,
+            });
+          } catch (error) {
+            console.error('Failed to apply spell attack damage to HP:', error);
+            throw new Error('Spell attack succeeded but damage application failed');
+          }
         }
       } else if (saveDC !== undefined && saveRolls) {
         // Saving throw spell
@@ -405,21 +440,39 @@ export class CombatAttackService {
             ? Math.floor(damageCalc.finalDamage / 2)
             : damageCalc.finalDamage;
 
-          results.push({
-            hit: !savedSuccessfully,
-            targetAC: 0, // Not applicable for saves
-            totalAttackRoll: saveRoll,
-            damage: damageCalc.baseDamage,
-            damageType,
-            damageBeforeResistances: damageCalc.damageBeforeResistances,
-            effectiveResistance: damageCalc.effectiveResistance,
-            effectiveVulnerability: damageCalc.effectiveVulnerability,
-            effectiveImmunity: damageCalc.effectiveImmunity,
-            finalDamage,
-            isCritical: false,
-            isNaturalOne: false,
-            isNaturalTwenty: false,
-          });
+          // Apply damage to target HP
+          try {
+            const hpResult = await CombatHPService.applyDamage(targetId, {
+              damageAmount: finalDamage,
+              damageType,
+              sourceParticipantId: casterId,
+              sourceDescription: spellName,
+              ignoreResistances: true, // Already applied in damage calculation
+              ignoreImmunities: true,  // Already applied in damage calculation
+            });
+
+            results.push({
+              hit: !savedSuccessfully,
+              targetAC: 0, // Not applicable for saves
+              totalAttackRoll: saveRoll,
+              damage: damageCalc.baseDamage,
+              damageType,
+              damageBeforeResistances: damageCalc.damageBeforeResistances,
+              effectiveResistance: damageCalc.effectiveResistance,
+              effectiveVulnerability: damageCalc.effectiveVulnerability,
+              effectiveImmunity: damageCalc.effectiveImmunity,
+              finalDamage,
+              targetNewHp: hpResult.newCurrentHp,
+              targetIsConscious: hpResult.isConscious,
+              targetIsDead: hpResult.isDead,
+              isCritical: false,
+              isNaturalOne: false,
+              isNaturalTwenty: false,
+            });
+          } catch (error) {
+            console.error('Failed to apply spell save damage to HP:', error);
+            throw new Error('Spell save resolved but damage application failed');
+          }
         }
       }
     }
@@ -442,69 +495,59 @@ export class CombatAttackService {
       description,
     } = input;
 
-    const result = await this.db.query(
-      `INSERT INTO weapon_attacks (
-        character_id, name, attack_bonus, damage_dice, damage_bonus,
-        damage_type, properties, description
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *`,
-      [characterId, name, attackBonus, damageDice, damageBonus, damageType, properties, description]
-    );
+    const [weapon] = await db
+      .insert(weaponAttacks)
+      .values({
+        characterId,
+        name,
+        attackBonus,
+        damageDice,
+        damageBonus,
+        damageType,
+        properties,
+        description: description || null,
+      })
+      .returning();
 
-    return this.mapWeaponAttackRow(result.rows[0]);
+    return weapon;
   }
 
   /**
    * Get all weapon attacks for a character
    */
   async getCharacterWeapons(characterId: string): Promise<WeaponAttack[]> {
-    const result = await this.db.query(
-      `SELECT * FROM weapon_attacks WHERE character_id = $1 ORDER BY created_at DESC`,
-      [characterId]
-    );
+    const weapons = await db.query.weaponAttacks.findMany({
+      where: eq(weaponAttacks.characterId, characterId),
+      orderBy: [desc(weaponAttacks.createdAt)],
+    });
 
-    return result.rows.map(row => this.mapWeaponAttackRow(row));
+    return weapons;
   }
 
   /**
    * Get a specific weapon attack
    */
   async getWeaponAttack(weaponId: string): Promise<WeaponAttack | null> {
-    const result = await this.db.query(
-      `SELECT * FROM weapon_attacks WHERE id = $1`,
-      [weaponId]
-    );
+    const weapon = await db.query.weaponAttacks.findFirst({
+      where: eq(weaponAttacks.id, weaponId),
+    });
 
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return this.mapWeaponAttackRow(result.rows[0]);
+    return weapon || null;
   }
 
   /**
    * Get creature stats (AC, resistances, etc.)
    */
   async getCreatureStats(creatureId: string): Promise<CreatureStats | null> {
-    // Try to find by character_id first
-    let result = await this.db.query(
-      `SELECT * FROM creature_stats WHERE character_id = $1`,
-      [creatureId]
-    );
+    // Try to find by character_id or npc_id
+    const stats = await db.query.creatureStats.findFirst({
+      where: or(
+        eq(creatureStats.characterId, creatureId),
+        eq(creatureStats.npcId, creatureId)
+      ),
+    });
 
-    // If not found, try npc_id
-    if (result.rows.length === 0) {
-      result = await this.db.query(
-        `SELECT * FROM creature_stats WHERE npc_id = $1`,
-        [creatureId]
-      );
-    }
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    return this.mapCreatureStatsRow(result.rows[0]);
+    return stats || null;
   }
 
   /**
@@ -531,41 +574,6 @@ export class CombatAttackService {
     return total;
   }
 
-  /**
-   * Helper: Map database row to WeaponAttack
-   */
-  private mapWeaponAttackRow(row: any): WeaponAttack {
-    return {
-      id: row.id,
-      characterId: row.character_id,
-      name: row.name,
-      attackBonus: row.attack_bonus,
-      damageDice: row.damage_dice,
-      damageBonus: row.damage_bonus,
-      damageType: row.damage_type as DamageType,
-      properties: row.properties || [],
-      description: row.description,
-      createdAt: row.created_at,
-    };
-  }
-
-  /**
-   * Helper: Map database row to CreatureStats
-   */
-  private mapCreatureStatsRow(row: any): CreatureStats {
-    return {
-      id: row.id,
-      characterId: row.character_id,
-      npcId: row.npc_id,
-      armorClass: row.armor_class,
-      resistances: (row.resistances || []) as DamageType[],
-      vulnerabilities: (row.vulnerabilities || []) as DamageType[],
-      immunities: (row.immunities || []) as DamageType[],
-      conditionImmunities: row.condition_immunities || [],
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-  }
 }
 
 // Export singleton instance

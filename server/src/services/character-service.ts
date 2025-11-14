@@ -9,7 +9,7 @@
  */
 
 import { db } from '../../../db/client.js';
-import { characters, characterStats, campaigns, type Character, type NewCharacter } from '../../../db/schema.js';
+import { characters, characterStats, campaigns, type Character, type NewCharacter } from '../../../db/schema/index.js';
 import { eq, and, desc } from 'drizzle-orm';
 
 export class CharacterService {

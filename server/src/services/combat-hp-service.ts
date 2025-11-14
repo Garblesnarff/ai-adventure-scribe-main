@@ -16,8 +16,9 @@ import {
   combatEncounters,
   type CombatParticipantStatus,
   type CombatDamageLog,
-} from '../../../db/schema.js';
+} from '../../../db/schema/index.js';
 import { eq, and, desc } from 'drizzle-orm';
+import { NotFoundError, ValidationError, BusinessLogicError } from '../lib/errors.js';
 
 /**
  * Damage types in D&D 5E
@@ -121,11 +122,11 @@ export class CombatHPService {
     });
 
     if (!participant) {
-      throw new Error(`Participant ${participantId} not found`);
+      throw new NotFoundError('Participant', participantId);
     }
 
     if (!participant.status) {
-      throw new Error(`Participant ${participantId} has no status record`);
+      throw new BusinessLogicError('Participant has no status record', { participantId });
     }
 
     const status = participant.status;
@@ -241,7 +242,7 @@ export class CombatHPService {
     sourceDescription?: string
   ): Promise<HealingResult> {
     if (healingAmount < 0) {
-      throw new Error('Healing amount must be non-negative');
+      throw new ValidationError('Healing amount must be non-negative', { healingAmount });
     }
 
     const participant = await db.query.combatParticipants.findFirst({
@@ -252,7 +253,7 @@ export class CombatHPService {
     });
 
     if (!participant || !participant.status) {
-      throw new Error(`Participant ${participantId} not found`);
+      throw new NotFoundError('Participant', participantId);
     }
 
     const status = participant.status;
@@ -304,7 +305,7 @@ export class CombatHPService {
     tempHpAmount: number
   ): Promise<{ participantId: string; oldTempHp: number; newTempHp: number }> {
     if (tempHpAmount < 0) {
-      throw new Error('Temporary HP amount must be non-negative');
+      throw new ValidationError('Temporary HP amount must be non-negative', { tempHpAmount });
     }
 
     const participant = await db.query.combatParticipants.findFirst({
@@ -315,7 +316,7 @@ export class CombatHPService {
     });
 
     if (!participant || !participant.status) {
-      throw new Error(`Participant ${participantId} not found`);
+      throw new NotFoundError('Participant', participantId);
     }
 
     const status = participant.status;
@@ -354,7 +355,7 @@ export class CombatHPService {
     roll: number
   ): Promise<DeathSaveResult> {
     if (roll < 1 || roll > 20) {
-      throw new Error('Death save roll must be between 1 and 20');
+      throw new ValidationError('Death save roll must be between 1 and 20', { roll });
     }
 
     const participant = await db.query.combatParticipants.findFirst({
@@ -365,13 +366,13 @@ export class CombatHPService {
     });
 
     if (!participant || !participant.status) {
-      throw new Error(`Participant ${participantId} not found`);
+      throw new NotFoundError('Participant', participantId);
     }
 
     const status = participant.status;
 
     if (status.isConscious) {
-      throw new Error('Cannot roll death save for conscious participant');
+      throw new BusinessLogicError('Cannot roll death save for conscious participant', { participantId });
     }
 
     let successes = status.deathSavesSuccesses;
@@ -458,7 +459,7 @@ export class CombatHPService {
     });
 
     if (!participant || !participant.status) {
-      throw new Error(`Participant ${participantId} not found`);
+      throw new NotFoundError('Participant', participantId);
     }
 
     return participant.status.isConscious;

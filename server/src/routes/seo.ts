@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { createRateLimiter } from '../middleware/rate-limit.js';
-import { fetchPublishedBlogPosts } from '../services/blog-service.js';
+import { BlogService } from '../services/blog-service.js';
 import { getSiteConfig } from '../config/site.js';
 
-type BlogPosts = Awaited<ReturnType<typeof fetchPublishedBlogPosts>>;
+type BlogPosts = Awaited<ReturnType<typeof BlogService.fetchPublishedBlogPosts>>;
 
 export function seoRouter() {
   const router = Router();
@@ -11,7 +11,7 @@ export function seoRouter() {
   router.get('/sitemap.xml', async (_req, res) => {
     try {
       const site = getSiteConfig();
-      const posts = await fetchPublishedBlogPosts();
+      const posts = await BlogService.fetchPublishedBlogPosts();
       const urls = buildSitemap(site.url, posts);
       res.setHeader('Content-Type', 'application/xml');
       res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
@@ -25,7 +25,7 @@ export function seoRouter() {
   router.get('/rss.xml', async (_req, res) => {
     try {
       const site = getSiteConfig();
-      const posts = await fetchPublishedBlogPosts();
+      const posts = await BlogService.fetchPublishedBlogPosts();
       const rss = buildRssFeed(site.url, site.name, site.description, posts);
       res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=1800, stale-while-revalidate=43200');

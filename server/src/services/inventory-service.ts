@@ -20,7 +20,7 @@ import {
   type InventoryItem,
   type NewInventoryItem,
   type ConsumableUsageLog,
-} from '../../../db/schema.js';
+} from '../../../db/schema/index.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import type {
   CreateInventoryItemInput,

@@ -8,8 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { CombatInitiativeService } from '../combat-initiative-service.js';
 import { db } from '../../../../src/infrastructure/database/index.js';
-import { combatEncounters, combatParticipants } from '../../../../db/combat-schema.js';
-import { gameSessions } from '../../../../db/session-schema.js';
+import { combatEncounters, combatParticipants, gameSessions } from '../../../../db/schema/index.js';
 import { eq } from 'drizzle-orm';
 import type { CreateParticipantInput } from '../../types/combat.js';
 

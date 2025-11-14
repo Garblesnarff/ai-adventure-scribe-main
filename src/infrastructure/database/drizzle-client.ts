@@ -7,8 +7,7 @@
 
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as sessionSchema from '../../../db/session-schema.js';
-import * as combatSchema from '../../../db/combat-schema.js';
+import * as schema from '../../../db/schema/index.js';
 
 /**
  * PostgreSQL connection pool
@@ -21,11 +20,11 @@ const pool = new Pool({
 });
 
 /**
- * Drizzle database instance with session and combat schemas
+ * Drizzle database instance with unified schema
  * Use this for type-safe queries
  */
 export const db = drizzle(pool, {
-  schema: { ...sessionSchema, ...combatSchema },
+  schema,
 });
 
 /**

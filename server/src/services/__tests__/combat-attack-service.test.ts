@@ -6,10 +6,12 @@
  * resistance/vulnerability/immunity, and edge cases
  *
  * Work Unit 1.4a - Attack & Damage Resolution
+ * Work Unit 2.1 - Attack-to-HP Integration
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { CombatAttackService } from '../combat-attack-service.js';
+import { CombatHPService } from '../combat-hp-service.js';
 import type {
   HitCheckInput,
   DamageCalculationInput,
@@ -18,11 +20,19 @@ import type {
   DamageType,
 } from '../../types/combat.js';
 
+// Mock the HP service
+vi.mock('../combat-hp-service.js');
+
 describe('CombatAttackService', () => {
   let service: CombatAttackService;
 
   beforeEach(() => {
     service = new CombatAttackService();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   // ==========================================
@@ -538,6 +548,278 @@ describe('CombatAttackService', () => {
 
       // 4 + 3 = 7, with vulnerability: 7 * 2 = 14
       expect(result.finalDamage).toBe(14);
+    });
+  });
+
+  // ==========================================
+  // HP Integration Tests
+  // Work Unit 2.1
+  // ==========================================
+  describe('HP Integration', () => {
+    it('should apply damage to HP and return HP status on successful attack', async () => {
+      // Mock database queries
+      const mockGetCreatureStats = vi.spyOn(service, 'getCreatureStats').mockResolvedValue({
+        id: 'stats-1',
+        armorClass: 15,
+        resistances: [],
+        vulnerabilities: [],
+        immunities: [],
+        conditionImmunities: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as CreatureStats);
+
+      const mockGetWeaponAttack = vi.spyOn(service, 'getWeaponAttack').mockResolvedValue({
+        id: 'weapon-1',
+        characterId: 'attacker-1',
+        name: 'Longsword',
+        attackBonus: 5,
+        damageDice: '1d8',
+        damageBonus: 3,
+        damageType: 'slashing',
+        properties: [],
+        createdAt: new Date(),
+      } as WeaponAttack);
+
+      // Mock HP service
+      const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage').mockResolvedValue({
+        participantId: 'target-1',
+        originalDamage: 10,
+        modifiedDamage: 10,
+        tempHpLost: 0,
+        hpLost: 10,
+        newCurrentHp: 15,
+        newTempHp: 0,
+        isConscious: true,
+        isDead: false,
+        wasResisted: false,
+        wasVulnerable: false,
+        wasImmune: false,
+        massiveDamage: false,
+      });
+
+      const result = await service.resolveAttack('encounter-1', {
+        attackerId: 'attacker-1',
+        targetId: 'target-1',
+        attackRoll: 15,
+        attackBonus: 5,
+        weaponId: 'weapon-1',
+        attackType: 'melee',
+        damageRoll: 10, // Total damage (includes bonus)
+      });
+
+      expect(result.hit).toBe(true);
+      expect(result.finalDamage).toBe(10);
+      expect(result.targetNewHp).toBe(15);
+      expect(result.targetIsConscious).toBe(true);
+      expect(result.targetIsDead).toBe(false);
+
+      expect(mockApplyDamage).toHaveBeenCalledWith('target-1', {
+        damageAmount: 10,
+        damageType: 'slashing',
+        sourceParticipantId: 'attacker-1',
+        sourceDescription: 'Longsword',
+        ignoreResistances: true,
+        ignoreImmunities: true,
+      });
+
+      mockGetCreatureStats.mockRestore();
+      mockGetWeaponAttack.mockRestore();
+    });
+
+    it('should not apply damage to HP on missed attack', async () => {
+      const mockGetCreatureStats = vi.spyOn(service, 'getCreatureStats').mockResolvedValue({
+        id: 'stats-1',
+        armorClass: 18,
+        resistances: [],
+        vulnerabilities: [],
+        immunities: [],
+        conditionImmunities: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as CreatureStats);
+
+      const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage');
+
+      const result = await service.resolveAttack('encounter-1', {
+        attackerId: 'attacker-1',
+        targetId: 'target-1',
+        attackRoll: 10,
+        attackBonus: 3,
+        attackType: 'melee',
+      });
+
+      expect(result.hit).toBe(false);
+      expect(mockApplyDamage).not.toHaveBeenCalled();
+
+      mockGetCreatureStats.mockRestore();
+    });
+
+    it('should handle HP service errors gracefully', async () => {
+      const mockGetCreatureStats = vi.spyOn(service, 'getCreatureStats').mockResolvedValue({
+        id: 'stats-1',
+        armorClass: 15,
+        resistances: [],
+        vulnerabilities: [],
+        immunities: [],
+        conditionImmunities: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as CreatureStats);
+
+      const mockGetWeaponAttack = vi.spyOn(service, 'getWeaponAttack').mockResolvedValue({
+        id: 'weapon-1',
+        characterId: 'attacker-1',
+        name: 'Dagger',
+        attackBonus: 5,
+        damageDice: '1d4',
+        damageBonus: 3,
+        damageType: 'piercing',
+        properties: [],
+        createdAt: new Date(),
+      } as WeaponAttack);
+
+      const mockApplyDamage = vi
+        .spyOn(CombatHPService, 'applyDamage')
+        .mockRejectedValue(new Error('Database error'));
+
+      await expect(
+        service.resolveAttack('encounter-1', {
+          attackerId: 'attacker-1',
+          targetId: 'target-1',
+          attackRoll: 15,
+          attackBonus: 5,
+          weaponId: 'weapon-1',
+          attackType: 'melee',
+          damageRoll: 4,
+        })
+      ).rejects.toThrow('Attack succeeded but damage application failed');
+
+      mockGetCreatureStats.mockRestore();
+      mockGetWeaponAttack.mockRestore();
+    });
+
+    it('should apply damage with critical hit modifier', async () => {
+      const mockGetCreatureStats = vi.spyOn(service, 'getCreatureStats').mockResolvedValue({
+        id: 'stats-1',
+        armorClass: 15,
+        resistances: [],
+        vulnerabilities: [],
+        immunities: [],
+        conditionImmunities: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as CreatureStats);
+
+      const mockGetWeaponAttack = vi.spyOn(service, 'getWeaponAttack').mockResolvedValue({
+        id: 'weapon-1',
+        characterId: 'attacker-1',
+        name: 'Greatsword',
+        attackBonus: 5,
+        damageDice: '2d6',
+        damageBonus: 4,
+        damageType: 'slashing',
+        properties: [],
+        createdAt: new Date(),
+      } as WeaponAttack);
+
+      const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage').mockResolvedValue({
+        participantId: 'target-1',
+        originalDamage: 20,
+        modifiedDamage: 20,
+        tempHpLost: 0,
+        hpLost: 20,
+        newCurrentHp: 0,
+        newTempHp: 0,
+        isConscious: false,
+        isDead: false,
+        wasResisted: false,
+        wasVulnerable: false,
+        wasImmune: false,
+        massiveDamage: false,
+      });
+
+      const result = await service.resolveAttack('encounter-1', {
+        attackerId: 'attacker-1',
+        targetId: 'target-1',
+        attackRoll: 20, // Natural 20
+        attackBonus: 5,
+        weaponId: 'weapon-1',
+        attackType: 'melee',
+        damageRoll: 8,
+      });
+
+      expect(result.hit).toBe(true);
+      expect(result.isCritical).toBe(true);
+      expect(result.targetIsConscious).toBe(false);
+      expect(mockApplyDamage).toHaveBeenCalled();
+
+      mockGetCreatureStats.mockRestore();
+      mockGetWeaponAttack.mockRestore();
+    });
+
+    it('should apply spell damage to multiple targets', async () => {
+      const mockGetCreatureStats = vi.spyOn(service, 'getCreatureStats').mockResolvedValue({
+        id: 'stats-1',
+        armorClass: 15,
+        resistances: [],
+        vulnerabilities: [],
+        immunities: [],
+        conditionImmunities: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as CreatureStats);
+
+      const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage').mockResolvedValue({
+        participantId: 'target-1',
+        originalDamage: 8,
+        modifiedDamage: 8,
+        tempHpLost: 0,
+        hpLost: 8,
+        newCurrentHp: 12,
+        newTempHp: 0,
+        isConscious: true,
+        isDead: false,
+        wasResisted: false,
+        wasVulnerable: false,
+        wasImmune: false,
+        massiveDamage: false,
+      });
+
+      const result = await service.resolveSpellAttack('encounter-1', {
+        casterId: 'caster-1',
+        targetIds: ['target-1', 'target-2'],
+        spellName: 'Fireball',
+        saveDC: 15,
+        saveRolls: {
+          'target-1': 10, // Failed save
+          'target-2': 16, // Successful save
+        },
+        damageDice: '8d6',
+        damageType: 'fire',
+        damageRoll: 28,
+      });
+
+      expect(result.results).toHaveLength(2);
+      expect(mockApplyDamage).toHaveBeenCalledTimes(2);
+
+      // Check that full damage was applied to failed save
+      expect(mockApplyDamage).toHaveBeenCalledWith('target-1', expect.objectContaining({
+        damageAmount: 28,
+        damageType: 'fire',
+        sourceParticipantId: 'caster-1',
+        sourceDescription: 'Fireball',
+      }));
+
+      // Check that half damage was applied to successful save
+      expect(mockApplyDamage).toHaveBeenCalledWith('target-2', expect.objectContaining({
+        damageAmount: 14, // Half of 28
+        damageType: 'fire',
+        sourceParticipantId: 'caster-1',
+        sourceDescription: 'Fireball',
+      }));
+
+      mockGetCreatureStats.mockRestore();
     });
   });
 });

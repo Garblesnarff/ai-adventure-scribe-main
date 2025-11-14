@@ -13,7 +13,7 @@ import {
   characterStats,
   characterHitDice,
   restEvents,
-} from '../../../../db/schema.js';
+} from '../../../../db/schema/index.js';
 import { eq } from 'drizzle-orm';
 
 describe('RestService', () => {

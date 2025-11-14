@@ -14,7 +14,7 @@ import {
   inventoryItems,
   consumableUsageLog,
   gameSessions,
-} from '../../../../db/schema.js';
+} from '../../../../db/schema/index.js';
 import { eq } from 'drizzle-orm';
 
 // Test data

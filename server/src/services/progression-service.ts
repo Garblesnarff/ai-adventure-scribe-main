@@ -15,7 +15,7 @@ import {
   characterStats,
   type ExperienceEvent,
   type LevelProgression,
-} from '../../../db/schema.js';
+} from '../../../db/schema/index.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type {
   XPSource,

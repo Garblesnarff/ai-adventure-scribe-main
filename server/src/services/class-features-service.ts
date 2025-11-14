@@ -19,7 +19,7 @@ import {
   type CharacterFeature,
   type CharacterSubclass,
   type FeatureUsageLog,
-} from '../../../db/schema.js';
+} from '../../../db/schema/index.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import type {
   GrantFeatureInput,

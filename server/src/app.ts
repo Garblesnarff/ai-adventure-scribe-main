@@ -8,10 +8,14 @@ import { registerRoutes } from './routes/index.js';
 import { blogRouter } from './routes/blog.js';
 import { seoRouter } from './routes/seo.js';
 import { errorLoggingMiddleware, requestIdMiddleware, requestLoggingMiddleware } from './lib/logger.js';
+import { metricsMiddleware } from './middleware/metrics.js';
+import { register } from './lib/metrics.js';
 import type { PgDb as Db } from '../../src/infrastructure/database/index.js';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { appRouter } from './trpc/root.js';
 import { createContext } from './trpc/context.js';
+import { db } from '../../db/client.js';
+import { sql } from 'drizzle-orm';
 
 export function createApp(_db?: Db) {
   const app = express();
@@ -57,13 +61,38 @@ export function createApp(_db?: Db) {
   app.use(helmet());
   app.use(express.json({ limit: '10mb' }));
 
-  // Observability: request id + structured logging
+  // Observability: request id + structured logging + metrics
   app.use(requestIdMiddleware());
   app.use(requestLoggingMiddleware());
+  app.use(metricsMiddleware);
 
   registerStaticAssetMiddleware(app);
 
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  // Prometheus metrics endpoint
+  app.get('/metrics', async (_req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  });
+
+  // Enhanced health check endpoint
+  app.get('/health', async (_req, res) => {
+    try {
+      // Check database connection
+      await db.execute(sql`SELECT 1`);
+
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        error: (error as Error).message,
+      });
+    }
+  });
 
   // Mount tRPC API at /api/trpc
   app.use(

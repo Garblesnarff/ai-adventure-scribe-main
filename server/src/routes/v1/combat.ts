@@ -27,8 +27,88 @@ export default function combatRouter() {
   router.use(planRateLimit('default'));
 
   /**
-   * POST /v1/sessions/:sessionId/combat/start
-   * Start a new combat encounter
+   * @openapi
+   * /v1/sessions/{sessionId}/combat/start:
+   *   post:
+   *     summary: Start a new combat encounter
+   *     description: Initiates a new combat encounter for a game session with specified participants
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Game session ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - participants
+   *             properties:
+   *               participants:
+   *                 type: array
+   *                 description: List of combatants participating in the encounter
+   *                 items:
+   *                   type: object
+   *                   required:
+   *                     - name
+   *                     - initiativeModifier
+   *                   properties:
+   *                     name:
+   *                       type: string
+   *                     characterId:
+   *                       type: string
+   *                       format: uuid
+   *                     npcId:
+   *                       type: string
+   *                       format: uuid
+   *                     initiativeModifier:
+   *                       type: integer
+   *                     hpCurrent:
+   *                       type: integer
+   *                     hpMax:
+   *                       type: integer
+   *               surpriseRound:
+   *                 type: boolean
+   *                 default: false
+   *                 description: Whether this combat starts with a surprise round
+   *           examples:
+   *             standardCombat:
+   *               summary: Standard combat with party and enemies
+   *               value:
+   *                 participants:
+   *                   - name: "Gandalf"
+   *                     characterId: "char-123"
+   *                     initiativeModifier: 2
+   *                     hpCurrent: 45
+   *                     hpMax: 45
+   *                   - name: "Orc Warrior"
+   *                     npcId: "npc-456"
+   *                     initiativeModifier: 0
+   *                     hpCurrent: 30
+   *                     hpMax: 30
+   *                 surpriseRound: false
+   *     responses:
+   *       201:
+   *         description: Combat started successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/CombatState'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/sessions/:sessionId/start', async (req: Request, res: Response) => {
     const { sessionId } = req.params;
@@ -286,8 +366,34 @@ export default function combatRouter() {
   });
 
   /**
-   * GET /v1/combat/:encounterId/status
-   * Get current combat state
+   * @openapi
+   * /v1/combat/{encounterId}/status:
+   *   get:
+   *     summary: Get current combat state
+   *     description: Retrieves the complete state of an active combat encounter including all participants, turn order, and current round
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Combat encounter ID
+   *     responses:
+   *       200:
+   *         description: Combat state retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/CombatState'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       403:
+   *         $ref: '#/components/responses/Forbidden'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.get('/:encounterId/status', async (req: Request, res: Response) => {
     const { encounterId } = req.params;
@@ -335,8 +441,85 @@ export default function combatRouter() {
   // ==========================================
 
   /**
-   * POST /v1/combat/:encounterId/attack
-   * Resolve an attack against a target
+   * @openapi
+   * /v1/combat/{encounterId}/attack:
+   *   post:
+   *     summary: Resolve an attack against a target
+   *     description: Processes a weapon or melee attack, applying damage with resistance/vulnerability calculations
+   *     tags:
+   *       - Combat
+   *     parameters:
+   *       - in: path
+   *         name: encounterId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - attackerId
+   *               - targetId
+   *               - attackRoll
+   *               - attackType
+   *             properties:
+   *               attackerId:
+   *                 type: string
+   *                 format: uuid
+   *               targetId:
+   *                 type: string
+   *                 format: uuid
+   *               attackRoll:
+   *                 type: integer
+   *                 minimum: 1
+   *                 maximum: 20
+   *               attackBonus:
+   *                 type: integer
+   *               weaponId:
+   *                 type: string
+   *                 format: uuid
+   *               attackType:
+   *                 type: string
+   *                 enum: [melee, ranged, spell]
+   *               isCritical:
+   *                 type: boolean
+   *               damageRoll:
+   *                 type: integer
+   *           examples:
+   *             meleeAttack:
+   *               summary: Basic melee attack
+   *               value:
+   *                 attackerId: "char-123"
+   *                 targetId: "npc-456"
+   *                 attackRoll: 18
+   *                 attackBonus: 5
+   *                 weaponId: "weapon-789"
+   *                 attackType: "melee"
+   *             criticalHit:
+   *               summary: Critical hit
+   *               value:
+   *                 attackerId: "char-123"
+   *                 targetId: "npc-456"
+   *                 attackRoll: 20
+   *                 attackType: "melee"
+   *                 isCritical: true
+   *     responses:
+   *       200:
+   *         description: Attack resolved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/AttackResult'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
    */
   router.post('/:encounterId/attack', async (req: Request, res: Response) => {
     const { encounterId } = req.params;

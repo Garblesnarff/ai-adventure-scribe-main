@@ -22,6 +22,7 @@ import type {
   ConditionDurationType,
   SaveAbility,
 } from '../types/combat.js';
+import { NotFoundError, ValidationError, BusinessLogicError } from '../lib/errors.js';
 
 /**
  * Conditions that include or supersede other conditions
@@ -63,7 +64,7 @@ export class ConditionsService {
     );
 
     if (conditionLibrary.rows.length === 0) {
-      throw new Error(`Condition '${conditionName}' not found in library`);
+      throw new NotFoundError('Condition', conditionName);
     }
 
     const conditionEntry = conditionLibrary.rows[0];
@@ -74,7 +75,7 @@ export class ConditionsService {
     );
 
     if (participantResult.rows.length === 0) {
-      throw new Error(`Participant '${participantId}' not found`);
+      throw new NotFoundError('Participant', participantId);
     }
 
     // Get current round from encounter if not provided
@@ -189,13 +190,13 @@ export class ConditionsService {
     );
 
     if (result.rows.length === 0) {
-      throw new Error(`Active condition '${conditionId}' not found`);
+      throw new NotFoundError('Active condition', conditionId);
     }
 
     const condition = result.rows[0];
 
     if (!condition.saveDc || !condition.saveAbility) {
-      throw new Error('This condition does not require a saving throw');
+      throw new BusinessLogicError('This condition does not require a saving throw', { conditionId });
     }
 
     const saved = saveRoll >= condition.saveDc;
@@ -464,7 +465,11 @@ export class ConditionsService {
   /**
    * Merge two effect values, choosing the most restrictive
    */
-  private static mergeEffectValues(current: any, incoming: any, key: string): any {
+  private static mergeEffectValues(
+    current: string | number | boolean | undefined,
+    incoming: string | number | boolean | undefined,
+    key: string
+  ): string | number | boolean | undefined {
     // For auto_fail, that always takes precedence
     if (current === 'auto_fail' || incoming === 'auto_fail') {
       return 'auto_fail';
