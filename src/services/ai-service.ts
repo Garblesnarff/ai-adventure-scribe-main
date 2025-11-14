@@ -14,6 +14,9 @@ import { AgentOrchestrator } from './crewai/agent-orchestrator';
 import type { RollRequest } from '@/components/game/DiceRollRequest';
 import { PassiveSkillsService, getCharacterPassiveScores } from './passive-skills-service';
 import type { Character } from '@/types/character';
+import { getLegacyCompatibilityAdapter } from '@/agents/langgraph/adapters/legacy-compatibility';
+import type { LegacyChatMessage } from '@/agents/langgraph/adapters/legacy-compatibility';
+import migrationMonitoringService from './migration-monitoring';
 
 // In-flight request deduplication with 2s TTL
 const inFlight = new Map<string, { ts: number; promise: Promise<any> }>();
@@ -281,6 +284,19 @@ export class AIService {
       return false;
     }
   }
+
+  /**
+   * Feature flag to enable LangGraph migration.
+   * When enabled, uses LangGraph-based agent system instead of custom messaging.
+   */
+  private static useLangGraph(): boolean {
+    try {
+      const raw = String((import.meta as any).env?.VITE_FEATURE_USE_LANGGRAPH ?? '').toLowerCase().trim();
+      return raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on';
+    } catch {
+      return false;
+    }
+  }
   /**
    * Generate a campaign description using AI with fallback
    */
@@ -413,8 +429,62 @@ When combat is detected, you MUST:
     }
 
     const p = (async () => {
-    
+
     try {
+      // ========================================================================
+      // LANGGRAPH MIGRATION PATH (Feature Flag)
+      // ========================================================================
+      // If LangGraph is enabled, delegate to the new system via compatibility adapter
+      if (this.useLangGraph()) {
+        try {
+          logger.info('[AIService] Using LangGraph agent system (VITE_FEATURE_USE_LANGGRAPH=true)');
+
+          const adapter = getLegacyCompatibilityAdapter();
+
+          // Convert ChatMessage[] to LegacyChatMessage[]
+          const legacyHistory: LegacyChatMessage[] = (params.conversationHistory || []).map(msg => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            narrationSegments: msg.narrationSegments,
+          }));
+
+          const result = await adapter.chatWithDM({
+            message: params.message,
+            context: params.context,
+            conversationHistory: legacyHistory,
+            onStream: params.onStream,
+            userPlan: params.userPlan,
+            turnCount: params.turnCount,
+          });
+
+          logger.info('[AIService] LangGraph response generated successfully');
+          return result;
+        } catch (langGraphError) {
+          logger.error('[AIService] LangGraph failed, falling back to legacy system:', langGraphError);
+
+          // Record fallback
+          migrationMonitoringService.recordInteraction({
+            system: 'langgraph',
+            outcome: 'fallback',
+            durationMs: 0,
+            messageLength: params.message.length,
+            responseLength: 0,
+            errorType: langGraphError instanceof Error ? langGraphError.name : 'Unknown',
+            errorMessage: langGraphError instanceof Error ? langGraphError.message : 'Unknown error',
+            sessionId: params.context.sessionId,
+            timestamp: new Date(),
+          });
+
+          // Continue to legacy path below
+        }
+      }
+
+      // ========================================================================
+      // LEGACY PATH (Custom Messaging + Gemini)
+      // ========================================================================
+
       // Retrieve relevant memories to enhance context
       let relevantMemories: Memory[] = [];
       if (params.context.sessionId) {
