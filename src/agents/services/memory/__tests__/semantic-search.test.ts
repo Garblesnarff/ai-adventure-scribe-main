@@ -15,13 +15,13 @@ vi.mock('@/integrations/supabase/client', () => ({
       gte: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
       insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis()
+      update: vi.fn().mockReturnThis(),
     })),
     rpc: vi.fn(),
     functions: {
-      invoke: vi.fn()
-    }
-  }
+      invoke: vi.fn(),
+    },
+  },
 }));
 
 // Mock logger
@@ -30,13 +30,13 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 // Mock importance calculation
 vi.mock('@/utils/memory/importance', () => ({
-  calculateImportance: vi.fn(() => 3)
+  calculateImportance: vi.fn(() => 3),
 }));
 
 // Import after mocking
@@ -63,7 +63,7 @@ describe('Semantic Search', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       await repository.matchMemories('session-123', mockEmbedding, 10, 0.7);
@@ -72,7 +72,7 @@ describe('Semantic Search', () => {
         query_embedding: mockEmbedding,
         session_id: 'session-123',
         match_threshold: 0.7,
-        match_count: 10
+        match_count: 10,
       });
     });
 
@@ -90,8 +90,8 @@ describe('Semantic Search', () => {
         data: null,
         error: {
           code: '42883', // PostgreSQL function not found
-          message: 'function match_memories does not exist'
-        } as any
+          message: 'function match_memories does not exist',
+        } as any,
       } as any);
 
       const result = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -104,8 +104,8 @@ describe('Semantic Search', () => {
         data: null,
         error: {
           code: 'PGRST202',
-          message: 'Schema cache not ready'
-        } as any
+          message: 'Schema cache not ready',
+        } as any,
       } as any);
 
       const result = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -118,8 +118,8 @@ describe('Semantic Search', () => {
         data: null,
         error: {
           status: 404,
-          message: 'Not found'
-        } as any
+          message: 'Not found',
+        } as any,
       } as any);
 
       const result = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -132,13 +132,11 @@ describe('Semantic Search', () => {
         data: null,
         error: {
           code: 'UNKNOWN',
-          message: 'Unexpected database error'
-        } as any
+          message: 'Unexpected database error',
+        } as any,
       } as any);
 
-      await expect(
-        repository.matchMemories('session-123', 'embedding', 10, 0.7)
-      ).rejects.toThrow();
+      await expect(repository.matchMemories('session-123', 'embedding', 10, 0.7)).rejects.toThrow();
     });
   });
 
@@ -158,7 +156,7 @@ describe('Semantic Search', () => {
           type: 'item',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
+          metadata: null,
         },
         {
           id: '2',
@@ -169,7 +167,7 @@ describe('Semantic Search', () => {
           type: 'location',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
+          metadata: null,
         },
         {
           id: '3',
@@ -180,13 +178,13 @@ describe('Semantic Search', () => {
           type: 'event',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       } as any);
 
       const result = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -209,7 +207,7 @@ describe('Semantic Search', () => {
           type: 'event',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
+          metadata: null,
         },
         {
           id: '2',
@@ -220,13 +218,13 @@ describe('Semantic Search', () => {
           type: 'event',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       } as any);
 
       // Test with threshold 0.8 (should filter second memory)
@@ -238,26 +236,28 @@ describe('Semantic Search', () => {
         query_embedding: 'embedding',
         session_id: 'session-123',
         match_threshold: 0.8,
-        match_count: 10
+        match_count: 10,
       });
     });
 
     it('should respect limit parameter', async () => {
-      const mockMemories = Array(15).fill(null).map((_, i) => ({
-        id: `${i}`,
-        content: `Memory ${i}`,
-        importance: 3,
-        similarity: 0.9 - (i * 0.05),
-        session_id: 'session-123',
-        type: 'event',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
-      }));
+      const mockMemories = Array(15)
+        .fill(null)
+        .map((_, i) => ({
+          id: `${i}`,
+          content: `Memory ${i}`,
+          importance: 3,
+          similarity: 0.9 - i * 0.05,
+          session_id: 'session-123',
+          type: 'event',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          metadata: null,
+        }));
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: mockMemories.slice(0, 5), // Database would return only 5
-        error: null
+        error: null,
       } as any);
 
       await repository.matchMemories('session-123', 'embedding', 5, 0.7);
@@ -266,7 +266,7 @@ describe('Semantic Search', () => {
         query_embedding: 'embedding',
         session_id: 'session-123',
         match_threshold: 0.7,
-        match_count: 5
+        match_count: 5,
       });
     });
   });
@@ -280,19 +280,19 @@ describe('Semantic Search', () => {
       const mockQueryEmbedding = JSON.stringify(Array(1536).fill(0.5));
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: { embedding: mockQueryEmbedding },
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       await MemoryService.getRelevantMemories('session-123', 'find the magical sword', 10);
 
       // Verify embedding was generated
       expect(supabase.functions.invoke).toHaveBeenCalledWith('generate-embedding', {
-        body: { text: 'find the magical sword' }
+        body: { text: 'find the magical sword' },
       });
 
       // Verify RPC was called with the embedding
@@ -300,14 +300,14 @@ describe('Semantic Search', () => {
         query_embedding: mockQueryEmbedding,
         session_id: 'session-123',
         match_threshold: 0.7,
-        match_count: 10
+        match_count: 10,
       });
     });
 
     it('should handle query embedding generation failure', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: null,
-        error: { message: 'Failed to generate embedding' } as any
+        error: { message: 'Failed to generate embedding' } as any,
       } as any);
 
       // Mock fallback query
@@ -320,8 +320,8 @@ describe('Semantic Search', () => {
           type: 'event',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -330,8 +330,8 @@ describe('Semantic Search', () => {
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue({
           data: mockFallbackData,
-          error: null
-        })
+          error: null,
+        }),
       } as any);
 
       const result = await MemoryService.getRelevantMemories('session-123', 'query', 10);
@@ -355,8 +355,8 @@ describe('Semantic Search', () => {
           type: 'event',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -365,8 +365,8 @@ describe('Semantic Search', () => {
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue({
           data: mockMemories,
-          error: null
-        })
+          error: null,
+        }),
       } as any);
 
       const result = await MemoryService.getRelevantMemories('session-123', 'query', 10);
@@ -381,12 +381,12 @@ describe('Semantic Search', () => {
 
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [], // No matches
-        error: null
+        error: null,
       } as any);
 
       const mockMemories = [
@@ -398,8 +398,8 @@ describe('Semantic Search', () => {
           type: 'event',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -408,8 +408,8 @@ describe('Semantic Search', () => {
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue({
           data: mockMemories,
-          error: null
-        })
+          error: null,
+        }),
       } as any);
 
       const result = await MemoryService.getRelevantMemories('session-123', 'query', 10);
@@ -426,12 +426,12 @@ describe('Semantic Search', () => {
     it('should return empty array when no memories exist', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -440,8 +440,8 @@ describe('Semantic Search', () => {
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue({
           data: [],
-          error: null
-        })
+          error: null,
+        }),
       } as any);
 
       const result = await MemoryService.getRelevantMemories('session-123', 'query', 10);
@@ -452,12 +452,12 @@ describe('Semantic Search', () => {
     it('should handle empty query string', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0)) },
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -466,8 +466,8 @@ describe('Semantic Search', () => {
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue({
           data: [],
-          error: null
-        })
+          error: null,
+        }),
       } as any);
 
       const result = await MemoryService.getRelevantMemories('session-123', '', 10);
@@ -478,12 +478,12 @@ describe('Semantic Search', () => {
     it('should handle null data from RPC', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       } as any);
 
       const result = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -507,12 +507,12 @@ describe('Semantic Search', () => {
         type: 'event',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
+        metadata: null,
       };
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [sessionAMemory],
-        error: null
+        error: null,
       } as any);
 
       const result = await repository.matchMemories('session-A', 'embedding', 10, 0.7);
@@ -523,7 +523,7 @@ describe('Semantic Search', () => {
         query_embedding: 'embedding',
         session_id: 'session-A',
         match_threshold: 0.7,
-        match_count: 10
+        match_count: 10,
       });
     });
   });
@@ -536,50 +536,53 @@ describe('Semantic Search', () => {
     it('should use default threshold of 0.7', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       } as any);
 
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       await MemoryService.getRelevantMemories('session-123', 'query', 10);
 
-      expect(supabase.rpc).toHaveBeenCalledWith('match_memories',
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        'match_memories',
         expect.objectContaining({
-          match_threshold: 0.7
-        })
+          match_threshold: 0.7,
+        }),
       );
     });
 
     it('should accept custom threshold values', async () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       await repository.matchMemories('session-123', 'embedding', 10, 0.9);
 
-      expect(supabase.rpc).toHaveBeenCalledWith('match_memories',
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        'match_memories',
         expect.objectContaining({
-          match_threshold: 0.9
-        })
+          match_threshold: 0.9,
+        }),
       );
     });
 
     it('should accept very low threshold for broader results', async () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       } as any);
 
       await repository.matchMemories('session-123', 'embedding', 10, 0.3);
 
-      expect(supabase.rpc).toHaveBeenCalledWith('match_memories',
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        'match_memories',
         expect.objectContaining({
-          match_threshold: 0.3
-        })
+          match_threshold: 0.3,
+        }),
       );
     });
   });

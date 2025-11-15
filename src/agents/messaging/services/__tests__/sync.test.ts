@@ -35,17 +35,17 @@ vi.mock('../../../error/services/error-handling-service', () => ({
     getInstance: vi.fn(() => ({
       handleDatabaseOperation: vi.fn(async (operation: any) => {
         return await operation();
-      })
-    }))
-  }
+      }),
+    })),
+  },
 }));
 
 vi.mock('../../../error/services/recovery-service', () => ({
   RecoveryService: {
     getInstance: vi.fn(() => ({
-      attemptRecovery: vi.fn().mockResolvedValue(true)
-    }))
-  }
+      attemptRecovery: vi.fn().mockResolvedValue(true),
+    })),
+  },
 }));
 
 vi.mock('../MessageQueueService');
@@ -75,10 +75,10 @@ describe('MessageSynchronizationService', () => {
     deliveryStatus: {
       delivered: false,
       timestamp: new Date(),
-      attempts: 0
+      attempts: 0,
     },
     retryCount: 0,
-    maxRetries: 3
+    maxRetries: 3,
   });
 
   const createTestSequence = (messageId: string, agentId: string): MessageSequence => ({
@@ -87,7 +87,7 @@ describe('MessageSynchronizationService', () => {
     sequenceNumber: 1,
     vectorClock: { [agentId]: 1 },
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   });
 
   beforeEach(() => {
@@ -97,18 +97,18 @@ describe('MessageSynchronizationService', () => {
     // Setup mock implementations
     mockQueueService = {
       getQueueIds: vi.fn(() => ['msg-1', 'msg-2']),
-      getInstance: vi.fn()
+      getInstance: vi.fn(),
     };
     (MessageQueueService.getInstance as any) = vi.fn(() => mockQueueService);
 
     mockConnectionService = {
       onConnectionStateChanged: vi.fn(),
-      getState: vi.fn(() => ({ status: 'connected' }))
+      getState: vi.fn(() => ({ status: 'connected' })),
     };
     (ConnectionStateService.getInstance as any) = vi.fn(() => mockConnectionService);
 
     mockOfflineService = {
-      isOnline: vi.fn(() => true)
+      isOnline: vi.fn(() => true),
     };
     (OfflineStateService.getInstance as any) = vi.fn(() => mockOfflineService);
 
@@ -164,9 +164,9 @@ describe('MessageSynchronizationService', () => {
         expect.objectContaining({
           messageId: 'msg-1',
           vectorClock: expect.objectContaining({
-            'dm-agent': expect.any(Number)
-          })
-        })
+            'dm-agent': expect.any(Number),
+          }),
+        }),
       );
     });
 
@@ -179,8 +179,8 @@ describe('MessageSynchronizationService', () => {
         expect.objectContaining({
           messageId: 'msg-1',
           sequenceNumber: expect.any(Number),
-          vectorClock: expect.any(Object)
-        })
+          vectorClock: expect.any(Object),
+        }),
       );
     });
 
@@ -235,7 +235,7 @@ describe('MessageSynchronizationService', () => {
       const sequences = [
         createTestSequence('msg-1', 'dm-agent'),
         createTestSequence('msg-2', 'rules-agent'),
-        createTestSequence('msg-3', 'dm-agent')
+        createTestSequence('msg-3', 'dm-agent'),
       ];
 
       mockDatabaseAdapter.getAllMessageSequences.mockResolvedValue(sequences);
@@ -342,7 +342,7 @@ describe('MessageSynchronizationService', () => {
     it('should continue sync despite individual message failures', async () => {
       const sequences = [
         createTestSequence('msg-1', 'dm-agent'),
-        createTestSequence('msg-2', 'rules-agent')
+        createTestSequence('msg-2', 'rules-agent'),
       ];
 
       mockDatabaseAdapter.getAllMessageSequences.mockResolvedValue(sequences);
@@ -360,7 +360,7 @@ describe('MessageSynchronizationService', () => {
   describe('Consistency Checks', () => {
     it('should perform periodic consistency checks when online', async () => {
       // Wait for consistency check interval
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Consistency validator should be called (if online)
       // Note: Actual interval is 5000ms, but we can verify setup
@@ -445,11 +445,11 @@ describe('MessageSynchronizationService', () => {
           lastSequenceNumber: 5,
           vectorClock: { 'dm-agent': 5 },
           pendingMessages: [],
-          conflicts: []
+          conflicts: [],
         },
         vectorClock: { 'dm-agent': 5 },
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       mockDatabaseAdapter.getSyncStatus.mockResolvedValue(syncStatus);
@@ -497,11 +497,9 @@ describe('MessageSynchronizationService', () => {
     });
 
     it('should handle rapid synchronization requests', async () => {
-      const messages = Array.from({ length: 10 }, (_, i) =>
-        createTestMessage(`rapid-${i}`)
-      );
+      const messages = Array.from({ length: 10 }, (_, i) => createTestMessage(`rapid-${i}`));
 
-      await Promise.all(messages.map(msg => service.synchronizeMessage(msg)));
+      await Promise.all(messages.map((msg) => service.synchronizeMessage(msg)));
 
       expect(mockDatabaseAdapter.saveMessageSequence).toHaveBeenCalledTimes(10);
     });
@@ -544,7 +542,9 @@ describe('MessageSynchronizationService', () => {
 
     it('should listen to connection state changes', () => {
       expect(mockConnectionService.onConnectionStateChanged).toHaveBeenCalled();
-      expect(typeof mockConnectionService.onConnectionStateChanged.mock.calls[0][0]).toBe('function');
+      expect(typeof mockConnectionService.onConnectionStateChanged.mock.calls[0][0]).toBe(
+        'function',
+      );
     });
   });
 });

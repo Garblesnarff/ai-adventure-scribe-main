@@ -91,7 +91,7 @@ export const analytics = {
    */
   async trackCharacterCreationFlow(
     flow: 'legacy' | 'new',
-    info: { campaignId?: string; userId?: string } = {}
+    info: { campaignId?: string; userId?: string } = {},
   ): Promise<void> {
     // Track to analytics providers
     this.track('character_creation_flow', {

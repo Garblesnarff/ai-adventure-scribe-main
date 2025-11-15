@@ -29,26 +29,26 @@ const ENV_VARIABLES: EnvVariable[] = [
     key: 'VITE_SUPABASE_URL',
     description: 'Supabase project URL',
     required: true,
-    validator: (value) => value.startsWith('https://') && value.includes('supabase.co')
+    validator: (value) => value.startsWith('https://') && value.includes('supabase.co'),
   },
   {
     key: 'VITE_SUPABASE_ANON_KEY',
     description: 'Supabase anonymous key',
     required: true,
-    validator: (value) => value.length > 20 // Basic length check
+    validator: (value) => value.length > 20, // Basic length check
   },
   {
     key: 'VITE_GEMINI_API_KEYS',
     description: 'Gemini API key(s) for AI functionality',
     required: true,
-    validator: (value) => value.length > 10 // Basic length check
+    validator: (value) => value.length > 10, // Basic length check
   },
   {
     key: 'VITE_GA_MEASUREMENT_ID',
     description: 'Google Analytics measurement ID',
     required: false,
-    validator: (value) => value.startsWith('G-')
-  }
+    validator: (value) => value.startsWith('G-'),
+  },
 ];
 
 export interface ValidationResult {
@@ -70,7 +70,7 @@ export function validateEnvironment(): ValidationResult {
   logger.info('Validating environment configuration', {
     mode: import.meta.env.MODE,
     dev: import.meta.env.DEV,
-    prod: import.meta.env.PROD
+    prod: import.meta.env.PROD,
   });
 
   // Check each environment variable
@@ -87,12 +87,12 @@ export function validateEnvironment(): ValidationResult {
           logger.error('Required environment variable not configured', {
             variable: envVar.key,
             description: envVar.description,
-            hint: `Add ${envVar.key} to your .env file`
+            hint: `Add ${envVar.key} to your .env file`,
           });
         } else {
           logger.warn('Required environment variable not configured in production', {
             variable: envVar.key,
-            description: envVar.description
+            description: envVar.description,
           });
         }
       } else {
@@ -101,7 +101,7 @@ export function validateEnvironment(): ValidationResult {
 
         logger.debug('Optional environment variable not set', {
           variable: envVar.key,
-          description: envVar.description
+          description: envVar.description,
         });
       }
       continue;
@@ -115,12 +115,12 @@ export function validateEnvironment(): ValidationResult {
       logger.warn('Environment variable has invalid format', {
         variable: envVar.key,
         description: envVar.description,
-        valueLength: value.length
+        valueLength: value.length,
       });
     } else {
       logger.debug('Environment variable validated', {
         variable: envVar.key,
-        configured: true
+        configured: true,
       });
     }
   }
@@ -129,21 +129,21 @@ export function validateEnvironment(): ValidationResult {
   const result: ValidationResult = {
     isValid: errors.length === 0,
     errors,
-    warnings
+    warnings,
   };
 
   if (errors.length > 0) {
     logger.error('Environment validation failed', {
       errorCount: errors.length,
       warningCount: warnings.length,
-      errors: errors.slice(0, 3) // Limit to avoid log spam
+      errors: errors.slice(0, 3), // Limit to avoid log spam
     });
 
     if (isDevelopment) {
       // In development, show detailed error message
       console.error('\n=== Environment Configuration Error ===');
       console.error('Missing required environment variables:\n');
-      errors.forEach(error => console.error(`  - ${error}`));
+      errors.forEach((error) => console.error(`  - ${error}`));
       console.error('\nTo fix this:');
       console.error('  1. Copy .env.example to .env');
       console.error('  2. Fill in the required values');
@@ -152,17 +152,17 @@ export function validateEnvironment(): ValidationResult {
       // In production, warn but don't throw
       logger.error('Production environment is missing required variables', {
         message: 'Application may not function correctly',
-        errorCount: errors.length
+        errorCount: errors.length,
       });
     }
   } else if (warnings.length > 0) {
     logger.info('Environment validation completed with warnings', {
       warningCount: warnings.length,
-      warnings: warnings.slice(0, 3)
+      warnings: warnings.slice(0, 3),
     });
   } else {
     logger.info('Environment validation successful', {
-      validatedVariables: ENV_VARIABLES.length
+      validatedVariables: ENV_VARIABLES.length,
     });
   }
 
@@ -209,7 +209,7 @@ export function getOptionalEnv(key: string, defaultValue: string): string {
   if (!value || value === '' || value === 'undefined' || value === 'null') {
     logger.debug('Using default value for optional environment variable', {
       key,
-      default: defaultValue
+      default: defaultValue,
     });
     return defaultValue;
   }

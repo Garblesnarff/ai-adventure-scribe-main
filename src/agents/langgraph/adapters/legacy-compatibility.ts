@@ -100,7 +100,7 @@ export class LegacyCompatibilityAdapter {
     const stopTiming = migrationMonitoringService.startTiming(
       'langgraph',
       message.length,
-      context.sessionId
+      context.sessionId,
     );
 
     try {
@@ -128,9 +128,7 @@ export class LegacyCompatibilityAdapter {
         sessionId: context.sessionId || '',
         campaignDetails: context.campaignDetails,
         characterDetails: context.characterDetails,
-        recentEvents: conversationHistory
-          ?.slice(-5)
-          .map(msg => msg.content) || [],
+        recentEvents: conversationHistory?.slice(-5).map((msg) => msg.content) || [],
       };
 
       // Call LangGraph DMService
@@ -142,10 +140,7 @@ export class LegacyCompatibilityAdapter {
       });
 
       // Convert DMResponse to legacy format
-      const legacyResponse = this.convertToLegacyFormat(
-        dmResponse,
-        combatDetection
-      );
+      const legacyResponse = this.convertToLegacyFormat(dmResponse, combatDetection);
 
       logger.info('[LangGraph] Response generated successfully:', {
         sessionId: context.sessionId,
@@ -165,7 +160,7 @@ export class LegacyCompatibilityAdapter {
       stopTiming('error', 0, error instanceof Error ? error : undefined);
 
       throw new Error(
-        `LangGraph adapter failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `LangGraph adapter failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -175,7 +170,7 @@ export class LegacyCompatibilityAdapter {
    */
   private convertToLegacyFormat(
     dmResponse: DMResponse,
-    combatDetection: CombatDetectionResult
+    combatDetection: CombatDetectionResult,
   ): LegacyAIResponse {
     const response: LegacyAIResponse = {
       text: dmResponse.response,
@@ -340,7 +335,9 @@ export class LegacyCompatibilityAdapter {
         // Extract character name if present (e.g., "The guard says, 'Stop!'")
         const dialogue = part.slice(1, -1); // Remove quotes
         const contextBefore = parts[parts.indexOf(part) - 1] || '';
-        const characterMatch = contextBefore.match(/(\w+)\s+(?:says?|shouts?|whispers?|asks?|replies?)[,:]/i);
+        const characterMatch = contextBefore.match(
+          /(\w+)\s+(?:says?|shouts?|whispers?|asks?|replies?)[,:]/i,
+        );
 
         segments.push({
           type: 'character',

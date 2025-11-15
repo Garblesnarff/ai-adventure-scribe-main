@@ -13,13 +13,13 @@ vi.mock('@/integrations/supabase/client', () => {
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockReturnThis(),
-        gte: vi.fn().mockReturnThis()
+        gte: vi.fn().mockReturnThis(),
       })),
       rpc: vi.fn(),
       functions: {
-        invoke: vi.fn()
-      }
-    }
+        invoke: vi.fn(),
+      },
+    },
   };
 });
 
@@ -29,13 +29,13 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 // Mock importance calculation
 vi.mock('@/utils/memory/importance', () => ({
-  calculateImportance: vi.fn(() => 3)
+  calculateImportance: vi.fn(() => 3),
 }));
 
 // Import after mocking
@@ -64,7 +64,7 @@ describe('Memory Performance Tests', () => {
       eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
-      gte: vi.fn().mockReturnThis()
+      gte: vi.fn().mockReturnThis(),
     } as any);
   });
 
@@ -75,29 +75,31 @@ describe('Memory Performance Tests', () => {
   describe('Retrieval Performance (<100ms requirement)', () => {
     it('should retrieve semantic search results in under 100ms', async () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
-      const mockMemories = Array(10).fill(null).map((_, i) => ({
-        id: `${i}`,
-        content: `Memory ${i}`,
-        importance: 3,
-        similarity: 0.9 - (i * 0.05),
-        session_id: 'session-123',
-        type: 'event',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
-      }));
+      const mockMemories = Array(10)
+        .fill(null)
+        .map((_, i) => ({
+          id: `${i}`,
+          content: `Memory ${i}`,
+          importance: 3,
+          similarity: 0.9 - i * 0.05,
+          session_id: 'session-123',
+          type: 'event',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          metadata: null,
+        }));
 
       // Simulate fast database response
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 10)); // Simulate 10ms DB latency
+        await new Promise((resolve) => setTimeout(resolve, 10)); // Simulate 10ms DB latency
         return {
           data: mockMemories,
-          error: null
+          error: null,
         };
       });
 
@@ -114,20 +116,22 @@ describe('Memory Performance Tests', () => {
     it('should retrieve non-semantic results in under 50ms', async () => {
       vi.spyOn(featureFlags, 'isSemanticMemoriesEnabled').mockReturnValue(false);
 
-      const mockMemories = Array(10).fill(null).map((_, i) => ({
-        id: `${i}`,
-        content: `Memory ${i}`,
-        importance: 3,
-        session_id: 'session-123',
-        type: 'event',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
-      }));
+      const mockMemories = Array(10)
+        .fill(null)
+        .map((_, i) => ({
+          id: `${i}`,
+          content: `Memory ${i}`,
+          importance: 3,
+          session_id: 'session-123',
+          type: 'event',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          metadata: null,
+        }));
 
       mockSelect.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       const startTime = performance.now();
@@ -141,28 +145,30 @@ describe('Memory Performance Tests', () => {
 
     it('should maintain performance with concurrent retrievals', async () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
-      const mockMemories = Array(5).fill(null).map((_, i) => ({
-        id: `${i}`,
-        content: `Memory ${i}`,
-        importance: 3,
-        similarity: 0.9,
-        session_id: 'session-123',
-        type: 'event',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
-      }));
+      const mockMemories = Array(5)
+        .fill(null)
+        .map((_, i) => ({
+          id: `${i}`,
+          content: `Memory ${i}`,
+          importance: 3,
+          similarity: 0.9,
+          session_id: 'session-123',
+          type: 'event',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          metadata: null,
+        }));
 
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 15));
+        await new Promise((resolve) => setTimeout(resolve, 15));
         return {
           data: mockMemories,
-          error: null
+          error: null,
         };
       });
 
@@ -171,13 +177,11 @@ describe('Memory Performance Tests', () => {
         'npc details',
         'location description',
         'item properties',
-        'event history'
+        'event history',
       ];
 
       const startTime = performance.now();
-      await Promise.all(
-        queries.map(q => MemoryService.getRelevantMemories('session-123', q, 5))
-      );
+      await Promise.all(queries.map((q) => MemoryService.getRelevantMemories('session-123', q, 5)));
       const endTime = performance.now();
 
       const duration = endTime - startTime;
@@ -192,29 +196,31 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
 
       // Simulate database with 1000+ memories, returning top 50
-      const mockMemories = Array(50).fill(null).map((_, i) => ({
-        id: `${i}`,
-        content: `Memory ${i} from large dataset`,
-        importance: Math.floor(Math.random() * 5) + 1,
-        similarity: 0.95 - (i * 0.01),
-        session_id: 'session-123',
-        type: 'event',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
-      }));
+      const mockMemories = Array(50)
+        .fill(null)
+        .map((_, i) => ({
+          id: `${i}`,
+          content: `Memory ${i} from large dataset`,
+          importance: Math.floor(Math.random() * 5) + 1,
+          similarity: 0.95 - i * 0.01,
+          session_id: 'session-123',
+          type: 'event',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          metadata: null,
+        }));
 
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
         // Simulate realistic DB query time for large dataset
-        await new Promise(resolve => setTimeout(resolve, 30));
+        await new Promise((resolve) => setTimeout(resolve, 30));
         return {
           data: mockMemories,
-          error: null
+          error: null,
         };
       });
 
@@ -233,25 +239,36 @@ describe('Memory Performance Tests', () => {
       const pageSize = 20;
 
       mockSelect.mockImplementation(() => ({
-        data: Array(pageSize).fill(null).map((_, i) => ({
-          id: `${i}`,
-          content: `Memory ${i}`,
-          importance: 3,
-          session_id: 'session-123',
-          type: 'event',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        })),
-        error: null
+        data: Array(pageSize)
+          .fill(null)
+          .map((_, i) => ({
+            id: `${i}`,
+            content: `Memory ${i}`,
+            importance: 3,
+            session_id: 'session-123',
+            type: 'event',
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+            metadata: null,
+          })),
+        error: null,
       }));
 
       const memoryService = new MemoryService('session-123');
 
       const startTime = performance.now();
-      const page1 = await memoryService.retrieveMemories({ limit: pageSize, semanticSearch: false });
-      const page2 = await memoryService.retrieveMemories({ limit: pageSize, semanticSearch: false });
-      const page3 = await memoryService.retrieveMemories({ limit: pageSize, semanticSearch: false });
+      const page1 = await memoryService.retrieveMemories({
+        limit: pageSize,
+        semanticSearch: false,
+      });
+      const page2 = await memoryService.retrieveMemories({
+        limit: pageSize,
+        semanticSearch: false,
+      });
+      const page3 = await memoryService.retrieveMemories({
+        limit: pageSize,
+        semanticSearch: false,
+      });
       const endTime = performance.now();
 
       const duration = endTime - startTime;
@@ -263,28 +280,30 @@ describe('Memory Performance Tests', () => {
     });
 
     it('should maintain memory efficiency with large datasets', async () => {
-      const largeMemorySet = Array(2000).fill(null).map((_, i) => ({
-        id: `${i}`,
-        content: `Memory ${i}`,
-        importance: 3,
-        similarity: 0.8,
-        session_id: 'session-123',
-        type: 'event',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-        metadata: null
-      }));
+      const largeMemorySet = Array(2000)
+        .fill(null)
+        .map((_, i) => ({
+          id: `${i}`,
+          content: `Memory ${i}`,
+          importance: 3,
+          similarity: 0.8,
+          session_id: 'session-123',
+          type: 'event',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+          metadata: null,
+        }));
 
       // Mock should only return requested limit, not entire dataset
       mockRpc.mockResolvedValue({
         data: largeMemorySet.slice(0, 10),
-        error: null
+        error: null,
       });
 
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       const results = await MemoryService.getRelevantMemories('session-123', 'query', 10);
@@ -299,38 +318,40 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         return {
-          data: Array(5).fill(null).map((_, i) => ({
-            id: `${i}`,
-            content: `Memory ${i}`,
-            importance: 3,
-            similarity: 0.9,
-            session_id: 'session-123',
-            type: 'event',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          })),
-          error: null
+          data: Array(5)
+            .fill(null)
+            .map((_, i) => ({
+              id: `${i}`,
+              content: `Memory ${i}`,
+              importance: 3,
+              similarity: 0.9,
+              session_id: 'session-123',
+              type: 'event',
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+              metadata: null,
+            })),
+          error: null,
         };
       });
 
       const startTime = performance.now();
-      const promises = Array(10).fill(null).map((_, i) =>
-        MemoryService.getRelevantMemories('session-123', `query ${i}`, 5)
-      );
+      const promises = Array(10)
+        .fill(null)
+        .map((_, i) => MemoryService.getRelevantMemories('session-123', `query ${i}`, 5));
       const results = await Promise.all(promises);
       const endTime = performance.now();
 
       const duration = endTime - startTime;
 
       expect(results).toHaveLength(10);
-      expect(results.every(r => r.length === 5)).toBe(true);
+      expect(results.every((r) => r.length === 5)).toBe(true);
       // Concurrent should be much faster than 10 * 20ms = 200ms
       expect(duration).toBeLessThan(300);
     });
@@ -339,31 +360,33 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 15));
+        await new Promise((resolve) => setTimeout(resolve, 15));
         return {
-          data: Array(3).fill(null).map((_, i) => ({
-            id: `${i}`,
-            content: `Memory ${i}`,
-            importance: 3,
-            similarity: 0.9,
-            session_id: 'session-123',
-            type: 'event',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          })),
-          error: null
+          data: Array(3)
+            .fill(null)
+            .map((_, i) => ({
+              id: `${i}`,
+              content: `Memory ${i}`,
+              importance: 3,
+              similarity: 0.9,
+              session_id: 'session-123',
+              type: 'event',
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+              metadata: null,
+            })),
+          error: null,
         };
       });
 
       const startTime = performance.now();
-      const promises = Array(50).fill(null).map((_, i) =>
-        MemoryService.getRelevantMemories(`session-${i % 5}`, `query ${i}`, 3)
-      );
+      const promises = Array(50)
+        .fill(null)
+        .map((_, i) => MemoryService.getRelevantMemories(`session-${i % 5}`, `query ${i}`, 3));
       const results = await Promise.all(promises);
       const endTime = performance.now();
 
@@ -377,7 +400,7 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       let requestCount = 0;
@@ -385,22 +408,24 @@ describe('Memory Performance Tests', () => {
 
       mockRpc.mockImplementation(async () => {
         const reqStartTime = performance.now();
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         requestCount++;
         requestTimes.push(performance.now() - reqStartTime);
         return {
-          data: Array(5).fill(null).map((_, i) => ({
-            id: `${i}`,
-            content: `Memory ${i}`,
-            importance: 3,
-            similarity: 0.9,
-            session_id: 'session-123',
-            type: 'event',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          })),
-          error: null
+          data: Array(5)
+            .fill(null)
+            .map((_, i) => ({
+              id: `${i}`,
+              content: `Memory ${i}`,
+              importance: 3,
+              similarity: 0.9,
+              session_id: 'session-123',
+              type: 'event',
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+              metadata: null,
+            })),
+          error: null,
         };
       });
 
@@ -409,11 +434,11 @@ describe('Memory Performance Tests', () => {
       const batchSize = 10;
 
       for (let i = 0; i < batches; i++) {
-        const promises = Array(batchSize).fill(null).map(() =>
-          MemoryService.getRelevantMemories('session-123', 'query', 5)
-        );
+        const promises = Array(batchSize)
+          .fill(null)
+          .map(() => MemoryService.getRelevantMemories('session-123', 'query', 5));
         await Promise.all(promises);
-        await new Promise(resolve => setTimeout(resolve, 50)); // Small gap between batches
+        await new Promise((resolve) => setTimeout(resolve, 50)); // Small gap between batches
       }
 
       expect(requestCount).toBe(batches * batchSize);
@@ -432,24 +457,26 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 25)); // Simulate vector search
+        await new Promise((resolve) => setTimeout(resolve, 25)); // Simulate vector search
         return {
-          data: Array(10).fill(null).map((_, i) => ({
-            id: `${i}`,
-            content: `Semantically relevant memory ${i}`,
-            importance: 4,
-            similarity: 0.9 - (i * 0.05),
-            session_id: 'session-123',
-            type: 'event',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          })),
-          error: null
+          data: Array(10)
+            .fill(null)
+            .map((_, i) => ({
+              id: `${i}`,
+              content: `Semantically relevant memory ${i}`,
+              importance: 4,
+              similarity: 0.9 - i * 0.05,
+              session_id: 'session-123',
+              type: 'event',
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+              metadata: null,
+            })),
+          error: null,
         };
       });
 
@@ -467,17 +494,19 @@ describe('Memory Performance Tests', () => {
       vi.spyOn(featureFlags, 'isSemanticMemoriesEnabled').mockReturnValue(false);
 
       mockSelect.mockResolvedValue({
-        data: Array(10).fill(null).map((_, i) => ({
-          id: `${i}`,
-          content: `Memory ${i}`,
-          importance: 3,
-          session_id: 'session-123',
-          type: 'event',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        })),
-        error: null
+        data: Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            id: `${i}`,
+            content: `Memory ${i}`,
+            importance: 3,
+            session_id: 'session-123',
+            type: 'event',
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+            metadata: null,
+          })),
+        error: null,
       });
 
       const startTime = performance.now();
@@ -494,24 +523,26 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         return {
-          data: Array(10).fill(null).map((_, i) => ({
-            id: `${i}`,
-            content: `Memory ${i}`,
-            importance: 3,
-            similarity: 0.9,
-            session_id: 'session-123',
-            type: 'event',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          })),
-          error: null
+          data: Array(10)
+            .fill(null)
+            .map((_, i) => ({
+              id: `${i}`,
+              content: `Memory ${i}`,
+              importance: 3,
+              similarity: 0.9,
+              session_id: 'session-123',
+              type: 'event',
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+              metadata: null,
+            })),
+          error: null,
         };
       });
 
@@ -524,17 +555,19 @@ describe('Memory Performance Tests', () => {
       vi.spyOn(featureFlags, 'isSemanticMemoriesEnabled').mockReturnValue(false);
 
       mockSelect.mockResolvedValue({
-        data: Array(10).fill(null).map((_, i) => ({
-          id: `${i}`,
-          content: `Memory ${i}`,
-          importance: 3,
-          session_id: 'session-123',
-          type: 'event',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        })),
-        error: null
+        data: Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            id: `${i}`,
+            content: `Memory ${i}`,
+            importance: 3,
+            session_id: 'session-123',
+            type: 'event',
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+            metadata: null,
+          })),
+        error: null,
       });
 
       const keywordStart = performance.now();
@@ -556,10 +589,10 @@ describe('Memory Performance Tests', () => {
     it('should generate embeddings in reasonable time', async () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 30)); // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 30)); // Simulate API call
         return {
           data: { embedding: mockEmbedding },
-          error: null
+          error: null,
         };
       });
 
@@ -576,17 +609,19 @@ describe('Memory Performance Tests', () => {
     it('should handle batch embedding generation efficiently', async () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 25));
+        await new Promise((resolve) => setTimeout(resolve, 25));
         return {
           data: { embedding: mockEmbedding },
-          error: null
+          error: null,
         };
       });
 
-      const contents = Array(10).fill(null).map((_, i) => `Content ${i}`);
+      const contents = Array(10)
+        .fill(null)
+        .map((_, i) => `Content ${i}`);
 
       const startTime = performance.now();
-      await Promise.all(contents.map(c => repository.invokeEmbedding(c)));
+      await Promise.all(contents.map((c) => repository.invokeEmbedding(c)));
       const endTime = performance.now();
 
       const duration = endTime - startTime;
@@ -601,24 +636,26 @@ describe('Memory Performance Tests', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       mockRpc.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 15));
+        await new Promise((resolve) => setTimeout(resolve, 15));
         return {
-          data: Array(5).fill(null).map((_, i) => ({
-            id: `${i}`,
-            content: `Memory ${i}`,
-            importance: 3,
-            similarity: 0.9,
-            session_id: 'session-123',
-            type: 'event',
-            created_at: '2024-01-01T00:00:00Z',
-            updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          })),
-          error: null
+          data: Array(5)
+            .fill(null)
+            .map((_, i) => ({
+              id: `${i}`,
+              content: `Memory ${i}`,
+              importance: 3,
+              similarity: 0.9,
+              session_id: 'session-123',
+              type: 'event',
+              created_at: '2024-01-01T00:00:00Z',
+              updated_at: '2024-01-01T00:00:00Z',
+              metadata: null,
+            })),
+          error: null,
         };
       });
 

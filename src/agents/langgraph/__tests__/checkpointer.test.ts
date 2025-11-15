@@ -86,11 +86,7 @@ describe('LangGraph Checkpointer', () => {
 
       mockQuery.upsert.mockResolvedValue({ error: null });
 
-      await checkpointer.put(
-        { configurable: { thread_id: 'thread-1' } },
-        checkpoint,
-        metadata
-      );
+      await checkpointer.put({ configurable: { thread_id: 'thread-1' } }, checkpoint, metadata);
 
       expect(mockFrom).toHaveBeenCalledWith('agent_checkpoints');
       expect(mockQuery.upsert).toHaveBeenCalled();
@@ -113,9 +109,9 @@ describe('LangGraph Checkpointer', () => {
         writes: {},
       };
 
-      await expect(
-        checkpointer.put({ configurable: {} }, checkpoint, metadata)
-      ).rejects.toThrow('thread_id is required');
+      await expect(checkpointer.put({ configurable: {} }, checkpoint, metadata)).rejects.toThrow(
+        'thread_id is required',
+      );
     });
 
     it('should handle upsert errors gracefully', async () => {
@@ -136,11 +132,7 @@ describe('LangGraph Checkpointer', () => {
       });
 
       await expect(
-        checkpointer.put(
-          { configurable: { thread_id: 'thread-1' } },
-          checkpoint,
-          metadata
-        )
+        checkpointer.put({ configurable: { thread_id: 'thread-1' } }, checkpoint, metadata),
       ).rejects.toThrow();
     });
 
@@ -166,11 +158,7 @@ describe('LangGraph Checkpointer', () => {
 
       mockQuery.upsert.mockResolvedValue({ error: null });
 
-      await checkpointer.put(
-        { configurable: { thread_id: 'thread-1' } },
-        checkpoint,
-        metadata
-      );
+      await checkpointer.put({ configurable: { thread_id: 'thread-1' } }, checkpoint, metadata);
 
       const upsertCall = mockQuery.upsert.mock.calls[0][0];
       expect(upsertCall.state).toBeDefined();
@@ -253,9 +241,7 @@ describe('LangGraph Checkpointer', () => {
         state: {
           id: 'checkpoint-1',
           channel_values: {
-            messages: [
-              { content: 'Test', type: 'human' },
-            ],
+            messages: [{ content: 'Test', type: 'human' }],
             playerIntent: 'exploration',
           },
         },
@@ -325,10 +311,7 @@ describe('LangGraph Checkpointer', () => {
 
       mockQuery.then = vi.fn((cb) => cb({ data: checkpoints, error: null }));
 
-      await checkpointer.list(
-        { configurable: { thread_id: 'thread-1' } },
-        5
-      );
+      await checkpointer.list({ configurable: { thread_id: 'thread-1' } }, 5);
 
       expect(mockQuery.limit).toHaveBeenCalledWith(5);
     });
@@ -379,9 +362,7 @@ describe('LangGraph Checkpointer', () => {
     it('should handle deletion errors', async () => {
       mockQuery.delete.mockResolvedValue({ error: new Error('Delete failed') });
 
-      await expect(
-        checkpointer.deleteCheckpoint('thread-1', 'checkpoint-1')
-      ).rejects.toThrow();
+      await expect(checkpointer.deleteCheckpoint('thread-1', 'checkpoint-1')).rejects.toThrow();
     });
   });
 
@@ -390,10 +371,7 @@ describe('LangGraph Checkpointer', () => {
       const completeState = {
         id: 'checkpoint-full',
         channel_values: {
-          messages: [
-            new HumanMessage({ content: 'Hello' }),
-            new AIMessage({ content: 'Hi' }),
-          ],
+          messages: [new HumanMessage({ content: 'Hello' }), new AIMessage({ content: 'Hi' })],
           playerInput: 'Hello',
           playerIntent: 'social',
           rulesValidation: {
@@ -515,9 +493,7 @@ describe('LangGraph Checkpointer', () => {
           ],
           worldContext: {
             campaignId: 'campaign-1',
-            recentMemories: [
-              { content: 'Memory 1', type: 'event', timestamp: new Date() },
-            ],
+            recentMemories: [{ content: 'Memory 1', type: 'event', timestamp: new Date() }],
           },
           metadata: {
             timestamp: new Date(),
@@ -529,11 +505,12 @@ describe('LangGraph Checkpointer', () => {
 
       mockQuery.upsert.mockResolvedValue({ error: null });
 
-      await checkpointer.put(
-        { configurable: { thread_id: 'thread-1' } },
-        complexState,
-        { parent_checkpoint_id: null, source: 'update', step: 1, writes: {} }
-      );
+      await checkpointer.put({ configurable: { thread_id: 'thread-1' } }, complexState, {
+        parent_checkpoint_id: null,
+        source: 'update',
+        step: 1,
+        writes: {},
+      });
 
       const savedState = mockQuery.upsert.mock.calls[0][0].state;
       expect(savedState).toBeDefined();
@@ -576,7 +553,7 @@ describe('LangGraph Checkpointer', () => {
       await checkpointer.put(
         { configurable: { thread_id: 'thread-1' } },
         { id: 'checkpoint-1', channel_values: {} },
-        { parent_checkpoint_id: null, source: 'update', step: 1, writes: {} }
+        { parent_checkpoint_id: null, source: 'update', step: 1, writes: {} },
       );
 
       // Load from thread-2
@@ -597,7 +574,7 @@ describe('LangGraph Checkpointer', () => {
         await checkpointer.put(
           { configurable: { thread_id: threadId } },
           { id: `checkpoint-${threadId}`, channel_values: {} },
-          { parent_checkpoint_id: null, source: 'update', step: 1, writes: {} }
+          { parent_checkpoint_id: null, source: 'update', step: 1, writes: {} },
         );
       }
 

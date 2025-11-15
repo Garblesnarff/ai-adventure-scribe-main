@@ -50,7 +50,7 @@ function calculateAbilityModifier(score: number): number {
 export function calculatePassiveSkill(
   abilityScore: number,
   proficiencyBonus: number,
-  isProficient: boolean
+  isProficient: boolean,
 ): number {
   const abilityModifier = calculateAbilityModifier(abilityScore);
   const proficiency = isProficient ? proficiencyBonus : 0;
@@ -105,10 +105,7 @@ export function calculatePassiveInvestigation(character: Character): number {
 /**
  * Check a character's passive Perception against a DC
  */
-export function checkPassivePerception(
-  character: Character,
-  dc: number
-): PassiveCheckResult {
+export function checkPassivePerception(character: Character, dc: number): PassiveCheckResult {
   const passiveScore = calculatePassivePerception(character);
   const success = passiveScore >= dc;
 
@@ -126,10 +123,7 @@ export function checkPassivePerception(
 /**
  * Check a character's passive Insight against a DC
  */
-export function checkPassiveInsight(
-  character: Character,
-  dc: number
-): PassiveCheckResult {
+export function checkPassiveInsight(character: Character, dc: number): PassiveCheckResult {
   const passiveScore = calculatePassiveInsight(character);
   const success = passiveScore >= dc;
 
@@ -147,10 +141,7 @@ export function checkPassiveInsight(
 /**
  * Check a character's passive Investigation against a DC
  */
-export function checkPassiveInvestigation(
-  character: Character,
-  dc: number
-): PassiveCheckResult {
+export function checkPassiveInvestigation(character: Character, dc: number): PassiveCheckResult {
   const passiveScore = calculatePassiveInvestigation(character);
   const success = passiveScore >= dc;
 
@@ -173,10 +164,7 @@ export function checkPassiveInvestigation(
  * @param scene - Scene object with DCs for different passive checks
  * @returns PassiveSceneCheck with results for all characters and all passive skills
  */
-export function evaluatePassiveChecks(
-  characters: Character[],
-  scene: Scene
-): PassiveSceneCheck {
+export function evaluatePassiveChecks(characters: Character[], scene: Scene): PassiveSceneCheck {
   const results: PassiveSceneCheck = {
     perception: [],
     insight: [],
@@ -185,22 +173,20 @@ export function evaluatePassiveChecks(
 
   // Check Perception if DC is set
   if (scene.perceptionDC !== undefined) {
-    results.perception = characters.map(char =>
-      checkPassivePerception(char, scene.perceptionDC!)
+    results.perception = characters.map((char) =>
+      checkPassivePerception(char, scene.perceptionDC!),
     );
   }
 
   // Check Insight if DC is set
   if (scene.insightDC !== undefined) {
-    results.insight = characters.map(char =>
-      checkPassiveInsight(char, scene.insightDC!)
-    );
+    results.insight = characters.map((char) => checkPassiveInsight(char, scene.insightDC!));
   }
 
   // Check Investigation if DC is set
   if (scene.investigationDC !== undefined) {
-    results.investigation = characters.map(char =>
-      checkPassiveInvestigation(char, scene.investigationDC!)
+    results.investigation = characters.map((char) =>
+      checkPassiveInvestigation(char, scene.investigationDC!),
     );
   }
 
@@ -215,41 +201,38 @@ export function evaluatePassiveChecks(
  * @param scene - Scene with details about what can be noticed
  * @returns Array of narrative strings for successful checks
  */
-export function getPassiveCheckNarration(
-  sceneCheck: PassiveSceneCheck,
-  scene: Scene
-): string[] {
+export function getPassiveCheckNarration(sceneCheck: PassiveSceneCheck, scene: Scene): string[] {
   const narrations: string[] = [];
 
   // Perception successes
   if (scene.perceptionDetails) {
-    const successfulChecks = sceneCheck.perception.filter(c => c.success);
+    const successfulChecks = sceneCheck.perception.filter((c) => c.success);
     if (successfulChecks.length > 0) {
-      const names = successfulChecks.map(c => c.characterName).join(', ');
+      const names = successfulChecks.map((c) => c.characterName).join(', ');
       narrations.push(
-        `${names}'s keen awareness (Passive Perception ${successfulChecks[0].passiveScore}) reveals: ${scene.perceptionDetails}`
+        `${names}'s keen awareness (Passive Perception ${successfulChecks[0].passiveScore}) reveals: ${scene.perceptionDetails}`,
       );
     }
   }
 
   // Insight successes
   if (scene.insightDetails) {
-    const successfulChecks = sceneCheck.insight.filter(c => c.success);
+    const successfulChecks = sceneCheck.insight.filter((c) => c.success);
     if (successfulChecks.length > 0) {
-      const names = successfulChecks.map(c => c.characterName).join(', ');
+      const names = successfulChecks.map((c) => c.characterName).join(', ');
       narrations.push(
-        `${names}'s intuition (Passive Insight ${successfulChecks[0].passiveScore}) senses: ${scene.insightDetails}`
+        `${names}'s intuition (Passive Insight ${successfulChecks[0].passiveScore}) senses: ${scene.insightDetails}`,
       );
     }
   }
 
   // Investigation successes
   if (scene.investigationDetails) {
-    const successfulChecks = sceneCheck.investigation.filter(c => c.success);
+    const successfulChecks = sceneCheck.investigation.filter((c) => c.success);
     if (successfulChecks.length > 0) {
-      const names = successfulChecks.map(c => c.characterName).join(', ');
+      const names = successfulChecks.map((c) => c.characterName).join(', ');
       narrations.push(
-        `${names}'s analytical mind (Passive Investigation ${successfulChecks[0].passiveScore}) notices: ${scene.investigationDetails}`
+        `${names}'s analytical mind (Passive Investigation ${successfulChecks[0].passiveScore}) notices: ${scene.investigationDetails}`,
       );
     }
   }

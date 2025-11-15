@@ -21,13 +21,13 @@ vi.mock('@/integrations/supabase/client', () => {
         gte: vi.fn().mockReturnThis(),
         single: vi.fn().mockReturnThis(),
         insert: mockInsert,
-        update: mockUpdate.mockReturnThis()
+        update: mockUpdate.mockReturnThis(),
       })),
       rpc: mockRpc,
       functions: {
-        invoke: mockFunctionsInvoke
-      }
-    }
+        invoke: mockFunctionsInvoke,
+      },
+    },
   };
 });
 
@@ -37,8 +37,8 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 // Mock importance calculation
@@ -53,10 +53,10 @@ vi.mock('@/utils/memory/importance', () => ({
       location: 3,
       dialogue_gem: 3,
       event: 3,
-      general: 2
+      general: 2,
     };
     return importanceMap[type as string] || 2;
-  })
+  }),
 }));
 
 // Mock Gemini API Manager
@@ -67,26 +67,28 @@ vi.mock('@/services/gemini-api-manager-singleton', () => ({
         getGenerativeModel: vi.fn(() => ({
           generateContent: vi.fn(async () => ({
             response: {
-              text: vi.fn(async () => JSON.stringify({
-                memories: [
-                  {
-                    session_id: 'session-123',
-                    type: 'quest',
-                    category: 'main_quest',
-                    content: 'Find the Dragon Scroll',
-                    importance: 5,
-                    emotional_tone: 'intense',
-                    metadata: {}
-                  }
-                ]
-              }))
-            }
-          }))
-        }))
+              text: vi.fn(async () =>
+                JSON.stringify({
+                  memories: [
+                    {
+                      session_id: 'session-123',
+                      type: 'quest',
+                      category: 'main_quest',
+                      content: 'Find the Dragon Scroll',
+                      importance: 5,
+                      emotional_tone: 'intense',
+                      metadata: {},
+                    },
+                  ],
+                }),
+              ),
+            },
+          })),
+        })),
       };
       return fn(mockGenAI);
-    })
-  }))
+    }),
+  })),
 }));
 
 // Import after mocking
@@ -118,7 +120,7 @@ describe('Memory Service Integration', () => {
       gte: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
       insert: mockInsert,
-      update: mockUpdate.mockReturnThis()
+      update: mockUpdate.mockReturnThis(),
     } as any);
 
     vi.mocked(supabase.rpc).mockImplementation(mockRpc as any);
@@ -136,13 +138,13 @@ describe('Memory Service Integration', () => {
       // Mock embedding generation
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: mockEmbedding },
-        error: null
+        error: null,
       });
 
       // Mock insert
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       // Store memory
@@ -150,12 +152,12 @@ describe('Memory Service Integration', () => {
       await memoryService.storeMemory(
         'The knight discovered a hidden chamber',
         'location',
-        'discovery'
+        'discovery',
       );
 
       // Verify embedding was generated
       expect(mockFunctionsInvoke).toHaveBeenCalledWith('generate-embedding', {
-        body: { text: 'The knight discovered a hidden chamber' }
+        body: { text: 'The knight discovered a hidden chamber' },
       });
 
       // Verify memory was inserted with embedding
@@ -165,8 +167,8 @@ describe('Memory Service Integration', () => {
           type: 'location',
           content: 'The knight discovered a hidden chamber',
           importance: 3,
-          embedding: mockEmbedding
-        })
+          embedding: mockEmbedding,
+        }),
       ]);
 
       // Mock semantic search retrieval
@@ -181,20 +183,20 @@ describe('Memory Service Integration', () => {
         updated_at: '2024-01-01T00:00:00Z',
         metadata: {
           category: 'discovery',
-          context: JSON.stringify({})
-        }
+          context: JSON.stringify({}),
+        },
       };
 
       mockRpc.mockResolvedValue({
         data: [mockMemory],
-        error: null
+        error: null,
       });
 
       // Retrieve via semantic search
       const results = await memoryService.retrieveMemories({
         query: 'hidden chamber',
         semanticSearch: true,
-        limit: 10
+        limit: 10,
       });
 
       expect(results).toHaveLength(1);
@@ -206,15 +208,11 @@ describe('Memory Service Integration', () => {
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
-      await memoryService.storeMemory(
-        'The wizard cast a spell',
-        'event',
-        'combat'
-      );
+      await memoryService.storeMemory('The wizard cast a spell', 'event', 'combat');
 
       // Verify embedding was NOT generated
       expect(mockFunctionsInvoke).not.toHaveBeenCalled();
@@ -222,8 +220,8 @@ describe('Memory Service Integration', () => {
       // Verify memory was inserted without embedding
       expect(mockInsert).toHaveBeenCalledWith([
         expect.objectContaining({
-          embedding: null
-        })
+          embedding: null,
+        }),
       ]);
     });
   });
@@ -232,87 +230,79 @@ describe('Memory Service Integration', () => {
     it('should assign high importance to quest memories', async () => {
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
       await memoryService.storeMemory(
         'Retrieve the Golden Crown from the Ancient Tomb',
         'quest',
-        'main_quest'
+        'main_quest',
       );
 
       expect(mockInsert).toHaveBeenCalledWith([
         expect.objectContaining({
-          importance: 5
-        })
+          importance: 5,
+        }),
       ]);
     });
 
     it('should assign medium importance to NPC memories', async () => {
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
-      await memoryService.storeMemory(
-        'Met the mysterious merchant Aldric',
-        'npc',
-        'character'
-      );
+      await memoryService.storeMemory('Met the mysterious merchant Aldric', 'npc', 'character');
 
       expect(mockInsert).toHaveBeenCalledWith([
         expect.objectContaining({
-          importance: 4
-        })
+          importance: 4,
+        }),
       ]);
     });
 
     it('should assign lower importance to general memories', async () => {
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
-      await memoryService.storeMemory(
-        'The weather was pleasant',
-        'general',
-        'general'
-      );
+      await memoryService.storeMemory('The weather was pleasant', 'general', 'general');
 
       expect(mockInsert).toHaveBeenCalledWith([
         expect.objectContaining({
-          importance: 2
-        })
+          importance: 2,
+        }),
       ]);
     });
 
     it('should normalize importance to 1-5 range', async () => {
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       // Mock saveMemories to test normalization
@@ -324,7 +314,7 @@ describe('Memory Service Integration', () => {
           importance: 10, // Should be normalized to 5
           metadata: null,
           created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z'
+          updated_at: '2024-01-01T00:00:00Z',
         },
         {
           session_id: 'session-123',
@@ -333,8 +323,8 @@ describe('Memory Service Integration', () => {
           importance: 0, // Should be normalized to 1
           metadata: null,
           created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z'
-        }
+          updated_at: '2024-01-01T00:00:00Z',
+        },
       ];
 
       await MemoryService.saveMemories(memories);
@@ -351,7 +341,7 @@ describe('Memory Service Integration', () => {
       { type: 'location', content: 'Entered the Misty Mountains', category: 'environment' },
       { type: 'quest', content: 'Destroy the One Ring', category: 'main_quest' },
       { type: 'item', content: 'Found Sting, an elvish blade', category: 'weapon' },
-      { type: 'event', content: 'Battle of Helm\'s Deep', category: 'combat' },
+      { type: 'event', content: "Battle of Helm's Deep", category: 'combat' },
       { type: 'story_beat', content: 'The fellowship is formed', category: 'milestone' },
       { type: 'character_moment', content: 'Frodo shows great courage', category: 'growth' },
       { type: 'world_detail', content: 'Elves are immortal beings', category: 'lore' },
@@ -359,19 +349,19 @@ describe('Memory Service Integration', () => {
       { type: 'atmosphere', content: 'Dark and foreboding silence', category: 'mood' },
       { type: 'plot_point', content: 'Gollum betrays the heroes', category: 'twist' },
       { type: 'foreshadowing', content: 'A shadow grows in the East', category: 'hint' },
-      { type: 'general', content: 'The sky was cloudy', category: 'general' }
+      { type: 'general', content: 'The sky was cloudy', category: 'general' },
     ];
 
     memoryTypes.forEach(({ type, content, category }) => {
       it(`should correctly classify ${type} memories`, async () => {
         mockFunctionsInvoke.mockResolvedValue({
           data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-          error: null
+          error: null,
         });
 
         mockInsert.mockResolvedValue({
           data: null,
-          error: null
+          error: null,
         });
 
         const memoryService = new MemoryService('session-123');
@@ -380,8 +370,8 @@ describe('Memory Service Integration', () => {
         expect(mockInsert).toHaveBeenCalledWith([
           expect.objectContaining({
             type,
-            content
-          })
+            content,
+          }),
         ]);
       });
     });
@@ -390,16 +380,16 @@ describe('Memory Service Integration', () => {
   describe('Concurrent Memory Creation', () => {
     it('should handle multiple concurrent memory creations', async () => {
       mockFunctionsInvoke.mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return {
           data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-          error: null
+          error: null,
         };
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
@@ -409,11 +399,11 @@ describe('Memory Service Integration', () => {
         { content: 'Memory 2', type: 'location' as const, category: 'discovery' },
         { content: 'Memory 3', type: 'npc' as const, category: 'character' },
         { content: 'Memory 4', type: 'quest' as const, category: 'side_quest' },
-        { content: 'Memory 5', type: 'item' as const, category: 'treasure' }
+        { content: 'Memory 5', type: 'item' as const, category: 'treasure' },
       ];
 
       await Promise.all(
-        memories.map(m => memoryService.storeMemory(m.content, m.type, m.category))
+        memories.map((m) => memoryService.storeMemory(m.content, m.type, m.category)),
       );
 
       expect(mockFunctionsInvoke).toHaveBeenCalledTimes(5);
@@ -427,18 +417,18 @@ describe('Memory Service Integration', () => {
         if (callCount === 2) {
           return {
             data: null,
-            error: { message: 'Failed' }
+            error: { message: 'Failed' },
           };
         }
         return {
           data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-          error: null
+          error: null,
         };
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
@@ -446,11 +436,11 @@ describe('Memory Service Integration', () => {
       const results = await Promise.allSettled([
         memoryService.storeMemory('Memory 1', 'event', 'combat'),
         memoryService.storeMemory('Memory 2', 'event', 'combat'),
-        memoryService.storeMemory('Memory 3', 'event', 'combat')
+        memoryService.storeMemory('Memory 3', 'event', 'combat'),
       ]);
 
       // All should succeed (embedding failure doesn't prevent storage)
-      expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+      expect(results.every((r) => r.status === 'fulfilled')).toBe(true);
     });
   });
 
@@ -463,7 +453,7 @@ describe('Memory Service Integration', () => {
           content: 'Important quest',
           importance: 5,
           created_at: '2024-01-01T00:00:00Z',
-          metadata: { category: 'main_quest' }
+          metadata: { category: 'main_quest' },
         },
         {
           id: '2',
@@ -471,18 +461,18 @@ describe('Memory Service Integration', () => {
           content: 'Minor event',
           importance: 2,
           created_at: '2024-01-01T00:00:00Z',
-          metadata: { category: 'general' }
-        }
+          metadata: { category: 'general' },
+        },
       ];
 
       mockSelect.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
       const results = await memoryService.retrieveMemories({
-        semanticSearch: false
+        semanticSearch: false,
       });
 
       expect(results.length).toBeGreaterThan(0);
@@ -496,19 +486,19 @@ describe('Memory Service Integration', () => {
           content: 'Met a merchant',
           importance: 3,
           created_at: '2024-01-01T00:00:00Z',
-          metadata: { category: 'npc' }
-        }
+          metadata: { category: 'npc' },
+        },
       ];
 
       mockSelect.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
       const results = await memoryService.retrieveMemories({
         category: 'npc',
-        semanticSearch: false
+        semanticSearch: false,
       });
 
       expect(results.length).toBeGreaterThan(0);
@@ -523,19 +513,19 @@ describe('Memory Service Integration', () => {
           content: 'Recent event',
           importance: 3,
           created_at: new Date(now.getTime() - 10 * 60 * 1000).toISOString(), // 10 minutes ago
-          metadata: { category: 'general' }
-        }
+          metadata: { category: 'general' },
+        },
       ];
 
       mockSelect.mockResolvedValue({
         data: recentMemories,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
       const results = await memoryService.retrieveMemories({
         timeframe: 'recent',
-        semanticSearch: false
+        semanticSearch: false,
       });
 
       expect(results.length).toBeGreaterThan(0);
@@ -549,13 +539,13 @@ describe('Memory Service Integration', () => {
           content: 'Recent important quest',
           importance: 5,
           created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-          metadata: { category: 'main_quest' }
-        }
+          metadata: { category: 'main_quest' },
+        },
       ];
 
       mockSelect.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       const memoryService = new MemoryService('session-123');
@@ -563,7 +553,7 @@ describe('Memory Service Integration', () => {
         category: 'main_quest',
         timeframe: 'recent',
         limit: 5,
-        semanticSearch: false
+        semanticSearch: false,
       });
 
       expect(results.length).toBeGreaterThan(0);
@@ -574,12 +564,12 @@ describe('Memory Service Integration', () => {
     it('should extract memories from conversation context', async () => {
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const context = {
@@ -590,13 +580,13 @@ describe('Memory Service Integration', () => {
         activeNPCs: ['High Priest'],
         activeQuests: ['Find the Sacred Relic'],
         currentMessage: 'I enter the temple',
-        recentMessages: ['You approach the ancient temple']
+        recentMessages: ['You approach the ancient temple'],
       };
 
       const result = await MemoryService.extractMemories(
         context,
         'I search for the sacred relic',
-        'The high priest reveals a hidden chamber containing the relic'
+        'The high priest reveals a hidden chamber containing the relic',
       );
 
       expect(result.memories).toBeInstanceOf(Array);
@@ -609,12 +599,12 @@ describe('Memory Service Integration', () => {
     it('should save extracted memories with embeddings', async () => {
       mockFunctionsInvoke.mockResolvedValue({
         data: { embedding: JSON.stringify(Array(1536).fill(0.5)) },
-        error: null
+        error: null,
       });
 
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const context = {
@@ -622,13 +612,13 @@ describe('Memory Service Integration', () => {
         campaignId: 'campaign-456',
         characterId: 'char-789',
         currentMessage: 'I attack the dragon',
-        recentMessages: ['A dragon appears']
+        recentMessages: ['A dragon appears'],
       };
 
       const result = await MemoryService.extractMemories(
         context,
         'I attack with my sword',
-        'You strike the dragon!'
+        'You strike the dragon!',
       );
 
       if (result.memories.length > 0) {
@@ -643,24 +633,24 @@ describe('Memory Service Integration', () => {
       const mockMemory = {
         id: 'memory-123',
         importance: 3,
-        narrative_weight: 5
+        narrative_weight: 5,
       };
 
       mockSelect.mockResolvedValue({
         data: mockMemory,
-        error: null
+        error: null,
       });
 
       mockUpdate.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       await MemoryService.reinforceMemory('memory-123', 1);
 
       expect(mockUpdate).toHaveBeenCalledWith({
         importance: 4,
-        narrative_weight: 6
+        narrative_weight: 6,
       });
     });
 
@@ -668,36 +658,34 @@ describe('Memory Service Integration', () => {
       const mockMemory = {
         id: 'memory-123',
         importance: 5,
-        narrative_weight: 10
+        narrative_weight: 10,
       };
 
       mockSelect.mockResolvedValue({
         data: mockMemory,
-        error: null
+        error: null,
       });
 
       mockUpdate.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       await MemoryService.reinforceMemory('memory-123', 2);
 
       expect(mockUpdate).toHaveBeenCalledWith({
         importance: 5, // Should not exceed 5
-        narrative_weight: 10 // Should not exceed 10
+        narrative_weight: 10, // Should not exceed 10
       });
     });
 
     it('should handle non-existent memory gracefully', async () => {
       mockSelect.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
-      await expect(
-        MemoryService.reinforceMemory('non-existent', 1)
-      ).resolves.not.toThrow();
+      await expect(MemoryService.reinforceMemory('non-existent', 1)).resolves.not.toThrow();
 
       expect(mockUpdate).not.toHaveBeenCalled();
     });
@@ -709,13 +697,13 @@ describe('Memory Service Integration', () => {
         {
           id: '1',
           type: 'plot_point',
-          content: 'The hero\'s secret is revealed',
+          content: "The hero's secret is revealed",
           importance: 5,
           narrative_weight: 9,
           session_id: 'session-123',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
+          metadata: null,
         },
         {
           id: '2',
@@ -726,19 +714,19 @@ describe('Memory Service Integration', () => {
           session_id: 'session-123',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       mockSelect.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       const results = await MemoryService.getFictionReadyMemories('session-123', 6);
 
       expect(results).toHaveLength(2);
-      expect(results.every(m => (m as any).narrative_weight >= 6)).toBe(true);
+      expect(results.every((m) => (m as any).narrative_weight >= 6)).toBe(true);
     });
   });
 });

@@ -73,7 +73,7 @@ describe('Intent Detector Node', () => {
             action: 'attack with sword',
             skill: null,
           },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -95,7 +95,7 @@ describe('Intent Detector Node', () => {
             action: 'persuade',
             skill: 'Persuasion',
           },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -116,7 +116,7 @@ describe('Intent Detector Node', () => {
             action: 'search for hidden doors',
             skill: 'Investigation',
           },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -136,7 +136,7 @@ describe('Intent Detector Node', () => {
             action: 'cast Healing Word',
             skill: null,
           },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -148,7 +148,7 @@ describe('Intent Detector Node', () => {
       const mockState = createMockState('I move forward cautiously');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        'Based on the player input, here is my analysis: {"type": "movement", "confidence": 0.85, "details": {"target": null, "action": "move forward", "skill": null}}'
+        'Based on the player input, here is my analysis: {"type": "movement", "confidence": 0.85, "details": {"target": null, "action": "move forward", "skill": null}}',
       );
 
       const result = await detectIntent(mockState);
@@ -227,9 +227,7 @@ describe('Intent Detector Node', () => {
     it('should handle AI service errors gracefully', async () => {
       const mockState = createMockState('I attack the dragon');
 
-      mockGeminiManager.executeWithRotation.mockRejectedValue(
-        new Error('AI service unavailable')
-      );
+      mockGeminiManager.executeWithRotation.mockRejectedValue(new Error('AI service unavailable'));
 
       const result = await detectIntent(mockState);
 
@@ -241,7 +239,7 @@ describe('Intent Detector Node', () => {
       const mockState = createMockState('I search for traps');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        '{"type": "exploration", invalid json}'
+        '{"type": "exploration", invalid json}',
       );
 
       const result = await detectIntent(mockState);
@@ -256,7 +254,7 @@ describe('Intent Detector Node', () => {
         JSON.stringify({
           // Missing 'type' and 'confidence'
           details: { target: 'innkeeper' },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -271,7 +269,7 @@ describe('Intent Detector Node', () => {
       mockState.metadata!.stepCount = 5;
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ type: 'other', confidence: 0.5, details: {} })
+        JSON.stringify({ type: 'other', confidence: 0.5, details: {} }),
       );
 
       const result = await detectIntent(mockState);
@@ -288,7 +286,7 @@ describe('Intent Detector Node', () => {
       };
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ type: 'exploration', confidence: 0.9, details: {} })
+        JSON.stringify({ type: 'exploration', confidence: 0.9, details: {} }),
       );
 
       const result = await detectIntent(mockState);
@@ -300,16 +298,14 @@ describe('Intent Detector Node', () => {
 
   describe('Complex Input Scenarios', () => {
     it('should handle multi-action input', async () => {
-      const mockState = createMockState(
-        'I draw my sword and attack the nearest enemy'
-      );
+      const mockState = createMockState('I draw my sword and attack the nearest enemy');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
           type: 'attack',
           confidence: 0.93,
           details: { target: 'nearest enemy', action: 'attack', skill: null },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -319,7 +315,7 @@ describe('Intent Detector Node', () => {
 
     it('should handle conditional actions', async () => {
       const mockState = createMockState(
-        'If the door is locked, I try to pick it. Otherwise I open it.'
+        'If the door is locked, I try to pick it. Otherwise I open it.',
       );
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
@@ -327,7 +323,7 @@ describe('Intent Detector Node', () => {
           type: 'skill_check',
           confidence: 0.78,
           details: { target: 'door', action: 'pick lock', skill: 'Sleight of Hand' },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -337,7 +333,7 @@ describe('Intent Detector Node', () => {
 
     it('should handle roleplay-heavy input', async () => {
       const mockState = createMockState(
-        'With a flourish of my cape, I address the crowd: "Good people of Waterdeep, lend me your ears!"'
+        'With a flourish of my cape, I address the crowd: "Good people of Waterdeep, lend me your ears!"',
       );
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
@@ -345,7 +341,7 @@ describe('Intent Detector Node', () => {
           type: 'social',
           confidence: 0.96,
           details: { target: 'crowd', action: 'address', skill: 'Performance' },
-        })
+        }),
       );
 
       const result = await detectIntent(mockState);
@@ -369,7 +365,7 @@ describe('Intent Detector Node', () => {
       const mockState = createMockState(longInput);
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ type: 'attack', confidence: 0.9, details: {} })
+        JSON.stringify({ type: 'attack', confidence: 0.9, details: {} }),
       );
 
       const result = await detectIntent(mockState);
@@ -378,12 +374,10 @@ describe('Intent Detector Node', () => {
     });
 
     it('should handle special characters in input', async () => {
-      const mockState = createMockState(
-        'I say "Hey! @#$% you!" to the guard'
-      );
+      const mockState = createMockState('I say "Hey! @#$% you!" to the guard');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ type: 'social', confidence: 0.85, details: {} })
+        JSON.stringify({ type: 'social', confidence: 0.85, details: {} }),
       );
 
       const result = await detectIntent(mockState);

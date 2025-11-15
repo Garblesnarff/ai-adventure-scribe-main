@@ -7,7 +7,12 @@ import type { Memory } from './memory-manager';
 import { WorldBuilderService } from './world-builders/world-builder-service';
 import { voiceConsistencyService } from './voice-consistency-service';
 import type { SessionVoiceContext } from './voice-consistency-service';
-import { detectCombatFromText, type CombatDetectionResult, type DetectedEnemy, type DetectedCombatAction } from '@/utils/combatDetection';
+import {
+  detectCombatFromText,
+  type CombatDetectionResult,
+  type DetectedEnemy,
+  type DetectedCombatAction,
+} from '@/utils/combatDetection';
 import logger from '@/lib/logger';
 import { SessionStateService } from './session-state-service';
 import { AgentOrchestrator } from './crewai/agent-orchestrator';
@@ -39,8 +44,8 @@ const ROLL_KEYWORDS: Array<{
       type: 'attack',
       formula: '1d20+attack_bonus',
       purpose: 'Attack roll to resolve your strike',
-      ac: 13
-    })
+      ac: 13,
+    }),
   },
   {
     keywords: ['stealth', 'sneak', 'hide', 'creep', 'quiet'],
@@ -50,8 +55,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Stealth check to stay hidden',
       dc: 14,
       skill: 'stealth',
-      ability: 'dexterity'
-    })
+      ability: 'dexterity',
+    }),
   },
   {
     keywords: ['persuade', 'convince', 'charm', 'negotiate', 'diplomacy', 'talk'],
@@ -61,8 +66,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Persuasion check to influence the NPC',
       dc: 15,
       skill: 'persuasion',
-      ability: 'charisma'
-    })
+      ability: 'charisma',
+    }),
   },
   {
     keywords: ['intimidate', 'threaten', 'menace', 'coerce'],
@@ -72,8 +77,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Intimidation check to cow your target',
       dc: 15,
       skill: 'intimidation',
-      ability: 'charisma'
-    })
+      ability: 'charisma',
+    }),
   },
   {
     keywords: ['investigate', 'inspect', 'search', 'study', 'analyze'],
@@ -83,8 +88,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Investigation check to uncover details',
       dc: 14,
       skill: 'investigation',
-      ability: 'intelligence'
-    })
+      ability: 'intelligence',
+    }),
   },
   {
     keywords: ['acrobatic', 'flip', 'tumble', 'dodge', 'leap'],
@@ -94,8 +99,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Acrobatics check to keep your footing',
       dc: 13,
       skill: 'acrobatics',
-      ability: 'dexterity'
-    })
+      ability: 'dexterity',
+    }),
   },
   {
     keywords: ['climb', 'heave', 'lift', 'push', 'force', 'shove', 'grapple'],
@@ -105,8 +110,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Athletics check to power through the challenge',
       dc: 15,
       skill: 'athletics',
-      ability: 'strength'
-    })
+      ability: 'strength',
+    }),
   },
   {
     keywords: ['perceive', 'spot', 'notice', 'scan', 'watch', 'listen', 'hear'],
@@ -116,8 +121,8 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Perception check to notice hidden details',
       dc: 13,
       skill: 'perception',
-      ability: 'wisdom'
-    })
+      ability: 'wisdom',
+    }),
   },
   {
     keywords: ['insight', 'sense motive', 'judge', 'read'],
@@ -127,9 +132,9 @@ const ROLL_KEYWORDS: Array<{
       purpose: 'Insight check to read intentions',
       dc: 13,
       skill: 'insight',
-      ability: 'wisdom'
-    })
-  }
+      ability: 'wisdom',
+    }),
+  },
 ];
 
 function isPaymentRequiredError(error: unknown): boolean {
@@ -146,21 +151,24 @@ function isPaymentRequiredError(error: unknown): boolean {
   return typeof message === 'string' && PAYMENT_REQUIRED_PATTERN.test(message);
 }
 
-function determineFallbackRoll(playerText: string, combatDetection: CombatDetectionResult): FallbackRollRequest | null {
+function determineFallbackRoll(
+  playerText: string,
+  combatDetection: CombatDetectionResult,
+): FallbackRollRequest | null {
   if (!playerText) {
     return combatDetection.isCombat
       ? {
           type: 'attack',
           formula: '1d20+attack_bonus',
           purpose: 'Attack roll as combat breaks out',
-          ac: 13
+          ac: 13,
         }
       : null;
   }
 
   const lower = playerText.toLowerCase();
   for (const mapping of ROLL_KEYWORDS) {
-    if (mapping.keywords.some(keyword => lower.includes(keyword))) {
+    if (mapping.keywords.some((keyword) => lower.includes(keyword))) {
       return mapping.build();
     }
   }
@@ -170,7 +178,7 @@ function determineFallbackRoll(playerText: string, combatDetection: CombatDetect
       type: 'attack',
       formula: '1d20+attack_bonus',
       purpose: 'Attack roll to press the fight',
-      ac: 13
+      ac: 13,
     };
   }
 
@@ -188,7 +196,7 @@ function serializeRollForBlock(roll: FallbackRollRequest) {
   const payload: Record<string, unknown> = {
     type: roll.type,
     formula: roll.formula,
-    purpose: roll.purpose
+    purpose: roll.purpose,
   };
 
   if (roll.dc !== undefined) payload.dc = roll.dc;
@@ -207,12 +215,14 @@ function buildPaymentRequiredFallback(playerText: string, combatDetection: Comba
   const tension = combatDetection.isCombat
     ? `Steel clashes in your imagination as the unresolved action hangs in the air.`
     : `The world around you seems to hold its breath, waiting for your next move.`;
-  const rollLine = roll ? formatRollInstruction(roll) : `No roll is required yet—choose your approach.`;
+  const rollLine = roll
+    ? formatRollInstruction(roll)
+    : `No roll is required yet—choose your approach.`;
 
   const options = [
     'A. **Stay the course**, following through exactly as you intended.',
     'B. **Adjust your tactics**, taking a more cautious, observant approach.',
-    'C. **Try something unexpected**, improvising a bold alternative.'
+    'C. **Try something unexpected**, improvising a bold alternative.',
   ];
 
   const rollsBlock = `\n\n\`\`\`ROLL_REQUESTS_V1\n${JSON.stringify({ rolls: roll ? [serializeRollForBlock(roll)] : [] }, null, 2)}\n\`\`\`\n`;
@@ -225,13 +235,13 @@ function buildPaymentRequiredFallback(playerText: string, combatDetection: Comba
         dc: roll.dc,
         ac: roll.ac,
         advantage: roll.advantage,
-        disadvantage: roll.disadvantage
+        disadvantage: roll.disadvantage,
       }
     : null;
 
   return {
     text: `${narration}\n\n${tension}\n${rollLine}\n\n${options.join('\n')}${rollsBlock}`,
-    roll_requests: normalizedRoll ? [normalizedRoll] : []
+    roll_requests: normalizedRoll ? [normalizedRoll] : [],
   };
 }
 
@@ -274,11 +284,13 @@ export class AIService {
   private static getGeminiManager(): GeminiApiManager {
     return getGeminiApiManager();
   }
-  
+
   /** Feature flag to enable CrewAI orchestrator integration. */
   private static useCrewAI(): boolean {
     try {
-      const raw = String((import.meta as any).env?.VITE_USE_CREWAI_DM ?? '').toLowerCase().trim();
+      const raw = String((import.meta as any).env?.VITE_USE_CREWAI_DM ?? '')
+        .toLowerCase()
+        .trim();
       return raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on';
     } catch {
       return false;
@@ -291,7 +303,9 @@ export class AIService {
    */
   private static useLangGraph(): boolean {
     try {
-      const raw = String((import.meta as any).env?.VITE_FEATURE_USE_LANGGRAPH ?? '').toLowerCase().trim();
+      const raw = String((import.meta as any).env?.VITE_FEATURE_USE_LANGGRAPH ?? '')
+        .toLowerCase()
+        .trim();
       return raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on';
     } catch {
       return false;
@@ -308,14 +322,14 @@ export class AIService {
   }): Promise<string> {
     // Skip Edge Function - use local Gemini API directly
     logger.info('Using local Gemini API for campaign description...');
-    
+
     try {
       // Use local Gemini API
       const geminiManager = this.getGeminiManager();
-      
+
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-        
+
         const prompt = `Create an engaging D&D 5e campaign description that hooks players immediately and sets up an epic adventure.
 
 **Campaign Parameters:**
@@ -344,16 +358,15 @@ export class AIService {
 - **Paragraph 2**: The unique world elements, key NPCs, and what makes this adventure special
 - **Paragraph 3**: What players can expect - types of challenges, character integration, and why this matters
 
-Create a campaign description that makes players say "I want to play in this world right now!"`;  
-        
+Create a campaign description that makes players say "I want to play in this world right now!"`;
+
         const response = await model.generateContent(prompt);
         const result = await response.response;
         return result.text();
       });
-      
+
       logger.info('Successfully generated campaign description using local Gemini API');
       return result;
-      
     } catch (geminiError) {
       logger.error('Local Gemini API failed:', geminiError);
       throw new Error('Failed to generate campaign description - AI service unavailable');
@@ -416,11 +429,21 @@ When combat is detected, you MUST:
     onStream?: (chunk: string) => void;
     userPlan?: 'free' | 'pro' | 'enterprise';
     turnCount?: number;
-  }): Promise<{ text: string; narrationSegments?: NarrationSegment[]; roll_requests?: import('@/components/game/DiceRollRequest').RollRequest[]; dice_rolls?: unknown[]; combatDetection?: CombatDetectionResult }> {
+  }): Promise<{
+    text: string;
+    narrationSegments?: NarrationSegment[];
+    roll_requests?: import('@/components/game/DiceRollRequest').RollRequest[];
+    dice_rolls?: unknown[];
+    combatDetection?: CombatDetectionResult;
+  }> {
     // Decision about path (CrewAI vs Gemini) happens below
 
     // Dedupe in-flight chat calls (2s TTL)
-    const key = keyFor(params.context?.sessionId, params.message, (params.conversationHistory || []).length);
+    const key = keyFor(
+      params.context?.sessionId,
+      params.message,
+      (params.conversationHistory || []).length,
+    );
     const now = Date.now();
     for (const [k, v] of inFlight) if (now - v.ts > DEDUPE_MS) inFlight.delete(k);
     if (inFlight.has(key)) {
@@ -429,224 +452,262 @@ When combat is detected, you MUST:
     }
 
     const p = (async () => {
+      try {
+        // ========================================================================
+        // LANGGRAPH MIGRATION PATH (Feature Flag)
+        // ========================================================================
+        // If LangGraph is enabled, delegate to the new system via compatibility adapter
+        if (this.useLangGraph()) {
+          try {
+            logger.info(
+              '[AIService] Using LangGraph agent system (VITE_FEATURE_USE_LANGGRAPH=true)',
+            );
 
-    try {
-      // ========================================================================
-      // LANGGRAPH MIGRATION PATH (Feature Flag)
-      // ========================================================================
-      // If LangGraph is enabled, delegate to the new system via compatibility adapter
-      if (this.useLangGraph()) {
-        try {
-          logger.info('[AIService] Using LangGraph agent system (VITE_FEATURE_USE_LANGGRAPH=true)');
+            const adapter = getLegacyCompatibilityAdapter();
 
-          const adapter = getLegacyCompatibilityAdapter();
+            // Convert ChatMessage[] to LegacyChatMessage[]
+            const legacyHistory: LegacyChatMessage[] = (params.conversationHistory || []).map(
+              (msg) => ({
+                id: msg.id,
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.timestamp,
+                narrationSegments: msg.narrationSegments,
+              }),
+            );
 
-          // Convert ChatMessage[] to LegacyChatMessage[]
-          const legacyHistory: LegacyChatMessage[] = (params.conversationHistory || []).map(msg => ({
-            id: msg.id,
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp,
-            narrationSegments: msg.narrationSegments,
-          }));
+            const result = await adapter.chatWithDM({
+              message: params.message,
+              context: params.context,
+              conversationHistory: legacyHistory,
+              onStream: params.onStream,
+              userPlan: params.userPlan,
+              turnCount: params.turnCount,
+            });
 
-          const result = await adapter.chatWithDM({
-            message: params.message,
-            context: params.context,
-            conversationHistory: legacyHistory,
-            onStream: params.onStream,
-            userPlan: params.userPlan,
-            turnCount: params.turnCount,
-          });
+            logger.info('[AIService] LangGraph response generated successfully');
+            return result;
+          } catch (langGraphError) {
+            logger.error(
+              '[AIService] LangGraph failed, falling back to legacy system:',
+              langGraphError,
+            );
 
-          logger.info('[AIService] LangGraph response generated successfully');
-          return result;
-        } catch (langGraphError) {
-          logger.error('[AIService] LangGraph failed, falling back to legacy system:', langGraphError);
+            // Record fallback
+            migrationMonitoringService.recordInteraction({
+              system: 'langgraph',
+              outcome: 'fallback',
+              durationMs: 0,
+              messageLength: params.message.length,
+              responseLength: 0,
+              errorType: langGraphError instanceof Error ? langGraphError.name : 'Unknown',
+              errorMessage:
+                langGraphError instanceof Error ? langGraphError.message : 'Unknown error',
+              sessionId: params.context.sessionId,
+              timestamp: new Date(),
+            });
 
-          // Record fallback
-          migrationMonitoringService.recordInteraction({
-            system: 'langgraph',
-            outcome: 'fallback',
-            durationMs: 0,
-            messageLength: params.message.length,
-            responseLength: 0,
-            errorType: langGraphError instanceof Error ? langGraphError.name : 'Unknown',
-            errorMessage: langGraphError instanceof Error ? langGraphError.message : 'Unknown error',
-            sessionId: params.context.sessionId,
-            timestamp: new Date(),
-          });
-
-          // Continue to legacy path below
-        }
-      }
-
-      // ========================================================================
-      // LEGACY PATH (Custom Messaging + Gemini)
-      // ========================================================================
-
-      // Retrieve relevant memories to enhance context
-      let relevantMemories: Memory[] = [];
-      if (params.context.sessionId) {
-        try {
-          relevantMemories = await MemoryManager.getRelevantMemories(
-            params.context.sessionId,
-            params.message,
-            8 // Get top 8 relevant memories
-          );
-          logger.info(`📚 Retrieved ${relevantMemories.length} relevant memories`);
-        } catch (memoryError) {
-          logger.warn('Failed to retrieve memories:', memoryError);
-        }
-      }
-
-      // Get voice context for multi-voice narration
-      // TEMPORARILY DISABLED for option button testing
-      const voiceContext: SessionVoiceContext | null = null;
-      // if (params.context.sessionId) {
-      //   try {
-      //     voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
-      //     logger.info(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
-      //   } catch (voiceError) {
-      //     logger.warn('Failed to retrieve voice context:', voiceError);
-      //   }
-      // }
-
-      // Detect combat from player message
-      const combatDetection = detectCombatFromText(params.message);
-      logger.info(`⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`);
-      
-      if (combatDetection.isCombat) {
-        logger.info(`🎯 Combat details:`, {
-          type: combatDetection.combatType,
-          shouldStart: combatDetection.shouldStartCombat,
-          shouldEnd: combatDetection.shouldEndCombat,
-          enemies: combatDetection.enemies?.length || 0,
-          actions: combatDetection.combatActions?.length || 0
-        });
-      }
-      
-      // Optional path: delegate to CrewAI orchestrator behind feature flag
-      if (this.useCrewAI() && params.context.sessionId) {
-        try {
-          logger.info('Using CrewAI microservice for chat...');
-          const sessionState = await SessionStateService.getState(params.context.sessionId);
-          const crewResult = await AgentOrchestrator.generateResponse({
-            message: params.message,
-            context: params.context,
-            conversationHistory: params.conversationHistory || [],
-            sessionState
-          });
-
-          // If CrewAI returned placeholder text, generate final prose via Gemini but keep CrewAI roll_requests
-          let finalText = crewResult.text || '';
-          const isPlaceholder = finalText.trim().startsWith('[CrewAI placeholder]');
-          const rollRequests = (crewResult as any).roll_requests || [];
-          if (isPlaceholder) {
-            // If a roll is requested, prompt the user to roll first instead of narrating outcomes
-            if (Array.isArray(rollRequests) && rollRequests.length > 0) {
-              const rr = rollRequests[0];
-              const typeLabel = rr.type === 'check' ? 'Check' : rr.type === 'save' ? 'Saving Throw' : rr.type === 'attack' ? 'Attack' : rr.type === 'damage' ? 'Damage' : 'Initiative';
-              const purpose = rr.purpose || (rr.type === 'check' ? 'Ability/Skill Check' : typeLabel);
-              const target = rr.dc ? ` (DC ${rr.dc})` : rr.ac ? ` (AC ${rr.ac})` : '';
-              const advantage = rr.advantage ? ' with advantage' : rr.disadvantage ? ' with disadvantage' : '';
-              finalText = `Please roll ${purpose}${target}${advantage}.`;
-            } else {
-              logger.info('CrewAI returned placeholder text; generating narration via local Gemini.');
-              try {
-                const geminiManager = this.getGeminiManager();
-                const genAIResult = await geminiManager.executeWithRotation(async (genAI) => {
-                  const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-                  const prompt = `Respond to the player succinctly (2-3 short paragraphs) and end with 2-3 lettered options. Player said: "${params.message}"`;
-                  const response = await model.generateContent(prompt);
-                  const res = await response.response;
-                  return res.text();
-                });
-                finalText = genAIResult || finalText;
-              } catch (e) {
-                logger.warn('Gemini fallback for placeholder failed, using placeholder text:', e);
-              }
-            }
+            // Continue to legacy path below
           }
+        }
 
-          // Post-processing parity: memory extraction and world expansion
-          if (params.context.sessionId) {
-            // Graceful degradation: free tier only extracts memories every 3rd turn
-            const shouldExtractMemory =
-              params.userPlan === 'pro' ||
-              params.userPlan === 'enterprise' ||
-              !params.userPlan || // Default to extracting if plan is unknown
-              (params.turnCount !== undefined && params.turnCount % 3 === 0);
+        // ========================================================================
+        // LEGACY PATH (Custom Messaging + Gemini)
+        // ========================================================================
 
-            if (shouldExtractMemory) {
-              try {
-                const memoryContext = {
-                  sessionId: params.context.sessionId,
-                  campaignId: params.context.campaignId,
-                  characterId: params.context.characterId,
-                  currentMessage: params.message,
-                  recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
-                };
-                const extractionResult = await MemoryManager.extractMemories(
-                  memoryContext,
-                  params.message,
-                  finalText
+        // Retrieve relevant memories to enhance context
+        let relevantMemories: Memory[] = [];
+        if (params.context.sessionId) {
+          try {
+            relevantMemories = await MemoryManager.getRelevantMemories(
+              params.context.sessionId,
+              params.message,
+              8, // Get top 8 relevant memories
+            );
+            logger.info(`📚 Retrieved ${relevantMemories.length} relevant memories`);
+          } catch (memoryError) {
+            logger.warn('Failed to retrieve memories:', memoryError);
+          }
+        }
+
+        // Get voice context for multi-voice narration
+        // TEMPORARILY DISABLED for option button testing
+        const voiceContext: SessionVoiceContext | null = null;
+        // if (params.context.sessionId) {
+        //   try {
+        //     voiceContext = await voiceConsistencyService.getSessionVoiceContext(params.context.sessionId);
+        //     logger.info(`🎭 Retrieved voice context for ${Object.keys(voiceContext.knownCharacters).length} known characters`);
+        //   } catch (voiceError) {
+        //     logger.warn('Failed to retrieve voice context:', voiceError);
+        //   }
+        // }
+
+        // Detect combat from player message
+        const combatDetection = detectCombatFromText(params.message);
+        logger.info(
+          `⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`,
+        );
+
+        if (combatDetection.isCombat) {
+          logger.info(`🎯 Combat details:`, {
+            type: combatDetection.combatType,
+            shouldStart: combatDetection.shouldStartCombat,
+            shouldEnd: combatDetection.shouldEndCombat,
+            enemies: combatDetection.enemies?.length || 0,
+            actions: combatDetection.combatActions?.length || 0,
+          });
+        }
+
+        // Optional path: delegate to CrewAI orchestrator behind feature flag
+        if (this.useCrewAI() && params.context.sessionId) {
+          try {
+            logger.info('Using CrewAI microservice for chat...');
+            const sessionState = await SessionStateService.getState(params.context.sessionId);
+            const crewResult = await AgentOrchestrator.generateResponse({
+              message: params.message,
+              context: params.context,
+              conversationHistory: params.conversationHistory || [],
+              sessionState,
+            });
+
+            // If CrewAI returned placeholder text, generate final prose via Gemini but keep CrewAI roll_requests
+            let finalText = crewResult.text || '';
+            const isPlaceholder = finalText.trim().startsWith('[CrewAI placeholder]');
+            const rollRequests = (crewResult as any).roll_requests || [];
+            if (isPlaceholder) {
+              // If a roll is requested, prompt the user to roll first instead of narrating outcomes
+              if (Array.isArray(rollRequests) && rollRequests.length > 0) {
+                const rr = rollRequests[0];
+                const typeLabel =
+                  rr.type === 'check'
+                    ? 'Check'
+                    : rr.type === 'save'
+                      ? 'Saving Throw'
+                      : rr.type === 'attack'
+                        ? 'Attack'
+                        : rr.type === 'damage'
+                          ? 'Damage'
+                          : 'Initiative';
+                const purpose =
+                  rr.purpose || (rr.type === 'check' ? 'Ability/Skill Check' : typeLabel);
+                const target = rr.dc ? ` (DC ${rr.dc})` : rr.ac ? ` (AC ${rr.ac})` : '';
+                const advantage = rr.advantage
+                  ? ' with advantage'
+                  : rr.disadvantage
+                    ? ' with disadvantage'
+                    : '';
+                finalText = `Please roll ${purpose}${target}${advantage}.`;
+              } else {
+                logger.info(
+                  'CrewAI returned placeholder text; generating narration via local Gemini.',
                 );
-                if (extractionResult.memories.length > 0) {
-                  await MemoryManager.saveMemories(extractionResult.memories);
-                  logger.info(`🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`);
+                try {
+                  const geminiManager = this.getGeminiManager();
+                  const genAIResult = await geminiManager.executeWithRotation(async (genAI) => {
+                    const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
+                    const prompt = `Respond to the player succinctly (2-3 short paragraphs) and end with 2-3 lettered options. Player said: "${params.message}"`;
+                    const response = await model.generateContent(prompt);
+                    const res = await response.response;
+                    return res.text();
+                  });
+                  finalText = genAIResult || finalText;
+                } catch (e) {
+                  logger.warn('Gemini fallback for placeholder failed, using placeholder text:', e);
                 }
-              } catch (memoryError) {
-                logger.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
               }
-            } else {
-              logger.info(`⏭️ Skipping memory extraction for free tier (turn ${params.turnCount}, next extraction on turn ${params.turnCount ? Math.ceil((params.turnCount + 1) / 3) * 3 : 'unknown'})`);
             }
 
-            try {
-              const worldExpansion = await WorldBuilderService.respondToPlayerAction(
-                params.context.campaignId,
-                params.context.sessionId!,
-                params.context.characterId,
-                params.message,
-                finalText
-              );
-              if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
-                logger.info(`🌍 World expanded (CrewAI): +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
+            // Post-processing parity: memory extraction and world expansion
+            if (params.context.sessionId) {
+              // Graceful degradation: free tier only extracts memories every 3rd turn
+              const shouldExtractMemory =
+                params.userPlan === 'pro' ||
+                params.userPlan === 'enterprise' ||
+                !params.userPlan || // Default to extracting if plan is unknown
+                (params.turnCount !== undefined && params.turnCount % 3 === 0);
+
+              if (shouldExtractMemory) {
+                try {
+                  const memoryContext = {
+                    sessionId: params.context.sessionId,
+                    campaignId: params.context.campaignId,
+                    characterId: params.context.characterId,
+                    currentMessage: params.message,
+                    recentMessages:
+                      params.conversationHistory?.slice(-5).map((msg) => msg.content) || [],
+                  };
+                  const extractionResult = await MemoryManager.extractMemories(
+                    memoryContext,
+                    params.message,
+                    finalText,
+                  );
+                  if (extractionResult.memories.length > 0) {
+                    await MemoryManager.saveMemories(extractionResult.memories);
+                    logger.info(
+                      `🧠 Extracted and saved ${extractionResult.memories.length} memories (CrewAI path)`,
+                    );
+                  }
+                } catch (memoryError) {
+                  logger.warn('Memory extraction (CrewAI path) failed (non-fatal):', memoryError);
+                }
+              } else {
+                logger.info(
+                  `⏭️ Skipping memory extraction for free tier (turn ${params.turnCount}, next extraction on turn ${params.turnCount ? Math.ceil((params.turnCount + 1) / 3) * 3 : 'unknown'})`,
+                );
               }
-            } catch (worldError) {
-              logger.warn('World building (CrewAI path) failed (non-fatal):', worldError);
+
+              try {
+                const worldExpansion = await WorldBuilderService.respondToPlayerAction(
+                  params.context.campaignId,
+                  params.context.sessionId!,
+                  params.context.characterId,
+                  params.message,
+                  finalText,
+                );
+                if (
+                  worldExpansion &&
+                  worldExpansion.locations.length +
+                    worldExpansion.npcs.length +
+                    worldExpansion.quests.length >
+                    0
+                ) {
+                  logger.info(
+                    `🌍 World expanded (CrewAI): +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`,
+                  );
+                }
+              } catch (worldError) {
+                logger.warn('World building (CrewAI path) failed (non-fatal):', worldError);
+              }
             }
+
+            const enhancedCrewResult = {
+              ...crewResult,
+              text: finalText,
+              combatDetection: {
+                isCombat: combatDetection.isCombat,
+                confidence: combatDetection.confidence,
+                combatType: combatDetection.combatType,
+                shouldStartCombat: combatDetection.shouldStartCombat,
+                shouldEndCombat: combatDetection.shouldEndCombat,
+                enemies: combatDetection.enemies || [],
+                combatActions: combatDetection.combatActions || [],
+              },
+            } as any;
+
+            return enhancedCrewResult;
+          } catch (crewError) {
+            logger.warn('CrewAI orchestrator failed, falling back to Gemini:', crewError);
+            // Continue to legacy path below
           }
-
-          const enhancedCrewResult = {
-            ...crewResult,
-            text: finalText,
-            combatDetection: {
-              isCombat: combatDetection.isCombat,
-              confidence: combatDetection.confidence,
-              combatType: combatDetection.combatType,
-              shouldStartCombat: combatDetection.shouldStartCombat,
-              shouldEndCombat: combatDetection.shouldEndCombat,
-              enemies: combatDetection.enemies || [],
-              combatActions: combatDetection.combatActions || []
-            }
-          } as any;
-
-          return enhancedCrewResult;
-        } catch (crewError) {
-          logger.warn('CrewAI orchestrator failed, falling back to Gemini:', crewError);
-          // Continue to legacy path below
         }
-      }
-      
-      // Use local Gemini API
-      logger.info('Using local Gemini API for chat...');
-      const geminiManager = this.getGeminiManager();
-      
-      const result = await geminiManager.executeWithRotation(async (genAI) => {
+
+        // Use local Gemini API
+        logger.info('Using local Gemini API for chat...');
+        const geminiManager = this.getGeminiManager();
+
+        const result = await geminiManager.executeWithRotation(async (genAI) => {
           const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-          
+
           // Build enhanced context for DM interactions with voice segmentation
           let contextPrompt = `<persona>
 You are a skilled D&D 5e Dungeon Master who creates immersive, mechanically-sound adventures. You balance compelling narrative with proper game mechanics, always giving players meaningful choices with clear consequences.
@@ -925,15 +986,15 @@ Example 3 - Saving Throw:
 - NPCs should use tactics appropriate to their intelligence and experience.
 </combat>
 </rules_of_play>`;
-          
-          contextPrompt += `<game_context>`
+
+          contextPrompt += `<game_context>`;
           if (params.context.campaignDetails) {
             contextPrompt += `<campaign_details>
 CAMPAIGN: "${params.context.campaignDetails.name}"
 DESCRIPTION: ${params.context.campaignDetails.description}
 </campaign_details>`;
           }
-          
+
           if (params.context.characterDetails) {
             const char = params.context.characterDetails;
             contextPrompt += `<character_details>
@@ -951,13 +1012,24 @@ STR ${stats.strength}(${Math.floor((stats.strength - 10) / 2) >= 0 ? '+' : ''}${
 </ability_scores>`;
 
               // Calculate and include proficiency bonus
-              const profBonus = char.level >= 17 ? 6 : char.level >= 13 ? 5 : char.level >= 9 ? 4 : char.level >= 5 ? 3 : 2;
+              const profBonus =
+                char.level >= 17
+                  ? 6
+                  : char.level >= 13
+                    ? 5
+                    : char.level >= 9
+                      ? 4
+                      : char.level >= 5
+                        ? 3
+                        : 2;
               contextPrompt += `
 <proficiency_bonus>+${profBonus}</proficiency_bonus>`;
             }
 
             // Add default equipment for class-based damage rolls
-            const classEquipment = this.getClassEquipment(char.class?.name || char.class || 'Fighter');
+            const classEquipment = this.getClassEquipment(
+              char.class?.name || char.class || 'Fighter',
+            );
             contextPrompt += `
 <equipment>
 ${classEquipment.weapons.join(', ')} | ${classEquipment.armor}
@@ -971,15 +1043,41 @@ ${classEquipment.weapons.join(', ')} | ${classEquipment.armor}
                 id: char.id,
                 name: char.name,
                 level: char.level,
-                abilityScores: char.character_stats?.[0] ? {
-                  strength: { score: char.character_stats[0].strength || 10, modifier: Math.floor((char.character_stats[0].strength || 10 - 10) / 2), savingThrow: false },
-                  dexterity: { score: char.character_stats[0].dexterity || 10, modifier: Math.floor((char.character_stats[0].dexterity || 10 - 10) / 2), savingThrow: false },
-                  constitution: { score: char.character_stats[0].constitution || 10, modifier: Math.floor((char.character_stats[0].constitution || 10 - 10) / 2), savingThrow: false },
-                  intelligence: { score: char.character_stats[0].intelligence || 10, modifier: Math.floor((char.character_stats[0].intelligence || 10 - 10) / 2), savingThrow: false },
-                  wisdom: { score: char.character_stats[0].wisdom || 10, modifier: Math.floor((char.character_stats[0].wisdom || 10 - 10) / 2), savingThrow: false },
-                  charisma: { score: char.character_stats[0].charisma || 10, modifier: Math.floor((char.character_stats[0].charisma || 10 - 10) / 2), savingThrow: false },
-                } : undefined,
-                skillProficiencies: char.skill_proficiencies?.split(',').map(s => s.trim()) || [],
+                abilityScores: char.character_stats?.[0]
+                  ? {
+                      strength: {
+                        score: char.character_stats[0].strength || 10,
+                        modifier: Math.floor((char.character_stats[0].strength || 10 - 10) / 2),
+                        savingThrow: false,
+                      },
+                      dexterity: {
+                        score: char.character_stats[0].dexterity || 10,
+                        modifier: Math.floor((char.character_stats[0].dexterity || 10 - 10) / 2),
+                        savingThrow: false,
+                      },
+                      constitution: {
+                        score: char.character_stats[0].constitution || 10,
+                        modifier: Math.floor((char.character_stats[0].constitution || 10 - 10) / 2),
+                        savingThrow: false,
+                      },
+                      intelligence: {
+                        score: char.character_stats[0].intelligence || 10,
+                        modifier: Math.floor((char.character_stats[0].intelligence || 10 - 10) / 2),
+                        savingThrow: false,
+                      },
+                      wisdom: {
+                        score: char.character_stats[0].wisdom || 10,
+                        modifier: Math.floor((char.character_stats[0].wisdom || 10 - 10) / 2),
+                        savingThrow: false,
+                      },
+                      charisma: {
+                        score: char.character_stats[0].charisma || 10,
+                        modifier: Math.floor((char.character_stats[0].charisma || 10 - 10) / 2),
+                        savingThrow: false,
+                      },
+                    }
+                  : undefined,
+                skillProficiencies: char.skill_proficiencies?.split(',').map((s) => s.trim()) || [],
               };
               const passiveScores = getCharacterPassiveScores(characterForPassive);
               contextPrompt += `
@@ -1005,7 +1103,7 @@ Passive Investigation: ${passiveScores.investigation} (spots clues, patterns, lo
             contextPrompt += `
 </character_details>`;
           }
-          
+
           // Add relevant memories to context
           if (relevantMemories.length > 0) {
             contextPrompt += `
@@ -1019,11 +1117,13 @@ Reference these memories naturally to maintain story continuity.`;
             contextPrompt += `
 </story_memories>`;
           }
-          contextPrompt += `</game_context>`
+          contextPrompt += `</game_context>`;
 
           // Detect if this is a campaign opening (first message)
-          const isFirstMessage = (!params.conversationHistory || params.conversationHistory.length === 0) && (!params.message || params.message.trim() === '');
-          
+          const isFirstMessage =
+            (!params.conversationHistory || params.conversationHistory.length === 0) &&
+            (!params.message || params.message.trim() === '');
+
           if (isFirstMessage) {
             contextPrompt += `<opening_scene_requirements>
 <title>CAMPAIGN OPENING - FIRST MESSAGE REQUIREMENTS</title>
@@ -1057,7 +1157,7 @@ This is the campaign's opening scene. Create an engaging D&D adventure start tha
 
           // Add combat context if detected
           contextPrompt += this.formatCombatContext(combatDetection);
-          
+
           // Add specific dice roll requirements for combat
           if (combatDetection.isCombat) {
             contextPrompt += `<combat_roll_requirements>
@@ -1109,9 +1209,8 @@ You MUST respond with JSON containing both display text AND pre-segmented narrat
 
 <voice_categories>hero_male, hero_female, villain_male, villain_female, merchant, guard, innkeeper, elder, child, creature, goblin, monster</voice_categories>
 </voice_optimization_format>`;
-
           }
-          
+
           contextPrompt += `<response_structure>
 <title>DM RESPONSE GUIDELINES</title>
 <core_principles>
@@ -1166,25 +1265,28 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
 </response_structure>`;
 
           if (voiceContext) {
-              contextPrompt += `\n**REMEMBER: Always respond in the JSON format with narration_segments for voice synthesis!**`;
+            contextPrompt += `\n**REMEMBER: Always respond in the JSON format with narration_segments for voice synthesis!**`;
           }
-          
+
           // Build conversation history
           const messages = [
             { role: 'user', parts: [{ text: contextPrompt }] },
-            { role: 'model', parts: [{ text: 'Understood! I\'m ready to be your Dungeon Master.' }] }
+            {
+              role: 'model',
+              parts: [{ text: "Understood! I'm ready to be your Dungeon Master." }],
+            },
           ];
-          
+
           // Add conversation history
           if (params.conversationHistory) {
-            params.conversationHistory.forEach(msg => {
+            params.conversationHistory.forEach((msg) => {
               messages.push({
                 role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
+                parts: [{ text: msg.content }],
               });
             });
           }
-          
+
           const chat = model.startChat({
             history: messages,
             generationConfig: {
@@ -1194,18 +1296,18 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
               maxOutputTokens: 2048, // Increased from 1024 to prevent truncation
             },
           });
-          
+
           // Use streaming if callback provided (note: streaming won't work with JSON parsing)
           if (params.onStream && !voiceContext) {
             const response = await chat.sendMessageStream(params.message);
             let fullResponse = '';
-            
+
             for await (const chunk of response.stream) {
               const chunkText = chunk.text();
               fullResponse += chunkText;
               params.onStream(chunkText);
             }
-            
+
             return { text: fullResponse };
           } else {
             const response = await chat.sendMessage(params.message);
@@ -1217,62 +1319,72 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
               try {
                 // Clean the response by removing markdown code blocks first
                 let cleanedResponse = rawResponse.trim();
-                
+
                 // Remove markdown code blocks (```json ... ```)
-                cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-                
+                cleanedResponse = cleanedResponse
+                  .replace(/^```(?:json)?\s*/, '')
+                  .replace(/\s*```$/, '');
+
                 // Try to find JSON content if the response has extra text
                 const jsonStart = cleanedResponse.indexOf('{');
                 const jsonEnd = cleanedResponse.lastIndexOf('}');
-                
+
                 if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
                   cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1);
                 }
-                
+
                 // Additional cleanup for common JSON formatting issues
                 cleanedResponse = cleanedResponse
-                  .replace(/,\s*}/g, '}')  // Remove trailing commas before }
-                  .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+                  .replace(/,\s*}/g, '}') // Remove trailing commas before }
+                  .replace(/,\s*]/g, ']') // Remove trailing commas before ]
                   .replace(/}\s*{/g, '},{') // Fix missing commas between objects
                   .replace(/"\s*:\s*"([^"]*?)"\s*([,}])/g, '":"$1"$2'); // Fix spacing issues
-                
+
                 // Parse the cleaned JSON
                 const structuredResponse = JSON.parse(cleanedResponse);
                 logger.debug('🎭 Successfully parsed structured voice response');
-                
+
                 // 🔍 DEBUG: Log the raw AI response structure
                 logger.debug('📥 RAW AI RESPONSE:', JSON.stringify(structuredResponse, null, 2));
-                
+
                 if (structuredResponse.narration_segments) {
                   logger.debug('📊 AI SEGMENTS ANALYSIS:');
-                  structuredResponse.narration_segments.forEach((segment: NarrationSegment, idx: number) => {
-                    logger.debug(`  Segment ${idx + 1}:`, {
-                      type: segment.type,
-                      character: segment.character,
-                      voice_category: segment.voice_category,
-                      text_length: segment.text?.length || 0,
-                      text_preview: segment.text?.substring(0, 50) + '...'
-                    });
-                  });
+                  structuredResponse.narration_segments.forEach(
+                    (segment: NarrationSegment, idx: number) => {
+                      logger.debug(`  Segment ${idx + 1}:`, {
+                        type: segment.type,
+                        character: segment.character,
+                        voice_category: segment.voice_category,
+                        text_length: segment.text?.length || 0,
+                        text_preview: segment.text?.substring(0, 50) + '...',
+                      });
+                    },
+                  );
                 }
-                
+
                 return structuredResponse;
               } catch (parseError) {
-                logger.warn('Failed to parse structured response, attempting to extract text:', parseError);
-                
+                logger.warn(
+                  'Failed to parse structured response, attempting to extract text:',
+                  parseError,
+                );
+
                 // Try to extract text from malformed JSON
                 try {
                   // Look for text field in the response even if JSON is malformed
                   const textMatch = rawResponse.match(/"text"\s*:\s*"([\s\S]*?)"(?=\s*[,}])/);
                   if (textMatch) {
-                    const extractedText = textMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+                    const extractedText = textMatch[1]
+                      .replace(/\\"/g, '"')
+                      .replace(/\\n/g, '\n')
+                      .replace(/\\\\/g, '\\');
                     logger.debug('🔧 Extracted text from malformed JSON');
                     return { text: extractedText };
                   }
                 } catch (extractError) {
                   logger.warn('Could not extract text from malformed JSON:', extractError);
                 }
-                
+
                 // Final fallback - return raw response with minimal cleaning
                 // Only remove obvious JSON structure markers if they exist
                 let cleanText = rawResponse;
@@ -1282,7 +1394,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
                   if (startMatch) {
                     const startIndex = startMatch.index! + startMatch[0].length;
                     let textContent = cleanText.substring(startIndex);
-                    
+
                     // Find the end of the text content (look for quote followed by comma or closing brace)
                     const endMatch = textContent.match(/"\s*[,}]/);
                     if (endMatch) {
@@ -1294,41 +1406,56 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
                         textContent = textContent.substring(0, lastQuoteIndex);
                       }
                     }
-                    
+
                     // Unescape the content
-                    cleanText = textContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+                    cleanText = textContent
+                      .replace(/\\"/g, '"')
+                      .replace(/\\n/g, '\n')
+                      .replace(/\\\\/g, '\\');
                   }
                 }
                 return { text: cleanText || rawResponse };
               }
             }
-            
+
             return { text: rawResponse };
           }
         });
-        
+
         logger.info('Successfully generated DM response using local Gemini API');
 
         // Process voice assignments if we have structured data
         if (result.narration_segments && params.context.sessionId && voiceContext) {
           try {
             // Normalize segment types for compatibility
-            type VoiceSegment = { type: string; text: string; character?: string; voice_category?: string };
-            const normalizedSegments: VoiceSegment[] = result.narration_segments.map((segment: NarrationSegment) => ({
-              ...segment,
-              type: segment.type === 'dm' ? 'narration' : segment.type === 'character' ? 'dialogue' : (segment.type as string)
-            }));
-            
+            type VoiceSegment = {
+              type: string;
+              text: string;
+              character?: string;
+              voice_category?: string;
+            };
+            const normalizedSegments: VoiceSegment[] = result.narration_segments.map(
+              (segment: NarrationSegment) => ({
+                ...segment,
+                type:
+                  segment.type === 'dm'
+                    ? 'narration'
+                    : segment.type === 'character'
+                      ? 'dialogue'
+                      : (segment.type as string),
+              }),
+            );
+
             await voiceConsistencyService.processVoiceAssignments(
               params.context.sessionId,
-              normalizedSegments
+              normalizedSegments,
             );
             logger.info('🎪 Processed voice assignments for character consistency');
           } catch (voiceError) {
             logger.warn('Voice assignment processing failed (non-fatal):', voiceError);
           }
         }
-        
+
         // Extract memories from this conversation exchange
         if (params.context.sessionId) {
           // Graceful degradation: free tier only extracts memories every 3rd turn
@@ -1345,13 +1472,14 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
                 campaignId: params.context.campaignId,
                 characterId: params.context.characterId,
                 currentMessage: params.message,
-                recentMessages: params.conversationHistory?.slice(-5).map(msg => msg.content) || [],
+                recentMessages:
+                  params.conversationHistory?.slice(-5).map((msg) => msg.content) || [],
               };
 
               const extractionResult = await MemoryManager.extractMemories(
                 memoryContext,
                 params.message,
-                result.text
+                result.text,
               );
 
               if (extractionResult.memories.length > 0) {
@@ -1362,47 +1490,56 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
               logger.warn('Memory extraction failed (non-fatal):', memoryError);
             }
           } else {
-            logger.info(`⏭️ Skipping memory extraction for free tier (turn ${params.turnCount}, next extraction on turn ${params.turnCount ? Math.ceil((params.turnCount + 1) / 3) * 3 : 'unknown'})`);
+            logger.info(
+              `⏭️ Skipping memory extraction for free tier (turn ${params.turnCount}, next extraction on turn ${params.turnCount ? Math.ceil((params.turnCount + 1) / 3) * 3 : 'unknown'})`,
+            );
           }
-          
+
           // Expand world based on player action and AI response
-            try {
-              const worldExpansion = await WorldBuilderService.respondToPlayerAction(
-                params.context.campaignId,
-                params.context.sessionId!,
-                params.context.characterId,
-                params.message,
-                result.text
+          try {
+            const worldExpansion = await WorldBuilderService.respondToPlayerAction(
+              params.context.campaignId,
+              params.context.sessionId!,
+              params.context.characterId,
+              params.message,
+              result.text,
+            );
+
+            if (
+              worldExpansion &&
+              worldExpansion.locations.length +
+                worldExpansion.npcs.length +
+                worldExpansion.quests.length >
+                0
+            ) {
+              logger.info(
+                `🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`,
               );
-            
-              if (worldExpansion && worldExpansion.locations.length + worldExpansion.npcs.length + worldExpansion.quests.length > 0) {
-                logger.info(`🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`);
-              }
-            } catch (worldError) {
-              logger.warn('World building failed (non-fatal):', worldError);
             }
+          } catch (worldError) {
+            logger.warn('World building failed (non-fatal):', worldError);
           }
-        
-          // Add combat detection data to the result
-          const enhancedResult = {
-            ...result,
-            combatDetection: {
-              isCombat: combatDetection.isCombat,
-              confidence: combatDetection.confidence,
-              combatType: combatDetection.combatType,
-              shouldStartCombat: combatDetection.shouldStartCombat,
-              shouldEndCombat: combatDetection.shouldEndCombat,
-              enemies: combatDetection.enemies || [],
-              combatActions: combatDetection.combatActions || []
-            }
-          };
-        
-          return enhancedResult;
-        
-    } catch (geminiError) {
-      logger.error('Local Gemini API failed:', geminiError);
-      throw new Error('Failed to get DM response - AI service unavailable');
-    }
+        }
+
+        // Add combat detection data to the result
+        const enhancedResult = {
+          ...result,
+          combatDetection: {
+            isCombat: combatDetection.isCombat,
+            confidence: combatDetection.confidence,
+            combatType: combatDetection.combatType,
+            shouldStartCombat: combatDetection.shouldStartCombat,
+            shouldEndCombat: combatDetection.shouldEndCombat,
+            enemies: combatDetection.enemies || [],
+            combatActions: combatDetection.combatActions || [],
+          },
+        };
+
+        return enhancedResult;
+      } catch (geminiError) {
+        logger.error('Local Gemini API failed:', geminiError);
+        throw new Error('Failed to get DM response - AI service unavailable');
+      }
     })(); // End of the async promise wrapper
 
     // Store promise in in-flight map and return it
@@ -1420,14 +1557,12 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
     speakerId?: string;
   }): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('dialogue_history')
-        .insert({
-          session_id: params.sessionId,
-          speaker_type: params.role,
-          speaker_id: params.speakerId,
-          message: params.content,
-        });
+      const { error } = await supabase.from('dialogue_history').insert({
+        session_id: params.sessionId,
+        speaker_type: params.role,
+        speaker_id: params.speakerId,
+        message: params.content,
+      });
 
       if (error) {
         logger.error('Error saving chat message:', error);
@@ -1455,7 +1590,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
         throw new Error('Failed to get conversation history');
       }
 
-      return data.map(msg => ({
+      return data.map((msg) => ({
         id: msg.id,
         role: msg.speaker_type as 'user' | 'assistant',
         content: msg.message,
@@ -1501,7 +1636,7 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
       const options = [
         `A. **Follow the tension**, approach the most anxious-looking onlooker or official and press them for what they are afraid to speak.`,
         `B. **Scout the surroundings**, slip into observation mode—alleys, rooftops, guards, sigils, anything that reveals who truly holds power here.`,
-        `C. **Invite trouble**, stride boldly into the nearest focal point of activity (a tavern, barricade, or shrine) and announce that you are ready to solve someone’s problem—for a price.`
+        `C. **Invite trouble**, stride boldly into the nearest focal point of activity (a tavern, barricade, or shrine) and announce that you are ready to solve someone’s problem—for a price.`,
       ];
 
       return `${intro}\n\n${world}\n\nWhat do you do?\n${options.join('\n')}`;
@@ -1509,15 +1644,18 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
 
     try {
       const geminiManager = this.getGeminiManager();
-      const result = await geminiManager.executeWithRotation(async genAI => {
+      const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
 
         let campaignTone: 'dark' | 'lighthearted' | 'epic' | 'balanced' = 'balanced';
         if (campaign.description) {
           const d = String(campaign.description).toLowerCase();
-          if (d.includes('dark') || d.includes('horror') || d.includes('grim')) campaignTone = 'dark';
-          else if (d.includes('light') || d.includes('comedy') || d.includes('fun')) campaignTone = 'lighthearted';
-          else if (d.includes('epic') || d.includes('legendary') || d.includes('heroic')) campaignTone = 'epic';
+          if (d.includes('dark') || d.includes('horror') || d.includes('grim'))
+            campaignTone = 'dark';
+          else if (d.includes('light') || d.includes('comedy') || d.includes('fun'))
+            campaignTone = 'lighthearted';
+          else if (d.includes('epic') || d.includes('legendary') || d.includes('heroic'))
+            campaignTone = 'epic';
         }
 
         let prompt = `You are an expert D&D 5e Dungeon Master. Create an immersive, campaign-specific opening scene.`;
@@ -1532,7 +1670,8 @@ Keep responses engaging, 1-3 paragraphs, and always end with a clear prompt for 
           if (character.race) prompt += `Race: ${character.race?.name || character.race}\n`;
           if (character.class) prompt += `Class: ${character.class?.name || character.class}\n`;
           if (character.level) prompt += `Level: ${character.level}\n`;
-          if (character.background) prompt += `Background: ${character.background?.name || character.background}\n`;
+          if (character.background)
+            prompt += `Background: ${character.background?.name || character.background}\n`;
         }
 
         prompt += `
@@ -1562,8 +1701,15 @@ Now write the opening scene and options.`;
         const text = (await response.response).text() || '';
 
         // If Gemini returns something empty or obviously generic, use rich fallback
-        if (!text.trim() || text.includes('Welcome to your adventure! You find yourself at the beginning of an epic journey.')) {
-          logger.warn('[OpeningMessage] Gemini returned empty or generic text; using rich fallback.');
+        if (
+          !text.trim() ||
+          text.includes(
+            'Welcome to your adventure! You find yourself at the beginning of an epic journey.',
+          )
+        ) {
+          logger.warn(
+            '[OpeningMessage] Gemini returned empty or generic text; using rich fallback.',
+          );
           return richFallback();
         }
 
@@ -1589,79 +1735,79 @@ Now write the opening scene and options.`;
       case 'fighter':
         return {
           weapons: ['Longsword (1d8)', 'Shortsword (1d6)', 'Handaxe (1d6)', 'Light Crossbow (1d8)'],
-          armor: 'Chain mail (AC 16)'
+          armor: 'Chain mail (AC 16)',
         };
 
       case 'rogue':
         return {
           weapons: ['Shortsword (1d6)', 'Dagger (1d4)', 'Shortbow (1d6)', 'Rapier (1d8)'],
-          armor: 'Leather armor (AC 11)'
+          armor: 'Leather armor (AC 11)',
         };
 
       case 'ranger':
         return {
           weapons: ['Longsword (1d8)', 'Shortsword (1d6)', 'Longbow (1d8)', 'Handaxe (1d6)'],
-          armor: 'Studded leather (AC 12)'
+          armor: 'Studded leather (AC 12)',
         };
 
       case 'barbarian':
         return {
           weapons: ['Greataxe (1d12)', 'Handaxe (1d6)', 'Javelin (1d6)'],
-          armor: 'Unarmored (AC 10 + Dex + Con)'
+          armor: 'Unarmored (AC 10 + Dex + Con)',
         };
 
       case 'wizard':
         return {
           weapons: ['Dagger (1d4)', 'Dart (1d4)', 'Light Crossbow (1d8)', 'Quarterstaff (1d6)'],
-          armor: 'No armor (AC 10)'
+          armor: 'No armor (AC 10)',
         };
 
       case 'sorcerer':
         return {
           weapons: ['Dagger (1d4)', 'Dart (1d4)', 'Light Crossbow (1d8)', 'Quarterstaff (1d6)'],
-          armor: 'No armor (AC 10)'
+          armor: 'No armor (AC 10)',
         };
 
       case 'warlock':
         return {
           weapons: ['Dagger (1d4)', 'Light Crossbow (1d8)', 'Scimitar (1d6)'],
-          armor: 'Leather armor (AC 11)'
+          armor: 'Leather armor (AC 11)',
         };
 
       case 'cleric':
         return {
           weapons: ['Mace (1d6)', 'Warhammer (1d8)', 'Light Crossbow (1d8)', 'Shield'],
-          armor: 'Scale mail (AC 14)'
+          armor: 'Scale mail (AC 14)',
         };
 
       case 'druid':
         return {
           weapons: ['Scimitar (1d6)', 'Shield', 'Dart (1d4)', 'Javelin (1d6)'],
-          armor: 'Leather armor (AC 11)'
+          armor: 'Leather armor (AC 11)',
         };
 
       case 'paladin':
         return {
           weapons: ['Longsword (1d8)', 'Javelin (1d6)', 'Shield'],
-          armor: 'Chain mail (AC 16)'
+          armor: 'Chain mail (AC 16)',
         };
 
       case 'bard':
         return {
           weapons: ['Rapier (1d8)', 'Shortsword (1d6)', 'Dagger (1d4)', 'Hand Crossbow (1d6)'],
-          armor: 'Leather armor (AC 11)'
+          armor: 'Leather armor (AC 11)',
         };
 
       case 'monk':
         return {
           weapons: ['Shortsword (1d6)', 'Dart (1d4)', 'Unarmed Strike (1d4)'],
-          armor: 'Unarmored (AC 10 + Dex + Wis)'
+          armor: 'Unarmored (AC 10 + Dex + Wis)',
         };
 
       default:
         return {
           weapons: ['Longsword (1d8)', 'Shortsword (1d6)', 'Dagger (1d4)'],
-          armor: 'Leather armor (AC 11)'
+          armor: 'Leather armor (AC 11)',
         };
     }
   }

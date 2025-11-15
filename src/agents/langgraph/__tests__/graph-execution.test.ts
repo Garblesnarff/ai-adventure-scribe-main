@@ -128,9 +128,15 @@ describe('LangGraph Graph Execution', () => {
 
       expect(result.playerIntent).toBeTruthy();
       // Intent should be detected (attack, exploration, social, etc.)
-      expect(['attack', 'exploration', 'social', 'spellcast', 'skill_check', 'movement', 'other']).toContain(
-        result.playerIntent
-      );
+      expect([
+        'attack',
+        'exploration',
+        'social',
+        'spellcast',
+        'skill_check',
+        'movement',
+        'other',
+      ]).toContain(result.playerIntent);
     });
 
     it('should validate rules after intent detection', async () => {

@@ -31,31 +31,31 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
       onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } }
+        data: { subscription: { unsubscribe: vi.fn() } },
       })),
       getSession: vi.fn().mockResolvedValue({
         data: { session: { user: { id: 'test-user' } } },
-        error: null
-      })
-    }
-  }
+        error: null,
+      }),
+    },
+  },
 }));
 
 // Mock error services
 vi.mock('../../error/services/error-handling-service', () => ({
   ErrorHandlingService: {
     getInstance: vi.fn(() => ({
-      handleDatabaseOperation: vi.fn(async (operation: any) => await operation())
-    }))
-  }
+      handleDatabaseOperation: vi.fn(async (operation: any) => await operation()),
+    })),
+  },
 }));
 
 vi.mock('../../error/services/recovery-service', () => ({
   RecoveryService: {
     getInstance: vi.fn(() => ({
-      attemptRecovery: vi.fn().mockResolvedValue(true)
-    }))
-  }
+      attemptRecovery: vi.fn().mockResolvedValue(true),
+    })),
+  },
 }));
 
 // Mock IndexedDB
@@ -90,9 +90,9 @@ vi.mock('../services/storage/IndexedDBService', () => {
           messages.clear();
           queueState = null;
           offlineState = null;
-        }
-      }))
-    }
+        },
+      })),
+    },
   };
 });
 
@@ -102,16 +102,16 @@ vi.mock('../services/sync/adapters/DatabaseAdapter', () => ({
     saveMessageSequence: vi.fn().mockResolvedValue(undefined),
     getAllMessageSequences: vi.fn().mockResolvedValue([]),
     getMessageSequence: vi.fn().mockResolvedValue(null),
-    getSyncStatus: vi.fn().mockResolvedValue(null)
-  }
+    getSyncStatus: vi.fn().mockResolvedValue(null),
+  },
 }));
 
 // Mock other sync components
 vi.mock('../services/sync/handlers/ConflictHandler');
 vi.mock('../services/sync/validators/ConsistencyValidator', () => ({
   ConsistencyValidator: vi.fn().mockImplementation(() => ({
-    checkConsistency: vi.fn().mockResolvedValue(true)
-  }))
+    checkConsistency: vi.fn().mockResolvedValue(true),
+  })),
 }));
 
 vi.mock('../services/sync/managers/SyncStateManager', () => ({
@@ -120,8 +120,8 @@ vi.mock('../services/sync/managers/SyncStateManager', () => ({
     incrementVectorClock: vi.fn(),
     getVectorClock: vi.fn(() => ({ 'dm-agent': 1 })),
     updateSyncState: vi.fn().mockResolvedValue(undefined),
-    detectConflict: vi.fn(() => false)
-  }))
+    detectConflict: vi.fn(() => false),
+  })),
 }));
 
 vi.mock('../services/queue/QueueStateManager', () => ({
@@ -133,33 +133,33 @@ vi.mock('../services/queue/QueueStateManager', () => ({
       getMetrics: vi.fn(() => ({
         totalProcessed: 0,
         failedDeliveries: 0,
-        avgProcessingTime: 0
-      }))
-    }))
-  }
+        avgProcessingTime: 0,
+      })),
+    })),
+  },
 }));
 
 vi.mock('../services/recovery/MessageRecoveryService', () => ({
   MessageRecoveryService: {
     getInstance: vi.fn(() => ({
-      recoverMessages: vi.fn().mockResolvedValue([])
-    }))
-  }
+      recoverMessages: vi.fn().mockResolvedValue([]),
+    })),
+  },
 }));
 
 vi.mock('../services/connection/EventEmitter', () => ({
   EventEmitter: vi.fn().mockImplementation(() => ({
     on: vi.fn(),
     emit: vi.fn(),
-    off: vi.fn()
-  }))
+    off: vi.fn(),
+  })),
 }));
 
 vi.mock('../services/connection/ReconnectionManager', () => ({
   ReconnectionManager: vi.fn().mockImplementation(() => ({
     reset: vi.fn(),
-    startReconnection: vi.fn()
-  }))
+    startReconnection: vi.fn(),
+  })),
 }));
 
 vi.mock('../services/connection/ConnectionStateManager', () => ({
@@ -170,9 +170,9 @@ vi.mock('../services/connection/ConnectionStateManager', () => ({
       status: 'connected',
       isOnline: true,
       lastConnectedAt: new Date().toISOString(),
-      reconnectionAttempts: 0
-    }))
-  }))
+      reconnectionAttempts: 0,
+    })),
+  })),
 }));
 
 describe('Messaging System Integration Tests', () => {
@@ -185,13 +185,13 @@ describe('Messaging System Integration Tests', () => {
   const createMessage = (
     id: string,
     sender: string = 'dm-agent',
-    receiver: string = 'rules-agent'
+    receiver: string = 'rules-agent',
   ): QueuedMessage => ({
     id,
     type: MessageType.TASK,
     content: {
       action: 'process_dice_roll',
-      data: { roll: '1d20+5' }
+      data: { roll: '1d20+5' },
     },
     priority: MessagePriority.HIGH,
     sender,
@@ -200,10 +200,10 @@ describe('Messaging System Integration Tests', () => {
     deliveryStatus: {
       delivered: false,
       timestamp: new Date(),
-      attempts: 0
+      attempts: 0,
     },
     retryCount: 0,
-    maxRetries: 3
+    maxRetries: 3,
   });
 
   beforeEach(async () => {
@@ -222,7 +222,7 @@ describe('Messaging System Integration Tests', () => {
     // Mock navigator.onLine
     Object.defineProperty(navigator, 'onLine', {
       writable: true,
-      value: true
+      value: true,
     });
 
     // Initialize services
@@ -275,7 +275,7 @@ describe('Messaging System Integration Tests', () => {
       const messages = [
         createMessage('seq-1', 'dm-agent', 'rules-agent'),
         createMessage('seq-2', 'dm-agent', 'rules-agent'),
-        createMessage('seq-3', 'dm-agent', 'rules-agent')
+        createMessage('seq-3', 'dm-agent', 'rules-agent'),
       ];
 
       // Enqueue all messages
@@ -326,13 +326,13 @@ describe('Messaging System Integration Tests', () => {
       // Simulate offline state
       Object.defineProperty(navigator, 'onLine', {
         writable: true,
-        value: false
+        value: false,
       });
 
       const offlineMessages = [
         createMessage('offline-1'),
         createMessage('offline-2'),
-        createMessage('offline-3')
+        createMessage('offline-3'),
       ];
 
       // Enqueue and persist while offline
@@ -352,7 +352,7 @@ describe('Messaging System Integration Tests', () => {
       // Start offline
       Object.defineProperty(navigator, 'onLine', {
         writable: true,
-        value: false
+        value: false,
       });
 
       // Queue messages offline
@@ -367,7 +367,7 @@ describe('Messaging System Integration Tests', () => {
       // Go online
       Object.defineProperty(navigator, 'onLine', {
         writable: true,
-        value: true
+        value: true,
       });
 
       // Sync messages
@@ -389,7 +389,7 @@ describe('Messaging System Integration Tests', () => {
       // Offline: persist messages
       Object.defineProperty(navigator, 'onLine', {
         writable: true,
-        value: false
+        value: false,
       });
 
       const message = createMessage('transition-1');
@@ -401,7 +401,7 @@ describe('Messaging System Integration Tests', () => {
       // Online: sync
       Object.defineProperty(navigator, 'onLine', {
         writable: true,
-        value: true
+        value: true,
       });
 
       const synced = await syncService.synchronizeMessage(message);
@@ -506,10 +506,7 @@ describe('Messaging System Integration Tests', () => {
     });
 
     it('should maintain consistency across services', async () => {
-      const messages = [
-        createMessage('consistency-1'),
-        createMessage('consistency-2')
-      ];
+      const messages = [createMessage('consistency-1'), createMessage('consistency-2')];
 
       for (const msg of messages) {
         await queueService.enqueue(msg);
@@ -564,12 +561,10 @@ describe('Messaging System Integration Tests', () => {
 
     it('should handle message bursts', async () => {
       const burstSize = 20;
-      const messages = Array.from({ length: burstSize }, (_, i) =>
-        createMessage(`burst-${i}`)
-      );
+      const messages = Array.from({ length: burstSize }, (_, i) => createMessage(`burst-${i}`));
 
       // Enqueue all at once
-      await Promise.all(messages.map(msg => queueService.enqueue(msg)));
+      await Promise.all(messages.map((msg) => queueService.enqueue(msg)));
 
       expect(queueService.getQueueLength()).toBe(burstSize);
 
@@ -584,9 +579,7 @@ describe('Messaging System Integration Tests', () => {
     });
 
     it('should handle concurrent operations', async () => {
-      const messages = Array.from({ length: 10 }, (_, i) =>
-        createMessage(`concurrent-${i}`)
-      );
+      const messages = Array.from({ length: 10 }, (_, i) => createMessage(`concurrent-${i}`));
 
       // Concurrent enqueue and persist
       await Promise.all(
@@ -594,7 +587,7 @@ describe('Messaging System Integration Tests', () => {
           await queueService.enqueue(msg);
           await persistenceService.persistMessage(msg);
           await syncService.synchronizeMessage(msg);
-        })
+        }),
       );
 
       expect(queueService.getQueueLength()).toBe(10);
@@ -602,10 +595,7 @@ describe('Messaging System Integration Tests', () => {
 
     it('should handle state recovery after crash', async () => {
       // Simulate pre-crash state
-      const messages = [
-        createMessage('crash-1'),
-        createMessage('crash-2')
-      ];
+      const messages = [createMessage('crash-1'), createMessage('crash-2')];
 
       for (const msg of messages) {
         await queueService.enqueue(msg);
@@ -621,8 +611,8 @@ describe('Messaging System Integration Tests', () => {
         metrics: {
           totalProcessed: 0,
           failedDeliveries: 0,
-          avgProcessingTime: 0
-        }
+          avgProcessingTime: 0,
+        },
       };
 
       await persistenceService.saveQueueState(queueState);
@@ -639,9 +629,7 @@ describe('Messaging System Integration Tests', () => {
     it('should handle queue size limits', async () => {
       queueService.updateConfig({ maxQueueSize: 5 });
 
-      const messages = Array.from({ length: 10 }, (_, i) =>
-        createMessage(`limit-${i}`)
-      );
+      const messages = Array.from({ length: 10 }, (_, i) => createMessage(`limit-${i}`));
 
       let enqueued = 0;
       for (const msg of messages) {
@@ -658,8 +646,8 @@ describe('Messaging System Integration Tests', () => {
       largeMessage.content = {
         data: Array.from({ length: 1000 }, (_, i) => ({
           id: i,
-          value: `data-${i}`
-        }))
+          value: `data-${i}`,
+        })),
       };
 
       const start = Date.now();

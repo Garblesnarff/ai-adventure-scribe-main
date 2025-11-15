@@ -29,7 +29,7 @@ vi.mock('../queue/QueueStateManager', () => {
   const mockMetrics = {
     totalProcessed: 0,
     failedDeliveries: 0,
-    avgProcessingTime: 0
+    avgProcessingTime: 0,
   };
 
   return {
@@ -41,9 +41,9 @@ vi.mock('../queue/QueueStateManager', () => {
           mockMetrics.totalProcessed++;
           if (!success) mockMetrics.failedDeliveries++;
         }),
-        getMetrics: vi.fn(() => ({ ...mockMetrics }))
-      }))
-    }
+        getMetrics: vi.fn(() => ({ ...mockMetrics })),
+      })),
+    },
   };
 });
 
@@ -54,7 +54,7 @@ describe('MessageQueueService', () => {
   // Helper function to create test messages
   const createTestMessage = (
     id: string,
-    priority: MessagePriority = MessagePriority.MEDIUM
+    priority: MessagePriority = MessagePriority.MEDIUM,
   ): QueuedMessage => ({
     id,
     type: MessageType.TASK,
@@ -66,10 +66,10 @@ describe('MessageQueueService', () => {
     deliveryStatus: {
       delivered: false,
       timestamp: new Date(),
-      attempts: 0
+      attempts: 0,
     },
     retryCount: 0,
-    maxRetries: 3
+    maxRetries: 3,
   });
 
   beforeEach(() => {
@@ -109,7 +109,7 @@ describe('MessageQueueService', () => {
       const messages = [
         createTestMessage('msg-1'),
         createTestMessage('msg-2'),
-        createTestMessage('msg-3')
+        createTestMessage('msg-3'),
       ];
 
       for (const msg of messages) {
@@ -122,10 +122,10 @@ describe('MessageQueueService', () => {
 
     it('should reject invalid messages', async () => {
       const invalidMessage = {
-        id: '',  // Invalid: empty id
+        id: '', // Invalid: empty id
         type: MessageType.TASK,
         content: {},
-        priority: MessagePriority.MEDIUM
+        priority: MessagePriority.MEDIUM,
       } as QueuedMessage;
 
       vi.spyOn(QueueValidator, 'validateMessage').mockReturnValue(false);

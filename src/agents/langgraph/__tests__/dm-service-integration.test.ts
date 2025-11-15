@@ -438,9 +438,7 @@ describe('DMService Integration Tests', () => {
         },
       ];
 
-      const responses = await Promise.all(
-        configs.map((config) => service.sendMessage(config))
-      );
+      const responses = await Promise.all(configs.map((config) => service.sendMessage(config)));
 
       expect(responses).toHaveLength(3);
       responses.forEach((response) => {
@@ -626,11 +624,7 @@ describe('DMService Integration Tests', () => {
           campaignId: 'campaign-1',
           characterId: 'char-1',
           sessionId: 'session-context-3',
-          recentEvents: [
-            'Defeated a dragon',
-            'Found a magic sword',
-            'Leveled up to 6',
-          ],
+          recentEvents: ['Defeated a dragon', 'Found a magic sword', 'Leveled up to 6'],
         },
       };
 

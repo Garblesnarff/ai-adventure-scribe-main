@@ -16,40 +16,40 @@ import type { EncounterSpec, MonsterDef } from '@/types/encounters';
 
 // Mock all dependencies before importing the agent
 vi.mock('../rules/services/ValidationService', () => ({
-  ValidationService: vi.fn()
+  ValidationService: vi.fn(),
 }));
 
 vi.mock('../rules/services/ValidationResultsProcessor', () => ({
-  ValidationResultsProcessor: vi.fn()
+  ValidationResultsProcessor: vi.fn(),
 }));
 
 vi.mock('../messaging/agent-messaging-service', () => ({
   AgentMessagingService: {
-    getInstance: vi.fn()
-  }
+    getInstance: vi.fn(),
+  },
 }));
 
 vi.mock('@/utils/edgeFunctionHandler', () => ({
-  callEdgeFunction: vi.fn()
+  callEdgeFunction: vi.fn(),
 }));
 
 vi.mock('@/services/encounters/srd-loader', () => ({
-  loadMonsters: vi.fn(() => [])
+  loadMonsters: vi.fn(() => []),
 }));
 
 vi.mock('../error/services/error-handling-service', () => ({
   ErrorHandlingService: {
     getInstance: vi.fn(() => ({
-      handleOperation: vi.fn((fn) => fn())
-    }))
-  }
+      handleOperation: vi.fn((fn) => fn()),
+    })),
+  },
 }));
 
 vi.mock('../rules/validators/encounter-validator', () => ({
   validateEncounterSpec: vi.fn((spec) => ({
     ok: true,
-    issues: []
-  }))
+    issues: [],
+  })),
 }));
 
 // Import agent after mocks are set up
@@ -85,12 +85,12 @@ function createMockCharacter(overrides: any = {}) {
         ability: 'str',
         proficient: true,
         damageDice: '1d8',
-        damageType: 'slashing'
-      }
+        damageType: 'slashing',
+      },
     ],
     savingThrowProficiencies: { str: true, con: true },
     skillProficiencies: { athletics: true, perception: true },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -113,13 +113,13 @@ function createSpellcaster(overrides: any = {}) {
     spellSlots: {
       1: { total: 4, expended: 1 },
       2: { total: 3, expended: 0 },
-      3: { total: 2, expended: 1 }
+      3: { total: 2, expended: 1 },
     },
     spellcastingAbility: 'int',
     spellSaveDC: 15,
     spellAttackBonus: 7,
     conditions: { concentrating: false },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -132,8 +132,8 @@ function createUnconsciousCharacter() {
     currentHp: 0,
     conditions: {
       unconscious: true,
-      deathSaves: { successes: 1, failures: 1 }
-    }
+      deathSaves: { successes: 1, failures: 1 },
+    },
   };
 }
 
@@ -167,13 +167,13 @@ describe('RulesInterpreterAgent', () => {
 
     // Setup mock instances
     mockValidationService = {
-      validateRules: vi.fn()
+      validateRules: vi.fn(),
     };
     mockResultsProcessor = {
-      processResults: vi.fn()
+      processResults: vi.fn(),
     };
     mockMessagingService = {
-      sendMessage: vi.fn()
+      sendMessage: vi.fn(),
     };
 
     // Mock constructors
@@ -199,18 +199,18 @@ describe('RulesInterpreterAgent', () => {
           action: 'attack',
           actor: character,
           weapon: character.weapons[0],
-          targetAC: 15
-        }
+          targetAC: 15,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'attack', isValid: true, description: 'Attack is valid' }
+        { rule_type: 'attack', isValid: true, description: 'Attack is valid' },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -229,8 +229,8 @@ describe('RulesInterpreterAgent', () => {
           ruleType: 'attack',
           action: 'attack',
           actor: character,
-          actionAvailable: false
-        }
+          actionAvailable: false,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -238,17 +238,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'attack',
           isValid: false,
           description: 'No action available',
-          rule_conditions: [{
-            description: 'Actor must have action available',
-            suggestion: 'Wait until next turn'
-          }]
-        }
+          rule_conditions: [
+            {
+              description: 'Actor must have action available',
+              suggestion: 'Wait until next turn',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'No action available' }],
         suggestions: ['Wait until next turn'],
-        errors: ['No action available']
+        errors: ['No action available'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -268,18 +270,18 @@ describe('RulesInterpreterAgent', () => {
           action: 'move',
           actor: character,
           distance: 25,
-          movementUsed: 0
-        }
+          movementUsed: 0,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'movement', isValid: true, description: 'Movement is valid' }
+        { rule_type: 'movement', isValid: true, description: 'Movement is valid' },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -298,8 +300,8 @@ describe('RulesInterpreterAgent', () => {
           action: 'move',
           actor: character,
           distance: 40,
-          movementUsed: 0
-        }
+          movementUsed: 0,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -307,17 +309,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'movement',
           isValid: false,
           description: 'Movement exceeds speed limit',
-          rule_conditions: [{
-            description: 'Distance must be within speed limit',
-            suggestion: 'Reduce movement or use Dash action'
-          }]
-        }
+          rule_conditions: [
+            {
+              description: 'Distance must be within speed limit',
+              suggestion: 'Reduce movement or use Dash action',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'Movement exceeds speed limit' }],
         suggestions: ['Reduce movement or use Dash action'],
-        errors: ['Movement exceeds speed limit']
+        errors: ['Movement exceeds speed limit'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -339,18 +343,18 @@ describe('RulesInterpreterAgent', () => {
           ability: 'str',
           skill: 'athletics',
           dc: 15,
-          expectedModifier: getAbilityModifier(16) + 3 // +6
-        }
+          expectedModifier: getAbilityModifier(16) + 3, // +6
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'abilityCheck', isValid: true, description: 'Check is valid' }
+        { rule_type: 'abilityCheck', isValid: true, description: 'Check is valid' },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -379,10 +383,10 @@ describe('RulesInterpreterAgent', () => {
             level: 3,
             components: ['V', 'S', 'M'],
             school: 'evocation',
-            castingTime: 'action'
+            castingTime: 'action',
           },
-          spellLevel: 3
-        }
+          spellLevel: 3,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -390,14 +394,14 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'spellcast',
           isValid: true,
           description: 'Spell slot available',
-          rule_requirements: []
-        }
+          rule_requirements: [],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -412,8 +416,8 @@ describe('RulesInterpreterAgent', () => {
         spellSlots: {
           1: { total: 4, expended: 4 }, // All 1st level slots used
           2: { total: 3, expended: 3 }, // All 2nd level slots used
-          3: { total: 2, expended: 2 }  // All 3rd level slots used
-        }
+          3: { total: 2, expended: 2 }, // All 3rd level slots used
+        },
       });
       const task: AgentTask = {
         description: 'Cast spell without slots',
@@ -422,8 +426,8 @@ describe('RulesInterpreterAgent', () => {
           action: 'castSpell',
           actor: caster,
           spell: { name: 'Magic Missile', level: 1 },
-          spellLevel: 1
-        }
+          spellLevel: 1,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -431,17 +435,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'spellcast',
           isValid: false,
           description: 'No spell slots available',
-          rule_requirements: [{
-            description: 'Requires available spell slot of level 1 or higher',
-            suggestion: 'Take a long rest to recover spell slots'
-          }]
-        }
+          rule_requirements: [
+            {
+              description: 'Requires available spell slot of level 1 or higher',
+              suggestion: 'Take a long rest to recover spell slots',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'No spell slots available' }],
         suggestions: ['Take a long rest to recover spell slots'],
-        errors: ['No spell slots available']
+        errors: ['No spell slots available'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -460,8 +466,8 @@ describe('RulesInterpreterAgent', () => {
           action: 'castSpell',
           actor: caster,
           spell: { name: 'Wall of Force', level: 5 }, // 5th level spell
-          spellLevel: 5
-        }
+          spellLevel: 5,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -469,17 +475,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'spellcast',
           isValid: false,
           description: 'Spell level too high for character level',
-          rule_requirements: [{
-            description: 'Character level 5 can only cast up to 3rd level spells',
-            suggestion: 'Gain more levels to cast higher level spells'
-          }]
-        }
+          rule_requirements: [
+            {
+              description: 'Character level 5 can only cast up to 3rd level spells',
+              suggestion: 'Gain more levels to cast higher level spells',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'Spell level too high for character level' }],
         suggestions: ['Gain more levels to cast higher level spells'],
-        errors: ['Spell level too high for character level']
+        errors: ['Spell level too high for character level'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -501,25 +509,25 @@ describe('RulesInterpreterAgent', () => {
             level: 1,
             components: ['V', 'S', 'M'],
             materials: 'a pearl worth at least 100 gp',
-            ritual: true
+            ritual: true,
           },
           hasComponents: true,
-          hasMaterials: true
-        }
+          hasMaterials: true,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'spellcast',
           isValid: true,
-          description: 'All components available'
-        }
+          description: 'All components available',
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -531,7 +539,7 @@ describe('RulesInterpreterAgent', () => {
 
     it('validates concentration limits (one spell at a time)', async () => {
       const caster = createSpellcaster({
-        conditions: { concentrating: true }
+        conditions: { concentrating: true },
       });
       const task: AgentTask = {
         description: 'Cast concentration spell while concentrating',
@@ -542,10 +550,10 @@ describe('RulesInterpreterAgent', () => {
           spell: {
             name: 'Hold Person',
             level: 2,
-            concentration: true
+            concentration: true,
           },
-          currentlyConcentrating: true
-        }
+          currentlyConcentrating: true,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -553,24 +561,28 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'spellcast',
           isValid: true,
           description: 'Casting new concentration spell will break existing concentration',
-          rule_conditions: [{
-            description: 'Can only concentrate on one spell',
-            suggestion: 'Existing concentration will be broken'
-          }]
-        }
+          rule_conditions: [
+            {
+              description: 'Can only concentrate on one spell',
+              suggestion: 'Existing concentration will be broken',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: ['Existing concentration will be broken'],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
       const result = await agent.executeTask(task);
 
       expect(result.success).toBe(true);
-      expect(result.data.validationResults.suggestions).toContain('Existing concentration will be broken');
+      expect(result.data.validationResults.suggestions).toContain(
+        'Existing concentration will be broken',
+      );
     });
   });
 
@@ -592,18 +604,18 @@ describe('RulesInterpreterAgent', () => {
           actor: attacker,
           weapon: attacker.weapons[0],
           targetAC: 15,
-          expectedAttackBonus: expectedToHit
-        }
+          expectedAttackBonus: expectedToHit,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'attack', isValid: true }
+        { rule_type: 'attack', isValid: true },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -623,22 +635,22 @@ describe('RulesInterpreterAgent', () => {
           actor: attacker,
           weapon: attacker.weapons[0],
           targetAC: 15,
-          advantage: true
-        }
+          advantage: true,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'attack',
           isValid: true,
-          description: 'Attack with advantage: roll twice, take higher'
-        }
+          description: 'Attack with advantage: roll twice, take higher',
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -658,22 +670,22 @@ describe('RulesInterpreterAgent', () => {
           actor: attacker,
           weapon: attacker.weapons[0],
           targetAC: 15,
-          disadvantage: true
-        }
+          disadvantage: true,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'attack',
           isValid: true,
-          description: 'Attack with disadvantage: roll twice, take lower'
-        }
+          description: 'Attack with disadvantage: roll twice, take lower',
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -694,22 +706,22 @@ describe('RulesInterpreterAgent', () => {
           weapon: attacker.weapons[0],
           targetAC: 15,
           attackRoll: 20,
-          isCritical: true
-        }
+          isCritical: true,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'attack',
           isValid: true,
-          description: 'Critical hit: double all damage dice'
-        }
+          description: 'Critical hit: double all damage dice',
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: ['Critical hit: double all damage dice'],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -731,18 +743,18 @@ describe('RulesInterpreterAgent', () => {
           weapon: attacker.weapons[0],
           hit: true,
           damageRoll: 5, // 1d8 roll
-          expectedDamage: 5 + strMod // 8 total
-        }
+          expectedDamage: 5 + strMod, // 8 total
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'attack', isValid: true }
+        { rule_type: 'attack', isValid: true },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -756,7 +768,7 @@ describe('RulesInterpreterAgent', () => {
       const attacker = createMockCharacter();
       const defender = createMockCharacter({
         id: 'defender',
-        resistances: { resistant: ['slashing'] }
+        resistances: { resistant: ['slashing'] },
       });
       const task: AgentTask = {
         description: 'Attack resistant target',
@@ -768,22 +780,22 @@ describe('RulesInterpreterAgent', () => {
           weapon: attacker.weapons[0],
           damageType: 'slashing',
           damage: 10,
-          expectedFinalDamage: 5 // halved
-        }
+          expectedFinalDamage: 5, // halved
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'attack',
           isValid: true,
-          description: 'Target has resistance to slashing damage'
-        }
+          description: 'Target has resistance to slashing damage',
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: ['Target has resistance: damage halved'],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -800,26 +812,26 @@ describe('RulesInterpreterAgent', () => {
 
   describe('Modifier Calculations', () => {
     it('calculates ability modifiers correctly for various scores', () => {
-      expect(getAbilityModifier(8)).toBe(-1);   // 8 -> -1
-      expect(getAbilityModifier(10)).toBe(0);   // 10 -> 0
-      expect(getAbilityModifier(11)).toBe(0);   // 11 -> 0
-      expect(getAbilityModifier(12)).toBe(1);   // 12 -> +1
-      expect(getAbilityModifier(14)).toBe(2);   // 14 -> +2
-      expect(getAbilityModifier(16)).toBe(3);   // 16 -> +3
-      expect(getAbilityModifier(18)).toBe(4);   // 18 -> +4
-      expect(getAbilityModifier(20)).toBe(5);   // 20 -> +5
+      expect(getAbilityModifier(8)).toBe(-1); // 8 -> -1
+      expect(getAbilityModifier(10)).toBe(0); // 10 -> 0
+      expect(getAbilityModifier(11)).toBe(0); // 11 -> 0
+      expect(getAbilityModifier(12)).toBe(1); // 12 -> +1
+      expect(getAbilityModifier(14)).toBe(2); // 14 -> +2
+      expect(getAbilityModifier(16)).toBe(3); // 16 -> +3
+      expect(getAbilityModifier(18)).toBe(4); // 18 -> +4
+      expect(getAbilityModifier(20)).toBe(5); // 20 -> +5
     });
 
     it('calculates proficiency bonus by level', () => {
-      expect(getProficiencyBonus(1)).toBe(2);   // Level 1-4 -> +2
+      expect(getProficiencyBonus(1)).toBe(2); // Level 1-4 -> +2
       expect(getProficiencyBonus(4)).toBe(2);
-      expect(getProficiencyBonus(5)).toBe(3);   // Level 5-8 -> +3
+      expect(getProficiencyBonus(5)).toBe(3); // Level 5-8 -> +3
       expect(getProficiencyBonus(8)).toBe(3);
-      expect(getProficiencyBonus(9)).toBe(4);   // Level 9-12 -> +4
+      expect(getProficiencyBonus(9)).toBe(4); // Level 9-12 -> +4
       expect(getProficiencyBonus(12)).toBe(4);
-      expect(getProficiencyBonus(13)).toBe(5);  // Level 13-16 -> +5
+      expect(getProficiencyBonus(13)).toBe(5); // Level 13-16 -> +5
       expect(getProficiencyBonus(16)).toBe(5);
-      expect(getProficiencyBonus(17)).toBe(6);  // Level 17-20 -> +6
+      expect(getProficiencyBonus(17)).toBe(6); // Level 17-20 -> +6
       expect(getProficiencyBonus(20)).toBe(6);
     });
 
@@ -828,7 +840,7 @@ describe('RulesInterpreterAgent', () => {
         abilities: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 8 },
         level: 5,
         proficiencyBonus: 3,
-        skillProficiencies: { athletics: true }
+        skillProficiencies: { athletics: true },
       });
 
       const strMod = getAbilityModifier(16); // +3
@@ -843,18 +855,18 @@ describe('RulesInterpreterAgent', () => {
           skill: 'athletics',
           ability: 'str',
           proficient: true,
-          expectedBonus
-        }
+          expectedBonus,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'skillCheck', isValid: true }
+        { rule_type: 'skillCheck', isValid: true },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -867,7 +879,7 @@ describe('RulesInterpreterAgent', () => {
     it('calculates skill bonus without proficiency', async () => {
       const character = createMockCharacter({
         abilities: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 8 },
-        skillProficiencies: { athletics: true }
+        skillProficiencies: { athletics: true },
       });
 
       const dexMod = getAbilityModifier(14); // +2
@@ -881,18 +893,18 @@ describe('RulesInterpreterAgent', () => {
           skill: 'stealth',
           ability: 'dex',
           proficient: false,
-          expectedBonus
-        }
+          expectedBonus,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'skillCheck', isValid: true }
+        { rule_type: 'skillCheck', isValid: true },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -907,7 +919,7 @@ describe('RulesInterpreterAgent', () => {
         abilities: { str: 8, dex: 14, con: 12, int: 18, wis: 12, cha: 10 },
         level: 5,
         proficiencyBonus: 3,
-        spellcastingAbility: 'int'
+        spellcastingAbility: 'int',
       });
 
       const intMod = getAbilityModifier(18); // +4
@@ -923,7 +935,7 @@ describe('RulesInterpreterAgent', () => {
         abilities: { str: 8, dex: 14, con: 12, int: 18, wis: 12, cha: 10 },
         level: 5,
         proficiencyBonus: 3,
-        spellcastingAbility: 'int'
+        spellcastingAbility: 'int',
       });
 
       const intMod = getAbilityModifier(18); // +4
@@ -947,18 +959,18 @@ describe('RulesInterpreterAgent', () => {
         xpBudget: 400,
         participants: {
           hostiles: [{ ref: 'srd:goblin', count: 4 }],
-          friendlies: []
+          friendlies: [],
         },
         terrain: { features: [] },
         objectives: [],
-        startState: { initiative: 'roll', surprise: false }
+        startState: { initiative: 'roll', surprise: false },
       } as any;
 
       const party = [
         createMockCharacter({ id: 'pc1', level: 3 }),
         createMockCharacter({ id: 'pc2', level: 3 }),
         createMockCharacter({ id: 'pc3', level: 3 }),
-        createMockCharacter({ id: 'pc4', level: 3 })
+        createMockCharacter({ id: 'pc4', level: 3 }),
       ];
 
       const task: AgentTask = {
@@ -966,8 +978,8 @@ describe('RulesInterpreterAgent', () => {
         context: {
           encounterSpec,
           party,
-          monsters: []
-        }
+          monsters: [],
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue(null);
@@ -987,19 +999,19 @@ describe('RulesInterpreterAgent', () => {
         xpBudget: 200,
         participants: {
           hostiles: [{ ref: 'srd:dragon', count: 1 }], // Way too powerful
-          friendlies: []
+          friendlies: [],
         },
         terrain: { features: [] },
         objectives: [],
-        startState: { initiative: 'roll', surprise: false }
+        startState: { initiative: 'roll', surprise: false },
       } as any;
 
       const task: AgentTask = {
         description: 'Validate overpowered encounter',
         context: {
           encounterSpec,
-          monsters: []
-        }
+          monsters: [],
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue(null);
@@ -1017,7 +1029,7 @@ describe('RulesInterpreterAgent', () => {
         createMockCharacter({ id: 'pc1', level: 5 }),
         createMockCharacter({ id: 'pc2', level: 5 }),
         createSpellcaster({ id: 'pc3', level: 5 }),
-        createMockCharacter({ id: 'pc4', level: 5 })
+        createMockCharacter({ id: 'pc4', level: 5 }),
       ];
 
       const encounterSpec: EncounterSpec = {
@@ -1026,11 +1038,11 @@ describe('RulesInterpreterAgent', () => {
         xpBudget: 800,
         participants: {
           hostiles: [{ ref: 'srd:orc', count: 5 }],
-          friendlies: []
+          friendlies: [],
         },
         terrain: { features: [] },
         objectives: [],
-        startState: { initiative: 'roll', surprise: false }
+        startState: { initiative: 'roll', surprise: false },
       } as any;
 
       const task: AgentTask = {
@@ -1038,8 +1050,8 @@ describe('RulesInterpreterAgent', () => {
         context: {
           encounterSpec,
           party,
-          monsters: []
-        }
+          monsters: [],
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue(null);
@@ -1065,8 +1077,8 @@ describe('RulesInterpreterAgent', () => {
         context: {
           ruleType: 'attack',
           action: 'attack',
-          actor: character
-        }
+          actor: character,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -1074,17 +1086,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'attack',
           isValid: false,
           description: 'Character is unconscious',
-          rule_conditions: [{
-            description: 'Character must be conscious to act',
-            suggestion: 'Character needs healing or stabilization'
-          }]
-        }
+          rule_conditions: [
+            {
+              description: 'Character must be conscious to act',
+              suggestion: 'Character needs healing or stabilization',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'Character is unconscious' }],
         suggestions: ['Character needs healing or stabilization'],
-        errors: ['Character is unconscious']
+        errors: ['Character is unconscious'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1099,8 +1113,8 @@ describe('RulesInterpreterAgent', () => {
         spellSlots: {
           1: { total: 4, expended: 4 },
           2: { total: 3, expended: 3 },
-          3: { total: 2, expended: 2 }
-        }
+          3: { total: 2, expended: 2 },
+        },
       });
 
       const task: AgentTask = {
@@ -1109,8 +1123,8 @@ describe('RulesInterpreterAgent', () => {
           ruleType: 'spellcast',
           action: 'castSpell',
           actor: caster,
-          spell: { name: 'Shield', level: 1 }
-        }
+          spell: { name: 'Shield', level: 1 },
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -1118,17 +1132,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'spellcast',
           isValid: false,
           description: 'No spell slots available at any level',
-          rule_requirements: [{
-            description: 'Must have available spell slots',
-            suggestion: 'Take a long rest to recover spell slots'
-          }]
-        }
+          rule_requirements: [
+            {
+              description: 'Must have available spell slots',
+              suggestion: 'Take a long rest to recover spell slots',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'No spell slots available at any level' }],
         suggestions: ['Take a long rest to recover spell slots'],
-        errors: ['No spell slots available at any level']
+        errors: ['No spell slots available at any level'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1140,7 +1156,7 @@ describe('RulesInterpreterAgent', () => {
 
     it('rejects invalid spell not in character spell list', async () => {
       const caster = createSpellcaster({
-        knownSpells: ['Magic Missile', 'Shield', 'Fireball', 'Counterspell']
+        knownSpells: ['Magic Missile', 'Shield', 'Fireball', 'Counterspell'],
       });
 
       const task: AgentTask = {
@@ -1150,26 +1166,28 @@ describe('RulesInterpreterAgent', () => {
           action: 'castSpell',
           actor: caster,
           spell: { name: 'Eldritch Blast', level: 0 }, // Warlock spell
-          spellLevel: 0
-        }
+          spellLevel: 0,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'spellcast',
           isValid: false,
-          description: 'Spell not in character\'s known spells',
-          rule_requirements: [{
-            description: 'Must know or have prepared the spell',
-            suggestion: 'Choose from known spells or prepare during long rest'
-          }]
-        }
+          description: "Spell not in character's known spells",
+          rule_requirements: [
+            {
+              description: 'Must know or have prepared the spell',
+              suggestion: 'Choose from known spells or prepare during long rest',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
-        validations: [{ isValid: false, error: 'Spell not in character\'s known spells' }],
+        validations: [{ isValid: false, error: "Spell not in character's known spells" }],
         suggestions: ['Choose from known spells or prepare during long rest'],
-        errors: ['Spell not in character\'s known spells']
+        errors: ["Spell not in character's known spells"],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1180,14 +1198,16 @@ describe('RulesInterpreterAgent', () => {
 
     it('rejects out-of-range attacks', async () => {
       const attacker = createMockCharacter({
-        weapons: [{
-          name: 'Shortbow',
-          ability: 'dex',
-          proficient: true,
-          damageDice: '1d6',
-          damageType: 'piercing',
-          range: { normal: 80, long: 320 }
-        }]
+        weapons: [
+          {
+            name: 'Shortbow',
+            ability: 'dex',
+            proficient: true,
+            damageDice: '1d6',
+            damageType: 'piercing',
+            range: { normal: 80, long: 320 },
+          },
+        ],
       });
 
       const task: AgentTask = {
@@ -1198,8 +1218,8 @@ describe('RulesInterpreterAgent', () => {
           actor: attacker,
           weapon: attacker.weapons[0],
           targetDistance: 400, // Beyond long range
-          targetAC: 15
-        }
+          targetAC: 15,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
@@ -1207,17 +1227,19 @@ describe('RulesInterpreterAgent', () => {
           rule_type: 'attack',
           isValid: false,
           description: 'Target out of range',
-          rule_conditions: [{
-            description: 'Target must be within weapon range',
-            suggestion: 'Move closer or choose different target'
-          }]
-        }
+          rule_conditions: [
+            {
+              description: 'Target must be within weapon range',
+              suggestion: 'Move closer or choose different target',
+            },
+          ],
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: false,
         validations: [{ isValid: false, error: 'Target out of range' }],
         suggestions: ['Move closer or choose different target'],
-        errors: ['Target out of range']
+        errors: ['Target out of range'],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1234,22 +1256,22 @@ describe('RulesInterpreterAgent', () => {
         context: {
           ruleType: 'deathSave',
           action: 'deathSave',
-          actor: character
-        }
+          actor: character,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'deathSave',
           isValid: true,
-          description: 'Character makes death saving throw'
-        }
+          description: 'Character makes death saving throw',
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1263,7 +1285,7 @@ describe('RulesInterpreterAgent', () => {
 
     it('validates concentration check after taking damage', async () => {
       const caster = createSpellcaster({
-        conditions: { concentrating: true }
+        conditions: { concentrating: true },
       });
 
       const damage = 22;
@@ -1276,22 +1298,22 @@ describe('RulesInterpreterAgent', () => {
           action: 'concentrationCheck',
           actor: caster,
           damageTaken: damage,
-          expectedDC: dc
-        }
+          expectedDC: dc,
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
         {
           rule_type: 'concentrationCheck',
           isValid: true,
-          description: `Concentration check DC ${dc}`
-        }
+          description: `Concentration check DC ${dc}`,
+        },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1304,7 +1326,7 @@ describe('RulesInterpreterAgent', () => {
     it('handles missing or invalid context gracefully', async () => {
       const task: AgentTask = {
         description: 'Task with no context',
-        context: {}
+        context: {},
       };
 
       mockValidationService.validateRules.mockResolvedValue(null);
@@ -1327,18 +1349,18 @@ describe('RulesInterpreterAgent', () => {
         description: 'Integration test',
         context: {
           ruleType: 'attack',
-          action: 'attack'
-        }
+          action: 'attack',
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([
-        { rule_type: 'attack', isValid: true }
+        { rule_type: 'attack', isValid: true },
       ]);
       mockResultsProcessor.processResults.mockResolvedValue({
         isValid: true,
         validations: [{ isValid: true }],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
 
@@ -1352,9 +1374,9 @@ describe('RulesInterpreterAgent', () => {
         expect.anything(),
         expect.objectContaining({
           taskDescription: 'Integration test',
-          validationResults: expect.anything()
+          validationResults: expect.anything(),
         }),
-        expect.anything()
+        expect.anything(),
       );
       expect(result.success).toBe(true);
     });
@@ -1363,8 +1385,8 @@ describe('RulesInterpreterAgent', () => {
       const task: AgentTask = {
         description: 'Error handling test',
         context: {
-          ruleType: 'attack'
-        }
+          ruleType: 'attack',
+        },
       };
 
       mockValidationService.validateRules.mockRejectedValue(new Error('Database error'));
@@ -1379,8 +1401,8 @@ describe('RulesInterpreterAgent', () => {
       const task: AgentTask = {
         description: 'Messaging error test',
         context: {
-          ruleType: 'attack'
-        }
+          ruleType: 'attack',
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([]);
@@ -1388,7 +1410,7 @@ describe('RulesInterpreterAgent', () => {
         isValid: true,
         validations: [],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockRejectedValue(new Error('Network error'));
 
@@ -1404,8 +1426,8 @@ describe('RulesInterpreterAgent', () => {
       const task: AgentTask = {
         description: 'Edge function error',
         context: {
-          ruleType: 'attack'
-        }
+          ruleType: 'attack',
+        },
       };
 
       mockValidationService.validateRules.mockResolvedValue([]);
@@ -1413,7 +1435,7 @@ describe('RulesInterpreterAgent', () => {
         isValid: true,
         validations: [],
         suggestions: [],
-        errors: []
+        errors: [],
       });
       mockMessagingService.sendMessage.mockResolvedValue(true);
       vi.mocked(edgeFunctionHandler.callEdgeFunction).mockResolvedValue(null);

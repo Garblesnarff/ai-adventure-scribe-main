@@ -126,7 +126,7 @@ class MigrationMonitoringService {
   startTiming(
     system: SystemType,
     messageLength: number,
-    sessionId?: string
+    sessionId?: string,
   ): (outcome: InteractionOutcome, responseLength: number, error?: Error) => void {
     const startTime = Date.now();
 
@@ -170,9 +170,9 @@ class MigrationMonitoringService {
       };
     }
 
-    const successCount = interactions.filter(m => m.outcome === 'success').length;
-    const errorCount = interactions.filter(m => m.outcome === 'error').length;
-    const fallbackCount = interactions.filter(m => m.outcome === 'fallback').length;
+    const successCount = interactions.filter((m) => m.outcome === 'success').length;
+    const errorCount = interactions.filter((m) => m.outcome === 'error').length;
+    const fallbackCount = interactions.filter((m) => m.outcome === 'fallback').length;
 
     const totalDuration = interactions.reduce((sum, m) => sum + m.durationMs, 0);
     const totalResponseLength = interactions.reduce((sum, m) => sum + m.responseLength, 0);
@@ -217,17 +217,19 @@ class MigrationMonitoringService {
     const legacy = this.getSystemMetrics('legacy');
 
     const totalRequests = langgraph.totalInteractions + legacy.totalInteractions;
-    const langgraphAdoption = totalRequests > 0
-      ? (langgraph.totalInteractions / totalRequests) * 100
-      : 0;
+    const langgraphAdoption =
+      totalRequests > 0 ? (langgraph.totalInteractions / totalRequests) * 100 : 0;
 
-    const performanceImprovement = legacy.averageDurationMs > 0
-      ? ((legacy.averageDurationMs - langgraph.averageDurationMs) / legacy.averageDurationMs) * 100
-      : 0;
+    const performanceImprovement =
+      legacy.averageDurationMs > 0
+        ? ((legacy.averageDurationMs - langgraph.averageDurationMs) / legacy.averageDurationMs) *
+          100
+        : 0;
 
-    const successRateImprovement = legacy.successRate > 0
-      ? ((langgraph.successRate - legacy.successRate) / legacy.successRate) * 100
-      : 0;
+    const successRateImprovement =
+      legacy.successRate > 0
+        ? ((langgraph.successRate - legacy.successRate) / legacy.successRate) * 100
+        : 0;
 
     return {
       langgraph,
@@ -246,7 +248,7 @@ class MigrationMonitoringService {
   getTotalInteractions(): number {
     return Array.from(this.metrics.values()).reduce(
       (sum, interactions) => sum + interactions.length,
-      0
+      0,
     );
   }
 

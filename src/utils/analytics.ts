@@ -21,7 +21,7 @@ export function initializeAnalytics(): void {
   if (!measurementId) {
     logger.warn('Google Analytics not configured', {
       hint: 'Set VITE_GA_MEASUREMENT_ID in .env to enable analytics',
-      impact: 'Analytics tracking is disabled'
+      impact: 'Analytics tracking is disabled',
     });
     return;
   }
@@ -31,7 +31,7 @@ export function initializeAnalytics(): void {
     logger.warn('Invalid Google Analytics measurement ID format', {
       provided: measurementId,
       expected: 'G-XXXXXXXXXX format',
-      impact: 'Analytics tracking may not work correctly'
+      impact: 'Analytics tracking may not work correctly',
     });
   }
 
@@ -53,7 +53,7 @@ export function initializeAnalytics(): void {
     // Configure GA4 with the measurement ID
     gtag('config', measurementId, {
       page_path: window.location.pathname,
-      send_page_view: true
+      send_page_view: true,
     });
 
     // Load the GA4 script dynamically
@@ -64,12 +64,12 @@ export function initializeAnalytics(): void {
 
     logger.info('Google Analytics initialized', {
       measurementId,
-      path: window.location.pathname
+      path: window.location.pathname,
     });
   } catch (error) {
     logger.error('Failed to initialize Google Analytics', {
       error,
-      measurementId
+      measurementId,
     });
   }
 }
@@ -105,7 +105,7 @@ export function trackPageView(pagePath: string, pageTitle?: string): void {
   if (typeof (window as any).gtag === 'function') {
     (window as any).gtag('event', 'page_view', {
       page_path: pagePath,
-      page_title: pageTitle
+      page_title: pageTitle,
     });
     logger.debug('Page view tracked', { pagePath, pageTitle });
   } else {

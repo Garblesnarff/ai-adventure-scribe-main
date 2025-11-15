@@ -39,10 +39,7 @@ describe('Rules Validator Node', () => {
     vi.clearAllMocks();
   });
 
-  const createMockState = (
-    playerInput: string,
-    playerIntent: string
-  ): DMState => ({
+  const createMockState = (playerInput: string, playerIntent: string): DMState => ({
     messages: [],
     playerInput,
     playerIntent,
@@ -75,7 +72,7 @@ describe('Rules Validator Node', () => {
           rollReason: 'attack roll',
           warnings: [],
           modifications: [],
-        })
+        }),
       );
 
       const result = await validateRules(mockState);
@@ -97,7 +94,7 @@ describe('Rules Validator Node', () => {
           dc: 15,
           warnings: ['Targets must make Dexterity saving throws'],
           modifications: [],
-        })
+        }),
       );
 
       const result = await validateRules(mockState);
@@ -107,10 +104,7 @@ describe('Rules Validator Node', () => {
     });
 
     it('should flag invalid actions', async () => {
-      const mockState = createMockState(
-        'I attack three times in one turn',
-        'attack'
-      );
+      const mockState = createMockState('I attack three times in one turn', 'attack');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
@@ -118,7 +112,7 @@ describe('Rules Validator Node', () => {
           reasoning: 'Most characters can only attack once per turn without Extra Attack',
           warnings: ['Check character level and class features'],
           modifications: ['Reduce to one attack', 'Use Action Surge if Fighter'],
-        })
+        }),
       );
 
       const result = await validateRules(mockState);
@@ -132,7 +126,7 @@ describe('Rules Validator Node', () => {
     beforeEach(() => {
       // Mock AI to return basic valid response
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ isValid: true, reasoning: 'Valid action' })
+        JSON.stringify({ isValid: true, reasoning: 'Valid action' }),
       );
     });
 
@@ -158,10 +152,7 @@ describe('Rules Validator Node', () => {
     });
 
     it('should identify Perception checks', async () => {
-      const mockState = createMockState(
-        'I use my Perception to spot enemies',
-        'skill_check'
-      );
+      const mockState = createMockState('I use my Perception to spot enemies', 'skill_check');
 
       const result = await validateRules(mockState);
 
@@ -169,10 +160,7 @@ describe('Rules Validator Node', () => {
     });
 
     it('should identify Investigation checks', async () => {
-      const mockState = createMockState(
-        'I investigate the crime scene',
-        'skill_check'
-      );
+      const mockState = createMockState('I investigate the crime scene', 'skill_check');
 
       const result = await validateRules(mockState);
 
@@ -180,10 +168,7 @@ describe('Rules Validator Node', () => {
     });
 
     it('should identify Stealth checks', async () => {
-      const mockState = createMockState(
-        'I attempt to stealth past the guards',
-        'skill_check'
-      );
+      const mockState = createMockState('I attempt to stealth past the guards', 'skill_check');
 
       const result = await validateRules(mockState);
 
@@ -199,10 +184,7 @@ describe('Rules Validator Node', () => {
     });
 
     it('should identify Persuasion checks', async () => {
-      const mockState = createMockState(
-        'I use persuasion to convince them',
-        'skill_check'
-      );
+      const mockState = createMockState('I use persuasion to convince them', 'skill_check');
 
       const result = await validateRules(mockState);
 
@@ -230,9 +212,7 @@ describe('Rules Validator Node', () => {
   describe('Fallback Validation', () => {
     beforeEach(() => {
       // Mock AI to fail
-      mockGeminiManager.executeWithRotation.mockRejectedValue(
-        new Error('AI unavailable')
-      );
+      mockGeminiManager.executeWithRotation.mockRejectedValue(new Error('AI unavailable'));
     });
 
     it('should use fallback for valid actions', async () => {
@@ -288,9 +268,7 @@ describe('Rules Validator Node', () => {
     it('should handle AI errors gracefully', async () => {
       const mockState = createMockState('I attack', 'attack');
 
-      mockGeminiManager.executeWithRotation.mockRejectedValue(
-        new Error('Service error')
-      );
+      mockGeminiManager.executeWithRotation.mockRejectedValue(new Error('Service error'));
 
       const result = await validateRules(mockState);
 
@@ -314,7 +292,7 @@ describe('Rules Validator Node', () => {
   describe('Metadata Handling', () => {
     beforeEach(() => {
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ isValid: true, reasoning: 'Valid' })
+        JSON.stringify({ isValid: true, reasoning: 'Valid' }),
       );
     });
 
@@ -363,7 +341,7 @@ describe('Rules Validator Node', () => {
       mockState.worldContext.characterIds = [];
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ isValid: true, reasoning: 'Valid' })
+        JSON.stringify({ isValid: true, reasoning: 'Valid' }),
       );
 
       const result = await validateRules(mockState);
@@ -376,7 +354,7 @@ describe('Rules Validator Node', () => {
     it('should validate multiclass spell slots', async () => {
       const mockState = createMockState(
         'I cast a 3rd level spell using my multiclass slots',
-        'spellcast'
+        'spellcast',
       );
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
@@ -384,7 +362,7 @@ describe('Rules Validator Node', () => {
           isValid: true,
           reasoning: 'Multiclass spell slots are calculated correctly',
           warnings: ['Verify available 3rd level slots'],
-        })
+        }),
       );
 
       const result = await validateRules(mockState);
@@ -393,10 +371,7 @@ describe('Rules Validator Node', () => {
     });
 
     it('should handle advantage/disadvantage scenarios', async () => {
-      const mockState = createMockState(
-        'I attack with advantage due to hidden status',
-        'attack'
-      );
+      const mockState = createMockState('I attack with advantage due to hidden status', 'attack');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
@@ -404,7 +379,7 @@ describe('Rules Validator Node', () => {
           reasoning: 'Hidden status grants advantage on attack rolls',
           needsRoll: true,
           rollFormula: '2d20kh1', // Roll 2d20, keep highest
-        })
+        }),
       );
 
       const result = await validateRules(mockState);
@@ -415,7 +390,7 @@ describe('Rules Validator Node', () => {
     it('should validate bonus actions vs actions', async () => {
       const mockState = createMockState(
         'I use my bonus action to Cunning Action and dash',
-        'skill_check'
+        'skill_check',
       );
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
@@ -423,7 +398,7 @@ describe('Rules Validator Node', () => {
           isValid: true,
           reasoning: 'Cunning Action allows bonus action Dash for Rogues',
           needsRoll: false,
-        })
+        }),
       );
 
       const result = await validateRules(mockState);
@@ -435,7 +410,7 @@ describe('Rules Validator Node', () => {
   describe('Edge Cases', () => {
     beforeEach(() => {
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        JSON.stringify({ isValid: true, reasoning: 'Valid' })
+        JSON.stringify({ isValid: true, reasoning: 'Valid' }),
       );
     });
 

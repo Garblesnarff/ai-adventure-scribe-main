@@ -48,7 +48,7 @@ describe('Response Generator Node', () => {
     playerInput: string,
     playerIntent: string,
     rulesValidation?: RuleCheckResult,
-    requiresDiceRoll?: DiceRollRequest
+    requiresDiceRoll?: DiceRollRequest,
   ): DMState => ({
     messages: [],
     playerInput,
@@ -103,7 +103,7 @@ describe('Response Generator Node', () => {
           npcs: [{ name: 'Goblin', dialogue: '*snarl* You die now, human!' }],
           availableActions: ['Attack again', 'Defend', 'Move to cover'],
           consequences: ['Goblin is now aware of you', 'Combat has begun'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -123,11 +123,7 @@ describe('Response Generator Node', () => {
         modifications: [],
       };
 
-      const mockState = createMockState(
-        'I try to persuade the guard',
-        'social',
-        validation
-      );
+      const mockState = createMockState('I try to persuade the guard', 'social', validation);
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
@@ -140,13 +136,9 @@ describe('Response Generator Node', () => {
               dialogue: "Alright, I'm listening. But make it quick.",
             },
           ],
-          availableActions: [
-            'Present your case',
-            'Offer a bribe',
-            'Show credentials',
-          ],
+          availableActions: ['Present your case', 'Offer a bribe', 'Show credentials'],
           consequences: ['Guard is willing to negotiate'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -163,11 +155,7 @@ describe('Response Generator Node', () => {
         modifications: [],
       };
 
-      const mockState = createMockState(
-        'I search the room',
-        'exploration',
-        validation
-      );
+      const mockState = createMockState('I search the room', 'exploration', validation);
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
@@ -181,7 +169,7 @@ describe('Response Generator Node', () => {
             'Investigate the fireplace',
           ],
           consequences: ['You notice strange markings on the floor'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -198,11 +186,7 @@ describe('Response Generator Node', () => {
         modifications: [],
       };
 
-      const mockState = createMockState(
-        'I cast Healing Word',
-        'spellcast',
-        validation
-      );
+      const mockState = createMockState('I cast Healing Word', 'spellcast', validation);
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
@@ -212,7 +196,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: ['Continue fighting', 'Cast another spell', 'Move to safety'],
           consequences: ['Spell slot consumed', 'Ally regains hit points'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -226,17 +210,16 @@ describe('Response Generator Node', () => {
     it('should incorporate recent memories into narrative', async () => {
       const mockState = createMockState('I look around', 'exploration');
 
-      mockGeminiManager.executeWithRotation.mockImplementation(
-        async (callback: any) => {
-          return JSON.stringify({
-            description: 'You recall entering the dark tavern and spot the hooded figure still watching.',
-            atmosphere: 'tense',
-            npcs: [],
-            availableActions: [],
-            consequences: [],
-          });
-        }
-      );
+      mockGeminiManager.executeWithRotation.mockImplementation(async (callback: any) => {
+        return JSON.stringify({
+          description:
+            'You recall entering the dark tavern and spot the hooded figure still watching.',
+          atmosphere: 'tense',
+          npcs: [],
+          availableActions: [],
+          consequences: [],
+        });
+      });
 
       const result = await generateResponse(mockState);
 
@@ -256,7 +239,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -284,7 +267,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: ['Use a cantrip', 'Take a short rest', 'Use an item'],
           consequences: ['No spell cast'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -314,7 +297,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -330,7 +313,7 @@ describe('Response Generator Node', () => {
       const mockState = createMockState('I look around', 'exploration');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        'You see a dimly lit room with cobwebs in the corners.'
+        'You see a dimly lit room with cobwebs in the corners.',
       );
 
       const result = await generateResponse(mockState);
@@ -344,7 +327,7 @@ describe('Response Generator Node', () => {
       const mockState = createMockState('I talk to NPC', 'social');
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
-        'Here is the response: {"description": "The NPC greets you warmly.", "atmosphere": "friendly", "npcs": [], "availableActions": [], "consequences": []}'
+        'Here is the response: {"description": "The NPC greets you warmly.", "atmosphere": "friendly", "npcs": [], "availableActions": [], "consequences": []}',
       );
 
       const result = await generateResponse(mockState);
@@ -356,9 +339,7 @@ describe('Response Generator Node', () => {
     it('should handle malformed JSON gracefully', async () => {
       const mockState = createMockState('I do something', 'other');
 
-      mockGeminiManager.executeWithRotation.mockResolvedValue(
-        '{invalid json content'
-      );
+      mockGeminiManager.executeWithRotation.mockResolvedValue('{invalid json content');
 
       const result = await generateResponse(mockState);
 
@@ -391,9 +372,7 @@ describe('Response Generator Node', () => {
     it('should handle AI service errors', async () => {
       const mockState = createMockState('I attack', 'attack');
 
-      mockGeminiManager.executeWithRotation.mockRejectedValue(
-        new Error('AI service down')
-      );
+      mockGeminiManager.executeWithRotation.mockRejectedValue(new Error('AI service down'));
 
       const result = await generateResponse(mockState);
 
@@ -421,7 +400,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        })
+        }),
       );
     });
 
@@ -455,7 +434,8 @@ describe('Response Generator Node', () => {
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
-          description: 'You stand before the council of elders, each watching you with varying degrees of interest.',
+          description:
+            'You stand before the council of elders, each watching you with varying degrees of interest.',
           atmosphere: 'formal and tense',
           npcs: [
             { name: 'Elder Theron', dialogue: 'Speak your peace, traveler.' },
@@ -464,7 +444,7 @@ describe('Response Generator Node', () => {
           ],
           availableActions: ['Present your case', 'Show evidence', 'Appeal to emotion'],
           consequences: ['All council members are now paying attention'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -484,7 +464,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: ['Examine the hieroglyphs', 'Proceed deeper', 'Turn back'],
           consequences: ['You have entered the tomb', 'No turning back now'],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -499,7 +479,8 @@ describe('Response Generator Node', () => {
 
       mockGeminiManager.executeWithRotation.mockResolvedValue(
         JSON.stringify({
-          description: 'You charge at the door with all your might. The wood splinters and the door crashes inward with a deafening crash.',
+          description:
+            'You charge at the door with all your might. The wood splinters and the door crashes inward with a deafening crash.',
           atmosphere: 'loud and chaotic',
           npcs: [],
           availableActions: ['Rush inside', 'Wait and listen', 'Take cover'],
@@ -508,7 +489,7 @@ describe('Response Generator Node', () => {
             'Everyone in the building heard that',
             'Surprise is no longer possible',
           ],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -531,7 +512,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -549,7 +530,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);
@@ -568,7 +549,7 @@ describe('Response Generator Node', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        })
+        }),
       );
 
       const result = await generateResponse(mockState);

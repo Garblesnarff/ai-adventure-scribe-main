@@ -70,8 +70,8 @@ vi.mock('../storage/IndexedDBService', () => {
         },
         __getMockMessages: () => mockMessages,
         __getMockQueueState: () => mockQueueState,
-      }))
-    }
+      })),
+    },
   };
 });
 
@@ -90,10 +90,10 @@ describe('MessagePersistenceService', () => {
     deliveryStatus: {
       delivered: false,
       timestamp: new Date(),
-      attempts: 0
+      attempts: 0,
     },
     retryCount: 0,
-    maxRetries: 3
+    maxRetries: 3,
   });
 
   const createTestStoredMessage = (id: string): StoredMessage => ({
@@ -107,7 +107,7 @@ describe('MessagePersistenceService', () => {
     metadata: {
       sender: 'dm-agent',
       receiver: 'rules-agent',
-    }
+    },
   });
 
   beforeEach(() => {
@@ -145,8 +145,8 @@ describe('MessagePersistenceService', () => {
           type: message.type,
           priority: 'MEDIUM',
           status: 'pending',
-          retryCount: 0
-        })
+          retryCount: 0,
+        }),
       );
     });
 
@@ -158,8 +158,8 @@ describe('MessagePersistenceService', () => {
 
       expect(mockStorage.storeMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          priority: 'HIGH'
-        })
+          priority: 'HIGH',
+        }),
       );
     });
 
@@ -172,9 +172,9 @@ describe('MessagePersistenceService', () => {
         expect.objectContaining({
           metadata: {
             sender: 'dm-agent',
-            receiver: 'rules-agent'
-          }
-        })
+            receiver: 'rules-agent',
+          },
+        }),
       );
     });
 
@@ -190,7 +190,7 @@ describe('MessagePersistenceService', () => {
       const messages = [
         createTestQueuedMessage('msg-1'),
         createTestQueuedMessage('msg-2'),
-        createTestQueuedMessage('msg-3')
+        createTestQueuedMessage('msg-3'),
       ];
 
       for (const msg of messages) {
@@ -229,18 +229,13 @@ describe('MessagePersistenceService', () => {
     it('should handle status update errors', async () => {
       mockStorage.updateMessageStatus.mockRejectedValue(new Error('Update failed'));
 
-      await expect(
-        service.updateMessageStatus('msg-1', 'sent')
-      ).rejects.toThrow('Update failed');
+      await expect(service.updateMessageStatus('msg-1', 'sent')).rejects.toThrow('Update failed');
     });
   });
 
   describe('Retrieving Unsent Messages', () => {
     it('should retrieve pending messages', async () => {
-      const pendingMessages = [
-        createTestStoredMessage('msg-1'),
-        createTestStoredMessage('msg-2')
-      ];
+      const pendingMessages = [createTestStoredMessage('msg-1'), createTestStoredMessage('msg-2')];
 
       mockStorage.getPendingMessages.mockResolvedValue(pendingMessages);
 
@@ -275,8 +270,8 @@ describe('MessagePersistenceService', () => {
         metrics: {
           totalProcessed: 5,
           failedDeliveries: 1,
-          avgProcessingTime: 250
-        }
+          avgProcessingTime: 250,
+        },
       };
 
       await service.saveQueueState(queueState);
@@ -293,8 +288,8 @@ describe('MessagePersistenceService', () => {
         metrics: {
           totalProcessed: 10,
           failedDeliveries: 2,
-          avgProcessingTime: 300
-        }
+          avgProcessingTime: 300,
+        },
       };
 
       mockStorage.getQueueState.mockResolvedValue(queueState);
@@ -323,8 +318,8 @@ describe('MessagePersistenceService', () => {
         metrics: {
           totalProcessed: 0,
           failedDeliveries: 0,
-          avgProcessingTime: 0
-        }
+          avgProcessingTime: 0,
+        },
       };
 
       await expect(service.saveQueueState(queueState)).rejects.toThrow('Save failed');
@@ -337,7 +332,7 @@ describe('MessagePersistenceService', () => {
       const offlineMessages = [
         createTestStoredMessage('offline-1'),
         createTestStoredMessage('offline-2'),
-        createTestStoredMessage('offline-3')
+        createTestStoredMessage('offline-3'),
       ];
 
       mockStorage.getPendingMessages.mockResolvedValue(offlineMessages);
@@ -345,25 +340,25 @@ describe('MessagePersistenceService', () => {
       const recovered = await service.getUnsentMessages();
 
       expect(recovered).toHaveLength(3);
-      expect(recovered.map(m => m.id)).toEqual(['offline-1', 'offline-2', 'offline-3']);
+      expect(recovered.map((m) => m.id)).toEqual(['offline-1', 'offline-2', 'offline-3']);
     });
 
     it('should handle recovery with mixed message statuses', async () => {
       const messages = [
         { ...createTestStoredMessage('msg-1'), status: 'pending' as const },
         { ...createTestStoredMessage('msg-2'), status: 'sent' as const },
-        { ...createTestStoredMessage('msg-3'), status: 'pending' as const }
+        { ...createTestStoredMessage('msg-3'), status: 'pending' as const },
       ];
 
       // Mock should only return pending messages
       mockStorage.getPendingMessages.mockResolvedValue(
-        messages.filter(m => m.status === 'pending')
+        messages.filter((m) => m.status === 'pending'),
       );
 
       const recovered = await service.getUnsentMessages();
 
       expect(recovered).toHaveLength(2);
-      expect(recovered.every(m => m.status === 'pending')).toBe(true);
+      expect(recovered.every((m) => m.status === 'pending')).toBe(true);
     });
   });
 
@@ -390,8 +385,8 @@ describe('MessagePersistenceService', () => {
       expect(mockStorage.storeMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'offline-msg',
-          status: 'pending'
-        })
+          status: 'pending',
+        }),
       );
     });
 
@@ -403,8 +398,8 @@ describe('MessagePersistenceService', () => {
 
       expect(mockStorage.storeMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          retryCount: 0  // Note: persistMessage resets retryCount to 0
-        })
+          retryCount: 0, // Note: persistMessage resets retryCount to 0
+        }),
       );
     });
 
@@ -419,7 +414,7 @@ describe('MessagePersistenceService', () => {
       // 2. Online: Retrieve pending messages
       mockStorage.getPendingMessages.mockResolvedValue([
         createTestStoredMessage('msg-1'),
-        createTestStoredMessage('msg-2')
+        createTestStoredMessage('msg-2'),
       ]);
 
       const pending = await service.getUnsentMessages();
@@ -437,10 +432,10 @@ describe('MessagePersistenceService', () => {
   describe('Edge Cases', () => {
     it('should handle concurrent persistence operations', async () => {
       const messages = Array.from({ length: 10 }, (_, i) =>
-        createTestQueuedMessage(`concurrent-${i}`)
+        createTestQueuedMessage(`concurrent-${i}`),
       );
 
-      await Promise.all(messages.map(msg => service.persistMessage(msg)));
+      await Promise.all(messages.map((msg) => service.persistMessage(msg)));
 
       expect(mockStorage.storeMessage).toHaveBeenCalledTimes(10);
     });
@@ -451,17 +446,17 @@ describe('MessagePersistenceService', () => {
         nested: {
           data: {
             value: 'complex',
-            array: [1, 2, 3]
-          }
-        }
+            array: [1, 2, 3],
+          },
+        },
       };
 
       await service.persistMessage(message);
 
       expect(mockStorage.storeMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: message.content
-        })
+          content: message.content,
+        }),
       );
     });
 
@@ -474,9 +469,9 @@ describe('MessagePersistenceService', () => {
         expect.objectContaining({
           metadata: {
             sender: 'dm-agent',
-            receiver: 'rules-agent'
-          }
-        })
+            receiver: 'rules-agent',
+          },
+        }),
       );
     });
 
@@ -494,18 +489,15 @@ describe('MessagePersistenceService', () => {
     it('should save complete queue state with metrics', async () => {
       const state: QueueState = {
         lastSyncTimestamp: new Date().toISOString(),
-        messages: [
-          createTestQueuedMessage('msg-1'),
-          createTestQueuedMessage('msg-2')
-        ],
+        messages: [createTestQueuedMessage('msg-1'), createTestQueuedMessage('msg-2')],
         pendingMessages: ['msg-1', 'msg-2'],
         processingMessage: 'msg-1',
         isOnline: true,
         metrics: {
           totalProcessed: 100,
           failedDeliveries: 5,
-          avgProcessingTime: 150
-        }
+          avgProcessingTime: 150,
+        },
       };
 
       await service.saveQueueState(state);
@@ -522,8 +514,8 @@ describe('MessagePersistenceService', () => {
         metrics: {
           totalProcessed: 50,
           failedDeliveries: 3,
-          avgProcessingTime: 200
-        }
+          avgProcessingTime: 200,
+        },
       };
 
       mockStorage.getQueueState.mockResolvedValue(savedState);

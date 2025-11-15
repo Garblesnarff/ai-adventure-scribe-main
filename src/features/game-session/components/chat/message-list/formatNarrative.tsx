@@ -54,7 +54,10 @@ const formatInline = (line: string): React.ReactNode[] => {
       nodes.push(line.slice(lastIndex, match.index));
     }
     nodes.push(
-      <em key={`em-${match.index}-${inner}`} className="font-medium italic text-infinite-purple-light">
+      <em
+        key={`em-${match.index}-${inner}`}
+        className="font-medium italic text-infinite-purple-light"
+      >
         {inner}
       </em>,
     );
@@ -91,9 +94,7 @@ const renderBlock = (block: string, index: number): React.ReactNode => {
   }
 
   const isDialogue = lines.length === 1 && DIALOGUE_PATTERN.test(lines[0]);
-  const className = isDialogue
-    ? 'italic text-infinite-teal-light font-serif text-[16px]'
-    : '';
+  const className = isDialogue ? 'italic text-infinite-teal-light font-serif text-[16px]' : '';
 
   if (lines.length === 1) {
     return (

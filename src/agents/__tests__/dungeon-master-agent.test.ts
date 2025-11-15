@@ -18,7 +18,7 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-  }
+  },
 }));
 
 // Mock messaging service
@@ -227,7 +227,9 @@ describe('DungeonMasterAgent', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.narrativeResponse?.environment).toBeDefined();
-      expect(result.data?.narrativeResponse?.environment?.description).toBe('A dark and mysterious forest');
+      expect(result.data?.narrativeResponse?.environment?.description).toBe(
+        'A dark and mysterious forest',
+      );
       expect(result.data?.narrativeResponse?.environment?.atmosphere).toBe('foreboding');
     });
 
@@ -246,7 +248,9 @@ describe('DungeonMasterAgent', () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.narrativeResponse?.characters).toBeDefined();
-      expect(result.data?.narrativeResponse?.characters?.activeNPCs).toContain('Mysterious Stranger');
+      expect(result.data?.narrativeResponse?.characters?.activeNPCs).toContain(
+        'Mysterious Stranger',
+      );
       expect(result.data?.narrativeResponse?.characters?.activeNPCs).toContain('Forest Guardian');
       expect(result.data?.narrativeResponse?.characters?.dialogue).toContain('Welcome, traveler');
     });
@@ -267,7 +271,9 @@ describe('DungeonMasterAgent', () => {
       expect(result.success).toBe(true);
       expect(result.data?.narrativeResponse?.opportunities?.immediate).toBeDefined();
       expect(result.data?.narrativeResponse?.opportunities?.immediate).toHaveLength(3);
-      expect(result.data?.narrativeResponse?.opportunities?.immediate).toContain('Speak with the stranger');
+      expect(result.data?.narrativeResponse?.opportunities?.immediate).toContain(
+        'Speak with the stranger',
+      );
     });
 
     it('should handle task without sessionId gracefully', async () => {
@@ -500,7 +506,9 @@ describe('DungeonMasterAgent', () => {
           },
         };
 
-        await expect(agent.reportEncounterOutcome('session-outcome', spec, 0.7)).resolves.not.toThrow();
+        await expect(
+          agent.reportEncounterOutcome('session-outcome', spec, 0.7),
+        ).resolves.not.toThrow();
       });
 
       it('should handle various resource usage values', async () => {
@@ -725,9 +733,9 @@ describe('DungeonMasterAgent', () => {
         },
       }));
 
-      const results = await Promise.all(tasks.map(t => agent.executeTask(t)));
+      const results = await Promise.all(tasks.map((t) => agent.executeTask(t)));
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeDefined();
         expect(result.success).toBeDefined();
       });

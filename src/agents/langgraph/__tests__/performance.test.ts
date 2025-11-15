@@ -118,11 +118,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
 
       for (let i = 0; i < iterations; i++) {
         const startTime = performance.now();
-        await invokeDMGraph(
-          `I perform action ${i}`,
-          createWorldContext(),
-          `perf-thread-2-${i}`
-        );
+        await invokeDMGraph(`I perform action ${i}`, createWorldContext(), `perf-thread-2-${i}`);
         const endTime = performance.now();
         durations.push(endTime - startTime);
       }
@@ -153,7 +149,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
         'dm-agent',
         'PLAYER_ACTION' as any,
         { action: 'attack', target: 'goblin' },
-        1 as any
+        1 as any,
       );
 
       const endTime = performance.now();
@@ -170,7 +166,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
       const result = await invokeDMGraph(
         'I attack with my longsword',
         createWorldContext(),
-        'mem-thread-1'
+        'mem-thread-1',
       );
 
       // Estimate memory footprint
@@ -193,7 +189,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
       const result = await invokeDMGraph(
         'I perform a complex multi-step action involving several NPCs and environmental interactions',
         worldContext,
-        'mem-thread-2'
+        'mem-thread-2',
       );
 
       const stateSize = JSON.stringify(result).length;
@@ -209,11 +205,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
       const startTime = performance.now();
 
       const promises = Array.from({ length: concurrentRequests }, (_, i) =>
-        invokeDMGraph(
-          `I perform action ${i}`,
-          createWorldContext(),
-          `concurrent-thread-${i}`
-        )
+        invokeDMGraph(`I perform action ${i}`, createWorldContext(), `concurrent-thread-${i}`),
       );
 
       const results = await Promise.all(promises);
@@ -239,7 +231,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
         await invokeDMGraph(
           `Sequential action ${i}`,
           createWorldContext(),
-          `sequential-thread-${i}`
+          `sequential-thread-${i}`,
         );
       }
 
@@ -286,9 +278,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
       console.log(`  LOC (main service): ${customMessagingMetrics.linesOfCode}+`);
 
       // LangGraph should be simpler
-      expect(langgraphMetrics.totalFiles).toBeLessThan(
-        customMessagingMetrics.totalFiles
-      );
+      expect(langgraphMetrics.totalFiles).toBeLessThan(customMessagingMetrics.totalFiles);
     });
 
     it('should evaluate error handling paths', async () => {
@@ -302,7 +292,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
         const result = await invokeDMGraph(
           scenario.input,
           createWorldContext(),
-          `error-thread-${errorScenarios.indexOf(scenario)}`
+          `error-thread-${errorScenarios.indexOf(scenario)}`,
         );
 
         // Should handle errors gracefully
@@ -331,9 +321,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
 
     it('should measure AI call efficiency with fallbacks', async () => {
       // Make AI fail to test fallback paths
-      mockGeminiManager.executeWithRotation.mockRejectedValueOnce(
-        new Error('AI unavailable')
-      );
+      mockGeminiManager.executeWithRotation.mockRejectedValueOnce(new Error('AI unavailable'));
 
       const callsBefore = mockGeminiManager.executeWithRotation.mock.calls.length;
 
@@ -377,11 +365,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
 
       // Measure LangGraph
       const lgStart = performance.now();
-      const lgResult = await invokeDMGraph(
-        'I attack',
-        createWorldContext(),
-        'benchmark-lg'
-      );
+      const lgResult = await invokeDMGraph('I attack', createWorldContext(), 'benchmark-lg');
       const lgEnd = performance.now();
       benchmarkResults.langgraph.avgResponseTime = lgEnd - lgStart;
       benchmarkResults.langgraph.stateSize = JSON.stringify(lgResult).length;
@@ -394,7 +378,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
         'dm',
         'ACTION' as any,
         { action: 'attack' },
-        1 as any
+        1 as any,
       );
       const cmEnd = performance.now();
       benchmarkResults.customMessaging.avgResponseTime = cmEnd - cmStart;
@@ -408,7 +392,7 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
 
       console.log('\nCustom Messaging System:');
       console.log(
-        `  Response Time: ${benchmarkResults.customMessaging.avgResponseTime.toFixed(2)}ms`
+        `  Response Time: ${benchmarkResults.customMessaging.avgResponseTime.toFixed(2)}ms`,
       );
       console.log(`  Services: ${benchmarkResults.customMessaging.services}`);
       console.log(`  Code Complexity: ${benchmarkResults.customMessaging.codeComplexity}`);
@@ -442,12 +426,12 @@ describe('Performance Comparison: LangGraph vs Custom Messaging', () => {
         const result = await invokeDMGraph(
           'I investigate',
           worldContext,
-          `scale-thread-${level.memories}`
+          `scale-thread-${level.memories}`,
         );
         const endTime = performance.now();
 
         console.log(
-          `  ${level.description} (${level.memories} memories): ${(endTime - startTime).toFixed(2)}ms`
+          `  ${level.description} (${level.memories} memories): ${(endTime - startTime).toFixed(2)}ms`,
         );
 
         expect(result).toBeTruthy();

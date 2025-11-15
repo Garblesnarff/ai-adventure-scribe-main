@@ -38,10 +38,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       }),
       getSession: vi.fn().mockResolvedValue({
         data: { session: { user: { id: 'test-user' } } },
-        error: null
-      })
-    }
-  }
+        error: null,
+      }),
+    },
+  },
 }));
 
 vi.mock('../connection/EventEmitter');
@@ -82,13 +82,13 @@ describe('ConnectionStateService', () => {
     mockEventEmitter = {
       on: vi.fn(),
       emit: vi.fn(),
-      off: vi.fn()
+      off: vi.fn(),
     };
     (EventEmitter as any).mockImplementation(() => mockEventEmitter);
 
     mockReconnectionManager = {
       reset: vi.fn(),
-      startReconnection: vi.fn()
+      startReconnection: vi.fn(),
     };
     (ReconnectionManager as any).mockImplementation(() => mockReconnectionManager);
 
@@ -96,13 +96,13 @@ describe('ConnectionStateService', () => {
       status: 'connected',
       isOnline: true,
       lastConnectedAt: new Date().toISOString(),
-      reconnectionAttempts: 0
+      reconnectionAttempts: 0,
     };
 
     mockStateManager = {
       handleConnectionRestored: vi.fn().mockResolvedValue(undefined),
       handleConnectionLost: vi.fn().mockResolvedValue(undefined),
-      getState: vi.fn(() => mockConnectionState)
+      getState: vi.fn(() => mockConnectionState),
     };
     (ConnectionStateManager as any).mockImplementation(() => mockStateManager);
 
@@ -151,9 +151,9 @@ describe('ConnectionStateService', () => {
           initialDelay: 1000,
           maxDelay: 30000,
           factor: 2,
-          jitter: true
+          jitter: true,
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -162,7 +162,7 @@ describe('ConnectionStateService', () => {
         expect.any(Object),
         expect.any(Object),
         expect.any(Object),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -319,7 +319,7 @@ describe('ConnectionStateService', () => {
   describe('Reconnection Logic', () => {
     it('should handle reconnection attempt event', async () => {
       const reconnectionCallback = mockEventEmitter.on.mock.calls.find(
-        (call: any) => call[0] === 'reconnectionAttempt'
+        (call: any) => call[0] === 'reconnectionAttempt',
       )?.[1];
 
       if (reconnectionCallback) {
@@ -334,11 +334,11 @@ describe('ConnectionStateService', () => {
       const { supabase } = await import('@/integrations/supabase/client');
       (supabase.auth.getSession as any).mockResolvedValueOnce({
         data: { session: null },
-        error: new Error('No session')
+        error: new Error('No session'),
       });
 
       const reconnectionCallback = mockEventEmitter.on.mock.calls.find(
-        (call: any) => call[0] === 'reconnectionAttempt'
+        (call: any) => call[0] === 'reconnectionAttempt',
       )?.[1];
 
       if (reconnectionCallback) {
@@ -353,11 +353,11 @@ describe('ConnectionStateService', () => {
       const { supabase } = await import('@/integrations/supabase/client');
       (supabase.auth.getSession as any).mockResolvedValueOnce({
         data: { session: { user: { id: 'test-user' } } },
-        error: null
+        error: null,
       });
 
       const reconnectionCallback = mockEventEmitter.on.mock.calls.find(
-        (call: any) => call[0] === 'reconnectionAttempt'
+        (call: any) => call[0] === 'reconnectionAttempt',
       )?.[1];
 
       if (reconnectionCallback) {
@@ -434,7 +434,7 @@ describe('ConnectionStateService', () => {
       (supabase.auth.getSession as any).mockRejectedValue(new Error('Session error'));
 
       const reconnectionCallback = mockEventEmitter.on.mock.calls.find(
-        (call: any) => call[0] === 'reconnectionAttempt'
+        (call: any) => call[0] === 'reconnectionAttempt',
       )?.[1];
 
       if (reconnectionCallback) {
@@ -468,7 +468,7 @@ describe('ConnectionStateService', () => {
 
   describe('Edge Cases', () => {
     it('should handle multiple simultaneous online events', async () => {
-      const promises = onlineListeners.map(listener => listener());
+      const promises = onlineListeners.map((listener) => listener());
       await Promise.all(promises);
 
       // Should handle gracefully
@@ -522,9 +522,9 @@ describe('ConnectionStateService', () => {
       expect(ReconnectionManager).toHaveBeenCalledWith(
         expect.objectContaining({
           factor: 2,
-          jitter: true
+          jitter: true,
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -532,9 +532,9 @@ describe('ConnectionStateService', () => {
       expect(ReconnectionManager).toHaveBeenCalledWith(
         expect.objectContaining({
           initialDelay: 1000,
-          maxDelay: 30000
+          maxDelay: 30000,
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

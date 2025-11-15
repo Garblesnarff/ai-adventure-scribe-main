@@ -342,7 +342,9 @@ describe('LangGraph State Management', () => {
       expect(Array.isArray(state.messages)).toBe(true);
       expect(typeof state.playerInput).toBe('string');
       expect(state.playerIntent === null || typeof state.playerIntent === 'string').toBe(true);
-      expect(state.rulesValidation === null || typeof state.rulesValidation === 'object').toBe(true);
+      expect(state.rulesValidation === null || typeof state.rulesValidation === 'object').toBe(
+        true,
+      );
       expect(typeof state.worldContext).toBe('object');
       expect(state.response === null || typeof state.response === 'object').toBe(true);
       expect(state.error === null || typeof state.error === 'string').toBe(true);

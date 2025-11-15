@@ -13,46 +13,37 @@
  * />
  */
 
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import {
-  Scroll,
-  Users,
-  Swords,
-  BookOpen,
-  Sparkles,
-  Dice6,
-  Map,
-  LucideIcon
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { Scroll, Users, Swords, BookOpen, Sparkles, Dice6, Map, LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const emptyStateVariants = cva(
-  "flex flex-col items-center justify-center text-center p-8 rounded-lg",
+  'flex flex-col items-center justify-center text-center p-8 rounded-lg',
   {
     variants: {
       variant: {
-        default: "bg-muted/30",
-        card: "border-2 border-dashed border-border bg-card",
-        minimal: "",
+        default: 'bg-muted/30',
+        card: 'border-2 border-dashed border-border bg-card',
+        minimal: '',
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: 'default',
     },
-  }
+  },
 );
 
 // Icon mapping for common empty states
 const iconMap: Record<string, LucideIcon> = {
-  "no-campaigns": Scroll,
-  "no-characters": Users,
-  "no-sessions": Swords,
-  "no-quests": BookOpen,
-  "no-items": Sparkles,
-  "no-rolls": Dice6,
-  "no-locations": Map,
+  'no-campaigns': Scroll,
+  'no-characters': Users,
+  'no-sessions': Swords,
+  'no-quests': BookOpen,
+  'no-items': Sparkles,
+  'no-rolls': Dice6,
+  'no-locations': Map,
 };
 
 export interface EmptyStateProps
@@ -73,7 +64,7 @@ export interface EmptyStateProps
   /** Animate on mount */
   animate?: boolean;
   /** Maximum width of content */
-  maxWidth?: "sm" | "md" | "lg";
+  maxWidth?: 'sm' | 'md' | 'lg';
 }
 
 const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
@@ -81,29 +72,27 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
     {
       className,
       variant,
-      illustration = "no-campaigns",
+      illustration = 'no-campaigns',
       icon,
       title,
       description,
       action,
       secondaryAction,
       animate = true,
-      maxWidth = "md",
+      maxWidth = 'md',
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     // Get icon from map if illustration is a string key
     const IconComponent =
-      typeof illustration === "string" && iconMap[illustration]
-        ? iconMap[illustration]
-        : null;
+      typeof illustration === 'string' && iconMap[illustration] ? iconMap[illustration] : null;
 
     const maxWidthClass = {
-      sm: "max-w-sm",
-      md: "max-w-md",
-      lg: "max-w-lg",
+      sm: 'max-w-sm',
+      md: 'max-w-md',
+      lg: 'max-w-lg',
     }[maxWidth];
 
     const containerVariants = {
@@ -145,7 +134,7 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-infinite-purple/10 to-infinite-teal/10 text-infinite-purple">
               <IconComponent className="h-10 w-10" strokeWidth={1.5} />
             </div>
-          ) : typeof illustration === "object" ? (
+          ) : typeof illustration === 'object' ? (
             illustration
           ) : null}
         </motion.div>
@@ -170,10 +159,7 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
 
         {/* Custom Content */}
         {children && (
-          <motion.div
-            className="mb-4"
-            variants={animate ? itemVariants : undefined}
-          >
+          <motion.div className="mb-4" variants={animate ? itemVariants : undefined}>
             {children}
           </motion.div>
         )}
@@ -195,12 +181,7 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
       return (
         <motion.div
           ref={ref}
-          className={cn(
-            emptyStateVariants({ variant }),
-            maxWidthClass,
-            "mx-auto",
-            className
-          )}
+          className={cn(emptyStateVariants({ variant }), maxWidthClass, 'mx-auto', className)}
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -214,20 +195,15 @@ const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
     return (
       <div
         ref={ref}
-        className={cn(
-          emptyStateVariants({ variant }),
-          maxWidthClass,
-          "mx-auto",
-          className
-        )}
+        className={cn(emptyStateVariants({ variant }), maxWidthClass, 'mx-auto', className)}
         {...props}
       >
         {Content}
       </div>
     );
-  }
+  },
 );
 
-EmptyState.displayName = "EmptyState";
+EmptyState.displayName = 'EmptyState';
 
 export { EmptyState, emptyStateVariants };

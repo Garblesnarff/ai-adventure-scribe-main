@@ -72,7 +72,7 @@ describe('LangGraph DM Agent Integration', () => {
   const setupMockResponses = (
     intentResponse: any,
     validationResponse: any,
-    narrativeResponse: any
+    narrativeResponse: any,
   ) => {
     let callCount = 0;
     mockGeminiManager.executeWithRotation.mockImplementation(async () => {
@@ -104,13 +104,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [{ name: 'Goblin', dialogue: '*growls*' }],
           availableActions: ['Attack', 'Defend', 'Move'],
           consequences: ['Combat initiated'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I attack the goblin with my sword',
         createWorldContext(),
-        'test-thread-1'
+        'test-thread-1',
       );
 
       // Verify complete flow
@@ -134,13 +134,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: ['Multiple enemies engaged'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I attack all nearby goblins',
         createWorldContext(),
-        'test-thread-2'
+        'test-thread-2',
       );
 
       expect(result.playerIntent).toBe('attack');
@@ -163,13 +163,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: ['Spell slot consumed', 'Area damaged by fire'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I cast Fireball at the enemy group',
         createWorldContext(),
-        'test-thread-3'
+        'test-thread-3',
       );
 
       expect(result.playerIntent).toBe('spellcast');
@@ -189,13 +189,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: ['Examine bookshelf', 'Follow footprints', 'Search elsewhere'],
           consequences: ['Discovered fresh footprints'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I search the room for clues',
         createWorldContext(),
-        'test-thread-4'
+        'test-thread-4',
       );
 
       expect(result.playerIntent).toBe('exploration');
@@ -219,13 +219,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I use perception to look for hidden enemies',
         createWorldContext(),
-        'test-thread-5'
+        'test-thread-5',
       );
 
       expect(result.playerIntent).toBe('skill_check');
@@ -248,13 +248,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I investigate the mysterious symbols',
         createWorldContext(),
-        'test-thread-6'
+        'test-thread-6',
       );
 
       expect(result.requiresDiceRoll).toBeTruthy();
@@ -274,19 +274,18 @@ describe('LangGraph DM Agent Integration', () => {
           skill: 'Persuasion',
         },
         {
-          description:
-            'You make your case eloquently. The merchant listens with interest.',
+          description: 'You make your case eloquently. The merchant listens with interest.',
           atmosphere: 'hopeful',
           npcs: [{ name: 'Merchant', dialogue: "I'm listening..." }],
           availableActions: ['Continue persuading', 'Offer deal', 'Threaten'],
           consequences: ['Merchant is considering your offer'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I try to persuade the merchant to lower the price',
         createWorldContext(),
-        'test-thread-7'
+        'test-thread-7',
       );
 
       expect(result.playerIntent).toBe('social');
@@ -304,13 +303,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [{ name: 'Guard', dialogue: 'Hmm... prove it.' }],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I lie to the guard about my identity',
         createWorldContext(),
-        'test-thread-8'
+        'test-thread-8',
       );
 
       expect(result.playerIntent).toBe('social');
@@ -327,13 +326,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [{ name: 'Bandit', dialogue: '*gulp* Okay, okay!' }],
           availableActions: [],
           consequences: ['Bandit is intimidated'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I intimidate the bandit into talking',
         createWorldContext(),
-        'test-thread-9'
+        'test-thread-9',
       );
 
       expect(result.response?.atmosphere).toBe('threatening');
@@ -356,13 +355,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: ['Stand up', 'Look for weapon'],
           consequences: [],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'I attack while lying down unarmed',
         createWorldContext(),
-        'test-thread-10'
+        'test-thread-10',
       );
 
       expect(result.rulesValidation?.isValid).toBe(false);
@@ -371,15 +370,9 @@ describe('LangGraph DM Agent Integration', () => {
     });
 
     it('should handle graph execution errors', async () => {
-      mockGeminiManager.executeWithRotation.mockRejectedValue(
-        new Error('AI service unavailable')
-      );
+      mockGeminiManager.executeWithRotation.mockRejectedValue(new Error('AI service unavailable'));
 
-      const result = await invokeDMGraph(
-        'I do something',
-        createWorldContext(),
-        'test-thread-11'
-      );
+      const result = await invokeDMGraph('I do something', createWorldContext(), 'test-thread-11');
 
       // Should use fallback logic
       expect(result.playerIntent).toBeTruthy();
@@ -419,14 +412,10 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
-      const result = await invokeDMGraph(
-        'I enter the tavern',
-        worldContext,
-        'test-thread-13'
-      );
+      const result = await invokeDMGraph('I enter the tavern', worldContext, 'test-thread-13');
 
       expect(result.response).toBeTruthy();
       // Memories should be included in the prompt (verified through mock call)
@@ -445,7 +434,7 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
       const chunks: any[] = [];
@@ -475,14 +464,10 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
-      const result = await invokeDMGraph(
-        'I attack',
-        createWorldContext(),
-        'test-thread-15'
-      );
+      const result = await invokeDMGraph('I attack', createWorldContext(), 'test-thread-15');
 
       // Graph should complete even with dice roll requirement
       // In production, this would interrupt before the dice roll node
@@ -502,14 +487,10 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: [],
           consequences: [],
-        }
+        },
       );
 
-      const result = await invokeDMGraph(
-        'I look around',
-        createWorldContext(),
-        'test-thread-16'
-      );
+      const result = await invokeDMGraph('I look around', createWorldContext(), 'test-thread-16');
 
       expect(result.metadata?.stepCount).toBeGreaterThan(0);
       expect(result.metadata?.timestamp).toBeInstanceOf(Date);
@@ -533,13 +514,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [],
           availableActions: ['Pick lock', 'Force door', 'Knock'],
           consequences: [],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'If the door is locked, I pick it. Otherwise I open it.',
         createWorldContext(),
-        'test-thread-17'
+        'test-thread-17',
       );
 
       expect(result.response?.availableActions).toContain('Pick lock');
@@ -556,13 +537,13 @@ describe('LangGraph DM Agent Integration', () => {
           npcs: [{ name: 'Crowd', dialogue: '*cheers*' }],
           availableActions: [],
           consequences: ['Crowd is engaged'],
-        }
+        },
       );
 
       const result = await invokeDMGraph(
         'With a flourish, I proclaim "Good people of Waterdeep, hear me!"',
         createWorldContext(),
-        'test-thread-18'
+        'test-thread-18',
       );
 
       expect(result.response?.atmosphere).toBe('dramatic');

@@ -10,13 +10,13 @@ vi.mock('@/integrations/supabase/client', () => {
       from: vi.fn(() => ({
         select: vi.fn(),
         insert: vi.fn(),
-        update: vi.fn()
+        update: vi.fn(),
       })),
       rpc: vi.fn(),
       functions: {
-        invoke: vi.fn()
-      }
-    }
+        invoke: vi.fn(),
+      },
+    },
   };
 });
 
@@ -26,8 +26,8 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 // Import after mocking
@@ -70,7 +70,7 @@ describe('Memory Repository', () => {
     mockGte.mockReturnThis();
     mockSingle.mockReturnThis();
     mockUpdate.mockReturnValue({
-      eq: mockEq.mockReturnThis()
+      eq: mockEq.mockReturnThis(),
     });
 
     vi.mocked(supabase.from).mockReturnValue({
@@ -81,7 +81,7 @@ describe('Memory Repository', () => {
       order: mockOrder,
       limit: mockLimit,
       gte: mockGte,
-      single: mockSingle
+      single: mockSingle,
     } as any);
     vi.mocked(supabase.rpc).mockImplementation(mockRpc as any);
     vi.mocked(supabase.functions.invoke).mockImplementation(mockFunctionsInvoke as any);
@@ -96,11 +96,11 @@ describe('Memory Repository', () => {
       it('should insert single memory successfully', async () => {
         mockInsert.mockResolvedValue({
           data: null,
-          error: null
+          error: null,
         });
 
         vi.mocked(supabase.from).mockReturnValue({
-          insert: mockInsert
+          insert: mockInsert,
         } as any);
 
         const memory = {
@@ -109,7 +109,7 @@ describe('Memory Repository', () => {
           content: 'Find the ancient artifact',
           importance: 5,
           embedding: JSON.stringify(Array(1536).fill(0.5)),
-          metadata: { category: 'main_quest' }
+          metadata: { category: 'main_quest' },
         };
 
         await repository.insertMemories([memory]);
@@ -120,17 +120,19 @@ describe('Memory Repository', () => {
       it('should insert multiple memories in batch', async () => {
         mockInsert.mockResolvedValue({
           data: null,
-          error: null
+          error: null,
         });
 
-        const memories = Array(10).fill(null).map((_, i) => ({
-          session_id: 'session-123',
-          type: 'event',
-          content: `Event ${i}`,
-          importance: 3,
-          embedding: JSON.stringify(Array(1536).fill(0.5)),
-          metadata: null
-        }));
+        const memories = Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            session_id: 'session-123',
+            type: 'event',
+            content: `Event ${i}`,
+            importance: 3,
+            embedding: JSON.stringify(Array(1536).fill(0.5)),
+            metadata: null,
+          }));
 
         await repository.insertMemories(memories);
 
@@ -146,7 +148,7 @@ describe('Memory Repository', () => {
       it('should throw error on insert failure', async () => {
         mockInsert.mockResolvedValue({
           data: null,
-          error: { message: 'Insert failed', code: '23505' }
+          error: { message: 'Insert failed', code: '23505' },
         });
 
         const memory = {
@@ -155,7 +157,7 @@ describe('Memory Repository', () => {
           content: 'Test',
           importance: 3,
           embedding: null,
-          metadata: null
+          metadata: null,
         };
 
         await expect(repository.insertMemories([memory])).rejects.toThrow();
@@ -166,8 +168,8 @@ describe('Memory Repository', () => {
           data: null,
           error: {
             message: 'duplicate key value violates unique constraint',
-            code: '23505'
-          }
+            code: '23505',
+          },
         });
 
         const memory = {
@@ -176,7 +178,7 @@ describe('Memory Repository', () => {
           content: 'Duplicate content',
           importance: 3,
           embedding: null,
-          metadata: null
+          metadata: null,
         };
 
         await expect(repository.insertMemories([memory])).rejects.toThrow();
@@ -185,20 +187,22 @@ describe('Memory Repository', () => {
 
     describe('loadRecentMemories', () => {
       it('should load recent memories with default limit', async () => {
-        const mockMemories = Array(5).fill(null).map((_, i) => ({
-          id: `${i}`,
-          session_id: 'session-123',
-          type: 'event',
-          content: `Recent memory ${i}`,
-          importance: 3,
-          created_at: new Date(Date.now() - i * 60000).toISOString(),
-          updated_at: new Date().toISOString(),
-          metadata: null
-        }));
+        const mockMemories = Array(5)
+          .fill(null)
+          .map((_, i) => ({
+            id: `${i}`,
+            session_id: 'session-123',
+            type: 'event',
+            content: `Recent memory ${i}`,
+            importance: 3,
+            created_at: new Date(Date.now() - i * 60000).toISOString(),
+            updated_at: new Date().toISOString(),
+            metadata: null,
+          }));
 
         mockLimit.mockResolvedValue({
           data: mockMemories,
-          error: null
+          error: null,
         });
 
         const results = await repository.loadRecentMemories('session-123');
@@ -211,20 +215,22 @@ describe('Memory Repository', () => {
       });
 
       it('should load recent memories with custom limit', async () => {
-        const mockMemories = Array(10).fill(null).map((_, i) => ({
-          id: `${i}`,
-          session_id: 'session-123',
-          type: 'event',
-          content: `Memory ${i}`,
-          importance: 3,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          metadata: null
-        }));
+        const mockMemories = Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            id: `${i}`,
+            session_id: 'session-123',
+            type: 'event',
+            content: `Memory ${i}`,
+            importance: 3,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            metadata: null,
+          }));
 
         mockLimit.mockResolvedValue({
           data: mockMemories,
-          error: null
+          error: null,
         });
 
         const results = await repository.loadRecentMemories('session-123', 10);
@@ -236,7 +242,7 @@ describe('Memory Repository', () => {
       it('should handle empty results', async () => {
         mockLimit.mockResolvedValue({
           data: [],
-          error: null
+          error: null,
         });
 
         const results = await repository.loadRecentMemories('session-123');
@@ -247,7 +253,7 @@ describe('Memory Repository', () => {
       it('should throw error on query failure', async () => {
         mockLimit.mockResolvedValue({
           data: null,
-          error: { message: 'Query failed' }
+          error: { message: 'Query failed' },
         });
 
         await expect(repository.loadRecentMemories('session-123')).rejects.toThrow();
@@ -265,7 +271,7 @@ describe('Memory Repository', () => {
             importance: 5,
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
+            metadata: null,
           },
           {
             id: '2',
@@ -275,13 +281,13 @@ describe('Memory Repository', () => {
             importance: 3,
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
-          }
+            metadata: null,
+          },
         ];
 
         mockLimit.mockResolvedValue({
           data: mockMemories,
-          error: null
+          error: null,
         });
 
         const results = await repository.loadTopMemories('session-123', 10);
@@ -292,20 +298,22 @@ describe('Memory Repository', () => {
       });
 
       it('should respect limit parameter', async () => {
-        const mockMemories = Array(20).fill(null).map((_, i) => ({
-          id: `${i}`,
-          session_id: 'session-123',
-          type: 'event',
-          content: `Memory ${i}`,
-          importance: 5 - Math.floor(i / 4),
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }));
+        const mockMemories = Array(20)
+          .fill(null)
+          .map((_, i) => ({
+            id: `${i}`,
+            session_id: 'session-123',
+            type: 'event',
+            content: `Memory ${i}`,
+            importance: 5 - Math.floor(i / 4),
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+            metadata: null,
+          }));
 
         mockLimit.mockResolvedValue({
           data: mockMemories.slice(0, 15),
-          error: null
+          error: null,
         });
 
         await repository.loadTopMemories('session-123', 15);
@@ -326,7 +334,7 @@ describe('Memory Repository', () => {
             narrative_weight: 9,
             created_at: '2024-01-01T00:00:00Z',
             updated_at: '2024-01-01T00:00:00Z',
-            metadata: null
+            metadata: null,
           },
           {
             id: '2',
@@ -337,13 +345,13 @@ describe('Memory Repository', () => {
             narrative_weight: 8,
             created_at: '2024-01-02T00:00:00Z',
             updated_at: '2024-01-02T00:00:00Z',
-            metadata: null
-          }
+            metadata: null,
+          },
         ];
 
         mockOrder.mockResolvedValue({
           data: mockMemories,
-          error: null
+          error: null,
         });
 
         const results = await repository.loadFictionReadyMemories('session-123', 6);
@@ -358,19 +366,19 @@ describe('Memory Repository', () => {
       it('should update importance score', async () => {
         mockEq.mockResolvedValue({
           data: null,
-          error: null
+          error: null,
         });
 
         mockUpdate.mockReturnValue({
-          eq: mockEq
+          eq: mockEq,
         });
 
         vi.mocked(supabase.from).mockReturnValue({
-          update: mockUpdate
+          update: mockUpdate,
         } as any);
 
         await repository.updateMemoryScores('memory-123', {
-          importance: 4
+          importance: 4,
         });
 
         expect(mockUpdate).toHaveBeenCalledWith({ importance: 4 });
@@ -380,19 +388,19 @@ describe('Memory Repository', () => {
       it('should update narrative weight', async () => {
         mockEq.mockResolvedValue({
           data: null,
-          error: null
+          error: null,
         });
 
         mockUpdate.mockReturnValue({
-          eq: mockEq
+          eq: mockEq,
         });
 
         vi.mocked(supabase.from).mockReturnValue({
-          update: mockUpdate
+          update: mockUpdate,
         } as any);
 
         await repository.updateMemoryScores('memory-123', {
-          narrative_weight: 7
+          narrative_weight: 7,
         });
 
         expect(mockUpdate).toHaveBeenCalledWith({ narrative_weight: 7 });
@@ -401,36 +409,36 @@ describe('Memory Repository', () => {
       it('should update both scores simultaneously', async () => {
         mockEq.mockResolvedValue({
           data: null,
-          error: null
+          error: null,
         });
 
         mockUpdate.mockReturnValue({
-          eq: mockEq
+          eq: mockEq,
         });
 
         vi.mocked(supabase.from).mockReturnValue({
-          update: mockUpdate
+          update: mockUpdate,
         } as any);
 
         await repository.updateMemoryScores('memory-123', {
           importance: 5,
-          narrative_weight: 9
+          narrative_weight: 9,
         });
 
         expect(mockUpdate).toHaveBeenCalledWith({
           importance: 5,
-          narrative_weight: 9
+          narrative_weight: 9,
         });
       });
 
       it('should throw error on update failure', async () => {
         mockUpdate.mockResolvedValue({
           data: null,
-          error: { message: 'Update failed' }
+          error: { message: 'Update failed' },
         });
 
         await expect(
-          repository.updateMemoryScores('memory-123', { importance: 4 })
+          repository.updateMemoryScores('memory-123', { importance: 4 }),
         ).rejects.toThrow();
       });
     });
@@ -439,12 +447,12 @@ describe('Memory Repository', () => {
       it('should fetch memory by ID', async () => {
         const mockMemory = {
           importance: 4,
-          narrative_weight: 7
+          narrative_weight: 7,
         };
 
         mockSingle.mockResolvedValue({
           data: mockMemory,
-          error: null
+          error: null,
         });
 
         const result = await repository.fetchMemoryById('memory-123');
@@ -457,7 +465,7 @@ describe('Memory Repository', () => {
       it('should return null when memory not found', async () => {
         mockSingle.mockResolvedValue({
           data: null,
-          error: { code: 'PGRST116', message: 'No rows found' }
+          error: { code: 'PGRST116', message: 'No rows found' },
         });
 
         const result = await repository.fetchMemoryById('non-existent');
@@ -468,7 +476,7 @@ describe('Memory Repository', () => {
       it('should return null on error', async () => {
         mockSingle.mockResolvedValue({
           data: null,
-          error: { message: 'Query failed' }
+          error: { message: 'Query failed' },
         });
 
         const result = await repository.fetchMemoryById('memory-123');
@@ -487,7 +495,7 @@ describe('Memory Repository', () => {
       const mockEmbedding = JSON.stringify(Array(1536).fill(0.5));
       mockRpc.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       await repository.matchMemories('session-123', mockEmbedding, 10, 0.7);
@@ -496,7 +504,7 @@ describe('Memory Repository', () => {
         query_embedding: mockEmbedding,
         session_id: 'session-123',
         match_threshold: 0.7,
-        match_count: 10
+        match_count: 10,
       });
     });
 
@@ -511,13 +519,13 @@ describe('Memory Repository', () => {
           importance: 3,
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
-          metadata: null
-        }
+          metadata: null,
+        },
       ];
 
       mockRpc.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       const results = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -528,7 +536,7 @@ describe('Memory Repository', () => {
     it('should handle null data from RPC', async () => {
       mockRpc.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       const results = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -547,7 +555,7 @@ describe('Memory Repository', () => {
         content: 'Test',
         importance: 3,
         embedding: null,
-        metadata: null
+        metadata: null,
       };
 
       await expect(repository.insertMemories([memory])).rejects.toThrow('Connection timeout');
@@ -558,8 +566,8 @@ describe('Memory Repository', () => {
         data: null,
         error: {
           message: 'invalid input syntax for type json',
-          code: '22P02'
-        }
+          code: '22P02',
+        },
       });
 
       const memory = {
@@ -568,7 +576,7 @@ describe('Memory Repository', () => {
         content: 'Test',
         importance: 3,
         embedding: 'invalid json',
-        metadata: null
+        metadata: null,
       };
 
       await expect(repository.insertMemories([memory])).rejects.toThrow();
@@ -579,8 +587,8 @@ describe('Memory Repository', () => {
         data: null,
         error: {
           message: 'insert or update on table "memories" violates foreign key constraint',
-          code: '23503'
-        }
+          code: '23503',
+        },
       });
 
       const memory = {
@@ -589,7 +597,7 @@ describe('Memory Repository', () => {
         content: 'Test',
         importance: 3,
         embedding: null,
-        metadata: null
+        metadata: null,
       };
 
       await expect(repository.insertMemories([memory])).rejects.toThrow();
@@ -600,8 +608,8 @@ describe('Memory Repository', () => {
         data: null,
         error: {
           code: '42883',
-          message: 'function match_memories does not exist'
-        }
+          message: 'function match_memories does not exist',
+        },
       });
 
       const results = await repository.matchMemories('session-123', 'embedding', 10, 0.7);
@@ -616,15 +624,13 @@ describe('Memory Repository', () => {
         data: null,
         error: {
           code: 'UNEXPECTED',
-          message: 'Something went wrong'
-        }
+          message: 'Something went wrong',
+        },
       });
 
       vi.mocked(supabase.rpc).mockImplementation(mockRpc as any);
 
-      await expect(
-        repository.matchMemories('session-123', 'embedding', 10, 0.7)
-      ).rejects.toThrow();
+      await expect(repository.matchMemories('session-123', 'embedding', 10, 0.7)).rejects.toThrow();
     });
   });
 
@@ -632,17 +638,19 @@ describe('Memory Repository', () => {
     it('should handle successful batch insert as transaction', async () => {
       mockInsert.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
-      const memories = Array(100).fill(null).map((_, i) => ({
-        session_id: 'session-123',
-        type: 'event',
-        content: `Memory ${i}`,
-        importance: 3,
-        embedding: JSON.stringify(Array(1536).fill(0.5)),
-        metadata: null
-      }));
+      const memories = Array(100)
+        .fill(null)
+        .map((_, i) => ({
+          session_id: 'session-123',
+          type: 'event',
+          content: `Memory ${i}`,
+          importance: 3,
+          embedding: JSON.stringify(Array(1536).fill(0.5)),
+          metadata: null,
+        }));
 
       await repository.insertMemories(memories);
 
@@ -656,18 +664,20 @@ describe('Memory Repository', () => {
         data: null,
         error: {
           message: 'Partial insert failed',
-          code: '23505'
-        }
+          code: '23505',
+        },
       });
 
-      const memories = Array(50).fill(null).map((_, i) => ({
-        session_id: 'session-123',
-        type: 'event',
-        content: `Memory ${i}`,
-        importance: 3,
-        embedding: null,
-        metadata: null
-      }));
+      const memories = Array(50)
+        .fill(null)
+        .map((_, i) => ({
+          session_id: 'session-123',
+          type: 'event',
+          content: `Memory ${i}`,
+          importance: 3,
+          embedding: null,
+          metadata: null,
+        }));
 
       await expect(repository.insertMemories(memories)).rejects.toThrow();
     });
@@ -685,9 +695,9 @@ describe('Memory Repository', () => {
           category: 'main_quest',
           context: JSON.stringify({
             location: 'Ancient Temple',
-            npcs: ['High Priest']
-          })
-        }
+            npcs: ['High Priest'],
+          }),
+        },
       };
 
       const enhanced = await repository.transformDatabaseMemory(dbMemory);
@@ -701,15 +711,15 @@ describe('Memory Repository', () => {
         category: 'main_quest',
         context: {
           location: 'Ancient Temple',
-          npcs: ['High Priest']
+          npcs: ['High Priest'],
         },
         metadata: {
           category: 'main_quest',
           context: JSON.stringify({
             location: 'Ancient Temple',
-            npcs: ['High Priest']
-          })
-        }
+            npcs: ['High Priest'],
+          }),
+        },
       });
     });
 
@@ -720,7 +730,7 @@ describe('Memory Repository', () => {
         content: 'Simple event',
         created_at: '2024-01-01T00:00:00Z',
         importance: 3,
-        metadata: null
+        metadata: null,
       };
 
       const enhanced = await repository.transformDatabaseMemory(dbMemory);
@@ -736,7 +746,7 @@ describe('Memory Repository', () => {
         type: 'event',
         content: 'Event without importance',
         created_at: '2024-01-01T00:00:00Z',
-        metadata: null
+        metadata: null,
       };
 
       const enhanced = await repository.transformDatabaseMemory(dbMemory);
@@ -753,8 +763,8 @@ describe('Memory Repository', () => {
         importance: 3,
         metadata: {
           category: 'general',
-          context: 'invalid json'
-        }
+          context: 'invalid json',
+        },
       };
 
       // Current implementation throws on invalid JSON
@@ -770,17 +780,17 @@ describe('Memory Repository', () => {
           type: 'npc',
           content: 'NPC memory',
           created_at: '2024-01-01T00:00:00Z',
-          metadata: { category: 'npc' }
-        }
+          metadata: { category: 'npc' },
+        },
       ];
 
       mockLimit.mockResolvedValue({
         data: mockMemories,
-        error: null
+        error: null,
       });
 
       await repository.fetchMemories('session-123', {
-        category: 'npc'
+        category: 'npc',
       });
 
       expect(mockEq).toHaveBeenCalledWith('metadata->category', 'npc');
@@ -789,11 +799,11 @@ describe('Memory Repository', () => {
     it('should filter by timeframe', async () => {
       mockLimit.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       await repository.fetchMemories('session-123', {
-        timeframe: 'recent'
+        timeframe: 'recent',
       });
 
       // Should call gte with a timestamp from 30 minutes ago
@@ -806,11 +816,11 @@ describe('Memory Repository', () => {
     it('should apply limit', async () => {
       mockLimit.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       await repository.fetchMemories('session-123', {
-        limit: 20
+        limit: 20,
       });
 
       expect(mockLimit).toHaveBeenCalledWith(20);
@@ -819,13 +829,13 @@ describe('Memory Repository', () => {
     it('should combine multiple filters', async () => {
       mockLimit.mockResolvedValue({
         data: [],
-        error: null
+        error: null,
       });
 
       await repository.fetchMemories('session-123', {
         category: 'quest',
         timeframe: 'recent',
-        limit: 10
+        limit: 10,
       });
 
       expect(mockEq).toHaveBeenCalledWith('metadata->category', 'quest');
