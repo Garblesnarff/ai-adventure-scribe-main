@@ -1,5 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
 import { getBlogRole } from './blog-author.js';
+
+import type { Request, Response, NextFunction } from 'express';
+
 
 declare global {
   namespace Express {

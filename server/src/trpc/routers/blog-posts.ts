@@ -14,7 +14,7 @@ import {
   blogTags,
   blogPostCategories,
   blogPostTags,
-} from '../../../../db/schema.js';
+} from '../../../../db/schema/index.js';
 import { eq, and, or, ilike, desc, lte, SQL, sql } from 'drizzle-orm';
 import {
   blogListQuerySchema,

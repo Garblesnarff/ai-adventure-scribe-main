@@ -1,8 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+
 import { useMessageContext } from '@/contexts/MessageContext';
 import logger from '@/lib/logger';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 interface TimelineRailProps {
   /** Scroll container element that holds the messages */
@@ -42,7 +41,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
 
     // Check if elements exist
     if (rootRef.current) {
-      anchors.forEach(anchor => {
+      anchors.forEach((anchor) => {
         const element = rootRef.current!.querySelector(`#${CSS.escape(anchor)}`);
         logger.debug(`[TimelineRail] Element ${anchor}:`, element);
       });
@@ -69,14 +68,21 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
         const scrollHeight = root.scrollHeight - root.clientHeight;
         const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
 
-        const indicator = railRef.current?.querySelector('.scroll-position-indicator') as HTMLElement | null;
+        const indicator = railRef.current?.querySelector(
+          '.scroll-position-indicator',
+        ) as HTMLElement | null;
         if (indicator) {
           const railHeight = root.clientHeight - 32;
-          const indicatorPosition = Math.max(0, Math.min(railHeight, scrollPercentage * railHeight));
+          const indicatorPosition = Math.max(
+            0,
+            Math.min(railHeight, scrollPercentage * railHeight),
+          );
           indicator.style.transform = `translateY(${indicatorPosition}px)`;
 
           // Absorb effect: detect overlap between indicator and beads
-          const dots = Array.from(railRef.current?.querySelectorAll<HTMLButtonElement>('.timeline-dot') || []);
+          const dots = Array.from(
+            railRef.current?.querySelectorAll<HTMLButtonElement>('.timeline-dot') || [],
+          );
           const indicatorCenter = indicatorPosition + 9; // indicator height ~18px
           const threshold = 10; // px threshold for overlap detection
 
@@ -146,7 +152,7 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible?.target?.id) setCurrentId(visible.target.id);
       },
-      { root, threshold: [0.6] }
+      { root, threshold: [0.6] },
     );
 
     els.forEach((el) => io.observe(el));
@@ -161,58 +167,42 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
 
     // Calculate the element's position relative to the scroll container
     const elementTop = el.offsetTop - root.offsetTop;
-    const middlePosition = elementTop - (root.clientHeight / 2) + (el.clientHeight / 2);
+    const middlePosition = elementTop - root.clientHeight / 2 + el.clientHeight / 2;
 
     root.scrollTo({
       top: middlePosition,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
   };
 
   if (anchors.length === 0) return null;
 
   return (
-    <motion.div
-      ref={railRef}
-      className="timeline-rail"
-      aria-label="DM message timeline"
-      variants={fadeInUp}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.div
-        className="timeline-track"
-        variants={cardContainer}
-        initial="hidden"
-        animate="visible"
-      >
+    <div ref={railRef} className="timeline-rail" aria-label="DM message timeline">
+      <div className="timeline-track">
         {/* Scroll Position Indicator */}
-        <motion.div
+        <div
           className="scroll-position-indicator absolute left-[-8px] w-[18px] h-[18px] bg-gradient-to-br from-infinite-gold to-infinite-gold-dark border-2 border-white shadow-lg rounded-full transition-all duration-100 ease-out z-20 pointer-events-none"
           style={{
             boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)',
             top: '0px',
-            transform: 'translateY(0px)'
+            transform: 'translateY(0px)',
           }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
         />
 
         {anchors.map((id, i) => (
-          <motion.button
+          <button
             key={id}
             className={`timeline-dot ${currentId === id ? 'active' : ''}`}
             title={`Jump to DM message ${i + 1}`}
             aria-label={`Jump to DM message ${i + 1}`}
             onClick={() => scrollTo(id)}
             data-anchor-id={id}
-            style={{ top: `${(i + 1) / (anchors.length + 1) * 100}%` }}
-            variants={cardItem}
+            style={{ top: `${((i + 1) / (anchors.length + 1)) * 100}%` }}
           />
         ))}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

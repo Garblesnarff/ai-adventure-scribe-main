@@ -1,6 +1,13 @@
 import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+
 import CombatInterface from '@/components/combat/CombatInterface';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 
 /**
  * GameCombatSheet Component
@@ -20,7 +27,8 @@ export const GameCombatSheet: React.FC<GameCombatSheetProps> = ({
   setShowTracker,
   isDM,
 }) => {
-  const overlayMode = (import.meta.env.VITE_COMBAT_SHEET_OVERLAY as 'light' | 'none' | undefined) ?? 'dark';
+  const overlayMode =
+    (import.meta.env.VITE_COMBAT_SHEET_OVERLAY as 'light' | 'none' | undefined) ?? 'dark';
 
   const overlayClassName = overlayMode === 'light' ? 'bg-black/40 backdrop-blur-sm' : undefined;
   const hideOverlay = overlayMode === 'none';

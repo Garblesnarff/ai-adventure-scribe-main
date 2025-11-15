@@ -5,20 +5,18 @@
  * Pure TypeScript - NO React dependencies.
  */
 
-import type {
-  CombatParticipant,
-  AddParticipantOptions,
-  AddParticipantResult,
-} from './types';
-import { rollDie } from '@/utils/diceRolls';
 import { sortByInitiative } from './InitiativeTracker';
+
+import type { CombatParticipant, AddParticipantOptions, AddParticipantResult } from './types';
+
+import { rollDie } from '@/utils/diceRolls';
 
 /**
  * Create a new participant with default values
  */
 export function createParticipant(
   partial: Partial<CombatParticipant>,
-  options?: AddParticipantOptions
+  options?: AddParticipantOptions,
 ): AddParticipantResult {
   const participant: CombatParticipant = {
     id: partial.id || crypto.randomUUID(),
@@ -87,7 +85,7 @@ export function createParticipant(
  */
 export function addParticipant(
   participants: CombatParticipant[],
-  newParticipant: CombatParticipant
+  newParticipant: CombatParticipant,
 ): CombatParticipant[] {
   const updated = [...participants, newParticipant];
   return sortByInitiative(updated);
@@ -98,9 +96,9 @@ export function addParticipant(
  */
 export function removeParticipant(
   participants: CombatParticipant[],
-  participantId: string
+  participantId: string,
 ): CombatParticipant[] {
-  return participants.filter(p => p.id !== participantId);
+  return participants.filter((p) => p.id !== participantId);
 }
 
 /**
@@ -109,11 +107,9 @@ export function removeParticipant(
 export function updateParticipant(
   participants: CombatParticipant[],
   participantId: string,
-  updates: Partial<CombatParticipant>
+  updates: Partial<CombatParticipant>,
 ): CombatParticipant[] {
-  return participants.map(p =>
-    p.id === participantId ? { ...p, ...updates } : p
-  );
+  return participants.map((p) => (p.id === participantId ? { ...p, ...updates } : p));
 }
 
 /**
@@ -121,9 +117,9 @@ export function updateParticipant(
  */
 export function findParticipant(
   participants: CombatParticipant[],
-  participantId: string
+  participantId: string,
 ): CombatParticipant | undefined {
-  return participants.find(p => p.id === participantId);
+  return participants.find((p) => p.id === participantId);
 }
 
 /**
@@ -131,38 +127,30 @@ export function findParticipant(
  */
 export function getParticipantsByType(
   participants: CombatParticipant[],
-  type: 'player' | 'enemy' | 'npc'
+  type: 'player' | 'enemy' | 'npc',
 ): CombatParticipant[] {
-  return participants.filter(p => p.participantType === type);
+  return participants.filter((p) => p.participantType === type);
 }
 
 /**
  * Get all alive participants
  */
-export function getAliveParticipants(
-  participants: CombatParticipant[]
-): CombatParticipant[] {
-  return participants.filter(p => p.currentHitPoints > 0);
+export function getAliveParticipants(participants: CombatParticipant[]): CombatParticipant[] {
+  return participants.filter((p) => p.currentHitPoints > 0);
 }
 
 /**
  * Get all unconscious participants
  */
-export function getUnconsciousParticipants(
-  participants: CombatParticipant[]
-): CombatParticipant[] {
-  return participants.filter(
-    p => p.currentHitPoints <= 0 && p.deathSaves.failures < 3
-  );
+export function getUnconsciousParticipants(participants: CombatParticipant[]): CombatParticipant[] {
+  return participants.filter((p) => p.currentHitPoints <= 0 && p.deathSaves.failures < 3);
 }
 
 /**
  * Get all dead participants
  */
-export function getDeadParticipants(
-  participants: CombatParticipant[]
-): CombatParticipant[] {
-  return participants.filter(p => p.deathSaves.failures >= 3);
+export function getDeadParticipants(participants: CombatParticipant[]): CombatParticipant[] {
+  return participants.filter((p) => p.deathSaves.failures >= 3);
 }
 
 /**
@@ -172,12 +160,8 @@ export function shouldCombatEnd(participants: CombatParticipant[]): {
   shouldEnd: boolean;
   reason?: 'all_enemies_defeated' | 'all_players_defeated' | 'all_dead';
 } {
-  const alivePlayers = getAliveParticipants(
-    getParticipantsByType(participants, 'player')
-  );
-  const aliveEnemies = getAliveParticipants(
-    getParticipantsByType(participants, 'enemy')
-  );
+  const alivePlayers = getAliveParticipants(getParticipantsByType(participants, 'player'));
+  const aliveEnemies = getAliveParticipants(getParticipantsByType(participants, 'enemy'));
 
   if (alivePlayers.length === 0 && aliveEnemies.length === 0) {
     return { shouldEnd: true, reason: 'all_dead' };

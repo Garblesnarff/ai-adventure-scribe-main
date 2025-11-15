@@ -1,19 +1,26 @@
+import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { useSearchParams } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { useCampaign } from '@/contexts/CampaignContext';
+import { useCharacter } from '@/contexts/CharacterContext';
+import logger from '@/lib/logger';
+import { analytics } from '@/services/analytics';
 import { characterDescriptionGenerator } from '@/services/character-description-generator';
 import { characterImageGenerator } from '@/services/character-image-generator';
 import { openRouterService } from '@/services/openrouter-service';
 import { toCharacterPromptData } from '@/services/prompts/characterPrompts';
-import { Loader2, Sparkles, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react';
-import logger from '@/lib/logger';
-import { useCampaign } from '@/contexts/CampaignContext';
-import { analytics } from '@/services/analytics';
-import { useSearchParams } from 'react-router-dom';
 
 /**
  * CharacterFinalization component for character creation
@@ -27,7 +34,9 @@ const CharacterFinalization: React.FC = () => {
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('fantasy');
-  const [generationStep, setGenerationStep] = useState<'idle' | 'avatar' | 'sheet' | 'background'>('idle');
+  const [generationStep, setGenerationStep] = useState<'idle' | 'avatar' | 'sheet' | 'background'>(
+    'idle',
+  );
   const [searchParams] = useSearchParams();
 
   // Initialize theme from campaign defaults when available
@@ -44,7 +53,7 @@ const CharacterFinalization: React.FC = () => {
   const handleDescriptionChange = (description: string) => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { description }
+      payload: { description },
     });
   };
 
@@ -54,9 +63,9 @@ const CharacterFinalization: React.FC = () => {
   const handleGenerateDescription = async () => {
     if (!state.character?.name?.trim()) {
       toast({
-        title: "Character Incomplete",
-        description: "Character name is required for description generation.",
-        variant: "destructive",
+        title: 'Character Incomplete',
+        description: 'Character name is required for description generation.',
+        variant: 'destructive',
       });
       return;
     }
@@ -80,8 +89,8 @@ const CharacterFinalization: React.FC = () => {
           includeBackstory: true,
           includePersonality: true,
           includeAppearance: true,
-          tone: 'heroic'
-        }
+          tone: 'heroic',
+        },
       );
 
       dispatch({
@@ -90,21 +99,21 @@ const CharacterFinalization: React.FC = () => {
           description: enhancedDescription.description,
           appearance: enhancedDescription.appearance,
           personality_traits: enhancedDescription.personality_traits,
-          backstory_elements: enhancedDescription.backstory_elements
-        }
+          backstory_elements: enhancedDescription.backstory_elements,
+        },
       });
 
       toast({
-        title: "Description Generated",
-        description: "Your character's description has been enhanced with AI using all your character choices!",
+        title: 'Description Generated',
+        description:
+          "Your character's description has been enhanced with AI using all your character choices!",
       });
-
     } catch (error) {
       logger.error('Failed to generate description:', error);
       toast({
-        title: "Generation Failed",
-        description: "Failed to generate character description. Please try again.",
-        variant: "destructive",
+        title: 'Generation Failed',
+        description: 'Failed to generate character description. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsGeneratingDescription(false);
@@ -117,9 +126,9 @@ const CharacterFinalization: React.FC = () => {
   const handleGenerateAvatar = async () => {
     if (!state.character?.name?.trim()) {
       toast({
-        title: "Character Incomplete",
-        description: "Character name is required for avatar generation.",
-        variant: "destructive",
+        title: 'Character Incomplete',
+        description: 'Character name is required for avatar generation.',
+        variant: 'destructive',
       });
       return;
     }
@@ -142,10 +151,10 @@ const CharacterFinalization: React.FC = () => {
 
       logger.info('Generating avatar with theme:', selectedTheme);
 
-      const avatarBase64 = await characterImageGenerator.generateAvatarImage(
-        characterData,
-        { artStyle: 'fantasy-art', theme: selectedTheme }
-      );
+      const avatarBase64 = await characterImageGenerator.generateAvatarImage(characterData, {
+        artStyle: 'fantasy-art',
+        theme: selectedTheme,
+      });
 
       // Upload avatar to get URL
       const avatarUrl = await openRouterService.uploadImage(avatarBase64, { label: 'avatar' });
@@ -154,22 +163,22 @@ const CharacterFinalization: React.FC = () => {
         type: 'UPDATE_CHARACTER',
         payload: {
           avatar_url: avatarUrl,
-          theme: selectedTheme
-        }
+          theme: selectedTheme,
+        },
       });
 
       toast({
-        title: "Avatar Generated",
-        description: "Your character avatar portrait has been created!",
+        title: 'Avatar Generated',
+        description: 'Your character avatar portrait has been created!',
       });
 
       setGenerationStep('idle');
     } catch (error) {
       logger.error('Failed to generate avatar:', error);
       toast({
-        title: "Avatar Generation Failed",
-        description: "Failed to generate character avatar. Please try again.",
-        variant: "destructive",
+        title: 'Avatar Generation Failed',
+        description: 'Failed to generate character avatar. Please try again.',
+        variant: 'destructive',
       });
       setGenerationStep('idle');
     } finally {
@@ -183,9 +192,9 @@ const CharacterFinalization: React.FC = () => {
   const handleGenerateImage = async () => {
     if (!state.character?.name?.trim()) {
       toast({
-        title: "Character Incomplete",
-        description: "Character name is required for image generation.",
-        variant: "destructive",
+        title: 'Character Incomplete',
+        description: 'Character name is required for image generation.',
+        variant: 'destructive',
       });
       return;
     }
@@ -230,31 +239,35 @@ const CharacterFinalization: React.FC = () => {
 
       const imageUrl = await characterImageGenerator.generateCharacterImage(
         characterData,
-        { style: 'character-sheet', artStyle: 'fantasy-art', theme: selectedTheme, storage: { label: 'design-sheet' } },
-        avatarReference
+        {
+          style: 'character-sheet',
+          artStyle: 'fantasy-art',
+          theme: selectedTheme,
+          storage: { label: 'design-sheet' },
+        },
+        avatarReference,
       );
 
       dispatch({
         type: 'UPDATE_CHARACTER',
         payload: {
           image_url: imageUrl,
-          theme: selectedTheme
-        }
+          theme: selectedTheme,
+        },
       });
 
       toast({
-        title: "Character Design Sheet Generated",
+        title: 'Character Design Sheet Generated',
         description: `Your detailed character design sheet in ${selectedTheme} theme has been created${avatarReference ? ' using your avatar as reference' : ''}!`,
       });
 
       setGenerationStep('idle');
-
     } catch (error) {
       logger.error('Failed to generate character design sheet:', error);
       toast({
-        title: "Design Sheet Generation Failed",
-        description: "Failed to generate character design sheet. Please try again.",
-        variant: "destructive",
+        title: 'Design Sheet Generation Failed',
+        description: 'Failed to generate character design sheet. Please try again.',
+        variant: 'destructive',
       });
       setGenerationStep('idle');
     } finally {
@@ -265,7 +278,7 @@ const CharacterFinalization: React.FC = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-center mb-6">Finalize Your Character</h2>
-      
+
       {/* Character Summary */}
       <div className="bg-muted/50 p-4 rounded-lg border">
         <h3 className="font-semibold mb-3 flex items-center">
@@ -273,12 +286,24 @@ const CharacterFinalization: React.FC = () => {
           Character Summary
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div><strong>Name:</strong> {state.character?.name || 'Not set'}</div>
-          <div><strong>Race:</strong> {state.character?.race?.name || 'Not selected'}</div>
-          <div><strong>Class:</strong> {state.character?.class?.name || 'Not selected'}</div>
-          <div><strong>Background:</strong> {state.character?.background?.name || 'Not selected'}</div>
-          <div><strong>Alignment:</strong> {state.character?.alignment || 'Not set'}</div>
-          <div><strong>Level:</strong> {state.character?.level || 1}</div>
+          <div>
+            <strong>Name:</strong> {state.character?.name || 'Not set'}
+          </div>
+          <div>
+            <strong>Race:</strong> {state.character?.race?.name || 'Not selected'}
+          </div>
+          <div>
+            <strong>Class:</strong> {state.character?.class?.name || 'Not selected'}
+          </div>
+          <div>
+            <strong>Background:</strong> {state.character?.background?.name || 'Not selected'}
+          </div>
+          <div>
+            <strong>Alignment:</strong> {state.character?.alignment || 'Not set'}
+          </div>
+          <div>
+            <strong>Level:</strong> {state.character?.level || 1}
+          </div>
         </div>
       </div>
 
@@ -291,22 +316,28 @@ const CharacterFinalization: React.FC = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm space-y-2">
             <div>
-              <strong>Skills:</strong> {(state.character.skillProficiencies?.length || 0) > 0 
+              <strong>Skills:</strong>{' '}
+              {(state.character.skillProficiencies?.length || 0) > 0
                 ? state.character.skillProficiencies?.join(', ') || 'None'
                 : 'None'}
             </div>
             <div>
-              <strong>Tools:</strong> {(state.character.toolProficiencies?.length || 0) > 0 
+              <strong>Tools:</strong>{' '}
+              {(state.character.toolProficiencies?.length || 0) > 0
                 ? state.character.toolProficiencies?.join(', ') || 'None'
                 : 'None'}
             </div>
             <div>
-              <strong>Saving Throws:</strong> {(state.character.savingThrowProficiencies?.length || 0) > 0 
-                ? (state.character.savingThrowProficiencies || []).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')
+              <strong>Saving Throws:</strong>{' '}
+              {(state.character.savingThrowProficiencies?.length || 0) > 0
+                ? (state.character.savingThrowProficiencies || [])
+                    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+                    .join(', ')
                 : 'None'}
             </div>
             <div>
-              <strong>Languages:</strong> {(state.character.languages?.length || 0) > 0 
+              <strong>Languages:</strong>{' '}
+              {(state.character.languages?.length || 0) > 0
                 ? state.character.languages?.join(', ') || 'None'
                 : 'None'}
             </div>
@@ -371,7 +402,9 @@ const CharacterFinalization: React.FC = () => {
 
           {state.character?.backstory_elements && (
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">AI-Generated Backstory Elements</Label>
+              <Label className="text-sm text-muted-foreground">
+                AI-Generated Backstory Elements
+              </Label>
               <p className="text-sm p-3 bg-muted/50 rounded-md border">
                 {state.character.backstory_elements}
               </p>
@@ -435,9 +468,7 @@ const CharacterFinalization: React.FC = () => {
               ) : (
                 <div className="text-center text-muted-foreground">
                   <ImageIcon className="mx-auto h-10 w-10 mb-2" />
-                  <p className="text-xs">
-                    Generate avatar first (portrait style)
-                  </p>
+                  <p className="text-xs">Generate avatar first (portrait style)</p>
                 </div>
               )}
             </div>
@@ -479,24 +510,27 @@ const CharacterFinalization: React.FC = () => {
               ) : (
                 <div className="text-center text-muted-foreground">
                   <ImageIcon className="mx-auto h-10 w-10 mb-2" />
-                  <p className="text-xs">
-                    Generate character sheet with multiple views
-                  </p>
+                  <p className="text-xs">Generate character sheet with multiple views</p>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* AI Generation Tip */}
       <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
         <div className="flex items-start space-x-3">
           <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm">
-            <p className="font-medium text-green-900 dark:text-green-100 mb-1">Enhanced AI Generation</p>
+            <p className="font-medium text-green-900 dark:text-green-100 mb-1">
+              Enhanced AI Generation
+            </p>
             <p className="text-green-800 dark:text-green-200">
-              Generate in order: First create a portrait <strong>Avatar</strong>, then the <strong>Character Sheet</strong> will use it as reference for consistency! The avatar will be used throughout the app for character identification in chats, character lists, and more.
+              Generate in order: First create a portrait <strong>Avatar</strong>, then the{' '}
+              <strong>Character Sheet</strong> will use it as reference for consistency! The avatar
+              will be used throughout the app for character identification in chats, character
+              lists, and more.
             </p>
           </div>
         </div>

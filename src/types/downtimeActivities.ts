@@ -1,19 +1,19 @@
 /**
  * Downtime Activities System for D&D 5e
- * 
+ *
  * Data models for downtime activities, their effects, and tracking
  */
 
-import { Character } from '@/types/character';
+import type { Character } from '@/types/character';
 
 // ===========================
 // Downtime Activity Types
 // ===========================
 
-export type DowntimeActivityType = 
-  | 'crafting' 
-  | 'training' 
-  | 'research' 
+export type DowntimeActivityType =
+  | 'crafting'
+  | 'training'
+  | 'research'
   | 'buying_magic_items'
   | 'selling_magic_items'
   | 'working'
@@ -125,26 +125,38 @@ export interface CharacterDowntimeActivity {
 
 export interface DowntimeManager {
   // Activity management
-  startActivity: (character: Character, activity: DowntimeActivity) => Promise<CharacterDowntimeActivity>;
-  progressActivity: (activityRecord: CharacterDowntimeActivity, days: number) => Promise<CharacterDowntimeActivity>;
-  completeActivity: (activityRecord: CharacterDowntimeActivity) => Promise<{ 
-    activityRecord: CharacterDowntimeActivity; 
-    character: Character 
+  startActivity: (
+    character: Character,
+    activity: DowntimeActivity,
+  ) => Promise<CharacterDowntimeActivity>;
+  progressActivity: (
+    activityRecord: CharacterDowntimeActivity,
+    days: number,
+  ) => Promise<CharacterDowntimeActivity>;
+  completeActivity: (activityRecord: CharacterDowntimeActivity) => Promise<{
+    activityRecord: CharacterDowntimeActivity;
+    character: Character;
   }>;
-  
+
   // Validation
-  canStartActivity: (character: Character, activity: DowntimeActivity) => {
+  canStartActivity: (
+    character: Character,
+    activity: DowntimeActivity,
+  ) => {
     canStart: boolean;
     reasons: string[];
   };
-  
+
   // Calculations
   calculateActivityDuration: (character: Character, activity: DowntimeActivity) => number;
   calculateSuccessChance: (character: Character, activity: DowntimeActivity) => number;
-  
+
   // Complications
   rollForComplication: (activity: DowntimeActivity) => DowntimeComplication | null;
-  resolveComplication: (character: Character, complication: DowntimeComplication) => {
+  resolveComplication: (
+    character: Character,
+    complication: DowntimeComplication,
+  ) => {
     success: boolean;
     effect: string;
   };
@@ -162,17 +174,17 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
     description: 'Create a simple non-magical item using appropriate tools.',
     daysRequired: 1,
     goldCost: 5,
-    toolRequirements: ['Artisan\'s tools'],
+    toolRequirements: ["Artisan's tools"],
     outcomes: [
       {
         id: 'crafting_success_1',
         description: 'Successfully craft a simple item worth 5 gp.',
         automatic: true,
-        goldGained: 5
-      }
+        goldGained: 5,
+      },
     ],
     repeatable: true,
-    requiresSupplies: true
+    requiresSupplies: true,
   },
   {
     id: 'training_1',
@@ -187,11 +199,11 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
         id: 'training_success_1',
         description: 'Gain proficiency in the chosen skill.',
         automatic: true,
-        skillProficiencyGained: 'chosen'
-      }
+        skillProficiencyGained: 'chosen',
+      },
     ],
     repeatable: false,
-    requiresSupplies: false
+    requiresSupplies: false,
   },
   {
     id: 'research_1',
@@ -206,7 +218,7 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
         description: 'Gain valuable information about local legends.',
         minRoll: 1,
         maxRoll: 10,
-        experienceGained: 50
+        experienceGained: 50,
       },
       {
         id: 'research_success_2',
@@ -214,11 +226,11 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
         minRoll: 11,
         maxRoll: 20,
         experienceGained: 100,
-        itemGained: 'Scroll of Legend'
-      }
+        itemGained: 'Scroll of Legend',
+      },
     ],
     repeatable: true,
-    requiresSupplies: false
+    requiresSupplies: false,
   },
   {
     id: 'working_1',
@@ -231,11 +243,11 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
         id: 'work_success_1',
         description: 'Earn money through honest work.',
         automatic: true,
-        goldGained: 2
-      }
+        goldGained: 2,
+      },
     ],
     repeatable: true,
-    requiresSupplies: false
+    requiresSupplies: false,
   },
   {
     id: 'relaxation_1',
@@ -247,10 +259,10 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
       {
         id: 'relaxation_success_1',
         description: 'Recover from stress and minor injuries.',
-        automatic: true
-      }
+        automatic: true,
+      },
     ],
     repeatable: true,
-    requiresSupplies: false
-  }
+    requiresSupplies: false,
+  },
 ];

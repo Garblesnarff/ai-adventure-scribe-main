@@ -1,10 +1,10 @@
 /**
  * Dungeon Master Agent
- * 
+ *
  * Core AI Dungeon Master logic.
  * Manages game state, coordinates responses, interacts with memory,
  * and communicates with other agents.
- * 
+ *
  * Dependencies:
  * - Agent interfaces and types (src/agents/types.ts)
  * - Messaging service (src/agents/messaging/agent-messaging-service.ts)
@@ -13,7 +13,7 @@
  * - Response coordinator (src/agents/services/response/response-coordinator.ts)
  * - Game state types (src/types/gameState.ts)
  * - Memory manager (src/agents/services/memory/EnhancedMemoryManager.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -40,7 +40,6 @@ import { EncounterGenerationInput, EncounterSpec } from '@/types/encounters';
 import { postEncounterTelemetry } from '@/services/encounters/telemetry-client';
 import { logger } from '../lib/logger';
 
-
 export class DungeonMasterAgent implements Agent {
   // ====================================
   // Types and Interfaces
@@ -56,7 +55,7 @@ export class DungeonMasterAgent implements Agent {
   backstory: string;
   verbose: boolean;
   allowDelegation: boolean;
-  
+
   // ====================================
   // Dependencies and State
   // ====================================
@@ -79,16 +78,17 @@ export class DungeonMasterAgent implements Agent {
     this.id = 'dm_agent_1';
     this.role = 'Game Master';
     this.goal = 'Guide players through an engaging fantasy RPG campaign';
-    this.backstory = 'An experienced GM with vast knowledge of fantasy RPG rules and creative storytelling abilities';
+    this.backstory =
+      'An experienced GM with vast knowledge of fantasy RPG rules and creative storytelling abilities';
     this.verbose = true;
     this.allowDelegation = true;
-    
+
     this.messagingService = AgentMessagingService.getInstance();
     this.responseCoordinator = new ResponseCoordinator();
     this.responsePipeline = new ResponsePipeline({
       responseCoordinator: this.responseCoordinator,
       campaignProvider: new CachedCampaignContextProvider(),
-      conversationStore: new ConversationStateStore()
+      conversationStore: new ConversationStateStore(),
     });
     this.errorHandler = ErrorHandlingService.getInstance();
     this.gameState = this.initializeGameState();
@@ -96,7 +96,7 @@ export class DungeonMasterAgent implements Agent {
 
   /**
    * Initializes the default game state.
-   * 
+   *
    * @private
    * @returns {Partial<GameState>} The initial game state
    */
@@ -106,21 +106,21 @@ export class DungeonMasterAgent implements Agent {
         name: 'Starting Location',
         description: 'The beginning of your adventure',
         atmosphere: 'neutral',
-        timeOfDay: 'dawn'
+        timeOfDay: 'dawn',
       },
       activeNPCs: [],
       sceneStatus: {
         currentAction: 'beginning',
         availableActions: [],
         environmentalEffects: [],
-        threatLevel: 'none'
-      }
+        threatLevel: 'none',
+      },
     };
   }
 
   /**
    * Executes an agent task, updating game state, storing memories, and generating a response.
-   * 
+   *
    * @param {AgentTask} task - The task to execute
    * @returns {Promise<AgentResult>} The result of the task execution
    */
@@ -163,7 +163,7 @@ export class DungeonMasterAgent implements Agent {
       logger.error('Error executing DM agent task:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to execute task'
+        message: error instanceof Error ? error.message : 'Failed to execute task',
       };
     }
   }
@@ -177,7 +177,7 @@ export class DungeonMasterAgent implements Agent {
 
   /**
    * Initializes the memory manager if needed.
-   * 
+   *
    * @private
    * @param {AgentTask} task - The task to execute
    */
@@ -189,24 +189,21 @@ export class DungeonMasterAgent implements Agent {
 
   /**
    * Stores the player's action in memory.
-   * 
+   *
    * @private
    * @param {AgentTask} task - The task to execute
    */
   private async storePlayerActionMemory(task: AgentTask): Promise<void> {
     if (this.memoryManager) {
-      await this.memoryManager.storeMemory(
-        task.description,
-        'action',
-        'player_action',
-        { location: this.gameState.location?.name }
-      );
+      await this.memoryManager.storeMemory(task.description, 'action', 'player_action', {
+        location: this.gameState.location?.name,
+      });
     }
   }
 
   /**
    * Enhances the task context with game state and recent memories.
-   * 
+   *
    * @private
    * @param {AgentTask} task - The original task
    * @returns {Promise<AgentTask>} The enhanced task
@@ -221,48 +218,38 @@ export class DungeonMasterAgent implements Agent {
       context: {
         ...task.context,
         gameState: this.gameState,
-        recentMemories
-      }
+        recentMemories,
+      },
     };
   }
 
   /**
    * Stores the generated response in memory.
-   * 
+   *
    * @private
    * @param {AgentResult} response - The agent response
    */
   private async storeResponseMemories(response: AgentResult): Promise<void> {
     if (this.memoryManager && response.data?.narrativeResponse) {
       const { environment, characters } = response.data.narrativeResponse;
-      
-      await this.memoryManager.storeMemory(
-        environment.description,
-        'description',
-        'location',
-        {
-          location: this.gameState.location?.name,
-          npcs: characters.activeNPCs
-        }
-      );
+
+      await this.memoryManager.storeMemory(environment.description, 'description', 'location', {
+        location: this.gameState.location?.name,
+        npcs: characters.activeNPCs,
+      });
 
       if (characters.dialogue) {
-        await this.memoryManager.storeMemory(
-          characters.dialogue,
-          'dialogue',
-          'npc',
-          {
-            location: this.gameState.location?.name,
-            npcs: characters.activeNPCs
-          }
-        );
+        await this.memoryManager.storeMemory(characters.dialogue, 'dialogue', 'npc', {
+          location: this.gameState.location?.name,
+          npcs: characters.activeNPCs,
+        });
       }
     }
   }
 
   /**
    * Updates the game state based on the generated response.
-   * 
+   *
    * @private
    * @param {AgentResult} response - The agent response
    */
@@ -274,40 +261,40 @@ export class DungeonMasterAgent implements Agent {
         location: {
           ...this.gameState.location,
           description: environment.description,
-          atmosphere: environment.atmosphere
+          atmosphere: environment.atmosphere,
         },
-        activeNPCs: characters.activeNPCs.map(name => ({
+        activeNPCs: characters.activeNPCs.map((name) => ({
           id: name.toLowerCase().replace(/\s/g, '_'),
           name,
           description: '',
           personality: '',
-          currentStatus: 'active'
+          currentStatus: 'active',
         })),
         sceneStatus: {
           ...this.gameState.sceneStatus,
-          availableActions: response.data.narrativeResponse.opportunities.immediate
-        }
+          availableActions: response.data.narrativeResponse.opportunities.immediate,
+        },
       });
     }
   }
 
   /**
    * Updates the internal game state with new values.
-   * 
+   *
    * @private
    * @param {Partial<GameState>} newState - The new state to merge
    */
   private updateGameState(newState: Partial<GameState>) {
     this.gameState = {
       ...this.gameState,
-      ...newState
+      ...newState,
     };
     logger.info('Updated game state:', this.gameState);
   }
 
   /**
    * Notifies other agents (rules interpreter, narrator) with task results.
-   * 
+   *
    * @private
    * @param {AgentTask} task - The original task
    * @param {AgentResult} response - The generated response
@@ -315,39 +302,41 @@ export class DungeonMasterAgent implements Agent {
    */
   private async notifyAgents(task: AgentTask, response: AgentResult): Promise<void> {
     await this.errorHandler.handleOperation(
-      async () => this.messagingService.sendMessage(
-        this.id,
-        'rules_interpreter_1',
-        MessageType.TASK,
-        {
-          taskDescription: task.description,
-          result: response
-        },
-        MessagePriority.HIGH
-      ),
+      async () =>
+        this.messagingService.sendMessage(
+          this.id,
+          'rules_interpreter_1',
+          MessageType.TASK,
+          {
+            taskDescription: task.description,
+            result: response,
+          },
+          MessagePriority.HIGH,
+        ),
       {
         category: ErrorCategory.AGENT,
         context: 'DungeonMasterAgent.notifyAgents',
-        severity: ErrorSeverity.MEDIUM
-      }
+        severity: ErrorSeverity.MEDIUM,
+      },
     );
 
     await this.errorHandler.handleOperation(
-      async () => this.messagingService.sendMessage(
-        this.id,
-        'narrator_1',
-        MessageType.RESULT,
-        {
-          taskId: task.id,
-          result: response
-        },
-        MessagePriority.MEDIUM
-      ),
+      async () =>
+        this.messagingService.sendMessage(
+          this.id,
+          'narrator_1',
+          MessageType.RESULT,
+          {
+            taskId: task.id,
+            result: response,
+          },
+          MessagePriority.MEDIUM,
+        ),
       {
         category: ErrorCategory.AGENT,
         context: 'DungeonMasterAgent.notifyAgents',
-        severity: ErrorSeverity.MEDIUM
-      }
+        severity: ErrorSeverity.MEDIUM,
+      },
     );
   }
 
@@ -356,23 +345,24 @@ export class DungeonMasterAgent implements Agent {
    */
   public async validatePlannedEncounter(spec: EncounterSpec): Promise<void> {
     await this.errorHandler.handleOperation(
-      async () => this.messagingService.sendMessage(
-        this.id,
-        'rules_interpreter_1',
-        MessageType.TASK,
-        {
-          taskDescription: 'Validate planned encounter',
-          ruleType: 'encounter',
-          encounterSpec: spec,
-          monsters: [] // kept empty here; Rules Interpreter can load SRD
-        },
-        MessagePriority.HIGH
-      ),
+      async () =>
+        this.messagingService.sendMessage(
+          this.id,
+          'rules_interpreter_1',
+          MessageType.TASK,
+          {
+            taskDescription: 'Validate planned encounter',
+            ruleType: 'encounter',
+            encounterSpec: spec,
+            monsters: [], // kept empty here; Rules Interpreter can load SRD
+          },
+          MessagePriority.HIGH,
+        ),
       {
         category: ErrorCategory.AGENT,
         context: 'DungeonMasterAgent.validatePlannedEncounter',
-        severity: ErrorSeverity.MEDIUM
-      }
+        severity: ErrorSeverity.MEDIUM,
+      },
     );
   }
 
@@ -384,7 +374,8 @@ export class DungeonMasterAgent implements Agent {
     if (now - this.lastEncounterAt < this.encounterCooldownMs) return;
 
     const threat = this.gameState.sceneStatus?.threatLevel;
-    const justRested = typeof task.description === 'string' && /(short|long)\s+rest/i.test(task.description);
+    const justRested =
+      typeof task.description === 'string' && /(short|long)\s+rest/i.test(task.description);
 
     let trigger: 'none' | 'combat' | 'exploration' = 'none';
     if (threat === 'high' || threat === 'medium') trigger = 'combat';
@@ -409,7 +400,11 @@ export class DungeonMasterAgent implements Agent {
   /**
    * Report outcome telemetry for adaptive difficulty. No player UI involved.
    */
-  public async reportEncounterOutcome(sessionId: string, spec: EncounterSpec, resourcesUsedEst: number): Promise<void> {
+  public async reportEncounterOutcome(
+    sessionId: string,
+    spec: EncounterSpec,
+    resourcesUsedEst: number,
+  ): Promise<void> {
     try {
       await postEncounterTelemetry({ sessionId, difficulty: spec.difficulty, resourcesUsedEst });
     } catch (e) {

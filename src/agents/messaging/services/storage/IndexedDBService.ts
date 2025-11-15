@@ -1,19 +1,19 @@
 /**
  * IndexedDB Service
- * 
+ *
  * This file defines the IndexedDBService class, a singleton service that provides
  * an interface for interacting with the browser's IndexedDB. It is used for
  * persistent client-side storage of messages, queue state, and offline state,
  * supporting the offline capabilities of the messaging system.
- * 
+ *
  * Main Class:
  * - IndexedDBService: Manages IndexedDB operations (init, store, get, update, clear).
- * 
+ *
  * Key Dependencies:
  * - DatabaseInitializer (`./core/database-initializer.ts`)
  * - DEFAULT_STORAGE_CONFIG (`./config/storage-config.ts`)
  * - Various storage types from `./types.ts`.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -24,7 +24,6 @@ import { DatabaseInitializer } from './core/DatabaseInitializer';
 // Project Types
 import { OfflineState, QueueState, StoredMessage } from './types';
 import { logger } from '../../../../lib/logger';
-
 
 export class IndexedDBService {
   private static instance: IndexedDBService;
@@ -62,7 +61,10 @@ export class IndexedDBService {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.messageStoreName], 'readwrite');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.messageStoreName],
+        'readwrite',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.messageStoreName);
       const request = store.put(message);
 
@@ -83,7 +85,10 @@ export class IndexedDBService {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.messageStoreName], 'readonly');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.messageStoreName],
+        'readonly',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.messageStoreName);
       const request = store.get(id);
 
@@ -107,7 +112,10 @@ export class IndexedDBService {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.messageStoreName], 'readonly');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.messageStoreName],
+        'readonly',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.messageStoreName);
       const index = store.index('status');
       const request = index.getAll('pending');
@@ -123,7 +131,10 @@ export class IndexedDBService {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.queueStoreName], 'readwrite');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.queueStoreName],
+        'readwrite',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.queueStoreName);
       const request = store.put({ id: 'current', ...state });
 
@@ -156,7 +167,10 @@ export class IndexedDBService {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.offlineStoreName], 'readwrite');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.offlineStoreName],
+        'readwrite',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.offlineStoreName);
       const request = store.put({ id: 'current', ...state });
 
@@ -174,7 +188,10 @@ export class IndexedDBService {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.offlineStoreName], 'readonly');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.offlineStoreName],
+        'readonly',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.offlineStoreName);
       const request = store.get('current');
 
@@ -195,7 +212,10 @@ export class IndexedDBService {
     let deletedCount = 0;
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([DEFAULT_STORAGE_CONFIG.messageStoreName], 'readwrite');
+      const transaction = this.db!.transaction(
+        [DEFAULT_STORAGE_CONFIG.messageStoreName],
+        'readwrite',
+      );
       const store = transaction.objectStore(DEFAULT_STORAGE_CONFIG.messageStoreName);
       const index = store.index('timestamp');
       const range = IDBKeyRange.upperBound(cutoffTime);
@@ -249,7 +269,9 @@ export class IndexedDBService {
       try {
         const deletedCount = await this.clearOldMessages(config.maxMessageAgeMs);
         if (deletedCount > 0) {
-          logger.info(`[IndexedDB] Auto-cleanup: removed ${deletedCount} messages older than ${config.maxMessageAgeMs}ms`);
+          logger.info(
+            `[IndexedDB] Auto-cleanup: removed ${deletedCount} messages older than ${config.maxMessageAgeMs}ms`,
+          );
         }
       } catch (error) {
         logger.error('[IndexedDB] Auto-cleanup error:', error);
@@ -258,12 +280,12 @@ export class IndexedDBService {
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       window.requestIdleCallback(() => {
-        runCleanup().catch(err => logger.error('[IndexedDB] Idle cleanup error:', err));
+        runCleanup().catch((err) => logger.error('[IndexedDB] Idle cleanup error:', err));
       });
     } else {
       // Fallback to setTimeout with a small delay
       setTimeout(() => {
-        runCleanup().catch(err => logger.error('[IndexedDB] Delayed cleanup error:', err));
+        runCleanup().catch((err) => logger.error('[IndexedDB] Delayed cleanup error:', err));
       }, 100);
     }
   }

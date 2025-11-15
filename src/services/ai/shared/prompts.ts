@@ -6,6 +6,7 @@
 import type { GameContext, CampaignParams } from './types';
 import type { Memory } from '../../memory-manager';
 import type { CombatDetectionResult } from '@/utils/combatDetection';
+
 import logger from '@/lib/logger';
 
 /**
@@ -138,10 +139,7 @@ You handle rolls for NPCs and the environment "behind the screen".
 /**
  * Build game context section of prompt
  */
-export function buildGameContextPrompt(
-  context: GameContext,
-  relevantMemories: Memory[]
-): string {
+export function buildGameContextPrompt(context: GameContext, relevantMemories: Memory[]): string {
   let contextPrompt = '<game_context>';
 
   if (context.campaignDetails) {

@@ -1,6 +1,8 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+
 import GalleryGrid from './GalleryGrid';
+
 import { listEntityImages } from '@/services/gallery-service';
 
 interface CampaignGalleryProps {
@@ -12,7 +14,7 @@ const CampaignGallery: React.FC<CampaignGalleryProps> = ({ campaignId, backgroun
   const { data, isLoading } = useQuery({
     queryKey: ['gallery', 'campaign', campaignId],
     queryFn: () => listEntityImages('campaign', campaignId),
-    staleTime: 60_000
+    staleTime: 60_000,
   });
 
   const images = [] as { url: string; name?: string; createdAt?: string; label?: string }[];
@@ -22,16 +24,14 @@ const CampaignGallery: React.FC<CampaignGalleryProps> = ({ campaignId, backgroun
 
   // Only add background image if it's not already in the gallery
   if (backgroundImageUrl) {
-    const backgroundExists = images.some(img => img.url === backgroundImageUrl);
+    const backgroundExists = images.some((img) => img.url === backgroundImageUrl);
     if (!backgroundExists) {
       images.push({ url: backgroundImageUrl, label: 'Background' });
     }
   }
 
   if (isLoading) {
-    return (
-      <div className="border rounded p-6 text-sm text-muted-foreground">Loading gallery…</div>
-    );
+    return <div className="border rounded p-6 text-sm text-muted-foreground">Loading gallery…</div>;
   }
 
   return (

@@ -1,19 +1,7 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { Character } from '@/types/character';
-import { 
-  Lightbulb, 
-  Heart, 
-  Brain, 
+import {
+  Lightbulb,
+  Heart,
+  Brain,
   Anchor,
   Frown,
   Star,
@@ -23,8 +11,22 @@ import {
   Calendar,
   Sparkles,
   Target,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import type { Character } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
 
 interface PersonalityManagerProps {
   character: Character;
@@ -43,7 +45,7 @@ interface InspirationEntry {
  */
 const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUpdate }) => {
   const { toast } = useToast();
-  
+
   const [editMode, setEditMode] = useState<string | null>(null);
   const [newTrait, setNewTrait] = useState('');
   const [newIdeal, setNewIdeal] = useState('');
@@ -63,7 +65,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
    */
   const toggleInspiration = () => {
     const newInspirationState = !hasInspiration;
-    
+
     onUpdate({
       ...character,
       inspiration: newInspirationState,
@@ -71,9 +73,11 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
         ...character?.personalityIntegration,
         activeTraits: character?.personalityIntegration?.activeTraits || [],
         inspirationTriggers: character?.personalityIntegration?.inspirationTriggers || [],
-        lastInspiration: newInspirationState ? new Date().toISOString() : character?.personalityIntegration?.lastInspiration,
-        inspirationHistory: character?.personalityIntegration?.inspirationHistory || []
-      }
+        lastInspiration: newInspirationState
+          ? new Date().toISOString()
+          : character?.personalityIntegration?.lastInspiration,
+        inspirationHistory: character?.personalityIntegration?.inspirationHistory || [],
+      },
     });
 
     toast({
@@ -85,7 +89,11 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
   /**
    * Award inspiration with reason
    */
-  const awardInspiration = (trigger: string, source: InspirationEntry['source'], description: string) => {
+  const awardInspiration = (
+    trigger: string,
+    source: InspirationEntry['source'],
+    description: string,
+  ) => {
     if (hasInspiration) {
       toast({
         title: 'Already Have Inspiration',
@@ -99,7 +107,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
       date: new Date().toISOString(),
       trigger,
       source,
-      description
+      description,
     };
 
     const newHistory = [...inspirationHistory, newEntry];
@@ -112,8 +120,8 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
         activeTraits: character?.personalityIntegration?.activeTraits || [],
         inspirationTriggers: character?.personalityIntegration?.inspirationTriggers || [],
         lastInspiration: new Date().toISOString(),
-        inspirationHistory: newHistory
-      }
+        inspirationHistory: newHistory,
+      },
     });
 
     toast({
@@ -131,7 +139,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
     if (!value.trim()) return;
 
     const updates: Partial<Character> = {};
-    
+
     switch (type) {
       case 'trait':
         updates.personalityTraits = [...personalityTraits, value];
@@ -153,7 +161,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
 
     onUpdate({
       ...character,
-      ...updates
+      ...updates,
     });
 
     toast({
@@ -167,7 +175,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
    */
   const removePersonalityElement = (type: 'trait' | 'ideal' | 'bond' | 'flaw', index: number) => {
     const updates: Partial<Character> = {};
-    
+
     switch (type) {
       case 'trait':
         updates.personalityTraits = personalityTraits.filter((_, i) => i !== index);
@@ -185,7 +193,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
 
     onUpdate({
       ...character,
-      ...updates
+      ...updates,
     });
 
     toast({
@@ -199,11 +207,16 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
    */
   const getPersonalityIcon = (type: string) => {
     switch (type) {
-      case 'trait': return Heart;
-      case 'ideal': return Brain;
-      case 'bond': return Anchor;
-      case 'flaw': return AlertTriangle;
-      default: return Heart;
+      case 'trait':
+        return Heart;
+      case 'ideal':
+        return Brain;
+      case 'bond':
+        return Anchor;
+      case 'flaw':
+        return AlertTriangle;
+      default:
+        return Heart;
     }
   };
 
@@ -212,11 +225,16 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
    */
   const getPersonalityColor = (type: string) => {
     switch (type) {
-      case 'trait': return 'text-red-500';
-      case 'ideal': return 'text-blue-500';
-      case 'bond': return 'text-green-500';
-      case 'flaw': return 'text-orange-500';
-      default: return 'text-gray-500';
+      case 'trait':
+        return 'text-red-500';
+      case 'ideal':
+        return 'text-blue-500';
+      case 'bond':
+        return 'text-green-500';
+      case 'flaw':
+        return 'text-orange-500';
+      default:
+        return 'text-gray-500';
     }
   };
 
@@ -228,11 +246,11 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
     items: string[],
     newValue: string,
     setNewValue: (value: string) => void,
-    placeholder: string
+    placeholder: string,
   ) => {
     const Icon = getPersonalityIcon(type);
     const colorClass = getPersonalityColor(type);
-    
+
     return (
       <Card>
         <CardHeader>
@@ -261,7 +279,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
                 </Button>
               </div>
             ))}
-            
+
             <div className="flex gap-2">
               <Textarea
                 placeholder={placeholder}
@@ -291,34 +309,36 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Lightbulb className={`w-5 h-5 ${hasInspiration ? 'text-gold-500' : 'text-gray-500'}`} />
+              <Lightbulb
+                className={`w-5 h-5 ${hasInspiration ? 'text-gold-500' : 'text-gray-500'}`}
+              />
               Inspiration
             </div>
-            <Switch
-              checked={hasInspiration}
-              onCheckedChange={toggleInspiration}
-            />
+            <Switch checked={hasInspiration} onCheckedChange={toggleInspiration} />
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
-                hasInspiration 
-                  ? 'border-gold-500 bg-gold-100 dark:bg-gold-900/50' 
-                  : 'border-gray-300 bg-gray-100 dark:bg-gray-800'
-              }`}>
-                <Star className={`w-8 h-8 ${hasInspiration ? 'text-gold-500 animate-pulse' : 'text-gray-400'}`} />
+              <div
+                className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
+                  hasInspiration
+                    ? 'border-gold-500 bg-gold-100 dark:bg-gold-900/50'
+                    : 'border-gray-300 bg-gray-100 dark:bg-gray-800'
+                }`}
+              >
+                <Star
+                  className={`w-8 h-8 ${hasInspiration ? 'text-gold-500 animate-pulse' : 'text-gray-400'}`}
+                />
               </div>
               <div className="flex-1">
                 <h3 className="font-medium">
                   {hasInspiration ? 'You have inspiration!' : 'No inspiration'}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {hasInspiration 
+                  {hasInspiration
                     ? 'You can use inspiration to gain advantage on one ability check, attack roll, or saving throw.'
-                    : 'Inspiration is awarded for excellent roleplaying, particularly when acting on your personality traits, ideals, bonds, and flaws.'
-                  }
+                    : 'Inspiration is awarded for excellent roleplaying, particularly when acting on your personality traits, ideals, bonds, and flaws.'}
                 </p>
               </div>
             </div>
@@ -355,19 +375,22 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
                   Inspiration History
                 </Label>
                 <div className="max-h-32 overflow-y-auto space-y-2">
-                  {inspirationHistory.slice(-5).reverse().map((entry, index) => (
-                    <div key={index} className="text-xs p-2 bg-muted/50 rounded">
-                      <div className="flex justify-between items-center">
-                        <Badge variant="outline" className="text-xs">
-                          {entry.source.toUpperCase()}
-                        </Badge>
-                        <span className="text-muted-foreground">
-                          {new Date(entry.date).toLocaleDateString()}
-                        </span>
+                  {inspirationHistory
+                    .slice(-5)
+                    .reverse()
+                    .map((entry, index) => (
+                      <div key={index} className="text-xs p-2 bg-muted/50 rounded">
+                        <div className="flex justify-between items-center">
+                          <Badge variant="outline" className="text-xs">
+                            {entry.source.toUpperCase()}
+                          </Badge>
+                          <span className="text-muted-foreground">
+                            {new Date(entry.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="mt-1">{entry.description}</p>
                       </div>
-                      <p className="mt-1">{entry.description}</p>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
@@ -390,7 +413,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
             personalityTraits,
             newTrait,
             setNewTrait,
-            'e.g., I idolize a particular hero of my faith and constantly refer to that person\'s deeds and example.'
+            "e.g., I idolize a particular hero of my faith and constantly refer to that person's deeds and example.",
           )}
         </TabsContent>
 
@@ -400,7 +423,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
             ideals,
             newIdeal,
             setNewIdeal,
-            'e.g., Tradition. The ancient traditions of worship and sacrifice must be preserved and upheld.'
+            'e.g., Tradition. The ancient traditions of worship and sacrifice must be preserved and upheld.',
           )}
         </TabsContent>
 
@@ -410,7 +433,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
             bonds,
             newBond,
             setNewBond,
-            'e.g., I would die to recover an ancient relic of my faith that was lost long ago.'
+            'e.g., I would die to recover an ancient relic of my faith that was lost long ago.',
           )}
         </TabsContent>
 
@@ -420,7 +443,7 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
             flaws,
             newFlaw,
             setNewFlaw,
-            'e.g., I judge others harshly, and myself even more severely.'
+            'e.g., I judge others harshly, and myself even more severely.',
           )}
         </TabsContent>
       </Tabs>
@@ -435,12 +458,28 @@ const PersonalityManager: React.FC<PersonalityManagerProps> = ({ character, onUp
         </CardHeader>
         <CardContent className="text-sm text-blue-600 dark:text-blue-400">
           <div className="space-y-2">
-            <p><strong>Traits:</strong> Describe how your character behaves in everyday situations.</p>
-            <p><strong>Ideals:</strong> Drive your character's goals and ambitions - what they believe in.</p>
-            <p><strong>Bonds:</strong> Connect your character to the world - people, places, or things they care about.</p>
-            <p><strong>Flaws:</strong> Give your character weaknesses that can complicate their life in interesting ways.</p>
+            <p>
+              <strong>Traits:</strong> Describe how your character behaves in everyday situations.
+            </p>
+            <p>
+              <strong>Ideals:</strong> Drive your character's goals and ambitions - what they
+              believe in.
+            </p>
+            <p>
+              <strong>Bonds:</strong> Connect your character to the world - people, places, or
+              things they care about.
+            </p>
+            <p>
+              <strong>Flaws:</strong> Give your character weaknesses that can complicate their life
+              in interesting ways.
+            </p>
             <Separator className="my-3 bg-blue-300 dark:bg-blue-700" />
-            <p><em>Acting on these elements, especially when it creates interesting complications, is a great way to earn inspiration!</em></p>
+            <p>
+              <em>
+                Acting on these elements, especially when it creates interesting complications, is a
+                great way to earn inspiration!
+              </em>
+            </p>
           </div>
         </CardContent>
       </Card>

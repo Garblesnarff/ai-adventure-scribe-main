@@ -4,8 +4,8 @@
  * Shared types for database clients and connections.
  */
 
-import type { Pool } from 'pg';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Pool } from 'pg';
 
 /**
  * PostgreSQL connection pool type

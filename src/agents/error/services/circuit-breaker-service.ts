@@ -1,6 +1,6 @@
 /**
  * Circuit Breaker Service
- * 
+ *
  * This file defines the CircuitBreakerService class, which implements the
  * circuit breaker pattern. This pattern is used to prevent an application
  * from repeatedly trying to execute an operation that is likely to fail.
@@ -9,12 +9,12 @@
  * blocking further calls. After a timeout, it enters a "half-open" state
  * to test if the underlying operation is healthy again.
  * This service is a singleton.
- * 
+ *
  * Main Class:
  * - CircuitBreakerService: Manages circuit breaker states for different contexts.
- * 
+ *
  * Key Dependencies: None external to standard TypeScript/JavaScript.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -43,7 +43,7 @@ export class CircuitBreakerService {
 
   public isOpen(context: string): boolean {
     const state = this.getState(context);
-    
+
     if (state.state === 'OPEN') {
       if (Date.now() - state.lastFailure >= this.RESET_TIMEOUT) {
         state.state = 'HALF_OPEN';
@@ -51,7 +51,7 @@ export class CircuitBreakerService {
       }
       return true;
     }
-    
+
     return false;
   }
 
@@ -80,7 +80,7 @@ export class CircuitBreakerService {
       this.states.set(context, {
         failures: 0,
         lastFailure: 0,
-        state: 'CLOSED'
+        state: 'CLOSED',
       });
     }
     return this.states.get(context)!;

@@ -1,6 +1,6 @@
-import { Memory } from './memory';
-import { Campaign } from './campaign';
-import { ActionOption } from '@/utils/parseMessageOptions';
+import type { Campaign } from './campaign';
+import type { Memory } from './memory';
+import type { ActionOption } from '@/utils/parseMessageOptions';
 
 export type SpeakerType = 'player' | 'dm' | 'system';
 

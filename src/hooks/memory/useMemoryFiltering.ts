@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { Memory, MemoryType, MemorySubcategory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
+
+import type { Memory, MemoryType, MemorySubcategory } from '@/components/game/memory/types';
+
+import { isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
 
 interface FilterOptions {
   types?: MemoryType[];
@@ -21,7 +24,7 @@ const sanitizeFilterOptions = (options: FilterOptions | null | undefined): Filte
 
   if (Array.isArray(options.types)) {
     const validTypes = options.types.filter(
-      (type): type is MemoryType => typeof type === 'string' && isValidMemoryType(type)
+      (type): type is MemoryType => typeof type === 'string' && isValidMemoryType(type),
     );
     if (validTypes.length) {
       sanitized.types = validTypes;
@@ -31,7 +34,7 @@ const sanitizeFilterOptions = (options: FilterOptions | null | undefined): Filte
   if (Array.isArray(options.subcategories)) {
     const validSubcategories = options.subcategories.filter(
       (subcategory): subcategory is MemorySubcategory =>
-        typeof subcategory === 'string' && isValidMemorySubcategory(subcategory)
+        typeof subcategory === 'string' && isValidMemorySubcategory(subcategory),
     );
     if (validSubcategories.length) {
       sanitized.subcategories = validSubcategories;
@@ -39,7 +42,9 @@ const sanitizeFilterOptions = (options: FilterOptions | null | undefined): Filte
   }
 
   if (Array.isArray(options.tags)) {
-    const validTags = options.tags.filter((tag): tag is string => typeof tag === 'string' && tag.length > 0);
+    const validTags = options.tags.filter(
+      (tag): tag is string => typeof tag === 'string' && tag.length > 0,
+    );
     if (validTags.length) {
       sanitized.tags = validTags;
     }
@@ -65,7 +70,7 @@ const sanitizeFilterOptions = (options: FilterOptions | null | undefined): Filte
  */
 export const useMemoryFiltering = (
   memories: Memory[] | null | undefined,
-  options: FilterOptions | null | undefined = {}
+  options: FilterOptions | null | undefined = {},
 ) => {
   const normalizedOptions = useMemo<FilterOptions>(() => sanitizeFilterOptions(options), [options]);
 
@@ -86,37 +91,37 @@ export const useMemoryFiltering = (
 
     // Filter by types (only use valid types to prevent errors)
     if (validTypes.length) {
-      filtered = filtered.filter(memory => validTypes.includes(memory.type));
+      filtered = filtered.filter((memory) => validTypes.includes(memory.type));
     }
 
     // Filter by subcategories
     if (selectedSubcategories.length) {
-      filtered = filtered.filter(memory => 
-        memory.subcategory && selectedSubcategories.includes(memory.subcategory)
+      filtered = filtered.filter(
+        (memory) => memory.subcategory && selectedSubcategories.includes(memory.subcategory),
       );
     }
 
     // Filter by tags
     if (selectedTags.length) {
-      filtered = filtered.filter(memory => 
-        memory.tags?.some(tag => selectedTags.includes(tag))
+      filtered = filtered.filter((memory) =>
+        memory.tags?.some((tag) => selectedTags.includes(tag)),
       );
     }
 
     // Filter by context
     if (contextId) {
-      filtered = filtered.filter(memory => memory.context_id === contextId);
+      filtered = filtered.filter((memory) => memory.context_id === contextId);
     }
 
     // Filter by importance
     if (typeof minImportance === 'number') {
-      filtered = filtered.filter(memory => memory.importance >= minImportance);
+      filtered = filtered.filter((memory) => memory.importance >= minImportance);
     }
 
     // Filter by timeframe
     if (timeframe === 'recent') {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      filtered = filtered.filter(memory => memory.created_at >= oneHourAgo);
+      filtered = filtered.filter((memory) => memory.created_at >= oneHourAgo);
     }
 
     // Sort by importance and recency
@@ -136,33 +141,36 @@ export const useMemoryFiltering = (
  */
 export const groupMemories = (
   memories: Memory[],
-  groupBy: 'type' | 'subcategory' | 'contextId' | 'tags'
+  groupBy: 'type' | 'subcategory' | 'contextId' | 'tags',
 ) => {
-  return memories.reduce((groups, memory) => {
-    let key: string;
-    
-    switch (groupBy) {
-      case 'type':
-        key = memory.type;
-        break;
-      case 'subcategory':
-        key = memory.subcategory || 'general';
-        break;
-      case 'contextId':
-        key = memory.context_id || 'none';
-        break;
-      case 'tags':
-        memory.tags?.forEach(tag => {
-          if (!groups[tag]) groups[tag] = [];
-          groups[tag].push(memory);
-        });
-        return groups;
-      default:
-        key = 'other';
-    }
+  return memories.reduce(
+    (groups, memory) => {
+      let key: string;
 
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(memory);
-    return groups;
-  }, {} as Record<string, Memory[]>);
+      switch (groupBy) {
+        case 'type':
+          key = memory.type;
+          break;
+        case 'subcategory':
+          key = memory.subcategory || 'general';
+          break;
+        case 'contextId':
+          key = memory.context_id || 'none';
+          break;
+        case 'tags':
+          memory.tags?.forEach((tag) => {
+            if (!groups[tag]) groups[tag] = [];
+            groups[tag].push(memory);
+          });
+          return groups;
+        default:
+          key = 'other';
+      }
+
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(memory);
+      return groups;
+    },
+    {} as Record<string, Memory[]>,
+  );
 };

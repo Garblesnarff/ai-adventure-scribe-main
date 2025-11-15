@@ -1,11 +1,13 @@
-import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CharacterRace, Subrace } from '@/types/character';
-import { useToast } from '@/components/ui/use-toast';
-import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Check, Users, Zap, ArrowRight } from 'lucide-react';
+import React from 'react';
+
+import type { CharacterRace, Subrace } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import logger from '@/lib/logger';
 
 /**
@@ -26,10 +28,9 @@ const SubraceSelection: React.FC = () => {
         <Users className="w-16 h-16 mx-auto text-muted-foreground" />
         <h2 className="text-2xl font-bold">No Subrace Options</h2>
         <p className="text-muted-foreground">
-          {currentRace ? 
-            `The ${currentRace.name} race does not have subrace variants.` :
-            'Please select a race first.'
-          }
+          {currentRace
+            ? `The ${currentRace.name} race does not have subrace variants.`
+            : 'Please select a race first.'}
         </p>
         <p className="text-sm text-muted-foreground">
           You can proceed to the next step of character creation.
@@ -42,15 +43,15 @@ const SubraceSelection: React.FC = () => {
     logger.info('Selecting subrace:', subrace);
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { subrace }
+      payload: { subrace },
     });
-    
+
     toast({
-      title: "Subrace Selected",
+      title: 'Subrace Selected',
       description: `You have chosen the ${subrace.name} subrace.`,
       duration: 1000,
     });
-    
+
     // Auto-scroll to navigation to proceed to next step
     scrollToNavigation();
   };
@@ -86,17 +87,19 @@ const SubraceSelection: React.FC = () => {
           <span className="text-muted-foreground">Choose subrace for additional bonuses</span>
         </div>
       </Card>
-      
+
       {/* Subrace Options */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {currentRace.subraces.map((subrace) => {
           const isSelected = state.character?.subrace?.id === subrace.id;
-          
+
           return (
-            <Card 
+            <Card
               key={subrace.id}
               className={`cursor-pointer transition-all hover:shadow-lg border-2 relative ${
-                isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-primary/50'
+                isSelected
+                  ? 'border-primary bg-primary/5'
+                  : 'border-transparent hover:border-primary/50'
               }`}
               onClick={() => handleSubraceSelect(subrace)}
               role="button"
@@ -115,34 +118,35 @@ const SubraceSelection: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
                   <h3 className="text-2xl font-bold">{subrace.name}</h3>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">{subrace.description}</p>
-                
+
                 {/* Additional Ability Score Increases */}
-                {subrace.abilityScoreIncrease && Object.keys(subrace.abilityScoreIncrease).length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Zap className="w-4 h-4 text-orange-500" />
-                      <h4 className="font-semibold">Additional Ability Score Increases</h4>
+                {subrace.abilityScoreIncrease &&
+                  Object.keys(subrace.abilityScoreIncrease).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="w-4 h-4 text-orange-500" />
+                        <h4 className="font-semibold">Additional Ability Score Increases</h4>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(subrace.abilityScoreIncrease).map(([ability, bonus]) => (
+                          <Badge key={ability} variant="secondary" className="capitalize">
+                            {ability.substring(0, 3)} +{bonus}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {Object.entries(subrace.abilityScoreIncrease).map(([ability, bonus]) => (
-                        <Badge key={ability} variant="secondary" className="capitalize">
-                          {ability.substring(0, 3)} +{bonus}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
+                  )}
+
                 {/* Speed Modification */}
                 {subrace.speed && subrace.speed !== currentRace.speed && (
                   <div>
@@ -163,7 +167,9 @@ const SubraceSelection: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {subrace.languages.map((language, index) => (
-                        <Badge key={index} variant="outline">{language}</Badge>
+                        <Badge key={index} variant="outline">
+                          {language}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -230,15 +236,14 @@ const SubraceSelection: React.FC = () => {
           );
         })}
       </div>
-      
+
       {/* Selected Subrace Summary */}
       {state.character?.subrace && (
         <Card className="p-4 bg-primary/5">
-          <h3 className="font-semibold mb-2">
-            Selected Subrace: {state.character.subrace.name}
-          </h3>
+          <h3 className="font-semibold mb-2">Selected Subrace: {state.character.subrace.name}</h3>
           <p className="text-sm text-muted-foreground">
-            You'll gain the subrace traits and bonuses shown above when you complete character creation.
+            You'll gain the subrace traits and bonuses shown above when you complete character
+            creation.
           </p>
         </Card>
       )}

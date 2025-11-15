@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import React from 'react';
-import { Character, CharacterClass, CharacterRace, Subrace } from '@/types/character';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+import type { Character, CharacterClass, CharacterRace, Subrace } from '@/types/character';
 
 /**
  * Spell Selection Integration Tests
@@ -24,8 +25,8 @@ vi.mock('@/utils/spellComponents', () => ({
     material: spell.material || false,
     materialDescription: spell.materialDescription,
     materialCost: spell.materialCost,
-    materialConsumed: spell.materialConsumed || false
-  })
+    materialConsumed: spell.materialConsumed || false,
+  }),
 }));
 
 vi.mock('@/data/spellOptions', () => ({
@@ -45,7 +46,7 @@ vi.mock('@/data/spellOptions', () => ({
             description: 'A spectral, floating hand appears at a point you choose within range.',
             verbal: true,
             somatic: true,
-            concentration: true
+            concentration: true,
           },
           {
             id: 'prestidigitation',
@@ -56,9 +57,10 @@ vi.mock('@/data/spellOptions', () => ({
             range: '10 feet',
             components: 'V, S',
             duration: 'Up to 1 hour',
-            description: 'This spell is a minor magical trick that novice spellcasters use for practice.',
+            description:
+              'This spell is a minor magical trick that novice spellcasters use for practice.',
             verbal: true,
-            somatic: true
+            somatic: true,
           },
           {
             id: 'light',
@@ -72,7 +74,7 @@ vi.mock('@/data/spellOptions', () => ({
             description: 'You touch one object that is no larger than 10 feet in any dimension.',
             verbal: true,
             material: true,
-            materialDescription: 'a firefly or phosphorescent moss'
+            materialDescription: 'a firefly or phosphorescent moss',
           },
           {
             id: 'minor-illusion',
@@ -86,8 +88,8 @@ vi.mock('@/data/spellOptions', () => ({
             description: 'You create a sound or an image of an object within range.',
             somatic: true,
             material: true,
-            materialDescription: 'a bit of fleece'
-          }
+            materialDescription: 'a bit of fleece',
+          },
         ],
         spells: [
           {
@@ -102,7 +104,7 @@ vi.mock('@/data/spellOptions', () => ({
             description: 'You create three glowing darts of magical force.',
             verbal: true,
             somatic: true,
-            damage: '1d4 + 1'
+            damage: '1d4 + 1',
           },
           {
             id: 'shield',
@@ -115,7 +117,7 @@ vi.mock('@/data/spellOptions', () => ({
             duration: '1 round',
             description: 'An invisible barrier of magical force appears and protects you.',
             verbal: true,
-            somatic: true
+            somatic: true,
           },
           {
             id: 'detect-magic',
@@ -130,7 +132,7 @@ vi.mock('@/data/spellOptions', () => ({
             verbal: true,
             somatic: true,
             ritual: true,
-            concentration: true
+            concentration: true,
           },
           {
             id: 'burning-hands',
@@ -141,10 +143,11 @@ vi.mock('@/data/spellOptions', () => ({
             range: 'Self (15-foot cone)',
             components: 'V, S',
             duration: 'Instantaneous',
-            description: 'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth.',
+            description:
+              'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth.',
             verbal: true,
             somatic: true,
-            damage: '3d6'
+            damage: '3d6',
           },
           {
             id: 'sleep',
@@ -159,7 +162,7 @@ vi.mock('@/data/spellOptions', () => ({
             verbal: true,
             somatic: true,
             material: true,
-            materialDescription: 'a pinch of fine sand, rose petals, or a cricket'
+            materialDescription: 'a pinch of fine sand, rose petals, or a cricket',
           },
           {
             id: 'color-spray',
@@ -174,18 +177,18 @@ vi.mock('@/data/spellOptions', () => ({
             verbal: true,
             somatic: true,
             material: true,
-            materialDescription: 'a pinch of powder or sand that is colored red, yellow, and blue'
-          }
-        ]
+            materialDescription: 'a pinch of powder or sand that is colored red, yellow, and blue',
+          },
+        ],
       },
       Fighter: {
         cantrips: [],
-        spells: []
-      }
+        spells: [],
+      },
     };
 
     return mockSpells[className] || { cantrips: [], spells: [] };
-  }
+  },
 }));
 
 // Create a mock spell selection component for testing
@@ -197,11 +200,14 @@ const MockSpellSelection: React.FC<{ character: Character | null }> = ({ charact
 
   // Mock spell data
   const { getClassSpells } = require('@/data/spellOptions');
-  const availableSpells = character?.class ? getClassSpells(character.class.name) : { cantrips: [], spells: [] };
+  const availableSpells = character?.class
+    ? getClassSpells(character.class.name)
+    : { cantrips: [], spells: [] };
 
   // Filter spells based on search and filters
   const filteredCantrips = availableSpells.cantrips.filter((spell: any) => {
-    const matchesSearch = !searchTerm ||
+    const matchesSearch =
+      !searchTerm ||
       spell.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       spell.description.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -211,7 +217,8 @@ const MockSpellSelection: React.FC<{ character: Character | null }> = ({ charact
   });
 
   const filteredSpells = availableSpells.spells.filter((spell: any) => {
-    const matchesSearch = !searchTerm ||
+    const matchesSearch =
+      !searchTerm ||
       spell.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       spell.description.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -221,14 +228,14 @@ const MockSpellSelection: React.FC<{ character: Character | null }> = ({ charact
   });
 
   // Validation logic
-  const isValid = character?.class?.spellcasting ?
-    (selectedCantrips.length === 3 && selectedSpells.length === 6) :
-    (selectedCantrips.length === 0 && selectedSpells.length === 0);
+  const isValid = character?.class?.spellcasting
+    ? selectedCantrips.length === 3 && selectedSpells.length === 6
+    : selectedCantrips.length === 0 && selectedSpells.length === 0;
 
   const toggleCantrip = (cantripId: string) => {
-    setSelectedCantrips(prev => {
+    setSelectedCantrips((prev) => {
       if (prev.includes(cantripId)) {
-        return prev.filter(id => id !== cantripId);
+        return prev.filter((id) => id !== cantripId);
       } else if (prev.length < 3) {
         return [...prev, cantripId];
       }
@@ -237,9 +244,9 @@ const MockSpellSelection: React.FC<{ character: Character | null }> = ({ charact
   };
 
   const toggleSpell = (spellId: string) => {
-    setSelectedSpells(prev => {
+    setSelectedSpells((prev) => {
       if (prev.includes(spellId)) {
-        return prev.filter(id => id !== spellId);
+        return prev.filter((id) => id !== spellId);
       } else if (prev.length < 6) {
         return [...prev, spellId];
       }
@@ -272,7 +279,9 @@ const MockSpellSelection: React.FC<{ character: Character | null }> = ({ charact
         <select
           multiple
           value={schoolFilter}
-          onChange={(e) => setSchoolFilter(Array.from(e.target.selectedOptions, option => option.value))}
+          onChange={(e) =>
+            setSchoolFilter(Array.from(e.target.selectedOptions, (option) => option.value))
+          }
           data-testid="school-filter"
         >
           <option value="Abjuration">Abjuration</option>
@@ -378,11 +387,11 @@ describe('Spell Selection Integration Tests', () => {
         cantripsKnown: 3,
         spellsKnown: 6,
         ritualCasting: true,
-        spellbook: true
+        spellbook: true,
       },
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockFighter = {
@@ -396,7 +405,7 @@ describe('Spell Selection Integration Tests', () => {
       numSkillChoices: 2,
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     mockRace = {
@@ -406,7 +415,7 @@ describe('Spell Selection Integration Tests', () => {
       abilityScoreIncrease: {},
       speed: 30,
       traits: [],
-      languages: ['Common']
+      languages: ['Common'],
     };
 
     mockHighElfSubrace = {
@@ -417,8 +426,8 @@ describe('Spell Selection Integration Tests', () => {
       traits: ['Elf Weapon Training', 'Cantrip'],
       bonusCantrip: {
         source: 'wizard',
-        count: 1
-      }
+        count: 1,
+      },
     };
   });
 
@@ -436,8 +445,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
 
       render(<MockSpellSelection character={wizardCharacter} />);
@@ -462,8 +471,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
 
       render(<MockSpellSelection character={wizardCharacter} />);
@@ -496,8 +505,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: true },
           intelligence: { score: 10, modifier: 0, savingThrow: false },
           wisdom: { score: 12, modifier: 1, savingThrow: false },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
 
       render(<MockSpellSelection character={fighterCharacter} />);
@@ -522,8 +531,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
     });
 
@@ -607,8 +616,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
     });
 
@@ -695,8 +704,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
     });
 
@@ -759,8 +768,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
     });
 
@@ -793,8 +802,12 @@ describe('Spell Selection Integration Tests', () => {
     it('should display spell descriptions', () => {
       render(<MockSpellSelection character={wizardCharacter} />);
 
-      expect(screen.getByText('A spectral, floating hand appears at a point you choose within range.')).toBeInTheDocument();
-      expect(screen.getByText('You create three glowing darts of magical force.')).toBeInTheDocument();
+      expect(
+        screen.getByText('A spectral, floating hand appears at a point you choose within range.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('You create three glowing darts of magical force.'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -818,8 +831,8 @@ describe('Spell Selection Integration Tests', () => {
           constitution: { score: 13, modifier: 1, savingThrow: false },
           intelligence: { score: 15, modifier: 2, savingThrow: true },
           wisdom: { score: 12, modifier: 1, savingThrow: true },
-          charisma: { score: 8, modifier: -1, savingThrow: false }
-        }
+          charisma: { score: 8, modifier: -1, savingThrow: false },
+        },
       };
 
       render(<MockSpellSelection character={characterWithoutClass} />);

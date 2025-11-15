@@ -1,5 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
 import { logger } from '../lib/logger';
+
+import { supabase } from '@/integrations/supabase/client';
 
 export type EntityType = 'campaign' | 'character';
 
@@ -24,13 +25,13 @@ function buildPrefix(entityType: EntityType, entityId: string): string {
 export async function listEntityImages(
   entityType: EntityType,
   entityId: string,
-  bucket: string = DEFAULT_BUCKET
+  bucket: string = DEFAULT_BUCKET,
 ): Promise<GalleryImage[]> {
   try {
     const prefix = buildPrefix(entityType, entityId);
     const { data, error } = await supabase.storage.from(bucket).list(prefix, {
       limit: 100,
-      offset: 0
+      offset: 0,
       // Note: sortBy is inconsistently supported; sorting handled client-side
     });
 
@@ -49,7 +50,7 @@ export async function listEntityImages(
           url: urlData.publicUrl,
           name: f.name,
           createdAt,
-          label
+          label,
         } as GalleryImage;
       });
 

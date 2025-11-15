@@ -1,5 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
 import { logger } from '../lib/logger';
+
+import { supabase } from '@/integrations/supabase/client';
 
 export type RollKind = 'check' | 'save' | 'attack' | 'initiative' | 'damage';
 

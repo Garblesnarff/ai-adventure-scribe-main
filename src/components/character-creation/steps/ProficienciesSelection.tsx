@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { CharacterClass, CharacterBackground, CharacterRace } from '@/types/character';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
-import { CharacterClass, CharacterBackground, CharacterRace } from '@/types/character';
-import { classes } from '@/data/classOptions';
+import { useCharacter } from '@/contexts/CharacterContext';
 import { backgrounds } from '@/data/backgroundOptions';
+import { classes } from '@/data/classOptions';
 // import { races } from '@/data/raceOptions'; // Not needed, using state
 
 // Standard D&D 5e languages for choices
 const standardLanguages = [
-  'Common', 'Dwarvish', 'Elvish', 'Giant', 'Gnomish', 'Halfling', 'Infernal', 'Orc',
-  'Abyssal', 'Celestial', 'Deep Speech', 'Draconic', 'Sylvan', 'Undercommon'
+  'Common',
+  'Dwarvish',
+  'Elvish',
+  'Giant',
+  'Gnomish',
+  'Halfling',
+  'Infernal',
+  'Orc',
+  'Abyssal',
+  'Celestial',
+  'Deep Speech',
+  'Draconic',
+  'Sylvan',
+  'Undercommon',
 ];
 
 /**
@@ -51,12 +65,31 @@ const ProficienciesSelection: React.FC = () => {
   const hasLanguageChoices = numLanguageChoices > 0;
 
   // Handle 'Any' for bard skills - use all possible skills
-  const availableSkills = skillChoices.includes('Any') 
-    ? fixedSkills.concat(['Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival'])
+  const availableSkills = skillChoices.includes('Any')
+    ? fixedSkills.concat([
+        'Acrobatics',
+        'Animal Handling',
+        'Arcana',
+        'Athletics',
+        'Deception',
+        'History',
+        'Insight',
+        'Intimidation',
+        'Investigation',
+        'Medicine',
+        'Nature',
+        'Perception',
+        'Performance',
+        'Persuasion',
+        'Religion',
+        'Sleight of Hand',
+        'Stealth',
+        'Survival',
+      ])
     : skillChoices;
 
   // Filter out already fixed skills from choices
-  const choosableSkills = availableSkills.filter(skill => !fixedSkills.includes(skill));
+  const choosableSkills = availableSkills.filter((skill) => !fixedSkills.includes(skill));
 
   // Update proficiencies on selection complete (e.g., on next button, but for simplicity, update on change with validation)
   const updateProficiencies = () => {
@@ -113,7 +146,7 @@ const ProficienciesSelection: React.FC = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-center mb-4">Proficiencies & Languages</h2>
-      
+
       {/* Fixed Proficiencies Summary */}
       <Card>
         <CardHeader>
@@ -137,7 +170,10 @@ const ProficienciesSelection: React.FC = () => {
           )}
           {fixedSavingThrows.length > 0 && (
             <div>
-              <h3 className="font-medium">Saving Throws: {fixedSavingThrows.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}</h3>
+              <h3 className="font-medium">
+                Saving Throws:{' '}
+                {fixedSavingThrows.map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}
+              </h3>
             </div>
           )}
         </CardContent>
@@ -147,8 +183,13 @@ const ProficienciesSelection: React.FC = () => {
       {hasSkillChoices && (
         <Card>
           <CardHeader>
-            <CardTitle>Choose Skills ({selectedSkills.length}/{numSkillChoices})</CardTitle>
-            <p className="text-sm text-gray-600">Your {currentClass?.name} class allows you to choose {numSkillChoices} skill{numSkillChoices > 1 ? 's' : ''} from the following:</p>
+            <CardTitle>
+              Choose Skills ({selectedSkills.length}/{numSkillChoices})
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Your {currentClass?.name} class allows you to choose {numSkillChoices} skill
+              {numSkillChoices > 1 ? 's' : ''} from the following:
+            </p>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
@@ -157,7 +198,9 @@ const ProficienciesSelection: React.FC = () => {
                   <Checkbox
                     id={skill}
                     checked={selectedSkills.includes(skill)}
-                    disabled={!selectedSkills.includes(skill) && selectedSkills.length >= numSkillChoices}
+                    disabled={
+                      !selectedSkills.includes(skill) && selectedSkills.length >= numSkillChoices
+                    }
                     onCheckedChange={(checked) => {
                       if (checked) {
                         if (selectedSkills.length >= numSkillChoices) {
@@ -168,13 +211,16 @@ const ProficienciesSelection: React.FC = () => {
                           });
                           return;
                         }
-                        setSelectedSkills(prev => [...prev, skill]);
+                        setSelectedSkills((prev) => [...prev, skill]);
                       } else {
-                        setSelectedSkills(prev => prev.filter(s => s !== skill));
+                        setSelectedSkills((prev) => prev.filter((s) => s !== skill));
                       }
                     }}
                   />
-                  <label htmlFor={skill} className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor={skill}
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     {skill}
                   </label>
                 </div>
@@ -188,8 +234,13 @@ const ProficienciesSelection: React.FC = () => {
       {hasLanguageChoices && (
         <Card>
           <CardHeader>
-            <CardTitle>Choose Languages ({selectedLanguages.length}/{numLanguageChoices})</CardTitle>
-            <p className="text-sm text-gray-600">Your background grants {numLanguageChoices} additional language{numLanguageChoices > 1 ? 's' : ''}:</p>
+            <CardTitle>
+              Choose Languages ({selectedLanguages.length}/{numLanguageChoices})
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Your background grants {numLanguageChoices} additional language
+              {numLanguageChoices > 1 ? 's' : ''}:
+            </p>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
@@ -198,7 +249,10 @@ const ProficienciesSelection: React.FC = () => {
                   <Checkbox
                     id={lang}
                     checked={selectedLanguages.includes(lang)}
-                    disabled={!selectedLanguages.includes(lang) && selectedLanguages.length >= numLanguageChoices}
+                    disabled={
+                      !selectedLanguages.includes(lang) &&
+                      selectedLanguages.length >= numLanguageChoices
+                    }
                     onCheckedChange={(checked) => {
                       if (checked) {
                         if (selectedLanguages.length >= numLanguageChoices) {
@@ -209,13 +263,16 @@ const ProficienciesSelection: React.FC = () => {
                           });
                           return;
                         }
-                        setSelectedLanguages(prev => [...prev, lang]);
+                        setSelectedLanguages((prev) => [...prev, lang]);
                       } else {
-                        setSelectedLanguages(prev => prev.filter(l => l !== lang));
+                        setSelectedLanguages((prev) => prev.filter((l) => l !== lang));
                       }
                     }}
                   />
-                  <label htmlFor={lang} className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor={lang}
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     {lang}
                   </label>
                 </div>

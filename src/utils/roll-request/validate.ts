@@ -1,4 +1,6 @@
-import { parseRollRequests, ParsedRollRequest } from './parse';
+import { parseRollRequests } from './parse';
+
+import type { ParsedRollRequest } from './parse';
 
 export function containsRollRequest(message: string): boolean {
   return parseRollRequests(message).length > 0;
@@ -13,19 +15,14 @@ export function detectsSuccessfulAttack(message: string): boolean {
     /successful\s+attack/gi,
     /your\s+(?:sword|weapon|blade|attack).*?(?:hits|strikes|connects)/gi,
     /critical\s+hit/gi,
-    /natural\s+20/gi
+    /natural\s+20/gi,
   ];
-  return hitPatterns.some(pattern => pattern.test(message));
+  return hitPatterns.some((pattern) => pattern.test(message));
 }
 
 export function detectsCriticalHit(message: string): boolean {
-  const critPatterns = [
-    /critical\s+hit/gi,
-    /natural\s+20/gi,
-    /nat\s+20/gi,
-    /crit(?:ical)?/gi
-  ];
-  return critPatterns.some(pattern => pattern.test(message));
+  const critPatterns = [/critical\s+hit/gi, /natural\s+20/gi, /nat\s+20/gi, /crit(?:ical)?/gi];
+  return critPatterns.some((pattern) => pattern.test(message));
 }
 
 export function extractPrimaryRollRequest(message: string): ParsedRollRequest | null {
@@ -42,7 +39,7 @@ export function removeRollRequestsFromMessage(message: string): string {
 
   // THEN: Parse remaining message for any regex-matched roll requests and remove them too
   const requests = parseRollRequests(message);
-  requests.forEach(request => {
+  requests.forEach((request) => {
     cleanMessage = cleanMessage.replace(request.originalText, '').trim();
   });
 

@@ -1,7 +1,9 @@
 import React from 'react';
-import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
-import { GameErrorFallback } from '@/components/error/GameErrorFallback';
+
 import GameContent from './GameContent';
+
+import { GameErrorFallback } from '@/components/error/GameErrorFallback';
+import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
 
 /**
  * GameContentWithErrorBoundary Component
@@ -14,10 +16,7 @@ import GameContent from './GameContent';
  */
 const GameContentWithErrorBoundary: React.FC = () => {
   return (
-    <ErrorBoundary
-      level="route"
-      fallback={<GameErrorFallback />}
-    >
+    <ErrorBoundary level="route" fallback={<GameErrorFallback />}>
       <GameContent />
     </ErrorBoundary>
   );

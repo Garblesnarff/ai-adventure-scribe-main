@@ -9,5 +9,5 @@ export const ravenfolk: CharacterRace = {
   speed: 30,
   languages: ['Common', 'Auran'],
   backgroundImage: '/images/races/base/ravenfolk-class-card-background.png',
-  subraces: []
+  subraces: [],
 };

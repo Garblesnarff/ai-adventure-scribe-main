@@ -1,7 +1,13 @@
-import { EncounterGenerationInput, EncounterSpec, Difficulty, MonsterDef } from '@/types/encounters';
+import { generateSocialEncounter, generateExplorationEncounter } from './social-templates';
 import { loadMonsters } from './srd-loader';
 import { getDifficultyAdjustment } from './telemetry';
-import { generateSocialEncounter, generateExplorationEncounter } from './social-templates';
+
+import type {
+  EncounterGenerationInput,
+  EncounterSpec,
+  Difficulty,
+  MonsterDef,
+} from '@/types/encounters';
 
 // Minimal SRD-like sample to keep file small; real dataset should be loaded from data files.
 const SAMPLE_MONSTERS: MonsterDef[] = [
@@ -12,7 +18,10 @@ const SAMPLE_MONSTERS: MonsterDef[] = [
 ];
 
 // Per-character XP thresholds per 5e (SRD 5.1). Levels 1-5 sufficient for MVP; extend as needed.
-const XP_THRESHOLDS: Record<number, { easy: number; medium: number; hard: number; deadly: number }> = {
+const XP_THRESHOLDS: Record<
+  number,
+  { easy: number; medium: number; hard: number; deadly: number }
+> = {
   1: { easy: 25, medium: 50, hard: 75, deadly: 100 },
   2: { easy: 50, medium: 100, hard: 150, deadly: 200 },
   3: { easy: 75, medium: 150, hard: 225, deadly: 400 },
@@ -41,12 +50,15 @@ function difficultyBudget(size: number, avgLevel: number, diff: Difficulty): num
 }
 
 function effectiveXp(xpPerMonster: number, count: number): number {
-  const mult = MULTIPLIERS.find(m => count <= m.count)?.mult || 2.5;
+  const mult = MULTIPLIERS.find((m) => count <= m.count)?.mult || 2.5;
   return xpPerMonster * count * mult;
 }
 
-function pickMonstersForBudget(budget: number, biome?: string): { id: string; count: number; xpEach: number }[] {
-  const tagged = biome ? SAMPLE_MONSTERS.filter(m => m.tags?.includes(biome)) : SAMPLE_MONSTERS;
+function pickMonstersForBudget(
+  budget: number,
+  biome?: string,
+): { id: string; count: number; xpEach: number }[] {
+  const tagged = biome ? SAMPLE_MONSTERS.filter((m) => m.tags?.includes(biome)) : SAMPLE_MONSTERS;
   const srd = loadMonsters();
   const catalog = srd.length ? srd : SAMPLE_MONSTERS;
   const pool = tagged.length > 0 ? tagged : catalog;
@@ -58,7 +70,7 @@ function pickMonstersForBudget(budget: number, biome?: string): { id: string; co
 
   for (let i = 0; i < 100 && remaining > 0; i++) {
     // pick the best that doesn't overshoot too much
-    const choice = sorted.find(m => effectiveXp(m.xp, 1) <= remaining + tolerance) || sorted[0];
+    const choice = sorted.find((m) => effectiveXp(m.xp, 1) <= remaining + tolerance) || sorted[0];
     const count = Math.max(1, Math.round(remaining / (choice.xp * 1.5)));
     result.push({ id: choice.id, count, xpEach: choice.xp });
     remaining -= effectiveXp(choice.xp, count);
@@ -72,18 +84,18 @@ export class EncounterGenerator {
   generate(input: EncounterGenerationInput): EncounterSpec {
     if (input.type === 'social') return generateSocialEncounter(input);
     if (input.type === 'exploration') return generateExplorationEncounter(input);
-    const levels = input.party.members.map(m => m.level);
+    const levels = input.party.members.map((m) => m.level);
     const { size, avgLevel } = partyAverages(levels);
     const difficulty = input.requestedDifficulty ?? 'medium';
-  let xpBudget = difficultyBudget(size, avgLevel, difficulty);
-  const sessionId = (input as any).sessionId as string | undefined;
-  if (sessionId) {
-    const adjust = getDifficultyAdjustment(sessionId, difficulty);
-    xpBudget = Math.round(xpBudget * adjust);
-  }
+    let xpBudget = difficultyBudget(size, avgLevel, difficulty);
+    const sessionId = (input as any).sessionId as string | undefined;
+    if (sessionId) {
+      const adjust = getDifficultyAdjustment(sessionId, difficulty);
+      xpBudget = Math.round(xpBudget * adjust);
+    }
 
     const picks = pickMonstersForBudget(xpBudget, input.world.biome);
-    const hostiles = picks.map(p => ({ ref: p.id, count: Math.max(1, p.count) }));
+    const hostiles = picks.map((p) => ({ ref: p.id, count: Math.max(1, p.count) }));
 
     const type = input.type ?? 'combat';
     const spec: EncounterSpec = {

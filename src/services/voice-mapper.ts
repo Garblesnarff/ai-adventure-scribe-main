@@ -1,13 +1,14 @@
 /**
  * Voice Mapping Service
- * 
+ *
  * Maps character types and names to specific ElevenLabs voice IDs and settings.
  * Uses the most cost-effective Flash v2.5 model for all voices.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
-import { VoiceSettings } from './dialogue-parser';
+import type { VoiceSettings } from './dialogue-parser';
+
 import logger from '@/lib/logger';
 
 export interface VoiceConfig {
@@ -36,8 +37,8 @@ export class VoiceMapper {
         stability: 0.5,
         similarity_boost: 0.75,
         style: 0.1,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // Heroes and Good Characters
@@ -51,8 +52,8 @@ export class VoiceMapper {
         stability: 0.6,
         similarity_boost: 0.8,
         style: 0.2,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     hero_female: {
@@ -65,8 +66,8 @@ export class VoiceMapper {
         stability: 0.5,
         similarity_boost: 0.75,
         style: 0.3,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // Villains and Evil Characters
@@ -80,8 +81,8 @@ export class VoiceMapper {
         stability: 0.7,
         similarity_boost: 0.9,
         style: 0.4,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     villain_female: {
@@ -94,8 +95,8 @@ export class VoiceMapper {
         stability: 0.8,
         similarity_boost: 0.85,
         style: 0.5,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // Creatures and Monsters
@@ -109,8 +110,8 @@ export class VoiceMapper {
         stability: 0.9,
         similarity_boost: 0.7,
         style: 0.1,
-        use_speaker_boost: false
-      }
+        use_speaker_boost: false,
+      },
     },
 
     goblin: {
@@ -123,8 +124,8 @@ export class VoiceMapper {
         stability: 0.3,
         similarity_boost: 0.6,
         style: 0.6,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // NPCs
@@ -138,8 +139,8 @@ export class VoiceMapper {
         stability: 0.8,
         similarity_boost: 0.7,
         style: 0.1,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     merchant: {
@@ -152,8 +153,8 @@ export class VoiceMapper {
         stability: 0.4,
         similarity_boost: 0.8,
         style: 0.4,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     innkeeper: {
@@ -166,8 +167,8 @@ export class VoiceMapper {
         stability: 0.6,
         similarity_boost: 0.8,
         style: 0.2,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // Children
@@ -181,8 +182,8 @@ export class VoiceMapper {
         stability: 0.3,
         similarity_boost: 0.7,
         style: 0.5,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // Elders and Wise Characters
@@ -196,8 +197,8 @@ export class VoiceMapper {
         stability: 0.8,
         similarity_boost: 0.8,
         style: 0.1,
-        use_speaker_boost: true
-      }
+        use_speaker_boost: true,
+      },
     },
 
     // Default fallback
@@ -211,23 +212,63 @@ export class VoiceMapper {
         stability: 0.5,
         similarity_boost: 0.75,
         style: 0.1,
-        use_speaker_boost: true
-      }
-    }
+        use_speaker_boost: true,
+      },
+    },
   };
 
   // Character type keywords for automatic mapping
   private static readonly CHARACTER_KEYWORDS = {
-    villain: ['villain', 'evil', 'dark lord', 'necromancer', 'demon', 'devil', 'cultist', 'bandit leader', 'witch', 'warlock'],
-    monster: ['dragon', 'demon', 'ancient', 'beast', 'lich', 'vampire lord', 'giant', 'titan', 'elemental'],
+    villain: [
+      'villain',
+      'evil',
+      'dark lord',
+      'necromancer',
+      'demon',
+      'devil',
+      'cultist',
+      'bandit leader',
+      'witch',
+      'warlock',
+    ],
+    monster: [
+      'dragon',
+      'demon',
+      'ancient',
+      'beast',
+      'lich',
+      'vampire lord',
+      'giant',
+      'titan',
+      'elemental',
+    ],
     goblin: ['goblin', 'imp', 'sprite', 'fairy', 'pixie', 'gnome', 'halfling', 'kobold'],
     guard: ['guard', 'soldier', 'captain', 'sergeant', 'knight', 'paladin', 'sheriff', 'watchman'],
     merchant: ['merchant', 'trader', 'shopkeeper', 'vendor', 'peddler', 'salesman', 'fence'],
     innkeeper: ['innkeeper', 'barkeep', 'bartender', 'tavern keeper', 'proprietor', 'host'],
     child: ['child', 'kid', 'boy', 'girl', 'young', 'orphan', 'student', 'apprentice'],
-    elder: ['elder', 'sage', 'wizard', 'priest', 'hermit', 'scholar', 'old man', 'old woman', 'grandmother', 'grandfather', 'thorne'],
+    elder: [
+      'elder',
+      'sage',
+      'wizard',
+      'priest',
+      'hermit',
+      'scholar',
+      'old man',
+      'old woman',
+      'grandmother',
+      'grandfather',
+      'thorne',
+    ],
     hero_male: ['hero', 'champion', 'warrior', 'fighter', 'ranger', 'rogue', 'bard'],
-    hero_female: ['heroine', 'warrior woman', 'ranger woman', 'female fighter', 'sorceress', 'priestess']
+    hero_female: [
+      'heroine',
+      'warrior woman',
+      'ranger woman',
+      'female fighter',
+      'sorceress',
+      'priestess',
+    ],
   };
 
   /**
@@ -235,7 +276,7 @@ export class VoiceMapper {
    */
   static getVoiceForCharacter(character: string): VoiceConfig {
     logger.debug(`🔍 VoiceMapper.getVoiceForCharacter called with: "${character}"`);
-    
+
     if (!character || character === 'unknown') {
       logger.info('↪️ Using default voice (no character name)');
       return this.VOICE_CONFIGS.default;
@@ -257,7 +298,9 @@ export class VoiceMapper {
         if (cleanCharacter.includes(keyword)) {
           const voiceConfig = this.VOICE_CONFIGS[voiceType];
           if (voiceConfig) {
-            logger.info(`🎯 Keyword match found: "${keyword}" -> ${voiceType} -> ${voiceConfig.name} (${voiceConfig.id})`);
+            logger.info(
+              `🎯 Keyword match found: "${keyword}" -> ${voiceType} -> ${voiceConfig.name} (${voiceConfig.id})`,
+            );
             // Save this mapping for future use
             this.saveCharacterVoice(cleanCharacter, voiceType);
             return voiceConfig;
@@ -269,11 +312,13 @@ export class VoiceMapper {
     // Finally, use smart classification for unknown characters
     const classifiedType = this.classifyCharacter(cleanCharacter);
     const voiceConfig = this.VOICE_CONFIGS[classifiedType] || this.VOICE_CONFIGS.default;
-    logger.info(`🤖 Smart classification: "${cleanCharacter}" -> ${classifiedType} -> ${voiceConfig.name} (${voiceConfig.id})`);
-    
+    logger.info(
+      `🤖 Smart classification: "${cleanCharacter}" -> ${classifiedType} -> ${voiceConfig.name} (${voiceConfig.id})`,
+    );
+
     // Save this mapping
     this.saveCharacterVoice(cleanCharacter, classifiedType);
-    
+
     return voiceConfig;
   }
 
@@ -299,15 +344,15 @@ export class VoiceMapper {
     if (character.includes('sir') || character.includes('lord') || character.includes('lady')) {
       return 'hero_male';
     }
-    
+
     if (character.includes('captain') || character.includes('commander')) {
       return 'guard';
     }
-    
+
     if (character.includes('master') || character.includes('wise')) {
       return 'elder';
     }
-    
+
     // Default to generic NPC voice
     return 'default';
   }
@@ -346,7 +391,7 @@ export class VoiceMapper {
     if (!this.VOICE_CONFIGS[voiceType]) {
       return false;
     }
-    
+
     this.saveCharacterVoice(character.toLowerCase().trim(), voiceType);
     return true;
   }
@@ -382,21 +427,20 @@ export class VoiceMapper {
     try {
       const saved = JSON.parse(localStorage.getItem('character-voice-mappings') || '{}');
       const cleanCharacter = character.toLowerCase().trim();
-      
+
       logger.info(`🔍 Debug character "${character}" (cleaned: "${cleanCharacter}"):`);
       logger.info('   Current saved mapping:', saved[cleanCharacter] || 'none');
       logger.info('   All saved mappings:', saved);
-      
+
       if (saved[cleanCharacter]) {
         delete saved[cleanCharacter];
         localStorage.setItem('character-voice-mappings', JSON.stringify(saved));
         logger.info(`   ✅ Cleared mapping for "${cleanCharacter}"`);
       }
-      
+
       // Test what voice would be assigned now
       const voiceConfig = this.getVoiceForCharacter(character);
       logger.info(`   🎭 Would now map to: ${voiceConfig.name} (${voiceConfig.id})`);
-      
     } catch (error) {
       logger.warn('Failed to debug character mapping:', error);
     }
@@ -407,16 +451,16 @@ export class VoiceMapper {
    */
   static getVoiceCategories(): Record<string, VoiceConfig[]> {
     const categories: Record<string, VoiceConfig[]> = {};
-    
-    Object.values(this.VOICE_CONFIGS).forEach(voice => {
+
+    Object.values(this.VOICE_CONFIGS).forEach((voice) => {
       if (!categories[voice.category]) {
         categories[voice.category] = [];
       }
-      if (!categories[voice.category].find(v => v.id === voice.id)) {
+      if (!categories[voice.category].find((v) => v.id === voice.id)) {
         categories[voice.category].push(voice);
       }
     });
-    
+
     return categories;
   }
 }

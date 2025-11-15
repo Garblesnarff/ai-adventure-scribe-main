@@ -1,14 +1,11 @@
 /**
  * Movement Utilities for D&D 5e Combat
- * 
+ *
  * Handles movement calculations, opportunity attacks, and positioning
  */
 
-import { 
-  CombatParticipant, 
-  CombatEncounter, 
-  ReactionOpportunity 
-} from '@/types/combat';
+import type { CombatParticipant, CombatEncounter, ReactionOpportunity } from '@/types/combat';
+
 import { checkMovementOpportunityAttacks } from '@/utils/reactionSystem';
 
 /**
@@ -18,9 +15,9 @@ export function processMovementAction(
   participantId: string,
   fromPosition: string,
   toPosition: string,
-  encounter: CombatEncounter
+  encounter: CombatEncounter,
 ): ReactionOpportunity[] {
-  const participant = encounter.participants.find(p => p.id === participantId);
+  const participant = encounter.participants.find((p) => p.id === participantId);
   if (!participant) {
     return [];
   }
@@ -30,7 +27,7 @@ export function processMovementAction(
     participant,
     encounter,
     fromPosition,
-    toPosition
+    toPosition,
   );
 
   return opportunities;
@@ -42,23 +39,24 @@ export function processMovementAction(
 export function doesMovementProvokeOpportunityAttacks(
   participant: CombatParticipant,
   fromPosition: string,
-  toPosition: string
+  toPosition: string,
 ): boolean {
   // Movement provokes opportunity attacks if:
   // 1. The creature leaves a hostile creature's reach
   // 2. The movement is not a teleport or involuntary movement
   // 3. The creature doesn't have features that prevent opportunity attacks
-  
+
   // Simplified check - in a real implementation, you'd have proper positioning
-  const isLeavingReach = fromPosition !== toPosition && 
-    (fromPosition === 'melee' || fromPosition === 'adjacent') && 
+  const isLeavingReach =
+    fromPosition !== toPosition &&
+    (fromPosition === 'melee' || fromPosition === 'adjacent') &&
     (toPosition === 'ranged' || toPosition === 'distant');
-  
+
   // Check for features that prevent opportunity attacks
-  const hasMobileFeature = participant.classFeatures?.some(f => f.name === 'mobile') || false;
+  const hasMobileFeature = participant.classFeatures?.some((f) => f.name === 'mobile') || false;
   const isFlying = participant.speed.fly > 0;
   const isUsingDisengage = participant.bonusActionTaken; // Simplified - would need proper tracking
-  
+
   return isLeavingReach && !hasMobileFeature && !isFlying && !isUsingDisengage;
 }
 
@@ -68,11 +66,11 @@ export function doesMovementProvokeOpportunityAttacks(
 export function calculateMovementCost(
   fromPosition: string,
   toPosition: string,
-  terrain: string
+  terrain: string,
 ): number {
   // Simplified movement cost calculation
   let baseCost = 0;
-  
+
   // Determine base movement cost
   if (fromPosition === 'melee' && toPosition === 'adjacent') {
     baseCost = 5; // 5 feet
@@ -81,7 +79,7 @@ export function calculateMovementCost(
   } else if (fromPosition === 'ranged' && toPosition === 'distant') {
     baseCost = 15; // 15 feet
   }
-  
+
   // Apply terrain modifiers
   let terrainMultiplier = 1;
   switch (terrain) {
@@ -94,7 +92,7 @@ export function calculateMovementCost(
     default:
       terrainMultiplier = 1;
   }
-  
+
   return baseCost * terrainMultiplier;
 }
 
@@ -105,7 +103,7 @@ export function canMoveToPosition(
   participant: CombatParticipant,
   currentPosition: string,
   targetPosition: string,
-  availableMovement: number
+  availableMovement: number,
 ): boolean {
   // Check if participant has enough movement
   const movementCost = calculateMovementCost(currentPosition, targetPosition, 'clear');

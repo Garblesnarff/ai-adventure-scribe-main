@@ -1,17 +1,19 @@
 import React, { useState, useRef } from 'react';
-import logger from '@/lib/logger';
-import { ChatMessage } from '@/types/game';
-import { useMessageContext } from '@/contexts/MessageContext';
-import { useGame } from '@/contexts/GameContext';
-import { useCombat } from '@/contexts/CombatContext';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { useCampaign } from '@/contexts/CampaignContext';
 import { useParams } from 'react-router-dom';
-import { handleAsyncError } from '@/utils/error-handler';
+
 import { MessageListContainer } from './message-list';
 import { useDynamicOptions } from './message-list/useDynamicOptions';
 import { useImageGeneration } from './message-list/useImageGeneration';
 import { useScrollBehavior } from './message-list/useScrollBehavior';
+
+import type { ChatMessage } from '@/types/game';
+import { useCampaign } from '@/contexts/CampaignContext';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useCombat } from '@/contexts/CombatContext';
+import { useGame } from '@/contexts/GameContext';
+import { useMessageContext } from '@/contexts/MessageContext';
+import logger from '@/lib/logger';
+import { handleAsyncError } from '@/utils/error-handler';
 
 interface MessageListProps {
   onSendFullMessage?: (message: string) => Promise<void>;
@@ -64,13 +66,14 @@ export const MessageList: React.FC<MessageListProps> = ({
     lastRollRef,
   });
 
-  const { generatingFor, imageByMessage, genErrorByMessage, handleGenerateScene } = useImageGeneration({
-    sessionId,
-    routeCampaignId,
-    character: characterState.character,
-    campaign: campaignState.campaign,
-    messages,
-  });
+  const { generatingFor, imageByMessage, genErrorByMessage, handleGenerateScene } =
+    useImageGeneration({
+      sessionId,
+      routeCampaignId,
+      character: characterState.character,
+      campaign: campaignState.campaign,
+      messages,
+    });
 
   useScrollBehavior(messagesRef, messages, hasMore, loadMore, isFetchingMore);
 
@@ -96,7 +99,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         });
       }
     },
-    [onSendFullMessage, sendMessage]
+    [onSendFullMessage, sendMessage],
   );
 
   return (

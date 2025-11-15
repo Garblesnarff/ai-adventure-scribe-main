@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
-import { CharacterProvider } from '@/contexts/CharacterContext';
-import WizardContent from './wizard/WizardContent';
 import { useSearchParams } from 'react-router-dom';
-import { analytics } from '@/services/analytics';
+
+import WizardContent from './wizard/WizardContent';
+
 import { ErrorBoundary } from '@/components/error';
 import { CharacterCreationErrorFallback } from '@/components/error/CharacterCreationErrorFallback';
+import { CharacterProvider } from '@/contexts/CharacterContext';
+import { analytics } from '@/services/analytics';
 
 /**
  * Wrapper component that provides character context to the wizard

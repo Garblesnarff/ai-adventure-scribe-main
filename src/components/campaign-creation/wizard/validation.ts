@@ -7,9 +7,9 @@
 export const validateBasicDetails = (campaign: any, toast: any): boolean => {
   if (!campaign?.name?.trim()) {
     toast({
-      title: "Missing Campaign Name",
-      description: "Please enter a name for your campaign.",
-      variant: "destructive",
+      title: 'Missing Campaign Name',
+      description: 'Please enter a name for your campaign.',
+      variant: 'destructive',
     });
     return false;
   }
@@ -25,9 +25,9 @@ export const validateBasicDetails = (campaign: any, toast: any): boolean => {
 export const validateGenreSelection = (campaign: any, toast: any): boolean => {
   if (!campaign?.genre) {
     toast({
-      title: "Missing Genre",
-      description: "Please select a genre for your campaign.",
-      variant: "destructive",
+      title: 'Missing Genre',
+      description: 'Please select a genre for your campaign.',
+      variant: 'destructive',
     });
     return false;
   }
@@ -42,9 +42,9 @@ export const validateGenreSelection = (campaign: any, toast: any): boolean => {
  */
 export const validateCampaignParameters = (campaign: any, toast: any): boolean => {
   const requiredFields = {
-    difficulty_level: "Difficulty Level",
-    campaign_length: "Campaign Length",
-    tone: "Campaign Tone"
+    difficulty_level: 'Difficulty Level',
+    campaign_length: 'Campaign Length',
+    tone: 'Campaign Tone',
   };
 
   for (const [field, label] of Object.entries(requiredFields)) {
@@ -52,7 +52,7 @@ export const validateCampaignParameters = (campaign: any, toast: any): boolean =
       toast({
         title: `Missing ${label}`,
         description: `Please select a ${label.toLowerCase()} for your campaign.`,
-        variant: "destructive",
+        variant: 'destructive',
       });
       return false;
     }
@@ -84,9 +84,9 @@ export const validateCampaignEnhancements = (campaign: any, toast: any): boolean
 export const validateCompleteCampaign = (campaign: any, toast: any): boolean => {
   if (!campaign) {
     toast({
-      title: "Missing Campaign Data",
-      description: "Campaign data is incomplete. Please fill in all required fields.",
-      variant: "destructive",
+      title: 'Missing Campaign Data',
+      description: 'Campaign data is incomplete. Please fill in all required fields.',
+      variant: 'destructive',
     });
     return false;
   }

@@ -29,7 +29,7 @@ export class SyncStateManager {
       lastSequenceNumber: this.vectorClock[agentId] || 0,
       vectorClock: { ...this.vectorClock },
       pendingMessages,
-      conflicts: []
+      conflicts: [],
     };
 
     await DatabaseAdapter.updateSyncStatus(agentId, syncState, this.vectorClock);

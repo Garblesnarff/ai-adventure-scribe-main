@@ -1,18 +1,18 @@
 /**
  * Queue State Manager
- * 
+ *
  * This file defines the QueueStateManager class, a singleton service responsible
  * for managing the state of the message queue. This includes saving snapshots
  * of the queue to persistent storage (IndexedDB), validating the queue state
  * against stored snapshots, and tracking metrics related to queue processing.
- * 
+ *
  * Main Class:
  * - QueueStateManager: Manages and persists the state of the message queue.
- * 
+ *
  * Key Dependencies:
  * - IndexedDBService (`../storage/indexed-db-service.ts`)
  * - Message and Queue state types.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -23,7 +23,6 @@ import { IndexedDBService } from '../storage/IndexedDBService';
 import { QueuedMessage } from '../../types';
 import { QueueState } from '../storage/types';
 import { logger } from '../../../../lib/logger';
-
 
 export class QueueStateManager {
   private static instance: QueueStateManager;
@@ -39,7 +38,7 @@ export class QueueStateManager {
     this.queueMetrics = {
       totalProcessed: 0,
       failedDeliveries: 0,
-      avgProcessingTime: 0
+      avgProcessingTime: 0,
     };
   }
 
@@ -55,12 +54,12 @@ export class QueueStateManager {
       const snapshot: QueueState = {
         lastSyncTimestamp: new Date().toISOString(),
         messages: messages,
-        pendingMessages: messages.map(msg => msg.id),
+        pendingMessages: messages.map((msg) => msg.id),
         processingMessage: undefined,
         isOnline: navigator.onLine,
-        metrics: this.queueMetrics
+        metrics: this.queueMetrics,
       };
-      
+
       await this.storage.saveQueueState(snapshot);
       logger.info('[QueueStateManager] Queue snapshot saved:', snapshot.lastSyncTimestamp);
     } catch (error) {
@@ -74,10 +73,10 @@ export class QueueStateManager {
       const storedState = await this.storage.getQueueState();
       if (!storedState) return true;
 
-      const currentIds = new Set(currentMessages.map(msg => msg.id));
-      const storedIds = new Set(storedState.messages.map(msg => msg.id));
+      const currentIds = new Set(currentMessages.map((msg) => msg.id));
+      const storedIds = new Set(storedState.messages.map((msg) => msg.id));
 
-      const missingMessages = [...storedIds].filter(id => !currentIds.has(id));
+      const missingMessages = [...storedIds].filter((id) => !currentIds.has(id));
       if (missingMessages.length > 0) {
         logger.warn('[QueueStateManager] Found missing messages:', missingMessages);
         return false;
@@ -95,10 +94,11 @@ export class QueueStateManager {
     if (!success) {
       this.queueMetrics.failedDeliveries++;
     }
-    
+
     // Update average processing time
     const oldTotal = this.queueMetrics.avgProcessingTime * (this.queueMetrics.totalProcessed - 1);
-    this.queueMetrics.avgProcessingTime = (oldTotal + processingTime) / this.queueMetrics.totalProcessed;
+    this.queueMetrics.avgProcessingTime =
+      (oldTotal + processingTime) / this.queueMetrics.totalProcessed;
   }
 
   public getMetrics() {

@@ -24,8 +24,9 @@
  */
 
 import { useEffect, useRef } from 'react';
-import telemetry from '@/lib/telemetry';
+
 import logger from '@/lib/logger';
+import telemetry from '@/lib/telemetry';
 
 export interface UseTelemetryOptions {
   /**
@@ -110,10 +111,7 @@ export function useTelemetry(options: UseTelemetryOptions = {}) {
 
     // Setup heartbeat if enabled
     if (enableHeartbeat && sessionId) {
-      heartbeatCleanupRef.current = telemetry.startSessionHeartbeat(
-        sessionId,
-        heartbeatInterval
-      );
+      heartbeatCleanupRef.current = telemetry.startSessionHeartbeat(sessionId, heartbeatInterval);
     }
 
     // Log initial memory state

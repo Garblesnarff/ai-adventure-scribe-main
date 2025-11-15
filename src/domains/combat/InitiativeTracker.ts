@@ -6,6 +6,7 @@
  */
 
 import type { CombatParticipant, DiceRoll, InitiativeRollResult } from './types';
+
 import { rollDie } from '@/utils/diceRolls';
 
 /**
@@ -13,7 +14,7 @@ import { rollDie } from '@/utils/diceRolls';
  */
 export function rollInitiativeForParticipant(
   participant: CombatParticipant,
-  initiativeModifier?: number
+  initiativeModifier?: number,
 ): InitiativeRollResult {
   const modifier = initiativeModifier ?? participant.initiative ?? 0;
   const roll = rollDie(20);
@@ -40,7 +41,7 @@ export function rollInitiativeForParticipant(
  * Roll initiative for multiple participants
  */
 export function rollInitiativeForAll(
-  participants: CombatParticipant[]
+  participants: CombatParticipant[],
 ): Map<string, InitiativeRollResult> {
   const results = new Map<string, InitiativeRollResult>();
 
@@ -56,9 +57,7 @@ export function rollInitiativeForAll(
  * Sort participants by initiative (highest first)
  * Handles ties by using dexterity score if available, otherwise preserves order
  */
-export function sortByInitiative(
-  participants: CombatParticipant[]
-): CombatParticipant[] {
+export function sortByInitiative(participants: CombatParticipant[]): CombatParticipant[] {
   return [...participants].sort((a, b) => {
     // Primary sort: initiative value (higher is better)
     if (b.initiative !== a.initiative) {
@@ -79,10 +78,10 @@ export function sortByInitiative(
 export function updateInitiative(
   participants: CombatParticipant[],
   participantId: string,
-  newInitiative: number
+  newInitiative: number,
 ): CombatParticipant[] {
-  const updated = participants.map(p =>
-    p.id === participantId ? { ...p, initiative: newInitiative } : p
+  const updated = participants.map((p) =>
+    p.id === participantId ? { ...p, initiative: newInitiative } : p,
   );
 
   return sortByInitiative(updated);
@@ -93,9 +92,9 @@ export function updateInitiative(
  */
 export function reorderParticipants(
   participants: CombatParticipant[],
-  newOrder: string[]
+  newOrder: string[],
 ): CombatParticipant[] {
-  const participantMap = new Map(participants.map(p => [p.id, p]));
+  const participantMap = new Map(participants.map((p) => [p.id, p]));
   const reordered: CombatParticipant[] = [];
 
   for (const id of newOrder) {
@@ -118,14 +117,14 @@ export function reorderParticipants(
  * Get the current initiative order as a list of participant IDs
  */
 export function getInitiativeOrder(participants: CombatParticipant[]): string[] {
-  return sortByInitiative(participants).map(p => p.id);
+  return sortByInitiative(participants).map((p) => p.id);
 }
 
 /**
  * Find the participant with the highest initiative
  */
 export function getFirstInInitiative(
-  participants: CombatParticipant[]
+  participants: CombatParticipant[],
 ): CombatParticipant | undefined {
   if (participants.length === 0) return undefined;
   return sortByInitiative(participants)[0];
@@ -135,7 +134,7 @@ export function getFirstInInitiative(
  * Group participants by initiative value (for tied initiatives)
  */
 export function groupByInitiative(
-  participants: CombatParticipant[]
+  participants: CombatParticipant[],
 ): Map<number, CombatParticipant[]> {
   const groups = new Map<number, CombatParticipant[]>();
 

@@ -144,11 +144,7 @@ export class UnifiedMessagingService {
   /**
    * Send message via legacy messaging service
    */
-  private async sendViaLegacy(params: {
-    sessionId: string;
-    message: string;
-    context: any;
-  }) {
+  private async sendViaLegacy(params: { sessionId: string; message: string; context: any }) {
     const sent = await this.legacyService.sendMessage(
       'user',
       'dm',
@@ -157,7 +153,7 @@ export class UnifiedMessagingService {
         message: params.message,
         context: params.context,
       },
-      MessagePriority.HIGH
+      MessagePriority.HIGH,
     );
 
     if (!sent) {
@@ -204,8 +200,6 @@ export class UnifiedMessagingService {
 /**
  * Factory function for creating unified messaging service
  */
-export function createUnifiedMessaging(
-  config?: CompatibilityConfig
-): UnifiedMessagingService {
+export function createUnifiedMessaging(config?: CompatibilityConfig): UnifiedMessagingService {
   return new UnifiedMessagingService(config);
 }

@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Image } from 'lucide-react';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Z_INDEX } from '@/constants/z-index';
 
 export interface GalleryItem {
@@ -25,23 +30,21 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ title, images, emptyMessage }
     return (
       <div className="w-full">
         {title && <h3 className="text-lg font-semibold mb-3">{title}</h3>}
-        <EmptyState
-          illustration={<Image className="h-10 w-10" />}
-          title="No images yet"
-          description={emptyMessage || "Images from your adventures will appear here."}
-          variant="card"
-          maxWidth="md"
-        />
+        <div className="text-sm text-muted-foreground border rounded p-6 text-center">
+          {emptyMessage || 'No images yet.'}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-full">
-      {title && <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-        <span className="w-1 h-6 bg-gradient-to-b from-infinite-purple to-infinite-gold rounded-full"></span>
-        {title}
-      </h3>}
+      {title && (
+        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+          <span className="w-1 h-6 bg-gradient-to-b from-infinite-purple to-infinite-gold rounded-full"></span>
+          {title}
+        </h3>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((img, index) => (
           <div
@@ -52,7 +55,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ title, images, emptyMessage }
               setOpen(true);
             }}
             style={{
-              animationDelay: `${index * 100}ms`
+              animationDelay: `${index * 100}ms`,
             }}
           >
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 aspect-[4/3]">

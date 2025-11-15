@@ -1,17 +1,17 @@
 /**
  * Multiclassing Utilities for D&D 5e
- * 
+ *
  * Functions for handling multiclassing rules, calculations, and validations
  */
 
-import { Character, CharacterClass, ClassFeature } from '@/types/character';
-import { 
-  multiclassRequirements, 
+import type { AbilityScores, Character, CharacterClass, ClassFeature } from '@/types/character';
+
+import {
+  multiclassRequirements,
   multiclassProficiencies,
   getProficiencyBonus,
-  getAllClassFeaturesUpToLevel
+  getAllClassFeaturesUpToLevel,
 } from '@/data/levelProgression';
-import { AbilityScores } from '@/types/character';
 
 // ===========================
 // Multiclassing Data Models
@@ -51,7 +51,7 @@ export interface MulticlassSpellcastingResult {
  */
 export function validateMulticlass(
   character: Character,
-  newClass: CharacterClass
+  newClass: CharacterClass,
 ): MulticlassValidationResult {
   const requirements: string[] = [];
   const missingRequirements: string[] = [];
@@ -110,14 +110,16 @@ export function validateMulticlass(
 /**
  * Calculate combined proficiencies for a multiclass character
  */
-export function calculateMulticlassProficiencies(character: Character): MulticlassProficiencyResult {
+export function calculateMulticlassProficiencies(
+  character: Character,
+): MulticlassProficiencyResult {
   const result: MulticlassProficiencyResult = {
     armor: [],
     weapons: [],
     tools: [],
     savingThrows: [],
     skillChoices: [],
-    numSkillChoices: 0
+    numSkillChoices: 0,
   };
 
   // Track what we've already added to avoid duplicates
@@ -129,47 +131,47 @@ export function calculateMulticlassProficiencies(character: Character): Multicla
   // Add proficiencies from first class
   if (character.class) {
     const firstClassProfs = multiclassProficiencies[character.class.name.toLowerCase()] || {};
-    
+
     // Add armor proficiencies
     if (firstClassProfs.armor) {
-      firstClassProfs.armor.forEach(armor => {
+      firstClassProfs.armor.forEach((armor) => {
         if (!addedArmor.has(armor)) {
           result.armor.push(armor);
           addedArmor.add(armor);
         }
       });
     }
-    
+
     // Add weapon proficiencies
     if (firstClassProfs.weapons) {
-      firstClassProfs.weapons.forEach(weapon => {
+      firstClassProfs.weapons.forEach((weapon) => {
         if (!addedWeapons.has(weapon)) {
           result.weapons.push(weapon);
           addedWeapons.add(weapon);
         }
       });
     }
-    
+
     // Add tool proficiencies
     if (firstClassProfs.tools) {
-      firstClassProfs.tools.forEach(tool => {
+      firstClassProfs.tools.forEach((tool) => {
         if (!addedTools.has(tool)) {
           result.tools.push(tool);
           addedTools.add(tool);
         }
       });
     }
-    
+
     // Add saving throw proficiencies from first class
     if (character.class.savingThrowProficiencies) {
-      character.class.savingThrowProficiencies.forEach(st => {
+      character.class.savingThrowProficiencies.forEach((st) => {
         if (!addedSavingThrows.has(st)) {
           result.savingThrows.push(st);
           addedSavingThrows.add(st);
         }
       });
     }
-    
+
     // Add skill choices from first class
     if (firstClassProfs.skillChoices) {
       result.skillChoices = [...firstClassProfs.skillChoices];
@@ -183,30 +185,30 @@ export function calculateMulticlassProficiencies(character: Character): Multicla
     for (let i = 1; i < character.classLevels.length; i++) {
       const classLevel = character.classLevels[i];
       const classProfs = multiclassProficiencies[classLevel.className.toLowerCase()] || {};
-      
+
       // Add armor proficiencies
       if (classProfs.armor) {
-        classProfs.armor.forEach(armor => {
+        classProfs.armor.forEach((armor) => {
           if (!addedArmor.has(armor)) {
             result.armor.push(armor);
             addedArmor.add(armor);
           }
         });
       }
-      
+
       // Add weapon proficiencies
       if (classProfs.weapons) {
-        classProfs.weapons.forEach(weapon => {
+        classProfs.weapons.forEach((weapon) => {
           if (!addedWeapons.has(weapon)) {
             result.weapons.push(weapon);
             addedWeapons.add(weapon);
           }
         });
       }
-      
+
       // Add tool proficiencies
       if (classProfs.tools) {
-        classProfs.tools.forEach(tool => {
+        classProfs.tools.forEach((tool) => {
           if (!addedTools.has(tool)) {
             result.tools.push(tool);
             addedTools.add(tool);
@@ -232,11 +234,11 @@ export function calculateMulticlassHitPoints(character: Character): number {
   }
 
   let totalHP = 0;
-  
+
   // For each class, add the appropriate HP based on level
   character.classLevels.forEach((classLevel, index) => {
     const hitDie = classLevel.hitDie;
-    
+
     if (index === 0) {
       // First class: Take full hit die at 1st level
       totalHP += hitDie;
@@ -244,7 +246,7 @@ export function calculateMulticlassHitPoints(character: Character): number {
       // Additional classes: Take half hit die (rounded up) at 1st level
       totalHP += Math.ceil(hitDie / 2);
     }
-    
+
     // For levels 2+, add Constitution modifier
     if (character.abilityScores) {
       const conModifier = character.abilityScores.constitution.modifier;
@@ -268,11 +270,13 @@ export function calculateMulticlassHitPoints(character: Character): number {
 /**
  * Calculate spellcasting for a multiclass character
  */
-export function calculateMulticlassSpellcasting(character: Character): MulticlassSpellcastingResult {
+export function calculateMulticlassSpellcasting(
+  character: Character,
+): MulticlassSpellcastingResult {
   const result: MulticlassSpellcastingResult = {
     spellcastingClasses: [],
     combinedCasterLevel: 0,
-    spellSlots: []
+    spellSlots: [],
   };
 
   if (!character.classLevels || character.classLevels.length === 0) {
@@ -280,9 +284,9 @@ export function calculateMulticlassSpellcasting(character: Character): Multiclas
   }
 
   // Identify spellcasting classes
-  character.classLevels.forEach(classLevel => {
+  character.classLevels.forEach((classLevel) => {
     let casterType: 'full' | 'half' | 'third' | 'pact' | null = null;
-    
+
     switch (classLevel.className.toLowerCase()) {
       // Full casters
       case 'bard':
@@ -292,13 +296,13 @@ export function calculateMulticlassSpellcasting(character: Character): Multiclas
       case 'wizard':
         casterType = 'full';
         break;
-        
+
       // Half casters
       case 'paladin':
       case 'ranger':
         casterType = 'half';
         break;
-        
+
       // Third casters (subclass features - NOTE: Only SRD subclasses supported)
       case 'fighter':
         // Only Champion subclass is SRD-compliant (no spellcasting)
@@ -310,31 +314,31 @@ export function calculateMulticlassSpellcasting(character: Character): Multiclas
         // Arcane Trickster archetype is NOT available in SRD
         // No spellcasting for rogue in SRD
         break;
-        
+
       // Pact casters
       case 'warlock':
         casterType = 'pact';
         break;
     }
-    
+
     if (casterType) {
       result.spellcastingClasses.push({
         className: classLevel.className,
         level: classLevel.level,
-        casterType
+        casterType,
       });
     }
   });
 
   // Calculate combined caster level (excluding Warlocks for spell slots)
   let combinedCasterLevel = 0;
-  
-  result.spellcastingClasses.forEach(spellClass => {
+
+  result.spellcastingClasses.forEach((spellClass) => {
     if (spellClass.casterType === 'pact') {
       // Warlocks don't contribute to combined spell slots
       return;
     }
-    
+
     switch (spellClass.casterType) {
       case 'full':
         combinedCasterLevel += spellClass.level;
@@ -347,7 +351,7 @@ export function calculateMulticlassSpellcasting(character: Character): Multiclas
         break;
     }
   });
-  
+
   result.combinedCasterLevel = combinedCasterLevel;
 
   // Calculate spell slots based on combined caster level
@@ -382,7 +386,7 @@ function calculateSpellSlots(casterLevel: number): number[] {
   if (casterLevel === 18) return [4, 3, 3, 3, 3, 1, 1, 1, 1];
   if (casterLevel === 19) return [4, 3, 3, 3, 3, 2, 1, 1, 1];
   if (casterLevel >= 20) return [4, 3, 3, 3, 3, 2, 2, 1, 1];
-  
+
   return [4, 3, 3, 3, 2, 1, 1, 1, 1]; // Default for higher levels
 }
 
@@ -399,8 +403,8 @@ export function getMulticlassFeatures(character: Character): ClassFeature[] {
   }
 
   const allFeatures: ClassFeature[] = [];
-  
-  character.classLevels.forEach(classLevel => {
+
+  character.classLevels.forEach((classLevel) => {
     const features = getAllClassFeaturesUpToLevel(classLevel.className, classLevel.level);
     allFeatures.push(...features);
   });
@@ -418,14 +422,14 @@ export function getMulticlassFeatures(character: Character): ClassFeature[] {
 export function addMulticlass(
   character: Character,
   newClass: CharacterClass,
-  levels: number = 1
+  levels: number = 1,
 ): Character {
   const updatedCharacter = { ...character };
-  
+
   // Initialize classLevels if not present
   if (!updatedCharacter.classLevels) {
     updatedCharacter.classLevels = [];
-    
+
     // Add current class as first entry
     if (updatedCharacter.class) {
       updatedCharacter.classLevels.push({
@@ -433,64 +437,67 @@ export function addMulticlass(
         className: updatedCharacter.class.name,
         level: updatedCharacter.level || 1,
         hitDie: updatedCharacter.class.hitDie,
-        features: updatedCharacter.class.classFeatures.map(f => f.id)
+        features: updatedCharacter.class.classFeatures.map((f) => f.id),
       });
     }
   }
-  
+
   // Add new class
   updatedCharacter.classLevels.push({
     classId: newClass.id,
     className: newClass.name,
     level: levels,
     hitDie: newClass.hitDie,
-    features: newClass.classFeatures.map(f => f.id)
+    features: newClass.classFeatures.map((f) => f.id),
   });
-  
+
   // Update total level
-  updatedCharacter.totalLevel = updatedCharacter.classLevels.reduce((sum, cls) => sum + cls.level, 0);
-  
+  updatedCharacter.totalLevel = updatedCharacter.classLevels.reduce(
+    (sum, cls) => sum + cls.level,
+    0,
+  );
+
   // Recalculate hit points
   updatedCharacter.hitPoints = {
     ...updatedCharacter.hitPoints,
-    maximum: calculateMulticlassHitPoints(updatedCharacter)
+    maximum: calculateMulticlassHitPoints(updatedCharacter),
   };
-  
+
   return updatedCharacter;
 }
 
 /**
  * Level up a specific class
  */
-export function levelUpClass(
-  character: Character,
-  classId: string
-): Character {
+export function levelUpClass(character: Character, classId: string): Character {
   const updatedCharacter = { ...character };
-  
+
   if (!updatedCharacter.classLevels) {
     return updatedCharacter;
   }
-  
+
   // Find and level up the specified class
-  updatedCharacter.classLevels = updatedCharacter.classLevels.map(cls => {
+  updatedCharacter.classLevels = updatedCharacter.classLevels.map((cls) => {
     if (cls.classId === classId) {
       return {
         ...cls,
-        level: cls.level + 1
+        level: cls.level + 1,
       };
     }
     return cls;
   });
-  
+
   // Update total level
-  updatedCharacter.totalLevel = updatedCharacter.classLevels.reduce((sum, cls) => sum + cls.level, 0);
-  
+  updatedCharacter.totalLevel = updatedCharacter.classLevels.reduce(
+    (sum, cls) => sum + cls.level,
+    0,
+  );
+
   // Recalculate hit points
   updatedCharacter.hitPoints = {
     ...updatedCharacter.hitPoints,
-    maximum: calculateMulticlassHitPoints(updatedCharacter)
+    maximum: calculateMulticlassHitPoints(updatedCharacter),
   };
-  
+
   return updatedCharacter;
 }

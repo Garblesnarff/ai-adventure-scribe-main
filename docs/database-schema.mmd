@@ -1,0 +1,637 @@
+erDiagram
+    %% ========================================
+    %% BLOG MODULE
+    %% ========================================
+
+    blog_authors {
+        uuid id PK
+        uuid user_id FK "References auth.users"
+        text display_name
+        text slug UK
+        text short_bio
+        text bio
+        text avatar_url
+        text website_url
+        text twitter_handle
+        text linkedin_url
+        jsonb metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    blog_categories {
+        uuid id PK
+        text name
+        text slug UK
+        text description
+        text seo_title
+        text seo_description
+        jsonb metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    blog_tags {
+        uuid id PK
+        text name
+        text slug UK
+        text description
+        jsonb metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    blog_posts {
+        uuid id PK
+        uuid author_id FK
+        text title
+        text slug UK
+        text summary
+        text content
+        text featured_image_url
+        text hero_image_alt
+        text seo_title
+        text seo_description
+        text[] seo_keywords
+        text canonical_url
+        text status
+        timestamp scheduled_for
+        timestamp published_at
+        jsonb metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    blog_post_categories {
+        uuid post_id FK
+        uuid category_id FK
+        timestamp assigned_at
+    }
+
+    blog_post_tags {
+        uuid post_id FK
+        uuid tag_id FK
+        timestamp assigned_at
+    }
+
+    %% Blog relationships
+    blog_authors ||--o{ blog_posts : "writes"
+    blog_posts ||--o{ blog_post_categories : "has"
+    blog_categories ||--o{ blog_post_categories : "categorizes"
+    blog_posts ||--o{ blog_post_tags : "has"
+    blog_tags ||--o{ blog_post_tags : "tags"
+
+    %% ========================================
+    %% GAME MODULE
+    %% ========================================
+
+    campaigns {
+        uuid id PK
+        text user_id FK "References auth.users"
+        text name
+        text description
+        text genre
+        text difficulty_level
+        text campaign_length
+        text tone
+        text era
+        text location
+        text atmosphere
+        jsonb setting_details
+        jsonb thematic_elements
+        text status
+        text background_image
+        text art_style
+        jsonb style_config
+        jsonb rules_config
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    characters {
+        uuid id PK
+        text user_id FK "References auth.users"
+        uuid campaign_id FK
+        text name
+        text description
+        text race
+        text class
+        integer level
+        text alignment
+        integer experience_points
+        text background
+        text image_url
+        text avatar_url
+        text background_image
+        text appearance
+        text personality_traits
+        text personality_notes
+        text backstory_elements
+        text cantrips
+        text known_spells
+        text prepared_spells
+        text ritual_spells
+        text[] vision_types
+        text obscurement
+        boolean is_hidden
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    character_stats {
+        uuid id PK
+        uuid character_id FK
+        integer strength
+        integer dexterity
+        integer constitution
+        integer intelligence
+        integer wisdom
+        integer charisma
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    game_sessions {
+        uuid id PK
+        uuid campaign_id FK
+        uuid character_id FK
+        integer session_number
+        timestamp start_time
+        timestamp end_time
+        text status
+        text current_scene_description
+        text summary
+        text session_notes
+        integer turn_count
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dialogue_history {
+        uuid id PK
+        uuid session_id FK
+        text speaker_type
+        uuid speaker_id
+        text message
+        timestamp timestamp
+        jsonb context
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Game relationships
+    campaigns ||--o{ characters : "contains"
+    campaigns ||--o{ game_sessions : "has"
+    characters ||--o| character_stats : "has"
+    characters ||--o{ game_sessions : "participates"
+    game_sessions ||--o{ dialogue_history : "records"
+
+    %% ========================================
+    %% REFERENCE MODULE
+    %% ========================================
+
+    classes {
+        uuid id PK
+        text name UK
+        integer hit_die
+        text spellcasting_ability
+        text caster_type
+        integer spell_slots_start_level
+        boolean ritual_casting
+        text spellcasting_focus_type
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    races {
+        uuid id PK
+        text name UK
+        text description
+        jsonb ability_score_increases
+        jsonb traits
+        integer speed
+        text size
+        text[] languages
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    spells {
+        uuid id PK
+        text name UK
+        integer level
+        text school
+        text casting_time
+        text range_text
+        text duration
+        boolean concentration
+        boolean ritual
+        boolean components_verbal
+        boolean components_somatic
+        boolean components_material
+        text material_components
+        integer material_cost_gp
+        boolean material_consumed
+        text description
+        text higher_level_text
+        text attack_type
+        text damage_type
+        jsonb damage_at_slot_level
+        jsonb heal_at_slot_level
+        jsonb area_of_effect
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    class_spells {
+        uuid id PK
+        uuid class_id FK
+        uuid spell_id FK
+        integer spell_level
+        text source_feature
+        timestamp created_at
+    }
+
+    character_spells {
+        uuid id PK
+        uuid character_id FK
+        uuid spell_id FK
+        uuid source_class_id FK
+        boolean is_prepared
+        boolean is_always_prepared
+        text source_feature
+        integer spell_level_learned
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Reference relationships
+    classes ||--o{ class_spells : "has"
+    spells ||--o{ class_spells : "available_to"
+    characters ||--o{ character_spells : "knows"
+    spells ||--o{ character_spells : "learned_by"
+    classes ||--o{ character_spells : "source"
+
+    %% ========================================
+    %% WORLD MODULE
+    %% ========================================
+
+    npcs {
+        uuid id PK
+        uuid campaign_id FK
+        text name
+        text race
+        text occupation
+        text personality
+        text description
+        text backstory
+        text relationship
+        text location
+        text image_url
+        text voice_id
+        jsonb stats
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    locations {
+        uuid id PK
+        uuid campaign_id FK
+        text name
+        text location_type
+        text description
+        integer population
+        text climate
+        text terrain
+        text[] notable_features
+        text[] connected_locations
+        text image_url
+        text map_url
+        jsonb metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    quests {
+        uuid id PK
+        uuid campaign_id FK
+        text title
+        text description
+        text quest_giver
+        text[] objectives
+        text[] rewards
+        text status
+        text difficulty
+        text quest_type
+        uuid location_id FK
+        jsonb metadata
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    memories {
+        uuid id PK
+        uuid campaign_id FK
+        uuid session_id FK
+        text memory_type
+        integer importance
+        text content
+        jsonb context
+        text embedding
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% World relationships
+    campaigns ||--o{ npcs : "contains"
+    campaigns ||--o{ locations : "has"
+    campaigns ||--o{ quests : "contains"
+    campaigns ||--o{ memories : "stores"
+    locations ||--o{ quests : "hosts"
+    game_sessions ||--o{ memories : "generates"
+
+    %% ========================================
+    %% COMBAT MODULE
+    %% ========================================
+
+    combat_encounters {
+        uuid id PK
+        uuid session_id FK
+        text status
+        integer current_round
+        integer current_turn_order
+        text location
+        text difficulty
+        integer experience_awarded
+        timestamp started_at
+        timestamp ended_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    combat_participants {
+        uuid id PK
+        uuid encounter_id FK
+        uuid character_id FK
+        uuid npc_id FK
+        text name
+        text participant_type
+        integer initiative
+        integer initiative_modifier
+        integer turn_order
+        boolean is_active
+        integer armor_class
+        integer max_hp
+        integer speed
+        text[] damage_resistances
+        text[] damage_immunities
+        text[] damage_vulnerabilities
+        jsonb multiclass_info
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    combat_participant_status {
+        uuid id PK
+        uuid participant_id FK UK
+        integer current_hp
+        integer max_hp
+        integer temp_hp
+        boolean is_conscious
+        integer death_saves_successes
+        integer death_saves_failures
+        timestamp updated_at
+    }
+
+    combat_damage_log {
+        uuid id PK
+        uuid encounter_id FK
+        uuid participant_id FK
+        integer damage_amount
+        text damage_type
+        uuid source_participant_id FK
+        text source_description
+        integer round_number
+        timestamp created_at
+    }
+
+    conditions_library {
+        uuid id PK
+        text name UK
+        text description
+        text mechanical_effects
+        text icon_name
+        timestamp created_at
+    }
+
+    combat_participant_conditions {
+        uuid id PK
+        uuid participant_id FK
+        uuid condition_id FK
+        text duration_type
+        integer duration_value
+        integer save_dc
+        text save_ability
+        integer applied_at_round
+        integer expires_at_round
+        text source_description
+        boolean is_active
+        timestamp created_at
+    }
+
+    creature_stats {
+        uuid id PK
+        uuid character_id FK
+        uuid npc_id FK
+        integer armor_class
+        text[] resistances
+        text[] vulnerabilities
+        text[] immunities
+        text[] condition_immunities
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    weapon_attacks {
+        uuid id PK
+        uuid character_id FK
+        text name
+        integer attack_bonus
+        text damage_dice
+        integer damage_bonus
+        text damage_type
+        text[] properties
+        text description
+        timestamp created_at
+    }
+
+    %% Combat relationships
+    game_sessions ||--o{ combat_encounters : "has"
+    combat_encounters ||--o{ combat_participants : "includes"
+    combat_participants ||--o| combat_participant_status : "has"
+    combat_encounters ||--o{ combat_damage_log : "records"
+    combat_participants ||--o{ combat_damage_log : "receives"
+    combat_participants ||--o{ combat_damage_log : "deals"
+    characters ||--o{ combat_participants : "joins"
+    npcs ||--o{ combat_participants : "fights"
+    combat_participants ||--o{ combat_participant_conditions : "has"
+    conditions_library ||--o{ combat_participant_conditions : "applied_as"
+    characters ||--o| creature_stats : "has"
+    npcs ||--o| creature_stats : "has"
+    characters ||--o{ weapon_attacks : "wields"
+
+    %% ========================================
+    %% REST MODULE
+    %% ========================================
+
+    rest_events {
+        uuid id PK
+        uuid character_id FK
+        uuid session_id FK
+        text rest_type
+        timestamp started_at
+        timestamp completed_at
+        integer hp_restored
+        integer hit_dice_spent
+        text resources_restored
+        boolean interrupted
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    character_hit_dice {
+        uuid id PK
+        uuid character_id FK
+        text class_name
+        text die_type
+        integer total_dice
+        integer used_dice
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Rest relationships
+    characters ||--o{ rest_events : "takes"
+    game_sessions ||--o{ rest_events : "during"
+    characters ||--o{ character_hit_dice : "has"
+
+    %% ========================================
+    %% INVENTORY MODULE
+    %% ========================================
+
+    inventory_items {
+        uuid id PK
+        uuid character_id FK
+        text name
+        text item_type
+        integer quantity
+        numeric weight
+        text description
+        text properties
+        boolean is_equipped
+        boolean is_attuned
+        boolean requires_attunement
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    consumable_usage_log {
+        uuid id PK
+        uuid character_id FK
+        uuid item_id FK
+        integer quantity_used
+        uuid session_id FK
+        text context
+        timestamp timestamp
+    }
+
+    %% Inventory relationships
+    characters ||--o{ inventory_items : "owns"
+    inventory_items ||--o{ consumable_usage_log : "used_in"
+    characters ||--o{ consumable_usage_log : "uses"
+    game_sessions ||--o{ consumable_usage_log : "during"
+
+    %% ========================================
+    %% PROGRESSION MODULE
+    %% ========================================
+
+    experience_events {
+        uuid id PK
+        uuid character_id FK
+        uuid session_id FK
+        integer xp_gained
+        text source
+        text description
+        timestamp timestamp
+    }
+
+    level_progression {
+        uuid character_id PK-FK
+        integer current_level
+        integer current_xp
+        integer xp_to_next_level
+        integer total_xp
+        timestamp last_level_up
+        timestamp updated_at
+    }
+
+    %% Progression relationships
+    characters ||--o{ experience_events : "earns"
+    game_sessions ||--o{ experience_events : "awards"
+    characters ||--o| level_progression : "tracks"
+
+    %% ========================================
+    %% CLASS FEATURES MODULE
+    %% ========================================
+
+    class_features_library {
+        uuid id PK
+        text class_name
+        text subclass_name
+        text feature_name
+        integer level_acquired
+        text description
+        text mechanical_effects
+        text usage_type
+        text uses_per_rest
+        integer uses_count
+        timestamp created_at
+    }
+
+    character_features {
+        uuid id PK
+        uuid character_id FK
+        uuid feature_id FK
+        integer uses_remaining
+        boolean is_active
+        integer acquired_at_level
+        timestamp created_at
+    }
+
+    character_subclasses {
+        uuid id PK
+        uuid character_id FK
+        text class_name
+        text subclass_name
+        integer chosen_at_level
+        timestamp created_at
+    }
+
+    feature_usage_log {
+        uuid id PK
+        uuid character_id FK
+        uuid feature_id FK
+        uuid session_id FK
+        timestamp used_at
+        text context
+        timestamp created_at
+    }
+
+    %% Class features relationships
+    class_features_library ||--o{ character_features : "granted_as"
+    characters ||--o{ character_features : "has"
+    characters ||--o{ character_subclasses : "chooses"
+    characters ||--o{ feature_usage_log : "uses"
+    class_features_library ||--o{ feature_usage_log : "used_as"
+    game_sessions ||--o{ feature_usage_log : "during"

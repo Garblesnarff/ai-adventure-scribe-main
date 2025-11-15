@@ -18,7 +18,7 @@ export class TypeConverter {
       sequenceNumber: dbRecord.sequence_number,
       vectorClock: this.fromJson<VectorClock>(dbRecord.vector_clock),
       createdAt: dbRecord.created_at,
-      updatedAt: dbRecord.updated_at
+      updatedAt: dbRecord.updated_at,
     };
   }
 
@@ -30,7 +30,7 @@ export class TypeConverter {
       syncState: this.fromJson<SyncState>(dbRecord.sync_state),
       vectorClock: this.fromJson<VectorClock>(dbRecord.vector_clock),
       createdAt: dbRecord.created_at,
-      updatedAt: dbRecord.updated_at
+      updatedAt: dbRecord.updated_at,
     };
   }
 
@@ -46,10 +46,10 @@ export class TypeConverter {
       deliveryStatus: {
         delivered: false,
         timestamp: new Date(),
-        attempts: 0
+        attempts: 0,
       },
       retryCount: 0,
-      maxRetries: 3
+      maxRetries: 3,
     };
   }
 }

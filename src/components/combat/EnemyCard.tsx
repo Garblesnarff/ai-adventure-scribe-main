@@ -1,26 +1,23 @@
 /**
  * Enemy Card Component
- * 
+ *
  * Displays enemy information during combat encounters.
  * Follows D&D 5e rules where HP is hidden until defeated or DM reveals.
  * Provides attack buttons and visual enemy representation.
  */
 
+import { Sword, Shield, Skull, Zap, Target } from 'lucide-react';
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+
+import HPTracker from './HPTracker';
+
+import type { MonsterAttack } from '@/types/combat';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import DiceRoller from '@/components/ui/dice-roller';
-import HPTracker from './HPTracker';
-import { 
-  Sword, 
-  Shield, 
-  Skull, 
-  Zap, 
-  Target, 
-} from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
-import { MonsterAttack } from '@/types/combat';
 
 interface EnemyCardProps {
   enemyId: string;
@@ -28,14 +25,10 @@ interface EnemyCardProps {
   onAttack?: (attack: MonsterAttack) => void;
 }
 
-const EnemyCard: React.FC<EnemyCardProps> = ({
-  enemyId,
-  className = '',
-  onAttack
-}) => {
+const EnemyCard: React.FC<EnemyCardProps> = ({ enemyId, className = '', onAttack }) => {
   const { state } = useCombat();
-  const enemy = state.activeEncounter?.participants.find(p => p.id === enemyId);
-  
+  const enemy = state.activeEncounter?.participants.find((p) => p.id === enemyId);
+
   if (!enemy || enemy.participantType !== 'monster') {
     return null;
   }
@@ -52,7 +45,7 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
   const renderAttackButton = (attack: MonsterAttack, index: number) => {
     const damageModifier = enemy.monsterData?.attacks?.[index]?.attackBonus || 0;
     const damageType = enemy.monsterData?.attacks?.[index]?.damageType || 'bludgeoning';
-    
+
     return (
       <Button
         key={index}
@@ -89,9 +82,9 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
             <Skull className="w-5 h-5" />
             {enemy.name}
           </CardTitle>
-          
+
           {enemy.monsterData?.challengeRating && (
-            <Badge 
+            <Badge
               className={getChallengeRatingColor(enemy.monsterData.challengeRating)}
               variant="secondary"
             >
@@ -99,7 +92,7 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
             </Badge>
           )}
         </div>
-        
+
         {enemy.monsterData?.type && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Target className="w-3 h-3" />
@@ -112,11 +105,7 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <HPTracker
-            participant={enemy}
-            showHPDetails={false}
-            isInteractive={false}
-        />
+        <HPTracker participant={enemy} showHPDetails={false} isInteractive={false} />
 
         {enemy.monsterData?.specialAbilities && enemy.monsterData.specialAbilities.length > 0 && (
           <div className="space-y-1">
@@ -139,9 +128,7 @@ const EnemyCard: React.FC<EnemyCardProps> = ({
               Actions
             </div>
             <div className="space-y-1">
-              {enemy.monsterData.attacks.map((attack, index) => 
-                renderAttackButton(attack, index)
-              )}
+              {enemy.monsterData.attacks.map((attack, index) => renderAttackButton(attack, index))}
             </div>
           </div>
         )}

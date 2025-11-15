@@ -15,15 +15,15 @@
  * If it sounds like a LinkedIn post → Delete it. If it gives you chills → Ship it.
  */
 
-import { HeroSection } from '@/components/landing/HeroSection';
-import { SocialProofBanner } from '@/components/landing/SocialProofBanner';
 import { BenefitsSection } from '@/components/landing/BenefitsSection';
-import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
-import { PricingSection } from '@/components/landing/PricingSection';
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { FinalCTASection } from '@/components/landing/FinalCTASection';
 import { Footer } from '@/components/landing/Footer';
+import { HeroSection } from '@/components/landing/HeroSection';
+import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { SocialProofBanner } from '@/components/landing/SocialProofBanner';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 
 /**
  * Main Landing Page Component

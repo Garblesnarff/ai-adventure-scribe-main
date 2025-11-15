@@ -10,5 +10,5 @@ export const seaborn: CharacterRace = {
   speed: 30,
   languages: ['Common', 'Primordial'],
   backgroundImage: '/images/races/base/seaborn-class-card-background.png',
-  subraces: []
+  subraces: [],
 };

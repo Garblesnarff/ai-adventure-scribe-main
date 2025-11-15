@@ -1,11 +1,8 @@
 import React from 'react';
+
 import { Slider } from '@/components/ui/slider';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
 import logger from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 
 interface VolumeSliderProps {
   volume: number;
@@ -16,10 +13,7 @@ interface VolumeSliderProps {
  * VolumeSlider Component
  * Handles volume adjustment with visual feedback
  */
-export const VolumeSlider: React.FC<VolumeSliderProps> = ({
-  volume,
-  onVolumeChange,
-}) => {
+export const VolumeSlider: React.FC<VolumeSliderProps> = ({ volume, onVolumeChange }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>

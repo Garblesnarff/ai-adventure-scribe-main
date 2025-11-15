@@ -24,24 +24,24 @@ import { SentenceSegmenter } from '@/utils/sentence-segmenter';
  */
 export const splitIntoSegments = (
   content: string,
-  options: Partial<SegmentationOptions> = {}
+  options: Partial<SegmentationOptions> = {},
 ): string[] => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   // Use enhanced sentence splitting instead of basic regex
   const sentences = SentenceSegmenter.splitIntoSentences(content);
-  
+
   // Filter by minimum length
-  const validSentences = sentences.filter(sentence => sentence.trim().length >= opts.minLength);
-  
+  const validSentences = sentences.filter((sentence) => sentence.trim().length >= opts.minLength);
+
   // Use the SentenceSegmenter's optimization for proper segment lengths
   const optimizedSegments = SentenceSegmenter.optimizeSegmentLengths(
-    validSentences, 
-    opts.minLength, 
-    opts.maxLength
+    validSentences,
+    opts.minLength,
+    opts.maxLength,
   );
 
-  return optimizedSegments.map(s => s.trim()).filter(s => s.length > 0);
+  return optimizedSegments.map((s) => s.trim()).filter((s) => s.length > 0);
 };
 
 /**

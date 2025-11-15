@@ -1,33 +1,41 @@
 // External/SDK Imports
 import { useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 // Project Hooks
-import { useToast } from '@/hooks/use-toast';
-import { useGame } from '@/contexts/GameContext';
-import { useCombat } from '@/contexts/CombatContext';
-import { useAuth } from '@/contexts/AuthContext';
 
 // Project Utilities
-import { selectRelevantMemories } from '@/utils/memory/selection';
 
 // Project Services
-import { voiceConsistencyService } from '@/services/voice-consistency-service';
-import { AIService } from '@/services/ai-service';
-import { rollStateManager } from '@/services/combat/rollStateManager';
-import logger from '@/lib/logger';
 import { SessionStateService } from '@/services/session-state-service';
 import { RollManager } from '@/services/roll-manager';
 
 // Project Types
-import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
+import {
+  Memory,
+  isValidMemoryType,
+  isValidMemorySubcategory,
+} from '@/components/game/memory/types';
 import { ChatMessage } from '@/types/game';
 import type { Campaign } from '@/types/campaign';
 import type { Character } from '@/types/character';
 import type { DetectedEnemy, DetectedCombatAction } from '@/utils/combatDetection';
-import { detectCombatFromText } from '@/utils/combatDetection';
-import { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } from '@/utils/rollRequestParser';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCombat } from '@/contexts/CombatContext';
+import { useGame } from '@/contexts/GameContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
+import { AIService } from '@/services/ai-service';
+import { rollStateManager } from '@/services/combat/rollStateManager';
 import { DiceEngine } from '@/services/dice/DiceEngine';
+import { voiceConsistencyService } from '@/services/voice-consistency-service';
+import { detectCombatFromText } from '@/utils/combatDetection';
+import { selectRelevantMemories } from '@/utils/memory/selection';
+import {
+  parseRollRequests,
+  detectsSuccessfulAttack,
+  detectsCriticalHit,
+} from '@/utils/rollRequestParser';
 
 // Voice narration types
 export interface NarrationSegment {
@@ -70,7 +78,7 @@ export interface EnhancedChatMessage extends ChatMessage {
   narrationSegments?: NarrationSegment[];
   diceRolls?: DiceRoll[];
   rollRequests?: RollRequest[];
-  imageRequests?: Array<{ prompt: string; style?: string; quality?: 'low'|'medium'|'high' }>; 
+  imageRequests?: Array<{ prompt: string; style?: string; quality?: 'low' | 'medium' | 'high' }>;
   combatDetection?: {
     isCombat: boolean;
     confidence: number;
@@ -82,19 +90,18 @@ export interface EnhancedChatMessage extends ChatMessage {
   };
 }
 
-
 /**
  * useAIResponse Hook
- * 
+ *
  * Handles AI response generation with memory context window.
  * Formats tasks, fetches game context, and calls the DM Agent.
- * 
+ *
  * Dependencies:
  * - Supabase client (src/integrations/supabase/client.ts)
  * - Toast hook (src/hooks/use-toast.ts)
  * - Memory selection utils (src/utils/memorySelection.ts)
  * - ChatMessage and Memory types (src/types/game.ts, src/components/game/memory/types.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 export const useAIResponse = () => {
@@ -106,7 +113,7 @@ export const useAIResponse = () => {
 
   /**
    * Formats chat messages into a task object for the DM Agent.
-   * 
+   *
    * @param {ChatMessage[]} messages - The full message history
    * @param {ChatMessage} latestMessage - The latest player message
    * @returns {object} The formatted task object
@@ -119,29 +126,33 @@ export const useAIResponse = () => {
       context: {
         messageHistory: messages,
         playerIntent: latestMessage.context?.intent || 'query',
-        playerEmotion: latestMessage.context?.emotion || 'neutral'
-      }
+        playerEmotion: latestMessage.context?.emotion || 'neutral',
+      },
     };
   };
 
   /**
    * Fetches campaign and character details for the DM Agent context.
-   * 
+   *
    * @param {string} sessionId - The session ID
    * @returns {Promise<{campaign: Campaign, character: Character} | null>} The game context or null if failed
    */
-  const fetchGameContext = async (sessionId: string): Promise<{campaign: Campaign, character: Character} | null> => {
+  const fetchGameContext = async (
+    sessionId: string,
+  ): Promise<{ campaign: Campaign; character: Character } | null> => {
     try {
       logger.info('Fetching game session details for:', sessionId);
-      
+
       // Get game session with campaign and character details using JOIN
       const { data: sessionData, error: sessionError } = await supabase
         .from('game_sessions')
-        .select(`
+        .select(
+          `
           *,
           campaigns:campaign_id (*),
           characters:character_id (*)
-        `)
+        `,
+        )
         .eq('id', sessionId)
         .single();
 
@@ -157,7 +168,7 @@ export const useAIResponse = () => {
 
       return {
         campaign: sessionData.campaigns,
-        character: sessionData.characters
+        character: sessionData.characters,
       };
     } catch (error) {
       logger.error('Error in fetchGameContext:', error);
@@ -175,13 +186,17 @@ export const useAIResponse = () => {
    * @returns {Promise<EnhancedChatMessage>} The generated AI response with optional narration segments
    * @throws {Error} If the DM Agent call fails
    */
-  const getAIResponse = async (messages: ChatMessage[], sessionId: string, turnCount?: number): Promise<EnhancedChatMessage> => {
+  const getAIResponse = async (
+    messages: ChatMessage[],
+    sessionId: string,
+    turnCount?: number,
+  ): Promise<EnhancedChatMessage> => {
     try {
       logger.info('Getting AI response for session:', sessionId);
 
       // Get latest message context
       const latestMessage = messages[messages.length - 1];
-      
+
       // Guard against repeated message processing
       const sig = `${sessionId}|${latestMessage.text}|${messages.length}`;
       if (lastSigRef.current === sig) {
@@ -191,7 +206,7 @@ export const useAIResponse = () => {
           text: '',
           sender: 'dm',
           timestamp: new Date().toISOString(),
-          context: { emotion: 'neutral', intent: 'response' }
+          context: { emotion: 'neutral', intent: 'response' },
         };
       }
       lastSigRef.current = sig;
@@ -199,13 +214,17 @@ export const useAIResponse = () => {
       try {
         const diceCtx: any = (latestMessage as any).context?.diceRoll;
         if ((latestMessage as any).context?.intent === 'dice_roll' && diceCtx) {
-          await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_result', payload: diceCtx });
+          await SessionStateService.appendRollEvent(sessionId, {
+            kind: 'roll_result',
+            payload: diceCtx,
+          });
           // Optional durable logging (flag-gated)
           await RollManager.recordRollResult({
             sessionId,
             kind: 'check',
             resultTotal: Number(diceCtx.total) || 0,
-            resultNatural: typeof diceCtx.naturalRoll === 'number' ? diceCtx.naturalRoll : undefined,
+            resultNatural:
+              typeof diceCtx.naturalRoll === 'number' ? diceCtx.naturalRoll : undefined,
             meta: {
               formula: diceCtx.formula,
               advantage: !!diceCtx.advantage,
@@ -221,27 +240,38 @@ export const useAIResponse = () => {
             /\bi\s*rolled\s*(\d+)\b/,
             /rolled[^\d]*(\d+)\b/,
             /\btotal\s*[:=]\s*(\d+)\b/,
-            /=\s*(\d+)\b/
+            /=\s*(\d+)\b/,
           ];
           for (const p of patterns) {
             const mm = m.match(p);
-            if (mm && mm[1]) { total = parseInt(mm[1], 10); break; }
+            if (mm && mm[1]) {
+              total = parseInt(mm[1], 10);
+              break;
+            }
           }
           if (total !== null && !Number.isNaN(total)) {
-            await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_result', payload: { total, raw: latestMessage.text } });
-            await RollManager.recordRollResult({ sessionId, kind: 'check', resultTotal: total, meta: { raw: latestMessage.text } });
+            await SessionStateService.appendRollEvent(sessionId, {
+              kind: 'roll_result',
+              payload: { total, raw: latestMessage.text },
+            });
+            await RollManager.recordRollResult({
+              sessionId,
+              kind: 'check',
+              resultTotal: total,
+              meta: { raw: latestMessage.text },
+            });
           }
         }
       } catch (e) {
         logger.warn('Non-fatal: failed to append roll result log', e);
       }
-      
+
       // Detect if this is the first player message in the session
-      const isFirstMessage = messages.filter(m => m.sender === 'player').length <= 1;
-      
+      const isFirstMessage = messages.filter((m) => m.sender === 'player').length <= 1;
+
       // Fetch campaign and character context
       const gameContext = await fetchGameContext(sessionId);
-      
+
       if (!gameContext) {
         throw new Error('Failed to fetch game context');
       }
@@ -257,19 +287,21 @@ export const useAIResponse = () => {
 
       // Validate and transform memories
       const memories: Memory[] = (memoriesData || [])
-        .filter(memory => memory.created_at && memory.updated_at) // Filter out incomplete records
+        .filter((memory) => memory.created_at && memory.updated_at) // Filter out incomplete records
         .map((memory): Memory => {
           if (!isValidMemoryType(memory.type)) {
-            logger.warn(`[Memory] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
+            logger.warn(
+              `[Memory] Invalid memory type detected: ${memory.type}, defaulting to 'general'`,
+            );
             memory.type = 'general';
           }
-          
+
           // Handle subcategory validation and conversion
           let subcategory: Memory['subcategory'] = undefined;
           if (memory.subcategory && isValidMemorySubcategory(memory.subcategory)) {
             subcategory = memory.subcategory;
           }
-          
+
           return {
             id: memory.id,
             type: isValidMemoryType(memory.type) ? memory.type : 'general',
@@ -283,7 +315,7 @@ export const useAIResponse = () => {
             updated_at: memory.updated_at!, // We filtered for non-null above
             context_id: memory.context_id || undefined,
             related_memories: memory.related_memories || undefined,
-            tags: memory.tags || undefined
+            tags: memory.tags || undefined,
           };
         });
 
@@ -297,16 +329,16 @@ export const useAIResponse = () => {
         selectedMemories: selectedMemories.length,
         knownCharacters: Object.keys(voiceContext.knownCharacters).length,
         isFirstMessage: isFirstMessage,
-        combatDetected: combatDetection.isCombat
+        combatDetected: combatDetection.isCombat,
       });
 
       // Get conversation history in the format expected by AIService
-      const conversationHistory = messages.slice(0, -1).map(msg => ({
+      const conversationHistory = messages.slice(0, -1).map((msg) => ({
         id: `msg_${Date.now()}_${Math.random()}`,
-        role: msg.sender === 'player' ? 'user' as const : 'assistant' as const,
+        role: msg.sender === 'player' ? ('user' as const) : ('assistant' as const),
         content: msg.text,
         timestamp: new Date(),
-        narrationSegments: msg.narrationSegments
+        narrationSegments: msg.narrationSegments,
       }));
 
       // Create proper GameContext for AIService with combat awareness
@@ -321,15 +353,15 @@ export const useAIResponse = () => {
           currentPhase: gameState.currentPhase,
           isInCombat: combatState.isInCombat,
           currentTurnPlayerId: combatState.activeEncounter?.currentTurnParticipantId,
-          pendingRolls: gameState.diceRollQueue.pendingRolls.length
-        }
+          pendingRolls: gameState.diceRollQueue.pendingRolls.length,
+        },
       };
 
       logger.debug('🎮 AI Context with combat awareness:', {
         phase: gameState.currentPhase,
         inCombat: combatState.isInCombat,
         pendingRolls: gameState.diceRollQueue.pendingRolls.length,
-        currentTurn: combatState.activeEncounter?.currentTurnParticipantId
+        currentTurn: combatState.activeEncounter?.currentTurnParticipantId,
       });
 
       // Use AIService directly which has local Gemini integration and combat detection
@@ -338,13 +370,15 @@ export const useAIResponse = () => {
         context: aiContext,
         conversationHistory: conversationHistory,
         userPlan: userPlan || undefined,
-        turnCount: turnCount
+        turnCount: turnCount,
       });
 
       // Extract response data
       const responseText = result.text;
-      const narrationSegments = (result as any).narration_segments || (result as any).narrationSegments;
-      const imageRequests = (result as any).image_requests || (result as any).imageRequests || undefined;
+      const narrationSegments =
+        (result as any).narration_segments || (result as any).narrationSegments;
+      const imageRequests =
+        (result as any).image_requests || (result as any).imageRequests || undefined;
 
       // Parse roll requests from the response and process through GameContext
       let rollRequests: RollRequest[] = result.roll_requests || [];
@@ -352,14 +386,14 @@ export const useAIResponse = () => {
         // Check for roll requests in the text
         const parsedRequests = parseRollRequests(responseText);
         logger.info(`🎲 Parsed roll requests from DM text: ${parsedRequests.length}`);
-        rollRequests = parsedRequests.map(req => ({
+        rollRequests = parsedRequests.map((req) => ({
           type: req.type,
           formula: req.formula,
           purpose: req.purpose,
           dc: req.dc,
           ac: req.ac,
           advantage: req.advantage,
-          disadvantage: req.disadvantage
+          disadvantage: req.disadvantage,
         }));
 
         // Check for context-dependent roll requests (like damage after successful attacks)
@@ -381,7 +415,7 @@ export const useAIResponse = () => {
               rollRequests.push({
                 type: 'damage',
                 formula: damageRequest.formula,
-                purpose: damageRequest.purpose
+                purpose: damageRequest.purpose,
               });
 
               logger.info('🗡️ Added automatic damage roll request:', damageRequest);
@@ -391,13 +425,13 @@ export const useAIResponse = () => {
       }
 
       // Track attack rolls in roll state manager
-      rollRequests.forEach(request => {
+      rollRequests.forEach((request) => {
         if (request.type === 'attack') {
           const rollId = rollStateManager.addPendingRoll({
             type: 'attack',
             targetAC: request.ac,
             context: request.purpose || 'Attack roll',
-            actorId: gameContext.character?.id || 'player'
+            actorId: gameContext.character?.id || 'player',
           });
           logger.info('⚔️ Tracking attack roll:', rollId);
         }
@@ -407,15 +441,26 @@ export const useAIResponse = () => {
       // by MessageHandler AFTER the AI message is displayed to prevent premature response.
       // Logging is done here for tracking purposes.
       if (rollRequests.length > 0) {
-        logger.info('🎲 Found', rollRequests.length, 'roll requests in AI response (will process after message display)');
+        logger.info(
+          '🎲 Found',
+          rollRequests.length,
+          'roll requests in AI response (will process after message display)',
+        );
 
         // Persist roll request events to session state (lightweight logging)
         try {
-          await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_requests', payload: rollRequests });
+          await SessionStateService.appendRollEvent(sessionId, {
+            kind: 'roll_requests',
+            payload: rollRequests,
+          });
           // Durable roll request logging (flag-gated)
           for (const rr of rollRequests) {
-            const kindMap: Record<string, 'check'|'save'|'attack'|'initiative'|'damage'> = {
-              check: 'check', save: 'save', attack: 'attack', initiative: 'initiative', damage: 'damage'
+            const kindMap: Record<string, 'check' | 'save' | 'attack' | 'initiative' | 'damage'> = {
+              check: 'check',
+              save: 'save',
+              attack: 'attack',
+              initiative: 'initiative',
+              damage: 'damage',
             };
             const kind = kindMap[rr.type] || 'check';
             await RollManager.recordRollRequest({
@@ -438,15 +483,23 @@ export const useAIResponse = () => {
       if (result.combatDetection?.isCombat && gameState.currentPhase !== 'combat') {
         logger.info('⚔️ Combat detected, updating game phase');
         setGamePhase('combat');
-      } else if (!result.combatDetection?.isCombat && gameState.currentPhase === 'combat' && !combatState.isInCombat) {
+      } else if (
+        !result.combatDetection?.isCombat &&
+        gameState.currentPhase === 'combat' &&
+        !combatState.isInCombat
+      ) {
         logger.info('🕊️ Combat ended, returning to exploration');
         setGamePhase('exploration');
       }
 
       // Process voice assignments if we have narration segments
       if (narrationSegments && narrationSegments.length > 0) {
-        logger.info('🎭 Received structured response with', narrationSegments.length, 'narration segments');
-        
+        logger.info(
+          '🎭 Received structured response with',
+          narrationSegments.length,
+          'narration segments',
+        );
+
         try {
           await voiceConsistencyService.processVoiceAssignments(sessionId, narrationSegments);
           logger.info('✅ Processed voice assignments successfully');
@@ -462,7 +515,8 @@ export const useAIResponse = () => {
       let startHint = !!combatDetection.shouldStartCombat;
       let endHint = !!combatDetection.shouldEndCombat;
       if (startHint && endHint) {
-        if (combatState.isInCombat) startHint = false; else endHint = false;
+        if (combatState.isInCombat) startHint = false;
+        else endHint = false;
       }
 
       // Format the response as an EnhancedChatMessage
@@ -485,8 +539,8 @@ export const useAIResponse = () => {
           shouldStartCombat: startHint,
           shouldEndCombat: endHint,
           enemies: combatDetection.enemies || [],
-          combatActions: combatDetection.combatActions || []
-        }
+          combatActions: combatDetection.combatActions || [],
+        },
       };
     } catch (error) {
       logger.error('Error in getAIResponse:', error);

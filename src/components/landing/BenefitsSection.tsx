@@ -15,8 +15,8 @@
  * Messaging Rule: If it sounds like a feature list → Delete it
  */
 
-import React from 'react';
 import { Brain, Heart, BookOpen, Clock, Zap, Sword } from 'lucide-react';
+import React from 'react';
 
 export const BenefitsSection: React.FC = () => {
   return (
@@ -46,8 +46,8 @@ export const BenefitsSection: React.FC = () => {
               Your Choices Have Consequences - For Once
             </h3>
             <p className="text-gray-400 leading-relaxed">
-              Betray an NPC? They remember. Show mercy to an enemy? They'll return the favor.
-              Every decision ripples through your world, creating a story that's{' '}
+              Betray an NPC? They remember. Show mercy to an enemy? They'll return the favor. Every
+              decision ripples through your world, creating a story that's{' '}
               <span className="text-purple-400 font-semibold">uniquely yours</span>.
             </p>
           </div>
@@ -57,12 +57,11 @@ export const BenefitsSection: React.FC = () => {
             <div className="w-14 h-14 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Zap className="w-7 h-7 text-amber-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
-              The AI Learns How YOU Think
-            </h3>
+            <h3 className="text-2xl font-bold text-white mb-3">The AI Learns How YOU Think</h3>
             <p className="text-gray-400 leading-relaxed">
-              It tracks your playstyle. If you're a sneaky diplomat, NPCs start posting guards.
-              If you charge into battle, enemies lay traps. <span className="text-amber-400 font-semibold">It adapts</span>.
+              It tracks your playstyle. If you're a sneaky diplomat, NPCs start posting guards. If
+              you charge into battle, enemies lay traps.{' '}
+              <span className="text-amber-400 font-semibold">It adapts</span>.
             </p>
           </div>
 
@@ -75,8 +74,9 @@ export const BenefitsSection: React.FC = () => {
               A World So Real, You'll Feel Guilty Leaving
             </h3>
             <p className="text-gray-400 leading-relaxed">
-              NPCs with real motivations. Cities that evolve. A living world that continues
-              even when you're not playing. <span className="text-purple-400 font-semibold">It waits for you</span>.
+              NPCs with real motivations. Cities that evolve. A living world that continues even
+              when you're not playing.{' '}
+              <span className="text-purple-400 font-semibold">It waits for you</span>.
             </p>
           </div>
 
@@ -89,8 +89,8 @@ export const BenefitsSection: React.FC = () => {
               Every Session Writes Your Personal Fantasy Novel
             </h3>
             <p className="text-gray-400 leading-relaxed">
-              Not bullet points. Not logs. Full narrative storytelling that captures your epic moments.
-              Export your campaign as a{' '}
+              Not bullet points. Not logs. Full narrative storytelling that captures your epic
+              moments. Export your campaign as a{' '}
               <span className="text-amber-400 font-semibold">beautifully formatted story</span>{' '}
               you'll actually want to read.
             </p>
@@ -101,11 +101,10 @@ export const BenefitsSection: React.FC = () => {
             <div className="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Clock className="w-7 h-7 text-purple-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
-              No Scheduling. No Rulebooks.
-            </h3>
+            <h3 className="text-2xl font-bold text-white mb-3">No Scheduling. No Rulebooks.</h3>
             <p className="text-gray-400 leading-relaxed">
-              3 AM on a Tuesday? Your DM is ready. Don't know the difference between a d12 and a d20?
+              3 AM on a Tuesday? Your DM is ready. Don't know the difference between a d12 and a
+              d20?
               <span className="text-purple-400 font-semibold"> Doesn't matter</span>. Just play.
             </p>
           </div>
@@ -119,9 +118,10 @@ export const BenefitsSection: React.FC = () => {
               Play Your Way - Dark Lord, Hero, or Chaotic Wildcard
             </h3>
             <p className="text-gray-400 leading-relaxed max-w-4xl">
-              Want to be the villain? Go for it. The hero? Classic. The chaotic neutral wildcard who steals from the party?
-              We won't judge. The AI responds to{' '}
-              <span className="text-amber-400 font-semibold">who you actually are</span>, not who you're "supposed" to be.
+              Want to be the villain? Go for it. The hero? Classic. The chaotic neutral wildcard who
+              steals from the party? We won't judge. The AI responds to{' '}
+              <span className="text-amber-400 font-semibold">who you actually are</span>, not who
+              you're "supposed" to be.
             </p>
           </div>
         </div>

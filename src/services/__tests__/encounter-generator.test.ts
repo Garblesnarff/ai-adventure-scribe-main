@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import generator from '@/services/encounters/encounter-generator';
 
 describe('EncounterGenerator', () => {
@@ -17,8 +18,16 @@ describe('EncounterGenerator', () => {
   });
 
   it('uses biome to bias monster picks', () => {
-    const forest = generator.generate({ party: { members: [{ level: 2 }, { level: 2 }, { level: 2 }, { level: 2 }] }, world: { biome: 'forest' } });
-    const road = generator.generate({ party: { members: [{ level: 2 }, { level: 2 }, { level: 2 }, { level: 2 }] }, world: { biome: 'road' } });
-    expect(JSON.stringify(forest.participants.hostiles)).not.toEqual(JSON.stringify(road.participants.hostiles));
+    const forest = generator.generate({
+      party: { members: [{ level: 2 }, { level: 2 }, { level: 2 }, { level: 2 }] },
+      world: { biome: 'forest' },
+    });
+    const road = generator.generate({
+      party: { members: [{ level: 2 }, { level: 2 }, { level: 2 }, { level: 2 }] },
+      world: { biome: 'road' },
+    });
+    expect(JSON.stringify(forest.participants.hostiles)).not.toEqual(
+      JSON.stringify(road.participants.hostiles),
+    );
   });
 });

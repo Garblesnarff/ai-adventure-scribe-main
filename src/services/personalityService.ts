@@ -29,7 +29,9 @@ export class PersonalityService {
       throw new Error('API unavailable, using local fallback');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const token = session?.access_token;
 
     try {
@@ -67,7 +69,7 @@ export class PersonalityService {
     options?: {
       background?: string;
       alignment?: string;
-    }
+    },
   ): Promise<PersonalityElement> {
     const params = new URLSearchParams();
 
@@ -145,7 +147,7 @@ export class PersonalityService {
     options?: {
       background?: string;
       limit?: number;
-    }
+    },
   ): Promise<PersonalityElement[]> {
     const params = new URLSearchParams();
 
@@ -180,25 +182,25 @@ export class PersonalityService {
     const fallbackData = {
       traits: [
         "I idolize a particular hero of my faith, and constantly refer to that person's deeds and example.",
-        "I can find common ground between the fiercest enemies, empathizing with them and always working toward peace.",
-        "I always have a plan for what to do when things go wrong.",
-        "I judge people by their actions, not their words."
+        'I can find common ground between the fiercest enemies, empathizing with them and always working toward peace.',
+        'I always have a plan for what to do when things go wrong.',
+        'I judge people by their actions, not their words.',
       ],
       ideals: [
-        "Tradition. The ancient traditions of worship and sacrifice must be preserved and upheld.",
-        "Freedom. Chains are meant to be broken, as are those who would forge them.",
-        "Respect. People deserve to be treated with dignity and respect."
+        'Tradition. The ancient traditions of worship and sacrifice must be preserved and upheld.',
+        'Freedom. Chains are meant to be broken, as are those who would forge them.',
+        'Respect. People deserve to be treated with dignity and respect.',
       ],
       bonds: [
-        "I would die to recover an ancient relic of my faith that was lost long ago.",
-        "My ill-gotten gains go to support my family.",
-        "I have a family, but I have no idea where they are. One day, I hope to see them again."
+        'I would die to recover an ancient relic of my faith that was lost long ago.',
+        'My ill-gotten gains go to support my family.',
+        'I have a family, but I have no idea where they are. One day, I hope to see them again.',
       ],
       flaws: [
-        "I judge others harshly, and myself even more severely.",
+        'I judge others harshly, and myself even more severely.',
         "When I see something valuable, I can't think about anything but how to steal it.",
-        "The tyrant who rules my land will stop at nothing to see me killed."
-      ]
+        'The tyrant who rules my land will stop at nothing to see me killed.',
+      ],
     };
 
     const items = fallbackData[type];
@@ -208,7 +210,7 @@ export class PersonalityService {
       id: `fallback-${Date.now()}`,
       text: randomItem,
       source: 'PHB',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
   }
 }

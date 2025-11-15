@@ -131,7 +131,7 @@ export class DMService {
     } catch (error) {
       logger.error('[DMService] Error sending message:', error);
       throw new Error(
-        `Failed to send message to DM: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to send message to DM: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -199,10 +199,7 @@ export class DMService {
     const threadId = `session-${sessionId}`;
 
     try {
-      return await this.checkpointer.list(
-        { configurable: { thread_id: threadId } },
-        limit
-      );
+      return await this.checkpointer.list({ configurable: { thread_id: threadId } }, limit);
     } catch (error) {
       logger.error('[DMService] Error loading checkpoint history:', error);
       return [];
@@ -245,12 +242,7 @@ export class DMService {
 
       // If streaming is requested, use streaming graph invocation
       if (onStream) {
-        return await this.invokeGraphWithStreaming(
-          playerInput,
-          worldInfo,
-          threadId,
-          onStream
-        );
+        return await this.invokeGraphWithStreaming(playerInput, worldInfo, threadId, onStream);
       }
 
       // Non-streaming: invoke graph normally
@@ -277,7 +269,7 @@ export class DMService {
         {
           configurable: { thread_id: threadId },
           recursionLimit: 25,
-        }
+        },
       );
 
       // Map DMState to DMResponse
@@ -285,7 +277,7 @@ export class DMService {
     } catch (error) {
       logger.error('[DMService] Graph invocation failed:', error);
       throw new Error(
-        `Graph execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Graph execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -302,7 +294,7 @@ export class DMService {
     playerInput: string,
     worldInfo: WorldInfo,
     threadId: string,
-    onStream: (chunk: string) => void
+    onStream: (chunk: string) => void,
   ): Promise<DMResponse> {
     logger.info('[DMService] Invoking DM graph with streaming:', {
       threadId,

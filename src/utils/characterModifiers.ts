@@ -7,12 +7,19 @@
  * @author AI Dungeon Master Team
  */
 
-import { Character } from '@/types/character';
-import { Equipment } from '@/data/equipmentOptions';
+import type { Equipment } from '@/data/equipmentOptions';
+import type { Character } from '@/types/character';
+
 import logger from '@/lib/logger';
 
 // D&D 5e ability names
-export type AbilityName = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
+export type AbilityName =
+  | 'strength'
+  | 'dexterity'
+  | 'constitution'
+  | 'intelligence'
+  | 'wisdom'
+  | 'charisma';
 
 // D&D 5e skills and their associated abilities
 export const SKILL_ABILITIES: Record<string, AbilityName> = {
@@ -42,14 +49,14 @@ export const SKILL_ABILITIES: Record<string, AbilityName> = {
   deception: 'charisma',
   intimidation: 'charisma',
   performance: 'charisma',
-  persuasion: 'charisma'
+  persuasion: 'charisma',
 };
 
 // Common alternate skill names
 export const SKILL_ALIASES: Record<string, string> = {
-  'sleight': 'sleight of hand',
-  'animal': 'animal handling',
-  'handle': 'animal handling'
+  sleight: 'sleight of hand',
+  animal: 'animal handling',
+  handle: 'animal handling',
 };
 
 /**
@@ -99,9 +106,7 @@ export function isSkillProficient(character: Character, skillName: string): bool
 
   // Check if skill is in character's skill proficiencies
   if (character.skillProficiencies) {
-    return character.skillProficiencies.some(skill =>
-      skill.toLowerCase() === actualSkill
-    );
+    return character.skillProficiencies.some((skill) => skill.toLowerCase() === actualSkill);
   }
 
   return false;
@@ -200,7 +205,7 @@ export function calculateInitiativeModifier(character: Character): number {
 export function generateDiceFormula(
   diceType: number = 20,
   diceCount: number = 1,
-  modifier: number = 0
+  modifier: number = 0,
 ): string {
   const modifierStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
   return `${diceCount}d${diceType}${modifier !== 0 ? modifierStr : ''}`;
@@ -227,7 +232,7 @@ export function calculateRollWithBreakdown(
   character: Character,
   rollType: 'attack' | 'save' | 'check' | 'skill' | 'initiative',
   ability?: AbilityName,
-  skillName?: string
+  skillName?: string,
 ): RollCalculation {
   let abilityMod = 0;
   let proficiencyBonus = 0;
@@ -242,7 +247,9 @@ export function calculateRollWithBreakdown(
       abilityMod = getAbilityModifier(character, usedAbility);
       proficiencyBonus = getProficiencyBonus(character); // Assume weapon proficiency
       isProficient = true;
-      breakdown.push(`${usedAbility.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`);
+      breakdown.push(
+        `${usedAbility.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`,
+      );
       breakdown.push(`Prof +${proficiencyBonus}`);
       break;
 
@@ -252,7 +259,9 @@ export function calculateRollWithBreakdown(
       abilityMod = getAbilityModifier(character, ability);
       isProficient = isSaveProficient(character, ability);
       proficiencyBonus = isProficient ? getProficiencyBonus(character) : 0;
-      breakdown.push(`${ability.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`);
+      breakdown.push(
+        `${ability.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`,
+      );
       if (isProficient) breakdown.push(`Prof +${proficiencyBonus}`);
       break;
 
@@ -261,20 +270,25 @@ export function calculateRollWithBreakdown(
       usedAbility = ability;
       abilityMod = getAbilityModifier(character, ability);
       // Ability checks generally don't add proficiency unless it's a skill
-      breakdown.push(`${ability.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`);
+      breakdown.push(
+        `${ability.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`,
+      );
       break;
 
     case 'skill': {
       if (!skillName) throw new Error('Skill name required for skill check');
-      const skillAbility = SKILL_ABILITIES[skillName.toLowerCase()] ||
-                          SKILL_ALIASES[SKILL_ALIASES[skillName.toLowerCase()]];
+      const skillAbility =
+        SKILL_ABILITIES[skillName.toLowerCase()] ||
+        SKILL_ALIASES[SKILL_ALIASES[skillName.toLowerCase()]];
       if (!skillAbility) throw new Error(`Unknown skill: ${skillName}`);
 
       usedAbility = skillAbility;
       abilityMod = getAbilityModifier(character, skillAbility);
       isProficient = isSkillProficient(character, skillName);
       proficiencyBonus = isProficient ? getProficiencyBonus(character) : 0;
-      breakdown.push(`${skillAbility.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`);
+      breakdown.push(
+        `${skillAbility.slice(0, 3).toUpperCase()} ${abilityMod >= 0 ? '+' : ''}${abilityMod}`,
+      );
       if (isProficient) breakdown.push(`Prof +${proficiencyBonus}`);
       break;
     }
@@ -297,7 +311,7 @@ export function calculateRollWithBreakdown(
     totalModifier,
     isProficient,
     ability: usedAbility,
-    breakdown
+    breakdown,
   };
 }
 
@@ -308,18 +322,18 @@ export function parseAbilityName(input: string): AbilityName | null {
   const normalized = input.toLowerCase().trim();
 
   const abilityMap: Record<string, AbilityName> = {
-    'str': 'strength',
-    'strength': 'strength',
-    'dex': 'dexterity',
-    'dexterity': 'dexterity',
-    'con': 'constitution',
-    'constitution': 'constitution',
-    'int': 'intelligence',
-    'intelligence': 'intelligence',
-    'wis': 'wisdom',
-    'wisdom': 'wisdom',
-    'cha': 'charisma',
-    'charisma': 'charisma'
+    str: 'strength',
+    strength: 'strength',
+    dex: 'dexterity',
+    dexterity: 'dexterity',
+    con: 'constitution',
+    constitution: 'constitution',
+    int: 'intelligence',
+    intelligence: 'intelligence',
+    wis: 'wisdom',
+    wisdom: 'wisdom',
+    cha: 'charisma',
+    charisma: 'charisma',
   };
 
   return abilityMap[normalized] || null;

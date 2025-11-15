@@ -9,5 +9,5 @@ export const forestGiant: CharacterRace = {
   speed: 30,
   languages: ['Common', 'Elvish', 'Giant'],
   backgroundImage: '/images/races/base/forestgiant-class-card-background.png',
-  subraces: []
+  subraces: [],
 };

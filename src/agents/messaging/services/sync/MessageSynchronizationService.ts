@@ -1,20 +1,20 @@
 /**
  * Message Synchronization Service
- * 
+ *
  * This file defines the MessageSynchronizationService class, a singleton responsible
  * for synchronizing messages and their sequence information, likely in a distributed
  * or multi-agent scenario. It uses vector clocks for managing message order and
  * consistency, handles conflicts, and interacts with various other services for
  * queue management, connection state, error handling, and persistence.
- * 
+ *
  * Main Class:
  * - MessageSynchronizationService: Manages message synchronization and consistency.
- * 
+ *
  * Key Dependencies:
  * - Various messaging sub-services (Queue, Connection, Offline, ErrorHandling, Recovery).
  * - Sync-specific components (SyncStateManager, ConflictHandler, ConsistencyValidator, DatabaseAdapter).
  * - Message and Sync types.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -33,10 +33,9 @@ import { ConsistencyValidator } from './validators/ConsistencyValidator';
 import { ErrorCategory, ErrorSeverity } from '../../../error/types';
 import { QueuedMessage } from './types'; // Assuming QueuedMessage is from a higher-level type definition if not explicitly used here
 import { logger } from '../../../../lib/logger';
-    // If QueuedMessage from '../../types' is needed, add: import { QueuedMessage } from '../../types';
-    // Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
+// If QueuedMessage from '../../types' is needed, add: import { QueuedMessage } from '../../types';
+// Currently, QueuedMessage is also in ./types, resolve this ambiguity if possible.
 import { MessageSequence, MessageSyncOptions, SyncStatus } from './types';
-
 
 export class MessageSynchronizationService {
   private static instance: MessageSynchronizationService;
@@ -51,7 +50,7 @@ export class MessageSynchronizationService {
   private defaultOptions: MessageSyncOptions = {
     maxRetries: 3,
     retryDelay: 1000,
-    consistencyCheckInterval: 5000
+    consistencyCheckInterval: 5000,
   };
 
   private constructor() {
@@ -89,7 +88,7 @@ export class MessageSynchronizationService {
 
     this.syncInterval = setInterval(
       () => this.performConsistencyCheck(),
-      this.defaultOptions.consistencyCheckInterval
+      this.defaultOptions.consistencyCheckInterval,
     );
   }
 
@@ -120,8 +119,8 @@ export class MessageSynchronizationService {
         {
           category: ErrorCategory.DATABASE,
           context: 'MessageSync.saveSequence',
-          severity: ErrorSeverity.HIGH
-        }
+          severity: ErrorSeverity.HIGH,
+        },
       );
 
       await this.stateManager.updateSyncState(agentId, this.queueService.getQueueIds());
@@ -146,10 +145,10 @@ export class MessageSynchronizationService {
         {
           category: ErrorCategory.DATABASE,
           context: 'MessageSync.getAllSequences',
-          severity: ErrorSeverity.HIGH
-        }
+          severity: ErrorSeverity.HIGH,
+        },
       );
-      
+
       for (const sequence of sequences) {
         await this.processMessageSequence(sequence);
       }
@@ -168,10 +167,7 @@ export class MessageSynchronizationService {
     } else {
       Object.entries(sequence.vectorClock).forEach(([agentId, count]) => {
         const currentClock = this.stateManager.getVectorClock();
-        currentClock[agentId] = Math.max(
-          currentClock[agentId] || 0,
-          count
-        );
+        currentClock[agentId] = Math.max(currentClock[agentId] || 0, count);
       });
     }
   }

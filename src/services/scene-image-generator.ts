@@ -1,5 +1,7 @@
 import { openRouterService, type UploadOptions } from './openrouter-service';
+
 import type { Character } from '@/types/character';
+
 import logger from '@/lib/logger';
 
 type Quality = 'low' | 'medium' | 'high';
@@ -16,7 +18,18 @@ export interface SceneImageRequest {
     location?: string | null;
     background_image?: string | null;
   };
-  character?: Pick<Character, 'name' | 'race' | 'subrace' | 'class' | 'appearance' | 'personality_notes' | 'avatar_url' | 'image_url' | 'theme'> | null;
+  character?: Pick<
+    Character,
+    | 'name'
+    | 'race'
+    | 'subrace'
+    | 'class'
+    | 'appearance'
+    | 'personality_notes'
+    | 'avatar_url'
+    | 'image_url'
+    | 'theme'
+  > | null;
   quality?: Quality;
   model?: string;
   storage?: UploadOptions;
@@ -35,14 +48,20 @@ export interface SceneImageResult {
  * Uses server-proxied image generation, then uploads to Supabase storage.
  */
 export async function generateSceneImage(req: SceneImageRequest): Promise<SceneImageResult> {
-  const quality: Quality = req.quality || (import.meta.env.VITE_DM_IMAGE_QUALITY as Quality) || 'low';
+  const quality: Quality =
+    req.quality || (import.meta.env.VITE_DM_IMAGE_QUALITY as Quality) || 'low';
   const model = req.model || 'google/gemini-2.5-flash-image-preview';
 
   const prompt = buildPrompt(req);
 
   let referenceBase64: string | undefined;
   try {
-    const refUrl = req.referenceImageUrl || req.character?.avatar_url || req.character?.image_url || req.campaign?.background_image || undefined;
+    const refUrl =
+      req.referenceImageUrl ||
+      req.character?.avatar_url ||
+      req.character?.image_url ||
+      req.campaign?.background_image ||
+      undefined;
     if (refUrl) referenceBase64 = await fetchImageAsBase64(refUrl);
   } catch (e) {
     logger.warn('[SceneImage] Failed to fetch reference image, continuing without it');
@@ -50,9 +69,17 @@ export async function generateSceneImage(req: SceneImageRequest): Promise<SceneI
 
   const t0 = performance.now();
   logger.info('[SceneImage] Generating image', { model, quality, promptLen: prompt.length });
-  const base64 = await openRouterService.generateImage({ prompt, model, referenceImage: referenceBase64, quality });
+  const base64 = await openRouterService.generateImage({
+    prompt,
+    model,
+    referenceImage: referenceBase64,
+    quality,
+  });
 
-  const uploadedUrl = await openRouterService.uploadImage(base64, req.storage || defaultStorage(req));
+  const uploadedUrl = await openRouterService.uploadImage(
+    base64,
+    req.storage || defaultStorage(req),
+  );
   const ms = Math.round(performance.now() - t0);
   logger.info('[SceneImage] Uploaded image', { ms, urlPreview: uploadedUrl?.slice(0, 60) });
   return { url: uploadedUrl, prompt, model, quality };
@@ -74,7 +101,9 @@ function buildPrompt(req: SceneImageRequest): string {
   if (req.campaign?.tone) parts.push(`Tone: ${req.campaign.tone}.`);
   if (req.campaign?.atmosphere) parts.push(`Atmosphere: ${req.campaign.atmosphere}.`);
   if (req.campaign?.era || req.campaign?.location) {
-    parts.push(`Setting: ${[req.campaign.location, req.campaign.era].filter(Boolean).join(' / ')}.`);
+    parts.push(
+      `Setting: ${[req.campaign.location, req.campaign.era].filter(Boolean).join(' / ')}.`,
+    );
   }
 
   if (req.character) {

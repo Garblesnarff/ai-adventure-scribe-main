@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+
 import { deepEqual, shallowEqual, arrayEqual, pick } from './equality';
 
 describe('deepEqual', () => {
@@ -33,20 +34,13 @@ describe('deepEqual', () => {
   });
 
   it('should compare nested objects correctly', () => {
-    expect(deepEqual(
-      { a: 1, b: { c: 2, d: 3 } },
-      { a: 1, b: { c: 2, d: 3 } }
-    )).toBe(true);
+    expect(deepEqual({ a: 1, b: { c: 2, d: 3 } }, { a: 1, b: { c: 2, d: 3 } })).toBe(true);
 
-    expect(deepEqual(
-      { a: 1, b: { c: 2, d: { e: 4 } } },
-      { a: 1, b: { c: 2, d: { e: 4 } } }
-    )).toBe(true);
+    expect(deepEqual({ a: 1, b: { c: 2, d: { e: 4 } } }, { a: 1, b: { c: 2, d: { e: 4 } } })).toBe(
+      true,
+    );
 
-    expect(deepEqual(
-      { a: 1, b: { c: 2, d: 3 } },
-      { a: 1, b: { c: 2, d: 4 } }
-    )).toBe(false);
+    expect(deepEqual({ a: 1, b: { c: 2, d: 3 } }, { a: 1, b: { c: 2, d: 4 } })).toBe(false);
   });
 
   it('should compare arrays correctly', () => {
@@ -78,15 +72,15 @@ describe('deepEqual', () => {
     // Simulate the combat state scenario from GameContext
     const state1 = {
       isInCombat: true,
-      currentTurnPlayerId: 'player-123'
+      currentTurnPlayerId: 'player-123',
     };
     const state2 = {
       isInCombat: true,
-      currentTurnPlayerId: 'player-123'
+      currentTurnPlayerId: 'player-123',
     };
     const state3 = {
       isInCombat: true,
-      currentTurnPlayerId: 'player-456'
+      currentTurnPlayerId: 'player-456',
     };
 
     expect(deepEqual(state1, state2)).toBe(true);
@@ -156,15 +150,19 @@ describe('pick', () => {
     const combatState = {
       isInCombat: true,
       currentTurnPlayerId: 'player-123',
-      activeEncounter: { /* complex nested object */ },
-      participants: [/* array */],
-      otherStuff: 'ignored'
+      activeEncounter: {
+        /* complex nested object */
+      },
+      participants: [
+        /* array */
+      ],
+      otherStuff: 'ignored',
     };
 
     const extracted = pick(combatState, ['isInCombat', 'currentTurnPlayerId']);
     expect(extracted).toEqual({
       isInCombat: true,
-      currentTurnPlayerId: 'player-123'
+      currentTurnPlayerId: 'player-123',
     });
     expect('activeEncounter' in extracted).toBe(false);
   });
@@ -172,7 +170,12 @@ describe('pick', () => {
 
 describe('Performance considerations', () => {
   it('shallow equality should be faster for large objects', () => {
-    const largeObj1 = { ...Array.from({ length: 100 }, (_, i) => ({ [`key${i}`]: i })).reduce((acc, item) => ({ ...acc, ...item }), {}) };
+    const largeObj1 = {
+      ...Array.from({ length: 100 }, (_, i) => ({ [`key${i}`]: i })).reduce(
+        (acc, item) => ({ ...acc, ...item }),
+        {},
+      ),
+    };
     const largeObj2 = { ...largeObj1 };
 
     const shallowStart = performance.now();

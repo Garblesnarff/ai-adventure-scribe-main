@@ -1,13 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { useCampaign } from '@/contexts/CampaignContext';
-import { useToast } from '@/components/ui/use-toast';
-import StepNavigation from '../shared/StepNavigation';
-import ProgressIndicator from '../shared/ProgressIndicator';
-import CampaignPreview from '../shared/CampaignPreview';
-import WizardHeader from './WizardHeader';
-import { useAutosave } from '@/hooks/useAutosave';
+
 import { wizardSteps } from './constants';
 import { useCampaignSave } from './useCampaignSave';
 import {
@@ -15,8 +8,17 @@ import {
   validateGenreSelection,
   validateCampaignParameters,
   validateCampaignEnhancements,
-  validateCompleteCampaign
+  validateCompleteCampaign,
 } from './validation';
+import WizardHeader from './WizardHeader';
+import CampaignPreview from '../shared/CampaignPreview';
+import ProgressIndicator from '../shared/ProgressIndicator';
+import StepNavigation from '../shared/StepNavigation';
+
+import { Card } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { useCampaign } from '@/contexts/CampaignContext';
+import { useAutosave } from '@/hooks/useAutosave';
 import logger from '@/lib/logger';
 
 /**
@@ -72,16 +74,18 @@ const WizardContent: React.FC = () => {
       try {
         const campaignId = await saveCampaign(state.campaign);
         toast({
-          title: "Campaign Created Successfully!",
-          description: "Your new campaign is ready. Select or create a character to begin your adventure.",
+          title: 'Campaign Created Successfully!',
+          description:
+            'Your new campaign is ready. Select or create a character to begin your adventure.',
         });
         navigate(`/app/campaigns/${campaignId}`);
       } catch (error) {
         logger.error('Error saving campaign:', error);
         toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to create campaign. Please try again.",
-          variant: "destructive",
+          title: 'Error',
+          description:
+            error instanceof Error ? error.message : 'Failed to create campaign. Please try again.',
+          variant: 'destructive',
         });
       }
     }
@@ -110,19 +114,29 @@ const WizardContent: React.FC = () => {
         {/* Main Campaign Creation Area */}
         <div className="xl:col-span-2">
           <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-            <WizardHeader step={currentStep + 1} totalSteps={wizardSteps.length} autosaveKey={storageKey} formSnapshot={state.campaign} />
+            <WizardHeader
+              step={currentStep + 1}
+              totalSteps={wizardSteps.length}
+              autosaveKey={storageKey}
+              formSnapshot={state.campaign}
+            />
             <ProgressIndicator currentStep={currentStep} totalSteps={wizardSteps.length} />
             {hasDraft && (
               <div className="flex justify-end mb-3">
-                <button className="btn btn-sm mr-2" onClick={() => {
-                  const draft = restore();
-                  if (draft) {
-                    dispatch({ type: 'UPDATE_CAMPAIGN', payload: draft });
-                  }
-                }}>
+                <button
+                  className="btn btn-sm mr-2"
+                  onClick={() => {
+                    const draft = restore();
+                    if (draft) {
+                      dispatch({ type: 'UPDATE_CAMPAIGN', payload: draft });
+                    }
+                  }}
+                >
                   Restore draft
                 </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => clear()}>Clear draft</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => clear()}>
+                  Clear draft
+                </button>
               </div>
             )}
             <div className="min-h-[600px]">

@@ -1,11 +1,12 @@
-import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+
+import type { Character } from '@/types/character';
+
 import { MemoizedCharacterCard } from '@/components/character-list/character-card';
-import { Character } from '@/types/character';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState } from '@/components/ui/empty-state';
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
@@ -18,13 +19,15 @@ const CampaignCharacterList: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('characters')
-        .select(`
+        .select(
+          `
           id, name, description, race, class, level, image_url, background_image, appearance, personality_traits, backstory_elements, background,
           character_stats!left (
             strength, dexterity, constitution, intelligence, wisdom, charisma,
             max_hit_points, current_hit_points, armor_class
           )
-        `)
+        `,
+        )
         .eq('campaign_id', campaignId as string)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -39,16 +42,22 @@ const CampaignCharacterList: React.FC = () => {
     const callbackId = subscriptionManager.subscribeToEvents('characters', {
       events: ['INSERT', 'UPDATE', 'DELETE'],
       filter: (payload) => {
-        const newCampaignId = (payload.new as { campaign_id?: string } | null | undefined)?.campaign_id;
-        const oldCampaignId = (payload.old as { campaign_id?: string } | null | undefined)?.campaign_id;
+        const newCampaignId = (payload.new as { campaign_id?: string } | null | undefined)
+          ?.campaign_id;
+        const oldCampaignId = (payload.old as { campaign_id?: string } | null | undefined)
+          ?.campaign_id;
         return newCampaignId === campaignId || oldCampaignId === campaignId;
       },
       callback: (payload) => {
-        const queryKey: [string, string | undefined, string] = ['campaign', campaignId, 'characters'];
+        const queryKey: [string, string | undefined, string] = [
+          'campaign',
+          campaignId,
+          'characters',
+        ];
         if (payload.eventType === 'DELETE' || payload.eventType === 'INSERT') {
           logger.debug('Characters realtime change detected, invalidating query', {
             eventType: payload.eventType,
-            id: (payload.new ?? payload.old)?.id
+            id: (payload.new ?? payload.old)?.id,
           });
           queryClient.invalidateQueries({ queryKey, exact: true });
           return;
@@ -67,7 +76,7 @@ const CampaignCharacterList: React.FC = () => {
 
             const updatedRow = {
               ...previous[index],
-              ...payload.new
+              ...payload.new,
             };
 
             const next = [...previous];
@@ -75,7 +84,7 @@ const CampaignCharacterList: React.FC = () => {
             return next;
           });
         }
-      }
+      },
     });
 
     return () => {
@@ -102,17 +111,7 @@ const CampaignCharacterList: React.FC = () => {
   const characters = transformCharacterData(data || []);
 
   if (!characters.length) {
-    return (
-      <div className="mt-4">
-        <EmptyState
-          illustration="no-characters"
-          title="No characters in this campaign"
-          description="No characters have been assigned to this campaign yet. Create characters and assign them to join this adventure."
-          variant="card"
-          maxWidth="md"
-        />
-      </div>
-    );
+    return <div className="text-muted-foreground mt-4">No characters in this campaign yet.</div>;
   }
 
   return (

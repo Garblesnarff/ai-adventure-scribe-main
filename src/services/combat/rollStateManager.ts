@@ -41,7 +41,7 @@ export class RollStateManager {
   private static instance: RollStateManager;
   private state: CombatRollState = {
     pendingRolls: [],
-    completedRolls: []
+    completedRolls: [],
   };
 
   static getInstance(): RollStateManager {
@@ -59,7 +59,7 @@ export class RollStateManager {
     const pendingRoll: PendingRoll = {
       ...roll,
       id,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.state.pendingRolls.push(pendingRoll);
@@ -69,12 +69,16 @@ export class RollStateManager {
   /**
    * Record an attack roll result and mark if damage is needed
    */
-  recordAttackRoll(rollId: string, result: number, targetAC?: number): {
+  recordAttackRoll(
+    rollId: string,
+    result: number,
+    targetAC?: number,
+  ): {
     hit: boolean;
     critical: boolean;
     needsDamageRoll: boolean;
   } {
-    const roll = this.state.pendingRolls.find(r => r.id === rollId);
+    const roll = this.state.pendingRolls.find((r) => r.id === rollId);
     if (!roll || roll.type !== 'attack') {
       return { hit: false, critical: false, needsDamageRoll: false };
     }
@@ -92,13 +96,13 @@ export class RollStateManager {
       success: hit,
       timestamp: Date.now(),
       context: roll.context,
-      actorId: roll.actorId
+      actorId: roll.actorId,
     };
 
     this.state.completedRolls.push(completedRoll);
 
     // Remove from pending
-    this.state.pendingRolls = this.state.pendingRolls.filter(r => r.id !== rollId);
+    this.state.pendingRolls = this.state.pendingRolls.filter((r) => r.id !== rollId);
 
     // Track if we need damage roll
     if (hit) {
@@ -122,7 +126,7 @@ export class RollStateManager {
       result,
       timestamp: Date.now(),
       context: `Damage for attack ${attackRollId}`,
-      actorId: this.getActorIdForRoll(attackRollId) || 'unknown'
+      actorId: this.getActorIdForRoll(attackRollId) || 'unknown',
     };
 
     this.state.completedRolls.push(completedRoll);
@@ -148,7 +152,7 @@ export class RollStateManager {
    */
   getAwaitingDamageRoll(): RollResult | null {
     if (!this.state.awaitingDamageFor) return null;
-    return this.state.completedRolls.find(r => r.id === this.state.awaitingDamageFor) || null;
+    return this.state.completedRolls.find((r) => r.id === this.state.awaitingDamageFor) || null;
   }
 
   /**
@@ -162,12 +166,12 @@ export class RollStateManager {
    * Get damage roll suggestion with character data
    */
   getDamageRollSuggestion(attackRollId: string): { formula: string; purpose: string } | null {
-    const attackRoll = this.state.completedRolls.find(r => r.id === attackRollId);
+    const attackRoll = this.state.completedRolls.find((r) => r.id === attackRollId);
     if (!attackRoll) return null;
 
     // Find the original pending roll to get weapon and character data
-    const originalPending = this.state.pendingRolls.find(p =>
-      p.weaponName && p.actorId === attackRoll.actorId
+    const originalPending = this.state.pendingRolls.find(
+      (p) => p.weaponName && p.actorId === attackRoll.actorId,
     );
 
     if (!originalPending?.weaponName) {
@@ -182,14 +186,17 @@ export class RollStateManager {
       originalPending.weaponName,
       isCritical,
       originalPending.character,
-      originalPending.preferredAbility
+      originalPending.preferredAbility,
     );
   }
 
   /**
    * Get attack roll suggestion with character data
    */
-  getAttackRollSuggestion(weaponName: string, character?: import('@/types/character').Character): { formula: string; purpose: string } {
+  getAttackRollSuggestion(
+    weaponName: string,
+    character?: import('@/types/character').Character,
+  ): { formula: string; purpose: string } {
     const { DiceEngine } = require('../dice/DiceEngine');
     return DiceEngine.createAttackRollRequest(weaponName, character);
   }
@@ -207,7 +214,7 @@ export class RollStateManager {
   clearAllState(): void {
     this.state = {
       pendingRolls: [],
-      completedRolls: []
+      completedRolls: [],
     };
   }
 
@@ -233,7 +240,7 @@ export class RollStateManager {
   }
 
   private getActorIdForRoll(rollId: string): string | undefined {
-    const completedRoll = this.state.completedRolls.find(r => r.id === rollId);
+    const completedRoll = this.state.completedRolls.find((r) => r.id === rollId);
     return completedRoll?.actorId;
   }
 }

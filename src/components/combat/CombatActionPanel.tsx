@@ -1,18 +1,11 @@
 /**
  * Combat Action Panel Component
- * 
+ *
  * Replaces the normal chat input during combat with D&D 5e action buttons.
  * Provides quick access to standard actions while maintaining tabletop feel.
  * Actions are sent to the AI DM for narrative resolution.
  */
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import {
   Sword,
   Shield,
@@ -30,23 +23,43 @@ import {
   Coffee,
   UserX,
   Skull,
-  Plus
+  Plus,
 } from 'lucide-react';
-import { useCombat } from '@/contexts/CombatContext';
-import { ActionType, ConditionName, Condition } from '@/types/combat';
-import { Equipment, allEquipment } from '@/data/equipmentOptions';
-import { performAttack, canUseSneakAttack } from '@/utils/attackUtils';
-import SpellSlotPanel from '@/components/spellcasting/SpellSlotPanel';
+import React, { useState } from 'react';
+
 import AttackRollVisualization, { type AttackResult } from './AttackRollVisualization';
+
+import type { Equipment } from '@/data/equipmentOptions';
+import type { ActionType, ConditionName, Condition } from '@/types/combat';
+
+import SpellSlotPanel from '@/components/spellcasting/SpellSlotPanel';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { useCombat } from '@/contexts/CombatContext';
+import { allEquipment } from '@/data/equipmentOptions';
 import logger from '@/lib/logger';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { performAttack, canUseSneakAttack } from '@/utils/attackUtils';
 
 // ===========================
 // Condition Management Components
 // ===========================
 
 // Condition Icons & Colors
-const CONDITION_ICONS: Record<ConditionName, { icon: React.ComponentType<any>; color: string; bgColor: string }> = {
+const CONDITION_ICONS: Record<
+  ConditionName,
+  { icon: React.ComponentType<any>; color: string; bgColor: string }
+> = {
   blinded: { icon: UserX, color: 'text-white', bgColor: 'bg-gray-500' },
   charmed: { icon: Heart, color: 'text-white', bgColor: 'bg-pink-500' },
   deafened: { icon: UserX, color: 'text-white', bgColor: 'bg-slate-500' },
@@ -66,86 +79,91 @@ const CONDITION_ICONS: Record<ConditionName, { icon: React.ComponentType<any>; c
 };
 
 // Common D&D conditions with descriptions
-const CONDITION_TEMPLATES: Record<ConditionName, { name: string; description: string; defaultDuration: number }> = {
+const CONDITION_TEMPLATES: Record<
+  ConditionName,
+  { name: string; description: string; defaultDuration: number }
+> = {
   blinded: {
     name: 'Blinded',
     description: "Can't see, attacks against target have advantage, auto-miss on own attacks",
-    defaultDuration: 3
+    defaultDuration: 3,
   },
   charmed: {
     name: 'Charmed',
     description: 'Cannot attack charmer, regards charmer as friendly',
-    defaultDuration: 10
+    defaultDuration: 10,
   },
   deafened: {
     name: 'Deafened',
     description: 'Cannot hear sounds, fails audio-dependent saves',
-    defaultDuration: 5
+    defaultDuration: 5,
   },
   frightened: {
     name: 'Frightened',
     description: 'Cannot approach source of fear, disadvantage on attacks and checks',
-    defaultDuration: 5
+    defaultDuration: 5,
   },
   grappled: {
     name: 'Grappled',
     description: 'Speed becomes 0, can break free with Athletics or Acrobatics',
-    defaultDuration: 0 // Indeterminate until broken
+    defaultDuration: 0, // Indeterminate until broken
   },
   incapacitated: {
     name: 'Incapacitated',
     description: 'Cannot take actions or speak, no reactions',
-    defaultDuration: 3
+    defaultDuration: 3,
   },
   invisible: {
     name: 'Invisible',
-    description: 'Cannot be detected by sight, attacks have advantage, disadvantage to being targeted',
-    defaultDuration: 10
+    description:
+      'Cannot be detected by sight, attacks have advantage, disadvantage to being targeted',
+    defaultDuration: 10,
   },
   paralyzed: {
     name: 'Paralyzed',
     description: 'Cannot move, speak, or take actions, auto-fails STR and DEX saves',
-    defaultDuration: 3
+    defaultDuration: 3,
   },
   petrified: {
     name: 'Petrified',
     description: 'Turned to stone, unconscious and cannot take actions',
-    defaultDuration: 10
+    defaultDuration: 10,
   },
   poisoned: {
     name: 'Poisoned',
     description: 'Disadvantage on attack rolls and ability checks',
-    defaultDuration: 10
+    defaultDuration: 10,
   },
   prone: {
     name: 'Prone',
-    description: 'Lying down, melee attacks vs prone have advantage, ranged attacks have disadvantage',
-    defaultDuration: 0 // Indeterminate until standing
+    description:
+      'Lying down, melee attacks vs prone have advantage, ranged attacks have disadvantage',
+    defaultDuration: 0, // Indeterminate until standing
   },
   restrained: {
     name: 'Restrained',
     description: 'Speed 0, disadvantage on DEX saves, advantage on attacks against target',
-    defaultDuration: 5
+    defaultDuration: 5,
   },
   stunned: {
     name: 'Stunned',
     description: 'Cannot take actions, auto-fails STR and DEX saves',
-    defaultDuration: 1
+    defaultDuration: 1,
   },
   unconscious: {
     name: 'Unconscious',
     description: 'Completely unaware, defense has disadvantage, criticals automatically hit',
-    defaultDuration: 10
+    defaultDuration: 10,
   },
   exhaustion: {
     name: 'Exhaustion',
     description: 'Various penalties based on level (1-6), can lead to death at level 6',
-    defaultDuration: -1 // Persistent
+    defaultDuration: -1, // Persistent
   },
   surprised: {
     name: 'Surprised',
     description: 'Cannot take an action this turn',
-    defaultDuration: 0 // Until end of turn
+    defaultDuration: 0, // Until end of turn
   },
 };
 
@@ -171,7 +189,7 @@ const ConditionApplicationPanel: React.FC<ConditionApplicationPanelProps> = ({
   const [conditionDuration, setConditionDuration] = useState<number>(3);
 
   const applicableConditions = Object.entries(CONDITION_TEMPLATES).filter(
-    ([conditionName]) => conditionName !== 'surprised' && conditionName !== 'exhaustion'
+    ([conditionName]) => conditionName !== 'surprised' && conditionName !== 'exhaustion',
   );
 
   const handleApplyCondition = () => {
@@ -201,7 +219,10 @@ const ConditionApplicationPanel: React.FC<ConditionApplicationPanelProps> = ({
       <div className="space-y-3">
         <div>
           <label className="text-sm font-medium">Condition:</label>
-          <Select value={selectedCondition || ''} onValueChange={(value) => setSelectedCondition(value as ConditionName)}>
+          <Select
+            value={selectedCondition || ''}
+            onValueChange={(value) => setSelectedCondition(value as ConditionName)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a condition" />
             </SelectTrigger>
@@ -209,9 +230,12 @@ const ConditionApplicationPanel: React.FC<ConditionApplicationPanelProps> = ({
               {applicableConditions.map(([conditionName, template]) => (
                 <SelectItem key={conditionName} value={conditionName}>
                   <div className="flex items-center space-x-2">
-              {React.createElement(CONDITION_ICONS[conditionName as ConditionName]?.icon || UserX, {
-                className: "w-4 h-4"
-              })}
+                    {React.createElement(
+                      CONDITION_ICONS[conditionName as ConditionName]?.icon || UserX,
+                      {
+                        className: 'w-4 h-4',
+                      },
+                    )}
                     <span>{template.name}</span>
                   </div>
                 </SelectItem>
@@ -236,7 +260,7 @@ const ConditionApplicationPanel: React.FC<ConditionApplicationPanelProps> = ({
               <SelectValue placeholder="Select target" />
             </SelectTrigger>
             <SelectContent>
-              {participants.map(participant => (
+              {participants.map((participant) => (
                 <SelectItem key={participant.id} value={participant.id}>
                   {participant.name}
                   {participant.conditions.length > 0 && (
@@ -276,14 +300,19 @@ const ConditionApplicationPanel: React.FC<ConditionApplicationPanelProps> = ({
       <div className="space-y-2">
         <label className="text-sm font-medium">Managing Conditions:</label>
         <div className="space-y-1">
-          {participants.map(participant => (
+          {participants.map((participant) =>
             participant.conditions.map((condition: Condition, index: number) => (
-              <div key={`${participant.id}-${condition.name}-${index}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div
+                key={`${participant.id}-${condition.name}-${index}`}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded"
+              >
                 <div className="flex items-center space-x-2">
                   {React.createElement(CONDITION_ICONS[condition.name]?.icon || UserX, {
-                    className: "w-4 h-4"
+                    className: 'w-4 h-4',
                   })}
-                  <span className="text-sm">{condition.name} on {participant.name}</span>
+                  <span className="text-sm">
+                    {condition.name} on {participant.name}
+                  </span>
                   {condition.duration > 0 && (
                     <Badge variant="outline" className="text-xs">
                       {condition.duration} rounds
@@ -299,8 +328,8 @@ const ConditionApplicationPanel: React.FC<ConditionApplicationPanelProps> = ({
                   ×
                 </Button>
               </div>
-            ))
-          ))}
+            )),
+          )}
         </div>
       </div>
     </div>
@@ -316,12 +345,12 @@ interface ActionDefinition {
   name: string;
   icon: React.ComponentType<any>;
   description: string;
-  actionRequired: boolean;  // Uses action slot
-  bonusAction: boolean;     // Uses bonus action slot
-  quickAction: boolean;     // Can be done without detailed input
+  actionRequired: boolean; // Uses action slot
+  bonusAction: boolean; // Uses bonus action slot
+  quickAction: boolean; // Can be done without detailed input
 }
 
-  const COMBAT_ACTIONS: ActionDefinition[] = [
+const COMBAT_ACTIONS: ActionDefinition[] = [
   {
     type: 'attack',
     name: 'Attack',
@@ -329,7 +358,7 @@ interface ActionDefinition {
     description: 'Make a weapon or unarmed attack',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
+    quickAction: false,
   },
   {
     type: 'cast_spell',
@@ -338,7 +367,7 @@ interface ActionDefinition {
     description: 'Cast a spell or use a magical ability',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
+    quickAction: false,
   },
   {
     type: 'dash',
@@ -347,7 +376,7 @@ interface ActionDefinition {
     description: 'Move up to your speed again',
     actionRequired: true,
     bonusAction: false,
-    quickAction: true
+    quickAction: true,
   },
   {
     type: 'dodge',
@@ -356,7 +385,7 @@ interface ActionDefinition {
     description: 'Focus entirely on avoiding attacks',
     actionRequired: true,
     bonusAction: false,
-    quickAction: true
+    quickAction: true,
   },
   {
     type: 'help',
@@ -365,7 +394,7 @@ interface ActionDefinition {
     description: 'Give an ally advantage on their next ability check or attack',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
+    quickAction: false,
   },
   {
     type: 'hide',
@@ -374,7 +403,7 @@ interface ActionDefinition {
     description: 'Attempt to hide from enemies',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
+    quickAction: false,
   },
   {
     type: 'ready',
@@ -383,7 +412,7 @@ interface ActionDefinition {
     description: 'Prepare an action for later',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
+    quickAction: false,
   },
   {
     type: 'search',
@@ -392,7 +421,7 @@ interface ActionDefinition {
     description: 'Look for hidden objects, creatures, or other details',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
+    quickAction: false,
   },
   {
     type: 'use_object',
@@ -401,8 +430,8 @@ interface ActionDefinition {
     description: 'Interact with an object or use an item',
     actionRequired: true,
     bonusAction: false,
-    quickAction: false
-  }
+    quickAction: false,
+  },
 ];
 
 // Special management panel (not a combat action)
@@ -418,8 +447,8 @@ const MANAGEMENT_ACTIONS: ManagementAction[] = [
     type: 'manage_conditions',
     name: 'Manage Conditions',
     icon: UserX,
-    description: 'Apply, remove, or manage D&D conditions'
-  }
+    description: 'Apply, remove, or manage D&D conditions',
+  },
 ];
 
 // ===========================
@@ -437,7 +466,7 @@ interface CombatActionPanelProps {
 
 const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
   onActionSubmit,
-  className = ''
+  className = '',
 }) => {
   const { state, applyCondition, removeCondition } = useCombat();
   const { activeEncounter } = state;
@@ -470,12 +499,12 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
 
   // Get current participant to check action availability
   const currentParticipant = activeEncounter?.participants.find(
-    p => p.id === activeEncounter.currentTurnParticipantId
+    (p) => p.id === activeEncounter.currentTurnParticipantId,
   );
 
   const handleQuickAction = async (action: ActionDefinition) => {
     if (!action.quickAction) return;
-    
+
     setIsSubmitting(true);
     try {
       await onActionSubmit(action.type, `${action.name}: ${action.description}`);
@@ -486,7 +515,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
 
   const handleDetailedAction = async () => {
     if (!selectedAction) return;
-    
+
     setIsSubmitting(true);
     try {
       // For spell casting, include spell details
@@ -495,13 +524,15 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
           logger.error('No spell selected');
           return;
         }
-        await onActionSubmit(selectedAction.type, actionDetails, { spellName: selectedSpell, spellLevel: selectedSpellLevel });
-      } 
+        await onActionSubmit(selectedAction.type, actionDetails, {
+          spellName: selectedSpell,
+          spellLevel: selectedSpellLevel,
+        });
+      }
       // For rest actions, include hit dice selection
       else if (selectedAction.type === 'short_rest' || selectedAction.type === 'long_rest') {
         await onActionSubmit(selectedAction.type, actionDetails, { hitDiceToRoll });
-      } 
-      else {
+      } else {
         await onActionSubmit(selectedAction.type, actionDetails);
       }
       setSelectedAction(null);
@@ -522,29 +553,29 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
   // Check if action is available for current participant
   const isActionAvailable = (action: ActionDefinition): boolean => {
     if (!currentParticipant) return false;
-    
+
     if (action.actionRequired && currentParticipant.actionTaken) {
       return false;
     }
-    
+
     if (action.bonusAction && currentParticipant.bonusActionTaken) {
       return false;
     }
-    
+
     return true;
   };
 
   const getActionStatusText = (action: ActionDefinition): string => {
     if (!currentParticipant) return '';
-    
+
     if (action.actionRequired && currentParticipant.actionTaken) {
       return 'Action Used';
     }
-    
+
     if (action.bonusAction && currentParticipant.bonusActionTaken) {
       return 'Bonus Used';
     }
-    
+
     return '';
   };
 
@@ -557,9 +588,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
             <h3 className="font-semibold text-red-700">Combat Actions</h3>
           </div>
           {currentParticipant && (
-            <div className="text-sm text-gray-600">
-              {currentParticipant.name}'s Turn
-            </div>
+            <div className="text-sm text-gray-600">{currentParticipant.name}'s Turn</div>
           )}
         </div>
 
@@ -567,22 +596,22 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
         {currentParticipant && (
           <div className="flex space-x-2">
             <Badge
-              variant={currentParticipant.actionTaken ? "default" : "outline"}
+              variant={currentParticipant.actionTaken ? 'default' : 'outline'}
               className="text-xs"
             >
-              Action {currentParticipant.actionTaken ? "Used" : "Available"}
+              Action {currentParticipant.actionTaken ? 'Used' : 'Available'}
             </Badge>
             <Badge
-              variant={currentParticipant.bonusActionTaken ? "default" : "outline"}
+              variant={currentParticipant.bonusActionTaken ? 'default' : 'outline'}
               className="text-xs"
             >
-              Bonus {currentParticipant.bonusActionTaken ? "Used" : "Available"}
+              Bonus {currentParticipant.bonusActionTaken ? 'Used' : 'Available'}
             </Badge>
             <Badge
-              variant={currentParticipant.reactionTaken ? "default" : "outline"}
+              variant={currentParticipant.reactionTaken ? 'default' : 'outline'}
               className="text-xs"
             >
-              Reaction {currentParticipant.reactionTaken ? "Used" : "Available"}
+              Reaction {currentParticipant.reactionTaken ? 'Used' : 'Available'}
             </Badge>
           </div>
         )}
@@ -614,10 +643,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
               />
             )}
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedManagement(null)}
-              >
+              <Button variant="outline" onClick={() => setSelectedManagement(null)}>
                 Back to Actions
               </Button>
             </div>
@@ -637,9 +663,7 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
               </Button>
             </div>
 
-            <p className="text-sm text-gray-600">
-              {selectedAction.description}
-            </p>
+            <p className="text-sm text-gray-600">{selectedAction.description}</p>
 
             {selectedAction.type === 'cast_spell' ? (
               <SpellSlotPanel
@@ -686,29 +710,27 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
               />
             )}
 
-            {selectedAction.type !== 'cast_spell' && selectedAction.type !== 'short_rest' && selectedAction.type !== 'long_rest' && (
-              <div className="flex space-x-2">
-                <Button
-                  onClick={handleDetailedAction}
-                  disabled={!actionDetails.trim() || isSubmitting}
-                  className="flex-1"
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  {isSubmitting ? 'Submitting...' : `Take ${selectedAction.name}`}
-                </Button>
+            {selectedAction.type !== 'cast_spell' &&
+              selectedAction.type !== 'short_rest' &&
+              selectedAction.type !== 'long_rest' && (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={handleDetailedAction}
+                    disabled={!actionDetails.trim() || isSubmitting}
+                    className="flex-1"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Submitting...' : `Take ${selectedAction.name}`}
+                  </Button>
 
-                <Button
-                  variant="outline"
-                  onClick={handleCancelAction}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
+                  <Button variant="outline" onClick={handleCancelAction} disabled={isSubmitting}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
           </div>
         ) : (
-// Integrated SpellSlotPanel for cast_spell actions
+          // Integrated SpellSlotPanel for cast_spell actions
           /* Action Selection Grid */
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -716,17 +738,17 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
                 const available = isActionAvailable(action);
                 const statusText = getActionStatusText(action);
                 const ActionIcon = action.icon;
-                
+
                 return (
                   <Button
                     key={action.type}
-                    variant={available ? "outline" : "ghost"}
+                    variant={available ? 'outline' : 'ghost'}
                     className={`h-auto flex-col space-y-2 p-4 ${
                       !available ? 'opacity-50 cursor-not-allowed' : 'hover:border-red-400'
                     }`}
                     onClick={() => {
                       if (!available) return;
-                      
+
                       if (action.quickAction) {
                         handleQuickAction(action);
                       } else {
@@ -735,25 +757,21 @@ const CombatActionPanel: React.FC<CombatActionPanelProps> = ({
                     }}
                     disabled={!available || isSubmitting}
                   >
-                    <ActionIcon className={`w-6 h-6 ${
-                      available ? 'text-gray-700' : 'text-gray-400'
-                    }`} />
-                    
+                    <ActionIcon
+                      className={`w-6 h-6 ${available ? 'text-gray-700' : 'text-gray-400'}`}
+                    />
+
                     <div className="text-center">
                       <div className="font-medium text-sm">{action.name}</div>
-                      {statusText && (
-                        <div className="text-xs text-red-500 mt-1">
-                          {statusText}
-                        </div>
-                      )}
+                      {statusText && <div className="text-xs text-red-500 mt-1">{statusText}</div>}
                     </div>
                   </Button>
                 );
               })}
             </div>
-            
+
             <Separator />
-            
+
             {/* Movement & Free Actions */}
             <div className="text-center">
               <p className="text-sm text-gray-500">

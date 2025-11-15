@@ -142,7 +142,7 @@ function validateConfig() {
   if (LANGGRAPH_CONFIG.enableTracing && !LANGGRAPH_CONFIG.apiKey) {
     console.warn(
       '[LangGraph] Tracing enabled but VITE_LANGCHAIN_API_KEY not set. ' +
-      'Tracing will be disabled.'
+        'Tracing will be disabled.',
     );
   }
 

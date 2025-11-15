@@ -1,27 +1,30 @@
 /**
  * Message Acknowledgment Service
- * 
+ *
  * This file defines the MessageAcknowledgmentService class, a singleton service
  * responsible for managing the acknowledgment lifecycle of messages within the
  * agent messaging system. It interacts with database functions for persistence
  * and timeout handlers for managing acknowledgment expirations.
- * 
+ *
  * Main Class:
  * - MessageAcknowledgmentService: Manages message acknowledgments.
- * 
+ *
  * Key Dependencies:
  * - Acknowledgment DB functions (`./acknowledgment/db.ts`)
  * - Timeout handler (`./acknowledgment/timeout.ts`)
  * - AcknowledgmentStatus type (`./acknowledgment/types.ts`)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
 // Project Utilities & Types (assuming kebab-case for .ts files)
-import { createAcknowledgment, updateAcknowledgment, getAcknowledgmentStatus } from './acknowledgment/db';
+import {
+  createAcknowledgment,
+  updateAcknowledgment,
+  getAcknowledgmentStatus,
+} from './acknowledgment/db';
 import { handleTimeout } from './acknowledgment/timeout';
 import { AcknowledgmentStatus } from './acknowledgment/types';
-
 
 export class MessageAcknowledgmentService {
   private static instance: MessageAcknowledgmentService;
@@ -40,9 +43,9 @@ export class MessageAcknowledgmentService {
   }
 
   public async updateAcknowledgment(
-    messageId: string, 
+    messageId: string,
     status: 'received' | 'processed' | 'failed',
-    error?: string
+    error?: string,
   ): Promise<void> {
     return updateAcknowledgment(messageId, { status, error });
   }

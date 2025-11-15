@@ -16,7 +16,7 @@ export const isOffline = (): boolean => !isOnline();
 
 export const addNetworkListener = (
   type: 'online' | 'offline',
-  handler: () => void
+  handler: () => void,
 ): (() => void) => {
   if (typeof window === 'undefined') {
     return () => {

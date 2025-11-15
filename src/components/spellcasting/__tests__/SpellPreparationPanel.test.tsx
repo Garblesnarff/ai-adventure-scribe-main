@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
+
 import SpellPreparationPanel from '../SpellPreparationPanel';
 
 // Mock CharacterContext
@@ -24,7 +25,7 @@ describe('SpellPreparationPanel', () => {
 
     expect(screen.getByText('Spell Preparation')).toBeInTheDocument();
     expect(
-      screen.getByText('Your character class does not require spell preparation.')
+      screen.getByText('Your character class does not require spell preparation.'),
     ).toBeInTheDocument();
   });
 });

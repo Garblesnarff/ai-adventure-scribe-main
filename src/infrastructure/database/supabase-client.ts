@@ -11,12 +11,14 @@ const SUPABASE_CLIENT_KEY = SUPABASE_ANON_KEY || SUPABASE_SERVICE_ROLE_KEY;
 export const supabase = createClient(SUPABASE_URL, SUPABASE_CLIENT_KEY);
 export const supabaseService = createClient(
   SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY
+  SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY,
 );
 
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || '';
 
-export async function verifySupabaseToken(token: string): Promise<{ userId: string; email?: string } | null> {
+export async function verifySupabaseToken(
+  token: string,
+): Promise<{ userId: string; email?: string } | null> {
   if (JWT_SECRET) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as any;

@@ -1,43 +1,46 @@
 /**
  * Environmental Hazards Utilities for D&D 5e
- * 
+ *
  * Functions for handling environmental hazard detection, interaction, and effects
  */
 
-import { 
-  EnvironmentalHazard, 
-  HazardDetectionResult, 
+import type { Character } from '@/types/character';
+import type {
+  EnvironmentalHazard,
+  HazardDetectionResult,
   HazardSaveResult,
-  HazardManager
+  HazardManager,
 } from '@/types/environmentalHazards';
-import { Character } from '@/types/character';
-import { rollDice, rollSavingThrow } from '@/utils/diceUtils';
-import { calculateDamage } from '@/utils/diceUtils';
+
+import { rollDice, rollSavingThrow, calculateDamage } from '@/utils/diceUtils';
 import { applyExhaustion } from '@/utils/exhaustionUtils';
 
 /**
  * Detect an environmental hazard
  */
-export function detectHazard(character: Character, hazard: EnvironmentalHazard): HazardDetectionResult {
+export function detectHazard(
+  character: Character,
+  hazard: EnvironmentalHazard,
+): HazardDetectionResult {
   // If hazard isn't hidden, it's automatically detected
   if (!hazard.isHidden) {
     return {
       detected: true,
-      description: `You notice the ${hazard.name}.`
+      description: `You notice the ${hazard.name}.`,
     };
   }
-  
+
   // If no detection DC, assume it can't be detected
   if (!hazard.detectDC || !hazard.detectSkill) {
     return {
       detected: false,
-      description: `You don't notice anything unusual.`
+      description: `You don't notice anything unusual.`,
     };
   }
-  
+
   // Roll the appropriate skill check
   let skillModifier = 0;
-  
+
   switch (hazard.detectSkill) {
     case 'perception':
       skillModifier = character.abilityScores?.wisdom?.modifier || 0;
@@ -58,37 +61,38 @@ export function detectHazard(character: Character, hazard: EnvironmentalHazard):
       }
       break;
   }
-  
+
   const rollResult = rollDice(20, 1, skillModifier);
   const detected = rollResult.total >= hazard.detectDC;
-  
+
   return {
     detected,
     rollResult: rollResult.total,
     dc: hazard.detectDC,
-    description: detected 
-      ? `You notice the ${hazard.name}!` 
-      : `You don't notice anything unusual.`
+    description: detected ? `You notice the ${hazard.name}!` : `You don't notice anything unusual.`,
   };
 }
 
 /**
  * Interact with an environmental hazard (trigger it)
  */
-export function interactWithHazard(character: Character, hazard: EnvironmentalHazard): HazardSaveResult {
+export function interactWithHazard(
+  character: Character,
+  hazard: EnvironmentalHazard,
+): HazardSaveResult {
   // If no save DC, hazard automatically affects
   if (!hazard.saveDC || !hazard.saveAbility) {
     const damage = hazard.damage ? calculateHazardDamage(hazard, false) : 0;
     return {
       saved: false,
       damageTaken: damage,
-      description: `You are affected by the ${hazard.name}!`
+      description: `You are affected by the ${hazard.name}!`,
     };
   }
-  
+
   // Roll the saving throw
   let abilityModifier = 0;
-  
+
   switch (hazard.saveAbility) {
     case 'str':
       abilityModifier = character.abilityScores?.strength?.modifier || 0;
@@ -109,10 +113,10 @@ export function interactWithHazard(character: Character, hazard: EnvironmentalHa
       abilityModifier = character.abilityScores?.charisma?.modifier || 0;
       break;
   }
-  
+
   // Check for proficiency or special bonuses
   const proficiencyBonus = Math.floor((character.level || 1) / 4) + 2;
-  
+
   // Some classes have bonuses to certain saves
   let saveBonus = 0;
   if (character.class?.name?.toLowerCase() === 'monk' && hazard.saveAbility === 'dex') {
@@ -121,22 +125,22 @@ export function interactWithHazard(character: Character, hazard: EnvironmentalHa
   if (character.class?.name?.toLowerCase() === 'barbarian' && hazard.saveAbility === 'con') {
     saveBonus += proficiencyBonus; // Barbarians are proficient in Con saves
   }
-  
+
   const rollResult = rollSavingThrow(abilityModifier, saveBonus);
   const saved = rollResult.total >= hazard.saveDC;
-  
+
   // Calculate damage based on save result
   const damage = hazard.damage ? calculateHazardDamage(hazard, saved) : 0;
-  
+
   // Check for condition application
   const conditionsApplied: import('@/types/combat').ConditionName[] = [];
   if (hazard.conditions && !saved) {
-    conditionsApplied.push(...hazard.conditions.map(c => c.name));
+    conditionsApplied.push(...hazard.conditions.map((c) => c.name));
   }
-  
+
   // Check for exhaustion
   const exhaustionApplied = hazard.exhaustionLevel && !saved ? hazard.exhaustionLevel : 0;
-  
+
   return {
     saved,
     rollResult: rollResult.total,
@@ -144,9 +148,9 @@ export function interactWithHazard(character: Character, hazard: EnvironmentalHa
     damageTaken: damage,
     conditionsApplied,
     exhaustionApplied,
-    description: saved 
-      ? `You avoid the worst of the ${hazard.name}!` 
-      : `You are affected by the ${hazard.name}!`
+    description: saved
+      ? `You avoid the worst of the ${hazard.name}!`
+      : `You are affected by the ${hazard.name}!`,
   };
 }
 
@@ -155,18 +159,18 @@ export function interactWithHazard(character: Character, hazard: EnvironmentalHa
  */
 export function calculateHazardDamage(hazard: EnvironmentalHazard, saveSuccess: boolean): number {
   if (!hazard.damage) return 0;
-  
+
   // Parse dice notation
   const diceParts = hazard.damage.dice.split('d');
   const diceCount = parseInt(diceParts[0]) || 0;
   const diceSides = parseInt(diceParts[1]) || 0;
-  
+
   if (diceCount === 0 || diceSides === 0) return 0;
-  
+
   // Roll damage
   const damageRoll = rollDice(diceSides, diceCount, 0);
   let damage = damageRoll.total;
-  
+
   // Apply damage based on save result
   if (saveSuccess) {
     // Successful save
@@ -182,44 +186,54 @@ export function calculateHazardDamage(hazard: EnvironmentalHazard, saveSuccess: 
     }
     // 'full' damage is already applied
   }
-  
+
   return Math.max(0, damage);
 }
 
 /**
  * Apply hazard effects to a character
  */
-export function applyHazardEffects(character: Character, hazard: EnvironmentalHazard, saveResult: HazardSaveResult): Character {
+export function applyHazardEffects(
+  character: Character,
+  hazard: EnvironmentalHazard,
+  saveResult: HazardSaveResult,
+): Character {
   // Create a copy of the character to modify
   const updatedCharacter = { ...character };
-  
+
   // Apply damage
   if (saveResult.damageTaken && saveResult.damageTaken > 0) {
     // Apply to current HP
     if (updatedCharacter.hitPoints) {
-      updatedCharacter.hitPoints.current = Math.max(0, updatedCharacter.hitPoints.current - saveResult.damageTaken);
+      updatedCharacter.hitPoints.current = Math.max(
+        0,
+        updatedCharacter.hitPoints.current - saveResult.damageTaken,
+      );
     }
   }
-  
+
   // Apply conditions
   if (saveResult.conditionsApplied && saveResult.conditionsApplied.length > 0) {
     // This would need to be implemented based on how conditions are stored in the character
     // For now, we'll just note that conditions would be applied
   }
-  
+
   // Apply exhaustion
   if (saveResult.exhaustionApplied && saveResult.exhaustionApplied > 0) {
     // This would need to be implemented based on how exhaustion is stored in the character
     // For now, we'll just note that exhaustion would be applied
   }
-  
+
   return updatedCharacter;
 }
 
 /**
  * Check character immunities, resistances, and vulnerabilities to hazard
  */
-export function checkHazardImmunities(character: Character, hazard: EnvironmentalHazard): {
+export function checkHazardImmunities(
+  character: Character,
+  hazard: EnvironmentalHazard,
+): {
   immune: boolean;
   resistant: boolean;
   vulnerable: boolean;
@@ -227,12 +241,12 @@ export function checkHazardImmunities(character: Character, hazard: Environmenta
   if (!hazard.damage) {
     return { immune: false, resistant: false, vulnerable: false };
   }
-  
+
   const damageType = hazard.damage.type;
   const immune = character.damageImmunities?.includes(damageType) || false;
   const resistant = character.damageResistances?.includes(damageType) || false;
   const vulnerable = character.damageVulnerabilities?.includes(damageType) || false;
-  
+
   return { immune, resistant, vulnerable };
 }
 
@@ -244,7 +258,7 @@ export const hazardManager: HazardManager = {
   interactWithHazard,
   applyHazardEffects,
   calculateHazardDamage,
-  checkImmunities: checkHazardImmunities
+  checkImmunities: checkHazardImmunities,
 };
 
 /**
@@ -265,9 +279,9 @@ export const commonHazards: EnvironmentalHazard[] = [
       dice: '2d6',
       type: 'acid',
       onFail: 'full',
-      onSuccess: 'half'
+      onSuccess: 'half',
     },
-    trigger: 'enter'
+    trigger: 'enter',
   },
   {
     id: 'spiked_pit',
@@ -283,15 +297,15 @@ export const commonHazards: EnvironmentalHazard[] = [
       dice: '3d6',
       type: 'piercing',
       onFail: 'full',
-      onSuccess: 'none'
+      onSuccess: 'none',
     },
     conditions: [
       {
         name: 'prone',
-        duration: 1
-      }
+        duration: 1,
+      },
     ],
-    trigger: 'enter'
+    trigger: 'enter',
   },
   {
     id: 'extreme_heat',
@@ -301,7 +315,7 @@ export const commonHazards: EnvironmentalHazard[] = [
     isAreaEffect: true,
     areaOfEffect: {
       shape: 'sphere',
-      size: 20
+      size: 20,
     },
     saveDC: 15,
     saveAbility: 'con',
@@ -309,10 +323,10 @@ export const commonHazards: EnvironmentalHazard[] = [
       dice: '1d6',
       type: 'fire',
       onFail: 'full',
-      onSuccess: 'none'
+      onSuccess: 'none',
     },
     exhaustionLevel: 1,
-    trigger: 'end_turn'
+    trigger: 'end_turn',
   },
   {
     id: 'poisonous_spores',
@@ -322,7 +336,7 @@ export const commonHazards: EnvironmentalHazard[] = [
     isAreaEffect: true,
     areaOfEffect: {
       shape: 'cone',
-      size: 15
+      size: 15,
     },
     saveDC: 13,
     saveAbility: 'con',
@@ -330,10 +344,10 @@ export const commonHazards: EnvironmentalHazard[] = [
       {
         name: 'poisoned',
         duration: 1,
-        saveEnds: true
-      }
+        saveEnds: true,
+      },
     ],
-    trigger: 'enter'
+    trigger: 'enter',
   },
   {
     id: 'slippery_ice',
@@ -345,10 +359,10 @@ export const commonHazards: EnvironmentalHazard[] = [
     conditions: [
       {
         name: 'prone',
-        duration: 1
-      }
+        duration: 1,
+      },
     ],
     movementModifier: 0.5,
-    trigger: 'move'
-  }
+    trigger: 'move',
+  },
 ];

@@ -5,24 +5,26 @@
  * and campaign creation with filtering and AI integration.
  */
 
+import { Search, Filter, Sparkles, RotateCcw, Grid, List, Eye } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
+import { OptionSelector } from './option-selector';
+
+import type { EnhancementOption, OptionSelection } from '@/types/enhancement-options';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Filter, Sparkles, RotateCcw, Grid, List, Eye } from 'lucide-react';
 import {
-  EnhancementOption,
-  OptionSelection,
   EnhancementPackage,
   checkOptionAvailability,
   CHARACTER_ENHANCEMENTS,
-  CAMPAIGN_ENHANCEMENTS
+  CAMPAIGN_ENHANCEMENTS,
 } from '@/types/enhancement-options';
-import { OptionSelector } from './option-selector';
 
 interface EnhancementPanelProps {
   category: 'character' | 'campaign';
@@ -41,7 +43,7 @@ export function EnhancementPanel({
   selections,
   onSelectionChange,
   onAIGenerate,
-  className = ''
+  className = '',
 }: EnhancementPanelProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
@@ -49,12 +51,28 @@ export function EnhancementPanel({
   const [isGenerating, setIsGenerating] = React.useState<string | null>(null);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list' | 'compact'>('grid');
 
-  const CARD_TAGS = React.useMemo(() => new Set(['plot', 'hooks', 'story', 'worldbuilding', 'politics', 'tone', 'economy']), []);
-  const CARD_IDS = React.useMemo(() => new Set(['story-hooks', 'world-features', 'social-dynamics', 'tone-modifiers', 'economic-factors', 'secrets', 'personal-goals', 'special-training']), []);
+  const CARD_TAGS = React.useMemo(
+    () => new Set(['plot', 'hooks', 'story', 'worldbuilding', 'politics', 'tone', 'economy']),
+    [],
+  );
+  const CARD_IDS = React.useMemo(
+    () =>
+      new Set([
+        'story-hooks',
+        'world-features',
+        'social-dynamics',
+        'tone-modifiers',
+        'economic-factors',
+        'secrets',
+        'personal-goals',
+        'special-training',
+      ]),
+    [],
+  );
 
   const shouldUseCards = (option: EnhancementOption) => {
     if (CARD_IDS.has(option.id)) return true;
-    return option.tags.some(t => CARD_TAGS.has(t));
+    return option.tags.some((t) => CARD_TAGS.has(t));
   };
 
   // Get the appropriate options based on category
@@ -63,8 +81,8 @@ export function EnhancementPanel({
   // Get all available tags
   const allTags = React.useMemo(() => {
     const tags = new Set<string>();
-    allOptions.forEach(option => {
-      option.tags.forEach(tag => tags.add(tag));
+    allOptions.forEach((option) => {
+      option.tags.forEach((tag) => tags.add(tag));
     });
     return Array.from(tags).sort();
   }, [allOptions]);
@@ -76,35 +94,42 @@ export function EnhancementPanel({
     // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(option =>
-        option.name.toLowerCase().includes(term) ||
-        option.description.toLowerCase().includes(term) ||
-        option.tags.some(tag => tag.toLowerCase().includes(term))
+      filtered = filtered.filter(
+        (option) =>
+          option.name.toLowerCase().includes(term) ||
+          option.description.toLowerCase().includes(term) ||
+          option.tags.some((tag) => tag.toLowerCase().includes(term)),
       );
     }
 
     // Tag filter
     if (selectedTags.length > 0) {
-      filtered = filtered.filter(option =>
-        selectedTags.some(tag => option.tags.includes(tag))
-      );
+      filtered = filtered.filter((option) => selectedTags.some((tag) => option.tags.includes(tag)));
     }
 
     // Availability filter
     if (showOnlyAvailable) {
-      const selectedOptionIds = selections.map(s => s.optionId);
-      filtered = filtered.filter(option =>
-        checkOptionAvailability(option, characterData, campaignData, selectedOptionIds)
+      const selectedOptionIds = selections.map((s) => s.optionId);
+      filtered = filtered.filter((option) =>
+        checkOptionAvailability(option, characterData, campaignData, selectedOptionIds),
       );
     }
 
     return filtered;
-  }, [allOptions, searchTerm, selectedTags, showOnlyAvailable, characterData, campaignData, selections]);
+  }, [
+    allOptions,
+    searchTerm,
+    selectedTags,
+    showOnlyAvailable,
+    characterData,
+    campaignData,
+    selections,
+  ]);
 
   // Group options by their primary tag
   const groupedOptions = React.useMemo(() => {
     const groups: Record<string, EnhancementOption[]> = {};
-    filteredOptions.forEach(option => {
+    filteredOptions.forEach((option) => {
       const primaryTag = option.tags[0] || 'other';
       if (!groups[primaryTag]) {
         groups[primaryTag] = [];
@@ -115,7 +140,7 @@ export function EnhancementPanel({
   }, [filteredOptions]);
 
   const handleSelectionChange = (selection: OptionSelection) => {
-    const existingIndex = selections.findIndex(s => s.optionId === selection.optionId);
+    const existingIndex = selections.findIndex((s) => s.optionId === selection.optionId);
 
     if (existingIndex >= 0) {
       // Update existing selection
@@ -129,7 +154,7 @@ export function EnhancementPanel({
   };
 
   const handleRemoveSelection = (optionId: string) => {
-    onSelectionChange(selections.filter(s => s.optionId !== optionId));
+    onSelectionChange(selections.filter((s) => s.optionId !== optionId));
   };
 
   const handleAIGenerate = async (optionId: string): Promise<string> => {
@@ -145,10 +170,8 @@ export function EnhancementPanel({
   };
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -159,7 +182,7 @@ export function EnhancementPanel({
   };
 
   const getSelectionValue = (optionId: string) => {
-    return selections.find(s => s.optionId === optionId);
+    return selections.find((s) => s.optionId === optionId);
   };
 
   return (
@@ -172,8 +195,7 @@ export function EnhancementPanel({
         <CardDescription>
           {category === 'character'
             ? 'Select options to make your character unique and interesting'
-            : 'Choose elements to enhance your campaign world and story'
-          }
+            : 'Choose elements to enhance your campaign world and story'}
         </CardDescription>
       </CardHeader>
 
@@ -208,13 +230,28 @@ export function EnhancementPanel({
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">View:</span>
             <div className="flex border rounded-md">
-              <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('grid')} className="rounded-r-none">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="rounded-r-none"
+              >
                 <Grid className="w-4 h-4" />
               </Button>
-              <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')} className="rounded-none border-x">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-none border-x"
+              >
                 <List className="w-4 h-4" />
               </Button>
-              <Button variant={viewMode === 'compact' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('compact')} className="rounded-l-none">
+              <Button
+                variant={viewMode === 'compact' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('compact')}
+                className="rounded-l-none"
+              >
                 <Eye className="w-4 h-4" />
               </Button>
             </div>
@@ -224,7 +261,7 @@ export function EnhancementPanel({
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Filter by tags:</p>
             <div className="flex flex-wrap gap-1">
-              {allTags.map(tag => (
+              {allTags.map((tag) => (
                 <Badge
                   key={tag}
                   variant={selectedTags.includes(tag) ? 'default' : 'outline'}
@@ -245,8 +282,8 @@ export function EnhancementPanel({
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Current Selections ({selections.length}):</h4>
             <div className="flex flex-wrap gap-2">
-              {selections.map(selection => {
-                const option = allOptions.find(o => o.id === selection.optionId);
+              {selections.map((selection) => {
+                const option = allOptions.find((o) => o.id === selection.optionId);
                 if (!option) return null;
 
                 return (
@@ -278,7 +315,7 @@ export function EnhancementPanel({
             <Tabs defaultValue={Object.keys(groupedOptions)[0]} className="w-full">
               <div className="flex justify-start mb-4">
                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 h-auto p-2 bg-gradient-to-r from-infinite-dark/10 via-infinite-purple/5 to-infinite-teal/10 backdrop-blur-sm border-2 border-infinite-purple/20 shadow-lg">
-                  {Object.keys(groupedOptions).map(group => (
+                  {Object.keys(groupedOptions).map((group) => (
                     <TabsTrigger
                       key={group}
                       value={group}
@@ -292,8 +329,12 @@ export function EnhancementPanel({
                         disabled:opacity-50 disabled:pointer-events-none
                       "
                     >
-                      <span className="capitalize font-ui tracking-wide text-center leading-tight">{group}</span>
-                      <span className="text-[10px] opacity-75">({groupedOptions[group].length})</span>
+                      <span className="capitalize font-ui tracking-wide text-center leading-tight">
+                        {group}
+                      </span>
+                      <span className="text-[10px] opacity-75">
+                        ({groupedOptions[group].length})
+                      </span>
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -301,14 +342,14 @@ export function EnhancementPanel({
 
               {Object.entries(groupedOptions).map(([group, options]) => (
                 <TabsContent key={group} value={group} className="mt-4 space-y-6">
-                  {options.map(option => {
-                    const isSelected = selections.some(s => s.optionId === option.id);
-                    const selectedOptionIds = selections.map(s => s.optionId);
+                  {options.map((option) => {
+                    const isSelected = selections.some((s) => s.optionId === option.id);
+                    const selectedOptionIds = selections.map((s) => s.optionId);
                     const isAvailable = checkOptionAvailability(
                       option,
                       characterData,
                       campaignData,
-                      selectedOptionIds
+                      selectedOptionIds,
                     );
                     const itemLayout = shouldUseCards(option) ? 'cards' : 'list';
 
@@ -324,12 +365,24 @@ export function EnhancementPanel({
                         if (option.type === 'multiple') {
                           const isAlready = selectedValues.includes(opt);
                           if (isAlready) {
-                            handleSelectionChange({ optionId: option.id, value: selectedValues.filter(v => v !== opt), timestamp: new Date().toISOString() });
+                            handleSelectionChange({
+                              optionId: option.id,
+                              value: selectedValues.filter((v) => v !== opt),
+                              timestamp: new Date().toISOString(),
+                            });
                           } else if (!atMax) {
-                            handleSelectionChange({ optionId: option.id, value: [...selectedValues, opt], timestamp: new Date().toISOString() });
+                            handleSelectionChange({
+                              optionId: option.id,
+                              value: [...selectedValues, opt],
+                              timestamp: new Date().toISOString(),
+                            });
                           }
                         } else {
-                          handleSelectionChange({ optionId: option.id, value: opt as unknown as OptionSelection['value'], timestamp: new Date().toISOString() });
+                          handleSelectionChange({
+                            optionId: option.id,
+                            value: opt as unknown as OptionSelection['value'],
+                            timestamp: new Date().toISOString(),
+                          });
                         }
                       };
 
@@ -337,15 +390,22 @@ export function EnhancementPanel({
                         <div key={option.id} className="space-y-3">
                           {option.max && option.type === 'multiple' && (
                             <div className="text-xs text-muted-foreground mb-1">
-                              Select up to {option.max} options ({selectedValues.length}/{option.max} selected)
+                              Select up to {option.max} options ({selectedValues.length}/
+                              {option.max} selected)
                             </div>
                           )}
-                          <div role={option.type === 'multiple' ? 'group' : 'radiogroup'} aria-label={option.name} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
+                          <div
+                            role={option.type === 'multiple' ? 'group' : 'radiogroup'}
+                            aria-label={option.name}
+                            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}
+                          >
                             {option.options.map((opt) => {
-                              const isChecked = option.type === 'multiple'
-                                ? selectedValues.includes(opt)
-                                : (selection?.value as string) === opt;
-                              const canSelect = option.type === 'multiple' ? (isChecked || !atMax) : true;
+                              const isChecked =
+                                option.type === 'multiple'
+                                  ? selectedValues.includes(opt)
+                                  : (selection?.value as string) === opt;
+                              const canSelect =
+                                option.type === 'multiple' ? isChecked || !atMax : true;
                               return (
                                 <Card
                                   key={opt}
@@ -354,9 +414,15 @@ export function EnhancementPanel({
                                   aria-disabled={!canSelect || (!isAvailable && !isSelected)}
                                   tabIndex={0}
                                   className={`w-full cursor-pointer transition-all rounded-lg border-2 ${
-                                    isChecked ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/30' : (!canSelect || (!isAvailable && !isSelected)) ? 'border-border/60 opacity-60 cursor-not-allowed' : 'border-border/30 hover:border-primary/50 hover:shadow-xl'
+                                    isChecked
+                                      ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/30'
+                                      : !canSelect || (!isAvailable && !isSelected)
+                                        ? 'border-border/60 opacity-60 cursor-not-allowed'
+                                        : 'border-border/30 hover:border-primary/50 hover:shadow-xl'
                                   } ${viewMode === 'compact' ? 'p-4' : 'p-6'} hover:-translate-y-0.5`}
-                                  onClick={() => { if (canSelect) onToggle(opt); }}
+                                  onClick={() => {
+                                    if (canSelect) onToggle(opt);
+                                  }}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                       e.preventDefault();
@@ -365,9 +431,15 @@ export function EnhancementPanel({
                                   }}
                                 >
                                   <div className="flex flex-col gap-2">
-                                    <span className={`${viewMode === 'compact' ? 'text-sm' : 'text-base'} font-medium leading-snug`}>{opt}</span>
+                                    <span
+                                      className={`${viewMode === 'compact' ? 'text-sm' : 'text-base'} font-medium leading-snug`}
+                                    >
+                                      {opt}
+                                    </span>
                                     {isChecked && (
-                                      <Badge variant="secondary" className="text-[10px]">Selected</Badge>
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        Selected
+                                      </Badge>
                                     )}
                                   </div>
                                 </Card>

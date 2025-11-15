@@ -1,24 +1,23 @@
 /**
  * Rule Condition Checker Utility
- * 
+ *
  * This file defines the RuleConditionChecker class, responsible for checking
  * various types of conditions related to game rules. It evaluates conditions
  * such as ability score requirements, class/race requirements, level requirements,
  * equipment, and resource availability based on a given context.
- * 
+ *
  * Main Class:
  * - RuleConditionChecker: Checks if rule conditions are met.
- * 
+ *
  * Key Dependencies:
  * - RuleCondition type (likely from `@/types/agent` or a more specific rule type definition).
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
 // Project Types
 import { RuleCondition } from '@/types/agent'; // Assuming RuleCondition is a defined type
 import { logger } from '../../../lib/logger';
-
 
 export class RuleConditionChecker {
   async check(condition: RuleCondition): Promise<boolean> {
@@ -46,12 +45,12 @@ export class RuleConditionChecker {
   private checkAbilityScore(condition: RuleCondition): boolean {
     const { ability, minimum, maximum } = condition.data;
     const score = condition.context?.abilityScores?.[ability]?.score;
-    
+
     if (!score) return false;
-    
+
     if (minimum && score < minimum) return false;
     if (maximum && score > maximum) return false;
-    
+
     return true;
   }
 
@@ -74,14 +73,14 @@ export class RuleConditionChecker {
   private checkEquipmentRequirement(condition: RuleCondition): boolean {
     const { requiredItems } = condition.data;
     const equipment = condition.context?.equipment || [];
-    
-    return requiredItems.every(item => equipment.includes(item));
+
+    return requiredItems.every((item) => equipment.includes(item));
   }
 
   private checkResourceRequirement(condition: RuleCondition): boolean {
     const { resource, minimum } = condition.data;
     const available = condition.context?.resources?.[resource] || 0;
-    
+
     return available >= minimum;
   }
 }

@@ -26,7 +26,7 @@ export class ResponsePipeline {
   constructor({
     responseCoordinator,
     campaignProvider = new CachedCampaignContextProvider(),
-    conversationStore = new ConversationStateStore()
+    conversationStore = new ConversationStateStore(),
   }: PipelineDependencies) {
     this.responseCoordinator = responseCoordinator;
     this.campaignProvider = campaignProvider;
@@ -39,22 +39,22 @@ export class ResponsePipeline {
 
     const [conversationState, campaignDetails] = await Promise.all([
       sessionId ? this.conversationStore.load(sessionId) : Promise.resolve(null),
-      campaignId ? this.campaignProvider.fetchCampaignDetails(campaignId) : Promise.resolve(null)
+      campaignId ? this.campaignProvider.fetchCampaignDetails(campaignId) : Promise.resolve(null),
     ]);
 
     if (!campaignId || !sessionId) {
       logger.error('[ResponsePipeline] Missing campaign or session context for task execution', {
         taskId: task.id,
         campaignId,
-        sessionId
+        sessionId,
       });
       return {
         result: {
           success: false,
-          message: 'Missing campaign or session context for response generation'
+          message: 'Missing campaign or session context for response generation',
         },
         conversation: conversationState ?? undefined,
-        campaignDetails
+        campaignDetails,
       };
     }
 
@@ -69,7 +69,7 @@ export class ResponsePipeline {
     const result = await this.responseCoordinator.generateResponse(task, {
       campaignDetails,
       sessionId,
-      campaignId
+      campaignId,
     });
 
     const updatedConversation = this.responseCoordinator.getConversationSnapshot();
@@ -80,7 +80,7 @@ export class ResponsePipeline {
       } catch (error) {
         logger.warn('[ResponsePipeline] Failed to persist conversation snapshot', {
           sessionId,
-          error
+          error,
         });
       }
     }
@@ -88,7 +88,7 @@ export class ResponsePipeline {
     return {
       result,
       conversation: updatedConversation,
-      campaignDetails
+      campaignDetails,
     };
   }
 }

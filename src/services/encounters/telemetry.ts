@@ -1,4 +1,4 @@
-import { EncounterOutcome } from '@/types/encounters';
+import type { EncounterOutcome } from '@/types/encounters';
 
 type DifficultyStats = {
   samples: number;
@@ -22,6 +22,6 @@ export function getDifficultyAdjustment(sessionId: string, difficulty: string): 
   if (!s) return 1;
   // Target ~0.25 drain per encounter; adjust budget mildly
   const target = 0.25;
-  const factor = 1 + Math.max(-0.25, Math.min(0.25, (s.avgDrain - target))); // clamp ±25%
+  const factor = 1 + Math.max(-0.25, Math.min(0.25, s.avgDrain - target)); // clamp ±25%
   return factor;
 }

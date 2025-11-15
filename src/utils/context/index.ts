@@ -1,8 +1,9 @@
 import { buildCampaignContext } from './campaignContext';
 import { buildCharacterContext } from './characterContext';
 import { buildMemoryContext } from './memoryContext';
-import { Campaign } from '@/types/campaign';
+
 import logger from '@/lib/logger';
+import { Campaign } from '@/types/campaign';
 
 export { buildCampaignContext } from './campaignContext';
 export { buildCharacterContext } from './characterContext';
@@ -18,11 +19,11 @@ export { buildMemoryContext } from './memoryContext';
 export const buildGameContext = async (
   campaignId: string,
   characterId: string,
-  sessionId: string
+  sessionId: string,
 ) => {
   try {
     logger.info('[Context] Building complete game context');
-    
+
     const [campaignContext, characterContext, memoryContext] = await Promise.all([
       buildCampaignContext(campaignId),
       buildCharacterContext(characterId),

@@ -1,32 +1,61 @@
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Save, Eye, Send, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
 import { MarkdownEditor } from './markdown-editor';
 import { MediaManager } from './media-manager';
 import { MultiSelect } from './multi-select';
-import { slugify } from '@/utils/slug';
-import { useBlogCategories, useBlogTags } from '@/hooks/blog/useBlogTaxonomy';
-import { useCreateBlogPost, useUpdateBlogPost } from '@/hooks/blog/useBlogPosts';
+
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useCreateBlogPost, useUpdateBlogPost } from '@/hooks/blog/useBlogPosts';
+import { useBlogCategories, useBlogTags } from '@/hooks/blog/useBlogTaxonomy';
+import { slugify } from '@/utils/slug';
 import { generateExcerpt } from '@/utils/text-helpers';
 
 export const blogPostSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be 200 characters or less'),
-  slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase with hyphens'),
+  slug: z
+    .string()
+    .min(1, 'Slug is required')
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase with hyphens'),
   excerpt: z.string().max(500, 'Excerpt must be 500 characters or less').optional(),
   content: z.string().min(1, 'Content is required'),
   coverImageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -35,7 +64,10 @@ export const blogPostSchema = z.object({
   categoryIds: z.array(z.string()).optional(),
   tagIds: z.array(z.string()).optional(),
   seoTitle: z.string().max(60, 'SEO title should be 60 characters or less').optional(),
-  seoDescription: z.string().max(160, 'SEO description should be 160 characters or less').optional(),
+  seoDescription: z
+    .string()
+    .max(160, 'SEO description should be 160 characters or less')
+    .optional(),
   allowComments: z.boolean().default(true),
 });
 
@@ -47,11 +79,7 @@ interface BlogPostEditorProps {
   onCancel?: () => void;
 }
 
-export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
-  post,
-  onSuccess,
-  onCancel,
-}) => {
+export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSuccess, onCancel }) => {
   const isEditMode = !!post;
   const [mediaManagerOpen, setMediaManagerOpen] = React.useState(false);
   const [unsavedChanges, setUnsavedChanges] = React.useState(false);
@@ -106,14 +134,14 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
   const handleAutoGenerateSEO = () => {
     const title = form.getValues('title');
     const excerpt = form.getValues('excerpt') || generateExcerpt(contentValue, 160);
-    
+
     if (!form.getValues('seoTitle')) {
       form.setValue('seoTitle', title.substring(0, 60), { shouldDirty: true });
     }
     if (!form.getValues('seoDescription')) {
       form.setValue('seoDescription', excerpt.substring(0, 160), { shouldDirty: true });
     }
-    
+
     toast.success('SEO fields populated');
   };
 
@@ -192,9 +220,13 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Blog Post' : 'Create Blog Post'}</h2>
+              <h2 className="text-2xl font-bold">
+                {isEditMode ? 'Edit Blog Post' : 'Create Blog Post'}
+              </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {isEditMode ? 'Update your blog post details' : 'Fill in the details to create a new blog post'}
+                {isEditMode
+                  ? 'Update your blog post details'
+                  : 'Fill in the details to create a new blog post'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -374,12 +406,7 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
                     )}
                   />
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAutoGenerateSEO}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={handleAutoGenerateSEO}>
                     Auto-populate SEO fields
                   </Button>
                 </CardContent>
@@ -444,10 +471,7 @@ export const BlogPostEditor: React.FC<BlogPostEditorProps> = ({
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                       </FormItem>
                     )}

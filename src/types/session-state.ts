@@ -1,6 +1,6 @@
 // Session state types for gameplay and orchestration
 
-import { DialogueHistory } from '@/types/dialogue';
+import type { DialogueHistory } from '@/types/dialogue';
 
 export interface CombatantState {
   id: string;
@@ -52,6 +52,6 @@ export const createDefaultSessionState = (sessionId: string): SessionStatePayloa
     currentNPC: null,
     dialogueHistory: [],
     playerChoices: [],
-    lastResponse: null
-  }
+    lastResponse: null,
+  },
 });

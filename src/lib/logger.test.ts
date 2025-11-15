@@ -5,7 +5,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { logger, LogMetadata } from './logger';
+
+import { logger } from './logger';
+
+import type { LogMetadata } from './logger';
 
 describe('Logger Utility', () => {
   let consoleSpy: {
@@ -27,7 +30,7 @@ describe('Logger Utility', () => {
 
   afterEach(() => {
     // Restore console methods
-    Object.values(consoleSpy).forEach(spy => spy.mockRestore());
+    Object.values(consoleSpy).forEach((spy) => spy.mockRestore());
   });
 
   describe('Basic logging', () => {

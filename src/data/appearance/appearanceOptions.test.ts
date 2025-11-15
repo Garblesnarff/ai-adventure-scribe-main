@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { getAppearanceOptions } from './appearanceOptions';
 
 describe('getAppearanceOptions', () => {

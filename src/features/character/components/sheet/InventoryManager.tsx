@@ -1,35 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  allEquipment, 
-  Equipment, 
-  calculateArmorClass,
-  getEquipmentByCategory,
-  convertCurrency,
-  formatCurrency
-} from '@/data/equipmentOptions';
-import { Character } from '@/types/character';
-import { 
-  Package, 
-  Shield, 
-  Sword, 
-  Coins, 
-  Plus, 
+import {
+  Package,
+  Shield,
+  Sword,
+  Coins,
+  Plus,
   Minus,
   Search,
   ShoppingCart,
   Weight,
-  Zap
+  Zap,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import type { Equipment } from '@/data/equipmentOptions';
+import type { Character } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  allEquipment,
+  calculateArmorClass,
+  getEquipmentByCategory,
+  convertCurrency,
+  formatCurrency,
+} from '@/data/equipmentOptions';
 
 interface InventoryItem extends Equipment {
   quantity: number;
@@ -70,60 +78,63 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
     { value: 'shield', label: 'Shields' },
     { value: 'tool', label: 'Tools' },
     { value: 'gear', label: 'Gear' },
-    { value: 'consumable', label: 'Consumables' }
+    { value: 'consumable', label: 'Consumables' },
   ];
 
   // Filter equipment for shop
-  const filteredEquipment = allEquipment.filter(item => {
+  const filteredEquipment = allEquipment.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   // Get equipped items
-  const equippedArmor = inventory.find(item => item.equipped && item.category === 'armor');
-  const equippedShield = inventory.find(item => item.equipped && item.category === 'shield');
-  const equippedWeapons = inventory.filter(item => item.equipped && item.category === 'weapon');
+  const equippedArmor = inventory.find((item) => item.equipped && item.category === 'armor');
+  const equippedShield = inventory.find((item) => item.equipped && item.category === 'shield');
+  const equippedWeapons = inventory.filter((item) => item.equipped && item.category === 'weapon');
 
   // Calculate AC with unarmored defense support
   const dexModifier = character?.abilityScores?.dexterity?.modifier || 0;
   const conModifier = character?.abilityScores?.constitution?.modifier || 0;
   const wisModifier = character?.abilityScores?.wisdom?.modifier || 0;
   const characterClass = character?.class?.name || '';
-  
+
   const calculatedAC = calculateArmorClass(
-    equippedArmor || null, 
-    equippedShield || null, 
+    equippedArmor || null,
+    equippedShield || null,
     dexModifier,
     0, // otherBonuses
     characterClass,
     conModifier,
-    wisModifier
+    wisModifier,
   );
 
   // Calculate total weight
-  const totalWeight = inventory.reduce((total, item) => total + (item.weight || 0) * item.quantity, 0);
+  const totalWeight = inventory.reduce(
+    (total, item) => total + (item.weight || 0) * item.quantity,
+    0,
+  );
   const carryingCapacity = (character?.abilityScores?.strength?.score || 10) * 15; // STR x 15 lbs
 
   /**
    * Add item to inventory
    */
   const addToInventory = (equipment: Equipment, quantity: number = 1) => {
-    const existingItem = inventory.find(item => item.id === equipment.id);
-    
+    const existingItem = inventory.find((item) => item.id === equipment.id);
+
     if (existingItem) {
-      setInventory(prev => prev.map(item => 
-        item.id === equipment.id 
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      ));
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.id === equipment.id ? { ...item, quantity: item.quantity + quantity } : item,
+        ),
+      );
     } else {
       const newItem: InventoryItem = {
         ...equipment,
         quantity,
-        equipped: false
+        equipped: false,
       };
-      setInventory(prev => [...prev, newItem]);
+      setInventory((prev) => [...prev, newItem]);
     }
 
     toast({
@@ -136,13 +147,18 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
    * Remove item from inventory
    */
   const removeFromInventory = (itemId: string, quantity: number = 1) => {
-    setInventory(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const newQuantity = Math.max(0, item.quantity - quantity);
-        return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
-      }
-      return item;
-    }).filter(Boolean) as InventoryItem[]);
+    setInventory(
+      (prev) =>
+        prev
+          .map((item) => {
+            if (item.id === itemId) {
+              const newQuantity = Math.max(0, item.quantity - quantity);
+              return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+            }
+            return item;
+          })
+          .filter(Boolean) as InventoryItem[],
+    );
 
     toast({
       title: 'Item Removed',
@@ -154,25 +170,29 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
    * Toggle equipment status
    */
   const toggleEquipped = (itemId: string) => {
-    const item = inventory.find(i => i.id === itemId);
+    const item = inventory.find((i) => i.id === itemId);
     if (!item) return;
 
     // Handle armor/shield - only one can be equipped
     if (item.category === 'armor') {
-      setInventory(prev => prev.map(i => ({
-        ...i,
-        equipped: i.category === 'armor' ? i.id === itemId && !i.equipped : i.equipped
-      })));
+      setInventory((prev) =>
+        prev.map((i) => ({
+          ...i,
+          equipped: i.category === 'armor' ? i.id === itemId && !i.equipped : i.equipped,
+        })),
+      );
     } else if (item.category === 'shield') {
-      setInventory(prev => prev.map(i => ({
-        ...i,
-        equipped: i.category === 'shield' ? i.id === itemId && !i.equipped : i.equipped
-      })));
+      setInventory((prev) =>
+        prev.map((i) => ({
+          ...i,
+          equipped: i.category === 'shield' ? i.id === itemId && !i.equipped : i.equipped,
+        })),
+      );
     } else {
       // Other items can be equipped/unequipped normally
-      setInventory(prev => prev.map(i => 
-        i.id === itemId ? { ...i, equipped: !i.equipped } : i
-      ));
+      setInventory((prev) =>
+        prev.map((i) => (i.id === itemId ? { ...i, equipped: !i.equipped } : i)),
+      );
     }
 
     const action = item.equipped ? 'Unequipped' : 'Equipped';
@@ -187,11 +207,11 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
    */
   const purchaseItem = (equipment: Equipment) => {
     const cost = convertCurrency(equipment.cost.amount, equipment.cost.currency, 'gp');
-    
+
     if (currency.gp >= cost) {
-      setCurrency(prev => ({ ...prev, gp: prev.gp - cost }));
+      setCurrency((prev) => ({ ...prev, gp: prev.gp - cost }));
       addToInventory(equipment);
-      
+
       toast({
         title: 'Item Purchased',
         description: `Purchased ${equipment.name} for ${formatCurrency(equipment.cost)}.`,
@@ -210,9 +230,9 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
    */
   const sellItem = (item: InventoryItem) => {
     const sellValue = Math.floor(convertCurrency(item.cost.amount, item.cost.currency, 'gp') / 2);
-    setCurrency(prev => ({ ...prev, gp: prev.gp + sellValue }));
+    setCurrency((prev) => ({ ...prev, gp: prev.gp + sellValue }));
     removeFromInventory(item.id, 1);
-    
+
     toast({
       title: 'Item Sold',
       description: `Sold ${item.name} for ${sellValue} gp.`,
@@ -223,14 +243,18 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
    * Update currency
    */
   const updateCurrency = (type: keyof Currency, amount: number) => {
-    setCurrency(prev => ({ ...prev, [type]: Math.max(0, amount) }));
+    setCurrency((prev) => ({ ...prev, [type]: Math.max(0, amount) }));
   };
 
   const getItemIcon = (category: Equipment['category']) => {
     switch (category) {
-      case 'weapon': return <Sword className="w-4 h-4" />;
-      case 'armor': case 'shield': return <Shield className="w-4 h-4" />;
-      default: return <Package className="w-4 h-4" />;
+      case 'weapon':
+        return <Sword className="w-4 h-4" />;
+      case 'armor':
+      case 'shield':
+        return <Shield className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
     }
   };
 
@@ -257,9 +281,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
             <div className="text-center p-3 border rounded">
               <div className="text-2xl font-bold">{totalWeight}</div>
               <div className="text-xs text-muted-foreground">Weight (lbs)</div>
-              <div className="text-xs text-muted-foreground">
-                Capacity: {carryingCapacity}
-              </div>
+              <div className="text-xs text-muted-foreground">Capacity: {carryingCapacity}</div>
             </div>
             <div className="text-center p-3 border rounded">
               <div className="text-2xl font-bold">{equippedWeapons.length}</div>
@@ -296,11 +318,17 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
             ))}
           </div>
           <div className="text-center mt-2 text-sm text-muted-foreground">
-            Total Value: {convertCurrency(
-              currency.cp + currency.sp * 10 + currency.ep * 50 + currency.gp * 100 + currency.pp * 1000,
+            Total Value:{' '}
+            {convertCurrency(
+              currency.cp +
+                currency.sp * 10 +
+                currency.ep * 50 +
+                currency.gp * 100 +
+                currency.pp * 1000,
               'cp',
-              'gp'
-            ).toFixed(2)} gp
+              'gp',
+            ).toFixed(2)}{' '}
+            gp
           </div>
         </CardContent>
       </Card>
@@ -324,7 +352,10 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
               {inventory.length > 0 ? (
                 <div className="space-y-3">
                   {inventory.map((item) => (
-                    <div key={`${item.id}-${item.quantity}`} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={`${item.id}-${item.quantity}`}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                           {getItemIcon(item.category)}
@@ -339,14 +370,16 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
                             <span className={`font-medium ${item.equipped ? 'text-primary' : ''}`}>
                               {item.name}
                             </span>
-                            {item.equipped && <Badge variant="default" className="text-xs">Equipped</Badge>}
+                            {item.equipped && (
+                              <Badge variant="default" className="text-xs">
+                                Equipped
+                              </Badge>
+                            )}
                             <Badge variant="outline" className="text-xs capitalize">
                               {item.category}
                             </Badge>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {item.description}
-                          </div>
+                          <div className="text-sm text-muted-foreground">{item.description}</div>
                           {item.weight && (
                             <div className="text-xs text-muted-foreground">
                               <Weight className="w-3 h-3 inline mr-1" />
@@ -355,16 +388,10 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          {item.quantity}x
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => sellItem(item)}
-                        >
+                        <Badge variant="secondary">{item.quantity}x</Badge>
+                        <Button variant="outline" size="sm" onClick={() => sellItem(item)}>
                           Sell
                         </Button>
                         <Button
@@ -397,7 +424,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
                 <ShoppingCart className="w-5 h-5 text-purple-500" />
                 Equipment Shop
               </CardTitle>
-              
+
               {/* Search and Filter */}
               <div className="flex gap-3">
                 <div className="relative flex-1">
@@ -423,11 +450,14 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
                 </Select>
               </div>
             </CardHeader>
-            
+
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                 {filteredEquipment.map((equipment) => (
-                  <div key={equipment.id} className="p-4 border rounded-lg hover:border-primary transition-colors">
+                  <div
+                    key={equipment.id}
+                    className="p-4 border rounded-lg hover:border-primary transition-colors"
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {getItemIcon(equipment.category)}
@@ -461,35 +491,39 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
                         )}
                       </div>
                     </div>
-                    
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {equipment.description}
-                    </p>
-                    
+
+                    <p className="text-sm text-muted-foreground mb-3">{equipment.description}</p>
+
                     {/* Equipment Stats */}
                     {equipment.damage && (
                       <div className="text-xs mb-2">
-                        <span className="font-medium">Damage:</span> {equipment.damage.dice} {equipment.damage.type}
+                        <span className="font-medium">Damage:</span> {equipment.damage.dice}{' '}
+                        {equipment.damage.type}
                       </div>
                     )}
                     {equipment.armorClass && (
                       <div className="text-xs mb-2">
                         <span className="font-medium">AC:</span> {equipment.armorClass.base}
                         {equipment.armorClass.dexModifier && ' + Dex'}
-                        {equipment.armorClass.maxDexModifier !== undefined && ` (max ${equipment.armorClass.maxDexModifier})`}
+                        {equipment.armorClass.maxDexModifier !== undefined &&
+                          ` (max ${equipment.armorClass.maxDexModifier})`}
                       </div>
                     )}
                     {equipment.properties && equipment.properties.length > 0 && (
                       <div className="text-xs mb-3">
-                        <span className="font-medium">Properties:</span> {equipment.properties.join(', ')}
+                        <span className="font-medium">Properties:</span>{' '}
+                        {equipment.properties.join(', ')}
                       </div>
                     )}
-                    
+
                     <Button
                       onClick={() => purchaseItem(equipment)}
                       className="w-full"
                       size="sm"
-                      disabled={currency.gp < convertCurrency(equipment.cost.amount, equipment.cost.currency, 'gp')}
+                      disabled={
+                        currency.gp <
+                        convertCurrency(equipment.cost.amount, equipment.cost.currency, 'gp')
+                      }
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Purchase
@@ -497,7 +531,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ character, onUpdate
                   </div>
                 ))}
               </div>
-              
+
               {filteredEquipment.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />

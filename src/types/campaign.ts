@@ -2,19 +2,19 @@
  * Interface for campaign setting details
  */
 export interface CampaignSetting {
-  era: string;              // e.g., "1920s", "medieval", "future"
-  location: string;         // e.g., "Ravenswood", "New Erebo"
-  atmosphere: string;       // e.g., "horror", "high fantasy"
+  era: string; // e.g., "1920s", "medieval", "future"
+  location: string; // e.g., "Ravenswood", "New Erebo"
+  atmosphere: string; // e.g., "horror", "high fantasy"
 }
 
 /**
  * Interface for campaign thematic elements
  */
 export interface ThematicElements {
-  mainThemes: string[];     // e.g., ["reflection", "madness"]
-  recurringMotifs: string[];// e.g., ["mirrors", "shadows"]
-  keyLocations: string[];   // e.g., ["Blackstone Mansion"]
-  importantNPCs: string[];  // e.g., ["Edward Blackstone"]
+  mainThemes: string[]; // e.g., ["reflection", "madness"]
+  recurringMotifs: string[]; // e.g., ["mirrors", "shadows"]
+  keyLocations: string[]; // e.g., ["Blackstone Mansion"]
+  importantNPCs: string[]; // e.g., ["Edward Blackstone"]
 }
 
 /**

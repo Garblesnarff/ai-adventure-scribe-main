@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { processContent } from '../memory/classification';
 
 describe('Memory Importance Normalization', () => {
@@ -15,9 +16,9 @@ describe('Memory Importance Normalization', () => {
     `;
 
     const segments = processContent(content);
-    
+
     // All segments should have importance in the 1-5 range
-    segments.forEach(segment => {
+    segments.forEach((segment) => {
       expect(segment.importance).toBeGreaterThanOrEqual(1);
       expect(segment.importance).toBeLessThanOrEqual(5);
     });
@@ -31,9 +32,9 @@ describe('Memory Importance Normalization', () => {
   it('should preserve memory types while normalizing importance', () => {
     const content = 'The brave knight Sir Reginald entered the dark cave.';
     const segments = processContent(content);
-    
+
     expect(segments.length).toBeGreaterThan(0);
-    segments.forEach(segment => {
+    segments.forEach((segment) => {
       expect(typeof segment.type).toBe('string');
       expect(segment.content).toBeTruthy();
       expect(segment.importance).toBeGreaterThanOrEqual(1);
@@ -53,11 +54,11 @@ describe('Memory Importance Normalization', () => {
     const segments = processContent(content);
 
     // At least one segment should have importance >= 4 (high normalized value)
-    const hasHighImportance = segments.some(segment => segment.importance >= 4);
+    const hasHighImportance = segments.some((segment) => segment.importance >= 4);
     expect(hasHighImportance).toBe(true);
 
     // All segments should still be in normalized range
-    segments.forEach(segment => {
+    segments.forEach((segment) => {
       expect(segment.importance).toBeGreaterThanOrEqual(1);
       expect(segment.importance).toBeLessThanOrEqual(5);
     });

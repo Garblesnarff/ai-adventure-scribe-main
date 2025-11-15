@@ -32,7 +32,7 @@ export async function exampleAttackAction() {
   const result = await invokeDMGraph(
     'I attack the goblin with my longsword',
     worldContext,
-    'session-456'
+    'session-456',
   );
 
   console.log('Player Intent:', result.playerIntent);
@@ -62,7 +62,7 @@ export async function exampleSocialInteraction() {
   const result = await invokeDMGraph(
     'I try to persuade the guard to let me pass',
     worldContext,
-    'session-457'
+    'session-457',
   );
 
   console.log('Player Intent:', result.playerIntent); // Should be 'social'
@@ -87,11 +87,7 @@ export async function exampleSimpleExploration() {
     threatLevel: 'low',
   };
 
-  const result = await invokeDMGraph(
-    'I walk down the forest path',
-    worldContext,
-    'session-458'
-  );
+  const result = await invokeDMGraph('I walk down the forest path', worldContext, 'session-458');
 
   console.log('Player Intent:', result.playerIntent); // Should be 'movement'
   console.log('Dice Roll Required:', result.requiresDiceRoll); // Should be null
@@ -119,7 +115,7 @@ export async function exampleStreamingExecution() {
   for await (const chunk of streamDMGraph(
     'I search the chest for treasure',
     worldContext,
-    'session-459'
+    'session-459',
   )) {
     console.log('State update:', chunk);
   }
@@ -142,7 +138,7 @@ export async function exampleErrorHandling() {
   const result = await invokeDMGraph(
     '', // Empty input
     worldContext,
-    'session-460'
+    'session-460',
   );
 
   console.log('Error:', result.error);
@@ -179,7 +175,7 @@ export async function exampleWithMemories() {
   const result = await invokeDMGraph(
     'I use the key I found to unlock the door',
     worldContext,
-    'session-461'
+    'session-461',
   );
 
   console.log('DM Response:', result.response?.description);

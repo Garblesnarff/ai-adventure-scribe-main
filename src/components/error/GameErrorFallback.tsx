@@ -1,7 +1,8 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, RotateCcw } from 'lucide-react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
 
 /**
  * Props for the GameErrorFallback component
@@ -61,46 +62,30 @@ export const GameErrorFallback: React.FC<GameErrorFallbackProps> = ({ error, res
         {/* Error Description */}
         <div className="mb-6 p-4 bg-muted/50 rounded border border-muted">
           <p className="text-sm text-foreground mb-2">
-            Don't worry - your progress has been saved. You can try one of the following options to continue:
+            Don't worry - your progress has been saved. You can try one of the following options to
+            continue:
           </p>
 
           {error && (
-            <p className="text-xs text-muted-foreground mt-2 font-mono">
-              Error: {error.message}
-            </p>
+            <p className="text-xs text-muted-foreground mt-2 font-mono">Error: {error.message}</p>
           )}
         </div>
 
         {/* Recovery Options */}
         <div className="space-y-2">
           {reset && (
-            <Button
-              onClick={reset}
-              variant="default"
-              className="w-full"
-              size="lg"
-            >
+            <Button onClick={reset} variant="default" className="w-full" size="lg">
               <RotateCcw className="h-4 w-4 mr-2" />
               Restart Game Session
             </Button>
           )}
 
-          <Button
-            onClick={handleReturnHome}
-            variant="outline"
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleReturnHome} variant="outline" className="w-full" size="lg">
             <Home className="h-4 w-4 mr-2" />
             Return to Campaign Hub
           </Button>
 
-          <Button
-            onClick={handleReload}
-            variant="ghost"
-            className="w-full"
-            size="sm"
-          >
+          <Button onClick={handleReload} variant="ghost" className="w-full" size="sm">
             Reload Page
           </Button>
         </div>
@@ -111,9 +96,7 @@ export const GameErrorFallback: React.FC<GameErrorFallbackProps> = ({ error, res
             <summary className="cursor-pointer font-medium mb-2 text-muted-foreground">
               Error Stack (Development Only)
             </summary>
-            <pre className="whitespace-pre-wrap overflow-x-auto text-xs">
-              {error.stack}
-            </pre>
+            <pre className="whitespace-pre-wrap overflow-x-auto text-xs">{error.stack}</pre>
           </details>
         )}
       </div>

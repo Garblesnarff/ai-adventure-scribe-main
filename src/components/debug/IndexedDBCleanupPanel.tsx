@@ -15,13 +15,18 @@
  * @author AI Dungeon Master Team
  */
 
+import { Loader2, Trash2, RefreshCw, Info } from 'lucide-react';
 import React, { useState } from 'react';
-import { useIndexedDBCleanup, formatCleanupStats, timeSinceLastCleanup } from '@/hooks/use-indexeddb-cleanup';
+import { toast } from 'sonner';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Trash2, RefreshCw, Info } from 'lucide-react';
-import { toast } from 'sonner';
+import {
+  useIndexedDBCleanup,
+  formatCleanupStats,
+  timeSinceLastCleanup,
+} from '@/hooks/use-indexeddb-cleanup';
 
 /**
  * Panel component for IndexedDB cleanup management
@@ -91,8 +96,8 @@ export function IndexedDBCleanupPanel() {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Cleanup removes acknowledged and sent messages older than the selected age.
-            Pending and failed messages are preserved for retry.
+            Cleanup removes acknowledged and sent messages older than the selected age. Pending and
+            failed messages are preserved for retry.
           </AlertDescription>
         </Alert>
 
@@ -119,11 +124,7 @@ export function IndexedDBCleanupPanel() {
 
         {/* Action Buttons */}
         <div className="flex gap-2">
-          <Button
-            onClick={handleCleanup}
-            disabled={isLoading}
-            className="flex-1"
-          >
+          <Button onClick={handleCleanup} disabled={isLoading} className="flex-1">
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -137,28 +138,20 @@ export function IndexedDBCleanupPanel() {
             )}
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={refreshStats}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={refreshStats} disabled={isLoading}>
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Developer Info */}
         <details className="text-xs text-muted-foreground">
-          <summary className="cursor-pointer hover:text-foreground">
-            Developer Information
-          </summary>
+          <summary className="cursor-pointer hover:text-foreground">Developer Information</summary>
           <div className="mt-2 p-3 bg-muted rounded-md space-y-1">
             <p>Database: agentMessaging</p>
             <p>Store: messages</p>
             <p>Auto-cleanup interval: 6 hours</p>
             <p>Default max age: 24 hours</p>
-            <p>
-              View in DevTools: Application → IndexedDB → agentMessaging → messages
-            </p>
+            <p>View in DevTools: Application → IndexedDB → agentMessaging → messages</p>
           </div>
         </details>
       </CardContent>
@@ -190,17 +183,8 @@ export function IndexedDBCleanupCompact() {
           Last cleanup: {timeSince} ({stats.totalMessagesDeleted} total deleted)
         </p>
       </div>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleQuickCleanup}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          'Clean Now'
-        )}
+      <Button size="sm" variant="outline" onClick={handleQuickCleanup} disabled={isLoading}>
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Clean Now'}
       </Button>
     </div>
   );

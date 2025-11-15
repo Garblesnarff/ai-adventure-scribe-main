@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCampaign } from '@/contexts/CampaignContext';
@@ -46,7 +47,9 @@ export const CampaignSidePanel: React.FC<CampaignSidePanelProps> = ({ isCollapse
               {campaign.description && (
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">Description</div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{campaign.description}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {campaign.description}
+                  </p>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -75,16 +78,19 @@ export const CampaignSidePanel: React.FC<CampaignSidePanelProps> = ({ isCollapse
                   </div>
                 )}
               </div>
-              {campaign.enhancementEffects?.themes && campaign.enhancementEffects.themes.length > 0 && (
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Themes</div>
-                  <div className="flex flex-wrap gap-2">
-                    {campaign.enhancementEffects.themes.map((t, i) => (
-                      <span key={i} className="px-2 py-1 rounded-full bg-muted text-xs">{t}</span>
-                    ))}
+              {campaign.enhancementEffects?.themes &&
+                campaign.enhancementEffects.themes.length > 0 && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Themes</div>
+                    <div className="flex flex-wrap gap-2">
+                      {campaign.enhancementEffects.themes.map((t, i) => (
+                        <span key={i} className="px-2 py-1 rounded-full bg-muted text-xs">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
         </ScrollArea>

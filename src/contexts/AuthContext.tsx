@@ -1,5 +1,15 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { User, Session, AuthError, SupabaseClient } from '@supabase/supabase-js';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import type { User, Session, AuthError, SupabaseClient } from '@supabase/supabase-js';
+
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
@@ -67,20 +77,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasBootstrapped = useRef(false);
 
   const setAuthState = useMemo(
-    () =>
-      (nextSession: Session | null) => {
-        setSession(nextSession);
-        setUser(nextSession?.user ?? null);
-        persistSession(nextSession);
+    () => (nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      persistSession(nextSession);
 
-        if (!nextSession?.user) {
-          setBlogRole(null);
-          setBlogRoleLoading(false);
-          setUserPlan(null);
-          setUserPlanLoading(false);
-        }
-      },
-    []
+      if (!nextSession?.user) {
+        setBlogRole(null);
+        setBlogRoleLoading(false);
+        setUserPlan(null);
+        setUserPlanLoading(false);
+      }
+    },
+    [],
   );
 
   const fetchBlogRole = useCallback(async () => {
@@ -98,16 +107,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setBlogRoleLoading(true);
     try {
       // Dev override: allow admin access in non-production without email setup
-      const devAdminEmail = (import.meta as any)?.env?.VITE_DEV_BLOG_ADMIN_EMAIL as string | undefined;
-      const devOverrideRaw = (import.meta as any)?.env?.VITE_BLOG_ADMIN_DEV_OVERRIDE as string | undefined;
+      const devAdminEmail = (import.meta as any)?.env?.VITE_DEV_BLOG_ADMIN_EMAIL as
+        | string
+        | undefined;
+      const devOverrideRaw = (import.meta as any)?.env?.VITE_BLOG_ADMIN_DEV_OVERRIDE as
+        | string
+        | undefined;
       const isDev = (import.meta as any)?.env?.MODE !== 'production';
-      const enableDevOverride = devOverrideRaw === 'true' || devOverrideRaw === '1' || (devOverrideRaw === undefined && !devAdminEmail);
+      const enableDevOverride =
+        devOverrideRaw === 'true' ||
+        devOverrideRaw === '1' ||
+        (devOverrideRaw === undefined && !devAdminEmail);
       if (isDev && enableDevOverride) {
         setBlogRole('admin');
         return;
       }
       // If a specific dev admin email is set, grant admin for that user
-      if (isDev && devAdminEmail && user.email && user.email.toLowerCase() === devAdminEmail.toLowerCase()) {
+      if (
+        isDev &&
+        devAdminEmail &&
+        user.email &&
+        user.email.toLowerCase() === devAdminEmail.toLowerCase()
+      ) {
         setBlogRole('admin');
         return;
       }
@@ -143,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await fetch('http://localhost:8888/v1/llm/quota', {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -194,15 +215,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     bootstrapSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event !== 'INITIAL_SESSION') {
-          logger.info('Auth state changed:', { event, hasSession: !!session });
-        }
-        setAuthState(session ?? null);
-        setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event !== 'INITIAL_SESSION') {
+        logger.info('Auth state changed:', { event, hasSession: !!session });
       }
-    );
+      setAuthState(session ?? null);
+      setLoading(false);
+    });
 
     const disposers: Array<() => void> = [() => subscription.unsubscribe()];
 
@@ -236,7 +257,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     fetchBlogRole();
     // Recompute role only when user.id changes, not when fetchBlogRole reference changes
-
   }, [user?.id]);
 
   useEffect(() => {

@@ -1,16 +1,17 @@
 /**
  * Downtime Activity Utilities for D&D 5e
- * 
+ *
  * Functions for handling downtime activities, rolls, and outcomes
  */
 
-import { Character } from '@/types/character';
-import { 
-  DowntimeActivity, 
-  DowntimeOutcome, 
+import type { Character } from '@/types/character';
+import type {
+  DowntimeActivity,
+  DowntimeOutcome,
   DowntimeActivityType,
-  DowntimeResult
+  DowntimeResult,
 } from '@/types/downtimeActivities';
+
 import { rollDice } from '@/utils/diceUtils';
 
 /**
@@ -18,58 +19,58 @@ import { rollDice } from '@/utils/diceUtils';
  */
 export function checkDowntimePrerequisites(
   character: Character,
-  activity: DowntimeActivity
+  activity: DowntimeActivity,
 ): { canPerform: boolean; reason?: string } {
   // Check level requirement
   if (activity.levelRequirement && character.level && character.level < activity.levelRequirement) {
-    return { 
-      canPerform: false, 
-      reason: `Requires level ${activity.levelRequirement}` 
+    return {
+      canPerform: false,
+      reason: `Requires level ${activity.levelRequirement}`,
     };
   }
 
   // Check class requirement
   if (activity.classRequirement && character.class?.name !== activity.classRequirement) {
-    return { 
-      canPerform: false, 
-      reason: `Requires ${activity.classRequirement} class` 
+    return {
+      canPerform: false,
+      reason: `Requires ${activity.classRequirement} class`,
     };
   }
 
   // Check gold cost
   if (activity.goldCost && character.gold && character.gold < activity.goldCost) {
-    return { 
-      canPerform: false, 
-      reason: `Requires ${activity.goldCost} gold` 
+    return {
+      canPerform: false,
+      reason: `Requires ${activity.goldCost} gold`,
     };
   }
 
   // Check tool requirements
   if (activity.toolRequirements && activity.toolRequirements.length > 0) {
-    const hasTools = activity.toolRequirements.every(tool => 
-      character.inventory?.some(item => 
-        item.itemId.toLowerCase().includes(tool.toLowerCase()) && item.equipped
-      )
+    const hasTools = activity.toolRequirements.every((tool) =>
+      character.inventory?.some(
+        (item) => item.itemId.toLowerCase().includes(tool.toLowerCase()) && item.equipped,
+      ),
     );
-    
+
     if (!hasTools) {
-      return { 
-        canPerform: false, 
-        reason: `Requires tools: ${activity.toolRequirements.join(', ')}` 
+      return {
+        canPerform: false,
+        reason: `Requires tools: ${activity.toolRequirements.join(', ')}`,
       };
     }
   }
 
   // Check skill requirements
   if (activity.skillRequirements && activity.skillRequirements.length > 0) {
-    const hasSkills = activity.skillRequirements.every(skill => 
-      character.skillProficiencies?.includes(skill)
+    const hasSkills = activity.skillRequirements.every((skill) =>
+      character.skillProficiencies?.includes(skill),
     );
-    
+
     if (!hasSkills) {
-      return { 
-        canPerform: false, 
-        reason: `Requires skills: ${activity.skillRequirements.join(', ')}` 
+      return {
+        canPerform: false,
+        reason: `Requires skills: ${activity.skillRequirements.join(', ')}`,
       };
     }
   }
@@ -82,7 +83,7 @@ export function checkDowntimePrerequisites(
  */
 export function performDowntimeActivity(
   character: Character,
-  activity: DowntimeActivity
+  activity: DowntimeActivity,
 ): DowntimeResult {
   // Check prerequisites first
   const prereqCheck = checkDowntimePrerequisites(character, activity);
@@ -93,24 +94,24 @@ export function performDowntimeActivity(
       message: `Cannot perform activity: ${prereqCheck.reason}`,
       goldSpent: 0,
       materialsUsed: 0,
-      daysSpent: 0
+      daysSpent: 0,
     };
   }
 
   // Spend resources
   const updatedCharacter = { ...character };
-  
+
   // Deduct gold
   if (activity.goldCost && updatedCharacter.gold) {
     updatedCharacter.gold -= activity.goldCost;
   }
-  
+
   // Deduct materials
   if (activity.materialCost && updatedCharacter.gold) {
     // Using gold field for materials as well
     updatedCharacter.gold -= activity.materialCost;
   }
-  
+
   // Deduct days
   // In a real implementation, we would track days in the character data
 
@@ -123,7 +124,7 @@ export function performDowntimeActivity(
       goldSpent: activity.goldCost || 0,
       materialsUsed: activity.materialCost || 0,
       daysSpent: activity.daysRequired,
-      outcome: activity.outcomes.find(outcome => outcome.type === 'success')
+      outcome: activity.outcomes.find((outcome) => outcome.type === 'success'),
     };
   }
 
@@ -134,20 +135,20 @@ export function performDowntimeActivity(
 
   // Find appropriate outcome
   let outcome: DowntimeOutcome | undefined;
-  
+
   if (success) {
-    outcome = activity.outcomes.find(outcome => outcome.type === 'success');
+    outcome = activity.outcomes.find((outcome) => outcome.type === 'success');
   } else {
     // Find failure outcome
-    outcome = activity.outcomes.find(outcome => outcome.type === 'failure');
-    
+    outcome = activity.outcomes.find((outcome) => outcome.type === 'failure');
+
     // If no specific failure outcome, use generic failure
     if (!outcome) {
       outcome = {
         type: 'failure',
         description: 'The activity fails without significant consequence.',
         goldRecovery: 0,
-        experienceGained: 0
+        experienceGained: 0,
       };
     }
   }
@@ -158,42 +159,42 @@ export function performDowntimeActivity(
     if (outcome.experienceGained && updatedCharacter.experience) {
       updatedCharacter.experience += outcome.experienceGained;
     }
-    
+
     // Recover some gold on failure if specified
     if (outcome.goldRecovery && updatedCharacter.gold) {
       updatedCharacter.gold += outcome.goldRecovery;
     }
-    
+
     // Add items if specified
     if (outcome.itemsGained && updatedCharacter.inventory) {
-      updatedCharacter.inventory = [
-        ...updatedCharacter.inventory,
-        ...outcome.itemsGained
-      ];
+      updatedCharacter.inventory = [...updatedCharacter.inventory, ...outcome.itemsGained];
     }
   }
 
   return {
     success,
     activityCompleted: true,
-    message: success 
-      ? `Successfully completed ${activity.name}` 
+    message: success
+      ? `Successfully completed ${activity.name}`
       : `Failed to complete ${activity.name}`,
     goldSpent: activity.goldCost || 0,
     materialsUsed: activity.materialCost || 0,
     daysSpent: activity.daysRequired,
     outcome,
     rollResult: rollResult.total,
-    dc: activity.successDC
+    dc: activity.successDC,
   };
 }
 
 /**
  * Get the relevant ability modifier for a downtime activity type
  */
-function getRelevantAbilityModifier(character: Character, activityType: DowntimeActivityType): number {
+function getRelevantAbilityModifier(
+  character: Character,
+  activityType: DowntimeActivityType,
+): number {
   if (!character.abilityScores) return 0;
-  
+
   switch (activityType) {
     case 'crafting':
       return character.abilityScores.intelligence?.modifier || 0;
@@ -210,7 +211,7 @@ function getRelevantAbilityModifier(character: Character, activityType: Downtime
     case 'working':
       return Math.max(
         character.abilityScores.strength?.modifier || 0,
-        character.abilityScores.dexterity?.modifier || 0
+        character.abilityScores.dexterity?.modifier || 0,
       );
     default:
       return 0;
@@ -227,7 +228,10 @@ export function calculateDowntimeCost(activity: DowntimeActivity): number {
 /**
  * Check if a character can afford a downtime activity
  */
-export function canAffordDowntimeActivity(character: Character, activity: DowntimeActivity): boolean {
+export function canAffordDowntimeActivity(
+  character: Character,
+  activity: DowntimeActivity,
+): boolean {
   const totalCost = calculateDowntimeCost(activity);
   return (character.gold || 0) >= totalCost;
 }
@@ -237,10 +241,10 @@ export function canAffordDowntimeActivity(character: Character, activity: Downti
  */
 export function getAvailableDowntimeActivities(
   character: Character,
-  activities: DowntimeActivity[]
+  activities: DowntimeActivity[],
 ): DowntimeActivity[] {
-  return activities.filter(activity => 
-    checkDowntimePrerequisites(character, activity).canPerform
+  return activities.filter(
+    (activity) => checkDowntimePrerequisites(character, activity).canPerform,
   );
 }
 
@@ -266,16 +270,16 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
         description: 'You successfully create a spell scroll.',
         itemsGained: [
           // This would be populated with the actual scroll item
-        ]
+        ],
       },
       {
         type: 'failure',
         description: 'The spell scroll is ruined and materials are wasted.',
-        goldRecovery: 0
-      }
+        goldRecovery: 0,
+      },
     ],
     repeatable: true,
-    requiresSupplies: true
+    requiresSupplies: true,
   },
   {
     id: 'craft_item',
@@ -285,7 +289,7 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
     daysRequired: 10, // Varies by item
     goldCost: 100, // Base cost, varies by item
     materialCost: 500, // Base cost, varies by item
-    toolRequirements: ['Smith\'s tools', 'Alchemist\'s supplies'],
+    toolRequirements: ["Smith's tools", "Alchemist's supplies"],
     skillRequirements: ['Arcana'],
     levelRequirement: 3,
     successDC: 15,
@@ -296,16 +300,16 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
         itemsGained: [
           // This would be populated with the actual item
         ],
-        experienceGained: 250
+        experienceGained: 250,
       },
       {
         type: 'failure',
         description: 'The crafting fails and half the materials are wasted.',
-        goldRecovery: 0
-      }
+        goldRecovery: 0,
+      },
     ],
     repeatable: true,
-    requiresSupplies: true
+    requiresSupplies: true,
   },
   {
     id: 'train_skill',
@@ -320,16 +324,16 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
       {
         type: 'success',
         description: 'You gain proficiency in the chosen skill or tool.',
-        experienceGained: 100
+        experienceGained: 100,
       },
       {
         type: 'failure',
         description: 'Your training is not successful, but you learn from the experience.',
-        experienceGained: 25
-      }
+        experienceGained: 25,
+      },
     ],
     repeatable: false,
-    requiresSupplies: true
+    requiresSupplies: true,
   },
   {
     id: 'research_lore',
@@ -344,16 +348,16 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
       {
         type: 'success',
         description: 'You discover valuable information about your research topic.',
-        experienceGained: 150
+        experienceGained: 150,
       },
       {
         type: 'failure',
         description: 'Your research yields no new information.',
-        experienceGained: 50
-      }
+        experienceGained: 50,
+      },
     ],
     repeatable: true,
-    requiresSupplies: true
+    requiresSupplies: true,
   },
   {
     id: 'work_job',
@@ -367,16 +371,16 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
       {
         type: 'success',
         description: 'You earn money from your work.',
-        goldRecovery: 200
+        goldRecovery: 200,
       },
       {
         type: 'failure',
         description: 'You earn less than expected.',
-        goldRecovery: 50
-      }
+        goldRecovery: 50,
+      },
     ],
     repeatable: true,
-    requiresSupplies: false
+    requiresSupplies: false,
   },
   {
     id: 'carouse',
@@ -391,15 +395,15 @@ export const commonDowntimeActivities: DowntimeActivity[] = [
       {
         type: 'success',
         description: 'You make valuable social connections.',
-        experienceGained: 75
+        experienceGained: 75,
       },
       {
         type: 'failure',
         description: 'You spend money without making connections.',
-        goldRecovery: 0
-      }
+        goldRecovery: 0,
+      },
     ],
     repeatable: true,
-    requiresSupplies: false
-  }
+    requiresSupplies: false,
+  },
 ];

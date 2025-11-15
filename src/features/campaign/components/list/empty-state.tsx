@@ -1,6 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
 
 /**
  * EmptyState component
@@ -13,7 +14,9 @@ const EmptyState = () => {
   return (
     <div className="text-center py-12 parchment-panel rounded-lg p-8">
       <h3 className="text-2xl font-semibold mb-2 gradient-text">No Campaigns Found</h3>
-      <p className="text-muted-foreground mb-6">You haven't created any campaigns yet. Your tales await.</p>
+      <p className="text-muted-foreground mb-6">
+        You haven't created any campaigns yet. Your tales await.
+      </p>
       <div className="flex items-center justify-center">
         <Button
           onClick={() => navigate('/app/campaigns/create')}

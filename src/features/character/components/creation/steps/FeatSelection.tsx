@@ -1,17 +1,18 @@
+import { Sword, Sparkles, Users, Lightbulb, Award } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+
+import type { Feat } from '@/data/featOptions';
+import type { AbilityScores } from '@/types/character';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { feats, getFeatsByCategory, Feat } from '@/data/featOptions';
-import { AbilityScores } from '@/types/character';
-import { Sword, Sparkles, Users, Lightbulb, Award } from 'lucide-react';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { feats, getFeatsByCategory } from '@/data/featOptions';
 
 /**
  * FeatSelection component for choosing feats during character creation
@@ -30,7 +31,7 @@ const FeatSelection: React.FC = () => {
     constitution: 0,
     intelligence: 0,
     wisdom: 0,
-    charisma: 0
+    charisma: 0,
   });
 
   const currentLevel = character?.level || 1;
@@ -42,19 +43,23 @@ const FeatSelection: React.FC = () => {
    * Handle ASI (Ability Score Improvement) selection
    */
   const handleAbilityIncrease = (ability: string, change: number) => {
-    const currentScore = character?.abilityScores?.[ability as keyof typeof character.abilityScores]?.score || 10;
+    const currentScore =
+      character?.abilityScores?.[ability as keyof typeof character.abilityScores]?.score || 10;
     const currentIncrease = abilityIncreases[ability];
     const newIncrease = Math.max(0, Math.min(2, currentIncrease + change));
-    
+
     // Can't exceed 20 or use more than 2 points total
-    const totalIncreases = Object.values({...abilityIncreases, [ability]: newIncrease}).reduce((sum, val) => sum + val, 0);
+    const totalIncreases = Object.values({ ...abilityIncreases, [ability]: newIncrease }).reduce(
+      (sum, val) => sum + val,
+      0,
+    );
     if (currentScore + newIncrease > 20 || totalIncreases > 2) {
       return;
     }
 
-    setAbilityIncreases(prev => ({
+    setAbilityIncreases((prev) => ({
       ...prev,
-      [ability]: newIncrease
+      [ability]: newIncrease,
     }));
   };
 
@@ -87,7 +92,7 @@ const FeatSelection: React.FC = () => {
 
       dispatch({
         type: 'UPDATE_CHARACTER',
-        payload: { abilityScores: updatedAbilityScores as AbilityScores }
+        payload: { abilityScores: updatedAbilityScores as AbilityScores },
       });
 
       toast({
@@ -106,8 +111,8 @@ const FeatSelection: React.FC = () => {
 
       // Apply feat to character
       const currentFeats = character?.feats || [];
-      const feat = feats.find(f => f.id === selectedFeat);
-      
+      const feat = feats.find((f) => f.id === selectedFeat);
+
       if (feat) {
         // Apply ASI from feat if it has one
         if (feat.abilityScoreIncrease) {
@@ -124,15 +129,15 @@ const FeatSelection: React.FC = () => {
 
           dispatch({
             type: 'UPDATE_CHARACTER',
-            payload: { 
+            payload: {
               feats: [...currentFeats, selectedFeat],
-              abilityScores: updatedAbilityScores as AbilityScores
-            }
+              abilityScores: updatedAbilityScores as AbilityScores,
+            },
           });
         } else {
           dispatch({
             type: 'UPDATE_CHARACTER',
-            payload: { feats: [...currentFeats, selectedFeat] }
+            payload: { feats: [...currentFeats, selectedFeat] },
           });
         }
 
@@ -172,96 +177,93 @@ const FeatSelection: React.FC = () => {
   };
 
   const getFeatCard = (feat: Feat) => (
-    <motion.div key={feat.id} variants={cardItem}>
-      <Card
-        className={`cursor-pointer transition-all hover:shadow-md border-2 ${
-          selectedFeat === feat.id ? 'border-primary bg-primary/5' : 'border-muted'
-        }`}
-        onClick={() => setSelectedFeat(feat.id)}
-      >
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            {getCategoryIcon(feat.category)}
-            {feat.name}
-          </CardTitle>
-          <div className="flex gap-1">
-            <Badge variant="outline" className="text-xs">
-              {feat.category}
+    <Card
+      key={feat.id}
+      className={`cursor-pointer transition-all hover:shadow-md border-2 ${
+        selectedFeat === feat.id ? 'border-primary bg-primary/5' : 'border-muted'
+      }`}
+      onClick={() => setSelectedFeat(feat.id)}
+    >
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          {getCategoryIcon(feat.category)}
+          {feat.name}
+        </CardTitle>
+        <div className="flex gap-1">
+          <Badge variant="outline" className="text-xs">
+            {feat.category}
+          </Badge>
+          {feat.abilityScoreIncrease && (
+            <Badge variant="secondary" className="text-xs">
+              +1 Ability Score
             </Badge>
-            {feat.abilityScoreIncrease && (
-              <Badge variant="secondary" className="text-xs">
-                +1 Ability Score
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-2">{feat.description}</p>
-          {feat.prerequisites && (
-            <p className="text-xs text-orange-600 dark:text-orange-400 mb-2">
-              <strong>Prerequisites:</strong> {feat.prerequisites}
-            </p>
           )}
-          <div className="space-y-1">
-            {feat.benefits.map((benefit, index) => (
-              <p key={index} className="text-xs text-muted-foreground">
-                • {benefit}
-              </p>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-2">{feat.description}</p>
+        {feat.prerequisites && (
+          <p className="text-xs text-orange-600 dark:text-orange-400 mb-2">
+            <strong>Prerequisites:</strong> {feat.prerequisites}
+          </p>
+        )}
+        <div className="space-y-1">
+          {feat.benefits.map((benefit, index) => (
+            <p key={index} className="text-xs text-muted-foreground">
+              • {benefit}
+            </p>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 
-  return (
-    !canChooseFeat ? (
-      <div className="text-center space-y-4">
-        <Award className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">No Feat Selection</h2>
-        <p className="text-muted-foreground">
-          Feats become available at levels 4, 8, 12, 16, and 19.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Your character is currently level {currentLevel}.
-        </p>
-      </div>
-    ) : (
+  return !canChooseFeat ? (
+    <div className="text-center space-y-4">
+      <Award className="w-16 h-16 mx-auto text-muted-foreground" />
+      <h2 className="text-2xl font-bold">No Feat Selection</h2>
+      <p className="text-muted-foreground">
+        Feats become available at levels 4, 8, 12, 16, and 19.
+      </p>
+      <p className="text-sm text-muted-foreground">
+        Your character is currently level {currentLevel}.
+      </p>
+    </div>
+  ) : (
     <div className="space-y-6">
-      <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="text-center">
+      <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Ability Score Improvement</h2>
         <p className="text-muted-foreground">
           At level {currentLevel}, you can improve your abilities or gain a feat
         </p>
-      </motion.div>
+      </div>
 
       {/* ASI vs Feat Choice */}
-      <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Choose Your Improvement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={selectionType}
-              onValueChange={(value: 'asi' | 'feat') => setSelectionType(value)}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="asi" id="asi" />
-                <Label htmlFor="asi">
-                  <strong>Ability Score Improvement</strong> - Increase two different ability scores by 1 each, or one ability score by 2
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="feat" id="feat" />
-                <Label htmlFor="feat">
-                  <strong>Feat</strong> - Gain a special ability that provides unique benefits
-                </Label>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Choose Your Improvement</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup
+            value={selectionType}
+            onValueChange={(value: 'asi' | 'feat') => setSelectionType(value)}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="asi" id="asi" />
+              <Label htmlFor="asi">
+                <strong>Ability Score Improvement</strong> - Increase two different ability scores
+                by 1 each, or one ability score by 2
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="feat" id="feat" />
+              <Label htmlFor="feat">
+                <strong>Feat</strong> - Gain a special ability that provides unique benefits
+              </Label>
+            </div>
+          </RadioGroup>
+        </CardContent>
+      </Card>
 
       {/* ASI Selection */}
       {selectionType === 'asi' && (
@@ -269,51 +271,59 @@ const FeatSelection: React.FC = () => {
           <CardHeader>
             <CardTitle>Ability Score Improvement</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Distribute 2 points among your ability scores. You can increase two different scores by 1 each, or one score by 2.
+              Distribute 2 points among your ability scores. You can increase two different scores
+              by 1 each, or one score by 2.
             </p>
           </CardHeader>
           <CardContent>
-            <motion.div className="grid grid-cols-2 gap-4" variants={cardContainer} initial="hidden" animate="visible">
+            <div className="grid grid-cols-2 gap-4">
               {Object.entries(character?.abilityScores || {}).map(([ability, score]) => {
                 const increase = abilityIncreases[ability] || 0;
                 const newScore = score.score + increase;
 
                 return (
-                  <motion.div key={ability} variants={cardItem}>
-                    <div className="flex items-center justify-between p-3 border rounded">
-                      <div>
-                        <div className="font-medium capitalize">{ability}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {score.score} → {newScore} ({newScore >= 10 ? '+' : ''}{Math.floor((newScore - 10) / 2)})
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAbilityIncrease(ability, -1)}
-                          disabled={increase === 0}
-                        >
-                          -
-                        </Button>
-                        <span className="w-8 text-center">{increase}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAbilityIncrease(ability, 1)}
-                          disabled={increase === 2 || newScore >= 20 || Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0) >= 2}
-                        >
-                          +
-                        </Button>
+                  <div
+                    key={ability}
+                    className="flex items-center justify-between p-3 border rounded"
+                  >
+                    <div>
+                      <div className="font-medium capitalize">{ability}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {score.score} → {newScore} ({newScore >= 10 ? '+' : ''}
+                        {Math.floor((newScore - 10) / 2)})
                       </div>
                     </div>
-                  </motion.div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAbilityIncrease(ability, -1)}
+                        disabled={increase === 0}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center">{increase}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAbilityIncrease(ability, 1)}
+                        disabled={
+                          increase === 2 ||
+                          newScore >= 20 ||
+                          Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0) >= 2
+                        }
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
                 );
               })}
-            </motion.div>
+            </div>
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Points remaining: {2 - Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0)}
+                Points remaining:{' '}
+                {2 - Object.values(abilityIncreases).reduce((sum, val) => sum + val, 0)}
               </p>
             </div>
           </CardContent>
@@ -340,33 +350,33 @@ const FeatSelection: React.FC = () => {
               </TabsList>
 
               <TabsContent value="all" className="mt-4">
-                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto" variants={cardContainer} initial="hidden" animate="visible">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {feats.map(getFeatCard)}
-                </motion.div>
+                </div>
               </TabsContent>
 
               <TabsContent value="combat" className="mt-4">
-                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto" variants={cardContainer} initial="hidden" animate="visible">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {getFeatsByCategory('combat').map(getFeatCard)}
-                </motion.div>
+                </div>
               </TabsContent>
 
               <TabsContent value="magic" className="mt-4">
-                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto" variants={cardContainer} initial="hidden" animate="visible">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {getFeatsByCategory('magic').map(getFeatCard)}
-                </motion.div>
+                </div>
               </TabsContent>
 
               <TabsContent value="utility" className="mt-4">
-                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto" variants={cardContainer} initial="hidden" animate="visible">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {getFeatsByCategory('utility').map(getFeatCard)}
-                </motion.div>
+                </div>
               </TabsContent>
 
               <TabsContent value="social" className="mt-4">
-                <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto" variants={cardContainer} initial="hidden" animate="visible">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {getFeatsByCategory('social').map(getFeatCard)}
-                </motion.div>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -380,7 +390,6 @@ const FeatSelection: React.FC = () => {
         </Button>
       </div>
     </div>
-    )
   );
 };
 

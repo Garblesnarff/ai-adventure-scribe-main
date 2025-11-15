@@ -4,6 +4,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import importPlugin from "eslint-plugin-import";
 import tseslint from "typescript-eslint";
+import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
   { ignores: [
@@ -32,13 +33,81 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // Non-blocking rules intentionally disabled to reduce noise
-      "react-hooks/exhaustive-deps": "off",
-      "react-refresh/only-export-components": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-require-imports": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
+      // React Rules
+      "react-hooks/exhaustive-deps": "warn",
+      "react-refresh/only-export-components": "warn",
+
+      // TypeScript Strict Rules
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/explicit-function-return-type": [
+        "warn",
+        {
+          allowExpressions: true,
+          allowTypedFunctionExpressions: true,
+          allowHigherOrderFunctions: true,
+        },
+      ],
+      "@typescript-eslint/no-non-null-assertion": "warn",
+      "@typescript-eslint/no-require-imports": "error",
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        {
+          "ts-expect-error": "allow-with-description",
+          "ts-ignore": "allow-with-description",
+          "ts-nocheck": false,
+          "ts-check": false,
+          minimumDescriptionLength: 10,
+        },
+      ],
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "separate-type-imports" },
+      ],
+      // Note: @typescript-eslint/no-unnecessary-condition is disabled because it requires
+      // type-aware linting which significantly slows down the linting process
+      // "@typescript-eslint/no-unnecessary-condition": "warn",
+
+      // Error Handling Patterns
+      "no-throw-literal": "error",
+      "prefer-promise-reject-errors": "error",
+
+      // Import Organization
+      "import/order": [
+        "error",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            ["parent", "sibling"],
+            "index",
+            "type",
+          ],
+          "newlines-between": "always",
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+        },
+      ],
+      "import/newline-after-import": "error",
+      "import/no-duplicates": "error",
+
+      // General Code Quality
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-debugger": "error",
+      "prefer-const": "error",
+      "no-var": "error",
+      eqeqeq: ["error", "always", { null: "ignore" }],
+      curly: ["error", "all"],
 
       // Code Standards Enforcement (from CODE_STANDARDS.md)
       // Files should be under 200 lines
@@ -173,5 +242,7 @@ export default tseslint.config(
     rules: {
       "max-lines": "warn"
     }
-  }
+  },
+  // Prettier integration - must be last to override conflicting rules
+  prettierConfig
 );

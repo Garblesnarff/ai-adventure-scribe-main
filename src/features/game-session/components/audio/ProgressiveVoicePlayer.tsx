@@ -1,20 +1,43 @@
+import {
+  Play,
+  Pause,
+  Square,
+  Volume2,
+  VolumeX,
+  Users,
+  Settings,
+  AlertCircle,
+  RefreshCw,
+  Trash2,
+  TestTube,
+} from 'lucide-react';
 import React from 'react';
-import { Play, Pause, Square, Volume2, VolumeX, Users, Settings, AlertCircle, RefreshCw, Trash2, TestTube } from 'lucide-react';
-import { Button } from "@/shared/components/ui/button";
-import { Slider } from "@/shared/components/ui/slider";
-import { Badge } from "@/shared/components/ui/badge";
-import { Switch } from "@/shared/components/ui/switch";
-import { Label } from "@/shared/components/ui/label";
-import { Progress } from "@/shared/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/components/ui/collapsible";
-import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
-import { NarrationSegment } from '@/hooks/use-ai-response';
-import { AISegment } from '@/services/voice-director';
-import logger from '@/lib/logger';
+
+import type { NarrationSegment } from '@/hooks/use-ai-response';
+import type { AISegment } from '@/services/voice-director';
+
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
+import logger from '@/lib/logger';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/shared/components/ui/collapsible';
+import { Label } from '@/shared/components/ui/label';
+import { Slider } from '@/shared/components/ui/slider';
+import { Switch } from '@/shared/components/ui/switch';
+import { Progress } from '@/shared/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/shared/components/ui/tooltip';
 
 interface ProgressiveVoicePlayerProps {
   text: string;
@@ -25,17 +48,17 @@ interface ProgressiveVoicePlayerProps {
 
 // Helper function to convert NarrationSegments to AISegments
 const convertNarrationToAISegments = (narrationSegments: NarrationSegment[]): AISegment[] => {
-  return narrationSegments.map(segment => ({
+  return narrationSegments.map((segment) => ({
     type: (['dm', 'narration'].includes(segment.type) ? 'dm' : 'character') as 'dm' | 'character',
     text: segment.text,
     character: segment.character,
-    voice_category: segment.voice_category
+    voice_category: segment.voice_category,
   }));
 };
 
 /**
  * ProgressiveVoicePlayer Component
- * 
+ *
  * Simplified multi-voice player that uses progressive audio generation.
  * Replaces the complex MultiVoicePlayer with a cleaner, more reliable approach.
  */
@@ -43,7 +66,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
   text,
   narrationSegments,
   isEnabled = true,
-  className = ""
+  className = '',
 }) => {
   const {
     segments,
@@ -64,16 +87,22 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     retryApiKeyFetch,
     getCharacterVoiceMappings,
     clearCharacterVoiceMappings,
-    initializeAudioContext
+    initializeAudioContext,
   } = useProgressiveVoice();
 
   const [showSegments, setShowSegments] = React.useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useLocalStorage('progressive-voice-user-interacted', false);
-  const [autoPlayEnabled, setAutoPlayEnabled] = useLocalStorage('progressive-voice-auto-play', false); // DISABLED by default: Auto-play causes browser policy violations
+  const [hasUserInteracted, setHasUserInteracted] = useLocalStorage(
+    'progressive-voice-user-interacted',
+    false,
+  );
+  const [autoPlayEnabled, setAutoPlayEnabled] = useLocalStorage(
+    'progressive-voice-auto-play',
+    false,
+  ); // DISABLED by default: Auto-play causes browser policy violations
 
   // Auto-play functionality DISABLED to prevent browser policy issues
   const [lastText, setLastText] = React.useState('');
-  
+
   // Simple text change tracking (auto-play disabled)
   React.useEffect(() => {
     if (text && text !== lastText && text.trim()) {
@@ -84,7 +113,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
         narrationSegmentsLength: narrationSegments?.length || 0,
         narrationSegmentsType: typeof narrationSegments,
         narrationSegmentsFirst: narrationSegments?.[0],
-        rawNarrationSegments: narrationSegments
+        rawNarrationSegments: narrationSegments,
       });
     }
   }, [text, narrationSegments, lastText]);
@@ -106,7 +135,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
         hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
         narrationSegmentsLength: narrationSegments?.length || 0,
         narrationSegmentsType: typeof narrationSegments,
-        rawNarrationSegments: narrationSegments
+        rawNarrationSegments: narrationSegments,
       });
 
       if (narrationSegments && narrationSegments.length > 0) {
@@ -119,7 +148,18 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
         speakPlainText(text);
       }
     }
-  }, [isPlaying, isProcessing, stopPlayback, speakAISegments, speakPlainText, text, narrationSegments, hasUserInteracted, initializeAudioContext, setHasUserInteracted]);
+  }, [
+    isPlaying,
+    isProcessing,
+    stopPlayback,
+    speakAISegments,
+    speakPlainText,
+    text,
+    narrationSegments,
+    hasUserInteracted,
+    initializeAudioContext,
+    setHasUserInteracted,
+  ]);
 
   const handleAutoPlayToggle = React.useCallback(() => {
     setAutoPlayEnabled(!autoPlayEnabled);
@@ -140,19 +180,21 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
 
   const handleTestAudio = React.useCallback(async () => {
     logger.info('🧪 Testing audio with simple text...');
-    
+
     // Mark user interaction
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
     }
 
     // Test with simple DM narration
-    const testSegments = [{
-      type: 'dm' as const,
-      text: 'This is a test of the audio system.',
-      character: undefined,
-      voice_category: undefined
-    }];
+    const testSegments = [
+      {
+        type: 'dm' as const,
+        text: 'This is a test of the audio system.',
+        character: undefined,
+        voice_category: undefined,
+      },
+    ];
 
     await speakAISegments(testSegments);
   }, [speakAISegments, hasUserInteracted]);
@@ -162,9 +204,12 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
     clearCharacterVoiceMappings();
   }, [clearCharacterVoiceMappings]);
 
-  const handleVolumeChange = React.useCallback((values: number[]) => {
-    setVolume(values[0]);
-  }, [setVolume]);
+  const handleVolumeChange = React.useCallback(
+    (values: number[]) => {
+      setVolume(values[0]);
+    },
+    [setVolume],
+  );
 
   const calculateProgress = () => {
     if (segments.length === 0) return 0;
@@ -182,13 +227,15 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
 
   return (
     <TooltipProvider>
-      <Card className={`bg-white/90 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 transition-all duration-200 ${className}`}>
+      <Card
+        className={`bg-white/90 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 transition-all duration-200 ${className}`}
+      >
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between text-lg">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
               <span>Progressive Voice</span>
-              {(isProcessing) && (
+              {isProcessing && (
                 <Badge variant="outline" className="animate-pulse">
                   Processing...
                 </Badge>
@@ -201,10 +248,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
               )}
               {isVoiceEnabled && !isPlaying && !isProcessing && !error && (
                 <Badge variant="secondary" className="text-xs">
-                  {!hasUserInteracted 
-                    ? "⚠️ Click ▶ to activate audio" 
-                    : "📝 Manual playback only"
-                  }
+                  {!hasUserInteracted ? '⚠️ Click ▶ to activate audio' : '📝 Manual playback only'}
                 </Badge>
               )}
               {!isVoiceEnabled && (
@@ -241,16 +285,10 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                   disabled={!isVoiceEnabled || isProcessing || !text}
                   className="h-10 w-10 p-0"
                 >
-                  {isPlaying ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                {isPlaying ? 'Pause' : 'Play'}
-              </TooltipContent>
+              <TooltipContent>{isPlaying ? 'Pause' : 'Play'}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -265,9 +303,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                   <Square className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                Stop
-              </TooltipContent>
+              <TooltipContent>Stop</TooltipContent>
             </Tooltip>
 
             {/* Retry API Key Button */}
@@ -283,9 +319,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  Retry API key fetch
-                </TooltipContent>
+                <TooltipContent>Retry API key fetch</TooltipContent>
               </Tooltip>
             )}
 
@@ -302,9 +336,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                   <TestTube className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                Test audio
-              </TooltipContent>
+              <TooltipContent>Test audio</TooltipContent>
             </Tooltip>
 
             {/* Clear Voice Mappings Button */}
@@ -319,9 +351,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                Clear voice mappings
-              </TooltipContent>
+              <TooltipContent>Clear voice mappings</TooltipContent>
             </Tooltip>
 
             {/* Retry Button */}
@@ -338,27 +368,16 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  Retry
-                </TooltipContent>
+                <TooltipContent>Retry</TooltipContent>
               </Tooltip>
             )}
 
             {/* Volume Controls */}
             <div className="flex items-center gap-2 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleMute}
-                className="h-8 w-8 p-0"
-              >
-                {isMuted ? (
-                  <VolumeX className="h-4 w-4" />
-                ) : (
-                  <Volume2 className="h-4 w-4" />
-                )}
+              <Button variant="ghost" size="sm" onClick={toggleMute} className="h-8 w-8 p-0">
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </Button>
-              
+
               <Slider
                 value={[isMuted ? 0 : volume]}
                 onValueChange={handleVolumeChange}
@@ -366,7 +385,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                 step={0.05}
                 className="flex-1"
               />
-              
+
               <span className="text-xs text-muted-foreground w-10 text-right">
                 {Math.round((isMuted ? 0 : volume) * 100)}%
               </span>
@@ -387,11 +406,11 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {error}{" "}
+                {error}{' '}
                 {error.includes('API Key') && (
-                  <Button 
-                    variant="link" 
-                    size="sm" 
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={retryApiKeyFetch}
                     className="h-auto p-0 text-destructive underline"
                   >
@@ -399,9 +418,9 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                   </Button>
                 )}
                 {!error.includes('API Key') && (
-                  <Button 
-                    variant="link" 
-                    size="sm" 
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={handleRetry}
                     className="h-auto p-0 text-destructive underline"
                   >
@@ -417,7 +436,8 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
             <Alert variant="default">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                🔑 <strong>Retrieving API key...</strong><br />
+                🔑 <strong>Retrieving API key...</strong>
+                <br />
                 ElevenLabs API key is being loaded. If this persists, click the 🔄 button to retry.
               </AlertDescription>
             </Alert>
@@ -428,9 +448,10 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                🎙️ <strong>Welcome to Voice Narration!</strong><br />
-                Click the ▶ Play button or the 🧪 Test button to start audio. 
-                Once you interact, future AI responses will auto-play (if enabled).
+                🎙️ <strong>Welcome to Voice Narration!</strong>
+                <br />
+                Click the ▶ Play button or the 🧪 Test button to start audio. Once you interact,
+                future AI responses will auto-play (if enabled).
               </AlertDescription>
             </Alert>
           )}
@@ -441,11 +462,11 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
               <Progress value={calculateProgress()} className="h-2" />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>
-                  {currentSegmentIndex >= 0 ? `Segment ${currentSegmentIndex + 1} of ${segments.length}` : 'Starting...'}
+                  {currentSegmentIndex >= 0
+                    ? `Segment ${currentSegmentIndex + 1} of ${segments.length}`
+                    : 'Starting...'}
                 </span>
-                <span>
-                  {segments[currentSegmentIndex]?.character || 'DM'}
-                </span>
+                <span>{segments[currentSegmentIndex]?.character || 'DM'}</span>
               </div>
             </div>
           )}
@@ -455,7 +476,11 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
             <Card className="bg-primary/5 border-primary/30">
               <CardContent className="p-3">
                 <div className="flex items-start gap-3">
-                  <span className="text-lg" role="img" aria-label={segments[currentSegmentIndex].type}>
+                  <span
+                    className="text-lg"
+                    role="img"
+                    aria-label={segments[currentSegmentIndex].type}
+                  >
                     {getSegmentTypeIcon(segments[currentSegmentIndex].type)}
                   </span>
                   <div className="flex-1">
@@ -467,9 +492,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                         {segments[currentSegmentIndex].voiceName}
                       </Badge>
                     </div>
-                    <p className="text-sm leading-relaxed">
-                      {segments[currentSegmentIndex].text}
-                    </p>
+                    <p className="text-sm leading-relaxed">{segments[currentSegmentIndex].text}</p>
                   </div>
                 </div>
               </CardContent>
@@ -484,11 +507,9 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                   <Users className="h-4 w-4" />
                   Voice Segments
                 </h4>
-                
+
                 {segments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">
-                    No segments to display
-                  </p>
+                  <p className="text-sm text-muted-foreground italic">No segments to display</p>
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {segments.map((segment, index) => (
@@ -539,7 +560,7 @@ export const ProgressiveVoicePlayer: React.FC<ProgressiveVoicePlayerProps> = ({
                     ))}
                   </div>
                 )}
-                
+
                 {/* Voice Mappings Debug Info */}
                 <div className="mt-4 p-2 bg-muted/30 rounded text-xs">
                   <strong>Character Voice Mappings:</strong>

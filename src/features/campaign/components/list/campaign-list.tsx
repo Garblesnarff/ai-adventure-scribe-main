@@ -1,9 +1,9 @@
 /**
  * Campaign List Component
- * 
+ *
  * Fetches and displays all campaigns for the current user.
  * Handles loading, error, and empty states.
- * 
+ *
  * Dependencies:
  * - React Query (tanstack)
  * - Supabase client (src/integrations/supabase/client.ts)
@@ -11,37 +11,34 @@
  * - CampaignCard (src/components/campaign-list/campaign-card.tsx)
  * - CampaignSkeleton (src/components/campaign-list/campaign-skeleton.tsx)
  * - EmptyState (src/components/campaign-list/empty-state.tsx)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // SDK/library imports
- // ============================
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+// ============================
+// SDK/library imports
+// ============================
 import { useQuery } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
 
- // ============================
- // External integrations
- // ============================
-import { supabase } from '@/integrations/supabase/client';
+// ============================
+// External integrations
+// ============================
 
- // ============================
- // Project hooks
- // ============================
-import { useToast } from '@/hooks/use-toast';
+// ============================
+// Project hooks
+// ============================
 
- // ============================
- // Feature components
- // ============================
+// ============================
+// Feature components
+// ============================
 import { MemoizedCampaignCard } from './campaign-card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Button } from '@/components/ui/button';
-import { FantasyLoader } from '@/components/ui/fantasy-loader';
+import CampaignSkeleton from './campaign-skeleton';
+import EmptyState from './empty-state';
+
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
-import { cardContainer } from '@/utils/animations';
-import { useNavigate } from 'react-router-dom';
 
 /**
  * Props for CampaignList component
@@ -55,28 +52,34 @@ interface CampaignListProps {
 
 /**
  * Campaign List Component
- * 
+ *
  * Fetches and displays all campaigns for the current user.
  * Handles loading, error, and empty states.
- * 
+ *
  * @returns {JSX.Element} List of campaign cards or appropriate feedback state
  */
 const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   // map known campaign names to public cover images
-  const getCoverFor = useMemo(() => (name: string | null) => {
-    if (!name) return undefined;
-    const n = name.toLowerCase();
-    if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
-    if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
-    if (n.includes('tenebrous')) return '/tenebrous.jpeg';
-    return undefined;
-  }, []);
+  const getCoverFor = useMemo(
+    () => (name: string | null) => {
+      if (!name) return undefined;
+      const n = name.toLowerCase();
+      if (n.includes('kleetus') || n.includes('carnival')) return '/carnival.jpeg';
+      if (n.includes('erebo') || n.includes('new erebo')) return '/erebo.jpeg';
+      if (n.includes('tenebrous')) return '/tenebrous.jpeg';
+      return undefined;
+    },
+    [],
+  );
 
   // Fetch campaigns from Supabase with proper error handling and filtering/sorting
-  const { data: campaigns, isLoading, error } = useQuery({
+  const {
+    data: campaigns,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['campaigns', searchTerm, sortBy],
     queryFn: async () => {
       try {
@@ -84,12 +87,14 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
         // Excludes heavy JSONB fields (setting_details, thematic_elements, style_config, rules_config)
         let query = supabase
           .from('campaigns')
-          .select(`
+          .select(
+            `
             id, name, description, genre,
             difficulty_level, campaign_length, tone,
             status, background_image, art_style,
             created_at, updated_at
-          `)
+          `,
+          )
           .order(sortBy, { ascending: false });
 
         // Apply search filter
@@ -98,34 +103,31 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
         }
 
         const { data, error: supabaseError } = await query;
-        
+
         if (supabaseError) {
           throw new Error(supabaseError.message);
         }
-        
+
         return data;
       } catch (err) {
         logger.error('Error fetching campaigns:', err);
         toast({
-          title: "Error loading campaigns",
-          description: "There was a problem loading your campaigns. Please try again.",
-          variant: "destructive",
+          title: 'Error loading campaigns',
+          description: 'There was a problem loading your campaigns. Please try again.',
+          variant: 'destructive',
         });
         throw err;
       }
     },
   });
 
-  // Show loading state with FantasyLoader
+  // Show loading state with skeletons
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <FantasyLoader
-          type="parchment"
-          size="lg"
-          label="Loading campaigns..."
-          tip="Your epic adventures await!"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <CampaignSkeleton key={i} />
+        ))}
       </div>
     );
   }
@@ -135,7 +137,7 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
     return (
       <div className="text-center space-y-4">
         <p className="text-destructive">Error loading campaigns</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="text-sm text-muted-foreground hover:text-primary underline"
         >
@@ -147,29 +149,13 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
 
   // Show empty state if no campaigns
   if (!campaigns?.length) {
-    return (
-      <EmptyState
-        illustration="no-campaigns"
-        title="No campaigns yet"
-        description="Your tales await. Create your first epic saga to begin your adventure."
-        action={
-          <Button onClick={() => navigate('/app/campaigns/create')}>
-            Create Campaign
-          </Button>
-        }
-      />
-    );
+    return <EmptyState />;
   }
 
-  // Render campaign grid with stagger animation
+  // Render campaign grid
 
   return (
-    <motion.div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      variants={cardContainer}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {campaigns.map((campaign, i) => {
         // prefer explicit mapping; fall back to default test image for the first card
         const mapped = getCoverFor(campaign.name);
@@ -183,7 +169,7 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
           />
         );
       })}
-    </motion.div>
+    </div>
   );
 };
 

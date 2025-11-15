@@ -63,3 +63,7 @@ server.log
 # Code analysis outputs
 ts-prune-output.txt
 knip-output.txt
+
+# Migration backups
+*.sql.backup
+logs/

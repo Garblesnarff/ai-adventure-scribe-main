@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import generator from '@/services/encounters/encounter-generator';
 
 describe('Non-combat templates', () => {

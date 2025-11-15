@@ -1,4 +1,4 @@
-import { Character, CharacterClass, CharacterRace, Subrace, Spell } from '@/types/character';
+import type { Character, CharacterClass, CharacterRace, Subrace, Spell } from '@/types/character';
 
 /**
  * Spell Test Helpers
@@ -25,11 +25,11 @@ export const mockWizard: CharacterClass = {
     cantripsKnown: 3,
     spellsKnown: 6,
     ritualCasting: true,
-    spellbook: true
+    spellbook: true,
   },
   classFeatures: [],
   armorProficiencies: ['Light armor'],
-  weaponProficiencies: ['Daggers', 'darts', 'slings', 'quarterstaffs', 'light crossbows']
+  weaponProficiencies: ['Daggers', 'darts', 'slings', 'quarterstaffs', 'light crossbows'],
 };
 
 export const mockCleric: CharacterClass = {
@@ -44,11 +44,11 @@ export const mockCleric: CharacterClass = {
   spellcasting: {
     ability: 'wisdom',
     cantripsKnown: 3,
-    ritualCasting: true
+    ritualCasting: true,
   },
   classFeatures: [],
   armorProficiencies: ['Light armor', 'medium armor', 'shields'],
-  weaponProficiencies: ['Simple weapons']
+  weaponProficiencies: ['Simple weapons'],
 };
 
 export const mockBard: CharacterClass = {
@@ -64,11 +64,11 @@ export const mockBard: CharacterClass = {
     ability: 'charisma',
     cantripsKnown: 2,
     spellsKnown: 4,
-    ritualCasting: false
+    ritualCasting: false,
   },
   classFeatures: [],
   armorProficiencies: ['Light armor'],
-  weaponProficiencies: ['Simple weapons', 'hand crossbows', 'longswords', 'rapiers', 'shortswords']
+  weaponProficiencies: ['Simple weapons', 'hand crossbows', 'longswords', 'rapiers', 'shortswords'],
 };
 
 export const mockSorcerer: CharacterClass = {
@@ -84,11 +84,11 @@ export const mockSorcerer: CharacterClass = {
     ability: 'charisma',
     cantripsKnown: 4,
     spellsKnown: 2,
-    ritualCasting: false
+    ritualCasting: false,
   },
   classFeatures: [],
   armorProficiencies: [],
-  weaponProficiencies: ['Daggers', 'darts', 'slings', 'quarterstaffs', 'light crossbows']
+  weaponProficiencies: ['Daggers', 'darts', 'slings', 'quarterstaffs', 'light crossbows'],
 };
 
 export const mockWarlock: CharacterClass = {
@@ -98,18 +98,26 @@ export const mockWarlock: CharacterClass = {
   hitDie: 8,
   primaryAbility: 'charisma',
   savingThrowProficiencies: ['wisdom', 'charisma'],
-  skillChoices: ['Arcana', 'Deception', 'History', 'Intimidation', 'Investigation', 'Nature', 'Religion'],
+  skillChoices: [
+    'Arcana',
+    'Deception',
+    'History',
+    'Intimidation',
+    'Investigation',
+    'Nature',
+    'Religion',
+  ],
   numSkillChoices: 2,
   spellcasting: {
     ability: 'charisma',
     cantripsKnown: 2,
     spellsKnown: 2,
     pactMagic: true,
-    ritualCasting: false
+    ritualCasting: false,
   },
   classFeatures: [],
   armorProficiencies: ['Light armor'],
-  weaponProficiencies: ['Simple weapons']
+  weaponProficiencies: ['Simple weapons'],
 };
 
 export const mockPaladin: CharacterClass = {
@@ -124,11 +132,11 @@ export const mockPaladin: CharacterClass = {
   spellcasting: {
     ability: 'charisma',
     cantripsKnown: 0,
-    ritualCasting: false
+    ritualCasting: false,
   },
   classFeatures: [],
   armorProficiencies: ['All armor', 'shields'],
-  weaponProficiencies: ['Simple weapons', 'martial weapons']
+  weaponProficiencies: ['Simple weapons', 'martial weapons'],
 };
 
 export const mockRanger: CharacterClass = {
@@ -138,16 +146,25 @@ export const mockRanger: CharacterClass = {
   hitDie: 10,
   primaryAbility: 'dexterity',
   savingThrowProficiencies: ['strength', 'dexterity'],
-  skillChoices: ['Animal Handling', 'Athletics', 'Insight', 'Investigation', 'Nature', 'Perception', 'Stealth', 'Survival'],
+  skillChoices: [
+    'Animal Handling',
+    'Athletics',
+    'Insight',
+    'Investigation',
+    'Nature',
+    'Perception',
+    'Stealth',
+    'Survival',
+  ],
   numSkillChoices: 3,
   spellcasting: {
     ability: 'wisdom',
     cantripsKnown: 0,
-    ritualCasting: false
+    ritualCasting: false,
   },
   classFeatures: [],
   armorProficiencies: ['Light armor', 'medium armor', 'shields'],
-  weaponProficiencies: ['Simple weapons', 'martial weapons']
+  weaponProficiencies: ['Simple weapons', 'martial weapons'],
 };
 
 export const mockFighter: CharacterClass = {
@@ -157,11 +174,20 @@ export const mockFighter: CharacterClass = {
   hitDie: 10,
   primaryAbility: 'strength',
   savingThrowProficiencies: ['strength', 'constitution'],
-  skillChoices: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
+  skillChoices: [
+    'Acrobatics',
+    'Animal Handling',
+    'Athletics',
+    'History',
+    'Insight',
+    'Intimidation',
+    'Perception',
+    'Survival',
+  ],
   numSkillChoices: 2,
   classFeatures: [],
   armorProficiencies: ['All armor', 'shields'],
-  weaponProficiencies: ['Simple weapons', 'martial weapons']
+  weaponProficiencies: ['Simple weapons', 'martial weapons'],
 };
 
 // Mock Races
@@ -175,11 +201,11 @@ export const mockHuman: CharacterRace = {
     constitution: 1,
     intelligence: 1,
     wisdom: 1,
-    charisma: 1
+    charisma: 1,
   },
   speed: 30,
   traits: ['Versatile'],
-  languages: ['Common']
+  languages: ['Common'],
 };
 
 export const mockElf: CharacterRace = {
@@ -189,7 +215,7 @@ export const mockElf: CharacterRace = {
   abilityScoreIncrease: { dexterity: 2 },
   speed: 30,
   traits: ['Darkvision', 'Keen Senses', 'Fey Ancestry', 'Trance'],
-  languages: ['Common', 'Elvish']
+  languages: ['Common', 'Elvish'],
 };
 
 // Mock Subraces
@@ -201,10 +227,10 @@ export const mockHighElfSubrace: Subrace = {
   traits: ['Elf Weapon Training', 'Extra Language'],
   bonusCantrip: {
     source: 'wizard',
-    count: 1
+    count: 1,
   },
   weaponProficiencies: ['Longswords', 'shortbows', 'longbows'],
-  languages: ['One extra language']
+  languages: ['One extra language'],
 };
 
 export const mockWoodElfSubrace: Subrace = {
@@ -214,7 +240,7 @@ export const mockWoodElfSubrace: Subrace = {
   abilityScoreIncrease: { wisdom: 1 },
   traits: ['Elf Weapon Training', 'Fleet of Foot', 'Mask of the Wild'],
   speed: 35,
-  weaponProficiencies: ['Longswords', 'shortbows', 'longbows']
+  weaponProficiencies: ['Longswords', 'shortbows', 'longbows'],
 };
 
 export const mockDrowSubrace: Subrace = {
@@ -225,7 +251,7 @@ export const mockDrowSubrace: Subrace = {
   traits: ['Superior Darkvision', 'Sunlight Sensitivity', 'Drow Magic'],
   cantrips: ['dancing-lights'],
   spells: ['faerie-fire', 'darkness'], // Gained at higher levels
-  weaponProficiencies: ['Rapiers', 'shortswords', 'hand crossbows']
+  weaponProficiencies: ['Rapiers', 'shortswords', 'hand crossbows'],
 };
 
 export const mockTieflingSubrace: Subrace = {
@@ -235,7 +261,7 @@ export const mockTieflingSubrace: Subrace = {
   abilityScoreIncrease: { charisma: 2, intelligence: 1 },
   traits: ['Darkvision', 'Hellish Resistance', 'Infernal Legacy'],
   cantrips: ['thaumaturgy'],
-  spells: ['hellish-rebuke', 'darkness'] // Gained at higher levels
+  spells: ['hellish-rebuke', 'darkness'], // Gained at higher levels
 };
 
 export const mockForestGnomeSubrace: Subrace = {
@@ -244,7 +270,7 @@ export const mockForestGnomeSubrace: Subrace = {
   description: 'Forest gnomes have natural kinship with beasts of the forest',
   abilityScoreIncrease: { dexterity: 1 },
   traits: ['Natural Illusionist', 'Speak with Small Beasts'],
-  cantrips: ['minor-illusion']
+  cantrips: ['minor-illusion'],
 };
 
 // Mock Spells
@@ -261,7 +287,7 @@ export const mockCantrips: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'A spectral, floating hand appears at a point you choose within range.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'prestidigitation',
@@ -274,7 +300,7 @@ export const mockCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Up to 1 hour',
-    description: 'This spell is a minor magical trick that novice spellcasters use for practice.'
+    description: 'This spell is a minor magical trick that novice spellcasters use for practice.',
   },
   {
     id: 'light',
@@ -288,7 +314,7 @@ export const mockCantrips: Spell[] = [
     material: true,
     materialDescription: 'a firefly or phosphorescent moss',
     duration: '1 hour',
-    description: 'You touch one object that is no larger than 10 feet in any dimension.'
+    description: 'You touch one object that is no larger than 10 feet in any dimension.',
   },
   {
     id: 'minor-illusion',
@@ -302,7 +328,7 @@ export const mockCantrips: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: '1 minute',
-    description: 'You create a sound or an image of an object within range.'
+    description: 'You create a sound or an image of an object within range.',
   },
   {
     id: 'guidance',
@@ -316,7 +342,7 @@ export const mockCantrips: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 1 minute',
     description: 'You touch one willing creature and choose a skill.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'thaumaturgy',
@@ -328,7 +354,7 @@ export const mockCantrips: Spell[] = [
     components: 'V',
     verbal: true,
     duration: '1 minute',
-    description: 'You manifest a minor wonder, a sign of supernatural power, within range.'
+    description: 'You manifest a minor wonder, a sign of supernatural power, within range.',
   },
   {
     id: 'dancing-lights',
@@ -344,8 +370,8 @@ export const mockCantrips: Spell[] = [
     materialDescription: 'a bit of phosphorus or wychwood, or a glowworm',
     duration: 'Concentration, up to 1 minute',
     description: 'You create up to four torch-sized lights within range.',
-    concentration: true
-  }
+    concentration: true,
+  },
 ];
 
 export const mockSpells: Spell[] = [
@@ -361,7 +387,7 @@ export const mockSpells: Spell[] = [
     somatic: true,
     duration: 'Instantaneous',
     description: 'You create three glowing darts of magical force.',
-    damage: '1d4 + 1'
+    damage: '1d4 + 1',
   },
   {
     id: 'shield',
@@ -374,7 +400,7 @@ export const mockSpells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 round',
-    description: 'An invisible barrier of magical force appears and protects you.'
+    description: 'An invisible barrier of magical force appears and protects you.',
   },
   {
     id: 'detect-magic',
@@ -389,7 +415,7 @@ export const mockSpells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     ritual: true,
-    concentration: true
+    concentration: true,
   },
   {
     id: 'cure-wounds',
@@ -402,7 +428,8 @@ export const mockSpells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.'
+    description:
+      'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
   },
   {
     id: 'burning-hands',
@@ -415,8 +442,9 @@ export const mockSpells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth.',
-    damage: '3d6'
+    description:
+      'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth.',
+    damage: '3d6',
   },
   {
     id: 'sleep',
@@ -431,8 +459,8 @@ export const mockSpells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of fine sand, rose petals, or a cricket',
     duration: 'Up to 1 minute',
-    description: 'This spell sends creatures into a magical slumber.'
-  }
+    description: 'This spell sends creatures into a magical slumber.',
+  },
 ];
 
 // Helper Functions
@@ -443,7 +471,7 @@ export function createMockCharacter(
   subrace?: Subrace,
   level: number = 1,
   cantrips?: string[],
-  knownSpells?: string[]
+  knownSpells?: string[],
 ): Character {
   return {
     id: `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
@@ -458,18 +486,38 @@ export function createMockCharacter(
       strength: { score: 10, modifier: 0, savingThrow: false },
       dexterity: { score: 14, modifier: 2, savingThrow: false },
       constitution: { score: 13, modifier: 1, savingThrow: false },
-      intelligence: { score: 15, modifier: 2, savingThrow: characterClass.savingThrowProficiencies.includes('intelligence') },
-      wisdom: { score: 12, modifier: 1, savingThrow: characterClass.savingThrowProficiencies.includes('wisdom') },
-      charisma: { score: 8, modifier: -1, savingThrow: characterClass.savingThrowProficiencies.includes('charisma') }
-    }
+      intelligence: {
+        score: 15,
+        modifier: 2,
+        savingThrow: characterClass.savingThrowProficiencies.includes('intelligence'),
+      },
+      wisdom: {
+        score: 12,
+        modifier: 1,
+        savingThrow: characterClass.savingThrowProficiencies.includes('wisdom'),
+      },
+      charisma: {
+        score: 8,
+        modifier: -1,
+        savingThrow: characterClass.savingThrowProficiencies.includes('charisma'),
+      },
+    },
   };
 }
 
-export function createMockWizard(name: string = 'Test Wizard', cantrips?: string[], spells?: string[]): Character {
+export function createMockWizard(
+  name: string = 'Test Wizard',
+  cantrips?: string[],
+  spells?: string[],
+): Character {
   return createMockCharacter(name, mockWizard, mockHuman, undefined, 1, cantrips, spells);
 }
 
-export function createMockCleric(name: string = 'Test Cleric', cantrips?: string[], spells?: string[]): Character {
+export function createMockCleric(
+  name: string = 'Test Cleric',
+  cantrips?: string[],
+  spells?: string[],
+): Character {
   return createMockCharacter(name, mockCleric, mockHuman, undefined, 1, cantrips, spells);
 }
 
@@ -477,49 +525,98 @@ export function createMockFighter(name: string = 'Test Fighter'): Character {
   return createMockCharacter(name, mockFighter, mockHuman, undefined, 1);
 }
 
-export function createMockHighElfWizard(name: string = 'High Elf Wizard', cantrips?: string[], spells?: string[]): Character {
+export function createMockHighElfWizard(
+  name: string = 'High Elf Wizard',
+  cantrips?: string[],
+  spells?: string[],
+): Character {
   return createMockCharacter(name, mockWizard, mockElf, mockHighElfSubrace, 1, cantrips, spells);
 }
 
-export function createMockTieflingWarlock(name: string = 'Tiefling Warlock', cantrips?: string[], spells?: string[]): Character {
-  return createMockCharacter(name, mockWarlock, mockHuman, mockTieflingSubrace, 1, cantrips, spells);
+export function createMockTieflingWarlock(
+  name: string = 'Tiefling Warlock',
+  cantrips?: string[],
+  spells?: string[],
+): Character {
+  return createMockCharacter(
+    name,
+    mockWarlock,
+    mockHuman,
+    mockTieflingSubrace,
+    1,
+    cantrips,
+    spells,
+  );
 }
 
 // Validation Helpers
-export function expectValidWizardSelection(selectedCantrips: string[], selectedSpells: string[]): void {
+export function expectValidWizardSelection(
+  selectedCantrips: string[],
+  selectedSpells: string[],
+): void {
   expect(selectedCantrips).toHaveLength(3);
   expect(selectedSpells).toHaveLength(6);
 }
 
-export function expectValidClericSelection(selectedCantrips: string[], selectedSpells: string[]): void {
+export function expectValidClericSelection(
+  selectedCantrips: string[],
+  selectedSpells: string[],
+): void {
   expect(selectedCantrips).toHaveLength(3);
   expect(selectedSpells).toHaveLength(1); // Prepared spells
 }
 
-export function expectValidHighElfWizardSelection(selectedCantrips: string[], selectedSpells: string[]): void {
+export function expectValidHighElfWizardSelection(
+  selectedCantrips: string[],
+  selectedSpells: string[],
+): void {
   expect(selectedCantrips).toHaveLength(4); // 3 wizard + 1 racial
   expect(selectedSpells).toHaveLength(6);
 }
 
-export function expectValidTieflingWarlockSelection(selectedCantrips: string[], selectedSpells: string[]): void {
+export function expectValidTieflingWarlockSelection(
+  selectedCantrips: string[],
+  selectedSpells: string[],
+): void {
   expect(selectedCantrips).toHaveLength(3); // 2 warlock + 1 racial
   expect(selectedSpells).toHaveLength(2);
 }
 
 // Test Data Sets
 export const validWizardCantrips = ['mage-hand', 'prestidigitation', 'light'];
-export const validWizardSpells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
+export const validWizardSpells = [
+  'magic-missile',
+  'shield',
+  'detect-magic',
+  'burning-hands',
+  'sleep',
+  'color-spray',
+];
 
 export const validClericCantrips = ['guidance', 'thaumaturgy', 'sacred-flame'];
 export const validClericSpells = ['cure-wounds'];
 
-export const validHighElfWizardCantrips = ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'];
+export const validHighElfWizardCantrips = [
+  'mage-hand',
+  'prestidigitation',
+  'light',
+  'minor-illusion',
+];
 export const validTieflingWarlockCantrips = ['thaumaturgy', 'prestidigitation', 'minor-illusion'];
 
 // Performance Test Data
 export function generateLargeSpellDataset(count: number): Spell[] {
   const spells: Spell[] = [];
-  const schools = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
+  const schools = [
+    'Abjuration',
+    'Conjuration',
+    'Divination',
+    'Enchantment',
+    'Evocation',
+    'Illusion',
+    'Necromancy',
+    'Transmutation',
+  ];
 
   for (let i = 0; i < count; i++) {
     spells.push({
@@ -533,7 +630,7 @@ export function generateLargeSpellDataset(count: number): Spell[] {
       verbal: true,
       somatic: true,
       duration: 'Instantaneous',
-      description: `This is test spell number ${i} for performance testing.`
+      description: `This is test spell number ${i} for performance testing.`,
     });
   }
 
@@ -544,10 +641,18 @@ export function generateLargeSpellDataset(count: number): Spell[] {
 export const invalidSpellSelections = {
   tooManyCantrips: ['mage-hand', 'prestidigitation', 'light', 'minor-illusion', 'guidance'],
   tooFewCantrips: ['mage-hand'],
-  tooManySpells: ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray', 'cure-wounds'],
+  tooManySpells: [
+    'magic-missile',
+    'shield',
+    'detect-magic',
+    'burning-hands',
+    'sleep',
+    'color-spray',
+    'cure-wounds',
+  ],
   tooFewSpells: ['magic-missile'],
   invalidCantrips: ['mage-hand', 'prestidigitation', 'guidance'], // guidance not wizard
-  invalidSpells: ['magic-missile', 'shield', 'cure-wounds'] // cure-wounds not wizard
+  invalidSpells: ['magic-missile', 'shield', 'cure-wounds'], // cure-wounds not wizard
 };
 
 export default {
@@ -602,5 +707,5 @@ export default {
   generateLargeSpellDataset,
 
   // Error cases
-  invalidSpellSelections
+  invalidSpellSelections,
 };

@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const warlockCantrips: Spell[] = [
-{
+  {
     id: 'blade-ward-warlock',
     name: 'Blade Ward',
     level: 0,
@@ -12,7 +12,8 @@ export const warlockCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 round',
-    description: 'You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks.'
+    description:
+      'You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks.',
   },
   {
     id: 'chill-touch-warlock',
@@ -25,8 +26,9 @@ export const warlockCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave.',
-    damage: '1d8'
+    description:
+      'You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave.',
+    damage: '1d8',
   },
   {
     id: 'eldritch-blast',
@@ -39,8 +41,9 @@ export const warlockCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 force damage.',
-    damage: '1d10'
+    description:
+      'A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 force damage.',
+    damage: '1d10',
   },
   {
     id: 'friends-warlock',
@@ -54,8 +57,9 @@ export const warlockCantrips: Spell[] = [
     material: true,
     materialDescription: 'a small amount of makeup applied to the face as this spell is cast',
     duration: 'Concentration, up to 1 minute',
-    description: 'For the duration, you have advantage on all Charisma checks directed at one creature of your choice that isn\'t hostile toward you.',
-    concentration: true
+    description:
+      "For the duration, you have advantage on all Charisma checks directed at one creature of your choice that isn't hostile toward you.",
+    concentration: true,
   },
   {
     id: 'mage-hand-warlock',
@@ -68,8 +72,9 @@ export const warlockCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
-    concentration: true
+    description:
+      'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
+    concentration: true,
   },
   {
     id: 'minor-illusion-warlock',
@@ -83,7 +88,8 @@ export const warlockCantrips: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: '1 minute',
-    description: 'You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again.'
+    description:
+      'You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again.',
   },
   {
     id: 'prestidigitation-warlock',
@@ -96,6 +102,7 @@ export const warlockCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Up to 1 hour',
-    description: 'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.'
-  }
+    description:
+      'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.',
+  },
 ];

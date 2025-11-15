@@ -45,7 +45,7 @@ describe('Safety Commands', () => {
       it('handles case sensitivity in commands', async () => {
         const result1 = await checkSafetyCommands('/X', sessionId);
         const result2 = await checkSafetyCommands('/PAUSE', sessionId);
-        
+
         // Should work with toLowerCase conversion
         expect(result1.isSafetyCommand).toBe(true);
         expect(result2.isSafetyCommand).toBe(true);
@@ -56,7 +56,7 @@ describe('Safety Commands', () => {
       it('detects x-card trigger words', async () => {
         const aiResponse = 'The scene contains graphic violence and blood.';
         const result = await checkSafetyCommands('This is uncomfortable', sessionId, aiResponse);
-        
+
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('x_card');
         expect(result.command?.autoTriggered).toBe(true);
@@ -68,7 +68,7 @@ describe('Safety Commands', () => {
       it('detects veil trigger words', async () => {
         const aiResponse = 'They engage in suggestive behavior.';
         const result = await checkSafetyCommands('This feels inappropriate', sessionId, aiResponse);
-        
+
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('veil');
         expect(result.command?.autoTriggered).toBe(true);
@@ -78,7 +78,7 @@ describe('Safety Commands', () => {
       it('detects pause trigger words', async () => {
         const aiResponse = 'Everything is overwhelming.';
         const result = await checkSafetyCommands('This is too much', sessionId, aiResponse);
-        
+
         expect(result.isSafetyCommand).toBe(true);
         expect(result.command?.type).toBe('pause');
         expect(result.command?.autoTriggered).toBe(true);
@@ -114,11 +114,11 @@ describe('Safety Commands', () => {
         type: 'x_card' as const,
         triggeredBy: 'explicit_command',
         timestamp: '2025-10-08T12:00:00Z',
-        context: '/x'
+        context: '/x',
       };
 
       const response = await processSafetyCommand(command, sessionId);
-      
+
       expect(response.sender).toBe('system');
       expect(response.context?.intent).toBe('safety_x_card');
       expect(response.text).toContain('X-CARD ACTIVATED');
@@ -130,11 +130,11 @@ describe('Safety Commands', () => {
         type: 'veil' as const,
         triggeredBy: 'explicit_command',
         timestamp: '2025-10-08T12:00:00Z',
-        context: '/veil'
+        context: '/veil',
       };
 
       const response = await processSafetyCommand(command, sessionId);
-      
+
       expect(response.sender).toBe('system');
       expect(response.context?.intent).toBe('safety_veil');
       expect(response.text).toContain('VEIL ACTIVATED');
@@ -146,15 +146,15 @@ describe('Safety Commands', () => {
         type: 'pause' as const,
         triggeredBy: 'explicit_command',
         timestamp: '2025-10-08T12:00:00Z',
-        context: '/pause'
+        context: '/pause',
       };
 
       const response = await processSafetyCommand(command, sessionId);
-      
+
       expect(response.sender).toBe('system');
       expect(response.context?.intent).toBe('safety_pause');
       expect(response.text).toContain('GAME PAUSED');
-      expect(response.text).toContain('Use /resume when you\'re ready');
+      expect(response.text).toContain("Use /resume when you're ready");
     });
 
     it('processes resume command correctly', async () => {
@@ -162,11 +162,11 @@ describe('Safety Commands', () => {
         type: 'resume' as const,
         triggeredBy: 'explicit_command',
         timestamp: '2025-10-08T12:00:00Z',
-        context: '/resume'
+        context: '/resume',
       };
 
       const response = await processSafetyCommand(command, sessionId);
-      
+
       expect(response.sender).toBe('system');
       expect(response.context?.intent).toBe('safety_resume');
       expect(response.text).toContain('GAME RESUMED');
@@ -180,11 +180,11 @@ describe('Safety Commands', () => {
         timestamp: '2025-10-08T12:00:00Z',
         context: 'Auto-triggered by: violence',
         autoTriggered: true,
-        triggerWord: 'violence'
+        triggerWord: 'violence',
       };
 
       const response = await processSafetyCommand(command, sessionId);
-      
+
       expect(response.sender).toBe('system');
       expect(response.context?.autoTriggered).toBe(true);
       expect(response.context?.triggerWord).toBe('violence');

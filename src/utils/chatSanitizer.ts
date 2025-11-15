@@ -30,7 +30,10 @@ export function sanitizeDMText(input: string | undefined | null): string {
   // Collapse consecutive blank lines
   const collapsed: string[] = [];
   for (const line of filtered) {
-    if (line.trim() === '' && (collapsed.length === 0 || collapsed[collapsed.length - 1].trim() === '')) {
+    if (
+      line.trim() === '' &&
+      (collapsed.length === 0 || collapsed[collapsed.length - 1].trim() === '')
+    ) {
       continue;
     }
     collapsed.push(line);

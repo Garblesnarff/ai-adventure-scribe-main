@@ -1,6 +1,6 @@
 export function generateExcerpt(text: string, maxLength: number = 200): string {
   if (!text) return '';
-  
+
   const cleanText = text
     .replace(/[#*_`~>[\]]/g, '')
     .replace(/\n+/g, ' ')
@@ -13,7 +13,7 @@ export function generateExcerpt(text: string, maxLength: number = 200): string {
 
   const truncated = cleanText.substring(0, maxLength);
   const lastSpace = truncated.lastIndexOf(' ');
-  
+
   if (lastSpace > maxLength * 0.8) {
     return truncated.substring(0, lastSpace) + '...';
   }

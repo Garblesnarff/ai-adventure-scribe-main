@@ -1,4 +1,4 @@
-import { Memory } from "@/types/memory";
+import type { Memory } from '@/types/memory';
 
 /**
  * Interface for the factors that contribute to a memory's importance.
@@ -40,8 +40,8 @@ export const calculateImportance = (factors: ImportanceFactors): number => {
       score += 1;
       break;
     case 'task_result':
-        score += 5; // Default for task results
-        break;
+      score += 5; // Default for task results
+      break;
     default:
       score += 0;
   }
@@ -77,7 +77,10 @@ export const calculateImportance = (factors: ImportanceFactors): number => {
   }
 
   // Metadata-based factors
-  if (factors.metadata && typeof (factors.metadata as Record<string, unknown>).significance === 'number') {
+  if (
+    factors.metadata &&
+    typeof (factors.metadata as Record<string, unknown>).significance === 'number'
+  ) {
     score += (factors.metadata as Record<string, number>).significance;
   }
 

@@ -1,14 +1,14 @@
 /**
  * Offline State Service
- * 
+ *
  * This file defines the OfflineStateService class, a singleton service
  * responsible for managing the application's online/offline state. It listens
  * to browser online/offline events, attempts to synchronize pending messages
  * upon reconnection, and manages reconnection attempts with backoff.
- * 
+ *
  * Main Class:
  * - OfflineStateService: Manages and tracks online/offline status and synchronization.
- * 
+ *
  * Key Dependencies:
  * - IndexedDBService (`../storage/indexed-db-service.ts`)
  * - MessageQueueService (`../message-queue-service.ts`)
@@ -16,7 +16,7 @@
  * - MessageRecoveryService (`../recovery/message-recovery-service.ts`)
  * - QueueStateManager (`../queue/queue-state-manager.ts`)
  * - Various message and storage types.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -31,7 +31,6 @@ import { MessagePersistenceService } from '../storage/MessagePersistenceService'
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';
 import { OfflineState, StoredMessage } from '../storage/types';
 import { logger } from '../../../../lib/logger';
-
 
 export class OfflineStateService {
   private static instance: OfflineStateService;
@@ -49,14 +48,14 @@ export class OfflineStateService {
     this.persistenceService = MessagePersistenceService.getInstance();
     this.recoveryService = MessageRecoveryService.getInstance();
     this.stateManager = QueueStateManager.getInstance();
-    
+
     this.state = {
       isOnline: navigator.onLine,
       lastOnlineTimestamp: new Date().toISOString(),
       lastOfflineTimestamp: '',
       pendingSync: false,
       queueSize: 0,
-      reconnectionAttempts: 0
+      reconnectionAttempts: 0,
     };
 
     this.initializeService();
@@ -80,7 +79,7 @@ export class OfflineStateService {
       window.addEventListener('offline', this.handleOffline.bind(this));
 
       await this.saveState();
-      
+
       logger.info('[OfflineStateService] Initialized with state:', this.state);
     } catch (error) {
       logger.error('[OfflineStateService] Initialization error:', error);
@@ -89,22 +88,22 @@ export class OfflineStateService {
 
   private async handleOnline(): Promise<void> {
     logger.info('[OfflineStateService] Connection restored');
-    
+
     this.state.isOnline = true;
     this.state.lastOnlineTimestamp = new Date().toISOString();
     this.state.pendingSync = true;
-    
+
     await this.saveState();
     await this.synchronize();
   }
 
   private async handleOffline(): Promise<void> {
     logger.info('[OfflineStateService] Connection lost');
-    
+
     this.state.isOnline = false;
     this.state.lastOfflineTimestamp = new Date().toISOString();
     this.state.pendingSync = false;
-    
+
     await this.saveState();
     this.startReconnectionAttempts();
   }
@@ -147,10 +146,10 @@ export class OfflineStateService {
       deliveryStatus: {
         delivered: false,
         timestamp: new Date(),
-        attempts: stored.retryCount
+        attempts: stored.retryCount,
       },
       retryCount: stored.retryCount,
-      maxRetries: this.queueService.getConfig().maxRetries
+      maxRetries: this.queueService.getConfig().maxRetries,
     };
   }
 
@@ -180,8 +179,12 @@ export class OfflineStateService {
 
   public async updateOnlineStatus(isOnline: boolean): Promise<void> {
     this.state.isOnline = isOnline;
-    this.state.lastOnlineTimestamp = isOnline ? new Date().toISOString() : this.state.lastOnlineTimestamp;
-    this.state.lastOfflineTimestamp = !isOnline ? new Date().toISOString() : this.state.lastOfflineTimestamp;
+    this.state.lastOnlineTimestamp = isOnline
+      ? new Date().toISOString()
+      : this.state.lastOnlineTimestamp;
+    this.state.lastOfflineTimestamp = !isOnline
+      ? new Date().toISOString()
+      : this.state.lastOfflineTimestamp;
     await this.saveState();
   }
 
@@ -191,7 +194,7 @@ export class OfflineStateService {
     }
 
     const backoffTime = Math.min(1000 * Math.pow(2, this.state.reconnectionAttempts), 30000);
-    
+
     this.reconnectionTimeout = setTimeout(async () => {
       if (!this.state.isOnline) {
         this.state.reconnectionAttempts++;

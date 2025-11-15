@@ -1,5 +1,6 @@
 import React from 'react';
-import { ChatMessage } from '@/types/game';
+
+import type { ChatMessage } from '@/types/game';
 
 interface MessageMetadataProps {
   message: ChatMessage;
@@ -42,7 +43,10 @@ export const MessageMetadata: React.FC<MessageMetadataProps> = ({
       {isLastInGroup && (
         <div className={`text-xs message-meta px-2 ${isPlayer ? 'text-right' : 'text-left'} mt-1`}>
           {message.timestamp
-            ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            ? new Date(message.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
             : ''}
         </div>
       )}

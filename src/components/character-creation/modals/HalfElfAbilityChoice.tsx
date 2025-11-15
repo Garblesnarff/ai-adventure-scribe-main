@@ -1,4 +1,11 @@
+import { CheckCircle2, Circle } from 'lucide-react';
 import React, { useState } from 'react';
+
+import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -7,11 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle } from 'lucide-react';
-import type { AbilityScoreName } from '@/utils/racialAbilityBonuses';
 
 interface HalfElfAbilityChoiceProps {
   isOpen: boolean;
@@ -39,13 +41,13 @@ export const HalfElfAbilityChoice: React.FC<HalfElfAbilityChoiceProps> = ({
   currentChoices,
 }) => {
   const [selectedAbilities, setSelectedAbilities] = useState<AbilityScoreName[]>(
-    currentChoices ? [...currentChoices] : []
+    currentChoices ? [...currentChoices] : [],
   );
 
   const toggleAbility = (ability: AbilityScoreName) => {
     if (selectedAbilities.includes(ability)) {
       // Deselect
-      setSelectedAbilities(selectedAbilities.filter(a => a !== ability));
+      setSelectedAbilities(selectedAbilities.filter((a) => a !== ability));
     } else if (selectedAbilities.length < 2) {
       // Select (only if less than 2 selected)
       setSelectedAbilities([...selectedAbilities, ability]);
@@ -68,9 +70,12 @@ export const HalfElfAbilityChoice: React.FC<HalfElfAbilityChoiceProps> = ({
         <DialogHeader>
           <DialogTitle className="text-2xl">Half-Elf Ability Score Increase</DialogTitle>
           <DialogDescription className="text-base">
-            Your Half-Elf heritage grants you +2 to Charisma and +1 to two other abilities of your choice.
+            Your Half-Elf heritage grants you +2 to Charisma and +1 to two other abilities of your
+            choice.
             <br />
-            <span className="font-semibold text-foreground">Choose two abilities to increase by +1:</span>
+            <span className="font-semibold text-foreground">
+              Choose two abilities to increase by +1:
+            </span>
           </DialogDescription>
         </DialogHeader>
 
@@ -101,8 +106,8 @@ export const HalfElfAbilityChoice: React.FC<HalfElfAbilityChoiceProps> = ({
                     selected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50'
                       : disabled
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/20'
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/20'
                   }`}
                   onClick={() => !disabled && toggleAbility(ability.name)}
                 >
@@ -116,12 +121,13 @@ export const HalfElfAbilityChoice: React.FC<HalfElfAbilityChoiceProps> = ({
                         )}
                         <h4 className="font-semibold capitalize">{ability.label}</h4>
                       </div>
-                      <p className="text-sm text-muted-foreground ml-7">
-                        {ability.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground ml-7">{ability.description}</p>
                     </div>
                     {selected && (
-                      <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-700 border-blue-300">
+                      <Badge
+                        variant="outline"
+                        className="ml-2 bg-blue-100 text-blue-700 border-blue-300"
+                      >
                         +1
                       </Badge>
                     )}

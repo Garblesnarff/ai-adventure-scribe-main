@@ -1,12 +1,19 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { performance } from 'perf_hooks';
-import { validateSpellSelection, getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
 import {
   createMockWizard,
   generateLargeSpellDataset,
   validWizardCantrips,
-  validWizardSpells
+  validWizardSpells,
 } from '../helpers/spell-test-helpers';
+
+import {
+  validateSpellSelection,
+  getSpellcastingInfo,
+  getRacialSpells,
+} from '@/utils/spell-validation';
 
 /**
  * Spell System Performance Tests
@@ -33,7 +40,7 @@ describe('Spell System Performance Tests', () => {
       const result = validateSpellSelection(
         wizardCharacter,
         validWizardCantrips,
-        validWizardSpells
+        validWizardSpells,
       );
 
       const endTime = performance.now();
@@ -49,9 +56,9 @@ describe('Spell System Performance Tests', () => {
       // Mock the spell data
       vi.doMock('@/data/spellOptions', () => ({
         getClassSpells: () => ({
-          cantrips: largeSpellDataset.filter(s => s.level === 0).slice(0, 50),
-          spells: largeSpellDataset.filter(s => s.level === 1).slice(0, 100)
-        })
+          cantrips: largeSpellDataset.filter((s) => s.level === 0).slice(0, 50),
+          spells: largeSpellDataset.filter((s) => s.level === 1).slice(0, 100),
+        }),
       }));
 
       const startTime = performance.now();
@@ -59,7 +66,7 @@ describe('Spell System Performance Tests', () => {
       const result = validateSpellSelection(
         wizardCharacter,
         validWizardCantrips,
-        validWizardSpells
+        validWizardSpells,
       );
 
       const endTime = performance.now();
@@ -70,20 +77,18 @@ describe('Spell System Performance Tests', () => {
     });
 
     it('should batch validate multiple characters efficiently', () => {
-      const characters = Array.from({ length: 100 }, (_, i) =>
-        createMockWizard(`Wizard ${i}`)
-      );
+      const characters = Array.from({ length: 100 }, (_, i) => createMockWizard(`Wizard ${i}`));
 
       const startTime = performance.now();
 
-      const results = characters.map(character =>
-        validateSpellSelection(character, validWizardCantrips, validWizardSpells)
+      const results = characters.map((character) =>
+        validateSpellSelection(character, validWizardCantrips, validWizardSpells),
       );
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(results.every(r => r.valid)).toBe(true);
+      expect(results.every((r) => r.valid)).toBe(true);
       expect(duration).toBeLessThan(100); // Should validate 100 characters within 100ms
     });
   });
@@ -93,13 +98,13 @@ describe('Spell System Performance Tests', () => {
       const startTime = performance.now();
 
       const results = Array.from({ length: 1000 }, () =>
-        getSpellcastingInfo(wizardCharacter.class!, wizardCharacter.level)
+        getSpellcastingInfo(wizardCharacter.class!, wizardCharacter.level),
       );
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(results.every(r => r !== null)).toBe(true);
+      expect(results.every((r) => r !== null)).toBe(true);
       expect(duration).toBeLessThan(50); // Should compute 1000 results within 50ms
     });
 
@@ -122,14 +127,12 @@ describe('Spell System Performance Tests', () => {
     it('should compute racial spells quickly', () => {
       const startTime = performance.now();
 
-      const results = Array.from({ length: 1000 }, () =>
-        getRacialSpells('High Elf')
-      );
+      const results = Array.from({ length: 1000 }, () => getRacialSpells('High Elf'));
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(results.every(r => r.bonusCantrips === 1)).toBe(true);
+      expect(results.every((r) => r.bonusCantrips === 1)).toBe(true);
       expect(duration).toBeLessThan(25); // Should compute 1000 results within 25ms
     });
 
@@ -138,8 +141,8 @@ describe('Spell System Performance Tests', () => {
 
       const startTime = performance.now();
 
-      const results = races.flatMap(race =>
-        Array.from({ length: 200 }, () => getRacialSpells(race))
+      const results = races.flatMap((race) =>
+        Array.from({ length: 200 }, () => getRacialSpells(race)),
       );
 
       const endTime = performance.now();
@@ -189,9 +192,9 @@ describe('Spell System Performance Tests', () => {
       const initialMemory = process.memoryUsage().heapUsed;
 
       // Process the large dataset
-      const processedSpells = largeSpellDataset.map(spell => ({
+      const processedSpells = largeSpellDataset.map((spell) => ({
         ...spell,
-        processed: true
+        processed: true,
       }));
 
       const memoryAfterProcessing = process.memoryUsage().heapUsed;
@@ -208,16 +211,14 @@ describe('Spell System Performance Tests', () => {
       const spellCounts = [100, 500, 1000, 2000];
       const durations: number[] = [];
 
-      spellCounts.forEach(count => {
+      spellCounts.forEach((count) => {
         const dataset = generateLargeSpellDataset(count);
 
         const startTime = performance.now();
 
         // Simulate spell filtering operation
-        const filtered = dataset.filter(spell =>
-          spell.school === 'Evocation' &&
-          spell.level <= 3 &&
-          spell.verbal === true
+        const filtered = dataset.filter(
+          (spell) => spell.school === 'Evocation' && spell.level <= 3 && spell.verbal === true,
         );
 
         const endTime = performance.now();
@@ -246,10 +247,10 @@ describe('Spell System Performance Tests', () => {
 
       // Simulate complex filtering (multiple conditions)
       const complexFiltered = largeDataset
-        .filter(spell => spell.school === 'Evocation' || spell.school === 'Abjuration')
-        .filter(spell => spell.level >= 1 && spell.level <= 5)
-        .filter(spell => spell.verbal === true)
-        .filter(spell => spell.name.toLowerCase().includes('a'))
+        .filter((spell) => spell.school === 'Evocation' || spell.school === 'Abjuration')
+        .filter((spell) => spell.level >= 1 && spell.level <= 5)
+        .filter((spell) => spell.verbal === true)
+        .filter((spell) => spell.name.toLowerCase().includes('a'))
         .sort((a, b) => a.level - b.level);
 
       const endTime = performance.now();
@@ -262,15 +263,13 @@ describe('Spell System Performance Tests', () => {
 
   describe('Concurrent Operations', () => {
     it('should handle multiple simultaneous validations', async () => {
-      const characters = Array.from({ length: 50 }, (_, i) =>
-        createMockWizard(`Wizard ${i}`)
-      );
+      const characters = Array.from({ length: 50 }, (_, i) => createMockWizard(`Wizard ${i}`));
 
       const startTime = performance.now();
 
       // Simulate concurrent validations
-      const promises = characters.map(character =>
-        Promise.resolve(validateSpellSelection(character, validWizardCantrips, validWizardSpells))
+      const promises = characters.map((character) =>
+        Promise.resolve(validateSpellSelection(character, validWizardCantrips, validWizardSpells)),
       );
 
       const results = await Promise.all(promises);
@@ -278,7 +277,7 @@ describe('Spell System Performance Tests', () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      expect(results.every(r => r.valid)).toBe(true);
+      expect(results.every((r) => r.valid)).toBe(true);
       expect(duration).toBeLessThan(200); // All concurrent validations within 200ms
     });
 
@@ -289,19 +288,19 @@ describe('Spell System Performance Tests', () => {
 
       for (let i = 0; i < iterations; i++) {
         const characters = Array.from({ length: charactersPerIteration }, (_, j) =>
-          createMockWizard(`Wizard ${i}-${j}`)
+          createMockWizard(`Wizard ${i}-${j}`),
         );
 
         const startTime = performance.now();
 
-        const results = characters.map(character =>
-          validateSpellSelection(character, validWizardCantrips, validWizardSpells)
+        const results = characters.map((character) =>
+          validateSpellSelection(character, validWizardCantrips, validWizardSpells),
         );
 
         const endTime = performance.now();
         durations.push(endTime - startTime);
 
-        expect(results.every(r => r.valid)).toBe(true);
+        expect(results.every((r) => r.valid)).toBe(true);
       }
 
       // Performance should remain consistent across iterations
@@ -339,7 +338,8 @@ describe('Spell System Performance Tests', () => {
 
       // Simulate array comparison operations
       for (let i = 0; i < 1000; i++) {
-        const isEqual = array1.length === array2.length &&
+        const isEqual =
+          array1.length === array2.length &&
           array1.every((spell, index) => spell === array2[index]);
         expect(isEqual).toBe(true);
       }
@@ -370,7 +370,7 @@ describe('Spell System Performance Tests', () => {
       const malformedCharacter = {
         ...wizardCharacter,
         class: null,
-        race: null
+        race: null,
       };
 
       const startTime = performance.now();
@@ -392,7 +392,11 @@ describe('Spell System Performance Tests', () => {
 
       const startTime = performance.now();
 
-      const result = validateSpellSelection(wizardCharacter, longSpells.slice(0, 3), longSpells.slice(3, 9));
+      const result = validateSpellSelection(
+        wizardCharacter,
+        longSpells.slice(0, 3),
+        longSpells.slice(3, 9),
+      );
 
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -405,9 +409,9 @@ describe('Spell System Performance Tests', () => {
     it('should maintain baseline performance for typical operations', () => {
       const baseline = {
         singleValidation: 5, // ms
-        batchValidation: 50,  // ms for 100 characters
-        memoryUsage: 1024,    // KB increase
-        searchFilter: 25      // ms for complex filtering
+        batchValidation: 50, // ms for 100 characters
+        memoryUsage: 1024, // KB increase
+        searchFilter: 25, // ms for complex filtering
       };
 
       // Single validation test
@@ -420,7 +424,9 @@ describe('Spell System Performance Tests', () => {
       // Batch validation test
       const characters = Array.from({ length: 100 }, (_, i) => createMockWizard(`Wizard ${i}`));
       const batchStart = performance.now();
-      characters.forEach(char => validateSpellSelection(char, validWizardCantrips, validWizardSpells));
+      characters.forEach((char) =>
+        validateSpellSelection(char, validWizardCantrips, validWizardSpells),
+      );
       const batchDuration = performance.now() - batchStart;
 
       expect(batchDuration).toBeLessThan(baseline.batchValidation);
@@ -433,7 +439,7 @@ describe('Spell System Performance Tests', () => {
       const featureTests = [
         () => getSpellcastingInfo(wizardCharacter.class!, wizardCharacter.level),
         () => getRacialSpells(wizardCharacter.race!.name, wizardCharacter.subrace),
-        () => validateSpellSelection(wizardCharacter, validWizardCantrips, validWizardSpells)
+        () => validateSpellSelection(wizardCharacter, validWizardCantrips, validWizardSpells),
       ];
 
       featureTests.forEach((test, index) => {

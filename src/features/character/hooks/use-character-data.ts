@@ -1,18 +1,18 @@
 /**
  * useCharacterData Hook
- * 
+ *
  * This hook is responsible for fetching and managing detailed character data
  * from Supabase, including basic info, stats, and equipment. It also handles
  * validation of the character ID and navigation in case of errors or if the
  * character is not found.
- * 
+ *
  * Main Hook:
  * - useCharacterData: Fetches and provides character data.
- * 
+ *
  * Helper Functions (internal):
  * - transformAbilityScores: Formats raw stat data.
  * - transformCharacterData: Consolidates various DB records into a Character object.
- * 
+ *
  * Key Dependencies:
  * - React (useState, useEffect)
  * - React Router (useNavigate)
@@ -20,7 +20,7 @@
  * - useToast hook (`@/hooks/use-toast`)
  * - Character type (`@/types/character`)
  * - isValidUUID utility (`@/utils/validation`)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -29,14 +29,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Project Imports
-import { supabase } from '@/integrations/supabase/client';
+import { logger } from '../lib/logger';
+
+import type { Character, AbilityScores } from '@/types/character';
+
 import { useToast } from '@/hooks/use-toast'; // Assuming kebab-case from previous steps
+import { supabase } from '@/integrations/supabase/client';
 import { isValidUUID } from '@/utils/validation'; // Assuming kebab-case
 
 // Project Types
-import { Character, AbilityScores } from '@/types/character';
-import { logger } from '../lib/logger';
-
 
 // Helper Functions (defined in-file)
 interface CharacterStatsRow {
@@ -95,39 +96,41 @@ interface CharacterRow {
  * @param statsData - Raw stats data from database
  * @returns Formatted ability scores object
  */
-const transformAbilityScores = (statsData: CharacterStatsRow | null | undefined): AbilityScores | null => {
+const transformAbilityScores = (
+  statsData: CharacterStatsRow | null | undefined,
+): AbilityScores | null => {
   if (!statsData) return null;
-  
+
   return {
-    strength: { 
-      score: statsData.strength, 
-      modifier: Math.floor((statsData.strength - 10) / 2), 
-      savingThrow: false 
+    strength: {
+      score: statsData.strength,
+      modifier: Math.floor((statsData.strength - 10) / 2),
+      savingThrow: false,
     },
-    dexterity: { 
-      score: statsData.dexterity, 
-      modifier: Math.floor((statsData.dexterity - 10) / 2), 
-      savingThrow: false 
+    dexterity: {
+      score: statsData.dexterity,
+      modifier: Math.floor((statsData.dexterity - 10) / 2),
+      savingThrow: false,
     },
-    constitution: { 
-      score: statsData.constitution, 
-      modifier: Math.floor((statsData.constitution - 10) / 2), 
-      savingThrow: false 
+    constitution: {
+      score: statsData.constitution,
+      modifier: Math.floor((statsData.constitution - 10) / 2),
+      savingThrow: false,
     },
-    intelligence: { 
-      score: statsData.intelligence, 
-      modifier: Math.floor((statsData.intelligence - 10) / 2), 
-      savingThrow: false 
+    intelligence: {
+      score: statsData.intelligence,
+      modifier: Math.floor((statsData.intelligence - 10) / 2),
+      savingThrow: false,
     },
-    wisdom: { 
-      score: statsData.wisdom, 
-      modifier: Math.floor((statsData.wisdom - 10) / 2), 
-      savingThrow: false 
+    wisdom: {
+      score: statsData.wisdom,
+      modifier: Math.floor((statsData.wisdom - 10) / 2),
+      savingThrow: false,
     },
-    charisma: { 
-      score: statsData.charisma, 
-      modifier: Math.floor((statsData.charisma - 10) / 2), 
-      savingThrow: false 
+    charisma: {
+      score: statsData.charisma,
+      modifier: Math.floor((statsData.charisma - 10) / 2),
+      savingThrow: false,
     },
   };
 };
@@ -142,7 +145,7 @@ const transformAbilityScores = (statsData: CharacterStatsRow | null | undefined)
 const transformCharacterData = (
   characterData: CharacterRow,
   statsData: CharacterStatsRow | null,
-  equipmentData: CharacterEquipmentRow[] | null
+  equipmentData: CharacterEquipmentRow[] | null,
 ): Character => ({
   id: characterData.id,
   user_id: characterData.user_id,
@@ -155,7 +158,7 @@ const transformCharacterData = (
     abilityScoreIncrease: {},
     speed: 30,
     traits: [],
-    languages: []
+    languages: [],
   },
   class: {
     id: 'stored',
@@ -168,7 +171,7 @@ const transformCharacterData = (
     numSkillChoices: 2,
     classFeatures: [],
     armorProficiencies: [],
-    weaponProficiencies: []
+    weaponProficiencies: [],
   },
   level: characterData.level,
   background: {
@@ -181,8 +184,8 @@ const transformCharacterData = (
     equipment: [],
     feature: {
       name: '',
-      description: ''
-    }
+      description: '',
+    },
   },
   abilityScores: transformAbilityScores(statsData) || {
     strength: { score: 10, modifier: 0, savingThrow: false },
@@ -201,21 +204,22 @@ const transformCharacterData = (
   isHidden: characterData.is_hidden || false,
   stealthCheckBonus: characterData.stealth_check_bonus || 0,
   // Magic Items
-  inventory: equipmentData?.map((item) => ({
-    itemId: item.id,
-    quantity: item.quantity || 1,
-    equipped: item.equipped || false,
-    // Magic item properties
-    isMagic: item.is_magic || false,
-    magicBonus: item.magic_bonus || 0,
-    magicProperties: item.magic_properties ? JSON.parse(item.magic_properties) : [],
-    requiresAttunement: item.requires_attunement || false,
-    isAttuned: item.is_attuned || false,
-    attunementRequirements: item.attunement_requirements || '',
-    magicItemType: item.magic_item_type || '',
-    magicItemRarity: item.magic_item_rarity || 'common',
-    magicEffects: item.magic_effects ? JSON.parse(item.magic_effects) : {}
-  })) || [],
+  inventory:
+    equipmentData?.map((item) => ({
+      itemId: item.id,
+      quantity: item.quantity || 1,
+      equipped: item.equipped || false,
+      // Magic item properties
+      isMagic: item.is_magic || false,
+      magicBonus: item.magic_bonus || 0,
+      magicProperties: item.magic_properties ? JSON.parse(item.magic_properties) : [],
+      requiresAttunement: item.requires_attunement || false,
+      isAttuned: item.is_attuned || false,
+      attunementRequirements: item.attunement_requirements || '',
+      magicItemType: item.magic_item_type || '',
+      magicItemRarity: item.magic_item_rarity || 'common',
+      magicEffects: item.magic_effects ? JSON.parse(item.magic_effects) : {},
+    })) || [],
   // AI-generated fields
   avatar_url: characterData.avatar_url,
   image_url: characterData.image_url,
@@ -229,10 +233,30 @@ const transformCharacterData = (
   bonds: [],
   flaws: [],
   // Spell data - this was missing!
-  cantrips: characterData.cantrips ? characterData.cantrips.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : [],
-  knownSpells: characterData.known_spells ? characterData.known_spells.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : [],
-  preparedSpells: characterData.prepared_spells ? characterData.prepared_spells.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : [],
-  ritualSpells: characterData.ritual_spells ? characterData.ritual_spells.split(',').map((id: string) => id.trim()).filter((id: string) => id.length > 0) : []
+  cantrips: characterData.cantrips
+    ? characterData.cantrips
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter((id: string) => id.length > 0)
+    : [],
+  knownSpells: characterData.known_spells
+    ? characterData.known_spells
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter((id: string) => id.length > 0)
+    : [],
+  preparedSpells: characterData.prepared_spells
+    ? characterData.prepared_spells
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter((id: string) => id.length > 0)
+    : [],
+  ritualSpells: characterData.ritual_spells
+    ? characterData.ritual_spells
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter((id: string) => id.length > 0)
+    : [],
 });
 
 /**
@@ -255,9 +279,9 @@ export const useCharacterData = (characterId: string | undefined) => {
   const validateCharacterId = (id: string | undefined): boolean => {
     if (!id || !isValidUUID(id)) {
       toast({
-        title: "Invalid Character",
-        description: "The character ID is invalid. Redirecting to characters page.",
-        variant: "destructive",
+        title: 'Invalid Character',
+        description: 'The character ID is invalid. Redirecting to characters page.',
+        variant: 'destructive',
       });
       navigate('/app/characters');
       return false;
@@ -276,12 +300,14 @@ export const useCharacterData = (characterId: string | undefined) => {
       setLoading(true);
 
       // Get the current user session for ownership check
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         toast({
-          title: "Not Authenticated",
-          description: "Please log in to view your characters.",
-          variant: "destructive",
+          title: 'Not Authenticated',
+          description: 'Please log in to view your characters.',
+          variant: 'destructive',
         });
         navigate('/login');
         return;
@@ -290,21 +316,24 @@ export const useCharacterData = (characterId: string | undefined) => {
       // Fetch basic character info WITH ownership check
       const { data: characterData, error: characterError } = await supabase
         .from('characters')
-        .select(`
+        .select(
+          `
           *,
           character_stats(*)
-        `)
+        `,
+        )
         .eq('id', characterId!)
-        .eq('user_id', session.user.id)  // CRITICAL: Add ownership check
+        .eq('user_id', session.user.id) // CRITICAL: Add ownership check
         .maybeSingle();
 
       if (characterError) throw characterError;
-      
+
       if (!characterData) {
         toast({
-          title: "Character Not Found",
-          description: "The requested character could not be found. Redirecting to characters page.",
-          variant: "destructive",
+          title: 'Character Not Found',
+          description:
+            'The requested character could not be found. Redirecting to characters page.',
+          variant: 'destructive',
         });
         navigate('/app/characters');
         return;
@@ -312,8 +341,8 @@ export const useCharacterData = (characterId: string | undefined) => {
 
       // Extract character data and stats
       const characterRecord = Array.isArray(characterData) ? characterData[0] : characterData;
-      const statsData = Array.isArray(characterRecord.character_stats) 
-        ? characterRecord.character_stats[0] 
+      const statsData = Array.isArray(characterRecord.character_stats)
+        ? characterRecord.character_stats[0]
         : characterRecord.character_stats;
 
       // Fetch character equipment
@@ -327,17 +356,17 @@ export const useCharacterData = (characterId: string | undefined) => {
       // Transform and set character data
       const transformedCharacter = transformCharacterData(
         characterRecord as CharacterRow,
-        (statsData as CharacterStatsRow | null),
-        (equipmentData as CharacterEquipmentRow[] | null)
+        statsData as CharacterStatsRow | null,
+        equipmentData as CharacterEquipmentRow[] | null,
       );
-      
+
       setCharacter(transformedCharacter);
     } catch (error) {
       logger.error('Error fetching character:', error);
       toast({
-        title: "Error",
-        description: "Failed to load character data. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load character data. Please try again.',
+        variant: 'destructive',
       });
       navigate('/characters');
     } finally {

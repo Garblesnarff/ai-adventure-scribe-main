@@ -5,8 +5,6 @@
  * Features: Status badges, future-oriented language, transparent roadmap
  */
 
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import {
   Brain,
   Image,
@@ -17,8 +15,11 @@ import {
   Clock,
   CheckCircle,
   Wrench,
-  Zap
+  Zap,
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const FeaturesSection: React.FC = () => {
@@ -38,7 +39,7 @@ export const FeaturesSection: React.FC = () => {
       Clock,
       CheckCircle,
       Wrench,
-      Zap
+      Zap,
     };
     return icons[iconName as keyof typeof icons] || Brain;
   };
@@ -52,31 +53,31 @@ export const FeaturesSection: React.FC = () => {
         return {
           badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
           icon: 'text-purple-400',
-          bg: 'from-purple-900/40 to-gray-900/40 border-purple-500/20 hover:border-purple-500/40'
+          bg: 'from-purple-900/40 to-gray-900/40 border-purple-500/20 hover:border-purple-500/40',
         };
       case 'beta':
         return {
           badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
           icon: 'text-amber-400',
-          bg: 'from-amber-900/40 to-gray-900/40 border-amber-500/20 hover:border-amber-500/40'
+          bg: 'from-amber-900/40 to-gray-900/40 border-amber-500/20 hover:border-amber-500/40',
         };
       case 'planned':
         return {
           badge: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
           icon: 'text-gray-400',
-          bg: 'from-gray-900/40 to-gray-800/40 border-gray-500/20 hover:border-gray-500/40'
+          bg: 'from-gray-900/40 to-gray-800/40 border-gray-500/20 hover:border-gray-500/40',
         };
       case 'coming_soon':
         return {
           badge: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
           icon: 'text-blue-400',
-          bg: 'from-blue-900/40 to-gray-900/40 border-blue-500/20 hover:border-blue-500/40'
+          bg: 'from-blue-900/40 to-gray-900/40 border-blue-500/20 hover:border-blue-500/40',
         };
       default:
         return {
           badge: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
           icon: 'text-gray-400',
-          bg: 'from-gray-900/40 to-gray-800/40 border-gray-500/20 hover:border-gray-500/40'
+          bg: 'from-gray-900/40 to-gray-800/40 border-gray-500/20 hover:border-gray-500/40',
         };
     }
   };
@@ -107,9 +108,7 @@ export const FeaturesSection: React.FC = () => {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
             {features.headline}
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            {features.subtitle}
-          </p>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">{features.subtitle}</p>
         </div>
 
         {/* Features Grid */}
@@ -131,35 +130,39 @@ export const FeaturesSection: React.FC = () => {
                 </div>
 
                 {/* Icon */}
-                <div className={`w-14 h-14 bg-gray-800/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${styling.icon}`}>
+                <div
+                  className={`w-14 h-14 bg-gray-800/50 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${styling.icon}`}
+                >
                   <IconComponent className="w-7 h-7" />
                 </div>
 
                 {/* Content */}
-                <h3 className="text-2xl font-bold text-white mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-400 leading-relaxed">
-                  {feature.description}
-                </p>
+                <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
+                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
 
                 {/* Progress Indicator */}
                 <div className="mt-6 flex items-center gap-2">
                   <div className="flex-1 bg-gray-800/50 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${
-                        feature.status === 'in_development' ? 'bg-purple-400 w-3/4' :
-                        feature.status === 'beta' ? 'bg-amber-400 w-full' :
-                        feature.status === 'planned' ? 'bg-gray-400 w-1/4' :
-                        'bg-blue-400 w-1/2'
+                        feature.status === 'in_development'
+                          ? 'bg-purple-400 w-3/4'
+                          : feature.status === 'beta'
+                            ? 'bg-amber-400 w-full'
+                            : feature.status === 'planned'
+                              ? 'bg-gray-400 w-1/4'
+                              : 'bg-blue-400 w-1/2'
                       }`}
                     ></div>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {feature.status === 'in_development' ? '75%' :
-                     feature.status === 'beta' ? '100%' :
-                     feature.status === 'planned' ? '25%' :
-                     '50%'}
+                    {feature.status === 'in_development'
+                      ? '75%'
+                      : feature.status === 'beta'
+                        ? '100%'
+                        : feature.status === 'planned'
+                          ? '25%'
+                          : '50%'}
                   </span>
                 </div>
               </div>
@@ -172,13 +175,11 @@ export const FeaturesSection: React.FC = () => {
           <div className="flex items-start gap-4">
             <Clock className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-lg font-semibold text-white mb-2">
-                Development Timeline
-              </h3>
+              <h3 className="text-lg font-semibold text-white mb-2">Development Timeline</h3>
               <p className="text-gray-400 leading-relaxed">
-                Our beta launch focuses on the core AI storytelling experience. Advanced features like
-                visual generation and voice narration will be added based on beta feedback and testing.
-                All features shown are planned for full release in 2026.
+                Our beta launch focuses on the core AI storytelling experience. Advanced features
+                like visual generation and voice narration will be added based on beta feedback and
+                testing. All features shown are planned for full release in 2026.
               </p>
             </div>
           </div>

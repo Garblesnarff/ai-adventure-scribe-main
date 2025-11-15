@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
+
+import type { Character } from '@/types/character';
+
 import {
   buildCharacterDescriptionPrompt,
   buildCharacterImagePrompt,
   toCharacterPromptData,
   type CharacterPromptData,
 } from '@/services/prompts/characterPrompts';
-import type { Character } from '@/types/character';
 
 describe('characterPrompts', () => {
   it('injects mandatory physical traits into description prompts', () => {
@@ -25,7 +27,7 @@ describe('characterPrompts', () => {
     });
 
     expect(prompt).toContain('Physical Traits (MANDATORY):');
-    expect(prompt).toContain("Height: 5'8\" (173 cm)");
+    expect(prompt).toContain('Height: 5\'8" (173 cm)');
     expect(prompt).toContain('Weight: 150 lbs (68 kg)');
     expect(prompt).toContain('Eye Color: hazel');
     expect(prompt).toContain('Skin Tone: sun-kissed copper');
@@ -51,7 +53,7 @@ describe('characterPrompts', () => {
     });
 
     expect(prompt.toLowerCase()).toContain('dragonborn features');
-    expect(prompt).toContain("exact physical traits: Height: 6'8\" (203 cm);");
+    expect(prompt).toContain('exact physical traits: Height: 6\'8" (203 cm);');
     expect(prompt).toContain('Weight: 320 lbs (145 kg)');
     expect(prompt).toContain('Eye Color: molten gold');
     expect(prompt).toContain('Skin Tone: burnished bronze scales');
@@ -60,9 +62,29 @@ describe('characterPrompts', () => {
   it('builds prompt data from character object including physical fields', () => {
     const character: Character = {
       name: 'Vorik Stonebinder',
-      race: { id: 'dwarf', name: 'Dwarf', description: '', abilityScoreIncrease: {}, speed: 25, traits: [], languages: [] },
+      race: {
+        id: 'dwarf',
+        name: 'Dwarf',
+        description: '',
+        abilityScoreIncrease: {},
+        speed: 25,
+        traits: [],
+        languages: [],
+      },
       subrace: null,
-      class: { id: 'fighter', name: 'Fighter', description: '', hitDie: 10, primaryAbility: 'strength', savingThrowProficiencies: ['strength', 'constitution'], skillChoices: [], numSkillChoices: 0, classFeatures: [], armorProficiencies: [], weaponProficiencies: [] },
+      class: {
+        id: 'fighter',
+        name: 'Fighter',
+        description: '',
+        hitDie: 10,
+        primaryAbility: 'strength',
+        savingThrowProficiencies: ['strength', 'constitution'],
+        skillChoices: [],
+        numSkillChoices: 0,
+        classFeatures: [],
+        armorProficiencies: [],
+        weaponProficiencies: [],
+      },
       background: null,
       level: 4,
       alignment: 'Lawful Good',

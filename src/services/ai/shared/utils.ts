@@ -4,6 +4,7 @@
  */
 
 import type { ClassEquipment } from './types';
+
 import { getGeminiApiManager, type GeminiApiManager } from '@/infrastructure/ai';
 import logger from '@/lib/logger';
 
@@ -21,10 +22,7 @@ export function keyFor(sessionId: string | undefined, message: string, historyLe
 /**
  * Get or create deduplicated promise
  */
-export function getOrCreateDeduped<T>(
-  key: string,
-  factory: () => Promise<T>
-): Promise<T> {
+export function getOrCreateDeduped<T>(key: string, factory: () => Promise<T>): Promise<T> {
   const now = Date.now();
 
   // Clean up expired entries

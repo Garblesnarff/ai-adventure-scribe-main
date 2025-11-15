@@ -1,5 +1,6 @@
-import React from 'react';
 import { Plus } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {

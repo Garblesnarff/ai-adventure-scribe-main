@@ -1,38 +1,40 @@
 /**
  * Character Context
- * 
+ *
  * This file defines the CharacterContext for managing global character data
  * within the application. It includes the context provider, a reducer for state
  * updates (e.g., during character creation or when loading a character), and
  * a custom hook for accessing the character state and dispatch function.
- * 
+ *
  * Main Components:
  * - CharacterContext: The React context object.
  * - CharacterProvider: The provider component.
  * - useCharacter: Custom hook to consume the context.
- * 
+ *
  * Key State:
  * - character: Object containing details of the currently active/selected character.
  * - isDirty, currentStep, isLoading, error: UI state related to character management.
- * 
+ *
  * Dependencies:
  * - React
  * - Supabase client (`@/integrations/supabase/client`) - (Note: supabase client is imported but not directly used in this file's current code, might be for future use or removed if unused)
  * - Character types (`@/types/character`)
  * - useToast hook (`@/components/ui/use-toast`)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
 // SDK Imports
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer } from 'react';
+
+import type { Character } from '@/types/character';
+import type { ReactNode } from 'react';
 
 // Project Modules & Hooks
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client'; // Imported but not directly used in the provided snippet
-import { Character, transformCharacterForStorage } from '@/types/character';
 import logger from '@/lib/logger';
-
+import { transformCharacterForStorage } from '@/types/character';
 
 // Interfaces and Types (defined in-file, specific to this context)
 /**
@@ -88,7 +90,7 @@ const initialState: CharacterState = {
       constitution: { score: 10, modifier: 0, savingThrow: false },
       intelligence: { score: 10, modifier: 0, savingThrow: false },
       wisdom: { score: 10, modifier: 0, savingThrow: false },
-      charisma: { score: 10, modifier: 0, savingThrow: false }
+      charisma: { score: 10, modifier: 0, savingThrow: false },
     },
     experience: 0,
     alignment: '',
@@ -102,7 +104,7 @@ const initialState: CharacterState = {
     personalityIntegration: {
       activeTraits: [],
       inspirationTriggers: [],
-      inspirationHistory: []
+      inspirationHistory: [],
     },
     equipment: [],
     skillProficiencies: [],
@@ -113,7 +115,7 @@ const initialState: CharacterState = {
     cantrips: [],
     knownSpells: [],
     preparedSpells: [],
-    ritualSpells: []
+    ritualSpells: [],
   },
   isDirty: false,
   currentStep: 0,
@@ -147,7 +149,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid character payload:', action.payload);
           return {
             ...state,
-            error: 'Invalid character data provided'
+            error: 'Invalid character data provided',
           };
         }
 
@@ -155,7 +157,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           ...state,
           character: action.payload,
           isDirty: false,
-          error: null // Clear any previous errors
+          error: null, // Clear any previous errors
         };
       }
 
@@ -163,8 +165,10 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
         // Only log when there are actual changes to reduce noise
         const currentCharacter = state.character;
         const payload = action.payload;
-        const hasChanges = currentCharacter && payload &&
-          Object.keys(payload).some(key => {
+        const hasChanges =
+          currentCharacter &&
+          payload &&
+          Object.keys(payload).some((key) => {
             const currentValue = currentCharacter[key as keyof Character];
             const newValue = payload[key as keyof typeof payload];
             return JSON.stringify(currentValue) !== JSON.stringify(newValue);
@@ -176,7 +180,12 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.debug('Action payload:', payload);
 
           // Special logging for spell-related updates
-          if (payload.cantrips || payload.knownSpells || payload.preparedSpells || payload.ritualSpells) {
+          if (
+            payload.cantrips ||
+            payload.knownSpells ||
+            payload.preparedSpells ||
+            payload.ritualSpells
+          ) {
             logger.debug('[CharacterContext] Spell update detected:', {
               incomingCantrips: payload.cantrips,
               incomingKnownSpells: payload.knownSpells,
@@ -185,7 +194,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
               currentCantrips: state.character?.cantrips,
               currentKnownSpells: state.character?.knownSpells,
               currentPreparedSpells: state.character?.preparedSpells,
-              currentRitualSpells: state.character?.ritualSpells
+              currentRitualSpells: state.character?.ritualSpells,
             });
           }
         }
@@ -195,7 +204,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('No character to update or invalid character state');
           return {
             ...state,
-            error: 'No character data to update'
+            error: 'No character data to update',
           };
         }
 
@@ -204,18 +213,24 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid update payload:', action.payload);
           return {
             ...state,
-            error: 'Invalid character update data'
+            error: 'Invalid character update data',
           };
         }
 
         // Safe merge with validation
         const updatedCharacter = {
           ...state.character,
-          ...action.payload
+          ...action.payload,
         };
 
         // Additional logging for spell updates - include both property naming conventions
-        if (hasChanges && (payload.cantrips || payload.knownSpells || payload.preparedSpells || payload.ritualSpells)) {
+        if (
+          hasChanges &&
+          (payload.cantrips ||
+            payload.knownSpells ||
+            payload.preparedSpells ||
+            payload.ritualSpells)
+        ) {
           logger.debug('[CharacterContext] Final spell state after update:', {
             finalCantrips: updatedCharacter.cantrips,
             finalKnownSpells: updatedCharacter.knownSpells,
@@ -224,7 +239,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
             cantripCount: updatedCharacter.cantrips?.length || 0,
             spellCount: updatedCharacter.knownSpells?.length || 0,
             preparedSpellCount: updatedCharacter.preparedSpells?.length || 0,
-            ritualSpellCount: updatedCharacter.ritualSpells?.length || 0
+            ritualSpellCount: updatedCharacter.ritualSpells?.length || 0,
           });
         }
 
@@ -237,7 +252,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           ...state,
           character: updatedCharacter,
           isDirty: true,
-          error: null // Clear any previous errors on successful update
+          error: null, // Clear any previous errors on successful update
         };
 
         return newState;
@@ -291,14 +306,14 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid step number:', step);
           return {
             ...state,
-            error: 'Invalid character creation step'
+            error: 'Invalid character creation step',
           };
         }
 
         return {
           ...state,
           currentStep: step,
-          error: null
+          error: null,
         };
       }
 
@@ -309,14 +324,14 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid loading value:', loading);
           return {
             ...state,
-            error: 'Invalid loading state'
+            error: 'Invalid loading state',
           };
         }
 
         return {
           ...state,
           isLoading: loading,
-          error: null
+          error: null,
         };
       }
 
@@ -327,13 +342,13 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid error value:', error);
           return {
             ...state,
-            error: 'Invalid error message format'
+            error: 'Invalid error message format',
           };
         }
 
         return {
           ...state,
-          error: error
+          error: error,
         };
       }
 
@@ -344,7 +359,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid spell slots payload:', spellSlots);
           return {
             ...state,
-            error: 'Invalid spell slot data'
+            error: 'Invalid spell slot data',
           };
         }
 
@@ -355,17 +370,23 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
             logger.error('Invalid spell slot level:', level);
             return {
               ...state,
-              error: 'Invalid spell slot level'
+              error: 'Invalid spell slot level',
             };
           }
 
-          if (!slots || typeof slots !== 'object' ||
-              typeof slots.max !== 'number' || typeof slots.current !== 'number' ||
-              slots.max < 0 || slots.current < 0 || slots.current > slots.max) {
+          if (
+            !slots ||
+            typeof slots !== 'object' ||
+            typeof slots.max !== 'number' ||
+            typeof slots.current !== 'number' ||
+            slots.max < 0 ||
+            slots.current < 0 ||
+            slots.current > slots.max
+          ) {
             logger.error('Invalid spell slot data for level', level, ':', slots);
             return {
               ...state,
-              error: 'Invalid spell slot structure'
+              error: 'Invalid spell slot structure',
             };
           }
         }
@@ -375,7 +396,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('No character to update spell slots for');
           return {
             ...state,
-            error: 'No character data to update'
+            error: 'No character data to update',
           };
         }
 
@@ -386,7 +407,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
             spellSlots: spellSlots,
           },
           isDirty: true,
-          error: null
+          error: null,
         };
       }
 
@@ -397,7 +418,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('Invalid concentration payload:', concentration);
           return {
             ...state,
-            error: 'Invalid concentration spell data'
+            error: 'Invalid concentration spell data',
           };
         }
 
@@ -406,7 +427,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
           logger.error('No character to update concentration for');
           return {
             ...state,
-            error: 'No character data to update'
+            error: 'No character data to update',
           };
         }
 
@@ -417,7 +438,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
             activeConcentration: concentration,
           },
           isDirty: true,
-          error: null
+          error: null,
         };
       }
 
@@ -435,7 +456,7 @@ function characterReducer(state: CharacterState, action: CharacterAction): Chara
     logger.error('Unexpected error in character reducer:', error);
     return {
       ...state,
-      error: 'An unexpected error occurred while updating character data'
+      error: 'An unexpected error occurred while updating character data',
     };
   }
 }

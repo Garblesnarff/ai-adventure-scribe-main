@@ -1,22 +1,23 @@
+import { useQuery } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { useCampaign } from '@/contexts/CampaignContext';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Users } from 'lucide-react';
-import { ErrorBoundaryTest } from '@/components/error/ErrorBoundaryTest';
 
-import CampaignOverview from './CampaignOverview';
 import CampaignCharacters from './CampaignCharacters';
+import CampaignOverview from './CampaignOverview';
 import CampaignSessions from './CampaignSessions';
-import CampaignWorld from './CampaignWorld';
 import CampaignSettings from './CampaignSettings';
+import CampaignWorld from './CampaignWorld';
+
 import CharacterSelectionModal from '@/components/campaign-list/character-selection-modal';
+import { ErrorBoundaryTest } from '@/components/error/ErrorBoundaryTest';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCampaign } from '@/contexts/CampaignContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const CampaignHub: React.FC = () => {
   const { id: campaignId } = useParams();
@@ -40,12 +41,25 @@ const CampaignHub: React.FC = () => {
 
   React.useEffect(() => {
     if (campaign) {
-      dispatch({ type: 'UPDATE_CAMPAIGN', payload: { id: campaign.id, name: campaign.name, defaultArtStyle: 'fantasy', description: campaign.description || undefined, genre: campaign.genre || undefined, tone: campaign.tone as 'serious' | 'humorous' | 'gritty' | undefined, difficulty_level: campaign.difficulty_level || undefined, campaign_length: campaign.campaign_length as 'one-shot' | 'short' | 'full' | undefined } });
+      dispatch({
+        type: 'UPDATE_CAMPAIGN',
+        payload: {
+          id: campaign.id,
+          name: campaign.name,
+          defaultArtStyle: 'fantasy',
+          description: campaign.description || undefined,
+          genre: campaign.genre || undefined,
+          tone: campaign.tone as 'serious' | 'humorous' | 'gritty' | undefined,
+          difficulty_level: campaign.difficulty_level || undefined,
+          campaign_length: campaign.campaign_length as 'one-shot' | 'short' | 'full' | undefined,
+        },
+      });
     }
   }, [campaign, dispatch]);
 
   const currentTab = React.useMemo(() => {
-    if (location.pathname.endsWith('/characters') || location.pathname.includes('/characters/')) return 'characters';
+    if (location.pathname.endsWith('/characters') || location.pathname.includes('/characters/'))
+      return 'characters';
     if (location.pathname.endsWith('/sessions')) return 'sessions';
     if (location.pathname.endsWith('/world')) return 'world';
     if (location.pathname.endsWith('/settings')) return 'settings';
@@ -70,7 +84,10 @@ const CampaignHub: React.FC = () => {
     const params = new URLSearchParams(location.search);
     params.set('startSession', 'true');
     const search = params.toString();
-    navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true });
+    navigate(
+      { pathname: location.pathname, search: search ? `?${search}` : '' },
+      { replace: true },
+    );
   }, [location.pathname, location.search, navigate]);
 
   const closeCharacterModal = React.useCallback(() => {
@@ -79,12 +96,15 @@ const CampaignHub: React.FC = () => {
     if (params.has('startSession')) {
       params.delete('startSession');
       const search = params.toString();
-      navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true });
+      navigate(
+        { pathname: location.pathname, search: search ? `?${search}` : '' },
+        { replace: true },
+      );
     }
   }, [location.pathname, location.search, navigate]);
   const isCharacterCreationRoute = React.useMemo(
     () => location.pathname.includes('/characters/new'),
-    [location.pathname]
+    [location.pathname],
   );
 
   if (isLoading) {
@@ -127,7 +147,10 @@ const CampaignHub: React.FC = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild className="bg-gradient-to-r from-infinite-purple to-infinite-purple-dark hover:from-infinite-purple-dark hover:to-infinite-purple text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                <Button
+                  asChild
+                  className="bg-gradient-to-r from-infinite-purple to-infinite-purple-dark hover:from-infinite-purple-dark hover:to-infinite-purple text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                >
                   <Link to={`/app/campaigns/${campaignId}/characters`}>
                     <Users className="w-4 h-4 mr-2" />
                     Manage Characters
@@ -147,7 +170,12 @@ const CampaignHub: React.FC = () => {
         </div>
 
         {/* Enhanced Tabs */}
-        <Tabs value={currentTab} onValueChange={onTabChange} aria-label="Campaign sections" className="mb-6">
+        <Tabs
+          value={currentTab}
+          onValueChange={onTabChange}
+          aria-label="Campaign sections"
+          className="mb-6"
+        >
           <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-1 mb-4">
             <TabsTrigger
               value="overview"
@@ -182,10 +210,7 @@ const CampaignHub: React.FC = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            <CampaignOverview
-              campaign={campaign}
-              onStartNewSession={openCharacterModal}
-            />
+            <CampaignOverview campaign={campaign} onStartNewSession={openCharacterModal} />
           </TabsContent>
           <TabsContent value="characters">
             <CampaignCharacters mode={isCharacterCreationRoute ? 'create' : 'list'} />

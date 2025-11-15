@@ -5,11 +5,13 @@
  * Features: Founding member perks, clear beta limitations, urgency messaging
  */
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Crown, Star, Zap, MessageCircle, Clock, Users } from 'lucide-react';
+import React from 'react';
+
 import { WaitlistForm } from './WaitlistForm';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const EarlyAccessSection: React.FC = () => {
@@ -23,21 +25,21 @@ export const EarlyAccessSection: React.FC = () => {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
             {earlyAccess.headline}
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-6">
-            {earlyAccess.subtitle}
-          </p>
-          <p className="text-lg text-gray-300 max-w-4xl mx-auto">
-            {earlyAccess.description}
-          </p>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-6">{earlyAccess.subtitle}</p>
+          <p className="text-lg text-gray-300 max-w-4xl mx-auto">{earlyAccess.description}</p>
         </div>
 
         {/* Perks Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {earlyAccess.perks.map((perk, index) => {
-            const IconComponent = perk.icon === 'Crown' ? Crown :
-                                 perk.icon === 'Star' ? Star :
-                                 perk.icon === 'Zap' ? Zap :
-                                 MessageCircle;
+            const IconComponent =
+              perk.icon === 'Crown'
+                ? Crown
+                : perk.icon === 'Star'
+                  ? Star
+                  : perk.icon === 'Zap'
+                    ? Zap
+                    : MessageCircle;
 
             return (
               <div key={index} className="relative group">
@@ -46,12 +48,8 @@ export const EarlyAccessSection: React.FC = () => {
                   <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <IconComponent className="w-7 h-7 text-gray-900" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3">
-                    {perk.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    {perk.description}
-                  </p>
+                  <h3 className="text-xl font-bold text-white mb-3">{perk.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{perk.description}</p>
                 </div>
               </div>
             );
@@ -85,19 +83,22 @@ export const EarlyAccessSection: React.FC = () => {
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-gray-300">
-                  <span className="text-white font-semibold">Limited Features:</span> Beta focuses on core AI storytelling. Advanced features will be added post-launch.
+                  <span className="text-white font-semibold">Limited Features:</span> Beta focuses
+                  on core AI storytelling. Advanced features will be added post-launch.
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-gray-300">
-                  <span className="text-white font-semibold">Potential Bugs:</span> As a beta product, you may encounter occasional issues that we're actively fixing.
+                  <span className="text-white font-semibold">Potential Bugs:</span> As a beta
+                  product, you may encounter occasional issues that we're actively fixing.
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-gray-300">
-                  <span className="text-white font-semibold">Feedback Required:</span> We expect active participation in shaping the product through regular feedback.
+                  <span className="text-white font-semibold">Feedback Required:</span> We expect
+                  active participation in shaping the product through regular feedback.
                 </p>
               </div>
             </div>
@@ -115,7 +116,8 @@ export const EarlyAccessSection: React.FC = () => {
                   Now
                 </Badge>
                 <p className="text-gray-300">
-                  <span className="text-white font-semibold">Waitlist Open:</span> Join now to secure your spot in the closed beta queue.
+                  <span className="text-white font-semibold">Waitlist Open:</span> Join now to
+                  secure your spot in the closed beta queue.
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -123,7 +125,8 @@ export const EarlyAccessSection: React.FC = () => {
                   Q4 2025
                 </Badge>
                 <p className="text-gray-300">
-                  <span className="text-white font-semibold">Closed Beta:</span> Limited access for testing and feedback collection.
+                  <span className="text-white font-semibold">Closed Beta:</span> Limited access for
+                  testing and feedback collection.
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -131,7 +134,8 @@ export const EarlyAccessSection: React.FC = () => {
                   Q1 2026
                 </Badge>
                 <p className="text-gray-300">
-                  <span className="text-white font-semibold">Open Beta:</span> Expanded access with more features based on your feedback.
+                  <span className="text-white font-semibold">Open Beta:</span> Expanded access with
+                  more features based on your feedback.
                 </p>
               </div>
             </div>

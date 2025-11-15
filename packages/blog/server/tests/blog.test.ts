@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createApp } from '../src/app';
 
 process.env.SITE_URL = 'https://example.com';

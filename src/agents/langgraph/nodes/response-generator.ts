@@ -10,7 +10,11 @@
 import { DMState, NarrativeResponse } from '../state';
 import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { getGeminiManager } from '@/services/ai/shared/utils';
-import { buildDMPersonaPrompt, buildGameContextPrompt, buildResponseStructurePrompt } from '@/services/ai/shared/prompts';
+import {
+  buildDMPersonaPrompt,
+  buildGameContextPrompt,
+  buildResponseStructurePrompt,
+} from '@/services/ai/shared/prompts';
 import logger from '@/lib/logger';
 
 /**
@@ -96,9 +100,7 @@ function buildMemoryContext(state: DMState): string {
     return 'No recent memories available.';
   }
 
-  return memories
-    .map((mem, i) => `${i + 1}. ${mem.content} (${mem.type})`)
-    .join('\n');
+  return memories.map((mem, i) => `${i + 1}. ${mem.content} (${mem.type})`).join('\n');
 }
 
 /**
@@ -153,8 +155,7 @@ export async function generateResponse(state: DMState): Promise<Partial<DMState>
       : 'No dice roll needed';
 
     // Build prompt
-    const prompt = RESPONSE_GENERATION_PROMPT
-      .replace('{dmPersona}', dmPersona)
+    const prompt = RESPONSE_GENERATION_PROMPT.replace('{dmPersona}', dmPersona)
       .replace('{gameContext}', gameContext)
       .replace('{responseStructure}', responseStructure)
       .replace('{intent}', playerIntent)

@@ -1,15 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import React from 'react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+import type { Character } from '@/types/character';
+
 import {
   mockWizard,
   mockCleric,
   mockFighter,
   mockHuman,
-  createMockCharacter
+  createMockCharacter,
 } from '@/__tests__/helpers/spell-test-helpers';
-import { Character } from '@/types/character';
 
 /**
  * Spell Selection Accessibility Tests
@@ -36,17 +38,52 @@ const AccessibleSpellSelection: React.FC<{ character: Character }> = ({ characte
   const [announceMessage, setAnnounceMessage] = React.useState<string>('');
 
   const cantripsData = [
-    { id: 'mage-hand', name: 'Mage Hand', school: 'Conjuration', description: 'A spectral, floating hand appears' },
-    { id: 'prestidigitation', name: 'Prestidigitation', school: 'Transmutation', description: 'Minor magical trick' },
+    {
+      id: 'mage-hand',
+      name: 'Mage Hand',
+      school: 'Conjuration',
+      description: 'A spectral, floating hand appears',
+    },
+    {
+      id: 'prestidigitation',
+      name: 'Prestidigitation',
+      school: 'Transmutation',
+      description: 'Minor magical trick',
+    },
     { id: 'light', name: 'Light', school: 'Evocation', description: 'Object sheds bright light' },
-    { id: 'minor-illusion', name: 'Minor Illusion', school: 'Illusion', description: 'Create sound or image' }
+    {
+      id: 'minor-illusion',
+      name: 'Minor Illusion',
+      school: 'Illusion',
+      description: 'Create sound or image',
+    },
   ];
 
   const spellsData = [
-    { id: 'magic-missile', name: 'Magic Missile', school: 'Evocation', description: 'Three glowing darts' },
-    { id: 'shield', name: 'Shield', school: 'Abjuration', description: 'Invisible barrier protects you' },
-    { id: 'detect-magic', name: 'Detect Magic', school: 'Divination', description: 'Sense presence of magic' },
-    { id: 'burning-hands', name: 'Burning Hands', school: 'Evocation', description: 'Sheet of flames' }
+    {
+      id: 'magic-missile',
+      name: 'Magic Missile',
+      school: 'Evocation',
+      description: 'Three glowing darts',
+    },
+    {
+      id: 'shield',
+      name: 'Shield',
+      school: 'Abjuration',
+      description: 'Invisible barrier protects you',
+    },
+    {
+      id: 'detect-magic',
+      name: 'Detect Magic',
+      school: 'Divination',
+      description: 'Sense presence of magic',
+    },
+    {
+      id: 'burning-hands',
+      name: 'Burning Hands',
+      school: 'Evocation',
+      description: 'Sheet of flames',
+    },
   ];
 
   if (!character.class?.spellcasting) {
@@ -64,14 +101,18 @@ const AccessibleSpellSelection: React.FC<{ character: Character }> = ({ characte
   const maxSpells = character.class.spellcasting.spellsKnown || 1;
 
   const handleCantripToggle = (cantripId: string) => {
-    setSelectedCantrips(prev => {
+    setSelectedCantrips((prev) => {
       let newSelection;
       if (prev.includes(cantripId)) {
-        newSelection = prev.filter(id => id !== cantripId);
-        setAnnounceMessage(`${cantripsData.find(c => c.id === cantripId)?.name} removed from selection`);
+        newSelection = prev.filter((id) => id !== cantripId);
+        setAnnounceMessage(
+          `${cantripsData.find((c) => c.id === cantripId)?.name} removed from selection`,
+        );
       } else if (prev.length < maxCantrips) {
         newSelection = [...prev, cantripId];
-        setAnnounceMessage(`${cantripsData.find(c => c.id === cantripId)?.name} added to selection`);
+        setAnnounceMessage(
+          `${cantripsData.find((c) => c.id === cantripId)?.name} added to selection`,
+        );
       } else {
         setErrors([`Cannot select more than ${maxCantrips} cantrips`]);
         setAnnounceMessage(`Cannot select more than ${maxCantrips} cantrips`);
@@ -83,14 +124,16 @@ const AccessibleSpellSelection: React.FC<{ character: Character }> = ({ characte
   };
 
   const handleSpellToggle = (spellId: string) => {
-    setSelectedSpells(prev => {
+    setSelectedSpells((prev) => {
       let newSelection;
       if (prev.includes(spellId)) {
-        newSelection = prev.filter(id => id !== spellId);
-        setAnnounceMessage(`${spellsData.find(s => s.id === spellId)?.name} removed from selection`);
+        newSelection = prev.filter((id) => id !== spellId);
+        setAnnounceMessage(
+          `${spellsData.find((s) => s.id === spellId)?.name} removed from selection`,
+        );
       } else if (prev.length < maxSpells) {
         newSelection = [...prev, spellId];
-        setAnnounceMessage(`${spellsData.find(s => s.id === spellId)?.name} added to selection`);
+        setAnnounceMessage(`${spellsData.find((s) => s.id === spellId)?.name} added to selection`);
       } else {
         setErrors([`Cannot select more than ${maxSpells} spells`]);
         setAnnounceMessage(`Cannot select more than ${maxSpells} spells`);
@@ -158,10 +201,14 @@ const AccessibleSpellSelection: React.FC<{ character: Character }> = ({ characte
           className="error-container"
           data-testid="error-alert"
         >
-          <h2 id="error-heading" className="error-title">Validation Errors</h2>
+          <h2 id="error-heading" className="error-title">
+            Validation Errors
+          </h2>
           <ul>
             {errors.map((error, index) => (
-              <li key={index} className="error-message">{error}</li>
+              <li key={index} className="error-message">
+                {error}
+              </li>
             ))}
           </ul>
         </div>
@@ -169,10 +216,12 @@ const AccessibleSpellSelection: React.FC<{ character: Character }> = ({ characte
 
       {/* Instructions */}
       <div role="region" aria-labelledby="instructions-heading">
-        <h2 id="instructions-heading" className="sr-only">Instructions</h2>
+        <h2 id="instructions-heading" className="sr-only">
+          Instructions
+        </h2>
         <p id="spell-selection-instructions">
-          Use arrow keys to navigate, Enter or Space to select/deselect spells.
-          You must select {maxCantrips} cantrips and {maxSpells} {maxSpells === 1 ? 'spell' : 'spells'}.
+          Use arrow keys to navigate, Enter or Space to select/deselect spells. You must select{' '}
+          {maxCantrips} cantrips and {maxSpells} {maxSpells === 1 ? 'spell' : 'spells'}.
         </p>
       </div>
 
@@ -273,7 +322,8 @@ const AccessibleSpellSelection: React.FC<{ character: Character }> = ({ characte
         <h2 id="summary-heading">Selection Summary</h2>
         <div aria-live="polite" aria-atomic="true">
           <p>
-            Selected: {selectedCantrips.length} of {maxCantrips} cantrips, {selectedSpells.length} of {maxSpells} spells
+            Selected: {selectedCantrips.length} of {maxCantrips} cantrips, {selectedSpells.length}{' '}
+            of {maxSpells} spells
           </p>
           {selectedCantrips.length === maxCantrips && selectedSpells.length === maxSpells && (
             <p role="status" className="success-message">
@@ -393,7 +443,7 @@ describe('Spell Selection Accessibility Tests', () => {
       // Options
       const cantripOptions = screen.getAllByRole('option');
       expect(cantripOptions.length).toBeGreaterThan(0);
-      cantripOptions.forEach(option => {
+      cantripOptions.forEach((option) => {
         expect(option).toHaveAttribute('aria-selected');
         expect(option).toHaveAttribute('aria-describedby');
       });
@@ -412,7 +462,10 @@ describe('Spell Selection Accessibility Tests', () => {
       const mageHandOption = screen.getByTestId('cantrip-option-mage-hand');
       const describedBy = mageHandOption.getAttribute('aria-describedby');
       expect(describedBy).toBeTruthy();
-      expect(screen.getByText('A spectral, floating hand appears')).toHaveAttribute('id', describedBy);
+      expect(screen.getByText('A spectral, floating hand appears')).toHaveAttribute(
+        'id',
+        describedBy,
+      );
     });
 
     it('should announce selections and changes', async () => {
@@ -523,7 +576,11 @@ describe('Spell Selection Accessibility Tests', () => {
   describe('Error Accessibility', () => {
     it('should associate error messages with relevant form controls', async () => {
       const user = userEvent.setup();
-      const wizardCharacter = createMockCharacter('Error Association Wizard', mockWizard, mockHuman);
+      const wizardCharacter = createMockCharacter(
+        'Error Association Wizard',
+        mockWizard,
+        mockHuman,
+      );
 
       render(<AccessibleSpellSelection character={wizardCharacter} />);
 
@@ -595,7 +652,7 @@ describe('Spell Selection Accessibility Tests', () => {
       const spellOptions = screen.getAllByRole('option');
 
       // All spell options should be clickable (would need CSS checks in real implementation)
-      spellOptions.forEach(option => {
+      spellOptions.forEach((option) => {
         expect(option).toBeInTheDocument();
         expect(option).toHaveAttribute('role', 'option');
       });
@@ -603,7 +660,11 @@ describe('Spell Selection Accessibility Tests', () => {
 
     it('should support touch interactions', async () => {
       const user = userEvent.setup();
-      const wizardCharacter = createMockCharacter('Touch Interaction Wizard', mockWizard, mockHuman);
+      const wizardCharacter = createMockCharacter(
+        'Touch Interaction Wizard',
+        mockWizard,
+        mockHuman,
+      );
 
       render(<AccessibleSpellSelection character={wizardCharacter} />);
 

@@ -50,7 +50,11 @@ export const SimpleGameChatMigrated: React.FC<SimpleGameChatProps> = ({
   campaignDetails,
   characterDetails,
 }) => {
-  const { session, loading: sessionLoading, endSession } = useSimpleGameSession(campaignId, characterId);
+  const {
+    session,
+    loading: sessionLoading,
+    endSession,
+  } = useSimpleGameSession(campaignId, characterId);
   const [currentMessage, setCurrentMessage] = useState('');
   const [streamingMessage, setStreamingMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -72,7 +76,7 @@ export const SimpleGameChatMigrated: React.FC<SimpleGameChatProps> = ({
       characterDetails,
     },
     onStream: (chunk: string) => {
-      setStreamingMessage(prev => prev + chunk);
+      setStreamingMessage((prev) => prev + chunk);
     },
     onError: (error) => {
       // Custom error handling if needed
@@ -100,9 +104,10 @@ export const SimpleGameChatMigrated: React.FC<SimpleGameChatProps> = ({
     if (!session?.id) return;
 
     try {
-      const conversationSummary = messages.length > 0
-        ? `Session concluded with ${messages.length} messages exchanged.`
-        : 'Session ended without gameplay.';
+      const conversationSummary =
+        messages.length > 0
+          ? `Session concluded with ${messages.length} messages exchanged.`
+          : 'Session ended without gameplay.';
 
       await endSession(session.id, conversationSummary);
 
@@ -144,7 +149,7 @@ export const SimpleGameChatMigrated: React.FC<SimpleGameChatProps> = ({
   const extractChoices = (text: string) => {
     const lines = text.split('\n');
     const choices: string[] = [];
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const m = line.trim().match(/^([A-D]|\d+)\.\s*(.+)/);
       if (m) choices.push(m[2].trim());
     });
@@ -184,12 +189,7 @@ export const SimpleGameChatMigrated: React.FC<SimpleGameChatProps> = ({
             )}
           </div>
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={handleEndSession}
-              disabled={isSending}
-            >
+            <Button size="sm" variant="destructive" onClick={handleEndSession} disabled={isSending}>
               <LogOut className="w-4 h-4 mr-2" />
               End Session
             </Button>
@@ -218,16 +218,27 @@ export const SimpleGameChatMigrated: React.FC<SimpleGameChatProps> = ({
                   const choices = message.role !== 'user' ? extractChoices(message.content) : [];
 
                   return (
-                    <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`flex max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`flex max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}
+                      >
                         {message.role !== 'user' && (
                           <div className="flex-shrink-0 mr-3">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium avatar-dm">DM</div>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium avatar-dm">
+                              DM
+                            </div>
                           </div>
                         )}
 
-                        <div className={`rounded-lg px-5 py-3 message-bubble ${message.role === 'user' ? 'player-bubble ml-4' : 'dm-bubble mr-4'}`}>
-                          <div className="text-sm font-medium mb-1">{message.role === 'user' ? 'You' : 'Dungeon Master'}</div>
+                        <div
+                          className={`rounded-lg px-5 py-3 message-bubble ${message.role === 'user' ? 'player-bubble ml-4' : 'dm-bubble mr-4'}`}
+                        >
+                          <div className="text-sm font-medium mb-1">
+                            {message.role === 'user' ? 'You' : 'Dungeon Master'}
+                          </div>
                           <div className="whitespace-pre-wrap">{message.content}</div>
                           <div className="text-xs opacity-70 mt-2 message-meta">
                             {message.timestamp.toLocaleTimeString?.()}

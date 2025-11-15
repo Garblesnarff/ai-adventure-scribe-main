@@ -6,6 +6,7 @@
  */
 
 import type { CombatParticipant, DiceRoll } from './types';
+
 import { rollDie } from '@/utils/diceRolls';
 
 /**
@@ -17,7 +18,7 @@ export function rollSavingThrow(
   options?: {
     advantage?: boolean;
     disadvantage?: boolean;
-  }
+  },
 ): { roll: DiceRoll; success: boolean } {
   const hasAdvantage = options?.advantage && !options?.disadvantage;
   const hasDisadvantage = options?.disadvantage && !options?.advantage;
@@ -69,7 +70,7 @@ export function rollSavingThrow(
 export function checkConcentration(
   participant: CombatParticipant,
   damage: number,
-  constitutionSaveBonus: number = 0
+  constitutionSaveBonus: number = 0,
 ): { maintained: boolean; roll: DiceRoll } {
   if (!participant.activeConcentration) {
     return {
@@ -94,9 +95,7 @@ export function checkConcentration(
 /**
  * Break concentration (e.g., casting a new concentration spell)
  */
-export function breakConcentration(
-  participant: CombatParticipant
-): CombatParticipant {
+export function breakConcentration(participant: CombatParticipant): CombatParticipant {
   return {
     ...participant,
     activeConcentration: null,

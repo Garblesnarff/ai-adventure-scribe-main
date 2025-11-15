@@ -12,16 +12,14 @@ import type { CombatParticipant, Condition, ConditionName } from './types';
  */
 export function addCondition(
   participant: CombatParticipant,
-  condition: Condition
+  condition: Condition,
 ): CombatParticipant {
-  const hasCondition = participant.conditions.some(c => c.name === condition.name);
+  const hasCondition = participant.conditions.some((c) => c.name === condition.name);
 
   if (hasCondition) {
     return {
       ...participant,
-      conditions: participant.conditions.map(c =>
-        c.name === condition.name ? condition : c
-      ),
+      conditions: participant.conditions.map((c) => (c.name === condition.name ? condition : c)),
     };
   }
 
@@ -36,11 +34,11 @@ export function addCondition(
  */
 export function removeCondition(
   participant: CombatParticipant,
-  conditionName: ConditionName
+  conditionName: ConditionName,
 ): CombatParticipant {
   return {
     ...participant,
-    conditions: participant.conditions.filter(c => c.name !== conditionName),
+    conditions: participant.conditions.filter((c) => c.name !== conditionName),
   };
 }
 
@@ -49,7 +47,7 @@ export function removeCondition(
  */
 export function hasCondition(
   participant: CombatParticipant,
-  conditionName: ConditionName
+  conditionName: ConditionName,
 ): boolean {
-  return participant.conditions.some(c => c.name === conditionName);
+  return participant.conditions.some((c) => c.name === conditionName);
 }

@@ -1,8 +1,3 @@
-import React from 'react';
-import { useCampaign } from '@/contexts/CampaignContext';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Map,
   Users,
@@ -12,8 +7,14 @@ import {
   Crown,
   Star,
   Wand2,
-  BookOpen
+  BookOpen,
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { useCampaign } from '@/contexts/CampaignContext';
 
 /**
  * Real-time campaign preview component
@@ -43,31 +44,46 @@ const CampaignPreview: React.FC = () => {
 
   const getGenreColor = (genre: string) => {
     switch (genre?.toLowerCase()) {
-      case 'fantasy': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'sci-fi': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'horror': return 'bg-red-100 text-red-800 border-red-200';
-      case 'modern': return 'bg-green-100 text-green-800 border-green-200';
-      case 'historical': return 'bg-amber-100 text-amber-800 border-amber-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'fantasy':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'sci-fi':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'horror':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'modern':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'historical':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'hard': return 'bg-red-100 text-red-800 border-red-200';
-      case 'nightmare': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'easy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'hard':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'nightmare':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getToneColor = (tone: string) => {
     switch (tone?.toLowerCase()) {
-      case 'serious': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'humorous': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'gritty': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'serious':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'humorous':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'gritty':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -98,7 +114,10 @@ const CampaignPreview: React.FC = () => {
                 </Badge>
               )}
               {campaign.difficulty_level && (
-                <Badge variant="secondary" className={getDifficultyColor(campaign.difficulty_level)}>
+                <Badge
+                  variant="secondary"
+                  className={getDifficultyColor(campaign.difficulty_level)}
+                >
                   {campaign.difficulty_level}
                 </Badge>
               )}
@@ -162,15 +181,11 @@ const CampaignPreview: React.FC = () => {
           </h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-blue-100 dark:border-blue-900">
-              <div className="text-lg font-bold text-blue-600">
-                {campaign.genre ? '1' : '0'}/4
-              </div>
+              <div className="text-lg font-bold text-blue-600">{campaign.genre ? '1' : '0'}/4</div>
               <div className="text-xs text-gray-600 dark:text-gray-400">Steps Complete</div>
             </div>
             <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-blue-100 dark:border-blue-900">
-              <div className="text-lg font-bold text-green-600">
-                {campaign.name ? '✓' : '○'}
-              </div>
+              <div className="text-lg font-bold text-green-600">{campaign.name ? '✓' : '○'}</div>
               <div className="text-xs text-gray-600 dark:text-gray-400">Ready to Play</div>
             </div>
           </div>

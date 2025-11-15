@@ -1,16 +1,35 @@
-import * as React from 'react';
 import { Upload, Trash2, Image as ImageIcon, Loader2, ExternalLink } from 'lucide-react';
+import * as React from 'react';
 import { toast } from 'sonner';
+
+import { logger } from '../../../lib/logger';
+
+import type { BlogMediaAsset } from '@/types/blog';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useBlogMedia, useUploadBlogMedia, useDeleteBlogMedia } from '@/hooks/blog/useBlogMedia';
-import type { BlogMediaAsset } from '@/types/blog';
 import { compressImage, convertToWebP } from '@/utils/image-compression';
-import { logger } from '../../../lib/logger';
 
 interface MediaManagerProps {
   open: boolean;
@@ -28,7 +47,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
   const { data: mediaAssets = [], isLoading } = useBlogMedia();
   const uploadMutation = useUploadBlogMedia();
   const deleteMutation = useDeleteBlogMedia();
-  
+
   const [selectedAsset, setSelectedAsset] = React.useState<BlogMediaAsset | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<BlogMediaAsset | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -39,7 +58,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       if (!file.type.startsWith('image/')) {
         toast.error(`${file.name} is not an image file`);
         continue;
@@ -47,7 +66,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
 
       try {
         let processedFile: File | Blob = file;
-        
+
         if (file.type === 'image/png' || file.type === 'image/jpeg') {
           try {
             processedFile = await convertToWebP(file);
@@ -64,7 +83,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
           filename,
           contentType: processedFile instanceof File ? processedFile.type : 'image/webp',
         });
-        
+
         toast.success(`Uploaded ${file.name}`);
       } catch (error: any) {
         toast.error(`Failed to upload ${file.name}: ${error.message}`);
@@ -100,9 +119,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Media Library</DialogTitle>
-            <DialogDescription>
-              Upload and manage media files for your blog posts
-            </DialogDescription>
+            <DialogDescription>Upload and manage media files for your blog posts</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto">
@@ -119,11 +136,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
                   id="file-upload"
                 />
                 <Label htmlFor="file-upload" className="cursor-pointer">
-                  <Button
-                    variant="outline"
-                    disabled={uploadMutation.isPending}
-                    asChild
-                  >
+                  <Button variant="outline" disabled={uploadMutation.isPending} asChild>
                     <span>
                       {uploadMutation.isPending ? (
                         <>
@@ -218,9 +231,7 @@ export const MediaManager: React.FC<MediaManagerProps> = ({
               Close
             </Button>
             {selectedAsset && (
-              <Button onClick={() => handleSelectAsset(selectedAsset)}>
-                Select Image
-              </Button>
+              <Button onClick={() => handleSelectAsset(selectedAsset)}>Select Image</Button>
             )}
           </DialogFooter>
         </DialogContent>

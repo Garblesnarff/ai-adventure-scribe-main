@@ -80,4 +80,4 @@ export const Z_INDEX = {
   LOADING_OVERLAY: 100,
 } as const;
 
-export type ZIndexLayer = typeof Z_INDEX[keyof typeof Z_INDEX];
+export type ZIndexLayer = (typeof Z_INDEX)[keyof typeof Z_INDEX];

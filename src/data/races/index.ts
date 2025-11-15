@@ -1,23 +1,24 @@
-import type { CharacterRace } from '@/types/character';
-import { dwarf } from './dwarf';
-import { elf } from './elf';
-import { halfling } from './halfling';
-import { human } from './human';
-import { dragonborn } from './dragonborn';
-import { gnome } from './gnome';
-import { elementalborn } from './elementalborn';
-import { celestialborn } from './celestialborn';
 import { astralborn } from './astralborn';
-import { tiefling } from './tiefling';
+import { catfolk } from './catfolk';
+import { celestialborn } from './celestialborn';
+import { dragonborn } from './dragonborn';
+import { dwarf } from './dwarf';
+import { elementalborn } from './elementalborn';
+import { elf } from './elf';
+import { forestGiant } from './forest-giant';
+import { gnome } from './gnome';
 import { halfElf } from './half-elf';
 import { halfOrc } from './half-orc';
-import { forestGiant } from './forest-giant';
-import { stoneGiant } from './stone-giant';
+import { halfling } from './halfling';
+import { human } from './human';
 import { ravenfolk } from './ravenfolk';
-import { lizardfolk } from './lizardfolk';
-import { catfolk } from './catfolk';
 import { seaborn } from './seaborn';
 import { serpentfolk } from './serpentfolk';
+import { stoneGiant } from './stone-giant';
+import { tiefling } from './tiefling';
+import { lizardfolk } from './lizardfolk';
+
+import type { CharacterRace } from '@/types/character';
 
 export const baseRaces: CharacterRace[] = [
   dwarf,

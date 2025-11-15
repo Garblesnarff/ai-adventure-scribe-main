@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const sorcererLevel1Spells: Spell[] = [
-{
+  {
     id: 'burning-hands-sorcerer',
     name: 'Burning Hands',
     level: 1,
@@ -12,8 +12,9 @@ export const sorcererLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips.',
-    damage: '3d6'
+    description:
+      'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips.',
+    damage: '3d6',
   },
   {
     id: 'charm-person-sorcerer',
@@ -26,7 +27,7 @@ export const sorcererLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You attempt to charm a humanoid you can see within range.'
+    description: 'You attempt to charm a humanoid you can see within range.',
   },
   {
     id: 'chromatic-orb-sorcerer',
@@ -43,8 +44,9 @@ export const sorcererLevel1Spells: Spell[] = [
     materialCost: 50,
     materialConsumed: true,
     duration: 'Instantaneous',
-    description: 'You hurl a 4-inch-diameter sphere of energy at a creature that you can see within range.',
-    damage: '3d8'
+    description:
+      'You hurl a 4-inch-diameter sphere of energy at a creature that you can see within range.',
+    damage: '3d8',
   },
   {
     id: 'color-spray-sorcerer',
@@ -59,7 +61,7 @@ export const sorcererLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of powder or sand that is colored red, yellow, and blue',
     duration: '1 round',
-    description: 'A dazzling array of flashing, colored light springs from your hand.'
+    description: 'A dazzling array of flashing, colored light springs from your hand.',
   },
   {
     id: 'comprehend-languages-sorcerer',
@@ -74,8 +76,9 @@ export const sorcererLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of soot and salt',
     duration: '1 hour',
-    description: 'For the duration, you understand the literal meaning of any spoken language that you hear.',
-    ritual: true
+    description:
+      'For the duration, you understand the literal meaning of any spoken language that you hear.',
+    ritual: true,
   },
   {
     id: 'detect-magic-sorcerer',
@@ -90,7 +93,7 @@ export const sorcererLevel1Spells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'disguise-self-sorcerer',
@@ -103,7 +106,8 @@ export const sorcererLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You make yourself look different until the spell ends or until you use your action to dismiss it.'
+    description:
+      'You make yourself look different until the spell ends or until you use your action to dismiss it.',
   },
   {
     id: 'expeditious-retreat-sorcerer',
@@ -117,7 +121,7 @@ export const sorcererLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 10 minutes',
     description: 'This spell allows you to move at an incredible pace.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'false-life-sorcerer',
@@ -132,7 +136,8 @@ export const sorcererLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small amount of alcohol or distilled spirits',
     duration: '1 hour',
-    description: 'Bolstering yourself with a necromantic facsimile of life, you gain 1d4 + 4 temporary hit points for the duration.'
+    description:
+      'Bolstering yourself with a necromantic facsimile of life, you gain 1d4 + 4 temporary hit points for the duration.',
   },
   {
     id: 'feather-fall-sorcerer',
@@ -146,7 +151,8 @@ export const sorcererLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small feather or piece of down',
     duration: '1 minute',
-    description: 'Choose up to five falling creatures within range. A falling creature\'s rate of descent slows to 60 feet per round until the spell ends.'
+    description:
+      "Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends.",
   },
   {
     id: 'fog-cloud-sorcerer',
@@ -160,7 +166,7 @@ export const sorcererLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 1 hour',
     description: 'You create a 20-foot-radius sphere of fog centered on a point within range.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'jump-sorcerer',
@@ -169,13 +175,14 @@ export const sorcererLevel1Spells: Spell[] = [
     school: 'Transmutation',
     castingTime: '1 action',
     range: 'Touch',
-    components: 'V, S, M (a grasshopper\'s hind leg)',
+    components: "V, S, M (a grasshopper's hind leg)",
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a grasshopper\'s hind leg',
+    materialDescription: "a grasshopper's hind leg",
     duration: '1 minute',
-    description: 'You touch a creature. The creature\'s jump distance is tripled until the spell ends.'
+    description:
+      "You touch a creature. The creature's jump distance is tripled until the spell ends.",
   },
   {
     id: 'mage-armor-sorcerer',
@@ -190,7 +197,8 @@ export const sorcererLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a piece of cured leather',
     duration: '8 hours',
-    description: 'You touch a willing creature who isn\'t wearing armor, and a protective magical force surrounds it until the spell ends.'
+    description:
+      "You touch a willing creature who isn't wearing armor, and a protective magical force surrounds it until the spell ends.",
   },
   {
     id: 'magic-missile-sorcerer',
@@ -204,7 +212,7 @@ export const sorcererLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Instantaneous',
     description: 'You create three glowing darts of magical force.',
-    damage: '1d4+1'
+    damage: '1d4+1',
   },
   {
     id: 'ray-of-sickness',
@@ -217,8 +225,9 @@ export const sorcererLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target.',
-    damage: '2d8'
+    description:
+      'A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target.',
+    damage: '2d8',
   },
   {
     id: 'shield-sorcerer',
@@ -231,7 +240,7 @@ export const sorcererLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 round',
-    description: 'An invisible barrier of magical force appears and protects you.'
+    description: 'An invisible barrier of magical force appears and protects you.',
   },
   {
     id: 'silent-image-sorcerer',
@@ -246,7 +255,8 @@ export const sorcererLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: 'Concentration, up to 10 minutes',
-    description: 'You create the image of an object, a creature, or some other visible phenomenon that is no larger than a 15-foot cube.',
-    concentration: true
+    description:
+      'You create the image of an object, a creature, or some other visible phenomenon that is no larger than a 15-foot cube.',
+    concentration: true,
   },
 ];

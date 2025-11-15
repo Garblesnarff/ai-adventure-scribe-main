@@ -1,8 +1,9 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { CampaignProvider } from '@/contexts/CampaignContext';
 import CampaignHub from '@/pages/campaigns/CampaignHub';
 
@@ -10,9 +11,24 @@ import CampaignHub from '@/pages/campaigns/CampaignHub';
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () => ({ eq: () => ({ single: async () => ({ data: { id: '123', name: 'Test Campaign', description: null, genre: null, tone: null, difficulty_level: null, campaign_length: null }, error: null }) }) })
-    })
-  }
+      select: () => ({
+        eq: () => ({
+          single: async () => ({
+            data: {
+              id: '123',
+              name: 'Test Campaign',
+              description: null,
+              genre: null,
+              tone: null,
+              difficulty_level: null,
+              campaign_length: null,
+            },
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  },
 }));
 
 const queryClient = new QueryClient();
@@ -26,13 +42,13 @@ describe('CampaignHub routing and tabs', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <CampaignProvider>
-          <MemoryRouter initialEntries={["/app/campaigns/123"]}>
+          <MemoryRouter initialEntries={['/app/campaigns/123']}>
             <Routes>
               <Route path="/app/campaigns/:id/*" element={<CampaignHub />} />
             </Routes>
           </MemoryRouter>
         </CampaignProvider>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(await screen.findByText('Test Campaign')).toBeInTheDocument();

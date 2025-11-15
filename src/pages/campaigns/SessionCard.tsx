@@ -1,9 +1,10 @@
+import { format, formatDistanceToNow } from 'date-fns';
 import React from 'react';
-import { Card } from '@/components/ui/card';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format, formatDistanceToNow } from 'date-fns';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 export type SessionStatusType = 'active' | 'completed' | 'expired' | 'ending' | null;
@@ -54,7 +55,9 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, expired, onContinue,
   const startedAt = session.start_time || session.created_at;
   const endedAt = session.end_time;
 
-  const startedAgo = startedAt ? formatDistanceToNow(new Date(startedAt), { addSuffix: true }) : 'Unknown start';
+  const startedAgo = startedAt
+    ? formatDistanceToNow(new Date(startedAt), { addSuffix: true })
+    : 'Unknown start';
   const endedAgo = endedAt ? formatDistanceToNow(new Date(endedAt), { addSuffix: true }) : null;
 
   const characterName = session.character?.name ?? 'Unknown Character';
@@ -66,7 +69,8 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, expired, onContinue,
     .toUpperCase();
 
   const continueDisabled = !session.character?.id || continuing;
-  const continueLabel = session.status === 'active' && !expired ? 'Open Session' : 'Continue Session';
+  const continueLabel =
+    session.status === 'active' && !expired ? 'Open Session' : 'Continue Session';
 
   return (
     <Card className="p-4 md:p-5 shadow-sm border border-border/60">
@@ -78,21 +82,23 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, expired, onContinue,
               Session {session.session_number ?? '—'}
             </span>
             {startedAt && (
-              <span className="text-sm text-muted-foreground">
-                Started {startedAgo}
-              </span>
+              <span className="text-sm text-muted-foreground">Started {startedAgo}</span>
             )}
             {endedAgo && (
               <span className="text-sm text-muted-foreground">&bull; Ended {endedAgo}</span>
             )}
             {session.turn_count != null && (
-              <span className="text-sm text-muted-foreground">&bull; {session.turn_count} turns</span>
+              <span className="text-sm text-muted-foreground">
+                &bull; {session.turn_count} turns
+              </span>
             )}
           </div>
 
           <div className="space-y-2">
             <p className="text-base font-medium text-foreground">
-              {session.summary?.trim() || session.current_scene_description?.trim() || 'No summary recorded yet.'}
+              {session.summary?.trim() ||
+                session.current_scene_description?.trim() ||
+                'No summary recorded yet.'}
             </p>
             {startedAt && (
               <p className="text-xs text-muted-foreground">

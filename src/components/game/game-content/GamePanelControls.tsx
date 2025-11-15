@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Button } from '@/components/ui/button';
 
 /**
@@ -27,28 +28,13 @@ export const GamePanelControls: React.FC<GamePanelControlsProps> = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onLeftToggle}
-        title="Toggle campaign panel"
-      >
+      <Button variant="outline" size="sm" onClick={onLeftToggle} title="Toggle campaign panel">
         {isLeftCollapsed ? 'Show Campaign' : 'Hide Campaign'}
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onRightToggle}
-        title="Toggle character panel"
-      >
+      <Button variant="outline" size="sm" onClick={onRightToggle} title="Toggle character panel">
         {isRightCollapsed ? 'Show Character' : 'Hide Character'}
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onSceneBlurbToggle}
-        title="Toggle scene blurb"
-      >
+      <Button variant="outline" size="sm" onClick={onSceneBlurbToggle} title="Toggle scene blurb">
         {showSceneBlurb ? 'Hide Blurb' : 'Show Blurb'}
       </Button>
     </div>

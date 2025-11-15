@@ -8,8 +8,8 @@
  * @module agents/langgraph/checkpointer
  */
 
-import { MemorySaver } from "@langchain/langgraph";
-import { CHECKPOINT_CONFIG } from "./config";
+import { MemorySaver } from '@langchain/langgraph';
+import { CHECKPOINT_CONFIG } from './config';
 
 /**
  * In-memory checkpointer for development and testing
@@ -67,7 +67,7 @@ export class LocalStorageCheckpointer {
     const filtered = Object.fromEntries(
       Object.entries(checkpoints).filter(([_, data]: [string, any]) => {
         return now - data.timestamp < CHECKPOINT_CONFIG.ttl;
-      })
+      }),
     );
 
     localStorage.setItem(this.storageKey, JSON.stringify(filtered));
@@ -121,21 +121,21 @@ export function getCheckpointer() {
     case 'localstorage':
       console.warn(
         '[LangGraph] LocalStorage checkpointer not yet implemented. ' +
-        'Falling back to memory checkpointer.'
+          'Falling back to memory checkpointer.',
       );
       return memoryCheckpointer;
 
     case 'supabase':
       console.warn(
         '[LangGraph] Supabase checkpointer not yet implemented. ' +
-        'Falling back to memory checkpointer.'
+          'Falling back to memory checkpointer.',
       );
       return memoryCheckpointer;
 
     default:
       console.warn(
         `[LangGraph] Unknown checkpoint storage type: ${CHECKPOINT_CONFIG.storageType}. ` +
-        'Falling back to memory checkpointer.'
+          'Falling back to memory checkpointer.',
       );
       return memoryCheckpointer;
   }

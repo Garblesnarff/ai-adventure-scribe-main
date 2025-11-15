@@ -1,4 +1,5 @@
-import { Spell } from '../types/character';
+import type { Spell } from '../types/character';
+
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
@@ -60,12 +61,16 @@ class CharacterSpellService {
     return refreshedToken;
   }
 
-  private async executeRequest(url: string, options: RequestInit, token: string): Promise<Response> {
+  private async executeRequest(
+    url: string,
+    options: RequestInit,
+    token: string,
+  ): Promise<Response> {
     return fetch(`${this.baseUrl}${url}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         ...options.headers,
       },
     });
@@ -73,16 +78,25 @@ class CharacterSpellService {
 
   private async parseError(response: Response): Promise<string> {
     const body = await response.json().catch(() => ({ error: 'Unknown error' }));
-    const rawMessage = body?.error || body?.message || `Request failed: ${response.status} ${response.statusText}`;
+    const rawMessage =
+      body?.error || body?.message || `Request failed: ${response.status} ${response.statusText}`;
 
-    if (response.status === 401 && typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('invalid token')) {
+    if (
+      response.status === 401 &&
+      typeof rawMessage === 'string' &&
+      rawMessage.toLowerCase().includes('invalid token')
+    ) {
       return 'Authentication expired. Please sign in again.';
     }
 
     return typeof rawMessage === 'string' ? rawMessage : 'Unknown error';
   }
 
-  private async fetchWithAuth(url: string, options: RequestInit = {}, allowRetry = true): Promise<Response> {
+  private async fetchWithAuth(
+    url: string,
+    options: RequestInit = {},
+    allowRetry = true,
+  ): Promise<Response> {
     try {
       const initialToken = await this.getAccessToken();
       let response = await this.executeRequest(url, options, initialToken);
@@ -95,11 +109,15 @@ class CharacterSpellService {
         } catch (error) {
           logger.warn('[CharacterSpellService] Token refresh failed, signing out user.');
           await supabase.auth.signOut();
-          throw error instanceof Error ? error : new Error('Authentication expired. Please log in again.');
+          throw error instanceof Error
+            ? error
+            : new Error('Authentication expired. Please log in again.');
         }
 
         if (response.status === 401) {
-          logger.warn('[CharacterSpellService] Token refresh did not resolve 401, signing out user.');
+          logger.warn(
+            '[CharacterSpellService] Token refresh did not resolve 401, signing out user.',
+          );
           await supabase.auth.signOut();
           throw new Error('Your session has expired. Please sign in again.');
         }
@@ -122,18 +140,21 @@ class CharacterSpellService {
       const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`);
       return response.json();
     } catch (error) {
-      logger.warn(`[CharacterSpellService] Failed to fetch spells for character ${characterId}:`, error);
+      logger.warn(
+        `[CharacterSpellService] Failed to fetch spells for character ${characterId}:`,
+        error,
+      );
 
       if (error instanceof Error && error.message.includes('Character not found')) {
         return {
           character: {
             id: characterId,
             class: 'Unknown',
-            level: 1
+            level: 1,
           },
           cantrips: [],
           spells: [],
-          total_spells: 0
+          total_spells: 0,
         };
       }
 
@@ -143,7 +164,7 @@ class CharacterSpellService {
 
   async saveCharacterSpells(
     characterId: string,
-    request: SaveSpellsRequest
+    request: SaveSpellsRequest,
   ): Promise<SaveSpellsResponse> {
     const response = await this.fetchWithAuth(`/v1/characters/${characterId}/spells`, {
       method: 'POST',
@@ -162,7 +183,7 @@ class CharacterSpellService {
   async updateSpellPreparation(
     characterId: string,
     spellId: string,
-    isPrepared: boolean
+    isPrepared: boolean,
   ): Promise<void> {
     await this.fetchWithAuth(`/v1/characters/${characterId}/spells/${spellId}/preparation`, {
       method: 'PATCH',

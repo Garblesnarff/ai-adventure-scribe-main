@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Z_INDEX } from '@/constants/z-index';
 
 /**
@@ -18,20 +19,22 @@ export const GameLoadingOverlay: React.FC<GameLoadingOverlayProps> = ({ loadingP
   const getPhaseMessage = () => {
     switch (loadingPhase) {
       case 'initial':
-        return "Welcome to your infinite realm...";
+        return 'Welcome to your infinite realm...';
       case 'data':
-        return "Loading character and campaign data...";
+        return 'Loading character and campaign data...';
       case 'session':
-        return "Initializing game session...";
+        return 'Initializing game session...';
       case 'greeting':
-        return "The Dungeon Master is crafting your opening scene...";
+        return 'The Dungeon Master is crafting your opening scene...';
       default:
-        return "Preparing your adventure...";
+        return 'Preparing your adventure...';
     }
   };
 
   return (
-    <div className={`fixed inset-0 z-[${Z_INDEX.LOADING_OVERLAY}] bg-background/90 backdrop-blur-md flex items-center justify-center`}>
+    <div
+      className={`fixed inset-0 z-[${Z_INDEX.LOADING_OVERLAY}] bg-background/90 backdrop-blur-md flex items-center justify-center`}
+    >
       <div className="bg-card border border-border/60 rounded-xl p-8 shadow-2xl max-w-md mx-4 text-center">
         <div className="flex flex-col items-center space-y-6">
           {/* Animated DM icon */}
@@ -45,9 +48,7 @@ export const GameLoadingOverlay: React.FC<GameLoadingOverlayProps> = ({ loadingP
           {/* Progress content */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-card-foreground">Preparing Your Adventure</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {getPhaseMessage()}
-            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{getPhaseMessage()}</p>
           </div>
 
           {/* Animated progress dots */}

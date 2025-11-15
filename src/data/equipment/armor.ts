@@ -11,7 +11,7 @@ export const armor: Equipment[] = [
     weight: 8,
     armorClass: { base: 11, dexModifier: true },
     stealthDisadvantage: true,
-    description: 'Quilted layers of cloth and batting.'
+    description: 'Quilted layers of cloth and batting.',
   },
   {
     id: 'leather-armor',
@@ -21,7 +21,7 @@ export const armor: Equipment[] = [
     cost: { amount: 10, currency: 'gp' },
     weight: 10,
     armorClass: { base: 11, dexModifier: true },
-    description: 'Soft and flexible leather armor.'
+    description: 'Soft and flexible leather armor.',
   },
   {
     id: 'studded-leather',
@@ -31,7 +31,7 @@ export const armor: Equipment[] = [
     cost: { amount: 45, currency: 'gp' },
     weight: 13,
     armorClass: { base: 12, dexModifier: true },
-    description: 'Leather armor reinforced with metal studs.'
+    description: 'Leather armor reinforced with metal studs.',
   },
 
   // Medium Armor
@@ -43,7 +43,7 @@ export const armor: Equipment[] = [
     cost: { amount: 10, currency: 'gp' },
     weight: 12,
     armorClass: { base: 12, dexModifier: true, maxDexModifier: 2 },
-    description: 'Crude armor made from thick furs and pelts.'
+    description: 'Crude armor made from thick furs and pelts.',
   },
   {
     id: 'chain-shirt',
@@ -53,7 +53,7 @@ export const armor: Equipment[] = [
     cost: { amount: 50, currency: 'gp' },
     weight: 20,
     armorClass: { base: 13, dexModifier: true, maxDexModifier: 2 },
-    description: 'A shirt made of interlocking metal rings.'
+    description: 'A shirt made of interlocking metal rings.',
   },
   {
     id: 'scale-mail',
@@ -64,7 +64,7 @@ export const armor: Equipment[] = [
     weight: 45,
     armorClass: { base: 14, dexModifier: true, maxDexModifier: 2 },
     stealthDisadvantage: true,
-    description: 'Armor consisting of a coat of leather covered with overlapping pieces of metal.'
+    description: 'Armor consisting of a coat of leather covered with overlapping pieces of metal.',
   },
   {
     id: 'breastplate',
@@ -74,7 +74,7 @@ export const armor: Equipment[] = [
     cost: { amount: 400, currency: 'gp' },
     weight: 20,
     armorClass: { base: 14, dexModifier: true, maxDexModifier: 2 },
-    description: 'A fitted metal chest piece worn with supple leather.'
+    description: 'A fitted metal chest piece worn with supple leather.',
   },
   {
     id: 'half-plate',
@@ -85,7 +85,7 @@ export const armor: Equipment[] = [
     weight: 40,
     armorClass: { base: 15, dexModifier: true, maxDexModifier: 2 },
     stealthDisadvantage: true,
-    description: 'Partial plate armor covering the most vital areas.'
+    description: 'Partial plate armor covering the most vital areas.',
   },
 
   // Heavy Armor
@@ -98,7 +98,7 @@ export const armor: Equipment[] = [
     weight: 40,
     armorClass: { base: 14, dexModifier: false },
     stealthDisadvantage: true,
-    description: 'Leather armor with heavy rings sewn into it.'
+    description: 'Leather armor with heavy rings sewn into it.',
   },
   {
     id: 'chain-mail',
@@ -110,7 +110,7 @@ export const armor: Equipment[] = [
     armorClass: { base: 16, dexModifier: false },
     strengthRequirement: 13,
     stealthDisadvantage: true,
-    description: 'A complete suit of interlocking metal rings.'
+    description: 'A complete suit of interlocking metal rings.',
   },
   {
     id: 'splint-armor',
@@ -122,7 +122,7 @@ export const armor: Equipment[] = [
     armorClass: { base: 17, dexModifier: false },
     strengthRequirement: 15,
     stealthDisadvantage: true,
-    description: 'Armor made of narrow vertical strips of metal.'
+    description: 'Armor made of narrow vertical strips of metal.',
   },
   {
     id: 'plate-armor',
@@ -134,6 +134,7 @@ export const armor: Equipment[] = [
     armorClass: { base: 18, dexModifier: false },
     strengthRequirement: 15,
     stealthDisadvantage: true,
-    description: 'The finest and most protective armor, consisting of shaped, interlocking metal plates.'
-  }
+    description:
+      'The finest and most protective armor, consisting of shaped, interlocking metal plates.',
+  },
 ];

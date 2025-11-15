@@ -1,24 +1,45 @@
 /**
  * Environmental Hazards System for D&D 5e
- * 
+ *
  * Data models for environmental hazards, their effects, and interactions
  */
 
-import { DamageType, ConditionName } from '@/types/combat';
-import { Character } from '@/types/character';
+import type { Character } from '@/types/character';
+import type { DamageType, ConditionName } from '@/types/combat';
 
 // ===========================
 // Environmental Hazard Types
 // ===========================
 
-export type EnvironmentalHazardType = 
-  | 'acid_pool' | 'caustic_fog' | 'crushing_walls' | 'electrified_surface' 
-  | 'entangling_undergrowth' | 'erupting_geyser' | 'extreme_cold' | 'extreme_heat'
-  | 'falling_rocks' | 'fiery_pit' | 'force_vortex' | 'freezing_water'
-  | 'grasping_tendrils' | 'illusory_terrain' | 'lava_flow' | 'lightning_storm'
-  | 'poisonous_spores' | 'quicksand' | 'razor_wire' | 'slippery_ice'
-  | 'spiked_pit' | 'sticky_webbing' | 'thunder_clap' | 'toxic_waste'
-  | 'vacuum' | 'volcanic_ash' | 'whirlpool' | 'zone_of_truth';
+export type EnvironmentalHazardType =
+  | 'acid_pool'
+  | 'caustic_fog'
+  | 'crushing_walls'
+  | 'electrified_surface'
+  | 'entangling_undergrowth'
+  | 'erupting_geyser'
+  | 'extreme_cold'
+  | 'extreme_heat'
+  | 'falling_rocks'
+  | 'fiery_pit'
+  | 'force_vortex'
+  | 'freezing_water'
+  | 'grasping_tendrils'
+  | 'illusory_terrain'
+  | 'lava_flow'
+  | 'lightning_storm'
+  | 'poisonous_spores'
+  | 'quicksand'
+  | 'razor_wire'
+  | 'slippery_ice'
+  | 'spiked_pit'
+  | 'sticky_webbing'
+  | 'thunder_clap'
+  | 'toxic_waste'
+  | 'vacuum'
+  | 'volcanic_ash'
+  | 'whirlpool'
+  | 'zone_of_truth';
 
 // ===========================
 // Environmental Hazard Data Model
@@ -120,18 +141,25 @@ export interface HazardSaveResult {
 export interface HazardManager {
   // Hazard detection
   detectHazard: (character: Character, hazard: EnvironmentalHazard) => HazardDetectionResult;
-  
+
   // Hazard interaction
   interactWithHazard: (character: Character, hazard: EnvironmentalHazard) => HazardSaveResult;
-  
+
   // Apply hazard effects
-  applyHazardEffects: (character: Character, hazard: EnvironmentalHazard, saveResult: HazardSaveResult) => Character;
-  
+  applyHazardEffects: (
+    character: Character,
+    hazard: EnvironmentalHazard,
+    saveResult: HazardSaveResult,
+  ) => Character;
+
   // Calculate damage
   calculateHazardDamage: (hazard: EnvironmentalHazard, saveSuccess: boolean) => number;
-  
+
   // Check if character is immune or resistant
-  checkImmunities: (character: Character, hazard: EnvironmentalHazard) => {
+  checkImmunities: (
+    character: Character,
+    hazard: EnvironmentalHazard,
+  ) => {
     immune: boolean;
     resistant: boolean;
     vulnerable: boolean;

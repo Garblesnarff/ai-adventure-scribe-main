@@ -1,19 +1,20 @@
-import React, { useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
 import { Heart, Shield, Zap } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import React, { useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { useCharacter } from '@/contexts/CharacterContext';
 import logger from '@/lib/logger';
 
 /**
  * CompactCharacterHeader - Quick view of character essentials for game sidebar
  * Extracts core stats from CharacterContext for at-a-glance access during gameplay
- * 
+ *
  * Dependencies:
  * - CharacterContext for live character data
  * - lucide-react for icons
  * - ui/card, ui/button for styling
- * 
+ *
  * Usage: Render in sidebar tabs; updates automatically on character changes
  */
 export const CompactCharacterHeader: React.FC = () => {
@@ -26,7 +27,7 @@ export const CompactCharacterHeader: React.FC = () => {
       name: character?.name,
       avatar_url: character?.avatar_url,
       image_url: character?.image_url,
-      background_image: character?.background_image
+      background_image: character?.background_image,
     });
   }, [character]);
 
@@ -46,19 +47,25 @@ export const CompactCharacterHeader: React.FC = () => {
 
   // Calculate AC with unarmored defense support
   const armorClass = (() => {
-  const dexMod = character?.abilityScores?.dexterity?.modifier ?? 0;
-  let ac = 10 + dexMod;
+    const dexMod = character?.abilityScores?.dexterity?.modifier ?? 0;
+    let ac = 10 + dexMod;
     const className = (character.class?.name ?? '').toString().toLowerCase();
     const hasUnarmoredDefense = className === 'barbarian' || className === 'monk';
-    const isWearingArmor = !!(character.equippedArmor);
-    
+    const isWearingArmor = !!character.equippedArmor;
+
     if (hasUnarmoredDefense && !isWearingArmor) {
       switch (character.class!.name.toLowerCase()) {
         case 'barbarian':
-          ac = 10 + (character?.abilityScores?.dexterity?.modifier ?? 0) + (character?.abilityScores?.constitution?.modifier ?? 0);
+          ac =
+            10 +
+            (character?.abilityScores?.dexterity?.modifier ?? 0) +
+            (character?.abilityScores?.constitution?.modifier ?? 0);
           break;
         case 'monk':
-          ac = 10 + (character?.abilityScores?.dexterity?.modifier ?? 0) + (character?.abilityScores?.wisdom?.modifier ?? 0);
+          ac =
+            10 +
+            (character?.abilityScores?.dexterity?.modifier ?? 0) +
+            (character?.abilityScores?.wisdom?.modifier ?? 0);
           break;
       }
     }
@@ -77,7 +84,8 @@ export const CompactCharacterHeader: React.FC = () => {
   };
 
   // Resolve background image
-  const backgroundImage = character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
+  const backgroundImage =
+    character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
 
   // Helper function to calculate ability modifier
   const getModifier = (score?: number) => {
@@ -87,22 +95,22 @@ export const CompactCharacterHeader: React.FC = () => {
   };
 
   return (
-    <Card 
+    <Card
       className="group overflow-hidden border-2 border-border/30 hover:border-infinite-gold/70 relative transition-all duration-500 bg-cover bg-center"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundPosition: 'center',
       }}
     >
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
-      
+
       {/* Glow effect on hover */}
       <div className="absolute inset-0 z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
         <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(168,85,247,0.3)]" />
       </div>
-      
+
       {/* Avatar */}
       {character.avatar_url && (
         <div className="relative z-10 flex justify-center pt-4">
@@ -146,27 +154,39 @@ export const CompactCharacterHeader: React.FC = () => {
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="flex flex-col items-center p-2 bg-black/30 backdrop-blur-sm rounded border border-white/10">
             <span className="font-semibold text-gray-400">STR</span>
-            <span className="text-lg font-bold text-white">{getModifier(character.abilityScores?.strength?.score)}</span>
+            <span className="text-lg font-bold text-white">
+              {getModifier(character.abilityScores?.strength?.score)}
+            </span>
           </div>
           <div className="flex flex-col items-center p-2 bg-black/30 backdrop-blur-sm rounded border border-white/10">
             <span className="font-semibold text-gray-400">DEX</span>
-            <span className="text-lg font-bold text-white">{getModifier(character.abilityScores?.dexterity?.score)}</span>
+            <span className="text-lg font-bold text-white">
+              {getModifier(character.abilityScores?.dexterity?.score)}
+            </span>
           </div>
           <div className="flex flex-col items-center p-2 bg-black/30 backdrop-blur-sm rounded border border-white/10">
             <span className="font-semibold text-gray-400">CON</span>
-            <span className="text-lg font-bold text-white">{getModifier(character.abilityScores?.constitution?.score)}</span>
+            <span className="text-lg font-bold text-white">
+              {getModifier(character.abilityScores?.constitution?.score)}
+            </span>
           </div>
           <div className="flex flex-col items-center p-2 bg-black/30 backdrop-blur-sm rounded border border-white/10">
             <span className="font-semibold text-gray-400">INT</span>
-            <span className="text-lg font-bold text-white">{getModifier(character.abilityScores?.intelligence?.score)}</span>
+            <span className="text-lg font-bold text-white">
+              {getModifier(character.abilityScores?.intelligence?.score)}
+            </span>
           </div>
           <div className="flex flex-col items-center p-2 bg-black/30 backdrop-blur-sm rounded border border-white/10">
             <span className="font-semibold text-gray-400">WIS</span>
-            <span className="text-lg font-bold text-white">{getModifier(character.abilityScores?.wisdom?.score)}</span>
+            <span className="text-lg font-bold text-white">
+              {getModifier(character.abilityScores?.wisdom?.score)}
+            </span>
           </div>
           <div className="flex flex-col items-center p-2 bg-black/30 backdrop-blur-sm rounded border border-white/10">
             <span className="font-semibold text-gray-400">CHA</span>
-            <span className="text-lg font-bold text-white">{getModifier(character.abilityScores?.charisma?.score)}</span>
+            <span className="text-lg font-bold text-white">
+              {getModifier(character.abilityScores?.charisma?.score)}
+            </span>
           </div>
         </div>
 

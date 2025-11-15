@@ -22,9 +22,9 @@ export class CharacterInteractionGenerator {
   }
 
   async generateInteractions(
-    worldId: string, 
+    worldId: string,
     character: Character,
-    conversationState?: ConversationState
+    conversationState?: ConversationState,
   ) {
     // If we're in an active conversation, generate contextual dialogue
     if (conversationState?.currentNPC) {
@@ -38,22 +38,23 @@ export class CharacterInteractionGenerator {
   private async generateActiveConversation(
     worldId: string,
     character: Character,
-    conversationState: ConversationState
+    conversationState: ConversationState,
   ) {
     const npcData = await this.npcDataService.fetchNPCData(worldId, conversationState.currentNPC);
-    const lastPlayerMessage = conversationState.dialogueHistory[conversationState.dialogueHistory.length - 1];
-    
+    const lastPlayerMessage =
+      conversationState.dialogueHistory[conversationState.dialogueHistory.length - 1];
+
     const dialogue = this.dialogueGenerator.generateContextualDialogue(
       lastPlayerMessage?.text || '',
       npcData?.personality || 'neutral',
       character,
-      conversationState.dialogueHistory
+      conversationState.dialogueHistory,
     );
 
     return {
       activeNPCs: [conversationState.currentNPC],
       reactions: this.reactionGenerator.generateNPCReactions(character, npcData?.personality),
-      dialogue
+      dialogue,
     };
   }
 
@@ -63,9 +64,9 @@ export class CharacterInteractionGenerator {
     const dialogue = this.dialogueGenerator.generateInitialDialogue(character);
 
     return {
-      activeNPCs: npcs?.map(npc => npc.name) || [],
+      activeNPCs: npcs?.map((npc) => npc.name) || [],
       reactions,
-      dialogue
+      dialogue,
     };
   }
 }

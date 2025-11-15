@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { ChatMessage, MessageContext } from '@/types/game';
-import logger from '@/lib/logger';
 import { useState, useCallback, useEffect } from 'react';
+
+import type { ChatMessage, MessageContext } from '@/types/game';
+
+import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
 
 const PAGE_SIZE = 50;
 
@@ -35,7 +37,8 @@ export const useMessages = (sessionId: string | null) => {
       // Sequence numbers ensure proper ordering even with concurrent multi-tab inserts
       const { data, error, count } = await supabase
         .from('dialogue_history')
-        .select(`
+        .select(
+          `
           *,
           game_sessions!inner(
             id,
@@ -46,7 +49,9 @@ export const useMessages = (sessionId: string | null) => {
               avatar_url
             )
           )
-        `, { count: 'exact' })
+        `,
+          { count: 'exact' },
+        )
         .eq('session_id', sessionId)
         .order('sequence_number', { ascending: false })
         .range(start, end);
@@ -56,7 +61,7 @@ export const useMessages = (sessionId: string | null) => {
         return { messages: [], hasMore: false };
       }
 
-      const messages = (data || []).map(msg => {
+      const messages = (data || []).map((msg) => {
         // Extract character data from the nested structure
         const characterData = (msg.game_sessions as any)?.characters;
 
@@ -67,8 +72,10 @@ export const useMessages = (sessionId: string | null) => {
           timestamp: msg.timestamp,
           context: msg.context as MessageContext,
           images: Array.isArray((msg as any).images) ? (msg as any).images : undefined,
-          characterName: msg.speaker_type === 'player' && characterData ? characterData.name : undefined,
-          characterAvatar: msg.speaker_type === 'player' && characterData ? characterData.avatar_url : undefined,
+          characterName:
+            msg.speaker_type === 'player' && characterData ? characterData.name : undefined,
+          characterAvatar:
+            msg.speaker_type === 'player' && characterData ? characterData.avatar_url : undefined,
         };
       });
 
@@ -80,7 +87,9 @@ export const useMessages = (sessionId: string | null) => {
       const loadedCount = (page + 1) * PAGE_SIZE;
       const moreAvailable = loadedCount < totalMessages;
 
-      logger.info(`[useMessages] Loaded ${messages.length} messages, total: ${totalMessages}, hasMore: ${moreAvailable}`);
+      logger.info(
+        `[useMessages] Loaded ${messages.length} messages, total: ${totalMessages}, hasMore: ${moreAvailable}`,
+      );
 
       return { messages: reversedMessages, hasMore: moreAvailable };
     },
@@ -91,14 +100,14 @@ export const useMessages = (sessionId: string | null) => {
   // Update allMessages whenever query data changes
   useEffect(() => {
     if (query.data?.messages) {
-      setAllMessages(prev => {
+      setAllMessages((prev) => {
         // Prepend older messages to the beginning when loading more history
         if (page === 0) {
           return query.data.messages;
         }
         // Merge new page with existing messages, avoiding duplicates
-        const existingIds = new Set(prev.map(m => m.id));
-        const newMessages = query.data.messages.filter(m => !existingIds.has(m.id));
+        const existingIds = new Set(prev.map((m) => m.id));
+        const newMessages = query.data.messages.filter((m) => !existingIds.has(m.id));
         return [...newMessages, ...prev];
       });
       setHasMore(query.data.hasMore);
@@ -109,7 +118,7 @@ export const useMessages = (sessionId: string | null) => {
   const loadMore = useCallback(() => {
     if (hasMore && !query.isFetching) {
       logger.info('[useMessages] Loading more messages, current page:', page);
-      setPage(prev => prev + 1);
+      setPage((prev) => prev + 1);
     }
   }, [hasMore, query.isFetching, page]);
 
@@ -125,21 +134,21 @@ export const useMessages = (sessionId: string | null) => {
     if (!sessionId) return;
 
     try {
-      const contextData = message.context ? {
-        location: message.context.location || null,
-        emotion: message.context.emotion || null,
-        intent: message.context.intent || null
-      } : {};
+      const contextData = message.context
+        ? {
+            location: message.context.location || null,
+            emotion: message.context.emotion || null,
+            intent: message.context.intent || null,
+          }
+        : {};
 
-      const { error } = await supabase
-        .from('dialogue_history')
-        .insert({
-          session_id: sessionId,
-          message: message.text,
-          speaker_type: message.sender,
-          context: contextData,
-          timestamp: new Date().toISOString(),
-        });
+      const { error } = await supabase.from('dialogue_history').insert({
+        session_id: sessionId,
+        message: message.text,
+        speaker_type: message.sender,
+        context: contextData,
+        timestamp: new Date().toISOString(),
+      });
 
       if (error) {
         logger.error('Error adding message:', error);

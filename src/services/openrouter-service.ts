@@ -3,14 +3,29 @@
  * Proxies to server endpoints to avoid exposing API keys.
  */
 
-import { supabase } from '@/integrations/supabase/client';
-import { modelUsageTracker } from './model-usage-tracker';
 import { llmApiClient } from './llm-api-client';
+import { modelUsageTracker } from './model-usage-tracker';
 import { logger } from '../lib/logger';
 
-interface ImageGenerationRequest { prompt: string; model?: string; referenceImage?: string; quality?: 'low' | 'medium' | 'high'; }
-interface TextGenerationRequest { prompt: string; model?: string; maxTokens?: number; temperature?: number }
-interface ModelConfig { id: string; dailyLimit?: number; isFree: boolean }
+import { supabase } from '@/integrations/supabase/client';
+
+interface ImageGenerationRequest {
+  prompt: string;
+  model?: string;
+  referenceImage?: string;
+  quality?: 'low' | 'medium' | 'high';
+}
+interface TextGenerationRequest {
+  prompt: string;
+  model?: string;
+  maxTokens?: number;
+  temperature?: number;
+}
+interface ModelConfig {
+  id: string;
+  dailyLimit?: number;
+  isFree: boolean;
+}
 
 // Upload options to support entity-scoped storage paths
 export interface UploadOptions {
@@ -27,34 +42,43 @@ export class OpenRouterService {
   ];
 
   private textModels: ModelConfig[] = [
-    { id: import.meta.env.VITE_OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free', isFree: true, dailyLimit: 1000 },
+    {
+      id: import.meta.env.VITE_OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free',
+      isFree: true,
+      dailyLimit: 1000,
+    },
     { id: 'anthropic/claude-3.5-sonnet', isFree: false },
   ];
 
-  private get models(): ModelConfig[] { return [...this.imageModels, ...this.textModels]; }
+  private get models(): ModelConfig[] {
+    return [...this.imageModels, ...this.textModels];
+  }
 
   async hasPositiveBalance(): Promise<boolean> {
     // Balance/quotas are enforced server-side now
     return true;
   }
 
-  private selectAvailableModel(hasBalance: boolean = true, modelType: 'text' | 'image' = 'image'): ModelConfig {
+  private selectAvailableModel(
+    hasBalance: boolean = true,
+    modelType: 'text' | 'image' = 'image',
+  ): ModelConfig {
     const available = modelType === 'text' ? this.textModels : this.imageModels;
-    
+
     // DEPRECATED: Removed gpt-image-1-mini prioritization
     if (hasBalance) {
-      for (const m of available.filter(m => m.isFree)) {
+      for (const m of available.filter((m) => m.isFree)) {
         if (m.dailyLimit && modelUsageTracker.canUseModel(m.id, m.dailyLimit)) {
           return m;
         }
       }
     }
-    return available.find(m => !m.isFree) || available[0];
+    return available.find((m) => !m.isFree) || available[0];
   }
 
   getUsageStats(): { [modelId: string]: { used: number; limit: number; remaining: number } } {
     const stats: Record<string, { used: number; limit: number; remaining: number }> = {};
-    for (const m of this.models.filter(m => m.isFree && m.dailyLimit)) {
+    for (const m of this.models.filter((m) => m.isFree && m.dailyLimit)) {
       stats[m.id] = modelUsageTracker.getUsageStats(m.id, m.dailyLimit!);
     }
     return stats;
@@ -70,7 +94,7 @@ export class OpenRouterService {
       referenceImage: request.referenceImage,
       quality: request.quality,
     });
-    const cfg = this.models.find(m => m.id === modelId);
+    const cfg = this.models.find((m) => m.id === modelId);
     if (cfg?.isFree && cfg.dailyLimit) {
       modelUsageTracker.recordUsage(cfg.id, cfg.dailyLimit);
     }
@@ -87,7 +111,7 @@ export class OpenRouterService {
       maxTokens: request.maxTokens,
       temperature: request.temperature,
     });
-    const cfg = this.models.find(m => m.id === modelId);
+    const cfg = this.models.find((m) => m.id === modelId);
     if (cfg?.isFree && cfg.dailyLimit) {
       modelUsageTracker.recordUsage(cfg.id, cfg.dailyLimit);
     }

@@ -1,11 +1,12 @@
+import { Filter, X, Eye, Hand, Gem, Timer, RotateCcw, Zap } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Filter, X, Eye, Hand, Gem, Timer, RotateCcw, Zap } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 export interface SpellFilters {
   schools: string[];
@@ -44,27 +45,31 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
   onChange,
   availableSchools,
   isOpen = true,
-  className = ''
+  className = '',
 }) => {
   const schoolColors: Record<string, string> = {
-    'Abjuration': 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200',
-    'Conjuration': 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200',
-    'Divination': 'bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200',
-    'Enchantment': 'bg-pink-100 text-pink-800 hover:bg-pink-200 dark:bg-pink-900 dark:text-pink-200',
-    'Evocation': 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200',
-    'Illusion': 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200',
-    'Necromancy': 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-200',
-    'Transmutation': 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200'
+    Abjuration: 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200',
+    Conjuration:
+      'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200',
+    Divination:
+      'bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200',
+    Enchantment: 'bg-pink-100 text-pink-800 hover:bg-pink-200 dark:bg-pink-900 dark:text-pink-200',
+    Evocation: 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200',
+    Illusion:
+      'bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200',
+    Necromancy: 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-200',
+    Transmutation:
+      'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200',
   };
 
   const toggleSchool = (school: string) => {
     const newSchools = filters.schools.includes(school)
-      ? filters.schools.filter(s => s !== school)
+      ? filters.schools.filter((s) => s !== school)
       : [...filters.schools, school];
 
     onChange({
       ...filters,
-      schools: newSchools
+      schools: newSchools,
     });
   };
 
@@ -73,8 +78,8 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
       ...filters,
       components: {
         ...filters.components,
-        [component]: !filters.components[component]
-      }
+        [component]: !filters.components[component],
+      },
     });
   };
 
@@ -83,8 +88,8 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
       ...filters,
       properties: {
         ...filters.properties,
-        [property]: !filters.properties[property]
-      }
+        [property]: !filters.properties[property],
+      },
     });
   };
 
@@ -94,13 +99,13 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
       components: {
         verbal: false,
         somatic: false,
-        material: false
+        material: false,
       },
       properties: {
         concentration: false,
         ritual: false,
-        damage: false
-      }
+        damage: false,
+      },
     });
   };
 
@@ -122,12 +127,7 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
             Filters
           </CardTitle>
           {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="text-xs h-7"
-            >
+            <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-7">
               <X className="w-3 h-3 mr-1" />
               Clear All
             </Button>
@@ -146,7 +146,7 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
               return (
                 <Badge
                   key={school}
-                  variant={isSelected ? "default" : "outline"}
+                  variant={isSelected ? 'default' : 'outline'}
                   className={`cursor-pointer transition-colors ${
                     isSelected ? colorClass : 'hover:bg-muted'
                   }`}
@@ -213,7 +213,10 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
                 checked={filters.properties.concentration}
                 onCheckedChange={() => toggleProperty('concentration')}
               />
-              <Label htmlFor="concentration" className="flex items-center gap-2 text-sm cursor-pointer">
+              <Label
+                htmlFor="concentration"
+                className="flex items-center gap-2 text-sm cursor-pointer"
+              >
                 <Timer className="w-4 h-4 text-orange-500" />
                 Concentration
               </Label>
@@ -261,31 +264,35 @@ const SpellFilterPanel: React.FC<SpellFilterPanelProps> = ({
                     <X className="w-3 h-3 ml-1" />
                   </Badge>
                 ))}
-                {Object.entries(filters.components).map(([component, active]) =>
-                  active && (
-                    <Badge
-                      key={component}
-                      variant="secondary"
-                      className="text-xs cursor-pointer"
-                      onClick={() => toggleComponent(component as keyof SpellFilters['components'])}
-                    >
-                      {component.charAt(0).toUpperCase()}
-                      <X className="w-3 h-3 ml-1" />
-                    </Badge>
-                  )
+                {Object.entries(filters.components).map(
+                  ([component, active]) =>
+                    active && (
+                      <Badge
+                        key={component}
+                        variant="secondary"
+                        className="text-xs cursor-pointer"
+                        onClick={() =>
+                          toggleComponent(component as keyof SpellFilters['components'])
+                        }
+                      >
+                        {component.charAt(0).toUpperCase()}
+                        <X className="w-3 h-3 ml-1" />
+                      </Badge>
+                    ),
                 )}
-                {Object.entries(filters.properties).map(([property, active]) =>
-                  active && (
-                    <Badge
-                      key={property}
-                      variant="secondary"
-                      className="text-xs cursor-pointer"
-                      onClick={() => toggleProperty(property as keyof SpellFilters['properties'])}
-                    >
-                      {property}
-                      <X className="w-3 h-3 ml-1" />
-                    </Badge>
-                  )
+                {Object.entries(filters.properties).map(
+                  ([property, active]) =>
+                    active && (
+                      <Badge
+                        key={property}
+                        variant="secondary"
+                        className="text-xs cursor-pointer"
+                        onClick={() => toggleProperty(property as keyof SpellFilters['properties'])}
+                      >
+                        {property}
+                        <X className="w-3 h-3 ml-1" />
+                      </Badge>
+                    ),
                 )}
               </div>
             </div>

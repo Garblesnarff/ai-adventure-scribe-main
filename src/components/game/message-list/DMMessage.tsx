@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
-import { ChatMessage } from '@/types/game';
-import { MessageVoicePlayer } from './MessageVoicePlayer';
-import { MessageImageSection } from './MessageImageSection';
-import { removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
+
 import { formatNarrative } from './formatNarrative';
-import { cn } from '@/lib/utils';
+import { MessageImageSection } from './MessageImageSection';
+import { MessageVoicePlayer } from './MessageVoicePlayer';
+
+import type { ChatMessage } from '@/types/game';
+
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
 
 interface DMMessageProps {
   message: ChatMessage;
@@ -45,14 +48,17 @@ export const DMMessage: React.FC<DMMessageProps> = ({
   let cleanContent = removeRollRequestsFromMessage(displayContent);
   cleanContent = cleanContent.replace(/^[\t ]*VISUAL\s+PROMPT:.*$/gim, '').trim();
 
-  const { content, charCount, paragraphCount } = useMemo(() => formatNarrative(cleanContent), [cleanContent]);
+  const { content, charCount, paragraphCount } = useMemo(
+    () => formatNarrative(cleanContent),
+    [cleanContent],
+  );
   const exceedsClampThreshold = charCount > 800 || paragraphCount > 4;
   const shouldClamp = exceedsClampThreshold && !isExpanded;
 
   const narrativeClass = cn(
     'dm-narrative max-w-[72ch] lg:max-w-[78ch] text-[15px] md:text-base leading-7 text-white/90 tracking-normal hyphens-auto',
     'selection:bg-infinite-purple/20 selection:text-white break-words',
-    shouldClamp && 'max-h-[22rem] overflow-hidden clamp-fade'
+    shouldClamp && 'max-h-[22rem] overflow-hidden clamp-fade',
   );
 
   const hasContextMetadata = Boolean(message.context?.emotion || message.context?.location);
@@ -66,7 +72,7 @@ export const DMMessage: React.FC<DMMessageProps> = ({
         aria-label="Dungeon Master message"
         className={cn(
           'message-bubble dm-bubble relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#2d1155]/90 via-[#251147]/88 to-[#0b2336]/85',
-          'px-5 py-4 md:px-6 md:py-5 shadow-lg md:shadow-xl transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-infinite-purple/20'
+          'px-5 py-4 md:px-6 md:py-5 shadow-lg md:shadow-xl transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-infinite-purple/20',
         )}
       >
         <div className={narrativeClass}>{content}</div>
@@ -130,9 +136,7 @@ export const DMMessage: React.FC<DMMessageProps> = ({
         )}
 
         {isLastInGroup && timestamp && (
-          <div className="text-[11px] uppercase tracking-[0.35em] text-white/60">
-            {timestamp}
-          </div>
+          <div className="text-[11px] uppercase tracking-[0.35em] text-white/60">{timestamp}</div>
         )}
       </div>
     </div>

@@ -1,21 +1,20 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { useCharacterSave } from '@/hooks/use-character-save';
-import { useToast } from '@/components/ui/use-toast';
-import { useAutoScroll } from '@/hooks/use-auto-scroll';
-import StepNavigation from '../shared/StepNavigation';
-import ProgressIndicator from '../shared/ProgressIndicator';
-import CharacterPreview from '../shared/CharacterPreview';
-import { WizardStep } from './types';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import { wizardSteps } from './constants';
-import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
+import { WizardStep } from './types';
+import CharacterPreview from '../shared/CharacterPreview';
+import ProgressIndicator from '../shared/ProgressIndicator';
+import StepNavigation from '../shared/StepNavigation';
+
+import { Card } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useCharacterSave } from '@/hooks/use-character-save';
 import logger from '@/lib/logger';
 import { analytics } from '@/services/analytics';
-import { useSearchParams } from 'react-router-dom';
-import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
-import { supabase } from '@/integrations/supabase/client';
+import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
 
 /**
  * Main content component for the character creation wizard
@@ -61,7 +60,7 @@ const WizardContent: React.FC = () => {
    */
   const validateCurrentStep = (stepIndex: number) => {
     if (!state.character) {
-      return { isValid: false, message: "No character data found" };
+      return { isValid: false, message: 'No character data found' };
     }
 
     const stepLabel = filteredSteps[stepIndex]?.label || '';
@@ -71,44 +70,44 @@ const WizardContent: React.FC = () => {
       // Basic Info - Require name
       case 'Basic Info':
         if (!character.name?.trim()) {
-          return { isValid: false, message: "Please enter a character name before proceeding" };
+          return { isValid: false, message: 'Please enter a character name before proceeding' };
         }
         break;
 
       // Race Selection - Require race
       case 'Race':
         if (!character.race) {
-          return { isValid: false, message: "Please select a race for your character" };
+          return { isValid: false, message: 'Please select a race for your character' };
         }
         // If race has subraces, ensure one is selected
         if (character.race.subraces && character.race.subraces.length > 0 && !character.subrace) {
-          return { isValid: false, message: "Please select a subrace for your character" };
+          return { isValid: false, message: 'Please select a subrace for your character' };
         }
         break;
 
       // Subrace Selection - Validate if applicable (auto-skipped if not needed)
       case 'Subrace':
         if (character.race?.subraces?.length && !character.subrace) {
-          return { isValid: false, message: "Please select a subrace for your character" };
+          return { isValid: false, message: 'Please select a subrace for your character' };
         }
         break;
 
       // Class Selection - Require class
       case 'Class':
         if (!character.class) {
-          return { isValid: false, message: "Please select a class for your character" };
+          return { isValid: false, message: 'Please select a class for your character' };
         }
         break;
 
       // Class Features - Validate feature choices if applicable
       case 'Class Features': {
-        const classFeatures = character.class?.classFeatures?.filter(f => f.choices) || [];
+        const classFeatures = character.class?.classFeatures?.filter((f) => f.choices) || [];
         if (classFeatures.length > 0) {
-          const hasAllFeatures = classFeatures.every(feature =>
-            character.classFeatures?.[feature.id]
+          const hasAllFeatures = classFeatures.every(
+            (feature) => character.classFeatures?.[feature.id],
           );
           if (!hasAllFeatures) {
-            return { isValid: false, message: "Please complete your class feature selections" };
+            return { isValid: false, message: 'Please complete your class feature selections' };
           }
         }
         break;
@@ -117,15 +116,23 @@ const WizardContent: React.FC = () => {
       // Ability Scores - Ensure all scores are set
       case 'Ability Scores': {
         if (!character.abilityScores) {
-          return { isValid: false, message: "Please set your ability scores" };
+          return { isValid: false, message: 'Please set your ability scores' };
         }
         // Check if any ability score is missing or invalid
-        const abilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-        const hasAllScores = abilities.every(ability =>
-          character.abilityScores?.[ability as keyof typeof character.abilityScores]?.score >= 8
+        const abilities = [
+          'strength',
+          'dexterity',
+          'constitution',
+          'intelligence',
+          'wisdom',
+          'charisma',
+        ];
+        const hasAllScores = abilities.every(
+          (ability) =>
+            character.abilityScores?.[ability as keyof typeof character.abilityScores]?.score >= 8,
         );
         if (!hasAllScores) {
-          return { isValid: false, message: "Please complete your ability score selection" };
+          return { isValid: false, message: 'Please complete your ability score selection' };
         }
         break;
       }
@@ -133,23 +140,27 @@ const WizardContent: React.FC = () => {
       // Background Selection - Require background
       case 'Background':
         if (!character.background) {
-          return { isValid: false, message: "Please select a background for your character" };
+          return { isValid: false, message: 'Please select a background for your character' };
         }
         break;
 
       // Proficiencies - Validate skill and language selections
       case 'Proficiencies & Languages':
         if (!character.skillProficiencies?.length) {
-          return { isValid: false, message: "Please complete your skill proficiency selections" };
+          return { isValid: false, message: 'Please complete your skill proficiency selections' };
         }
         if (!character.languages?.length) {
-          return { isValid: false, message: "Please complete your language selections" };
+          return { isValid: false, message: 'Please complete your language selections' };
         }
         break;
 
       // Spells - Validate spell selection for spellcasters
       case 'Spells': {
-        logger.info('🔮 Validating Spells step for character:', character.name, character.class?.name);
+        logger.info(
+          '🔮 Validating Spells step for character:',
+          character.name,
+          character.class?.name,
+        );
 
         if (character.class?.spellcasting) {
           logger.debug('📚 Character is a spellcaster, checking spell requirements...');
@@ -163,7 +174,10 @@ const WizardContent: React.FC = () => {
 
             // Check cantrips if class learns them (relaxed validation)
             if (spellcastingInfo.cantripsKnown > 0) {
-              const expectedCantrips = spellcastingInfo.cantripsKnown + racialSpells.cantrips.length + racialSpells.bonusCantrips;
+              const expectedCantrips =
+                spellcastingInfo.cantripsKnown +
+                racialSpells.cantrips.length +
+                racialSpells.bonusCantrips;
               const cantripCount = character.cantrips?.length || 0;
               logger.debug(`✨ Cantrips - Expected: ${expectedCantrips}, Current: ${cantripCount}`);
               logger.debug('✨ Current cantrips:', character.cantrips);
@@ -179,7 +193,9 @@ const WizardContent: React.FC = () => {
             // Check spells if class learns them (relaxed validation)
             if (spellcastingInfo.spellsKnown && spellcastingInfo.spellsKnown > 0) {
               const spellCount = character.knownSpells?.length || 0;
-              logger.debug(`🪄 Spells - Expected: ${spellcastingInfo.spellsKnown}, Current: ${spellCount}`);
+              logger.debug(
+                `🪄 Spells - Expected: ${spellcastingInfo.spellsKnown}, Current: ${spellCount}`,
+              );
               logger.debug('🪄 Current spells:', character.knownSpells);
 
               // Relaxed validation: Allow proceeding with partial spell selection
@@ -209,12 +225,15 @@ const WizardContent: React.FC = () => {
           // Check if spell preparation is required and completed
           const needsPreparation = ['cleric', 'druid', 'paladin', 'wizard'].includes(classId);
           if (needsPreparation) {
-            const maxPreparedSpells = Math.max(1, level + (character.abilityScores?.[spellcasting.ability]?.modifier || 0));
+            const maxPreparedSpells = Math.max(
+              1,
+              level + (character.abilityScores?.[spellcasting.ability]?.modifier || 0),
+            );
             const preparedCount = character.preparedSpells?.length || 0;
             if (preparedCount < maxPreparedSpells) {
               return {
                 isValid: false,
-                message: `Please prepare ${maxPreparedSpells} spells for your ${character.class?.name}`
+                message: `Please prepare ${maxPreparedSpells} spells for your ${character.class?.name}`,
               };
             }
           }
@@ -227,7 +246,7 @@ const WizardContent: React.FC = () => {
             if (metamagicCount < maxMetamagicOptions) {
               return {
                 isValid: false,
-                message: `Please select ${maxMetamagicOptions} metamagic option${maxMetamagicOptions > 1 ? 's' : ''} for your ${character.class?.name}`
+                message: `Please select ${maxMetamagicOptions} metamagic option${maxMetamagicOptions > 1 ? 's' : ''} for your ${character.class?.name}`,
               };
             }
           }
@@ -235,15 +254,19 @@ const WizardContent: React.FC = () => {
           // Check if pact magic spells are required and completed (Warlock)
           const needsPactMagic = classId === 'warlock';
           if (needsPactMagic) {
-            const pactProgression = level === 1 ? { spellsKnown: 2 } :
-                                   level === 2 ? { spellsKnown: 3 } :
-                                   level === 3 ? { spellsKnown: 4 } :
-                                   { spellsKnown: Math.min(15, 2 + level) };
+            const pactProgression =
+              level === 1
+                ? { spellsKnown: 2 }
+                : level === 2
+                  ? { spellsKnown: 3 }
+                  : level === 3
+                    ? { spellsKnown: 4 }
+                    : { spellsKnown: Math.min(15, 2 + level) };
             const pactSpellCount = character.pactMagicSpells?.length || 0;
             if (pactSpellCount < pactProgression.spellsKnown) {
               return {
                 isValid: false,
-                message: `Please select ${pactProgression.spellsKnown} pact magic spell${pactProgression.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`
+                message: `Please select ${pactProgression.spellsKnown} pact magic spell${pactProgression.spellsKnown > 1 ? 's' : ''} for your ${character.class?.name}`,
               };
             }
           }
@@ -256,7 +279,7 @@ const WizardContent: React.FC = () => {
         break;
     }
 
-    return { isValid: true, message: "" };
+    return { isValid: true, message: '' };
   };
 
   /**
@@ -266,10 +289,26 @@ const WizardContent: React.FC = () => {
    */
   const validateCharacter = () => {
     if (!state.character) return false;
-    const { race, class: characterClass, abilityScores, background, skillProficiencies, languages, name } = state.character;
+    const {
+      race,
+      class: characterClass,
+      abilityScores,
+      background,
+      skillProficiencies,
+      languages,
+      name,
+    } = state.character;
 
     // Basic required fields including name
-    const hasBasicFields = !!(name?.trim() && race && characterClass && abilityScores && background && skillProficiencies !== undefined && languages !== undefined);
+    const hasBasicFields = !!(
+      name?.trim() &&
+      race &&
+      characterClass &&
+      abilityScores &&
+      background &&
+      skillProficiencies !== undefined &&
+      languages !== undefined
+    );
 
     // If race has subraces, subrace must be selected
     const hasValidSubrace = !race?.subraces?.length || !!state.character.subrace;
@@ -281,22 +320,27 @@ const WizardContent: React.FC = () => {
       const spellcastingInfo = getSpellcastingInfo(characterClass, state.character?.level || 1);
       if (spellcastingInfo) {
         const racialSpells = getRacialSpells(race?.name || '', state.character?.subrace);
-        const expectedCantrips = spellcastingInfo.cantripsKnown + racialSpells.cantrips.length + racialSpells.bonusCantrips;
+        const expectedCantrips =
+          spellcastingInfo.cantripsKnown +
+          racialSpells.cantrips.length +
+          racialSpells.bonusCantrips;
         const expectedSpells = spellcastingInfo.spellsKnown || 0;
 
-        const hasEnoughCantrips = expectedCantrips === 0 || (state.character.cantrips?.length || 0) >= expectedCantrips;
-        const hasEnoughSpells = expectedSpells === 0 || (state.character.knownSpells?.length || 0) >= expectedSpells;
+        const hasEnoughCantrips =
+          expectedCantrips === 0 || (state.character.cantrips?.length || 0) >= expectedCantrips;
+        const hasEnoughSpells =
+          expectedSpells === 0 || (state.character.knownSpells?.length || 0) >= expectedSpells;
 
         hasValidSpells = hasEnoughCantrips && hasEnoughSpells;
       }
     }
 
     // If class has features with choices, they must be selected
-    const classFeatures = characterClass?.classFeatures?.filter(f => f.choices) || [];
-    const hasValidClassFeatures = classFeatures.length === 0 || (
-      state.character.classFeatures &&
-      classFeatures.every(feature => state.character?.classFeatures?.[feature.id])
-    );
+    const classFeatures = characterClass?.classFeatures?.filter((f) => f.choices) || [];
+    const hasValidClassFeatures =
+      classFeatures.length === 0 ||
+      (state.character.classFeatures &&
+        classFeatures.every((feature) => state.character?.classFeatures?.[feature.id]));
 
     return hasBasicFields && hasValidSubrace && hasValidSpells && hasValidClassFeatures;
   };
@@ -322,16 +366,16 @@ const WizardContent: React.FC = () => {
           const isSpellStep = filteredSteps[currentStep]?.label === 'Spells';
           if (isSpellStep) {
             toast({
-              title: "Spell Selection Incomplete",
-              description: validation.message + " You can continue and complete this later.",
-              variant: "default",
+              title: 'Spell Selection Incomplete',
+              description: validation.message + ' You can continue and complete this later.',
+              variant: 'default',
             });
             // Allow proceeding despite incomplete spells
           } else {
             toast({
-              title: "Please Complete This Step",
+              title: 'Please Complete This Step',
               description: validation.message,
-              variant: "destructive",
+              variant: 'destructive',
             });
             return; // Don't proceed if validation fails for non-spell steps
           }
@@ -345,11 +389,16 @@ const WizardContent: React.FC = () => {
         if (nextStepIndex < filteredSteps.length && filteredSteps[nextStepIndex]) {
           setCurrentStep(nextStepIndex);
         } else {
-          logger.error('Next step does not exist in filtered steps:', nextStepIndex, filteredSteps.length);
+          logger.error(
+            'Next step does not exist in filtered steps:',
+            nextStepIndex,
+            filteredSteps.length,
+          );
           toast({
-            title: "Navigation Error",
-            description: "Unable to navigate to the next step. The wizard may need to be restarted.",
-            variant: "destructive",
+            title: 'Navigation Error',
+            description:
+              'Unable to navigate to the next step. The wizard may need to be restarted.',
+            variant: 'destructive',
           });
           // Attempt recovery by resetting to the last valid step
           const lastValidStep = Math.max(0, filteredSteps.length - 1);
@@ -364,9 +413,10 @@ const WizardContent: React.FC = () => {
         if (!state.character) {
           logger.error('No character data to save');
           toast({
-            title: "No Character Data",
-            description: "Character data appears to be missing. Please restart the character creation process.",
-            variant: "destructive",
+            title: 'No Character Data',
+            description:
+              'Character data appears to be missing. Please restart the character creation process.',
+            variant: 'destructive',
           });
           return;
         }
@@ -387,16 +437,17 @@ const WizardContent: React.FC = () => {
 
           if (criticalMissing.length > 0) {
             toast({
-              title: "Critical Fields Missing",
+              title: 'Critical Fields Missing',
               description: `Please complete these required fields: ${criticalMissing.join(', ')}. Character cannot be saved without them.`,
-              variant: "destructive",
+              variant: 'destructive',
             });
             return;
           } else {
             toast({
-              title: "Character Validation Issues",
-              description: "Some optional fields are incomplete. You can still save and edit later, or complete the missing sections.",
-              variant: "default",
+              title: 'Character Validation Issues',
+              description:
+                'Some optional fields are incomplete. You can still save and edit later, or complete the missing sections.',
+              variant: 'default',
             });
           }
         }
@@ -421,21 +472,13 @@ const WizardContent: React.FC = () => {
                 campaignGenre: undefined,
               });
               analytics.characterCreationCompleted({ campaignId, artStyle });
-
-              // Track character creation flow for legacy deprecation metrics
-              const isNewFlow = isCampaignCharacterFlowEnabled() && !!campaignId;
-              const flow = isNewFlow ? 'new' : 'legacy';
-              const { data: { user } } = await supabase.auth.getUser();
-              analytics.trackCharacterCreationFlow(flow, {
-                campaignId,
-                userId: user?.id,
-              });
             } catch (e) {
               // ignore analytics errors
             }
             toast({
-              title: "Success!",
-              description: "Character created successfully! Background image generation may continue in the background.",
+              title: 'Success!',
+              description:
+                'Character created successfully! Background image generation may continue in the background.',
             });
             const targetCampaignId = savedCharacter.campaign_id || state.character?.campaign_id;
             if (targetCampaignId) {
@@ -446,9 +489,10 @@ const WizardContent: React.FC = () => {
           } else {
             logger.error('Save succeeded but no ID returned');
             toast({
-              title: "Save Warning",
-              description: "Character data may be incomplete. Please review your characters list and edit if needed.",
-              variant: "destructive",
+              title: 'Save Warning',
+              description:
+                'Character data may be incomplete. Please review your characters list and edit if needed.',
+              variant: 'destructive',
             });
           }
         } catch (error) {
@@ -456,16 +500,17 @@ const WizardContent: React.FC = () => {
 
           // Enhanced error message with recovery suggestions
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          const isNetworkError = errorMessage.toLowerCase().includes('network') ||
-                                errorMessage.toLowerCase().includes('fetch') ||
-                                errorMessage.toLowerCase().includes('connection');
+          const isNetworkError =
+            errorMessage.toLowerCase().includes('network') ||
+            errorMessage.toLowerCase().includes('fetch') ||
+            errorMessage.toLowerCase().includes('connection');
 
           toast({
-            title: "Save Error",
+            title: 'Save Error',
             description: isNetworkError
               ? `Network connection issue: ${errorMessage}. Please check your internet connection and try again.`
               : `Failed to save character: ${errorMessage}. Please try again or contact support if the issue persists.`,
-            variant: "destructive",
+            variant: 'destructive',
           });
         }
       }
@@ -473,9 +518,10 @@ const WizardContent: React.FC = () => {
       // Catch-all error handler for any unexpected errors in navigation
       logger.error('Unexpected error in handleNext:', unexpectedError);
       toast({
-        title: "Unexpected Error",
-        description: "An unexpected error occurred during navigation. Please refresh the page and try again.",
-        variant: "destructive",
+        title: 'Unexpected Error',
+        description:
+          'An unexpected error occurred during navigation. Please refresh the page and try again.',
+        variant: 'destructive',
       });
     }
   };

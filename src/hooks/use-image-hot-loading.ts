@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+
 import { supabase } from '@/integrations/supabase/client';
-import { subscriptionManager } from '@/services/supabase-subscription-manager';
 import logger from '@/lib/logger';
+import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
 interface UseImageHotLoadingOptions {
   tableName: 'campaigns' | 'characters';
@@ -25,25 +26,25 @@ export const useImageHotLoading = ({
   tableName,
   recordId,
   imageField = 'background_image',
-  fallbackImage = '/card-placeholder.svg'
+  fallbackImage = '/card-placeholder.svg',
 }: UseImageHotLoadingOptions): ImageHotLoadingState => {
   const [state, setState] = useState<ImageHotLoadingState>({
     imageUrl: fallbackImage,
     isLoading: true,
     hasImage: false,
-    error: null
+    error: null,
   });
 
   const subscriptionIdRef = useRef<string | null>(null);
 
   // Callback for realtime updates
   const handleImageUpdate = (newImageUrl: string | null) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       imageUrl: newImageUrl || fallbackImage,
       hasImage: !!newImageUrl,
       isLoading: false,
-      error: null
+      error: null,
     }));
   };
 
@@ -53,7 +54,7 @@ export const useImageHotLoading = ({
     // Fetch initial image state
     const fetchInitialImage = async () => {
       try {
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
         const { data, error } = await supabase
           .from(tableName)
@@ -64,10 +65,10 @@ export const useImageHotLoading = ({
         if (error) {
           logger.error(`Error fetching initial ${imageField}:`, error);
           if (isMounted) {
-            setState(prev => ({
+            setState((prev) => ({
               ...prev,
               error: error.message,
-              isLoading: false
+              isLoading: false,
             }));
           }
           return;
@@ -75,21 +76,21 @@ export const useImageHotLoading = ({
 
         const imageUrl = data?.[imageField];
         if (isMounted) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             imageUrl: imageUrl || fallbackImage,
             hasImage: !!imageUrl,
             isLoading: false,
-            error: null
+            error: null,
           }));
         }
       } catch (err) {
         logger.error('Failed to fetch initial image:', err);
         if (isMounted) {
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             error: 'Failed to load image',
-            isLoading: false
+            isLoading: false,
           }));
         }
       }
@@ -100,7 +101,7 @@ export const useImageHotLoading = ({
       tableName,
       recordId,
       imageField,
-      handleImageUpdate
+      handleImageUpdate,
     );
     subscriptionIdRef.current = subscriptionId;
 
@@ -128,7 +129,7 @@ export const useCampaignImageHotLoading = (campaignId: string) => {
     tableName: 'campaigns',
     recordId: campaignId,
     imageField: 'background_image',
-    fallbackImage: '/campaign-background-placeholder.png'
+    fallbackImage: '/campaign-background-placeholder.png',
   });
 };
 
@@ -137,6 +138,6 @@ export const useCharacterImageHotLoading = (characterId: string) => {
     tableName: 'characters',
     recordId: characterId,
     imageField: 'background_image',
-    fallbackImage: '/character-background-placeholder.png'
+    fallbackImage: '/character-background-placeholder.png',
   });
 };

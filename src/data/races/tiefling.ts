@@ -3,8 +3,12 @@ import type { CharacterRace } from '@/types/character';
 import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
 
 const ranges = getHeightWeightRange('tiefling');
-const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [59, 73];
-const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [114, 238];
+const heightRange: [number, number] = ranges
+  ? ([...ranges.heightRange] as [number, number])
+  : [59, 73];
+const weightRange: [number, number] = ranges
+  ? ([...ranges.weightRange] as [number, number])
+  : [114, 238];
 
 export const tiefling: CharacterRace = {
   id: 'tiefling',
@@ -25,7 +29,7 @@ export const tiefling: CharacterRace = {
       abilityScoreIncrease: {},
       traits: ['Thaumaturgy'],
       cantrips: ['thaumaturgy'],
-      spells: ['hellish-rebuke']
-    }
-  ]
+      spells: ['hellish-rebuke'],
+    },
+  ],
 };

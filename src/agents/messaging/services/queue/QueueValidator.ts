@@ -1,23 +1,22 @@
 /**
  * Queue Validator
- * 
+ *
  * This file defines the QueueValidator class, which provides static methods
  * for validating individual messages and the integrity and order of the
  * message queue itself.
- * 
+ *
  * Main Class:
  * - QueueValidator: Contains static validation methods for the message queue.
- * 
+ *
  * Key Dependencies:
  * - QueuedMessage type from `../../types`.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
 // Project Types
 import { QueuedMessage } from '../../types';
 import { logger } from '../../../../lib/logger';
-
 
 export class QueueValidator {
   public static validateMessage(message: QueuedMessage): boolean {
@@ -34,7 +33,7 @@ export class QueueValidator {
 
   public static validateQueueIntegrity(messages: QueuedMessage[]): boolean {
     const seenIds = new Set<string>();
-    
+
     for (const message of messages) {
       if (!this.validateMessage(message)) {
         logger.error('[QueueValidator] Invalid message found:', message.id);
@@ -60,7 +59,7 @@ export class QueueValidator {
       if (prevMsg.priority < currMsg.priority) {
         logger.warn('[QueueValidator] Queue order violation:', {
           prev: prevMsg.id,
-          curr: currMsg.id
+          curr: currMsg.id,
         });
         return false;
       }

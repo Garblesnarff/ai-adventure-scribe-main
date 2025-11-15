@@ -1,20 +1,17 @@
 /**
  * Critical Hit Indicator Component
- * 
+ *
  * Displays information about critical hits including additional damage
  * and special effects from class features.
  */
 
+import { ShieldAlert, Zap, Sword, Sparkles } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { DiceRoll } from '@/types/combat';
+
 import { Badge } from '@/components/ui/badge';
-import { 
-  ShieldAlert, 
-  Zap, 
-  Sword,
-  Sparkles
-} from 'lucide-react';
-import { DiceRoll } from '@/types/combat';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // ===========================
 // Component Props
@@ -35,7 +32,7 @@ const CriticalHitIndicator: React.FC<CriticalHitIndicatorProps> = ({
   isCritical,
   criticalEffects,
   additionalDamage,
-  description
+  description,
 }) => {
   if (!isCritical) {
     return null;
@@ -51,10 +48,8 @@ const CriticalHitIndicator: React.FC<CriticalHitIndicatorProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Description */}
-        <p className="text-yellow-800 font-medium">
-          {description}
-        </p>
-        
+        <p className="text-yellow-800 font-medium">{description}</p>
+
         {/* Additional Damage */}
         {additionalDamage && (
           <div className="p-3 bg-yellow-100 rounded-lg">
@@ -67,7 +62,9 @@ const CriticalHitIndicator: React.FC<CriticalHitIndicatorProps> = ({
                 {additionalDamage.keptResults.join(' + ')}
                 {additionalDamage.modifier !== 0 && (
                   <span>
-                    {' '}{additionalDamage.modifier > 0 ? '+' : ''}{additionalDamage.modifier}
+                    {' '}
+                    {additionalDamage.modifier > 0 ? '+' : ''}
+                    {additionalDamage.modifier}
                   </span>
                 )}
               </span>
@@ -77,7 +74,7 @@ const CriticalHitIndicator: React.FC<CriticalHitIndicatorProps> = ({
             </div>
           </div>
         )}
-        
+
         {/* Special Effects */}
         {criticalEffects.length > 0 && (
           <div>
@@ -87,10 +84,7 @@ const CriticalHitIndicator: React.FC<CriticalHitIndicatorProps> = ({
             </h4>
             <div className="space-y-2">
               {criticalEffects.map((effect, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center gap-2 p-2 bg-yellow-100 rounded"
-                >
+                <div key={index} className="flex items-center gap-2 p-2 bg-yellow-100 rounded">
                   <Sword className="w-4 h-4 text-yellow-600" />
                   <span className="text-sm text-yellow-800">{effect}</span>
                 </div>
@@ -98,7 +92,7 @@ const CriticalHitIndicator: React.FC<CriticalHitIndicatorProps> = ({
             </div>
           </div>
         )}
-        
+
         {/* Critical Hit Reminder */}
         <div className="text-xs text-yellow-700 italic">
           Critical hits double the number of damage dice rolled.

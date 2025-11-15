@@ -1,5 +1,6 @@
 import React from 'react';
-import { FantasyLoader } from '@/components/ui/fantasy-loader';
+
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * RouteLoading Component
@@ -17,12 +18,29 @@ import { FantasyLoader } from '@/components/ui/fantasy-loader';
 export const RouteLoading: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <FantasyLoader
-        type="cosmic"
-        size="xl"
-        label="Loading..."
-        tip="Traversing the planes of existence!"
-      />
+      <div className="max-w-4xl w-full space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+
+        {/* Content skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-32 w-full rounded-lg" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </div>
+        </div>
+
+        {/* Loading indicator */}
+        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -36,11 +54,10 @@ export const RouteLoading: React.FC = () => {
 export const MinimalRouteLoading: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <FantasyLoader
-        type="spinner"
-        size="default"
-        label="Loading..."
-      />
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
     </div>
   );
 };

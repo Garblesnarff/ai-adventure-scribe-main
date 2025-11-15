@@ -1,5 +1,6 @@
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
 
@@ -63,7 +64,7 @@ class SupabaseSubscriptionManager {
     tableName: string,
     recordId: string,
     imageField: string,
-    callback: (imageUrl: string | null) => void
+    callback: (imageUrl: string | null) => void,
   ): string {
     const callbackId = `${recordId}_${imageField}_${Date.now()}`;
 
@@ -79,7 +80,7 @@ class SupabaseSubscriptionManager {
         lastRetry: 0,
         connectionTimeoutId: null,
         cleanupTimeoutId: null,
-        disabled: false
+        disabled: false,
       });
     }
 
@@ -95,7 +96,7 @@ class SupabaseSubscriptionManager {
       id: callbackId,
       recordId,
       imageField,
-      callback
+      callback,
     });
 
     // Setup or reuse channel
@@ -122,7 +123,7 @@ class SupabaseSubscriptionManager {
       events?: PostgresEvent[];
       filter?: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => boolean;
       callback: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void;
-    }
+    },
   ): string {
     const callbackId = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -137,7 +138,7 @@ class SupabaseSubscriptionManager {
         lastRetry: 0,
         connectionTimeoutId: null,
         cleanupTimeoutId: null,
-        disabled: false
+        disabled: false,
       });
     }
 
@@ -152,7 +153,7 @@ class SupabaseSubscriptionManager {
       id: callbackId,
       events: options.events ?? ['INSERT', 'UPDATE', 'DELETE'],
       filter: options.filter,
-      callback: options.callback
+      callback: options.callback,
     });
 
     this.ensureChannelConnected(tableName);
@@ -190,9 +191,11 @@ class SupabaseSubscriptionManager {
     }
 
     // Skip if already connected or recently retried
-    if (subscription.isConnected ||
-        subscription.isConnecting ||
-        (Date.now() - subscription.lastRetry < this.retryDelay)) {
+    if (
+      subscription.isConnected ||
+      subscription.isConnecting ||
+      Date.now() - subscription.lastRetry < this.retryDelay
+    ) {
       return;
     }
 
@@ -241,11 +244,14 @@ class SupabaseSubscriptionManager {
         {
           event: '*',
           schema: 'public',
-          table: tableName
+          table: tableName,
         },
         (payload) => {
-          this.handleTableEvent(tableName, payload as RealtimePostgresChangesPayload<Record<string, unknown>>);
-        }
+          this.handleTableEvent(
+            tableName,
+            payload as RealtimePostgresChangesPayload<Record<string, unknown>>,
+          );
+        },
       )
       .subscribe((status) => {
         this.handleSubscriptionStatus(tableName, status);
@@ -260,7 +266,11 @@ class SupabaseSubscriptionManager {
 
     const expectedChannel = channel;
     subscription.connectionTimeoutId = setTimeout(() => {
-      if (!subscription.isConnected && subscription.channel === expectedChannel && !subscription.disabled) {
+      if (
+        !subscription.isConnected &&
+        subscription.channel === expectedChannel &&
+        !subscription.disabled
+      ) {
         logger.warn(`Connection timeout for ${tableName} subscription`);
         this.handleConnectionFailure(tableName);
       }
@@ -272,7 +282,7 @@ class SupabaseSubscriptionManager {
    */
   private handleTableEvent(
     tableName: string,
-    payload: RealtimePostgresChangesPayload<Record<string, unknown>>
+    payload: RealtimePostgresChangesPayload<Record<string, unknown>>,
   ): void {
     const subscription = this.subscriptions.get(tableName);
     if (!subscription) return;
@@ -282,8 +292,14 @@ class SupabaseSubscriptionManager {
     if (recordId) {
       subscription.recordCallbacks.forEach((callbackData) => {
         if (callbackData.recordId === recordId) {
-          const newImageUrl = (payload.new ?? {})[callbackData.imageField] as string | null | undefined;
-          const oldImageUrl = (payload.old ?? {})[callbackData.imageField] as string | null | undefined;
+          const newImageUrl = (payload.new ?? {})[callbackData.imageField] as
+            | string
+            | null
+            | undefined;
+          const oldImageUrl = (payload.old ?? {})[callbackData.imageField] as
+            | string
+            | null
+            | undefined;
 
           if (newImageUrl !== oldImageUrl) {
             logger.info(`Image updated for ${tableName} ${recordId}: ${newImageUrl}`);
@@ -362,7 +378,9 @@ class SupabaseSubscriptionManager {
 
     if (subscription.retryCount < this.maxRetries) {
       const delay = this.retryDelay * Math.pow(2, subscription.retryCount - 1);
-      logger.info(`Retrying ${tableName} subscription in ${delay}ms (${subscription.retryCount}/${this.maxRetries})`);
+      logger.info(
+        `Retrying ${tableName} subscription in ${delay}ms (${subscription.retryCount}/${this.maxRetries})`,
+      );
 
       setTimeout(() => {
         this.setupChannel(tableName);

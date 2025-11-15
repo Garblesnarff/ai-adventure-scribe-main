@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+
+import type { NarrationSegment } from '@/hooks/use-ai-response';
+
 import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
-import { NarrationSegment } from '@/hooks/use-ai-response';
 import { extractNarrativeContent } from '@/utils/parseMessageOptions';
 
 interface VoiceContextType {
@@ -54,47 +56,55 @@ export function VoiceProvider({ children }: VoiceProviderProps) {
 
   // Helper function to convert NarrationSegments to AISegments
   const convertNarrationToAISegments = useCallback((narrationSegments: NarrationSegment[]) => {
-    return narrationSegments.map(segment => ({
+    return narrationSegments.map((segment) => ({
       type: (['dm', 'narration'].includes(segment.type) ? 'dm' : 'character') as 'dm' | 'character',
       text: segment.text,
       character: segment.character,
-      voice_category: segment.voice_category
+      voice_category: segment.voice_category,
     }));
   }, []);
 
-  const playMessage = useCallback((
-    messageId: string,
-    text: string,
-    narrationSegments?: NarrationSegment[]
-  ) => {
-    // Initialize audio context for browser compatibility
-    initializeAudioContext();
+  const playMessage = useCallback(
+    (messageId: string, text: string, narrationSegments?: NarrationSegment[]) => {
+      // Initialize audio context for browser compatibility
+      initializeAudioContext();
 
-    // If this is the same message and it's paused, resume it
-    if (currentPlayingId === messageId && isPaused) {
-      resumePlayback();
-      setAnnouncement('Resuming message playback');
-      return;
-    }
+      // If this is the same message and it's paused, resume it
+      if (currentPlayingId === messageId && isPaused) {
+        resumePlayback();
+        setAnnouncement('Resuming message playback');
+        return;
+      }
 
-    // Stop current message if different message is playing
-    if (currentPlayingId && currentPlayingId !== messageId) {
-      stopPlayback();
-    }
+      // Stop current message if different message is playing
+      if (currentPlayingId && currentPlayingId !== messageId) {
+        stopPlayback();
+      }
 
-    setCurrentPlayingId(messageId);
-    setAnnouncement('Playing message with text-to-speech');
+      setCurrentPlayingId(messageId);
+      setAnnouncement('Playing message with text-to-speech');
 
-    // Use AI segments if available, otherwise fall back to plain text
-    if (narrationSegments && narrationSegments.length > 0) {
-      const aiSegments = convertNarrationToAISegments(narrationSegments);
-      speakAISegments(aiSegments);
-    } else {
-      // Extract narrative content as a safeguard (in case full text with options is passed)
-      const narrativeText = extractNarrativeContent(text);
-      speakPlainText(narrativeText);
-    }
-  }, [currentPlayingId, isPaused, resumePlayback, stopPlayback, initializeAudioContext, convertNarrationToAISegments, speakAISegments, speakPlainText]);
+      // Use AI segments if available, otherwise fall back to plain text
+      if (narrationSegments && narrationSegments.length > 0) {
+        const aiSegments = convertNarrationToAISegments(narrationSegments);
+        speakAISegments(aiSegments);
+      } else {
+        // Extract narrative content as a safeguard (in case full text with options is passed)
+        const narrativeText = extractNarrativeContent(text);
+        speakPlainText(narrativeText);
+      }
+    },
+    [
+      currentPlayingId,
+      isPaused,
+      resumePlayback,
+      stopPlayback,
+      initializeAudioContext,
+      convertNarrationToAISegments,
+      speakAISegments,
+      speakPlainText,
+    ],
+  );
 
   const pauseMessage = useCallback(() => {
     pausePlayback();
@@ -133,11 +143,7 @@ export function VoiceProvider({ children }: VoiceProviderProps) {
       {children}
 
       {/* Screen reader announcements */}
-      <div
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
     </VoiceContext.Provider>

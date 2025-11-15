@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { validateSpellSelection, getSpellcastingInfo } from '@/utils/spell-validation';
-import { spellApi } from '@/services/spellApi';
+
 import {
   mockWizard,
   mockCleric,
@@ -9,8 +8,10 @@ import {
   mockWarlock,
   mockFighter,
   mockHuman,
-  createMockCharacter
+  createMockCharacter,
 } from '@/__tests__/helpers/spell-test-helpers';
+import { spellApi } from '@/services/spellApi';
+import { validateSpellSelection, getSpellcastingInfo } from '@/utils/spell-validation';
 
 /**
  * Core Class Spell Restriction Tests
@@ -33,7 +34,7 @@ vi.mock('@/services/spellApi', () => ({
     getClassSpells: vi.fn(),
     getSpellsBySchool: vi.fn(),
     validateSpellForClass: vi.fn(),
-  }
+  },
 }));
 
 describe('Spell Class Restriction Enforcement', () => {
@@ -47,7 +48,14 @@ describe('Spell Class Restriction Enforcement', () => {
 
       // Test basic count validation (current implementation)
       const tooFewCantrips = ['mage-hand', 'prestidigitation']; // Only 2, needs 3
-      const correctSpells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
+      const correctSpells = [
+        'magic-missile',
+        'shield',
+        'detect-magic',
+        'burning-hands',
+        'sleep',
+        'color-spray',
+      ];
 
       const result = validateSpellSelection(wizardCharacter, tooFewCantrips, correctSpells);
 
@@ -56,8 +64,8 @@ describe('Spell Class Restriction Enforcement', () => {
         expect.objectContaining({
           type: 'COUNT_MISMATCH',
           expected: 3,
-          actual: 2
-        })
+          actual: 2,
+        }),
       );
     });
 
@@ -69,13 +77,13 @@ describe('Spell Class Restriction Enforcement', () => {
 
       // These spells should be rejected when proper validation is implemented:
       const problematicDivineSpells = [
-        'cure-wounds',     // Level 1 cleric - the main bug
-        'healing-word',    // Level 1 cleric
-        'guiding-bolt',    // Level 1 cleric
-        'inflict-wounds',  // Level 1 cleric
-        'sanctuary',       // Level 1 cleric
-        'bless',          // Level 1 cleric
-        'command',        // Level 1 cleric
+        'cure-wounds', // Level 1 cleric - the main bug
+        'healing-word', // Level 1 cleric
+        'guiding-bolt', // Level 1 cleric
+        'inflict-wounds', // Level 1 cleric
+        'sanctuary', // Level 1 cleric
+        'bless', // Level 1 cleric
+        'command', // Level 1 cleric
       ];
 
       // For now, just verify the character structure is correct for future validation
@@ -88,14 +96,21 @@ describe('Spell Class Restriction Enforcement', () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       const validCantrips = ['mage-hand', 'prestidigitation', 'light'];
-      const validSpells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
+      const validSpells = [
+        'magic-missile',
+        'shield',
+        'detect-magic',
+        'burning-hands',
+        'sleep',
+        'color-spray',
+      ];
 
       const result = validateSpellSelection(wizardCharacter, validCantrips, validSpells);
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.warnings).toContain(
-        'As a Wizard, these spells will be recorded in your spellbook. You can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day.'
+        'As a Wizard, these spells will be recorded in your spellbook. You can prepare spells equal to your Intelligence modifier + 1 (minimum 1) each day.',
       );
     });
 
@@ -103,19 +118,19 @@ describe('Spell Class Restriction Enforcement', () => {
       const wizardCharacter = createMockCharacter('Test Wizard', mockWizard, mockHuman);
 
       const problematicDivineSpells = [
-        'cure-wounds',     // Level 1 cleric
-        'healing-word',    // Level 1 cleric
-        'guiding-bolt',    // Level 1 cleric
-        'inflict-wounds',  // Level 1 cleric
-        'sanctuary',       // Level 1 cleric
-        'bless',          // Level 1 cleric
-        'command',        // Level 1 cleric
+        'cure-wounds', // Level 1 cleric
+        'healing-word', // Level 1 cleric
+        'guiding-bolt', // Level 1 cleric
+        'inflict-wounds', // Level 1 cleric
+        'sanctuary', // Level 1 cleric
+        'bless', // Level 1 cleric
+        'command', // Level 1 cleric
       ];
 
       for (const spellId of problematicDivineSpells) {
         vi.mocked(spellApi.validateSpellForClass).mockResolvedValue({
           valid: false,
-          error: `Wizard cannot learn ${spellId}`
+          error: `Wizard cannot learn ${spellId}`,
         });
 
         const cantrips = ['mage-hand', 'prestidigitation', 'light'];
@@ -127,8 +142,8 @@ describe('Spell Class Restriction Enforcement', () => {
         expect(result.errors).toContainEqual(
           expect.objectContaining({
             type: 'INVALID_SPELL',
-            spellId: spellId
-          })
+            spellId: spellId,
+          }),
         );
       }
     });
@@ -156,8 +171,8 @@ describe('Spell Class Restriction Enforcement', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'INVALID_SPELL',
-          spellId: 'mage-hand'
-        })
+          spellId: 'mage-hand',
+        }),
       );
     });
 
@@ -166,7 +181,14 @@ describe('Spell Class Restriction Enforcement', () => {
 
       // Mock API to validate cleric spells
       vi.mocked(spellApi.validateSpellForClass).mockImplementation(async (spellId, className) => {
-        const clericSpells = ['guidance', 'thaumaturgy', 'sacred-flame', 'cure-wounds', 'healing-word', 'bless'];
+        const clericSpells = [
+          'guidance',
+          'thaumaturgy',
+          'sacred-flame',
+          'cure-wounds',
+          'healing-word',
+          'bless',
+        ];
         if (className === 'Cleric' && clericSpells.includes(spellId)) {
           return { valid: true };
         }
@@ -206,8 +228,8 @@ describe('Spell Class Restriction Enforcement', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'INVALID_SPELL',
-          spellId: 'magic-missile'
-        })
+          spellId: 'magic-missile',
+        }),
       );
     });
   });
@@ -218,30 +240,30 @@ describe('Spell Class Restriction Enforcement', () => {
         {
           className: 'Wizard',
           character: createMockCharacter('Test Wizard', mockWizard, mockHuman),
-          forbiddenSpells: ['cure-wounds', 'healing-word', 'guiding-bolt', 'bless', 'sanctuary']
+          forbiddenSpells: ['cure-wounds', 'healing-word', 'guiding-bolt', 'bless', 'sanctuary'],
         },
         {
           className: 'Cleric',
           character: createMockCharacter('Test Cleric', mockCleric, mockHuman),
-          forbiddenSpells: ['magic-missile', 'shield', 'fireball', 'misty-step', 'counterspell']
+          forbiddenSpells: ['magic-missile', 'shield', 'fireball', 'misty-step', 'counterspell'],
         },
         {
           className: 'Sorcerer',
           character: createMockCharacter('Test Sorcerer', mockSorcerer, mockHuman),
-          forbiddenSpells: ['cure-wounds', 'healing-word', 'goodberry', 'entangle']
+          forbiddenSpells: ['cure-wounds', 'healing-word', 'goodberry', 'entangle'],
         },
         {
           className: 'Warlock',
           character: createMockCharacter('Test Warlock', mockWarlock, mockHuman),
-          forbiddenSpells: ['cure-wounds', 'magic-missile', 'fireball']
-        }
+          forbiddenSpells: ['cure-wounds', 'magic-missile', 'fireball'],
+        },
       ];
 
       for (const testCase of testCases) {
         for (const forbiddenSpell of testCase.forbiddenSpells) {
           vi.mocked(spellApi.validateSpellForClass).mockResolvedValue({
             valid: false,
-            error: `${testCase.className} cannot learn ${forbiddenSpell}`
+            error: `${testCase.className} cannot learn ${forbiddenSpell}`,
           });
 
           const cantrips = ['prestidigitation', 'light'];
@@ -253,8 +275,8 @@ describe('Spell Class Restriction Enforcement', () => {
           expect(result.errors).toContainEqual(
             expect.objectContaining({
               type: 'INVALID_SPELL',
-              spellId: forbiddenSpell
-            })
+              spellId: forbiddenSpell,
+            }),
           );
         }
       }
@@ -265,14 +287,31 @@ describe('Spell Class Restriction Enforcement', () => {
 
       // Mock API to allow only wizard spells
       vi.mocked(spellApi.validateSpellForClass).mockImplementation(async (spellId, className) => {
-        const wizardSpells = ['mage-hand', 'prestidigitation', 'light', 'minor-illusion',
-                             'magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
+        const wizardSpells = [
+          'mage-hand',
+          'prestidigitation',
+          'light',
+          'minor-illusion',
+          'magic-missile',
+          'shield',
+          'detect-magic',
+          'burning-hands',
+          'sleep',
+          'color-spray',
+        ];
         return { valid: wizardSpells.includes(spellId) };
       });
 
       // Try to select correct count but with invalid spells mixed in
       const mixedCantrips = ['mage-hand', 'prestidigitation', 'guidance']; // guidance is cleric
-      const mixedSpells = ['magic-missile', 'shield', 'cure-wounds', 'detect-magic', 'burning-hands', 'sleep']; // cure-wounds is cleric
+      const mixedSpells = [
+        'magic-missile',
+        'shield',
+        'cure-wounds',
+        'detect-magic',
+        'burning-hands',
+        'sleep',
+      ]; // cure-wounds is cleric
 
       const result = validateSpellSelection(wizardCharacter, mixedCantrips, mixedSpells);
 
@@ -280,14 +319,14 @@ describe('Spell Class Restriction Enforcement', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'INVALID_SPELL',
-          spellId: 'guidance'
-        })
+          spellId: 'guidance',
+        }),
       );
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'INVALID_SPELL',
-          spellId: 'cure-wounds'
-        })
+          spellId: 'cure-wounds',
+        }),
       );
     });
   });
@@ -306,13 +345,13 @@ describe('Spell Class Restriction Enforcement', () => {
         'null',
         'undefined',
         '',
-        '../../divine/cure-wounds' // More complex path traversal
+        '../../divine/cure-wounds', // More complex path traversal
       ];
 
       for (const spellId of maliciousSpellIds) {
         vi.mocked(spellApi.validateSpellForClass).mockResolvedValue({
           valid: false,
-          error: `Invalid spell ID or not available for Wizard: ${spellId}`
+          error: `Invalid spell ID or not available for Wizard: ${spellId}`,
         });
 
         const cantrips = ['mage-hand', 'prestidigitation', 'light'];
@@ -321,9 +360,11 @@ describe('Spell Class Restriction Enforcement', () => {
         const result = validateSpellSelection(wizardCharacter, cantrips, spells);
 
         expect(result.valid).toBe(false);
-        expect(result.errors.some(error =>
-          error.type === 'INVALID_SPELL' && error.spellId === spellId
-        )).toBe(true);
+        expect(
+          result.errors.some(
+            (error) => error.type === 'INVALID_SPELL' && error.spellId === spellId,
+          ),
+        ).toBe(true);
       }
     });
 
@@ -335,7 +376,14 @@ describe('Spell Class Restriction Enforcement', () => {
 
       // Provide fully valid wizard selections; network failure must not affect local validation
       const cantrips = ['mage-hand', 'prestidigitation', 'light'];
-      const spells = ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'];
+      const spells = [
+        'magic-missile',
+        'shield',
+        'detect-magic',
+        'burning-hands',
+        'sleep',
+        'color-spray',
+      ];
 
       const result = validateSpellSelection(wizardCharacter, cantrips, spells);
 
@@ -357,8 +405,8 @@ describe('Spell Class Restriction Enforcement', () => {
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
           expect.objectContaining({
-            type: 'COUNT_MISMATCH'
-          })
+            type: 'COUNT_MISMATCH',
+          }),
         );
       }
     });
@@ -377,8 +425,8 @@ describe('Spell Class Restriction Enforcement', () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           type: 'LEVEL_REQUIREMENT',
-          message: expect.stringContaining('not a spellcasting class')
-        })
+          message: expect.stringContaining('not a spellcasting class'),
+        }),
       );
     });
 

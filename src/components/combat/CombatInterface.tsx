@@ -1,75 +1,89 @@
 /**
  * Combat Interface Component
- * 
+ *
  * Main combat UI that integrates all combat components.
  * Shows initiative tracker, enemy cards, and combat controls.
  * Manages combat mode and participant selection.
  */
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Sword, 
-  Shield, 
-  Users, 
-  X, 
-  Play, 
-  Pause, 
+import {
+  Sword,
+  Shield,
+  Users,
+  X,
+  Play,
+  Pause,
   RefreshCw,
   AlertTriangle,
   Flame,
-  Zap
+  Zap,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import ActionPanel from './ActionPanel';
+import DeathSaveManager from './DeathSaveManager';
+import EnemyCard from './EnemyCard';
+import HPTracker from './HPTracker';
+import InitiativeTracker from './InitiativeTracker';
+import ReactionOpportunityPanel from './ReactionOpportunityPanel';
+
+import type { ActionType, ReactionOpportunity } from '@/types/combat';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import DiceRoller from '@/components/ui/dice-roller';
+import { Separator } from '@/components/ui/separator';
+import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
 import { useCombatAIIntegration } from '@/hooks/use-combat-ai-integration';
 import { useGameSession } from '@/hooks/use-game-session';
-import { useCharacter } from '@/contexts/CharacterContext';
-import InitiativeTracker from './InitiativeTracker';
-import EnemyCard from './EnemyCard';
-import DiceRoller from '@/components/ui/dice-roller';
-import DeathSaveManager from './DeathSaveManager';
-import HPTracker from './HPTracker';
-import ReactionOpportunityPanel from './ReactionOpportunityPanel';
-import ActionPanel from './ActionPanel';
-import { ActionType, ReactionOpportunity } from '@/types/combat';
+
+import logger from '@/lib/logger';
+
+import { calculateAttackDamage } from '@/utils/attackUtils';
+import {
+  getClassFeatures,
+  canUseClassFeature,
+  useClassFeature,
+  getSneakAttackDice,
+  getRageDamageBonus,
+} from '@/utils/classFeatures';
+import { rollDeathSave, needsDeathSaves } from '@/utils/combat/deathSaves';
 import { rollDice, rollAttack, rollDamage, calculateDamage } from '@/utils/diceUtils';
+import {
+  createDefaultLightWeapons,
+  equipMainHandWeapon,
+  equipOffHandWeapon,
+} from '@/utils/equipmentUtils';
 import { getRacialTraits, canUseRacialTrait, useRacialTrait } from '@/utils/racialTraits';
-import { getClassFeatures, canUseClassFeature, useClassFeature, getSneakAttackDice, getRageDamageBonus } from '@/utils/classFeatures';
-import { 
-  createReactionOpportunity, 
-  checkOpportunityAttacks, 
+import {
+  createReactionOpportunity,
+  checkOpportunityAttacks,
   checkCounterspellOpportunities,
-  processReactionResponse 
+  processReactionResponse,
 } from '@/utils/reactionSystem';
-import { 
+import { checkConcentration } from '@/utils/spell-management';
+import {
   canUseTwoWeaponFighting,
   makeMainHandAttack,
   makeOffHandAttack,
-  canMakeOffHandAttack
+  canMakeOffHandAttack,
 } from '@/utils/twoWeaponFighting';
-import { calculateAttackDamage } from '@/utils/attackUtils';
-import { createDefaultLightWeapons, equipMainHandWeapon, equipOffHandWeapon } from '@/utils/equipmentUtils';
-import { checkConcentration } from '@/utils/spell-management';
-import { rollDeathSave, needsDeathSaves } from '@/utils/combat/deathSaves';
-import logger from '@/lib/logger';
 
 interface CombatInterfaceProps {
   isDM?: boolean;
 }
 
 const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
-  const { 
-    state, 
-    startCombat, 
-    endCombat, 
-    nextTurn, 
-    rollInitiative, 
+  const {
+    state,
+    startCombat,
+    endCombat,
+    nextTurn,
+    rollInitiative,
     takeAction,
     addParticipant,
-    updateParticipant
+    updateParticipant,
   } = useCombat();
 
   const { sessionId } = useGameSession();
@@ -77,13 +91,19 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const { validateCombatAction } = useCombatAIIntegration({
     sessionId,
     characterId: characterState.character?.id,
-    campaignId: undefined // Will be passed from parent component
+    campaignId: undefined, // Will be passed from parent component
   });
 
-  const { activeEncounter, isInCombat, showInitiativeTracker = false, showCombatLog = false } = state;
-  
-  const [localShowInitiativeTracker, setLocalShowInitiativeTracker] = useState(showInitiativeTracker);
-  
+  const {
+    activeEncounter,
+    isInCombat,
+    showInitiativeTracker = false,
+    showCombatLog = false,
+  } = state;
+
+  const [localShowInitiativeTracker, setLocalShowInitiativeTracker] =
+    useState(showInitiativeTracker);
+
   const [selectedEnemy, setSelectedEnemy] = useState<string | null>(null);
   const [showCombatMode, setShowCombatMode] = useState(false);
   const [isStartingCombat, setIsStartingCombat] = useState(false);
@@ -103,24 +123,24 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   } | null>(null);
 
   // Get player characters and potential enemies
-  const playerParticipants = activeEncounter?.participants.filter(p => p.participantType === 'player') || [];
-  const enemyParticipants = activeEncounter?.participants.filter(p => (p.participantType as string) === 'monster') || [];
+  const playerParticipants =
+    activeEncounter?.participants.filter((p) => p.participantType === 'player') || [];
+  const enemyParticipants =
+    activeEncounter?.participants.filter((p) => (p.participantType as string) === 'monster') || [];
   const playerCharacterId = characterState.character?.id;
   const isPlayersTurn = Boolean(
     activeEncounter?.currentTurnParticipantId &&
-    activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId)?.characterId === playerCharacterId
+      activeEncounter.participants.find((p) => p.id === activeEncounter.currentTurnParticipantId)
+        ?.characterId === playerCharacterId,
   );
-  
+
   // Handle starting combat
   const handleStartCombat = async () => {
     if (!isStartingCombat && playerParticipants.length > 0) {
       setIsStartingCombat(true);
-      
+
       // Create basic combat encounter with current participants
-      const combatParticipants = [
-        ...playerParticipants,
-        ...enemyParticipants
-      ].map(p => ({
+      const combatParticipants = [...playerParticipants, ...enemyParticipants].map((p) => ({
         id: p.id,
         participantType: p.participantType,
         name: p.name,
@@ -151,7 +171,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
         resources: (p as any).resources || {},
         characterClass: (p as any).characterClass || '',
         isRaging: false,
-        cover: (p as any).cover || { type: 'none' }
+        cover: (p as any).cover || { type: 'none' },
       })) as any[];
 
       await startCombat('current-session', combatParticipants);
@@ -172,11 +192,11 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     actionType: ActionType,
     participantId: string,
     targetId?: string,
-    additionalData?: any
+    additionalData?: any,
   ) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant) return;
 
     // Create action for validation
@@ -185,7 +205,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       targetParticipantId: targetId,
       actionType,
       description: `${participant.name} attempts to ${actionType}`,
-      ...additionalData
+      ...additionalData,
     };
 
     // Validate action with AI rules interpreter
@@ -202,7 +222,6 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       // Execute valid action
       await takeAction(action);
       setActionValidation(null);
-
     } catch (error) {
       logger.error('Error validating combat action:', error);
       // Proceed with action if validation fails
@@ -214,7 +233,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleEnemyAttack = async (attack: any) => {
     if (!selectedEnemy || !activeEncounter) return;
 
-    const enemy = activeEncounter.participants.find(p => p.id === selectedEnemy);
+    const enemy = activeEncounter.participants.find((p) => p.id === selectedEnemy);
     if (!enemy) return;
 
     await handleCombatAction(
@@ -225,18 +244,22 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
         attackRoll: {
           total: Math.floor(Math.random() * 20) + 1 + (attack.attackBonus || 0),
           rolls: [Math.floor(Math.random() * 20) + 1],
-          modifier: attack.attackBonus || 0
+          modifier: attack.attackBonus || 0,
         },
-        damageRolls: attack.damageRoll ? [{
-          total: 0, // Will be calculated
-          rolls: [],
-          modifier: 0
-        }] : [],
+        damageRolls: attack.damageRoll
+          ? [
+              {
+                total: 0, // Will be calculated
+                rolls: [],
+                modifier: 0,
+              },
+            ]
+          : [],
         damageType: attack.damageType,
-        description: `${enemy.name} uses ${attack.name}`
-      }
+        description: `${enemy.name} uses ${attack.name}`,
+      },
     );
-    
+
     // Auto-advance turn after enemy action
     setTimeout(() => {
       nextTurn();
@@ -273,15 +296,15 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
             name: 'Scimitar',
             attackBonus: 4,
             damageRoll: '1d6+2',
-            damageType: 'slashing'
+            damageType: 'slashing',
           },
           {
             name: 'Shortbow',
             attackBonus: 4,
             damageRoll: '1d6+2',
-            damageType: 'piercing'
-          }
-        ]
+            damageType: 'piercing',
+          },
+        ],
       },
       spellSlots: undefined,
       activeConcentration: null,
@@ -296,7 +319,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       resources: {},
       characterClass: '',
       isRaging: false,
-      cover: { type: 'none' }
+      cover: { type: 'none' },
     } as any;
 
     addParticipant(newEnemy);
@@ -304,29 +327,29 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
 
   // Handle enhanced attack with optional Divine Smite
   const handleEnhancedAttack = async (
-    participantId: string, 
+    participantId: string,
     targetId?: string,
     actionType: ActionType = 'attack',
     hasAdvantage: boolean = false,
     hasDisadvantage: boolean = false,
-    divineSmiteSlotLevel?: number // For Paladin's Divine Smite
+    divineSmiteSlotLevel?: number, // For Paladin's Divine Smite
   ) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant) return;
 
     // Roll attack with advantage/disadvantage
     const attackBonus = 5; // This would come from character stats
-    const attackRoll = rollAttack(attackBonus, { 
-      advantage: hasAdvantage, 
+    const attackRoll = rollAttack(attackBonus, {
+      advantage: hasAdvantage,
       disadvantage: hasDisadvantage,
-      halflingLucky: participant.racialTraits?.some(t => t.name === 'lucky') || false
+      halflingLucky: participant.racialTraits?.some((t) => t.name === 'lucky') || false,
     });
 
     // Check for critical hit
     const isCritical = attackRoll.critical || false;
-    
+
     // Calculate base damage with sneak attack and divine smite
     const damageResult = calculateAttackDamage(
       { name: 'Longsword', damage: '1d8+3', damageType: 'slashing', properties: {} },
@@ -335,18 +358,18 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       isCritical,
       undefined,
       activeEncounter,
-      divineSmiteSlotLevel
+      divineSmiteSlotLevel,
     );
-    
+
     let damageRolls = [damageResult.baseDamageRoll];
     let totalDamage = damageResult.baseDamageRoll.reduce((sum, roll) => sum + (roll.total || 0), 0);
-    
+
     // Add sneak attack damage if applicable
     if (damageResult.sneakAttackRoll) {
       damageRolls = [...damageRolls, ...damageResult.sneakAttackRoll];
       totalDamage += damageResult.sneakAttackRoll.reduce((sum, roll) => sum + (roll.total || 0), 0);
     }
-    
+
     // Add divine smite damage if applicable
     if (damageResult.divineSmiteRoll) {
       damageRolls = [...damageRolls, ...damageResult.divineSmiteRoll];
@@ -373,18 +396,18 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
         advantage: attackRoll.advantage,
         disadvantage: attackRoll.disadvantage,
         critical: attackRoll.critical,
-        naturalRoll: attackRoll.naturalRoll
+        naturalRoll: attackRoll.naturalRoll,
       },
-      damageRolls: damageRolls.map(roll => ({
+      damageRolls: damageRolls.map((roll) => ({
         dieType: roll.dieType,
         count: roll.count,
         modifier: roll.modifier,
         results: roll.results,
-        total: roll.total
+        total: roll.total,
       })),
       hit: attackRoll.total >= 15, // Would check against target AC
       damageDealt: totalDamage,
-      damageType: 'slashing'
+      damageType: 'slashing',
     };
 
     await handleCombatAction(actionType, participantId, targetId, action);
@@ -394,10 +417,10 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleRacialTraitUse = async (participantId: string, traitName: string) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant || !participant.racialTraits) return;
 
-    const trait = participant.racialTraits.find(t => t.name === traitName);
+    const trait = participant.racialTraits.find((t) => t.name === traitName);
     if (!trait || !canUseRacialTrait(trait)) return;
 
     let description = '';
@@ -417,7 +440,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       participantId,
       actionType: 'use_racial_trait' as ActionType,
       description,
-      traitUsed: trait.name
+      traitUsed: trait.name,
     };
 
     await handleCombatAction('bonus_action', participantId, undefined, action);
@@ -427,15 +450,15 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleClassFeature = async (participantId: string, featureName: string) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant || !participant.classFeatures || !participant.resources) return;
 
-    const feature = participant.classFeatures.find(f => f.name === featureName);
+    const feature = participant.classFeatures.find((f) => f.name === featureName);
     if (!feature || !canUseClassFeature(feature, participant.resources)) return;
 
     let description = '';
     let actionType: ActionType = 'use_class_feature' as ActionType;
-    
+
     switch (feature.name) {
       case 'rage':
         // If already raging, deactivate rage
@@ -465,28 +488,37 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       participantId,
       actionType,
       description,
-      featureUsed: feature.name
+      featureUsed: feature.name,
     };
 
     await handleCombatAction(actionType, participantId, undefined, action);
   };
 
   // Handle reaction opportunities
-  const handleReactionOpportunity = async (opportunity: ReactionOpportunity, selectedReaction: ActionType) => {
+  const handleReactionOpportunity = async (
+    opportunity: ReactionOpportunity,
+    selectedReaction: ActionType,
+  ) => {
     if (!activeEncounter) return;
 
     try {
-      const reactionAction = processReactionResponse(opportunity, selectedReaction, activeEncounter);
+      const reactionAction = processReactionResponse(
+        opportunity,
+        selectedReaction,
+        activeEncounter,
+      );
       await takeAction(reactionAction);
-      
+
       // Mark participant as having used their reaction
-      const participant = activeEncounter.participants.find(p => p.id === opportunity.participantId);
+      const participant = activeEncounter.participants.find(
+        (p) => p.id === opportunity.participantId,
+      );
       if (participant) {
         updateParticipant(opportunity.participantId, { reactionTaken: true });
       }
-      
+
       // Remove the opportunity after use
-      setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunity.id));
+      setReactionOpportunities((prev) => prev.filter((opp) => opp.id !== opportunity.id));
     } catch (error) {
       logger.error('Error processing reaction:', error);
     }
@@ -496,7 +528,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleDeathSave = async (participantId: string) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant || !needsDeathSaves(participant)) return;
 
     const { updatedParticipant, roll } = rollDeathSave(participant);
@@ -524,7 +556,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
         isStable: updatedParticipant.isStable,
         isDead: updatedParticipant.isDead,
         isCritical: roll.critical,
-      }
+      },
     };
 
     await takeAction(action);
@@ -534,7 +566,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleConcentrationSave = async (participantId: string, dc: number) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant || !(participant as any).activeConcentration) return;
 
     // Inline concentration save logic
@@ -553,8 +585,8 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
         succeeded,
         roll: rollResult,
         dc,
-        spellLost: !succeeded
-      }
+        spellLost: !succeeded,
+      },
     };
 
     if (!succeeded) {
@@ -569,7 +601,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleTwoWeaponAttack = async (participantId: string, targetId?: string) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant) return;
 
     // Equip default weapons if none equipped (for testing)
@@ -597,9 +629,13 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   };
 
   // Handle applying direct damage
-  const handleApplyDamage = async (participantId: string, damageAmount: number, damageType: string) => {
+  const handleApplyDamage = async (
+    participantId: string,
+    damageAmount: number,
+    damageType: string,
+  ) => {
     if (!activeEncounter) return;
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant) return;
 
     const newHP = Math.max(0, (participant.currentHitPoints || 0) - damageAmount);
@@ -636,7 +672,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
         newHitPoints: newHP,
         unconscious: isUnconscious,
         concentrationLost,
-      }
+      },
     };
     await takeAction(action);
   };
@@ -645,7 +681,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
   const handleHealing = async (participantId: string, healingAmount: number) => {
     if (!activeEncounter) return;
 
-    const participant = activeEncounter.participants.find(p => p.id === participantId);
+    const participant = activeEncounter.participants.find((p) => p.id === participantId);
     if (!participant) return;
 
     // Simple healing logic
@@ -657,7 +693,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     // Update participant
     updateParticipant(participantId, {
       currentHitPoints: newHP,
-      isUnconscious: (newHP <= 0) as any
+      isUnconscious: (newHP <= 0) as any,
     } as any);
 
     const description = `${participant.name} heals ${healingAmount} hit points${revived ? ' and regains consciousness' : ''}`;
@@ -669,8 +705,8 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
       healingAmount,
       effects: {
         revivedFromUnconscious: revived,
-        newHitPoints: newHP
-      }
+        newHitPoints: newHP,
+      },
     };
 
     await takeAction(action);
@@ -691,7 +727,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
             <div className="text-muted-foreground mb-4">
               Prepare for battle! Your party is ready to engage enemies.
             </div>
-            
+
             {playerParticipants.length === 0 ? (
               <div className="text-destructive mb-4">
                 No player characters found. Please ensure your character is selected.
@@ -699,28 +735,24 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
             ) : (
               <div className="space-y-2 mb-4">
                 <p className="text-sm text-muted-foreground">
-                  Party: {playerParticipants.map(p => p.name).join(', ')}
+                  Party: {playerParticipants.map((p) => p.name).join(', ')}
                 </p>
                 {enemyParticipants.length > 0 && (
                   <p className="text-sm text-destructive">
-                    Enemies: {enemyParticipants.map(p => p.name).join(', ')}
+                    Enemies: {enemyParticipants.map((p) => p.name).join(', ')}
                   </p>
                 )}
               </div>
             )}
-            
+
             <div className="flex gap-2 justify-center">
               {isDM ? (
                 <>
-                  <Button 
-                    onClick={addEnemy}
-                    variant="outline"
-                    size="sm"
-                  >
+                  <Button onClick={addEnemy} variant="outline" size="sm">
                     <Users className="w-4 h-4 mr-2" />
                     Add Enemy
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleStartCombat}
                     disabled={isStartingCombat || playerParticipants.length === 0}
                   >
@@ -761,21 +793,17 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
               Round {activeEncounter?.currentRound || 1}
             </Badge>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setLocalShowInitiativeTracker(!localShowInitiativeTracker)}
             >
               {localShowInitiativeTracker ? 'Hide' : 'Show'} Tracker
             </Button>
             {isDM && (
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={handleEndCombat}
-              >
+              <Button variant="destructive" size="sm" onClick={handleEndCombat}>
                 <X className="w-4 h-4 mr-2" />
                 End Combat
               </Button>
@@ -813,11 +841,11 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
               />
             )}
 
-            <ReactionOpportunityPanel 
+            <ReactionOpportunityPanel
               opportunities={reactionOpportunities}
               onReactionSelected={handleReactionOpportunity}
-              onOpportunityDismissed={(opportunityId) => 
-                setReactionOpportunities(prev => prev.filter(opp => opp.id !== opportunityId))
+              onOpportunityDismissed={(opportunityId) =>
+                setReactionOpportunities((prev) => prev.filter((opp) => opp.id !== opportunityId))
               }
             />
 
@@ -836,7 +864,10 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
                     participant={participant}
                     onDamage={handleApplyDamage}
                     onHeal={handleHealing}
-                    isInteractive={Boolean(isDM || (participant.characterId && participant.characterId === playerCharacterId))}
+                    isInteractive={Boolean(
+                      isDM ||
+                        (participant.characterId && participant.characterId === playerCharacterId),
+                    )}
                   />
                 ))}
               </CardContent>
@@ -856,33 +887,28 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {enemyParticipants.map((enemy) => (
-                    <div 
+                    <div
                       key={enemy.id}
                       className={`cursor-pointer transition-all ${
-                        selectedEnemy === enemy.id 
-                          ? 'ring-2 ring-red-500 ring-opacity-50' 
+                        selectedEnemy === enemy.id
+                          ? 'ring-2 ring-red-500 ring-opacity-50'
                           : 'hover:ring-1 hover:ring-red-200'
                       }`}
                       onClick={() => setSelectedEnemy(selectedEnemy === enemy.id ? null : enemy.id)}
                     >
-                      <EnemyCard 
+                      <EnemyCard
                         enemyId={enemy.id}
                         onAttack={isDM ? handleEnemyAttack : undefined}
                       />
                     </div>
                   ))}
-                  
+
                   {enemyParticipants.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                       <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                       <p>No enemies in combat</p>
                       {isDM && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={addEnemy}
-                          className="mt-2"
-                        >
+                        <Button variant="outline" size="sm" onClick={addEnemy} className="mt-2">
                           Add Enemy
                         </Button>
                       )}
@@ -903,50 +929,70 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {activeEncounter?.actions.slice(-10).reverse().map((action, index) => (
-                      <div key={index} className="text-sm p-2 bg-muted/50 rounded-md">
-                        <div className="font-medium">{action.description}</div>
-                        
-                        {action.attackRoll && (
-                          <div className="text-xs text-muted-foreground space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span>Attack: {action.attackRoll.total}</span>
-                              {action.attackRoll.advantage && <Badge variant="outline" className="text-green-600">Advantage</Badge>}
-                              {action.attackRoll.disadvantage && <Badge variant="outline" className="text-red-600">Disadvantage</Badge>}
-                              {action.attackRoll.critical && <Badge variant="destructive">CRITICAL!</Badge>}
+                    {activeEncounter?.actions
+                      .slice(-10)
+                      .reverse()
+                      .map((action, index) => (
+                        <div key={index} className="text-sm p-2 bg-muted/50 rounded-md">
+                          <div className="font-medium">{action.description}</div>
+
+                          {action.attackRoll && (
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span>Attack: {action.attackRoll.total}</span>
+                                {action.attackRoll.advantage && (
+                                  <Badge variant="outline" className="text-green-600">
+                                    Advantage
+                                  </Badge>
+                                )}
+                                {action.attackRoll.disadvantage && (
+                                  <Badge variant="outline" className="text-red-600">
+                                    Disadvantage
+                                  </Badge>
+                                )}
+                                {action.attackRoll.critical && (
+                                  <Badge variant="destructive">CRITICAL!</Badge>
+                                )}
+                              </div>
+                              <div>
+                                Rolled: {action.attackRoll.results?.join(', ')}
+                                {action.attackRoll.modifier !== 0 &&
+                                  ` + ${action.attackRoll.modifier}`}
+                              </div>
                             </div>
-                            <div>
-                              Rolled: {action.attackRoll.results?.join(', ')} 
-                              {action.attackRoll.modifier !== 0 && ` + ${action.attackRoll.modifier}`}
+                          )}
+
+                          {action.damageRolls && action.damageRolls.length > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              Damage Rolls:{' '}
+                              {action.damageRolls
+                                .map(
+                                  (roll) =>
+                                    `${roll.results?.join(', ')}${roll.modifier ? ` + ${roll.modifier}` : ''} = ${roll.total}`,
+                                )
+                                .join(' | ')}
                             </div>
+                          )}
+
+                          {action.damageDealt && action.damageDealt > 0 && (
+                            <div className="text-xs text-destructive font-medium">
+                              Total Damage: {action.damageDealt} {action.damageType}
+                            </div>
+                          )}
+
+                          {action.conditionsApplied && action.conditionsApplied.length > 0 && (
+                            <div className="text-xs text-blue-600">
+                              Conditions: {action.conditionsApplied.map((c) => c.name).join(', ')}
+                            </div>
+                          )}
+
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {action.timestamp
+                              ? new Date(action.timestamp).toLocaleTimeString()
+                              : 'Just now'}
                           </div>
-                        )}
-                        
-                        {action.damageRolls && action.damageRolls.length > 0 && (
-                          <div className="text-xs text-muted-foreground">
-                            Damage Rolls: {action.damageRolls.map(roll => 
-                              `${roll.results?.join(', ')}${roll.modifier ? ` + ${roll.modifier}` : ''} = ${roll.total}`
-                            ).join(' | ')}
-                          </div>
-                        )}
-                        
-                        {action.damageDealt && action.damageDealt > 0 && (
-                          <div className="text-xs text-destructive font-medium">
-                            Total Damage: {action.damageDealt} {action.damageType}
-                          </div>
-                        )}
-                        
-                        {action.conditionsApplied && action.conditionsApplied.length > 0 && (
-                          <div className="text-xs text-blue-600">
-                            Conditions: {action.conditionsApplied.map(c => c.name).join(', ')}
-                          </div>
-                        )}
-                        
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {action.timestamp ? new Date(action.timestamp).toLocaleTimeString() : 'Just now'}
                         </div>
-                      </div>
-                    ))}
+                      ))}
                     {activeEncounter?.actions.length === 0 && (
                       <div className="text-center text-muted-foreground py-8">
                         Combat log will appear here...

@@ -1,31 +1,33 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Character } from '@/types/character';
-import { 
-  User, 
-  Zap, 
-  Wand2, 
-  Package, 
-  Star, 
+import {
+  User,
+  Zap,
+  Wand2,
+  Package,
+  Star,
   FileText,
   Heart,
   Shield,
   Sword,
   TrendingUp,
   Users,
-  Image as ImageIcon
+  Image as ImageIcon,
 } from 'lucide-react';
+import React, { useState } from 'react';
 
 // Tab Components
-import MainTab from './tabs/MainTab';
-import AbilitiesTab from './tabs/AbilitiesTab';
-import SpellsTab from './tabs/SpellsTab';
-import InventoryTab from './tabs/InventoryTab';
-import FeaturesTab from './tabs/FeaturesTab';
-import NotesTab from './tabs/NotesTab';
 import ExperienceManager from './ExperienceManager';
 import MulticlassManager from './MulticlassManager';
+import AbilitiesTab from './tabs/AbilitiesTab';
+import FeaturesTab from './tabs/FeaturesTab';
+import InventoryTab from './tabs/InventoryTab';
+import MainTab from './tabs/MainTab';
+import NotesTab from './tabs/NotesTab';
+import SpellsTab from './tabs/SpellsTab';
+
+import type { Character } from '@/types/character';
+
 import CharacterGallery from '@/components/gallery/CharacterGallery';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CharacterSheetTabsProps {
   character: Character;
@@ -114,23 +116,28 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
               </div>
             )}
           </div>
-          
+
           {/* Character Title */}
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{character.name || 'Unnamed Character'}</h1>
             <p className="text-muted-foreground">
-              Level {character.level || 1} {character.race?.name || 'Unknown Race'} {character.class?.name || 'Unknown Class'}
+              Level {character.level || 1} {character.race?.name || 'Unknown Race'}{' '}
+              {character.class?.name || 'Unknown Class'}
             </p>
           </div>
-          
+
           {/* Quick Stats */}
           <div className="hidden md:flex items-center gap-4 text-sm">
             <div className="text-center">
               <div className="flex items-center gap-1 text-red-600">
                 <Heart className="w-4 h-4" />
                 <span className="font-bold">
-                  {Math.max(1, (character.level || 1) * (character.class?.hitDie || 8) +
-                   (character.abilityScores?.constitution?.modifier || 0) * (character.level || 1))}
+                  {Math.max(
+                    1,
+                    (character.level || 1) * (character.class?.hitDie || 8) +
+                      (character.abilityScores?.constitution?.modifier || 0) *
+                        (character.level || 1),
+                  )}
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">HP</div>
@@ -142,24 +149,34 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
                   {
                     // Armor Class calculation with unarmored defense support
                     (() => {
-                      const abilityScores = character.abilityScores || { dexterity: { modifier: 0 }, constitution: { modifier: 0 }, wisdom: { modifier: 0 } };
+                      const abilityScores = character.abilityScores || {
+                        dexterity: { modifier: 0 },
+                        constitution: { modifier: 0 },
+                        wisdom: { modifier: 0 },
+                      };
                       let armorClass = 10 + abilityScores.dexterity.modifier;
 
                       // Check for unarmored defense (Barbarian/monk without armor)
-                      const hasUnarmoredDefense = character.class &&
+                      const hasUnarmoredDefense =
+                        character.class &&
                         (character.class.name.toLowerCase() === 'barbarian' ||
-                         character.class.name.toLowerCase() === 'monk');
+                          character.class.name.toLowerCase() === 'monk');
 
-                      const isWearingArmor = character.equippedArmor !== undefined && character.equippedArmor !== '';
+                      const isWearingArmor =
+                        character.equippedArmor !== undefined && character.equippedArmor !== '';
 
                       // If character has unarmored defense and is not wearing armor, use unarmored AC
                       if (hasUnarmoredDefense && !isWearingArmor) {
                         switch (character.class!.name.toLowerCase()) {
                           case 'barbarian':
-                            armorClass = 10 + abilityScores.dexterity.modifier + abilityScores.constitution.modifier;
+                            armorClass =
+                              10 +
+                              abilityScores.dexterity.modifier +
+                              abilityScores.constitution.modifier;
                             break;
                           case 'monk':
-                            armorClass = 10 + abilityScores.dexterity.modifier + abilityScores.wisdom.modifier;
+                            armorClass =
+                              10 + abilityScores.dexterity.modifier + abilityScores.wisdom.modifier;
                             break;
                         }
                       }
@@ -221,20 +238,20 @@ const CharacterSheetTabs: React.FC<CharacterSheetTabsProps> = ({
 
           <TabsContent value="advancement" className="space-y-4">
             {character.classLevels && character.classLevels.length > 1 ? (
-              <MulticlassManager 
-                character={character} 
+              <MulticlassManager
+                character={character}
                 onUpdate={(updatedCharacter) => {
                   // Update character and trigger refresh
                   onCharacterUpdate();
-                }} 
+                }}
               />
             ) : (
-              <ExperienceManager 
-                character={character} 
+              <ExperienceManager
+                character={character}
                 onUpdate={(updatedCharacter) => {
                   // Update character and trigger refresh
                   onCharacterUpdate();
-                }} 
+                }}
               />
             )}
           </TabsContent>

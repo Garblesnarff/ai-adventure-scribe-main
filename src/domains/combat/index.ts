@@ -89,11 +89,7 @@ export {
 // ===========================
 // Conditions
 // ===========================
-export {
-  addCondition,
-  removeCondition,
-  hasCondition,
-} from './ConditionManager';
+export { addCondition, removeCondition, hasCondition } from './ConditionManager';
 
 // ===========================
 // Death Saves
@@ -110,18 +106,9 @@ export {
 // ===========================
 // Attack Rolls
 // ===========================
-export {
-  rollAttack,
-  doesAttackHit,
-  rollDamage,
-  getCriticalMultiplier,
-} from './AttackRolls';
+export { rollAttack, doesAttackHit, rollDamage, getCriticalMultiplier } from './AttackRolls';
 
 // ===========================
 // Saving Throws
 // ===========================
-export {
-  rollSavingThrow,
-  checkConcentration,
-  breakConcentration,
-} from './SavingThrows';
+export { rollSavingThrow, checkConcentration, breakConcentration } from './SavingThrows';

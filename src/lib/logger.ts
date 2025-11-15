@@ -131,7 +131,7 @@ function processMetadata(metadata?: LogMetadata): LogMetadata | undefined {
   const processed = { ...metadata };
 
   // Convert Error objects, DOM nodes, and React elements to structured data
-  Object.keys(processed).forEach(key => {
+  Object.keys(processed).forEach((key) => {
     const value = processed[key];
 
     if (value instanceof Error) {
@@ -156,9 +156,10 @@ function processMetadata(metadata?: LogMetadata): LogMetadata | undefined {
       // Handle React elements
       processed[key] = {
         __type: 'ReactElement',
-        type: typeof (value as { type?: unknown }).type === 'function'
-          ? (value as { type: { name?: string } }).type.name || 'Component'
-          : (value as { type?: unknown }).type,
+        type:
+          typeof (value as { type?: unknown }).type === 'function'
+            ? (value as { type: { name?: string } }).type.name || 'Component'
+            : (value as { type?: unknown }).type,
       };
     } else if (typeof value === 'object' && value !== null && 'current' in value) {
       // Handle React refs (objects with 'current' property that might contain DOM nodes)
@@ -174,7 +175,7 @@ function processMetadata(metadata?: LogMetadata): LogMetadata | undefined {
             tagName: element.tagName || undefined,
             id: (element as HTMLElement).id || undefined,
             className: (element as HTMLElement).className || undefined,
-          }
+          },
         };
       }
     }
@@ -204,7 +205,13 @@ export const logger = {
   debug: (message: unknown, ...rest: unknown[]) => {
     if (enabledLevels.debug) {
       // If first arg is a string and second is an object (new signature)
-      if (typeof message === 'string' && rest.length === 1 && typeof rest[0] === 'object' && rest[0] !== null && !Array.isArray(rest[0])) {
+      if (
+        typeof message === 'string' &&
+        rest.length === 1 &&
+        typeof rest[0] === 'object' &&
+        rest[0] !== null &&
+        !Array.isArray(rest[0])
+      ) {
         const processed = processMetadata(rest[0] as LogMetadata);
         const formatted = formatMetadata(processed);
         console.debug(...format('debug', [message, formatted].filter(Boolean)));
@@ -232,7 +239,13 @@ export const logger = {
   info: (message: unknown, ...rest: unknown[]) => {
     if (enabledLevels.info) {
       // If first arg is a string and second is an object (new signature)
-      if (typeof message === 'string' && rest.length === 1 && typeof rest[0] === 'object' && rest[0] !== null && !Array.isArray(rest[0])) {
+      if (
+        typeof message === 'string' &&
+        rest.length === 1 &&
+        typeof rest[0] === 'object' &&
+        rest[0] !== null &&
+        !Array.isArray(rest[0])
+      ) {
         const processed = processMetadata(rest[0] as LogMetadata);
         const formatted = formatMetadata(processed);
         console.info(...format('info', [message, formatted].filter(Boolean)));
@@ -260,7 +273,13 @@ export const logger = {
   warn: (message: unknown, ...rest: unknown[]) => {
     if (enabledLevels.warn) {
       // If first arg is a string and second is an object (new signature)
-      if (typeof message === 'string' && rest.length === 1 && typeof rest[0] === 'object' && rest[0] !== null && !Array.isArray(rest[0])) {
+      if (
+        typeof message === 'string' &&
+        rest.length === 1 &&
+        typeof rest[0] === 'object' &&
+        rest[0] !== null &&
+        !Array.isArray(rest[0])
+      ) {
         const processed = processMetadata(rest[0] as LogMetadata);
         const formatted = formatMetadata(processed);
         console.warn(...format('warn', [message, formatted].filter(Boolean)));
@@ -289,7 +308,13 @@ export const logger = {
   error: (message: unknown, ...rest: unknown[]) => {
     if (enabledLevels.error) {
       // If first arg is a string and second is an object (new signature)
-      if (typeof message === 'string' && rest.length === 1 && typeof rest[0] === 'object' && rest[0] !== null && !Array.isArray(rest[0])) {
+      if (
+        typeof message === 'string' &&
+        rest.length === 1 &&
+        typeof rest[0] === 'object' &&
+        rest[0] !== null &&
+        !Array.isArray(rest[0])
+      ) {
         const processed = processMetadata(rest[0] as LogMetadata);
         const formatted = formatMetadata(processed);
         console.error(...format('error', [message, formatted].filter(Boolean)));

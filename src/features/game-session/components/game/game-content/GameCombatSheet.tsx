@@ -1,6 +1,7 @@
 import React from 'react';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+
 import CombatInterface from '@/components/combat/CombatInterface';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 /**
  * GameCombatSheet Component

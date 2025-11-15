@@ -1,5 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 import type {
   BlogCategory,
   BlogMediaAsset,
@@ -10,6 +8,9 @@ import type {
   SignedUploadRequest,
   SignedUploadResponse,
 } from '@/types/blog';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { supabase } from '@/integrations/supabase/client';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 const BLOG_MEDIA_BUCKET = 'blog-media';

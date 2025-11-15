@@ -1,5 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getGeminiApiManager } from './gemini-api-manager-singleton';
+
+import type { GoogleGenerativeAI } from '@google/generative-ai';
+
 import logger from '@/lib/logger';
 
 /**
@@ -43,5 +45,5 @@ export const geminiService = {
       logger.error('Gemini service generation failed:', error);
       throw error;
     }
-  }
+  },
 };

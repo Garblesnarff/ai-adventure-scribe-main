@@ -1,17 +1,16 @@
+import { Sword, Shield, Heart, Zap, Check, Sparkles, BookOpen } from 'lucide-react';
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { CharacterClass } from '@/types/character';
+
 import { Badge } from '@/components/ui/badge';
-import { SelectableCard } from '@/components/ui/selectable-card';
-import { classes } from '@/data/classOptions';
-import { CharacterClass } from '@/types/character';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useAutoScroll } from '@/hooks/use-auto-scroll';
-import { Sword, Shield, Heart, Zap, Check, Sparkles, BookOpen, Wand2, Skull, Music, Trees, Users } from 'lucide-react';
-import { cardContainer, cardItem } from '@/utils/animations';
-import logger from '@/lib/logger';
 import { Z_INDEX } from '@/constants/z-index';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { classes } from '@/data/classOptions';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import logger from '@/lib/logger';
 
 const ClassSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -26,7 +25,7 @@ const ClassSelection: React.FC = () => {
 
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { class: characterClass }
+      payload: { class: characterClass },
     });
 
     logger.debug('🎯 Dispatched UPDATE_CHARACTER with payload:', { class: characterClass });
@@ -38,7 +37,7 @@ const ClassSelection: React.FC = () => {
     }, 100);
 
     toast({
-      title: "Class Selected",
+      title: 'Class Selected',
       description: `You have chosen the ${characterClass.name} class.`,
       duration: 1000,
     });
@@ -50,17 +49,11 @@ const ClassSelection: React.FC = () => {
   const getClassIcon = (classId: string) => {
     const iconMap: Record<string, React.ElementType> = {
       fighter: Sword,
-      wizard: Wand2,
+      wizard: BookOpen,
       cleric: Sparkles,
       rogue: Zap,
       paladin: Shield,
       barbarian: Heart,
-      ranger: BookOpen,
-      warlock: Skull,
-      bard: Music,
-      druid: Trees,
-      monk: Users,
-      sorcerer: Wand2,
     };
     return iconMap[classId] || Sword;
   };
@@ -77,7 +70,9 @@ const ClassSelection: React.FC = () => {
             <h2 className="text-3xl font-bold bg-gradient-to-r from-infinite-gold to-infinite-gold-dark bg-clip-text text-transparent">
               Choose Your Class
             </h2>
-            <p className="text-muted-foreground">Select the path that defines your abilities and playstyle</p>
+            <p className="text-muted-foreground">
+              Select the path that defines your abilities and playstyle
+            </p>
           </div>
         </div>
       </div>
@@ -91,7 +86,8 @@ const ClassSelection: React.FC = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">
-                <strong>Choose wisely!</strong> Your class determines your combat abilities, skills, and role in the party. Each class has unique features and progression paths.
+                <strong>Choose wisely!</strong> Your class determines your combat abilities, skills,
+                and role in the party. Each class has unique features and progression paths.
               </p>
             </div>
           </div>
@@ -125,11 +121,15 @@ const ClassSelection: React.FC = () => {
                   handleClassSelect(characterClass);
                 }
               }}
-              style={characterClass.backgroundImage ? {
-                backgroundImage: `url(${characterClass.backgroundImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              } : undefined}
+              style={
+                characterClass.backgroundImage
+                  ? {
+                      backgroundImage: `url(${characterClass.backgroundImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }
+                  : undefined
+              }
             >
               {/* Background Overlay */}
               {characterClass.backgroundImage && (
@@ -138,7 +138,9 @@ const ClassSelection: React.FC = () => {
 
               {/* Selected Indicator */}
               {isSelected && (
-                <div className={`absolute top-4 right-4 z-[${Z_INDEX.CARD_HOVER}] bg-primary text-primary-foreground rounded-full p-2 shadow-lg`}>
+                <div
+                  className={`absolute top-4 right-4 z-[${Z_INDEX.CARD_HOVER}] bg-primary text-primary-foreground rounded-full p-2 shadow-lg`}
+                >
                   <Check className="w-5 h-5" />
                 </div>
               )}
@@ -146,10 +148,16 @@ const ClassSelection: React.FC = () => {
               <CardHeader className={`relative z-[${Z_INDEX.OVERLAY_EFFECT}] pb-3`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${characterClass.backgroundImage ? 'bg-white/20 backdrop-blur-sm' : 'bg-primary/10'}`}>
-                      <ClassIcon className={`w-6 h-6 ${characterClass.backgroundImage ? 'text-white' : 'text-primary'}`} />
+                    <div
+                      className={`p-2 rounded-lg ${characterClass.backgroundImage ? 'bg-white/20 backdrop-blur-sm' : 'bg-primary/10'}`}
+                    >
+                      <ClassIcon
+                        className={`w-6 h-6 ${characterClass.backgroundImage ? 'text-white' : 'text-primary'}`}
+                      />
                     </div>
-                    <CardTitle className={`text-2xl font-bold ${characterClass.backgroundImage ? 'text-white drop-shadow-lg' : ''}`}>
+                    <CardTitle
+                      className={`text-2xl font-bold ${characterClass.backgroundImage ? 'text-white drop-shadow-lg' : ''}`}
+                    >
                       {characterClass.name}
                     </CardTitle>
                   </div>
@@ -157,34 +165,55 @@ const ClassSelection: React.FC = () => {
               </CardHeader>
 
               <CardContent className={`relative z-[${Z_INDEX.OVERLAY_EFFECT}] space-y-4`}>
-                <p className={`text-sm leading-relaxed ${characterClass.backgroundImage ? 'text-gray-100' : 'text-muted-foreground'}`}>
+                <p
+                  className={`text-sm leading-relaxed ${characterClass.backgroundImage ? 'text-gray-100' : 'text-muted-foreground'}`}
+                >
                   {characterClass.description}
                 </p>
 
                 {/* Stats Section */}
-                <div className={`space-y-3 pt-3 border-t ${characterClass.backgroundImage ? 'border-white/20' : 'border-border'}`}>
+                <div
+                  className={`space-y-3 pt-3 border-t ${characterClass.backgroundImage ? 'border-white/20' : 'border-border'}`}
+                >
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm font-medium flex items-center gap-2 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}>
+                    <span
+                      className={`text-sm font-medium flex items-center gap-2 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}
+                    >
                       <Heart className="w-4 h-4" />
                       Hit Die:
                     </span>
-                    <Badge variant={characterClass.backgroundImage ? "secondary" : "outline"} className={characterClass.backgroundImage ? 'bg-white/20 text-white border-white/30' : ''}>
+                    <Badge
+                      variant={characterClass.backgroundImage ? 'secondary' : 'outline'}
+                      className={
+                        characterClass.backgroundImage
+                          ? 'bg-white/20 text-white border-white/30'
+                          : ''
+                      }
+                    >
                       d{characterClass.hitDie}
                     </Badge>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm font-medium flex items-center gap-2 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}>
+                    <span
+                      className={`text-sm font-medium flex items-center gap-2 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}
+                    >
                       <Zap className="w-4 h-4" />
                       Primary Ability:
                     </span>
-                    <Badge variant={characterClass.backgroundImage ? "secondary" : "outline"} className={`capitalize ${characterClass.backgroundImage ? 'bg-white/20 text-white border-white/30' : ''}`}>
-                      {String(characterClass.primaryAbility).charAt(0).toUpperCase() + String(characterClass.primaryAbility).slice(1)}
+                    <Badge
+                      variant={characterClass.backgroundImage ? 'secondary' : 'outline'}
+                      className={`capitalize ${characterClass.backgroundImage ? 'bg-white/20 text-white border-white/30' : ''}`}
+                    >
+                      {String(characterClass.primaryAbility).charAt(0).toUpperCase() +
+                        String(characterClass.primaryAbility).slice(1)}
                     </Badge>
                   </div>
 
                   <div>
-                    <div className={`text-sm font-medium mb-2 flex items-center gap-2 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}>
+                    <div
+                      className={`text-sm font-medium mb-2 flex items-center gap-2 ${characterClass.backgroundImage ? 'text-gray-200' : ''}`}
+                    >
                       <Shield className="w-4 h-4" />
                       Saving Throws:
                     </div>

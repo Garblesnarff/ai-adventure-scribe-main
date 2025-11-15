@@ -1,16 +1,13 @@
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+
 import CampaignCard from './campaign-card';
+
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
 interface CampaignSelectionModalProps {
@@ -41,12 +38,14 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
       // Excludes heavy JSONB fields (setting_details, thematic_elements, style_config, rules_config)
       const { data, error } = await supabase
         .from('campaigns')
-        .select(`
+        .select(
+          `
           id, name, description, genre,
           difficulty_level, campaign_length, tone,
           status, background_image, art_style,
           created_at, updated_at
-        `)
+        `,
+        )
         .eq('status', 'active');
 
       if (error) throw error;
@@ -61,7 +60,7 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
   const handleStartSession = async (campaignId: string) => {
     try {
       logger.info('Starting session with character:', characterId);
-      
+
       // Create new game session
       const { data: session, error } = await supabase
         .from('game_sessions')
@@ -76,8 +75,8 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
       if (error) throw error;
 
       toast({
-        title: "Session Started",
-        description: "Your game session has begun!",
+        title: 'Session Started',
+        description: 'Your game session has begun!',
       });
 
       // Navigate to campaign hub with character and session IDs
@@ -85,9 +84,9 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
     } catch (error) {
       logger.error('Error starting session:', error);
       toast({
-        title: "Error",
-        description: "Failed to start game session",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to start game session',
+        variant: 'destructive',
       });
     }
   };
@@ -104,17 +103,11 @@ const CampaignSelectionModal: React.FC<CampaignSelectionModalProps> = ({
           ) : campaigns?.length ? (
             <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto">
               {campaigns.map((campaign) => (
-                <CampaignCard
-                  key={campaign.id}
-                  campaign={campaign}
-                  onSelect={handleStartSession}
-                />
+                <CampaignCard key={campaign.id} campaign={campaign} onSelect={handleStartSession} />
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground">
-              No available campaigns found
-            </p>
+            <p className="text-center text-muted-foreground">No available campaigns found</p>
           )}
         </div>
       </DialogContent>

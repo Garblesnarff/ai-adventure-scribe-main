@@ -1,7 +1,9 @@
+import { Send, Paperclip, Smile, Dice6, Loader2 } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
+
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Send, Paperclip, Smile, Dice6, Loader2 } from 'lucide-react';
+
 import { mightBeDiceCommand, getDiceCommandSuggestions } from '@/utils/diceCommandParser';
 
 interface ChatInputProps {
@@ -38,7 +40,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
     // Check for dice command and show suggestions
     const isDiceCommand = mightBeDiceCommand(input);
     setShowDiceSuggestions(isDiceCommand);
-    
+
     if (isDiceCommand) {
       const suggestions = getDiceCommandSuggestions(input);
       setDiceSuggestions(suggestions);
@@ -199,16 +201,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
         <div className="flex justify-between items-center mt-3 text-xs text-gray-400">
           <span>
             {showDiceSuggestions ? (
-              <>Type <code className="bg-gray-100 px-1 rounded">/roll 1d20</code> for dice rolls</>
+              <>
+                Type <code className="bg-gray-100 px-1 rounded">/roll 1d20</code> for dice rolls
+              </>
             ) : (
-              <>Press Enter to send, Shift+Enter for new line • <code className="bg-gray-100 px-1 rounded">/roll</code> for dice</>
+              <>
+                Press Enter to send, Shift+Enter for new line •{' '}
+                <code className="bg-gray-100 px-1 rounded">/roll</code> for dice
+              </>
             )}
           </span>
-          {isExpanded && (
-            <span className="text-gray-500">
-              {input.length}/1000 characters
-            </span>
-          )}
+          {isExpanded && <span className="text-gray-500">{input.length}/1000 characters</span>}
         </div>
       </div>
     </div>

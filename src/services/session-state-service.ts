@@ -1,5 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
 import type { SessionStatePayload } from '@/types/session-state';
+
+import { supabase } from '@/integrations/supabase/client';
 import { createDefaultSessionState } from '@/types/session-state';
 
 /**
@@ -32,7 +33,10 @@ export class SessionStateService {
   }
 
   /** Merge-update the session state JSON and persist. */
-  static async updateState(sessionId: string, partial: Partial<SessionStatePayload>): Promise<SessionStatePayload> {
+  static async updateState(
+    sessionId: string,
+    partial: Partial<SessionStatePayload>,
+  ): Promise<SessionStatePayload> {
     try {
       const current = await this.getState(sessionId);
       const next: SessionStatePayload = {
@@ -53,12 +57,20 @@ export class SessionStateService {
       return next;
     } catch {
       const current = await this.getState(sessionId);
-      return { ...current, ...partial, lastUpdate: new Date().toISOString() } as SessionStatePayload;
+      return {
+        ...current,
+        ...partial,
+        lastUpdate: new Date().toISOString(),
+      } as SessionStatePayload;
     }
   }
 
   /** Append a combat log entry into the state JSON with retention cap. */
-  static async appendCombatLog(sessionId: string, entry: any, maxEntries: number = 500): Promise<void> {
+  static async appendCombatLog(
+    sessionId: string,
+    entry: any,
+    maxEntries: number = 500,
+  ): Promise<void> {
     const current = await this.getState(sessionId);
     const newEntry = { timestamp: new Date().toISOString(), entry };
     const existing = current.combatLog || [];
@@ -72,17 +84,17 @@ export class SessionStateService {
     };
 
     try {
-      await supabase
-        .from('game_sessions')
-        .update({ session_state: updated })
-        .eq('id', sessionId);
+      await supabase.from('game_sessions').update({ session_state: updated }).eq('id', sessionId);
     } catch {
       // safe failure
     }
   }
 
   /** Convenience: append a structured dice/roll event to the combat log. */
-  static async appendRollEvent(sessionId: string, event: { kind: string; payload: any }): Promise<void> {
+  static async appendRollEvent(
+    sessionId: string,
+    event: { kind: string; payload: any },
+  ): Promise<void> {
     await this.appendCombatLog(sessionId, { kind: event.kind, payload: event.payload });
   }
 }

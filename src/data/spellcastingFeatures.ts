@@ -1,4 +1,4 @@
-import { AbilityScores } from '@/types/character';
+import type { AbilityScores } from '@/types/character';
 
 /**
  * Interface for metamagic options (Sorcerer feature)
@@ -42,23 +42,23 @@ export interface AdvancedSpellcasting {
   ability: keyof AbilityScores;
   cantripsKnown: number;
   spellsKnown?: number;
-  
+
   // Spell Preparation
   preparation: SpellPreparation;
-  
+
   // Pact Magic (Warlock)
   pactMagic?: PactMagicSystem;
-  
+
   // Metamagic (Sorcerer)
   metamagic?: {
     available: boolean;
     sorceryPoints: number;
     optionsKnown: number;
   };
-  
+
   // Ritual Casting
   ritualCasting: boolean;
-  
+
   // Spellbook (Wizard)
   spellbook?: {
     hasSpellbook: boolean;
@@ -75,52 +75,60 @@ export const metamagicOptions: MetamagicOption[] = [
   {
     id: 'careful-spell',
     name: 'Careful Spell',
-    description: 'When you cast a spell that forces other creatures to make a saving throw, you can protect some of those creatures from the spell\'s full force. To do so, you spend 1 sorcery point and choose a number of those creatures up to your Charisma modifier (minimum of one creature). A chosen creature automatically succeeds on its saving throw against the spell.',
-    sorceryPointCost: 1
+    description:
+      "When you cast a spell that forces other creatures to make a saving throw, you can protect some of those creatures from the spell's full force. To do so, you spend 1 sorcery point and choose a number of those creatures up to your Charisma modifier (minimum of one creature). A chosen creature automatically succeeds on its saving throw against the spell.",
+    sorceryPointCost: 1,
   },
   {
     id: 'distant-spell',
     name: 'Distant Spell',
-    description: 'When you cast a spell that has a range of 5 feet or greater, you can spend 1 sorcery point to double the range of the spell. When you cast a spell that has a range of touch, you can spend 1 sorcery point to make the range of the spell 30 feet.',
-    sorceryPointCost: 1
+    description:
+      'When you cast a spell that has a range of 5 feet or greater, you can spend 1 sorcery point to double the range of the spell. When you cast a spell that has a range of touch, you can spend 1 sorcery point to make the range of the spell 30 feet.',
+    sorceryPointCost: 1,
   },
   {
     id: 'empowered-spell',
     name: 'Empowered Spell',
-    description: 'When you roll damage for a spell, you can spend 1 sorcery point to reroll a number of the damage dice up to your Charisma modifier (minimum of one). You must use the new rolls. You can use Empowered Spell even if you have already used a different Metamagic option during the casting of the spell.',
-    sorceryPointCost: 1
+    description:
+      'When you roll damage for a spell, you can spend 1 sorcery point to reroll a number of the damage dice up to your Charisma modifier (minimum of one). You must use the new rolls. You can use Empowered Spell even if you have already used a different Metamagic option during the casting of the spell.',
+    sorceryPointCost: 1,
   },
   {
     id: 'extended-spell',
     name: 'Extended Spell',
-    description: 'When you cast a spell that has a duration of 1 minute or longer, you can spend 1 sorcery point to double its duration, to a maximum duration of 24 hours.',
-    sorceryPointCost: 1
+    description:
+      'When you cast a spell that has a duration of 1 minute or longer, you can spend 1 sorcery point to double its duration, to a maximum duration of 24 hours.',
+    sorceryPointCost: 1,
   },
   {
     id: 'heightened-spell',
     name: 'Heightened Spell',
-    description: 'When you cast a spell that forces a creature to make a saving throw to resist its effects, you can spend 3 sorcery points to give one target of the spell disadvantage on its first saving throw made against the spell.',
-    sorceryPointCost: 3
+    description:
+      'When you cast a spell that forces a creature to make a saving throw to resist its effects, you can spend 3 sorcery points to give one target of the spell disadvantage on its first saving throw made against the spell.',
+    sorceryPointCost: 3,
   },
   {
     id: 'quickened-spell',
     name: 'Quickened Spell',
-    description: 'When you cast a spell that has a casting time of 1 action, you can spend 2 sorcery points to change the casting time to 1 bonus action for this casting.',
+    description:
+      'When you cast a spell that has a casting time of 1 action, you can spend 2 sorcery points to change the casting time to 1 bonus action for this casting.',
     sorceryPointCost: 2,
-    applicableSpellLevels: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    applicableSpellLevels: [1, 2, 3, 4, 5, 6, 7, 8, 9],
   },
   {
     id: 'subtle-spell',
     name: 'Subtle Spell',
-    description: 'When you cast a spell, you can spend 1 sorcery point to cast it without any somatic or verbal components.',
-    sorceryPointCost: 1
+    description:
+      'When you cast a spell, you can spend 1 sorcery point to cast it without any somatic or verbal components.',
+    sorceryPointCost: 1,
   },
   {
     id: 'twinned-spell',
     name: 'Twinned Spell',
-    description: 'When you cast a spell that targets only one creature and doesn\'t have a range of self, you can spend a number of sorcery points equal to the spell\'s level to target a second creature in range with the same spell (1 sorcery point if the spell is a cantrip). To be eligible, a spell must be incapable of targeting more than one creature at the spell\'s current level.',
-    sorceryPointCost: 1 // Variable based on spell level
-  }
+    description:
+      "When you cast a spell that targets only one creature and doesn't have a range of self, you can spend a number of sorcery points equal to the spell's level to target a second creature in range with the same spell (1 sorcery point if the spell is a cantrip). To be eligible, a spell must be incapable of targeting more than one creature at the spell's current level.",
+    sorceryPointCost: 1, // Variable based on spell level
+  },
 ];
 
 /**
@@ -147,7 +155,7 @@ export const spellcastingProgression = {
     17: { cantrips: 5, spells: [4, 3, 3, 3, 2, 1, 1, 1, 1] },
     18: { cantrips: 5, spells: [4, 3, 3, 3, 3, 1, 1, 1, 1] },
     19: { cantrips: 5, spells: [4, 3, 3, 3, 3, 2, 1, 1, 1] },
-    20: { cantrips: 5, spells: [4, 3, 3, 3, 3, 2, 2, 1, 1] }
+    20: { cantrips: 5, spells: [4, 3, 3, 3, 3, 2, 2, 1, 1] },
   },
   halfCaster: {
     2: { cantrips: 0, spells: [2, 0, 0, 0, 0] },
@@ -168,7 +176,7 @@ export const spellcastingProgression = {
     17: { cantrips: 0, spells: [4, 3, 3, 3, 1] },
     18: { cantrips: 0, spells: [4, 3, 3, 3, 1] },
     19: { cantrips: 0, spells: [4, 3, 3, 3, 2] },
-    20: { cantrips: 0, spells: [4, 3, 3, 3, 2] }
+    20: { cantrips: 0, spells: [4, 3, 3, 3, 2] },
   },
   pactMagic: {
     1: { cantrips: 2, pactSlots: 1, pactSlotLevel: 1, spellsKnown: 2 },
@@ -190,8 +198,8 @@ export const spellcastingProgression = {
     17: { cantrips: 4, pactSlots: 4, pactSlotLevel: 5, spellsKnown: 14 },
     18: { cantrips: 4, pactSlots: 4, pactSlotLevel: 5, spellsKnown: 14 },
     19: { cantrips: 4, pactSlots: 4, pactSlotLevel: 5, spellsKnown: 15 },
-    20: { cantrips: 4, pactSlots: 4, pactSlotLevel: 5, spellsKnown: 15 }
-  }
+    20: { cantrips: 4, pactSlots: 4, pactSlotLevel: 5, spellsKnown: 15 },
+  },
 };
 
 /**
@@ -201,10 +209,12 @@ export const getSpellSlotsByLevel = (characterClass: string, level: number): num
   if (characterClass.toLowerCase() === 'warlock') {
     return []; // Warlocks use Pact Magic, not regular spell slots
   }
-  
+
   const isHalfCaster = ['paladin', 'ranger'].includes(characterClass.toLowerCase());
-  const progression = isHalfCaster ? spellcastingProgression.halfCaster : spellcastingProgression.fullCaster;
-  
+  const progression = isHalfCaster
+    ? spellcastingProgression.halfCaster
+    : spellcastingProgression.fullCaster;
+
   return progression[level as keyof typeof progression]?.spells || [];
 };
 
@@ -212,9 +222,13 @@ export const getPactMagicProgression = (level: number) => {
   return spellcastingProgression.pactMagic[level as keyof typeof spellcastingProgression.pactMagic];
 };
 
-export const calculateSpellsKnown = (characterClass: string, level: number, abilityModifier: number): number => {
+export const calculateSpellsKnown = (
+  characterClass: string,
+  level: number,
+  abilityModifier: number,
+): number => {
   const className = characterClass.toLowerCase();
-  
+
   switch (className) {
     case 'bard':
     case 'ranger':
@@ -222,17 +236,17 @@ export const calculateSpellsKnown = (characterClass: string, level: number, abil
     case 'warlock':
       // These classes have a fixed spells known progression
       return 0; // Should be looked up in class-specific tables
-    
+
     case 'cleric':
     case 'druid':
     case 'paladin':
       // Prepare spells = level + ability modifier
       return Math.max(1, level + abilityModifier);
-    
+
     case 'wizard':
       // Wizards learn spells in spellbook, prepare level + int modifier
       return Math.max(1, level + abilityModifier);
-    
+
     default:
       return 0;
   }

@@ -1,12 +1,20 @@
+import { Zap, Heart, Shield } from 'lucide-react';
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { CombatParticipant } from '@/types/combat';
+
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCombat } from '@/contexts/CombatContext';
-import { CombatParticipant } from '@/types/combat';
-import { Zap, Heart, Shield } from 'lucide-react';
 import logger from '@/lib/logger';
 
 interface ResourceConsumptionPanelProps {
@@ -18,7 +26,10 @@ interface ResourceConsumptionPanelProps {
  * ResourceConsumptionPanel component allows players to consume class resources
  * during combat, such as spell slots, ki points, rages, etc.
  */
-const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({ participant, onClose }) => {
+const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({
+  participant,
+  onClose,
+}) => {
   const { takeAction } = useCombat();
   const [selectedResource, setSelectedResource] = useState<string>('');
   const [resourceAmount, setResourceAmount] = useState<string>('1');
@@ -27,10 +38,16 @@ const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({ par
   const availableResources = [
     ...(participant.spellSlots ? [{ id: 'spell-slot', name: 'Spell Slot' }] : []),
     ...(participant.resources?.kiPoints ? [{ id: 'ki-points', name: 'Ki Points' }] : []),
-    ...(participant.resources?.sorceryPoints ? [{ id: 'sorcery-points', name: 'Sorcery Points' }] : []),
+    ...(participant.resources?.sorceryPoints
+      ? [{ id: 'sorcery-points', name: 'Sorcery Points' }]
+      : []),
     ...(participant.resources?.rages ? [{ id: 'rage', name: 'Rage' }] : []),
-    ...(participant.resources?.bardic_inspiration ? [{ id: 'bardic-inspiration', name: 'Bardic Inspiration' }] : []),
-    ...(participant.resources?.channelDivinity ? [{ id: 'channel-divinity', name: 'Channel Divinity' }] : []),
+    ...(participant.resources?.bardic_inspiration
+      ? [{ id: 'bardic-inspiration', name: 'Bardic Inspiration' }]
+      : []),
+    ...(participant.resources?.channelDivinity
+      ? [{ id: 'channel-divinity', name: 'Channel Divinity' }]
+      : []),
     ...(participant.resources?.actionSurge ? [{ id: 'action-surge', name: 'Action Surge' }] : []),
     ...(participant.resources?.layOnHands ? [{ id: 'lay-on-hands', name: 'Lay on Hands' }] : []),
   ];
@@ -118,34 +135,30 @@ const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({ par
           </Select>
         </div>
 
-        {selectedResource && selectedResource !== 'rage' && selectedResource !== 'bardic-inspiration' && selectedResource !== 'channel-divinity' && selectedResource !== 'action-surge' && (
-          <div>
-            <Label htmlFor="resource-amount">Amount</Label>
-            <Input
-              id="resource-amount"
-              type="number"
-              min="1"
-              value={resourceAmount}
-              onChange={(e) => setResourceAmount(e.target.value)}
-              placeholder="Enter amount"
-            />
-          </div>
-        )}
+        {selectedResource &&
+          selectedResource !== 'rage' &&
+          selectedResource !== 'bardic-inspiration' &&
+          selectedResource !== 'channel-divinity' &&
+          selectedResource !== 'action-surge' && (
+            <div>
+              <Label htmlFor="resource-amount">Amount</Label>
+              <Input
+                id="resource-amount"
+                type="number"
+                min="1"
+                value={resourceAmount}
+                onChange={(e) => setResourceAmount(e.target.value)}
+                placeholder="Enter amount"
+              />
+            </div>
+          )}
 
         <div className="flex gap-2">
-          <Button 
-            onClick={handleConsumeResource}
-            disabled={!selectedResource}
-            className="flex-1"
-          >
+          <Button onClick={handleConsumeResource} disabled={!selectedResource} className="flex-1">
             <Zap className="w-4 h-4 mr-2" />
             Consume
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="flex-1"
-          >
+          <Button variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
         </div>
@@ -169,43 +182,61 @@ const ResourceConsumptionPanel: React.FC<ResourceConsumptionPanelProps> = ({ par
             {participant.resources?.kiPoints && (
               <div className="flex justify-between">
                 <span>Ki Points:</span>
-                <span>{participant.resources.kiPoints.current}/{participant.resources.kiPoints.max}</span>
+                <span>
+                  {participant.resources.kiPoints.current}/{participant.resources.kiPoints.max}
+                </span>
               </div>
             )}
             {participant.resources?.sorceryPoints && (
               <div className="flex justify-between">
                 <span>Sorcery Points:</span>
-                <span>{participant.resources.sorceryPoints.current}/{participant.resources.sorceryPoints.max}</span>
+                <span>
+                  {participant.resources.sorceryPoints.current}/
+                  {participant.resources.sorceryPoints.max}
+                </span>
               </div>
             )}
             {participant.resources?.rages && (
               <div className="flex justify-between">
                 <span>Rages:</span>
-                <span>{participant.resources.rages.current}/{participant.resources.rages.max}</span>
+                <span>
+                  {participant.resources.rages.current}/{participant.resources.rages.max}
+                </span>
               </div>
             )}
             {participant.resources?.bardic_inspiration && (
               <div className="flex justify-between">
                 <span>Bardic Inspiration:</span>
-                <span>{participant.resources.bardic_inspiration.current}/{participant.resources.bardic_inspiration.max}</span>
+                <span>
+                  {participant.resources.bardic_inspiration.current}/
+                  {participant.resources.bardic_inspiration.max}
+                </span>
               </div>
             )}
             {participant.resources?.channelDivinity && (
               <div className="flex justify-between">
                 <span>Channel Divinity:</span>
-                <span>{participant.resources.channelDivinity.current}/{participant.resources.channelDivinity.max}</span>
+                <span>
+                  {participant.resources.channelDivinity.current}/
+                  {participant.resources.channelDivinity.max}
+                </span>
               </div>
             )}
             {participant.resources?.actionSurge && (
               <div className="flex justify-between">
                 <span>Action Surge:</span>
-                <span>{participant.resources.actionSurge.current}/{participant.resources.actionSurge.max}</span>
+                <span>
+                  {participant.resources.actionSurge.current}/
+                  {participant.resources.actionSurge.max}
+                </span>
               </div>
             )}
             {participant.resources?.layOnHands && (
               <div className="flex justify-between">
                 <span>Lay on Hands:</span>
-                <span>{participant.resources.layOnHands.current}/{participant.resources.layOnHands.max}</span>
+                <span>
+                  {participant.resources.layOnHands.current}/{participant.resources.layOnHands.max}
+                </span>
               </div>
             )}
           </div>

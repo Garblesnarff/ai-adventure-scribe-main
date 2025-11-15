@@ -12,7 +12,10 @@ export class CachedCampaignContextProvider {
   private cache = new Map<string, CacheEntry<any>>();
   private ttl: number;
 
-  constructor(ttl: number = DEFAULT_TTL, provider: CampaignContextProvider = new CampaignContextProvider()) {
+  constructor(
+    ttl: number = DEFAULT_TTL,
+    provider: CampaignContextProvider = new CampaignContextProvider(),
+  ) {
     this.ttl = ttl;
     this.inner = provider;
   }
@@ -28,7 +31,7 @@ export class CachedCampaignContextProvider {
     if (value) {
       this.cache.set(campaignId, {
         value,
-        expiresAt: Date.now() + this.ttl
+        expiresAt: Date.now() + this.ttl,
       });
     }
     return value;

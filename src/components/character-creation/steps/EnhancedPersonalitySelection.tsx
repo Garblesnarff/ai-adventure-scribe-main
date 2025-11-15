@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { Separator } from '@/components/ui/separator';
-import { backgrounds } from '@/data/backgroundOptions';
-import { 
-  Heart, 
-  Brain, 
+import {
+  Heart,
+  Brain,
   Anchor,
   AlertTriangle,
   Shuffle,
   Copy,
   Lightbulb,
   BookOpen,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { backgrounds } from '@/data/backgroundOptions';
 
 /**
  * EnhancedPersonalitySelection component for character creation
@@ -31,19 +32,23 @@ const EnhancedPersonalitySelection: React.FC = () => {
   const character = state.character;
   const selectedBackground = character?.background;
 
-  const [personalityTraits, setPersonalityTraits] = useState<string[]>(character?.personalityTraits || ['', '']);
+  const [personalityTraits, setPersonalityTraits] = useState<string[]>(
+    character?.personalityTraits || ['', ''],
+  );
   const [ideal, setIdeal] = useState<string>(character?.ideals?.[0] || '');
   const [bond, setBond] = useState<string>(character?.bonds?.[0] || '');
   const [flaw, setFlaw] = useState<string>(character?.flaws?.[0] || '');
 
   // Get background suggestions
   const backgroundData = backgrounds.find((bg: any) => bg.id === selectedBackground?.id);
-  const suggestions = backgroundData ? {
-    traits: backgroundData.suggestedPersonalityTraits || [],
-    ideals: backgroundData.suggestedIdeals || [],
-    bonds: backgroundData.suggestedBonds || [],
-    flaws: backgroundData.suggestedFlaws || []
-  } : null;
+  const suggestions = backgroundData
+    ? {
+        traits: backgroundData.suggestedPersonalityTraits || [],
+        ideals: backgroundData.suggestedIdeals || [],
+        bonds: backgroundData.suggestedBonds || [],
+        flaws: backgroundData.suggestedFlaws || [],
+      }
+    : null;
 
   /**
    * Apply personality changes to character
@@ -52,30 +57,34 @@ const EnhancedPersonalitySelection: React.FC = () => {
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: {
-        personalityTraits: personalityTraits.filter(trait => trait.trim()),
+        personalityTraits: personalityTraits.filter((trait) => trait.trim()),
         ideals: ideal.trim() ? [ideal] : [],
         bonds: bond.trim() ? [bond] : [],
         flaws: flaw.trim() ? [flaw] : [],
         // Initialize inspiration system
         inspiration: false,
         personalityIntegration: {
-          activeTraits: personalityTraits.filter(trait => trait.trim()),
+          activeTraits: personalityTraits.filter((trait) => trait.trim()),
           inspirationTriggers: [],
-          inspirationHistory: []
-        }
-      }
+          inspirationHistory: [],
+        },
+      },
     });
 
     toast({
       title: 'Personality Updated',
-      description: 'Your character\'s personality elements have been saved.',
+      description: "Your character's personality elements have been saved.",
     });
   };
 
   /**
    * Use a suggested element
    */
-  const applySuggestion = (type: 'traits' | 'ideals' | 'bonds' | 'flaws', suggestion: string, index?: number) => {
+  const applySuggestion = (
+    type: 'traits' | 'ideals' | 'bonds' | 'flaws',
+    suggestion: string,
+    index?: number,
+  ) => {
     switch (type) {
       case 'traits':
         if (index !== undefined) {
@@ -147,7 +156,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
     title: string,
     suggestions: string[],
     icon: React.ElementType,
-    colorClass: string
+    colorClass: string,
   ) => {
     if (!suggestions || suggestions.length === 0) return null;
 
@@ -155,7 +164,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
       <Card className="h-fit">
         <CardHeader className="pb-3">
           <CardTitle className={`flex items-center gap-2 text-sm ${colorClass}`}>
-            {React.createElement(icon, { className: "w-4 h-4" })}
+            {React.createElement(icon, { className: 'w-4 h-4' })}
             {title} Suggestions
           </CardTitle>
         </CardHeader>
@@ -208,7 +217,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
       {/* Quick Actions */}
       {suggestions && (
         <div className="flex justify-center">
-          <Button 
+          <Button
             onClick={useRandomSuggestions}
             variant="outline"
             className="flex items-center gap-2"
@@ -244,7 +253,9 @@ const EnhancedPersonalitySelection: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="trait-1" className="text-sm">First Trait</Label>
+                    <Label htmlFor="trait-1" className="text-sm">
+                      First Trait
+                    </Label>
                     <Textarea
                       id="trait-1"
                       placeholder="e.g., I idolize a particular hero of my faith..."
@@ -259,7 +270,9 @@ const EnhancedPersonalitySelection: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="trait-2" className="text-sm">Second Trait</Label>
+                    <Label htmlFor="trait-2" className="text-sm">
+                      Second Trait
+                    </Label>
                     <Textarea
                       id="trait-2"
                       placeholder="e.g., I can find common ground between enemies..."
@@ -309,7 +322,8 @@ const EnhancedPersonalitySelection: React.FC = () => {
                     Bond
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    What connects your character to the world? People, places, or things they care about.
+                    What connects your character to the world? People, places, or things they care
+                    about.
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -354,13 +368,25 @@ const EnhancedPersonalitySelection: React.FC = () => {
             <Lightbulb className="w-5 h-5 text-yellow-500" />
             Background Suggestions
           </h3>
-          
+
           {suggestions ? (
             <div className="space-y-4">
-              {renderSuggestions('traits', 'Personality Trait', suggestions.traits, Heart, 'text-red-500')}
+              {renderSuggestions(
+                'traits',
+                'Personality Trait',
+                suggestions.traits,
+                Heart,
+                'text-red-500',
+              )}
               {renderSuggestions('ideals', 'Ideal', suggestions.ideals, Brain, 'text-blue-500')}
               {renderSuggestions('bonds', 'Bond', suggestions.bonds, Anchor, 'text-green-500')}
-              {renderSuggestions('flaws', 'Flaw', suggestions.flaws, AlertTriangle, 'text-orange-500')}
+              {renderSuggestions(
+                'flaws',
+                'Flaw',
+                suggestions.flaws,
+                AlertTriangle,
+                'text-orange-500',
+              )}
             </div>
           ) : (
             <Card>
@@ -384,25 +410,23 @@ const EnhancedPersonalitySelection: React.FC = () => {
         </CardHeader>
         <CardContent className="text-sm text-gold-600 dark:text-gold-400">
           <p>
-            <strong>Inspiration</strong> is a rule the DM can use to reward you for playing your character 
-            in a way that's true to their personality traits, ideals, bonds, and flaws. When you have 
-            inspiration, you can spend it to gain advantage on one ability check, attack roll, or saving throw.
+            <strong>Inspiration</strong> is a rule the DM can use to reward you for playing your
+            character in a way that's true to their personality traits, ideals, bonds, and flaws.
+            When you have inspiration, you can spend it to gain advantage on one ability check,
+            attack roll, or saving throw.
           </p>
           <Separator className="my-3 bg-gold-300 dark:bg-gold-700" />
           <p className="text-xs">
-            Your DM tells you how to earn inspiration in the game. Typically, you gain it when you play 
-            out your character's personality in a way that creates interesting complications or drives the story forward.
+            Your DM tells you how to earn inspiration in the game. Typically, you gain it when you
+            play out your character's personality in a way that creates interesting complications or
+            drives the story forward.
           </p>
         </CardContent>
       </Card>
 
       {/* Completion Status */}
       <div className="text-center">
-        <Button 
-          onClick={applyPersonalityChanges}
-          size="lg"
-          className="w-full max-w-md"
-        >
+        <Button onClick={applyPersonalityChanges} size="lg" className="w-full max-w-md">
           Continue to Equipment Selection
         </Button>
       </div>

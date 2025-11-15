@@ -25,12 +25,30 @@ export default defineConfig({
     env: {
       DOTENV_CONFIG_PATH: path.resolve(rootDir, 'server/.env'),
     },
+    // Integration tests need more time
+    testTimeout: 30000,
+    // Run tests sequentially for integration tests (they use database)
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true, // Run one test at a time for database tests
+      },
+    },
     coverage: {
       enabled: true,
       provider: 'v8',
       reporter: ['text', 'html'],
       reportsDirectory: 'coverage',
-      include: ['src/rules/**/*.ts', 'src/trpc/**/*.ts'],
+      include: [
+        'src/rules/**/*.ts',
+        'src/trpc/**/*.ts',
+        'src/services/**/*.ts',
+      ],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        'src/__tests__/**',
+      ],
     },
   },
 });

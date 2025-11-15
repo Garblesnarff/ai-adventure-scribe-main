@@ -5,10 +5,12 @@
  * for characters and campaigns based on user choices and preferences.
  */
 
-import { EnhancementOption, OptionSelection } from '@/types/enhancement-options';
-import { Character } from '@/types/character';
-import { Campaign } from '@/types/campaign';
+import type { Campaign } from '@/types/campaign';
+import type { Character } from '@/types/character';
+import type { OptionSelection } from '@/types/enhancement-options';
+
 import logger from '@/lib/logger';
+import { EnhancementOption } from '@/types/enhancement-options';
 
 interface AIGenerationContext {
   character?: Character;
@@ -59,7 +61,7 @@ export class EnhancementAIGenerator {
       // Make API call to Gemini
       const response = await this.callGeminiAPI(enhancedPrompt, {
         temperature: request.temperature || 0.7,
-        maxTokens: request.maxLength || 150
+        maxTokens: request.maxLength || 150,
       });
 
       return this.postProcessResponse(response, request.optionId);
@@ -74,7 +76,7 @@ export class EnhancementAIGenerator {
    */
   public async generateMultipleSuggestions(
     request: AIGenerationRequest,
-    count: number = 3
+    count: number = 3,
   ): Promise<string[]> {
     const suggestions: string[] = [];
 
@@ -82,7 +84,7 @@ export class EnhancementAIGenerator {
       try {
         const suggestion = await this.generateEnhancement({
           ...request,
-          temperature: 0.8 + (i * 0.1) // Vary temperature for diversity
+          temperature: 0.8 + i * 0.1, // Vary temperature for diversity
         });
         suggestions.push(suggestion);
       } catch (error) {
@@ -98,21 +100,21 @@ export class EnhancementAIGenerator {
    */
   public async generateRecommendations(
     context: AIGenerationContext,
-    category: 'character' | 'campaign'
+    category: 'character' | 'campaign',
   ): Promise<string[]> {
     const prompt = this.buildRecommendationPrompt(context, category);
 
     try {
       const response = await this.callGeminiAPI(prompt, {
         temperature: 0.6,
-        maxTokens: 200
+        maxTokens: 200,
       });
 
       // Parse response into individual recommendations
       return response
         .split('\n')
-        .filter(line => line.trim())
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        .filter((line) => line.trim())
+        .map((line) => line.replace(/^\d+\.\s*/, '').trim())
         .slice(0, 5);
     } catch (error) {
       logger.error('Failed to generate recommendations:', error);
@@ -182,7 +184,7 @@ export class EnhancementAIGenerator {
 
     if (context.existingSelections?.length) {
       const selectionTypes = context.existingSelections
-        .map(s => s.optionId)
+        .map((s) => s.optionId)
         .slice(0, 3)
         .join(', ');
       info.push(`Existing enhancements: ${selectionTypes}`);
@@ -202,11 +204,12 @@ export class EnhancementAIGenerator {
    */
   private buildRecommendationPrompt(
     context: AIGenerationContext,
-    category: 'character' | 'campaign'
+    category: 'character' | 'campaign',
   ): string {
-    const basePrompt = category === 'character'
-      ? 'Suggest enhancement options for this D&D character that would create interesting roleplay opportunities and complement their build:'
-      : 'Suggest campaign enhancement elements that would create an engaging and memorable tabletop RPG experience:';
+    const basePrompt =
+      category === 'character'
+        ? 'Suggest enhancement options for this D&D character that would create interesting roleplay opportunities and complement their build:'
+        : 'Suggest campaign enhancement elements that would create an engaging and memorable tabletop RPG experience:';
 
     const contextInfo = this.buildContextInfo(context);
 
@@ -226,12 +229,12 @@ Provide 3-5 specific enhancement suggestions, each on a new line. Focus on:
    */
   private async callGeminiAPI(
     prompt: string,
-    options: { temperature: number; maxTokens: number }
+    options: { temperature: number; maxTokens: number },
   ): Promise<string> {
     // For now, return mock responses based on prompt content
     // In production, this would make actual API calls to Google Gemini
 
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
 
     // Mock responses based on prompt keywords
     if (prompt.includes('quirk') || prompt.includes('personality')) {
@@ -240,7 +243,7 @@ Provide 3-5 specific enhancement suggestions, each on a new line. Focus on:
         'Keeps a small journal where they write down the "last words" of defeated enemies, believing it honors their memory',
         'Has an unusual compulsion to taste everything once before eating, claiming it helps them "understand the essence" of food',
         'Speaks to their shadow as if it were a separate entity, occasionally asking it for advice in difficult situations',
-        'Collects small, smooth stones from every place they visit, arranging them in precise geometric patterns when making camp'
+        'Collects small, smooth stones from every place they visit, arranging them in precise geometric patterns when making camp',
       ];
       return quirks[Math.floor(Math.random() * quirks.length)];
     }
@@ -251,7 +254,7 @@ Provide 3-5 specific enhancement suggestions, each on a new line. Focus on:
         'The local wildlife has started exhibiting organized, almost intelligent behavior, as if responding to some unseen coordinator',
         'People throughout the region report the same recurring dream of a massive door deep underground, and some have begun sleepwalking toward a specific location',
         'Ancient coins bearing unknown symbols keep appearing in marketplaces, but no one remembers spending or receiving them',
-        'The stars have begun forming new constellations that somehow feel familiar, as if they\'re trying to communicate a long-lost message'
+        "The stars have begun forming new constellations that somehow feel familiar, as if they're trying to communicate a long-lost message",
       ];
       return mysteries[Math.floor(Math.random() * mysteries.length)];
     }
@@ -262,13 +265,13 @@ Provide 3-5 specific enhancement suggestions, each on a new line. Focus on:
         'A mysterious connection to an ancient organization',
         'An unusual pet or companion with special abilities',
         'A secret skill learned during a forgotten adventure',
-        'A prophetic dream that guides important decisions'
+        'A prophetic dream that guides important decisions',
       ];
       return recommendations.join('\n');
     }
 
     // Default response
-    return 'A mysterious trait that adds depth and intrigue to your character\'s story, creating new opportunities for adventure and roleplay.';
+    return "A mysterious trait that adds depth and intrigue to your character's story, creating new opportunities for adventure and roleplay.";
   }
 
   /**

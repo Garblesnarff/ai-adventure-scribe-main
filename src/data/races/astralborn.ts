@@ -15,14 +15,14 @@ export const astralborn: CharacterRace = {
       name: 'Astral Warrior',
       description: 'Fierce warriors with psionic abilities.',
       abilityScoreIncrease: { strength: 1 },
-      traits: ['Astral Knowledge', 'Warrior Psionics', 'Precise Strike']
+      traits: ['Astral Knowledge', 'Warrior Psionics', 'Precise Strike'],
     },
     {
       id: 'astral-monk',
       name: 'Astral Monk',
       description: 'Disciplined monks with psionic abilities.',
       abilityScoreIncrease: { wisdom: 1 },
-      traits: ['Mental Discipline', 'Monk Psionics', 'Psychic Blades']
-    }
-  ]
+      traits: ['Mental Discipline', 'Monk Psionics', 'Psychic Blades'],
+    },
+  ],
 };

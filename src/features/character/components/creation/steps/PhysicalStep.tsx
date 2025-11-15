@@ -1,15 +1,14 @@
+import { Ruler, Weight, User, Eye, Palette, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useCharacter } from '@/contexts/CharacterContext';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Ruler, Weight, User, Eye, Palette, Sparkles } from 'lucide-react';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
+import { useCharacter } from '@/contexts/CharacterContext';
 
 const PhysicalStep: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -74,12 +73,7 @@ const PhysicalStep: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <motion.div
-        className="text-center space-y-4"
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="text-center space-y-4">
         <div className="flex items-center justify-center space-x-3">
           <div className="p-3 bg-gradient-to-br from-infinite-purple to-infinite-teal rounded-full shadow-lg">
             <User className="w-8 h-8 text-white" />
@@ -96,36 +90,24 @@ const PhysicalStep: React.FC = () => {
             {race.name} Character
           </Badge>
         )}
-      </motion.div>
+      </div>
 
       {/* Units Toggle */}
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.1 }}
-      >
       <Card className="glass rounded-2xl hover-lift">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center space-x-3">
-            <Label htmlFor="metric-switch" className={!useMetric ? 'font-semibold' : ''}>Imperial</Label>
-            <Switch
-              id="metric-switch"
-              checked={useMetric}
-              onCheckedChange={setUseMetric}
-            />
-            <Label htmlFor="metric-switch" className={useMetric ? 'font-semibold' : ''}>Metric</Label>
+            <Label htmlFor="metric-switch" className={!useMetric ? 'font-semibold' : ''}>
+              Imperial
+            </Label>
+            <Switch id="metric-switch" checked={useMetric} onCheckedChange={setUseMetric} />
+            <Label htmlFor="metric-switch" className={useMetric ? 'font-semibold' : ''}>
+              Metric
+            </Label>
           </div>
         </CardContent>
       </Card>
-      </motion.div>
 
-      <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-        variants={cardContainer}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gender & Age Card */}
         <Card className="glass rounded-2xl hover-lift border-2 border-infinite-purple/20 transition-all">
           <CardHeader>
@@ -144,17 +126,23 @@ const PhysicalStep: React.FC = () => {
               >
                 <div className="flex items-center space-x-2 flex-1">
                   <RadioGroupItem value="male" id="male" />
-                  <Label htmlFor="male" className="cursor-pointer">Male</Label>
+                  <Label htmlFor="male" className="cursor-pointer">
+                    Male
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2 flex-1">
                   <RadioGroupItem value="female" id="female" />
-                  <Label htmlFor="female" className="cursor-pointer">Female</Label>
+                  <Label htmlFor="female" className="cursor-pointer">
+                    Female
+                  </Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label htmlFor="age" className="text-sm font-medium mb-2 block">Age (years)</Label>
+              <Label htmlFor="age" className="text-sm font-medium mb-2 block">
+                Age (years)
+              </Label>
               <Input
                 id="age"
                 type="number"
@@ -275,15 +263,9 @@ const PhysicalStep: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
 
       {/* Info Card */}
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.3 }}
-      >
       <Card className="glass rounded-2xl border-2 border-infinite-teal/20">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
@@ -292,13 +274,14 @@ const PhysicalStep: React.FC = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">
-                <strong>Tip:</strong> Your physical characteristics help bring your character to life. These details will be used for character portraits and descriptions during gameplay.
+                <strong>Tip:</strong> Your physical characteristics help bring your character to
+                life. These details will be used for character portraits and descriptions during
+                gameplay.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
-      </motion.div>
     </div>
   );
 };

@@ -2,8 +2,8 @@
  * Equipment utility functions for combat and inventory management
  */
 
-import { CombatParticipant } from '@/types/combat';
 import type { Equipment } from '@/data/equipmentOptions';
+import type { CombatParticipant } from '@/types/combat';
 
 type WeaponLike = {
   name: string;
@@ -29,7 +29,7 @@ export function createDefaultLightWeapons() {
     description: 'A curved, single-edged blade.',
     damage: { dice: '1d6', type: 'slashing' },
     attackBonus: 0,
-    weaponProperties: { finesse: true, light: true }
+    weaponProperties: { finesse: true, light: true },
   };
 
   const shortsword: Equipment = {
@@ -43,7 +43,7 @@ export function createDefaultLightWeapons() {
     description: 'A short, versatile piercing blade.',
     damage: { dice: '1d6', type: 'piercing' },
     attackBonus: 0,
-    weaponProperties: { finesse: true, light: true }
+    weaponProperties: { finesse: true, light: true },
   };
 
   const handaxe: Equipment = {
@@ -57,7 +57,7 @@ export function createDefaultLightWeapons() {
     description: 'A small axe for one-handed use.',
     damage: { dice: '1d6', type: 'slashing' },
     attackBonus: 0,
-    weaponProperties: { light: true, thrown: true }
+    weaponProperties: { light: true, thrown: true },
   };
 
   const dagger: Equipment = {
@@ -72,7 +72,7 @@ export function createDefaultLightWeapons() {
     damage: { dice: '1d4', type: 'piercing' },
     attackBonus: 0,
     weaponProperties: { finesse: true, light: true, thrown: true },
-    range: { normal: 20, long: 60 }
+    range: { normal: 20, long: 60 },
   };
 
   return { scimitar, shortsword, handaxe, dagger };
@@ -81,7 +81,10 @@ export function createDefaultLightWeapons() {
 /**
  * Equips a weapon to the main hand slot
  */
-export function equipMainHandWeapon(participant: CombatParticipant, weapon: Equipment): CombatParticipant {
+export function equipMainHandWeapon(
+  participant: CombatParticipant,
+  weapon: Equipment,
+): CombatParticipant {
   return {
     ...participant,
     mainHandWeapon: weapon,
@@ -91,7 +94,10 @@ export function equipMainHandWeapon(participant: CombatParticipant, weapon: Equi
 /**
  * Equips a weapon to the off-hand slot
  */
-export function equipOffHandWeapon(participant: CombatParticipant, weapon: Equipment): CombatParticipant {
+export function equipOffHandWeapon(
+  participant: CombatParticipant,
+  weapon: Equipment,
+): CombatParticipant {
   return {
     ...participant,
     offHandWeapon: weapon,
@@ -104,12 +110,12 @@ export function equipOffHandWeapon(participant: CombatParticipant, weapon: Equip
 export function canDualWield(participant: CombatParticipant) {
   const mainWeapon = participant.mainHandWeapon;
   const offWeapon = participant.offHandWeapon;
-  
+
   if (!mainWeapon || !offWeapon) return false;
-  
+
   const mainIsLight = mainWeapon.weaponProperties?.light;
   const offIsLight = offWeapon.weaponProperties?.light;
-  
+
   return mainIsLight && offIsLight;
 }
 
@@ -122,8 +128,8 @@ export function getEquippedWeapons(participant: CombatParticipant) {
     offHand: participant.offHandWeapon,
     allWeapons: [
       ...(participant.mainHandWeapon ? [participant.mainHandWeapon] : []),
-      ...(participant.offHandWeapon ? [participant.offHandWeapon] : [])
-    ].filter(Boolean)
+      ...(participant.offHandWeapon ? [participant.offHandWeapon] : []),
+    ].filter(Boolean),
   };
 }
 

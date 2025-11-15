@@ -1,6 +1,7 @@
+import { PromptComposer } from './prompt-composer';
+
 import type { ChatMessage, GameContext } from '@/services/ai-service';
 import type { SessionStatePayload } from '@/types/session-state';
-import { PromptComposer } from './prompt-composer';
 
 /**
  * StateAdapter
@@ -21,9 +22,12 @@ export class StateAdapter {
    * Normalize conversation history to the shape expected by the microservice
    * and cap to the most recent N turns (default 10).
    */
-  static normalizeHistory(history: ChatMessage[] = [], cap: number = 10): Array<{ role: 'user' | 'assistant'; content: string }> {
+  static normalizeHistory(
+    history: ChatMessage[] = [],
+    cap: number = 10,
+  ): Array<{ role: 'user' | 'assistant'; content: string }> {
     const trimmed = history.slice(-cap);
-    return trimmed.map(m => ({ role: m.role, content: m.content ?? '' }));
+    return trimmed.map((m) => ({ role: m.role, content: m.content ?? '' }));
   }
 
   /**

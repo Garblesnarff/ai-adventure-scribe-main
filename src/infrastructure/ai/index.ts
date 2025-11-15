@@ -30,7 +30,7 @@ export type {
   ApiKeyConfig,
   VoiceSettings,
   TTSRequest,
-  EmbeddingResponse
+  EmbeddingResponse,
 } from './types';
 
 /**

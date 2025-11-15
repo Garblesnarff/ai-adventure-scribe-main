@@ -13,7 +13,7 @@ import {
   blogTags,
   blogPostCategories,
   blogPostTags,
-} from '../../../../db/schema.js';
+} from '../../../../db/schema/index.js';
 import { eq, sql } from 'drizzle-orm';
 import { blogCategorySchema, blogTagSchema } from './blog-schemas.js';
 

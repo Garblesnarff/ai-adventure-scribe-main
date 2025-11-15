@@ -66,7 +66,7 @@ export class DiceEngine {
       rolls.push({
         dice: die.sides,
         value: die.value,
-        critical: die.sides === 20 && (die.value === 20 || die.value === 1)
+        critical: die.sides === 20 && (die.value === 20 || die.value === 1),
       });
     }
 
@@ -86,7 +86,7 @@ export class DiceEngine {
       timestamp: Date.now(),
       purpose,
       actorId,
-      secret
+      secret,
     };
   }
 
@@ -113,7 +113,7 @@ export class DiceEngine {
         expression,
         purpose,
         index: match.index,
-        length: match[0].length
+        length: match[0].length,
       });
     }
 
@@ -128,7 +128,7 @@ export class DiceEngine {
     // Parse the expression to double only the dice portions
     const criticalExpression = baseDamageExpression.replace(
       /(\d+)d(\d+)/g,
-      (match, count, sides) => `${parseInt(count) * 2}d${sides}`
+      (match, count, sides) => `${parseInt(count) * 2}d${sides}`,
     );
 
     return this.roll(criticalExpression, { purpose: 'critical damage' });
@@ -140,34 +140,37 @@ export class DiceEngine {
   static getWeaponDamageFormula(
     weaponName: string,
     character?: import('@/types/character').Character,
-    preferredAbility?: 'str' | 'dex'
+    preferredAbility?: 'str' | 'dex',
   ): string {
-    const weaponData: Record<string, { damage: string; versatile?: string; finesse?: boolean; ranged?: boolean }> = {
+    const weaponData: Record<
+      string,
+      { damage: string; versatile?: string; finesse?: boolean; ranged?: boolean }
+    > = {
       // Simple melee weapons
-      'club': { damage: '1d4' },
-      'dagger': { damage: '1d4', finesse: true },
-      'dart': { damage: '1d4', ranged: true },
-      'javelin': { damage: '1d6' },
-      'mace': { damage: '1d6' },
-      'staff': { damage: '1d6', versatile: '1d8' },
-      'spear': { damage: '1d6', versatile: '1d8' },
+      club: { damage: '1d4' },
+      dagger: { damage: '1d4', finesse: true },
+      dart: { damage: '1d4', ranged: true },
+      javelin: { damage: '1d6' },
+      mace: { damage: '1d6' },
+      staff: { damage: '1d6', versatile: '1d8' },
+      spear: { damage: '1d6', versatile: '1d8' },
 
       // Martial melee weapons
-      'battleaxe': { damage: '1d8', versatile: '1d10' },
-      'longsword': { damage: '1d8', versatile: '1d10' },
-      'rapier': { damage: '1d8', finesse: true },
-      'scimitar': { damage: '1d6', finesse: true },
-      'shortsword': { damage: '1d6', finesse: true },
-      'warhammer': { damage: '1d8', versatile: '1d10' },
-      'greatsword': { damage: '2d6' },
-      'greataxe': { damage: '1d12' },
-      'maul': { damage: '2d6' },
+      battleaxe: { damage: '1d8', versatile: '1d10' },
+      longsword: { damage: '1d8', versatile: '1d10' },
+      rapier: { damage: '1d8', finesse: true },
+      scimitar: { damage: '1d6', finesse: true },
+      shortsword: { damage: '1d6', finesse: true },
+      warhammer: { damage: '1d8', versatile: '1d10' },
+      greatsword: { damage: '2d6' },
+      greataxe: { damage: '1d12' },
+      maul: { damage: '2d6' },
 
       // Ranged weapons
-      'shortbow': { damage: '1d6', ranged: true },
-      'longbow': { damage: '1d8', ranged: true },
-      'crossbow': { damage: '1d8', ranged: true },
-      'handcrossbow': { damage: '1d6', ranged: true }
+      shortbow: { damage: '1d6', ranged: true },
+      longbow: { damage: '1d8', ranged: true },
+      crossbow: { damage: '1d8', ranged: true },
+      handcrossbow: { damage: '1d6', ranged: true },
     };
 
     const weapon = weaponData[weaponName.toLowerCase()];
@@ -188,7 +191,7 @@ export class DiceEngine {
       if (character?.abilityScores) {
         const strMod = character.abilityScores.strength?.modifier ?? 0;
         const dexMod = character.abilityScores.dexterity?.modifier ?? 0;
-        abilityToUse = (preferredAbility === 'dex' || dexMod > strMod) ? 'dexterity' : 'strength';
+        abilityToUse = preferredAbility === 'dex' || dexMod > strMod ? 'dexterity' : 'strength';
       } else {
         abilityToUse = preferredAbility === 'dex' ? 'dexterity' : 'strength';
       }
@@ -213,21 +216,21 @@ export class DiceEngine {
   static createAttackRollRequest(
     weaponName: string,
     character?: import('@/types/character').Character,
-    preferredAbility?: 'str' | 'dex'
+    preferredAbility?: 'str' | 'dex',
   ): {
     formula: string;
     purpose: string;
   } {
     const weaponData: Record<string, { finesse?: boolean; ranged?: boolean }> = {
-      'dagger': { finesse: true },
-      'rapier': { finesse: true },
-      'scimitar': { finesse: true },
-      'shortsword': { finesse: true },
-      'shortbow': { ranged: true },
-      'longbow': { ranged: true },
-      'crossbow': { ranged: true },
-      'handcrossbow': { ranged: true },
-      'dart': { ranged: true }
+      dagger: { finesse: true },
+      rapier: { finesse: true },
+      scimitar: { finesse: true },
+      shortsword: { finesse: true },
+      shortbow: { ranged: true },
+      longbow: { ranged: true },
+      crossbow: { ranged: true },
+      handcrossbow: { ranged: true },
+      dart: { ranged: true },
     };
 
     const weapon = weaponData[weaponName.toLowerCase()];
@@ -240,7 +243,7 @@ export class DiceEngine {
     } else if (weapon?.finesse && character?.abilityScores) {
       const strMod = character.abilityScores.strength?.modifier ?? 0;
       const dexMod = character.abilityScores.dexterity?.modifier ?? 0;
-      abilityToUse = (preferredAbility === 'dex' || dexMod > strMod) ? 'dexterity' : 'strength';
+      abilityToUse = preferredAbility === 'dex' || dexMod > strMod ? 'dexterity' : 'strength';
     } else if (weapon?.finesse) {
       abilityToUse = preferredAbility === 'dex' ? 'dexterity' : 'strength';
     }
@@ -255,7 +258,7 @@ export class DiceEngine {
 
     return {
       formula,
-      purpose: `Attack roll with ${weaponName}`
+      purpose: `Attack roll with ${weaponName}`,
     };
   }
 
@@ -266,7 +269,7 @@ export class DiceEngine {
     weaponName: string,
     critical: boolean = false,
     character?: import('@/types/character').Character,
-    preferredAbility?: 'str' | 'dex'
+    preferredAbility?: 'str' | 'dex',
   ): {
     formula: string;
     purpose: string;
@@ -276,17 +279,17 @@ export class DiceEngine {
     if (critical) {
       const criticalFormula = baseFormula.replace(
         /(\d+)d(\d+)/g,
-        (match, count, sides) => `${parseInt(count) * 2}d${sides}`
+        (match, count, sides) => `${parseInt(count) * 2}d${sides}`,
       );
       return {
         formula: criticalFormula,
-        purpose: `Critical damage roll for ${weaponName}`
+        purpose: `Critical damage roll for ${weaponName}`,
       };
     }
 
     return {
       formula: baseFormula,
-      purpose: `Damage roll for ${weaponName}`
+      purpose: `Damage roll for ${weaponName}`,
     };
   }
 
@@ -294,26 +297,28 @@ export class DiceEngine {
    * Check if a roll result is a critical hit
    */
   static isCriticalHit(result: DiceRollResult): boolean {
-    return result.naturalRoll === 20 && result.rolls.some(r => r.dice === 20);
+    return result.naturalRoll === 20 && result.rolls.some((r) => r.dice === 20);
   }
 
   /**
    * Check if a roll result is a critical miss
    */
   static isCriticalMiss(result: DiceRollResult): boolean {
-    return result.naturalRoll === 1 && result.rolls.some(r => r.dice === 20);
+    return result.naturalRoll === 1 && result.rolls.some((r) => r.dice === 20);
   }
 
   /**
    * Resolve advantage/disadvantage from multiple sources
    */
-  static resolveAdvantage(sources: Array<{ advantage?: boolean; disadvantage?: boolean; source: string }>): {
+  static resolveAdvantage(
+    sources: Array<{ advantage?: boolean; disadvantage?: boolean; source: string }>,
+  ): {
     advantage: boolean;
     disadvantage: boolean;
     canceledOut: boolean;
   } {
-    const advantageSources = sources.filter(s => s.advantage);
-    const disadvantageSources = sources.filter(s => s.disadvantage);
+    const advantageSources = sources.filter((s) => s.advantage);
+    const disadvantageSources = sources.filter((s) => s.disadvantage);
 
     const hasAdvantage = advantageSources.length > 0;
     const hasDisadvantage = disadvantageSources.length > 0;
@@ -321,7 +326,7 @@ export class DiceEngine {
     return {
       advantage: hasAdvantage && !hasDisadvantage,
       disadvantage: hasDisadvantage && !hasAdvantage,
-      canceledOut: hasAdvantage && hasDisadvantage
+      canceledOut: hasAdvantage && hasDisadvantage,
     };
   }
 }

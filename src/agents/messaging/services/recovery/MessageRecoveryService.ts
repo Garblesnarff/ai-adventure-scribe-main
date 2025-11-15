@@ -1,20 +1,20 @@
 /**
  * Message Recovery Service
- * 
+ *
  * This file defines the MessageRecoveryService class, a singleton service
  * responsible for recovering pending messages from persistent storage (IndexedDB)
  * and re-enqueuing them into the MessageQueueService. This is crucial for ensuring
  * message durability across application sessions or after unexpected closures.
  * It also provides a method to validate queue integrity against stored state.
- * 
+ *
  * Main Class:
  * - MessageRecoveryService: Handles recovery of pending messages.
- * 
+ *
  * Key Dependencies:
  * - IndexedDBService (`../storage/indexed-db-service.ts`)
  * - MessageQueueService (`../message-queue-service.ts`)
  * - QueuedMessage type from `../../types`.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -25,7 +25,6 @@ import { MessageQueueService } from '../MessageQueueService';
 // Project Types
 import { QueuedMessage } from '../../types';
 import { logger } from '../../../../lib/logger';
-
 
 export class MessageRecoveryService {
   private static instance: MessageRecoveryService;
@@ -47,7 +46,7 @@ export class MessageRecoveryService {
   public async recoverMessages(): Promise<void> {
     try {
       logger.info('[MessageRecoveryService] Starting message recovery...');
-      
+
       // Get all pending messages from storage
       const pendingMessages = await this.storage.getPendingMessages();
       logger.info(`[MessageRecoveryService] Found ${pendingMessages.length} pending messages`);
@@ -65,10 +64,10 @@ export class MessageRecoveryService {
           deliveryStatus: {
             delivered: false,
             timestamp: new Date(),
-            attempts: 0
+            attempts: 0,
           },
           retryCount: 0,
-          maxRetries: this.queueService.getConfig().maxRetries
+          maxRetries: this.queueService.getConfig().maxRetries,
         };
 
         // Validate message integrity
@@ -109,8 +108,8 @@ export class MessageRecoveryService {
       const storedQueueIds = queueState.pendingMessages;
 
       // Check if all stored messages are in the queue
-      const missingMessages = storedQueueIds.filter(id => !currentQueueIds.includes(id));
-      
+      const missingMessages = storedQueueIds.filter((id) => !currentQueueIds.includes(id));
+
       if (missingMessages.length > 0) {
         logger.warn(`[MessageRecoveryService] Found ${missingMessages.length} missing messages`);
         return false;

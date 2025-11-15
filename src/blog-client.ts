@@ -1,17 +1,17 @@
 type BlogPageState =
-  | ({
-    page: 'index';
-    posts: BlogClientPost[];
-    categories: string[];
-    tags: string[];
-    generatedAt: string;
-  })
-  | ({
-    page: 'post';
-    post: BlogClientPost;
-    relatedPosts: BlogClientPost[];
-    generatedAt: string;
-  });
+  | {
+      page: 'index';
+      posts: BlogClientPost[];
+      categories: string[];
+      tags: string[];
+      generatedAt: string;
+    }
+  | {
+      page: 'post';
+      post: BlogClientPost;
+      relatedPosts: BlogClientPost[];
+      generatedAt: string;
+    };
 
 interface BlogClientPost {
   id: string;
@@ -81,14 +81,17 @@ function initializeIndexInteractions(state: Extract<BlogPageState, { page: 'inde
     loadMoreButton?.addEventListener('click', handleLoadMore);
 
     if (sentinel && 'IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entriesList) => {
-        for (const entry of entriesList) {
-          if (entry.isIntersecting) {
-            handleLoadMore();
-            break;
+      const observer = new IntersectionObserver(
+        (entriesList) => {
+          for (const entry of entriesList) {
+            if (entry.isIntersecting) {
+              handleLoadMore();
+              break;
+            }
           }
-        }
-      }, { rootMargin: '200px 0px' });
+        },
+        { rootMargin: '200px 0px' },
+      );
 
       observer.observe(sentinel);
     }
@@ -138,12 +141,9 @@ function initializeIndexInteractions(state: Extract<BlogPageState, { page: 'inde
       }
 
       if (activeQuery) {
-        const haystack = [
-          post.title,
-          post.excerpt,
-          post.categories.join(' '),
-          post.tags.join(' '),
-        ].join(' ').toLowerCase();
+        const haystack = [post.title, post.excerpt, post.categories.join(' '), post.tags.join(' ')]
+          .join(' ')
+          .toLowerCase();
         if (!haystack.includes(activeQuery)) {
           return false;
         }

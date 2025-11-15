@@ -18,5 +18,5 @@ export async function getEncounterAdjustment(params: { sessionId: string; diffic
   const q = new URLSearchParams({ sessionId: params.sessionId, difficulty: params.difficulty });
   const res = await fetch(`${API_BASE_URL}/v1/encounters/adjustment?${q}`);
   if (!res.ok) throw new Error(`Adjustment fetch failed: ${res.status}`);
-  return res.json() as Promise<{ ok: boolean; factor: number }>; 
+  return res.json() as Promise<{ ok: boolean; factor: number }>;
 }

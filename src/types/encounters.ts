@@ -59,7 +59,7 @@ export interface EncounterSpec {
       ability: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
       dc: number;
       timing: 'start' | 'end' | 'trigger';
-    }
+    };
   }>;
 }
 

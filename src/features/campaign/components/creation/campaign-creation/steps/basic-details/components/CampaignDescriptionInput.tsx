@@ -1,7 +1,9 @@
 import React from 'react';
+
+import DescriptionGeneratorButton from './DescriptionGeneratorButton';
+
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import DescriptionGeneratorButton from './DescriptionGeneratorButton';
 
 interface CampaignDescriptionInputProps {
   value: string;
@@ -26,7 +28,7 @@ const CampaignDescriptionInput: React.FC<CampaignDescriptionInputProps> = ({
   value,
   onChange,
   onBlur,
-  campaignParams
+  campaignParams,
 }) => {
   return (
     <div className="space-y-2">

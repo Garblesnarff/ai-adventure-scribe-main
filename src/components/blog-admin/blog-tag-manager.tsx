@@ -1,23 +1,49 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+
+import type { BlogTag } from '@/types/blog';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { slugify } from '@/utils/slug';
+import { Textarea } from '@/components/ui/textarea';
 import {
   useBlogTags,
   useCreateBlogTag,
   useUpdateBlogTag,
   useDeleteBlogTag,
 } from '@/hooks/blog/useBlogTaxonomy';
-import type { BlogTag } from '@/types/blog';
+import { slugify } from '@/utils/slug';
 
 interface TagFormValues {
   name: string;
@@ -51,7 +77,10 @@ export const BlogTagManager: React.FC = () => {
       return;
     }
     if (createForm.formState.dirtyFields.slug) return;
-    createForm.setValue('slug', slugify(createNameValue), { shouldDirty: false, shouldTouch: false });
+    createForm.setValue('slug', slugify(createNameValue), {
+      shouldDirty: false,
+      shouldTouch: false,
+    });
   }, [createForm, createNameValue]);
 
   React.useEffect(() => {
@@ -81,7 +110,7 @@ export const BlogTagManager: React.FC = () => {
           createForm.reset(DEFAULT_VALUES);
         },
         onError: (error: any) => toast.error(error.message || 'Failed to create tag'),
-      }
+      },
     );
   };
 
@@ -111,7 +140,7 @@ export const BlogTagManager: React.FC = () => {
           setEditTarget(null);
         },
         onError: (error: any) => toast.error(error.message || 'Failed to update tag'),
-      }
+      },
     );
   };
 
@@ -185,11 +214,16 @@ export const BlogTagManager: React.FC = () => {
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading tags…</p>
           ) : tags.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tags defined yet. Add a tag to start organising content.</p>
+            <p className="text-sm text-muted-foreground">
+              No tags defined yet. Add a tag to start organising content.
+            </p>
           ) : (
             <ul className="space-y-3">
               {tags.map((tag) => (
-                <li key={tag.id} className="flex items-start justify-between rounded-md border border-border p-3">
+                <li
+                  key={tag.id}
+                  className="flex items-start justify-between rounded-md border border-border p-3"
+                >
                   <div>
                     <p className="font-medium">{tag.name}</p>
                     <p className="text-xs text-muted-foreground">/{tag.slug}</p>
@@ -285,12 +319,16 @@ export const BlogTagManager: React.FC = () => {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete tag?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This removes the tag from all posts. You can create it again later if needed.
+                            This removes the tag from all posts. You can create it again later if
+                            needed.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(tag)} disabled={deleteTag.isPending}>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(tag)}
+                            disabled={deleteTag.isPending}
+                          >
                             Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>

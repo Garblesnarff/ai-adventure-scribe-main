@@ -4,11 +4,25 @@ import { defaultMonsters } from '@/services/encounters/monster-catalog';
 
 describe('Encounter validation with party composition', () => {
   it('warns when party lacks counters to immunities', () => {
-    const mons = [...defaultMonsters, { id: 'srd:ghost', name: 'Ghost', cr: 4, xp: 1100, immunities: ['nonmagical'], tags: [] } as any];
+    const mons = [
+      ...defaultMonsters,
+      {
+        id: 'srd:ghost',
+        name: 'Ghost',
+        cr: 4,
+        xp: 1100,
+        immunities: ['nonmagical'],
+        tags: [],
+      } as any,
+    ];
     const spec: any = {
-      type: 'combat', difficulty: 'hard', xpBudget: 1100,
+      type: 'combat',
+      difficulty: 'hard',
+      xpBudget: 1100,
       participants: { hostiles: [{ ref: 'srd:ghost', count: 1 }], friendlies: [] },
-      terrain: { features: [] }, objectives: [], startState: { initiative: 'roll', surprise: false }
+      terrain: { features: [] },
+      objectives: [],
+      startState: { initiative: 'roll', surprise: false },
     };
     const party = { members: [{ level: 5, damageTypes: ['slashing'] }] } as any;
     const res = validateEncounterSpec(spec, mons, party);

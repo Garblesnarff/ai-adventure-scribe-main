@@ -14,8 +14,10 @@
  */
 
 import React from 'react';
-import { useMessageContext } from '@/contexts/MessageContext';
+
 import { ProgressiveVoicePlayer } from './audio/ProgressiveVoicePlayer';
+
+import { useMessageContext } from '@/contexts/MessageContext';
 import logger from '@/lib/logger';
 
 export const VoiceHandler: React.FC = () => {
@@ -35,7 +37,7 @@ export const VoiceHandler: React.FC = () => {
         textLength: lastMessage?.text?.length || 0,
         hasNarrationSegments: !!(narrationSegments && narrationSegments.length > 0),
         narrationSegmentsCount: narrationSegments?.length || 0,
-        narrationSegments: narrationSegments
+        narrationSegments: narrationSegments,
       });
     }
   }, [lastMessage, shouldRenderPlayer, narrationSegments]);

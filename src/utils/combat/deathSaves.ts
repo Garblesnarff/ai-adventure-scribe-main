@@ -1,4 +1,5 @@
-import { CombatParticipant, DiceRoll } from '@/types/combat';
+import type { CombatParticipant, DiceRoll } from '@/types/combat';
+
 import { d20 } from '@/utils/diceRolls';
 
 /**
@@ -20,10 +21,19 @@ export const needsDeathSaves = (participant: CombatParticipant): boolean => {
  * @param participant The participant making the death save.
  * @returns An object containing the updated participant and the dice roll details.
  */
-export const rollDeathSave = (participant: CombatParticipant): { updatedParticipant: CombatParticipant; roll: DiceRoll } => {
+export const rollDeathSave = (
+  participant: CombatParticipant,
+): { updatedParticipant: CombatParticipant; roll: DiceRoll } => {
   if (!needsDeathSaves(participant)) {
     // This should not be called if death saves are not needed, but as a safeguard:
-    const roll: DiceRoll = { dieType: 20, count: 1, modifier: 0, results: [], keptResults: [], total: 0 };
+    const roll: DiceRoll = {
+      dieType: 20,
+      count: 1,
+      modifier: 0,
+      results: [],
+      keptResults: [],
+      total: 0,
+    };
     return { updatedParticipant: participant, roll };
   }
 
