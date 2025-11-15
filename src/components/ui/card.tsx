@@ -4,14 +4,14 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const cardVariants = cva(
-  "rounded-lg border shadow-sm transition-all duration-300",
+  "rounded-lg border shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground border-border",
-        parchment: "fantasy-card bg-gradient-to-br from-[rgba(255,255,250,0.9)] to-[rgba(250,244,230,0.85)] text-amber-900 border-amber-200/50",
-        glass: "glass-panel",
-        cosmic: "cosmic-panel",
+        default: "bg-card text-card-foreground border-border hover:border-border/80",
+        parchment: "fantasy-card bg-gradient-to-br from-[rgba(255,255,250,0.9)] to-[rgba(250,244,230,0.85)] text-amber-900 border-amber-200/50 hover:shadow-lg hover:shadow-amber-200/20",
+        glass: "glass-panel hover:shadow-lg",
+        cosmic: "cosmic-panel hover:shadow-lg hover:shadow-infinite-purple/20",
       },
     },
     defaultVariants: {

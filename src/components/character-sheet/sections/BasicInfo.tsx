@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { HexagonalBadge } from '@/components/ui/hexagonal-badge';
 import { ScrollText, Eye, Heart, BookOpen, Shield, Book, Languages } from 'lucide-react';
 import { Character, Subrace } from '@/types/character';
 import { useCharacterStats } from '@/hooks/use-character-stats';
@@ -67,7 +68,7 @@ const BasicInfo = ({ character, onUpdate }: BasicInfoProps) => {
           </div>
           <div className="flex flex-wrap gap-1">
             {stats.allLanguages.map((language, index) => (
-              <Badge key={index} variant="outline" className="text-xs">{language}</Badge>
+              <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs">{language}</HexagonalBadge>
             ))}
           </div>
         </Card>

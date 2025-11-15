@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { HexagonalBadge } from '@/components/ui/hexagonal-badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Spell } from '@/types/character';
@@ -135,24 +136,24 @@ const SpellCard: React.FC<SpellCardProps> = ({
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {/* Level Badge */}
                     {showLevel && (
-                      <Badge variant="outline" className="text-xs">
+                      <HexagonalBadge variant="outline" size="sm" className="text-xs">
                         {spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`}
-                      </Badge>
+                      </HexagonalBadge>
                     )}
 
                     {/* School Badge */}
-                    <Badge className={`text-xs ${schoolColor}`}>
+                    <HexagonalBadge size="sm" className={`text-xs ${schoolColor}`}>
                       {spell.school}
-                    </Badge>
+                    </HexagonalBadge>
 
                     {/* Special Indicators */}
                     {spell.concentration && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          <HexagonalBadge variant="secondary" size="sm" className="text-xs flex items-center gap-1">
                             <Timer className="w-3 h-3" />
                             Concentration
-                          </Badge>
+                          </HexagonalBadge>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Requires concentration to maintain</p>
@@ -163,10 +164,10 @@ const SpellCard: React.FC<SpellCardProps> = ({
                     {spell.ritual && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          <HexagonalBadge variant="secondary" size="sm" className="text-xs flex items-center gap-1">
                             <RotateCcw className="w-3 h-3" />
                             Ritual
-                          </Badge>
+                          </HexagonalBadge>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Can be cast as a ritual (+10 minutes, no spell slot)</p>
@@ -177,10 +178,10 @@ const SpellCard: React.FC<SpellCardProps> = ({
                     {spell.damage && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                          <HexagonalBadge variant="destructive" size="sm" className="text-xs flex items-center gap-1">
                             <Zap className="w-3 h-3" />
                             {spell.damage}
-                          </Badge>
+                          </HexagonalBadge>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Damage: {spell.damage}</p>

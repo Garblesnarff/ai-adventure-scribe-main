@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { HexagonalBadge } from '@/components/ui/hexagonal-badge';
 import { Character } from '@/types/character';
 import EditableDescription from './EditableDescription';
 import { User, Heart, Palette, FileText, Sparkles, Image } from 'lucide-react';
@@ -163,9 +164,9 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
               {character.theme && (
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Selected Theme</h4>
-                  <Badge variant="secondary" className="text-sm font-medium">
+                  <HexagonalBadge variant="secondary" size="sm" className="text-sm font-medium">
                     {character.theme}
-                  </Badge>
+                  </HexagonalBadge>
                 </div>
               )}
               {character.appearance && (
@@ -248,9 +249,9 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Personality Traits</h4>
                   <div className="space-y-1">
                     {character.personalityTraits.map((trait, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
+                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs">
                         {trait}
-                      </Badge>
+                      </HexagonalBadge>
                     ))}
                   </div>
                 </div>
@@ -261,9 +262,9 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Ideals</h4>
                   <div className="space-y-1">
                     {character.ideals.map((ideal, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-blue-50 border-blue-200">
+                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs bg-blue-50 border-blue-200">
                         {ideal}
-                      </Badge>
+                      </HexagonalBadge>
                     ))}
                   </div>
                 </div>
@@ -274,9 +275,9 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Bonds</h4>
                   <div className="space-y-1">
                     {character.bonds.map((bond, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-green-50 border-green-200">
+                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs bg-green-50 border-green-200">
                         {bond}
-                      </Badge>
+                      </HexagonalBadge>
                     ))}
                   </div>
                 </div>
@@ -287,9 +288,9 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Flaws</h4>
                   <div className="space-y-1">
                     {character.flaws.map((flaw, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-red-50 border-red-200">
+                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs bg-red-50 border-red-200">
                         {flaw}
-                      </Badge>
+                      </HexagonalBadge>
                     ))}
                   </div>
                 </div>

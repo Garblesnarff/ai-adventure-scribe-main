@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { HexagonalBadge } from '@/components/ui/hexagonal-badge';
 import { Separator } from '@/components/ui/separator';
 import { DiceRoll } from '@/utils/diceUtils';
 import { DetectedCombatAction } from '@/utils/combatDetection';
@@ -64,7 +65,7 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
       case 'death_save':
         return data.success ? 'bg-green-600' : 'bg-red-600';
       case 'concentration_save':
-        return data.success ? 'bg-cyan-500' : 'bg-red-500';
+        return data.success ? 'bg-electricCyan' : 'bg-red-500';
       default:
         return 'bg-gray-500';
     }
@@ -126,6 +127,47 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
       return `${data.roll.total} damage`;
     }
 
+    // Use HexagonalBadge with electricCyan for concentration saves
+    if (data.type === 'concentration_save') {
+      if (data.dc !== undefined) {
+        const success = data.roll.total >= data.dc;
+        return (
+          <div className="flex items-center gap-2">
+            <HexagonalBadge
+              variant={success ? "status" : "destructive"}
+              size="sm"
+              pulse={success}
+              className={success
+                ? "text-xs bg-electricCyan/20 text-electricCyan border-electricCyan/40 shadow-[0_0_8px_rgba(6,182,212,0.4)] font-semibold"
+                : "text-xs"
+              }
+            >
+              {success ? "Maintained" : "Lost"}
+            </HexagonalBadge>
+            <span className="text-sm text-muted-foreground">
+              vs DC {data.dc}
+            </span>
+          </div>
+        );
+      }
+
+      if (data.success !== undefined) {
+        return (
+          <HexagonalBadge
+            variant={data.success ? "status" : "destructive"}
+            size="sm"
+            pulse={data.success}
+            className={data.success
+              ? "text-xs bg-electricCyan/20 text-electricCyan border-electricCyan/40 shadow-[0_0_8px_rgba(6,182,212,0.4)] font-semibold"
+              : "text-xs"
+            }
+          >
+            {data.success ? "Maintained" : "Lost"}
+          </HexagonalBadge>
+        );
+      }
+    }
+
     if (data.dc !== undefined) {
       const success = data.roll.total >= data.dc;
       return (
@@ -174,7 +216,7 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
       case 'death_save':
         return data.success ? 'border-l-green-600' : 'border-l-red-600';
       case 'concentration_save':
-        return data.success ? 'border-l-cyan-500' : 'border-l-red-500';
+        return data.success ? 'border-l-electricCyan' : 'border-l-red-500';
       default:
         return 'border-l-gray-500';
     }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { HexagonalBadge } from '@/components/ui/hexagonal-badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
@@ -214,10 +215,17 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
 
           {/* Level Check Warning */}
           {calculatedLevel > currentLevel && (
-            <div className="mt-4 p-3 bg-primary/10 border border-primary rounded-lg">
-              <div className="flex items-center gap-2 text-primary font-medium">
-                <Star className="w-4 h-4" />
-                Level Up Available!
+            <div className="mt-4 p-3 bg-electricCyan/10 border border-electricCyan/40 rounded-lg shadow-[0_0_12px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-shadow">
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-electricCyan" />
+                <HexagonalBadge
+                  variant="status"
+                  size="sm"
+                  pulse={true}
+                  className="text-xs bg-electricCyan/20 text-electricCyan border-electricCyan/40 shadow-[0_0_8px_rgba(6,182,212,0.4)] font-semibold"
+                >
+                  Level Up Available!
+                </HexagonalBadge>
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 You have enough experience for level {calculatedLevel}. Visit the Character Advancement section to level up.

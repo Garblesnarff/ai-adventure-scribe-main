@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { HexagonalBadge } from '@/components/ui/hexagonal-badge';
 import { Card } from '@/components/ui/card';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Play, Volume2 } from 'lucide-react';
 import logger from '@/lib/logger';
@@ -228,7 +229,16 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
 
   const getCriticalityBadge = (result: DiceRollResult) => {
     if (result.critical) {
-      return <Badge variant="destructive" className="text-xs">Critical Hit!</Badge>;
+      return (
+        <HexagonalBadge
+          variant="status"
+          size="sm"
+          pulse={true}
+          className="text-xs bg-electricCyan/20 text-electricCyan border-electricCyan/40 shadow-[0_0_12px_rgba(6,182,212,0.5)] hover:shadow-[0_0_20px_rgba(6,182,212,0.7)] font-semibold"
+        >
+          Critical Hit!
+        </HexagonalBadge>
+      );
     }
     if (result.naturalRoll === 1) {
       return <Badge variant="secondary" className="text-xs">Critical Miss</Badge>;
