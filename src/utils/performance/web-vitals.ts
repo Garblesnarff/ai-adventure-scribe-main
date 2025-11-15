@@ -10,6 +10,7 @@
  */
 
 import { onCLS, onINP, onFCP, onLCP, onTTFB, Metric } from 'web-vitals';
+import { logger } from '@/lib/logger';
 
 /**
  * Performance metric thresholds (in milliseconds or score)
@@ -67,25 +68,22 @@ function formatValue(metric: Metric): string {
 }
 
 /**
- * Log metric to console with color coding
+ * Log metric with structured logging
  */
 function logMetric(metric: Metric): void {
   const rating = getRating(metric);
   const formattedValue = formatValue(metric);
 
-  const colors = {
-    good: '\x1b[32m', // Green
-    'needs-improvement': '\x1b[33m', // Yellow
-    poor: '\x1b[31m', // Red
-  };
-
-  const color = colors[rating];
-  const reset = '\x1b[0m';
-
-  console.log(
-    `${color}[Performance] ${metric.name}: ${formattedValue} (${rating})${reset}`,
-    metric
-  );
+  // Use logger.debug for performance metrics (only shown in development)
+  logger.debug(`Performance: ${metric.name}: ${formattedValue} (${rating})`, {
+    metric: metric.name,
+    value: metric.value,
+    formattedValue,
+    rating,
+    id: metric.id,
+    delta: metric.delta,
+    navigationType: metric.navigationType
+  });
 }
 
 /**
@@ -112,7 +110,7 @@ function sendToAnalytics(metric: Metric): void {
     });
     sessionStorage.setItem('web-vitals', JSON.stringify(metrics));
   } catch (error) {
-    console.warn('Failed to store web vitals:', error);
+    logger.warn('Failed to store web vitals in sessionStorage', { error });
   }
 }
 

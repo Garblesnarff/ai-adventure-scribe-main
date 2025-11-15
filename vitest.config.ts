@@ -67,7 +67,13 @@ export default defineConfig({
       'src/components/spellcasting/__tests__/SpellPreparationPanel.test.tsx',
       'src/data/appearance/appearanceOptions.test.ts',
       'src/data/appearance/physicalTraits.test.ts',
-      'src/engine/**/*.test.ts'
+      'src/engine/**/*.test.ts',
+      // LangGraph DM Agent Tests
+      'src/agents/langgraph/nodes/__tests__/intent-detector.test.ts',
+      'src/agents/langgraph/nodes/__tests__/rules-validator.test.ts',
+      'src/agents/langgraph/nodes/__tests__/response-generator.test.ts',
+      'src/agents/langgraph/__tests__/integration.test.ts',
+      'src/agents/langgraph/__tests__/performance.test.ts'
     ],
     exclude: [
       'node_modules/**',
@@ -122,6 +128,11 @@ export default defineConfig({
         'src/agents/langgraph/nodes/response-generator.ts',
         'src/hooks/useSpellSelection.ts',
         'src/engine/**/*.ts',
+        // LangGraph implementation
+        'src/agents/langgraph/nodes/*.ts',
+        'src/agents/langgraph/dm-graph.ts',
+        'src/agents/langgraph/dm-service.ts',
+        'src/agents/langgraph/state.ts',
       ],
       exclude: [
         '**/__tests__/**',

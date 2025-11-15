@@ -8,14 +8,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "noUnusedLocals": false,
-    // Enable strict null checks for improved type safety
-    // This helps catch potential null/undefined errors at compile time
-    "strictNullChecks": true
+    }
   }
 }

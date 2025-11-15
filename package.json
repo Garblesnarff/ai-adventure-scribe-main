@@ -158,6 +158,7 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "jsdom": "^26.1.0",
+    "knip": "^5.69.1",
     "lovable-tagger": "^1.0.19",
     "postcss": "^8.4.47",
     "rollup-plugin-visualizer": "^6.0.5",

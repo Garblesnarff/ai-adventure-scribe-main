@@ -14,6 +14,8 @@ import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
 import logger from '@/lib/logger';
 import { analytics } from '@/services/analytics';
 import { useSearchParams } from 'react-router-dom';
+import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Main content component for the character creation wizard
@@ -419,6 +421,15 @@ const WizardContent: React.FC = () => {
                 campaignGenre: undefined,
               });
               analytics.characterCreationCompleted({ campaignId, artStyle });
+
+              // Track character creation flow for legacy deprecation metrics
+              const isNewFlow = isCampaignCharacterFlowEnabled() && !!campaignId;
+              const flow = isNewFlow ? 'new' : 'legacy';
+              const { data: { user } } = await supabase.auth.getUser();
+              analytics.trackCharacterCreationFlow(flow, {
+                campaignId,
+                userId: user?.id,
+              });
             } catch (e) {
               // ignore analytics errors
             }
