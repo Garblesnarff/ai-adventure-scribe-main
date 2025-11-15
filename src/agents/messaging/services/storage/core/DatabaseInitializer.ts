@@ -15,8 +15,8 @@
  * @author AI Dungeon Master Team
  */
 
-// Project Config (assuming kebab-case for StorageConfig.ts)
-import { DEFAULT_STORAGE_CONFIG } from '../config/storage-config';
+// Project Config
+import { DEFAULT_STORAGE_CONFIG } from '../config/StorageConfig';
 import { logger } from '../../../../../lib/logger';
 
 

@@ -26,13 +26,13 @@
 // External/SDK Imports
 import { supabase } from '@/integrations/supabase/client';
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { ConnectionStateManager } from './connection-state-manager';
-import { EventEmitter } from './event-emitter';
-import { MessageQueueService } from '../message-queue-service';
-import { OfflineStateService } from '../offline/offline-state-service';
-import { ReconnectionManager } from './reconnection-manager';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { ConnectionStateManager } from './ConnectionStateManager';
+import { EventEmitter } from './EventEmitter';
+import { MessageQueueService } from '../MessageQueueService';
+import { OfflineStateService } from '../offline/OfflineStateService';
+import { ReconnectionManager } from './ReconnectionManager';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { ConnectionState, ReconnectionConfig } from './types';

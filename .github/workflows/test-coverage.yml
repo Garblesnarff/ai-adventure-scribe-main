@@ -1,0 +1,127 @@
+name: Test Coverage Report
+
+on:
+  pull_request:
+    branches: ["**"]
+  push:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend tests with coverage
+        run: npx vitest run --coverage --reporter=json --reporter=html
+        continue-on-error: true
+
+      - name: Run server tests with coverage
+        run: npx vitest run -c server/vitest.config.ts --coverage --reporter=json
+        continue-on-error: true
+
+      - name: Generate coverage summary
+        id: coverage
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(node -p "Math.round(require('./coverage/coverage-summary.json').total.lines.pct)")
+            echo "frontend_coverage=$COVERAGE" >> $GITHUB_OUTPUT
+            echo "Frontend Coverage: $COVERAGE%"
+          else
+            echo "frontend_coverage=0" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -f server/coverage/coverage-summary.json ]; then
+            SERVER_COVERAGE=$(node -p "Math.round(require('./server/coverage/coverage-summary.json').total.lines.pct)")
+            echo "server_coverage=$SERVER_COVERAGE" >> $GITHUB_OUTPUT
+            echo "Server Coverage: $SERVER_COVERAGE%"
+          else
+            echo "server_coverage=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check coverage thresholds
+        run: |
+          FRONTEND_COV=${{ steps.coverage.outputs.frontend_coverage }}
+          SERVER_COV=${{ steps.coverage.outputs.server_coverage }}
+
+          echo "Frontend Coverage: $FRONTEND_COV%"
+          echo "Server Coverage: $SERVER_COV%"
+
+          # Target: 40% for Phase 1
+          if [ "$FRONTEND_COV" -lt 40 ]; then
+            echo "⚠️ Frontend coverage ($FRONTEND_COV%) is below 40% threshold"
+            echo "::warning::Frontend coverage is below 40% target"
+          else
+            echo "✅ Frontend coverage ($FRONTEND_COV%) meets 40% threshold"
+          fi
+
+          if [ "$SERVER_COV" -lt 40 ]; then
+            echo "⚠️ Server coverage ($SERVER_COV%) is below 40% threshold"
+            echo "::warning::Server coverage is below 40% target"
+          else
+            echo "✅ Server coverage ($SERVER_COV%) meets 40% threshold"
+          fi
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: coverage/
+          retention-days: 30
+
+      - name: Upload server coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: server-coverage
+          path: server/coverage/
+          retention-days: 30
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let frontendCov = '${{ steps.coverage.outputs.frontend_coverage }}';
+            let serverCov = '${{ steps.coverage.outputs.server_coverage }}';
+
+            const comment = `## 📊 Test Coverage Report
+
+            | Component | Coverage | Status |
+            |-----------|----------|--------|
+            | Frontend | ${frontendCov}% | ${frontendCov >= 40 ? '✅' : '⚠️'} |
+            | Server | ${serverCov}% | ${serverCov >= 40 ? '✅' : '⚠️'} |
+
+            **Target:** 40% minimum (Phase 1)
+
+            ${frontendCov >= 40 && serverCov >= 40 ? '✅ All coverage targets met!' : '⚠️ Some coverage targets below threshold'}
+
+            ---
+            *Coverage reports available in workflow artifacts*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

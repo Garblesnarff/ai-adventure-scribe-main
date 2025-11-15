@@ -18,16 +18,16 @@
  * @author AI Dungeon Master Team
  */
 
-// Project Services & Utilities (assuming kebab-case filenames)
+// Project Services & Utilities
 import { ErrorHandlingService } from '../../../error/services/error-handling-service';
 import { RecoveryService } from '../../../error/services/recovery-service';
-import { ConnectionStateService } from '../connection/connection-state-service';
-import { MessageQueueService } from '../message-queue-service';
-import { OfflineStateService } from '../offline/offline-state-service';
-import { DatabaseAdapter } from './adapters/database-adapter';
-import { ConflictHandler } from './handlers/conflict-handler';
-import { SyncStateManager } from './managers/sync-state-manager';
-import { ConsistencyValidator } from './validators/consistency-validator';
+import { ConnectionStateService } from '../connection/ConnectionStateService';
+import { MessageQueueService } from '../MessageQueueService';
+import { OfflineStateService } from '../offline/OfflineStateService';
+import { DatabaseAdapter } from './adapters/DatabaseAdapter';
+import { ConflictHandler } from './handlers/ConflictHandler';
+import { SyncStateManager } from './managers/SyncStateManager';
+import { ConsistencyValidator } from './validators/ConsistencyValidator';
 
 // Project Types
 import { ErrorCategory, ErrorSeverity } from '../../../error/types';
