@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Gauge, Clock, Theater, Zap, Skull, Grid, List, Eye, Check, Sparkles } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * Predefined options for campaign parameters
@@ -86,9 +88,19 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
     !searchQuery.trim() || label.toLowerCase().includes(searchQuery.toLowerCase());
 
   return (
-    <div className="space-y-10 parchment animate-fade-in-up">
+    <motion.div
+      className="space-y-10 parchment"
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Controls */}
-      <div className="space-y-4">
+      <motion.div
+        className="space-y-4"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="relative">
           <Input
             placeholder="Search difficulty, length, or tone..."
@@ -112,8 +124,12 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             </Button>
           </div>
         </div>
-      </div>
-      <div>
+      </motion.div>
+      <motion.div
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="text-center mb-6">
           <Label className="text-xl font-serif font-semibold flex items-center justify-center">
             <Gauge className="h-5 w-5 mr-2 text-blue-600" />
@@ -148,22 +164,56 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             }
             if (viewMode === 'list') {
               return (
-                <Card
-                  key={level.value}
-                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
-                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => handleParameterChange('difficulty_level', level.value)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('difficulty_level', level.value); }}
-                >
-                  <div className="p-4">
+                <motion.div key={level.value} variants={cardItem}>
+                  <Card
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleParameterChange('difficulty_level', level.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('difficulty_level', level.value); }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value={level.value} id={`difficulty-${level.value}`} className="text-blue-600" />
+                          <div className={`flex items-center ${colorClass}`}>
+                            <Gauge className="h-5 w-5" />
+                            <Label htmlFor={`difficulty-${level.value}`} className="font-medium cursor-pointer leading-tight ml-2">
+                              {level.label}
+                            </Label>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="bg-primary text-primary-foreground rounded-full p-1">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            }
+
+            if (viewMode === 'compact') {
+              return (
+                <motion.div key={level.value} variants={cardItem}>
+                  <Card
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-3 overflow-hidden ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleParameterChange('difficulty_level', level.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('difficulty_level', level.value); }}
+                  >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <RadioGroupItem value={level.value} id={`difficulty-${level.value}`} className="text-blue-600" />
                         <div className={`flex items-center ${colorClass}`}>
-                          <Gauge className="h-5 w-5" />
+                          <Gauge className="h-4 w-4" />
                           <Label htmlFor={`difficulty-${level.value}`} className="font-medium cursor-pointer leading-tight ml-2">
                             {level.label}
                           </Label>
@@ -171,75 +221,48 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
                       </div>
                       {isSelected && (
                         <div className="bg-primary text-primary-foreground rounded-full p-1">
-                          <Check className="w-4 h-4" />
+                          <Check className="w-3 h-3" />
                         </div>
                       )}
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
               );
             }
 
-            if (viewMode === 'compact') {
-              return (
+            return (
+              <motion.div key={level.value} variants={cardItem}>
                 <Card
-                  key={level.value}
-                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-3 overflow-hidden ${
-                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                  className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
+                    isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
                   }`}
                   onClick={() => handleParameterChange('difficulty_level', level.value)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('difficulty_level', level.value); }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value={level.value} id={`difficulty-${level.value}`} className="text-blue-600" />
-                      <div className={`flex items-center ${colorClass}`}>
-                        <Gauge className="h-4 w-4" />
-                        <Label htmlFor={`difficulty-${level.value}`} className="font-medium cursor-pointer leading-tight ml-2">
-                          {level.label}
-                        </Label>
-                      </div>
+                  <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0,0,0,0.08)' }} />
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
                     </div>
-                    {isSelected && (
-                      <div className="bg-primary text-primary-foreground rounded-full p-1">
-                        <Check className="w-3 h-3" />
-                      </div>
-                    )}
+                  )}
+                  <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
+                    <Gauge className="h-5 w-5" />
+                    <span className="font-bold text-lg">{level.label}</span>
                   </div>
                 </Card>
-              );
-            }
-
-            return (
-              <Card
-                key={level.value}
-                className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
-                  isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
-                }`}
-                onClick={() => handleParameterChange('difficulty_level', level.value)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('difficulty_level', level.value); }}
-              >
-                <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0,0,0,0.08)' }} />
-                {isSelected && (
-                  <div className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground rounded-full p-1">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
-                  <Gauge className="h-5 w-5" />
-                  <span className="font-bold text-lg">{level.label}</span>
-                </div>
-              </Card>
+              </motion.div>
             );
           })}
         </RadioGroup>
-      </div>
+      </motion.div>
 
-      <div>
+      <motion.div
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="text-center mb-6">
           <Label className="text-xl font-serif font-semibold flex items-center justify-center">
             <Clock className="h-5 w-5 mr-2 text-blue-600" />
@@ -274,22 +297,56 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             }
             if (viewMode === 'list') {
               return (
-                <Card
-                  key={length.value}
-                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
-                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => handleParameterChange('campaign_length', length.value)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('campaign_length', length.value); }}
-                >
-                  <div className="p-4">
+                <motion.div key={length.value} variants={cardItem}>
+                  <Card
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleParameterChange('campaign_length', length.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('campaign_length', length.value); }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value={length.value} id={`length-${length.value}`} className="text-blue-600" />
+                          <div className={`flex items-center ${colorClass}`}>
+                            <Clock className="h-5 w-5" />
+                            <Label htmlFor={`length-${length.value}`} className="font-medium cursor-pointer leading-tight ml-2">
+                              {length.label}
+                            </Label>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="bg-primary text-primary-foreground rounded-full p-1">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            }
+
+            if (viewMode === 'compact') {
+              return (
+                <motion.div key={length.value} variants={cardItem}>
+                  <Card
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-3 overflow-hidden ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleParameterChange('campaign_length', length.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('campaign_length', length.value); }}
+                  >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <RadioGroupItem value={length.value} id={`length-${length.value}`} className="text-blue-600" />
                         <div className={`flex items-center ${colorClass}`}>
-                          <Clock className="h-5 w-5" />
+                          <Clock className="h-4 w-4" />
                           <Label htmlFor={`length-${length.value}`} className="font-medium cursor-pointer leading-tight ml-2">
                             {length.label}
                           </Label>
@@ -297,75 +354,48 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
                       </div>
                       {isSelected && (
                         <div className="bg-primary text-primary-foreground rounded-full p-1">
-                          <Check className="w-4 h-4" />
+                          <Check className="w-3 h-3" />
                         </div>
                       )}
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
               );
             }
 
-            if (viewMode === 'compact') {
-              return (
+            return (
+              <motion.div key={length.value} variants={cardItem}>
                 <Card
-                  key={length.value}
-                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-3 overflow-hidden ${
-                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                  className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
+                    isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
                   }`}
                   onClick={() => handleParameterChange('campaign_length', length.value)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('campaign_length', length.value); }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value={length.value} id={`length-${length.value}`} className="text-blue-600" />
-                      <div className={`flex items-center ${colorClass}`}>
-                        <Clock className="h-4 w-4" />
-                        <Label htmlFor={`length-${length.value}`} className="font-medium cursor-pointer leading-tight ml-2">
-                          {length.label}
-                        </Label>
-                      </div>
+                  <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0,0,0,0.08)' }} />
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
                     </div>
-                    {isSelected && (
-                      <div className="bg-primary text-primary-foreground rounded-full p-1">
-                        <Check className="w-3 h-3" />
-                      </div>
-                    )}
+                  )}
+                  <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    <span className="font-bold text-lg">{length.label}</span>
                   </div>
                 </Card>
-              );
-            }
-
-            return (
-              <Card
-                key={length.value}
-                className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
-                  isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
-                }`}
-                onClick={() => handleParameterChange('campaign_length', length.value)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('campaign_length', length.value); }}
-              >
-                <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0,0,0,0.08)' }} />
-                {isSelected && (
-                  <div className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground rounded-full p-1">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <span className="font-bold text-lg">{length.label}</span>
-                </div>
-              </Card>
+              </motion.div>
             );
           })}
         </RadioGroup>
-      </div>
+      </motion.div>
 
-      <div>
+      <motion.div
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="text-center mb-6">
           <Label className="text-xl font-serif font-semibold flex items-center justify-center">
             <Theater className="h-5 w-5 mr-2 text-blue-600" />
@@ -405,19 +435,53 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
             }
             if (viewMode === 'list') {
               return (
-                <Card
-                  key={tone.value}
-                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
-                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => handleParameterChange('tone', tone.value)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('tone', tone.value); }}
-                >
-                  <div className="p-4">
+                <motion.div key={tone.value} variants={cardItem}>
+                  <Card
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleParameterChange('tone', tone.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('tone', tone.value); }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value={tone.value} id={`tone-${tone.value}`} className="text-blue-600" />
+                          <div className={`flex items-center ${colorClass}`}>
+                            {icon}
+                            <Label htmlFor={`tone-${tone.value}`} className="font-medium cursor-pointer leading-tight ml-2">
+                              {tone.label}
+                            </Label>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="bg-primary text-primary-foreground rounded-full p-1">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            }
+
+            if (viewMode === 'compact') {
+              return (
+                <motion.div key={tone.value} variants={cardItem}>
+                  <Card
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-3 overflow-hidden ${
+                      isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => handleParameterChange('tone', tone.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('tone', tone.value); }}
+                  >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <RadioGroupItem value={tone.value} id={`tone-${tone.value}`} className="text-blue-600" />
                         <div className={`flex items-center ${colorClass}`}>
                           {icon}
@@ -428,74 +492,43 @@ const CampaignParameters: React.FC<{ isLoading?: boolean }> = ({ isLoading = fal
                       </div>
                       {isSelected && (
                         <div className="bg-primary text-primary-foreground rounded-full p-1">
-                          <Check className="w-4 h-4" />
+                          <Check className="w-3 h-3" />
                         </div>
                       )}
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
               );
             }
 
-            if (viewMode === 'compact') {
-              return (
+            return (
+              <motion.div key={tone.value} variants={cardItem}>
                 <Card
-                  key={tone.value}
-                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-3 overflow-hidden ${
-                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                  className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
+                    isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
                   }`}
                   onClick={() => handleParameterChange('tone', tone.value)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('tone', tone.value); }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value={tone.value} id={`tone-${tone.value}`} className="text-blue-600" />
-                      <div className={`flex items-center ${colorClass}`}>
-                        {icon}
-                        <Label htmlFor={`tone-${tone.value}`} className="font-medium cursor-pointer leading-tight ml-2">
-                          {tone.label}
-                        </Label>
-                      </div>
+                  <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0,0,0,0.08)' }} />
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
                     </div>
-                    {isSelected && (
-                      <div className="bg-primary text-primary-foreground rounded-full p-1">
-                        <Check className="w-3 h-3" />
-                      </div>
-                    )}
+                  )}
+                  <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
+                    {icon}
+                    <span className="font-bold text-lg">{tone.label}</span>
                   </div>
                 </Card>
-              );
-            }
-
-            return (
-              <Card
-                key={tone.value}
-                className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
-                  isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
-                }`}
-                onClick={() => handleParameterChange('tone', tone.value)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleParameterChange('tone', tone.value); }}
-              >
-                <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0,0,0,0.08)' }} />
-                {isSelected && (
-                  <div className="absolute top-3 right-3 z-20 bg-primary text-primary-foreground rounded-full p-1">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
-                  {icon}
-                  <span className="font-bold text-lg">{tone.label}</span>
-                </div>
-              </Card>
+              </motion.div>
             );
           })}
         </RadioGroup>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -6,6 +7,7 @@ import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { getStartingEquipment, Equipment } from '@/data/equipmentOptions';
 import { backgrounds } from '@/data/backgroundOptions';
 import { Check } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * Equipment Selection component for character creation
@@ -60,83 +62,91 @@ const EquipmentSelection: React.FC = () => {
   if (!characterClass) {
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-center mb-4">Choose Your Equipment</h2>
-        <div className="text-center text-gray-500">
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+          <h2 className="text-2xl font-bold text-center mb-4">Choose Your Equipment</h2>
+        </motion.div>
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }} className="text-center text-gray-500">
           Please select a character class first to see available equipment options.
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-center mb-4">Choose Your Equipment</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+        <h2 className="text-2xl font-bold text-center mb-4">Choose Your Equipment</h2>
+      </motion.div>
+      <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-4" variants={cardContainer} initial="hidden" animate="visible">
         {/* Equipment Package Option */}
-        <Card 
-          className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 relative ${
-            state.character?.selectedEquipmentOptionIndex === 0 ? 'border-primary bg-accent/10' : 'border-transparent'
-          }`}
-          onClick={() => handleEquipmentSelect(startingEquipment, 0)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              handleEquipmentSelect(startingEquipment, 0);
-            }
-          }}
-        >
-          {state.character?.selectedEquipmentOptionIndex === 0 && (
-            <div className="absolute top-3 right-3">
-              <div className="bg-primary text-primary-foreground rounded-full p-1">
-                <Check className="w-4 h-4" />
+        <motion.div key="equipment-package" variants={cardItem}>
+          <Card
+            className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 relative ${
+              state.character?.selectedEquipmentOptionIndex === 0 ? 'border-primary bg-accent/10' : 'border-transparent'
+            }`}
+            onClick={() => handleEquipmentSelect(startingEquipment, 0)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleEquipmentSelect(startingEquipment, 0);
+              }
+            }}
+          >
+            {state.character?.selectedEquipmentOptionIndex === 0 && (
+              <div className="absolute top-3 right-3">
+                <div className="bg-primary text-primary-foreground rounded-full p-1">
+                  <Check className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-          )}
-          <h3 className="text-xl font-semibold mb-2">
-            {characterClass.name} Equipment Package
-          </h3>
-          <ul className="list-disc list-inside space-y-1">
-            {startingEquipment.map((equipment, itemIndex) => (
-              <li key={itemIndex} className="text-sm text-gray-600">{equipment.name}</li>
-            ))}
-          </ul>
-        </Card>
-        
+            )}
+            <h3 className="text-xl font-semibold mb-2">
+              {characterClass.name} Equipment Package
+            </h3>
+            <ul className="list-disc list-inside space-y-1">
+              {startingEquipment.map((equipment, itemIndex) => (
+                <li key={itemIndex} className="text-sm text-gray-600">{equipment.name}</li>
+              ))}
+            </ul>
+          </Card>
+        </motion.div>
+
         {/* Starting Gold Option */}
-        <Card 
-          className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 relative ${
-            state.character?.selectedEquipmentOptionIndex === 1 ? 'border-primary bg-accent/10' : 'border-transparent'
-          }`}
-          onClick={() => handleEquipmentSelect([], 1)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              handleEquipmentSelect([], 1);
-            }
-          }}
-        >
-          {state.character?.selectedEquipmentOptionIndex === 1 && (
-            <div className="absolute top-3 right-3">
-              <div className="bg-primary text-primary-foreground rounded-full p-1">
-                <Check className="w-4 h-4" />
+        <motion.div key="starting-gold" variants={cardItem}>
+          <Card
+            className={`p-4 cursor-pointer transition-all hover:shadow-lg border-2 relative ${
+              state.character?.selectedEquipmentOptionIndex === 1 ? 'border-primary bg-accent/10' : 'border-transparent'
+            }`}
+            onClick={() => handleEquipmentSelect([], 1)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleEquipmentSelect([], 1);
+              }
+            }}
+          >
+            {state.character?.selectedEquipmentOptionIndex === 1 && (
+              <div className="absolute top-3 right-3">
+                <div className="bg-primary text-primary-foreground rounded-full p-1">
+                  <Check className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-          )}
-          <h3 className="text-xl font-semibold mb-2">Starting Gold</h3>
-          <p className="text-sm text-gray-600 mb-2">
-            Roll for starting gold instead of taking the equipment package.
-          </p>
-          <p className="text-xs text-gray-500">
-            You can use the gold to buy equipment during character creation.
-          </p>
-        </Card>
-      </div>
+            )}
+            <h3 className="text-xl font-semibold mb-2">Starting Gold</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Roll for starting gold instead of taking the equipment package.
+            </p>
+            <p className="text-xs text-gray-500">
+              You can use the gold to buy equipment during character creation.
+            </p>
+          </Card>
+        </motion.div>
+      </motion.div>
       {characterBackground && (
-        <div className="text-sm text-gray-600">
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }} className="text-sm text-gray-600">
           <strong>Note:</strong> Background equipment ({characterBackground.name}) will be automatically added to your inventory.
-        </div>
+        </motion.div>
       )}
     </div>
   );

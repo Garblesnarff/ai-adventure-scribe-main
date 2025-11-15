@@ -1,6 +1,8 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useMessageContext } from '@/contexts/MessageContext';
 import logger from '@/lib/logger';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 interface TimelineRailProps {
   /** Scroll container element that holds the messages */
@@ -170,20 +172,35 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
   if (anchors.length === 0) return null;
 
   return (
-    <div ref={railRef} className="timeline-rail" aria-label="DM message timeline">
-      <div className="timeline-track">
+    <motion.div
+      ref={railRef}
+      className="timeline-rail"
+      aria-label="DM message timeline"
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="timeline-track"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Scroll Position Indicator */}
-        <div
+        <motion.div
           className="scroll-position-indicator absolute left-[-8px] w-[18px] h-[18px] bg-gradient-to-br from-infinite-gold to-infinite-gold-dark border-2 border-white shadow-lg rounded-full transition-all duration-100 ease-out z-20 pointer-events-none"
           style={{
             boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)',
             top: '0px',
             transform: 'translateY(0px)'
           }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
         />
 
         {anchors.map((id, i) => (
-          <button
+          <motion.button
             key={id}
             className={`timeline-dot ${currentId === id ? 'active' : ''}`}
             title={`Jump to DM message ${i + 1}`}
@@ -191,10 +208,11 @@ export const TimelineRail: React.FC<TimelineRailProps> = ({ rootRef }) => {
             onClick={() => scrollTo(id)}
             data-anchor-id={id}
             style={{ top: `${(i + 1) / (anchors.length + 1) * 100}%` }}
+            variants={cardItem}
           />
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

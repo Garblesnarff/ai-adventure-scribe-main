@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -63,41 +65,61 @@ const SubraceSelection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Choose Your {currentRace.name} Subrace</h2>
         <p className="text-muted-foreground">
           Select a specialized variant of the {currentRace.name} race
         </p>
-      </div>
+      </motion.div>
 
       {/* Current Race Summary */}
-      <Card className="p-4 bg-primary/5">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold">Selected Race: {currentRace.name}</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-2">{currentRace.description}</p>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1">
-            <Zap className="w-4 h-4 text-orange-500" />
-            <span>Base: {getAbilityScoreText(currentRace.abilityScoreIncrease)}</span>
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="p-4 bg-primary/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Selected Race: {currentRace.name}</h3>
           </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Choose subrace for additional bonuses</span>
-        </div>
-      </Card>
+          <p className="text-sm text-muted-foreground mb-2">{currentRace.description}</p>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1">
+              <Zap className="w-4 h-4 text-orange-500" />
+              <span>Base: {getAbilityScoreText(currentRace.abilityScoreIncrease)}</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Choose subrace for additional bonuses</span>
+          </div>
+        </Card>
+      </motion.div>
       
       {/* Subrace Options */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {currentRace.subraces.map((subrace) => {
           const isSelected = state.character?.subrace?.id === subrace.id;
-          
+
           return (
-            <Card 
+            <motion.div
               key={subrace.id}
-              className={`cursor-pointer transition-all hover:shadow-lg border-2 relative ${
-                isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-primary/50'
-              }`}
+              variants={cardItem}
+            >
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-lg border-2 relative ${
+                  isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-primary/50'
+                }`}
               onClick={() => handleSubraceSelect(subrace)}
               role="button"
               tabIndex={0}
@@ -227,20 +249,28 @@ const SubraceSelection: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
       
       {/* Selected Subrace Summary */}
       {state.character?.subrace && (
-        <Card className="p-4 bg-primary/5">
-          <h3 className="font-semibold mb-2">
-            Selected Subrace: {state.character.subrace.name}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            You'll gain the subrace traits and bonuses shown above when you complete character creation.
-          </p>
-        </Card>
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="p-4 bg-primary/5">
+            <h3 className="font-semibold mb-2">
+              Selected Subrace: {state.character.subrace.name}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              You'll gain the subrace traits and bonuses shown above when you complete character creation.
+            </p>
+          </Card>
+        </motion.div>
       )}
     </div>
   );

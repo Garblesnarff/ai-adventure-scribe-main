@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { GameInterface } from '@/features/game-session/components';
 import { Button } from '@/components/ui/button';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useGameSession } from '@/features/game-session';
 import { useToast } from '@/hooks/use-toast';
+import { fadeInUp, cardItem } from '@/utils/animations';
 
 interface GameSessionProps {
   campaignId: string;
@@ -41,17 +43,27 @@ export const GameSession: React.FC<GameSessionProps> = ({ campaignId }) => {
   // Show loading state while session is being initialized
   if (sessionState === 'loading') {
     return (
-      <div className="text-center py-8">
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        className="text-center py-8"
+      >
         <h2 className="text-xl font-semibold mb-4">Loading Game Session</h2>
         <p className="text-muted-foreground">Preparing your adventure...</p>
-      </div>
+      </motion.div>
     );
   }
 
   // Show error state if session initialization failed
   if (sessionState === 'error') {
     return (
-      <div className="text-center py-8">
+      <motion.div
+        variants={cardItem}
+        initial="hidden"
+        animate="visible"
+        className="text-center py-8"
+      >
         <h2 className="text-xl font-semibold mb-4">Session Error</h2>
         <p className="text-muted-foreground mb-4">
           Failed to initialize your game session. Please try refreshing the page.
@@ -62,13 +74,18 @@ export const GameSession: React.FC<GameSessionProps> = ({ campaignId }) => {
         >
           Refresh Page
         </Button>
-      </div>
+      </motion.div>
     );
   }
 
   if (!characterId) {
     return (
-      <div className="text-center py-8">
+      <motion.div
+        variants={cardItem}
+        initial="hidden"
+        animate="visible"
+        className="text-center py-8"
+      >
         <h2 className="text-xl font-semibold mb-4">No Character Selected</h2>
         <p className="text-muted-foreground mb-4">
           Select a character to start playing this campaign
@@ -79,7 +96,7 @@ export const GameSession: React.FC<GameSessionProps> = ({ campaignId }) => {
         >
           Choose Character
         </Button>
-      </div>
+      </motion.div>
     );
   }
 

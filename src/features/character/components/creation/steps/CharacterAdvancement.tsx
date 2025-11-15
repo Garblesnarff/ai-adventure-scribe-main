@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
+import {
   getLevelFromExperience,
-  getExperienceForLevel, 
+  getExperienceForLevel,
   getProficiencyBonus,
   canMulticlass,
   getClassFeaturesForLevel,
@@ -19,11 +20,12 @@ import {
 import { AbilityScores } from '@/types/character';
 import FeatSelection from './FeatSelection';
 import HitPointsSelection from './HitPointsSelection';
-import { 
-  TrendingUp, 
-  Star, 
-  Heart, 
-  Award, 
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
+import {
+  TrendingUp,
+  Star,
+  Heart,
+  Award,
   ChevronRight,
   Plus,
   AlertCircle,
@@ -166,14 +168,25 @@ const CharacterAdvancement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Character Advancement</h2>
         <p className="text-muted-foreground">
           Level up your character and gain new abilities
         </p>
-      </div>
+      </motion.div>
 
       {/* Current Status */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -215,9 +228,16 @@ const CharacterAdvancement: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Level Up Section */}
       {canLevelUp && (
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.2 }}
+        >
         <Card className="border-primary bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
@@ -261,9 +281,16 @@ const CharacterAdvancement: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       )}
 
       {/* Current Level Features */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.3 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -289,9 +316,16 @@ const CharacterAdvancement: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Multiclassing Section */}
       {currentLevel >= 2 && (
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.4 }}
+        >
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -348,6 +382,7 @@ const CharacterAdvancement: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        </motion.div>
       )}
     </div>
   );

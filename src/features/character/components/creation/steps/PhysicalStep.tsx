@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Ruler, Weight, User, Eye, Palette, Sparkles } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 const PhysicalStep: React.FC = () => {
   const { state, dispatch } = useCharacter();
@@ -72,7 +74,12 @@ const PhysicalStep: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="text-center space-y-4">
+      <motion.div
+        className="text-center space-y-4"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="flex items-center justify-center space-x-3">
           <div className="p-3 bg-gradient-to-br from-infinite-purple to-infinite-teal rounded-full shadow-lg">
             <User className="w-8 h-8 text-white" />
@@ -89,9 +96,15 @@ const PhysicalStep: React.FC = () => {
             {race.name} Character
           </Badge>
         )}
-      </div>
+      </motion.div>
 
       {/* Units Toggle */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
       <Card className="glass rounded-2xl hover-lift">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center space-x-3">
@@ -105,8 +118,14 @@ const PhysicalStep: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Gender & Age Card */}
         <Card className="glass rounded-2xl hover-lift border-2 border-infinite-purple/20 transition-all">
           <CardHeader>
@@ -256,9 +275,15 @@ const PhysicalStep: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Info Card */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.3 }}
+      >
       <Card className="glass rounded-2xl border-2 border-infinite-teal/20">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
@@ -273,6 +298,7 @@ const PhysicalStep: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 };

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { backgrounds } from '@/data/backgroundOptions';
-import { 
-  Heart, 
-  Brain, 
+import {
+  Heart,
+  Brain,
   Anchor,
   AlertTriangle,
   Shuffle,
@@ -152,30 +154,32 @@ const EnhancedPersonalitySelection: React.FC = () => {
     if (!suggestions || suggestions.length === 0) return null;
 
     return (
-      <Card className="h-fit">
-        <CardHeader className="pb-3">
-          <CardTitle className={`flex items-center gap-2 text-sm ${colorClass}`}>
-            {React.createElement(icon, { className: "w-4 h-4" })}
-            {title} Suggestions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {suggestions.slice(0, 3).map((suggestion, index) => (
-              <div
-                key={index}
-                className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors group"
-                onClick={() => applySuggestion(type, suggestion, type === 'traits' ? 0 : undefined)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs flex-1">{suggestion}</p>
-                  <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+      <motion.div key={type} variants={cardItem}>
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
+            <CardTitle className={`flex items-center gap-2 text-sm ${colorClass}`}>
+              {React.createElement(icon, { className: "w-4 h-4" })}
+              {title} Suggestions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {suggestions.slice(0, 3).map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors group"
+                  onClick={() => applySuggestion(type, suggestion, type === 'traits' ? 0 : undefined)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs flex-1">{suggestion}</p>
+                    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   };
 
@@ -193,7 +197,12 @@ const EnhancedPersonalitySelection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Character Personality</h2>
         <p className="text-muted-foreground">
           Define your character's personality using D&D 5E elements
@@ -203,7 +212,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
             {backgroundData.name} Background
           </Badge>
         )}
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
       {suggestions && (
@@ -349,52 +358,66 @@ const EnhancedPersonalitySelection: React.FC = () => {
         </div>
 
         {/* Right Column - Suggestions */}
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          variants={cardContainer}
+          initial="hidden"
+          animate="visible"
+        >
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Lightbulb className="w-5 h-5 text-yellow-500" />
             Background Suggestions
           </h3>
-          
+
           {suggestions ? (
-            <div className="space-y-4">
+            <>
               {renderSuggestions('traits', 'Personality Trait', suggestions.traits, Heart, 'text-red-500')}
               {renderSuggestions('ideals', 'Ideal', suggestions.ideals, Brain, 'text-blue-500')}
               {renderSuggestions('bonds', 'Bond', suggestions.bonds, Anchor, 'text-green-500')}
               {renderSuggestions('flaws', 'Flaw', suggestions.flaws, AlertTriangle, 'text-orange-500')}
-            </div>
+            </>
           ) : (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">
-                  No suggestions available for this background.
-                </p>
-              </CardContent>
-            </Card>
+            <motion.div variants={cardItem}>
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">
+                    No suggestions available for this background.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Inspiration Info */}
-      <Card className="border-gold-200 bg-gold-50 dark:bg-gold-950/20 dark:border-gold-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gold-700 dark:text-gold-300">
-            <Sparkles className="w-5 h-5" />
-            About Inspiration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-gold-600 dark:text-gold-400">
-          <p>
-            <strong>Inspiration</strong> is a rule the DM can use to reward you for playing your character 
-            in a way that's true to their personality traits, ideals, bonds, and flaws. When you have 
-            inspiration, you can spend it to gain advantage on one ability check, attack roll, or saving throw.
-          </p>
-          <Separator className="my-3 bg-gold-300 dark:bg-gold-700" />
-          <p className="text-xs">
-            Your DM tells you how to earn inspiration in the game. Typically, you gain it when you play 
-            out your character's personality in a way that creates interesting complications or drives the story forward.
-          </p>
-        </CardContent>
-      </Card>
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="border-gold-200 bg-gold-50 dark:bg-gold-950/20 dark:border-gold-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gold-700 dark:text-gold-300">
+              <Sparkles className="w-5 h-5" />
+              About Inspiration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-gold-600 dark:text-gold-400">
+            <p>
+              <strong>Inspiration</strong> is a rule the DM can use to reward you for playing your character
+              in a way that's true to their personality traits, ideals, bonds, and flaws. When you have
+              inspiration, you can spend it to gain advantage on one ability check, attack roll, or saving throw.
+            </p>
+            <Separator className="my-3 bg-gold-300 dark:bg-gold-700" />
+            <p className="text-xs">
+              Your DM tells you how to earn inspiration in the game. Typically, you gain it when you play
+              out your character's personality in a way that creates interesting complications or drives the story forward.
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Completion Status */}
       <div className="text-center">

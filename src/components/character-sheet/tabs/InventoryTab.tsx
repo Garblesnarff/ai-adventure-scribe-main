@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Character } from '@/types/character';
 import DiceRoller from '@/components/ui/dice-roller';
-import { 
-  Package, 
-  Coins, 
-  Sword, 
-  Shield, 
+import {
+  Package,
+  Coins,
+  Sword,
+  Shield,
   Weight,
   Plus,
   Minus,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useMagicItemAttunement } from '@/hooks/use-magic-item-attunement';
 import { validateAttunementRequirements } from '@/utils/magicItemEffects';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 interface InventoryTabProps {
   character: Character;
@@ -135,17 +137,28 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
   const attunementSummary = getAttunementSummary();
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Currency & Weight */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-yellow-500" />
-              Currency
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={cardItem}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Coins className="w-5 h-5 text-yellow-500" />
+                Currency
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-3">
               <div className="grid grid-cols-5 gap-2 text-center">
                 <div>
@@ -177,15 +190,17 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Weight className="w-5 h-5 text-blue-500" />
-              Carrying Capacity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <motion.div variants={cardItem}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Weight className="w-5 h-5 text-blue-500" />
+                Carrying Capacity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Current Weight</span>
@@ -220,25 +235,36 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Equipment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Equipment</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {character.inventory && character.inventory.length > 0 ? (
-              character.inventory.map((item) => {
-                // Simplified attunement status - check if already attuned
-                const attunementStatus = {
-                  canAttune: !item.isAttuned && item.requiresAttunement,
-                  isAttuned: item.isAttuned || false
-                };
-                
-                return (
-                  <div key={item.itemId} className="flex items-center justify-between p-3 border rounded-lg">
+      <motion.div variants={cardItem}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Equipment</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <motion.div
+              className="space-y-3"
+              variants={cardContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              {character.inventory && character.inventory.length > 0 ? (
+                character.inventory.map((item) => {
+                  // Simplified attunement status - check if already attuned
+                  const attunementStatus = {
+                    canAttune: !item.isAttuned && item.requiresAttunement,
+                    isAttuned: item.isAttuned || false
+                  };
+
+                  return (
+                    <motion.div
+                      key={item.itemId}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                      variants={cardItem}
+                    >
                     <div className="flex items-center gap-3 flex-1">
                       {getItemIcon(item.isMagic ? 'magic' : 'default')}
                       
@@ -320,27 +346,29 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
                         )}
                       </div>
                     </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No equipment found
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                    </motion.div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No equipment found
+                </div>
+              )}
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Attunement Slots */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="w-5 h-5 text-purple-500" />
-            Attunement
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <motion.div variants={cardItem}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-purple-500" />
+              Attunement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
           <div className="flex items-center gap-4">
             <span className="text-sm">Attuned Items:</span>
             <div className="flex gap-2">
@@ -374,7 +402,8 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import {
   Search
 } from 'lucide-react';
 import logger from '@/lib/logger';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * Enhanced SpellSelection component for spellcasting classes during character creation
@@ -173,15 +175,26 @@ const SpellSelection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Choose Your Starting Spells</h2>
         <p className="text-muted-foreground">
           As a {currentClass?.name}, you begin with magical knowledge
         </p>
-      </div>
+      </motion.div>
 
       {/* Class Spellcasting Info */}
-      <Card>
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-purple-500" />
@@ -240,6 +253,7 @@ const SpellSelection: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Search and Filter Controls */}
       <div className="flex flex-col lg:flex-row gap-4">
@@ -273,38 +287,59 @@ const SpellSelection: React.FC = () => {
 
       {/* Validation Alerts */}
       {validation.errors.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <div className="space-y-1">
-              {validation.errors.map((error, index) => (
-                <p key={index}>{error.message}</p>
-              ))}
-            </div>
-          </AlertDescription>
-        </Alert>
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.1 }}
+        >
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-1">
+                {validation.errors.map((error, index) => (
+                  <p key={index}>{error.message}</p>
+                ))}
+              </div>
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
 
       {validation.warnings.length > 0 && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <div className="space-y-1">
-              {validation.warnings.map((warning, index) => (
-                <p key={index}>{warning}</p>
-              ))}
-            </div>
-          </AlertDescription>
-        </Alert>
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.1 }}
+        >
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-1">
+                {validation.warnings.map((warning, index) => (
+                  <p key={index}>{warning}</p>
+                ))}
+              </div>
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
 
       {validation.valid && (selectedCantrips.length > 0 || selectedSpells.length > 0) && (
-        <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700 dark:text-green-300">
-            Spell selection is valid and has been saved to your character.
-          </AlertDescription>
-        </Alert>
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.1 }}
+        >
+          <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              Spell selection is valid and has been saved to your character.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
 
       {/* Enhanced Spell Selection Tabs */}

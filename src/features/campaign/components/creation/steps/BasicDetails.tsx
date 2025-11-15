@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * Basic campaign details component
@@ -104,66 +106,89 @@ const BasicDetails: React.FC<WizardStepProps> = ({ isLoading = false }) => {
   }
 
   return (
-    <div className="space-y-8 parchment animate-fade-in-up">
-      <div className="space-y-3">
-        <Label htmlFor="name" className="flex items-center text-lg font-medium">
-          <Wand2 className="h-4 w-4 mr-2 text-infinite-gold" />
-          Campaign Name
-          <span className="text-destructive ml-1">*</span>
-        </Label>
-        <Input
-          id="name"
-          value={state.campaign?.name || ''}
-          onChange={(e) => handleChange('name', e.target.value)}
-          onBlur={() => handleBlur('name')}
-          placeholder="Enter a legendary name for your campaign..."
-          className={`h-12 px-4 py-3 border-2 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-infinite-gold/30 focus:border-infinite-gold bg-white/80 backdrop-blur-sm ${nameError ? 'border-destructive focus:border-destructive ring-destructive/30' : 'border-amber-200 hover:border-amber-300'}`}
-        />
-        {nameError && (
-          <p className="text-sm text-destructive mt-1 flex items-center">
-            <AlertCircle className="h-4 w-4 mr-1" />
-            {nameError}
-          </p>
-        )}
-      </div>
-      <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <Label htmlFor="description" className="text-lg font-medium flex items-center">
-            <BookOpen className="h-4 w-4 mr-2 text-infinite-teal" />
-            Campaign Description
+    <motion.div
+      className="space-y-8 parchment"
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="space-y-3"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={cardItem}>
+          <Label htmlFor="name" className="flex items-center text-lg font-medium">
+            <Wand2 className="h-4 w-4 mr-2 text-infinite-gold" />
+            Campaign Name
+            <span className="text-destructive ml-1">*</span>
           </Label>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={generateDescription}
-            disabled={isGenerating}
-            className="choice-btn primary animate-shimmer hover:animate-pulse transition-all duration-200 border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Description
-              </>
-            )}
-          </Button>
-        </div>
-        <Textarea
-          id="description"
-          value={state.campaign?.description || ''}
-          onChange={(e) => handleChange('description', e.target.value)}
-          onBlur={() => handleBlur('description')}
-          placeholder="Describe the epic tale of your campaign, its mysteries, and adventures..."
-          className="h-40 px-4 py-3 border-2 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-infinite-purple/30 focus:border-infinite-purple bg-white/80 backdrop-blur-sm border-amber-200 hover:border-amber-300 resize-none font-serif text-base leading-relaxed"
-          rows={5}
-        />
-      </div>
-    </div>
+        </motion.div>
+        <motion.div variants={cardItem}>
+          <Input
+            id="name"
+            value={state.campaign?.name || ''}
+            onChange={(e) => handleChange('name', e.target.value)}
+            onBlur={() => handleBlur('name')}
+            placeholder="Enter a legendary name for your campaign..."
+            className={`h-12 px-4 py-3 border-2 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-infinite-gold/30 focus:border-infinite-gold bg-white/80 backdrop-blur-sm ${nameError ? 'border-destructive focus:border-destructive ring-destructive/30' : 'border-amber-200 hover:border-amber-300'}`}
+          />
+          {nameError && (
+            <p className="text-sm text-destructive mt-1 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              {nameError}
+            </p>
+          )}
+        </motion.div>
+      </motion.div>
+      <motion.div
+        className="space-y-3"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={cardItem}>
+          <div className="flex justify-between items-center">
+            <Label htmlFor="description" className="text-lg font-medium flex items-center">
+              <BookOpen className="h-4 w-4 mr-2 text-infinite-teal" />
+              Campaign Description
+            </Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={generateDescription}
+              disabled={isGenerating}
+              className="choice-btn primary animate-shimmer hover:animate-pulse transition-all duration-200 border-infinite-gold text-infinite-gold hover:bg-infinite-gold/10"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Description
+                </>
+              )}
+            </Button>
+          </div>
+        </motion.div>
+        <motion.div variants={cardItem}>
+          <Textarea
+            id="description"
+            value={state.campaign?.description || ''}
+            onChange={(e) => handleChange('description', e.target.value)}
+            onBlur={() => handleBlur('description')}
+            placeholder="Describe the epic tale of your campaign, its mysteries, and adventures..."
+            className="h-40 px-4 py-3 border-2 transition-all duration-200 ease-in-out focus:ring-2 focus:ring-infinite-purple/30 focus:border-infinite-purple bg-white/80 backdrop-blur-sm border-amber-200 hover:border-amber-300 resize-none font-serif text-base leading-relaxed"
+            rows={5}
+          />
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 

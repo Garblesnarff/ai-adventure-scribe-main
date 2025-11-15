@@ -93,6 +93,7 @@
     "drizzle-orm": "^0.44.7",
     "embla-carousel-react": "^8.3.0",
     "express": "^4.19.2",
+    "framer-motion": "^12.23.24",
     "helmet": "^7.1.0",
     "highlight.js": "^11.11.1",
     "howler": "^2.2.4",

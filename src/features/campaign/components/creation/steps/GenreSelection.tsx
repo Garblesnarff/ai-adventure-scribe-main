@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCampaign } from '@/contexts/CampaignContext';
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { BookOpen, Sword, Skull, Zap, Gavel, Anchor, Grid, List, Eye, Check, Sparkles } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 type GenreMeta = {
   value: string;
@@ -130,17 +132,28 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
   }
 
   return (
-    <div className="space-y-8 parchment animate-fade-in-up">
-      <div className="text-center mb-6">
+    <motion.div
+      className="space-y-8 parchment"
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="text-center mb-6"
+        variants={fadeInUp}
+      >
         <Label className="text-xl font-serif font-semibold flex items-center justify-center">
           <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
           Choose Your Campaign Genre
         </Label>
         <p className="text-sm text-muted-foreground mt-2">Select the world and tone for your epic adventure</p>
-      </div>
+      </motion.div>
 
       {/* Controls: search + view toggles */}
-      <div className="space-y-4">
+      <motion.div
+        className="space-y-4"
+        variants={fadeInUp}
+      >
         <div className="relative">
           <Input
             placeholder="Search genres, themes, or descriptions..."
@@ -182,39 +195,48 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
             Showing {filteredGenres.length} of {GENRES.length}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <RadioGroup
         value={state.campaign?.genre || ''}
         onValueChange={handleGenreChange}
-        className={
-          viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' :
-          viewMode === 'list' ? 'space-y-4' :
-          'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-        }
+        asChild
       >
-        {filteredGenres.map((genre) => {
+        <motion.div
+          className={
+            viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' :
+            viewMode === 'list' ? 'space-y-4' :
+            'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+          }
+          variants={cardContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          {filteredGenres.map((genre) => {
           const isSelected = state.campaign?.genre === genre.value;
 
           if (viewMode === 'list') {
             return (
-              <Card
+              <motion.div
                 key={genre.value}
-                className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
-                  isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
-                }`}
-                onClick={() => handleGenreChange(genre.value)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value);
-                }}
-                style={genre.backgroundImage ? {
-                  backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : undefined}
+                variants={cardItem}
               >
+                <Card
+                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden ${
+                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => handleGenreChange(genre.value)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value);
+                  }}
+                  style={genre.backgroundImage ? {
+                    backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : undefined}
+                >
                 {genre.backgroundImage && <div className="absolute inset-0 bg-black/70 z-0" />}
                 <div className={`p-4 relative z-10 ${genre.backgroundImage ? 'text-white' : ''}`}>
                   <div className="flex items-center justify-between">
@@ -247,28 +269,32 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                   </div>
                 </div>
               </Card>
+              </motion.div>
             );
           }
 
           if (viewMode === 'compact') {
             return (
-              <Card
+              <motion.div
                 key={genre.value}
-                className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-4 overflow-hidden ${
-                  isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
-                }`}
-                onClick={() => handleGenreChange(genre.value)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value);
-                }}
-                style={genre.backgroundImage ? {
-                  backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : undefined}
+                variants={cardItem}
               >
+                <Card
+                  className={`cursor-pointer transition-all hover:shadow-lg border-2 relative p-4 overflow-hidden ${
+                    isSelected ? 'border-primary bg-primary/5 shadow-lg' : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => handleGenreChange(genre.value)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value);
+                  }}
+                  style={genre.backgroundImage ? {
+                    backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : undefined}
+                >
                 {genre.backgroundImage && <div className="absolute inset-0 bg-black/70 z-0" />}
                 <div className={`flex items-center justify-between mb-2 relative z-10 ${genre.backgroundImage ? 'text-white' : ''}`}>
                   <div className="flex items-center gap-2">
@@ -299,31 +325,35 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                 </div>
                 <p className={`text-xs line-clamp-2 relative z-10 ${genre.backgroundImage ? 'text-gray-200' : 'text-muted-foreground'}`}>{genre.description}</p>
               </Card>
+              </motion.div>
             );
           }
 
           // grid view with hover popup
           return (
-            <Card
+            <motion.div
               key={genre.value}
-              className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
-                isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
-              }`}
-              style={{
-                padding: 0,
-                ...(genre.backgroundImage ? {
-                  backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : {})
-              }}
-              onClick={() => handleGenreChange(genre.value)}
-              onMouseEnter={() => setHovered(genre.value)}
-              onMouseLeave={() => setHovered(null)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value); }}
+              variants={cardItem}
             >
+              <Card
+                className={`group cursor-pointer transition-all hover:shadow-xl border-2 relative overflow-hidden aspect-square ${
+                  isSelected ? 'border-primary shadow-lg' : 'border-border/30 hover:border-infinite-purple/50'
+                }`}
+                style={{
+                  padding: 0,
+                  ...(genre.backgroundImage ? {
+                    backgroundImage: `url(${genre.backgroundImage}), url('/campaign-background-placeholder.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  } : {})
+                }}
+                onClick={() => handleGenreChange(genre.value)}
+                onMouseEnter={() => setHovered(genre.value)}
+                onMouseLeave={() => setHovered(null)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleGenreChange(genre.value); }}
+              >
               <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 60px 20px rgba(0, 0, 0, 0.3)' }} />
 
               {isSelected && (
@@ -355,10 +385,12 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
                 </div>
               </div>
             </Card>
+            </motion.div>
           );
         })}
+        </motion.div>
       </RadioGroup>
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,6 +22,7 @@ import { ExtendedGameSession } from '@/hooks/use-game-session';
 import { useParams } from 'react-router-dom';
 import { analytics } from '@/services/analytics';
 import { Z_INDEX } from '@/constants/z-index';
+import { fadeInUp, cardContainer, cardItem, slideInRight } from '@/utils/animations';
 
 interface MemoryPanelProps {
   sessionData: ExtendedGameSession | null;
@@ -276,10 +278,13 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
   };
 
   return (
-    <div 
-      ref={panelRef} 
+    <motion.div
+      ref={panelRef}
       className="h-full bg-white shadow-sm border-0 flex flex-col resize-x lg:resize-x-none min-w-[280px] max-w-[400px]"
       style={{ width: panelWidth, minWidth: '280px', maxWidth: '400px' }}
+      variants={slideInRight}
+      initial="hidden"
+      animate="visible"
     >
       {/* Drag Handle for Desktop */}
       <div
@@ -287,7 +292,7 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
         className="absolute left-0 top-0 w-1 h-full bg-border hover:bg-primary cursor-col-resize z-10 hidden lg:block"
         onMouseDown={startDrag}
       />
-      
+
       <Card className={`h-full glass-strong shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-3xl hover-glow bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm ${
         isInCombat
           ? 'border-red-400/60 bg-gradient-to-b from-red-900/15 to-card/95'
@@ -362,66 +367,101 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
           </div>
         </div>
         
-        {isExpanded && (
-          <div className="flex-grow flex flex-col overflow-hidden">
-            <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as any)} className="flex flex-col h-full">
-              <TabsContent value="character" className="flex-1 p-0 mt-0 border-0 bg-background">
-                <div style={{ maxHeight: '72vh', overflow: 'auto' }}>
-                  <CompactCharacterHeader />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="memory" className="flex-1 mt-0 border-0 flex flex-col overflow-hidden bg-background">
-                {/* Compact Session Notes Section */}
-                <div className="p-4 border-b border-border">
-                  <h4 className="font-display font-semibold mb-2 text-foreground text-sm">📝 Session Notes</h4>
-                  <Textarea
-                    value={localSessionNotes}
-                    onChange={(e) => setLocalSessionNotes(e.target.value)}
-                    placeholder="Type your session notes here..."
-                    rows={4}
-                    className="mb-3 text-sm bg-muted border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
-                  />
-                  <Button
-                    onClick={handleSaveNotes}
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors duration-200"
+        <AnimatePresence mode="wait">
+          {isExpanded && (
+            <motion.div
+              className="flex-grow flex flex-col overflow-hidden"
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as any)} className="flex flex-col h-full">
+                <TabsContent value="character" className="flex-1 p-0 mt-0 border-0 bg-background">
+                  <motion.div
+                    style={{ maxHeight: '72vh', overflow: 'auto' }}
+                    variants={fadeInUp}
+                    initial="hidden"
+                    animate="visible"
                   >
-                    Save Notes
-                  </Button>
-                </div>
-
-                {/* Memories Section */}
-                <div className="p-4 border-b flex-shrink-0">
-                  <MemoryFilter 
-                    selectedType={selectedType}
-                    onTypeSelect={setSelectedType}
-                  />
-                </div>
-                
-                <ScrollArea className="flex-1 p-4" style={{ maxHeight: '56vh' }}>
-                  {memoriesLoading && <p className="text-xs text-muted-foreground">Loading memories...</p>}
-                  {!memoriesLoading && sortedMemories.length === 0 && <p className="text-xs text-muted-foreground">No memories logged yet.</p>}
-                  <div className="space-y-2">
-                    {sortedMemories.map((memory) => (
-                      <MemoryCard key={memory.id} memory={memory} />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-
-              {isInCombat && (
-                <TabsContent value="combat" className="flex-1 mt-0 border-0 bg-background">
-                  <div style={{ maxHeight: '72vh', overflow: 'auto' }}>
-                    <CombatSummary />
-                  </div>
+                    <CompactCharacterHeader />
+                  </motion.div>
                 </TabsContent>
-              )}
-            </Tabs>
-          </div>
-        )}
+
+                <TabsContent value="memory" className="flex-1 mt-0 border-0 flex flex-col overflow-hidden bg-background">
+                  {/* Compact Session Notes Section */}
+                  <motion.div
+                    className="p-4 border-b border-border"
+                    variants={fadeInUp}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <h4 className="font-display font-semibold mb-2 text-foreground text-sm">📝 Session Notes</h4>
+                    <Textarea
+                      value={localSessionNotes}
+                      onChange={(e) => setLocalSessionNotes(e.target.value)}
+                      placeholder="Type your session notes here..."
+                      rows={4}
+                      className="mb-3 text-sm bg-muted border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
+                    />
+                    <Button
+                      onClick={handleSaveNotes}
+                      size="sm"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg transition-colors duration-200"
+                    >
+                      Save Notes
+                    </Button>
+                  </motion.div>
+
+                  {/* Memories Section */}
+                  <motion.div
+                    className="p-4 border-b flex-shrink-0"
+                    variants={fadeInUp}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <MemoryFilter
+                      selectedType={selectedType}
+                      onTypeSelect={setSelectedType}
+                    />
+                  </motion.div>
+
+                  <ScrollArea className="flex-1 p-4" style={{ maxHeight: '56vh' }}>
+                    {memoriesLoading && <p className="text-xs text-muted-foreground">Loading memories...</p>}
+                    {!memoriesLoading && sortedMemories.length === 0 && <p className="text-xs text-muted-foreground">No memories logged yet.</p>}
+                    <motion.div
+                      className="space-y-2"
+                      variants={cardContainer}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {sortedMemories.map((memory) => (
+                        <motion.div key={memory.id} variants={cardItem}>
+                          <MemoryCard memory={memory} />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </ScrollArea>
+                </TabsContent>
+
+                {isInCombat && (
+                  <TabsContent value="combat" className="flex-1 mt-0 border-0 bg-background">
+                    <motion.div
+                      style={{ maxHeight: '72vh', overflow: 'auto' }}
+                      variants={fadeInUp}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      <CombatSummary />
+                    </motion.div>
+                  </TabsContent>
+                )}
+              </Tabs>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Card>
-    </div>
+    </motion.div>
   );
 };
 

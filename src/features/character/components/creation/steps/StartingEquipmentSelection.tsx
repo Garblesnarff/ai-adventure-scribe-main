@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,21 +8,22 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  startingGoldByClass, 
-  allEquipment, 
+import {
+  startingGoldByClass,
+  allEquipment,
   Equipment,
-  calculateArmorClass 
+  calculateArmorClass
 } from '@/data/equipmentOptions';
-import { 
-  Package, 
-  Coins, 
-  Dice1, 
+import {
+  Package,
+  Coins,
+  Dice1,
   TrendingUp,
   Shield,
   Sword,
   Shirt
 } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * Starting Equipment Selection component for character creation
@@ -222,59 +224,71 @@ const StartingEquipmentSelection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Starting Equipment</h2>
         <p className="text-muted-foreground">
           Choose how to determine your {characterClass.name}'s starting equipment
         </p>
-      </div>
+      </motion.div>
 
       {/* Method Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Equipment Method</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup
-            value={method}
-            onValueChange={(value: 'package' | 'gold') => setMethod(value)}
-          >
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2 p-4 border rounded hover:border-primary transition-colors cursor-pointer">
-                <RadioGroupItem value="package" id="package" />
-                <div className="flex-1">
-                  <Label htmlFor="package" className="flex items-center gap-2 cursor-pointer">
-                    <Package className="w-5 h-5 text-blue-500" />
-                    <div>
-                      <div className="font-medium">Equipment Package</div>
-                      <div className="text-sm text-muted-foreground">
-                        Receive the standard {characterClass.name} equipment package
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Equipment Method</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup
+              value={method}
+              onValueChange={(value: 'package' | 'gold') => setMethod(value)}
+            >
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2 p-4 border rounded hover:border-primary transition-colors cursor-pointer">
+                  <RadioGroupItem value="package" id="package" />
+                  <div className="flex-1">
+                    <Label htmlFor="package" className="flex items-center gap-2 cursor-pointer">
+                      <Package className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <div className="font-medium">Equipment Package</div>
+                        <div className="text-sm text-muted-foreground">
+                          Receive the standard {characterClass.name} equipment package
+                        </div>
                       </div>
-                    </div>
-                  </Label>
+                    </Label>
+                  </div>
+                  <Badge variant="secondary">Recommended</Badge>
                 </div>
-                <Badge variant="secondary">Recommended</Badge>
-              </div>
 
-              <div className="flex items-center space-x-2 p-4 border rounded hover:border-primary transition-colors cursor-pointer">
-                <RadioGroupItem value="gold" id="gold" />
-                <div className="flex-1">
-                  <Label htmlFor="gold" className="flex items-center gap-2 cursor-pointer">
-                    <Coins className="w-5 h-5 text-yellow-500" />
-                    <div>
-                      <div className="font-medium">Starting Gold</div>
-                      <div className="text-sm text-muted-foreground">
-                        Roll {goldData?.dice} × {goldData?.multiplier} gp and buy your own equipment
+                <div className="flex items-center space-x-2 p-4 border rounded hover:border-primary transition-colors cursor-pointer">
+                  <RadioGroupItem value="gold" id="gold" />
+                  <div className="flex-1">
+                    <Label htmlFor="gold" className="flex items-center gap-2 cursor-pointer">
+                      <Coins className="w-5 h-5 text-yellow-500" />
+                      <div>
+                        <div className="font-medium">Starting Gold</div>
+                        <div className="text-sm text-muted-foreground">
+                          Roll {goldData?.dice} × {goldData?.multiplier} gp and buy your own equipment
+                        </div>
                       </div>
-                    </div>
-                  </Label>
+                    </Label>
+                  </div>
+                  <Badge variant="outline">Advanced</Badge>
                 </div>
-                <Badge variant="outline">Advanced</Badge>
               </div>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Equipment Package Preview */}
       {method === 'package' && (
@@ -286,36 +300,50 @@ const StartingEquipmentSelection: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-3 border rounded">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+              variants={cardContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
                 <div className="text-2xl font-bold text-blue-600">{estimatedAC()}</div>
                 <div className="text-xs text-muted-foreground">Estimated AC</div>
-              </div>
-              <div className="text-center p-3 border rounded">
+              </motion.div>
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
                 <div className="text-2xl font-bold">{startingEquipment.length}</div>
                 <div className="text-xs text-muted-foreground">Items Included</div>
-              </div>
-              <div className="text-center p-3 border rounded">
+              </motion.div>
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
                 <div className="text-2xl font-bold">0</div>
                 <div className="text-xs text-muted-foreground">Starting Gold</div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             <Separator className="mb-4" />
 
             <div className="space-y-3">
               <h4 className="font-medium">Equipment Included:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 gap-2"
+                variants={cardContainer}
+                initial="hidden"
+                animate="visible"
+              >
                 {startingEquipment.map((equipment, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 border rounded text-sm">
+                  <motion.div
+                    key={index}
+                    variants={cardItem}
+                    className="flex items-center gap-2 p-2 border rounded text-sm"
+                  >
                     {equipment.category === 'weapon' && <Sword className="w-4 h-4 text-red-500" />}
                     {equipment.category === 'armor' && <Shirt className="w-4 h-4 text-blue-500" />}
                     {equipment.category === 'shield' && <Shield className="w-4 h-4 text-gray-500" />}
                     {!['weapon', 'armor', 'shield'].includes(equipment.category) && <Package className="w-4 h-4 text-green-500" />}
                     <span>{equipment.name}</span>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           </CardContent>
         </Card>
@@ -340,7 +368,7 @@ const StartingEquipmentSelection: React.FC = () => {
                 <div className="text-sm text-muted-foreground mb-4">
                   Average: {goldData?.average} gp
                 </div>
-                
+
                 {hasRolledGold ? (
                   <div className="space-y-2">
                     <div className="text-3xl font-bold text-yellow-600">{rolledGold} gp</div>
@@ -358,27 +386,39 @@ const StartingEquipmentSelection: React.FC = () => {
                   </Button>
                 )}
               </div>
-              
-              <div className="text-sm text-muted-foreground">
-                With starting gold, you'll need to purchase all equipment from the shop. 
+
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ delay: 0.2 }}
+                className="text-sm text-muted-foreground"
+              >
+                With starting gold, you'll need to purchase all equipment from the shop.
                 This allows for complete customization but requires more planning.
-              </div>
+              </motion.div>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Apply Button */}
-      <div className="flex justify-center">
-        <Button 
-          onClick={applyEquipment} 
+      <motion.div
+        className="flex justify-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.3 }}
+      >
+        <Button
+          onClick={applyEquipment}
           size="lg"
           disabled={method === 'gold' && !hasRolledGold}
         >
           <TrendingUp className="w-4 h-4 mr-2" />
           Apply {method === 'package' ? 'Equipment Package' : 'Starting Gold'}
         </Button>
-      </div>
+      </motion.div>
     </div>
   );
 };

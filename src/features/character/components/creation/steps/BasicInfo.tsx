@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Sparkles, User, AlertCircle } from 'lucide-react';
+import { fadeInUp } from '@/utils/animations';
 
 /**
  * Character name validation rules per D&D 5E conventions
@@ -83,11 +85,20 @@ const BasicInfo: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="text-center space-y-4">
+      <motion.div
+        className="text-center space-y-4"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="flex items-center justify-center space-x-3">
-          <div className="p-3 bg-gradient-to-br from-infinite-purple to-infinite-gold rounded-full shadow-lg">
+          <motion.div
+            className="p-3 bg-gradient-to-br from-infinite-purple to-infinite-gold rounded-full shadow-lg"
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
             <Sparkles className="w-8 h-8 text-white" />
-          </div>
+          </motion.div>
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-infinite-purple to-infinite-gold bg-clip-text text-transparent">
               Begin Your Legend
@@ -95,9 +106,15 @@ const BasicInfo: React.FC = () => {
             <p className="text-muted-foreground">Every great hero needs a name</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Character Name Input */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.2 }}
+      >
       <Card className="p-6 max-w-2xl mx-auto glass hover-lift rounded-2xl border-2 border-infinite-purple/20">
         <div className="space-y-6">
           <div className="flex items-center space-x-2">
@@ -136,8 +153,15 @@ const BasicInfo: React.FC = () => {
           </div>
         </div>
       </Card>
+      </motion.div>
 
       {/* Information Card */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.4 }}
+      >
       <Card className="p-4 max-w-2xl mx-auto glass rounded-2xl border-2 border-infinite-teal/20">
         <div className="flex items-start space-x-3">
           <div className="p-2 bg-infinite-teal/20 rounded-full">
@@ -151,6 +175,7 @@ const BasicInfo: React.FC = () => {
           </div>
         </div>
       </Card>
+      </motion.div>
     </div>
   );
 };

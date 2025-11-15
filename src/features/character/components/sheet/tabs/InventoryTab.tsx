@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Character } from '@/types/character';
 import DiceRoller from '@/components/ui/dice-roller';
-import { 
-  Package, 
-  Coins, 
-  Sword, 
-  Shield, 
+import {
+  Package,
+  Coins,
+  Sword,
+  Shield,
   Weight,
   Plus,
   Minus,
@@ -324,8 +325,14 @@ const InventoryTab: React.FC<InventoryTabProps> = ({ character, onUpdate }) => {
                 );
               })
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No equipment found
+              <div className="py-4">
+                <EmptyState
+                  illustration={<Package className="h-10 w-10" />}
+                  title="No equipment found"
+                  description="Your inventory is empty. Collect items, weapons, and gear during your adventures."
+                  variant="minimal"
+                  maxWidth="sm"
+                />
               </div>
             )}
           </div>

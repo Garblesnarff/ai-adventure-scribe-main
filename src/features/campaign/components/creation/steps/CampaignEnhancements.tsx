@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import {
   CAMPAIGN_ENHANCEMENTS,
   checkOptionAvailability
 } from '@/types/enhancement-options';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 interface CampaignEnhancementsProps {
   isOptional?: boolean;
@@ -142,129 +144,141 @@ export default function CampaignEnhancements({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-primary" />
-            Campaign Enhancements
-            {isOptional && <Badge variant="secondary">Optional</Badge>}
-          </CardTitle>
-          <CardDescription>
-            Add unique elements, mysteries, and world features that make your campaign memorable and provide
-            rich material for storytelling. These enhancements give you plot hooks, atmosphere, and
-            mechanical elements to create an engaging experience.
-          </CardDescription>
-        </CardHeader>
+      <motion.div {...fadeInUp}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-primary" />
+              Campaign Enhancements
+              {isOptional && <Badge variant="secondary">Optional</Badge>}
+            </CardTitle>
+            <CardDescription>
+              Add unique elements, mysteries, and world features that make your campaign memorable and provide
+              rich material for storytelling. These enhancements give you plot hooks, atmosphere, and
+              mechanical elements to create an engaging experience.
+            </CardDescription>
+          </CardHeader>
 
-        {summary && (
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm font-medium">
-                  {selections.length} enhancement{selections.length !== 1 ? 's' : ''} selected
-                </span>
+          {summary && (
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium">
+                    {selections.length} enhancement{selections.length !== 1 ? 's' : ''} selected
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {summary.map(category => (
+                    <Badge key={category} variant="outline" className="capitalize">
+                      {category}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {summary.map(category => (
-                  <Badge key={category} variant="outline" className="capitalize">
-                    {category}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+            </CardContent>
+          )}
+        </Card>
+      </motion.div>
 
       {/* Recommendations */}
       {recommended.length > 0 && selections.length === 0 && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Recommended for your {state.campaign?.genre} campaign:</strong>{' '}
-            {recommended.map(opt => opt.name).join(', ')}.
-            These enhancements complement your campaign theme and provide excellent story material.
-          </AlertDescription>
-        </Alert>
+        <motion.div {...fadeInUp}>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Recommended for your {state.campaign?.genre} campaign:</strong>{' '}
+              {recommended.map(opt => opt.name).join(', ')}.
+              These enhancements complement your campaign theme and provide excellent story material.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
 
       {/* Enhancement Selection Panel */}
-      <EnhancementPanel
-        category="campaign"
-        campaignData={state.campaign}
-        selections={selections}
-        onSelectionChange={setSelections}
-        onAIGenerate={handleAIGenerate}
-        className="w-full"
-      />
+      <motion.div {...fadeInUp}>
+        <EnhancementPanel
+          category="campaign"
+          campaignData={state.campaign}
+          selections={selections}
+          onSelectionChange={setSelections}
+          onAIGenerate={handleAIGenerate}
+          className="w-full"
+        />
+      </motion.div>
 
       {/* Selection Summary */}
       {selections.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Your Campaign's Identity</CardTitle>
-            <CardDescription>
-              Here's how your enhancements shape your campaign's atmosphere and story potential:
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {selections.map(selection => {
-              const option = CAMPAIGN_ENHANCEMENTS.find(o => o.id === selection.optionId);
-              if (!option) return null;
+        <motion.div {...fadeInUp}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Your Campaign's Identity</CardTitle>
+              <CardDescription>
+                Here's how your enhancements shape your campaign's atmosphere and story potential:
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <motion.div variants={cardContainer} initial="hidden" animate="visible" className="space-y-4">
+                {selections.map(selection => {
+                  const option = CAMPAIGN_ENHANCEMENTS.find(o => o.id === selection.optionId);
+                  if (!option) return null;
 
-              return (
-                <div key={selection.optionId} className="border-l-2 border-primary/20 pl-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{option.icon}</span>
-                    <span className="font-medium">{option.name}</span>
-                    {selection.aiGenerated && (
-                      <Badge variant="outline" className="text-xs">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        AI
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    {Array.isArray(selection.value) ? (
-                      <ul className="list-disc list-inside">
-                        {(selection.value as string[]).map((value, index) => (
-                          <li key={index}>{value}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>{selection.value as string}</p>
-                    )}
-                    {selection.customValue && (
-                      <p className="italic">Note: {selection.customValue}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                  return (
+                    <motion.div key={selection.optionId} variants={cardItem} className="border-l-2 border-primary/20 pl-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{option.icon}</span>
+                        <span className="font-medium">{option.name}</span>
+                        {selection.aiGenerated && (
+                          <Badge variant="outline" className="text-xs">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {Array.isArray(selection.value) ? (
+                          <ul className="list-disc list-inside">
+                            {(selection.value as string[]).map((value, index) => (
+                              <li key={index}>{value}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>{selection.value as string}</p>
+                        )}
+                        {selection.customValue && (
+                          <p className="italic">Note: {selection.customValue}</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
 
-            {/* DM Guidance */}
-            <div className="mt-4 p-3 bg-muted rounded-md">
-              <h4 className="font-medium text-sm mb-2">For the Dungeon Master:</h4>
-              <p className="text-sm text-muted-foreground">
-                These enhancements provide story hooks, atmosphere cues, and mechanical considerations
-                for your campaign. Use them as inspiration for sessions, plot development, and world-building.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                {/* DM Guidance */}
+                <motion.div variants={cardItem} className="mt-4 p-3 bg-muted rounded-md">
+                  <h4 className="font-medium text-sm mb-2">For the Dungeon Master:</h4>
+                  <p className="text-sm text-muted-foreground">
+                    These enhancements provide story hooks, atmosphere cues, and mechanical considerations
+                    for your campaign. Use them as inspiration for sessions, plot development, and world-building.
+                  </p>
+                </motion.div>
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Skip Option */}
       {isOptional && selections.length === 0 && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Optional Step:</strong> You can skip enhancements and create a standard campaign,
-            or add them later. However, selecting enhancements now will give you and your players
-            a richer, more unique world to explore.
-          </AlertDescription>
-        </Alert>
+        <motion.div {...fadeInUp}>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Optional Step:</strong> You can skip enhancements and create a standard campaign,
+              or add them later. However, selecting enhancements now will give you and your players
+              a richer, more unique world to explore.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
     </div>
   );

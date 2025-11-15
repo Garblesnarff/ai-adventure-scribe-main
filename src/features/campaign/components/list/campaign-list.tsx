@@ -19,6 +19,7 @@
  // SDK/library imports
  // ============================
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 
  // ============================
@@ -35,9 +36,12 @@ import { useToast } from '@/hooks/use-toast';
  // Feature components
  // ============================
 import { MemoizedCampaignCard } from './campaign-card';
-import CampaignSkeleton from './campaign-skeleton';
-import EmptyState from './empty-state';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
+import { FantasyLoader } from '@/components/ui/fantasy-loader';
 import logger from '@/lib/logger';
+import { cardContainer } from '@/utils/animations';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Props for CampaignList component
@@ -59,6 +63,7 @@ interface CampaignListProps {
  */
 const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // map known campaign names to public cover images
   const getCoverFor = useMemo(() => (name: string | null) => {
@@ -111,13 +116,16 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
     },
   });
 
-  // Show loading state with skeletons
+  // Show loading state with FantasyLoader
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(3)].map((_, i) => (
-          <CampaignSkeleton key={i} />
-        ))}
+      <div className="flex items-center justify-center py-12">
+        <FantasyLoader
+          type="parchment"
+          size="lg"
+          label="Loading campaigns..."
+          tip="Your epic adventures await!"
+        />
       </div>
     );
   }
@@ -139,13 +147,29 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
 
   // Show empty state if no campaigns
   if (!campaigns?.length) {
-    return <EmptyState />;
+    return (
+      <EmptyState
+        illustration="no-campaigns"
+        title="No campaigns yet"
+        description="Your tales await. Create your first epic saga to begin your adventure."
+        action={
+          <Button onClick={() => navigate('/app/campaigns/create')}>
+            Create Campaign
+          </Button>
+        }
+      />
+    );
   }
 
-  // Render campaign grid
+  // Render campaign grid with stagger animation
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      variants={cardContainer}
+      initial="hidden"
+      animate="visible"
+    >
       {campaigns.map((campaign, i) => {
         // prefer explicit mapping; fall back to default test image for the first card
         const mapped = getCoverFor(campaign.name);
@@ -159,7 +183,7 @@ const CampaignList = ({ searchTerm = '', sortBy = 'created_at' }: CampaignListPr
           />
         );
       })}
-    </div>
+    </motion.div>
   );
 };
 

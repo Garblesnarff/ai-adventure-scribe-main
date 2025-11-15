@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SelectableCard } from '@/components/ui/selectable-card';
 import { classes } from '@/data/classOptions';
 import { CharacterClass } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
-import { Sword, Shield, Heart, Zap, Check, Sparkles, BookOpen } from 'lucide-react';
+import { Sword, Shield, Heart, Zap, Check, Sparkles, BookOpen, Wand2, Skull, Music, Trees, Users } from 'lucide-react';
+import { cardContainer, cardItem } from '@/utils/animations';
 import logger from '@/lib/logger';
 import { Z_INDEX } from '@/constants/z-index';
 
@@ -47,11 +50,17 @@ const ClassSelection: React.FC = () => {
   const getClassIcon = (classId: string) => {
     const iconMap: Record<string, React.ElementType> = {
       fighter: Sword,
-      wizard: BookOpen,
+      wizard: Wand2,
       cleric: Sparkles,
       rogue: Zap,
       paladin: Shield,
       barbarian: Heart,
+      ranger: BookOpen,
+      warlock: Skull,
+      bard: Music,
+      druid: Trees,
+      monk: Users,
+      sorcerer: Wand2,
     };
     return iconMap[classId] || Sword;
   };

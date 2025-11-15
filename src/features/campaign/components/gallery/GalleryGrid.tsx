@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Image } from 'lucide-react';
 import { Z_INDEX } from '@/constants/z-index';
 
 export interface GalleryItem {
@@ -23,9 +25,13 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ title, images, emptyMessage }
     return (
       <div className="w-full">
         {title && <h3 className="text-lg font-semibold mb-3">{title}</h3>}
-        <div className="text-sm text-muted-foreground border rounded p-6 text-center">
-          {emptyMessage || 'No images yet.'}
-        </div>
+        <EmptyState
+          illustration={<Image className="h-10 w-10" />}
+          title="No images yet"
+          description={emptyMessage || "Images from your adventures will appear here."}
+          variant="card"
+          maxWidth="md"
+        />
       </div>
     );
   }

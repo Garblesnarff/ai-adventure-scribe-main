@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { CharacterBackground } from '@/types/character';
 import { useToast } from '@/components/ui/use-toast';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { BookOpen, Check, Sparkles, Users, Scroll } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 import logger from '@/lib/logger';
 import { Z_INDEX } from '@/constants/z-index';
 
@@ -43,7 +45,12 @@ const BackgroundSelection: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="text-center space-y-4">
+      <motion.div
+        className="text-center space-y-4"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="flex items-center justify-center space-x-3">
           <div className="p-3 bg-gradient-to-br from-infinite-teal to-infinite-teal-dark rounded-full shadow-lg">
             <Scroll className="w-8 h-8 text-white" />
@@ -55,9 +62,15 @@ const BackgroundSelection: React.FC = () => {
             <p className="text-muted-foreground">Your past shapes your character's story</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Info Card */}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
       <Card className="glass rounded-2xl border-2 border-infinite-teal/20">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
@@ -72,15 +85,21 @@ const BackgroundSelection: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Background Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        variants={cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {backgrounds.map((background) => {
           const isSelected = state.character?.background?.id === background.id;
 
           return (
+            <motion.div key={background.id} variants={cardItem}>
             <Card
-              key={background.id}
               className={`glass rounded-2xl hover-lift cursor-pointer transition-all duration-300 border-2 ${
                 isSelected ? 'border-infinite-teal ring-4 ring-infinite-teal/20 shadow-xl' : 'border-infinite-teal/20 hover:border-infinite-teal/50'
               }`}
@@ -155,9 +174,10 @@ const BackgroundSelection: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 };

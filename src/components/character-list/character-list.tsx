@@ -12,7 +12,7 @@ import { MemoizedCharacterCard } from './character-card';
 import EmptyState from './empty-state';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
-import { CharacterListSkeleton } from '@/components/skeletons/CharacterListSkeleton';
+import { FantasyLoader } from '@/components/ui/fantasy-loader';
 import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
 /**
@@ -230,8 +230,15 @@ const CharacterList: React.FC = () => {
             </div>
           </div>
 
-          {/* Skeleton Grid */}
-          <CharacterListSkeleton />
+          {/* Loading State */}
+          <div className="flex items-center justify-center py-12">
+            <FantasyLoader
+              type="dice"
+              size="lg"
+              label="Loading your heroes..."
+              tip="Every great adventure begins with a hero!"
+            />
+          </div>
         </div>
       </div>
     );

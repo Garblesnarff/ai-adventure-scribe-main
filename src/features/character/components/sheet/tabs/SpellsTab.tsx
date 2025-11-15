@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Character } from '@/types/character';
 import DiceRoller from '@/components/ui/dice-roller';
 import { Wand2, Circle, Dot, Book, Target, Loader2 } from 'lucide-react';
@@ -269,8 +270,14 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
               <CardContent>
                 <div className="space-y-3">
                   {cantrips.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No cantrips learned yet
+                    <div className="py-4">
+                      <EmptyState
+                        illustration={<Wand2 className="h-10 w-10" />}
+                        title="No cantrips learned"
+                        description="You haven't learned any cantrips yet. Cantrips are simple spells you can cast at will."
+                        variant="minimal"
+                        maxWidth="sm"
+                      />
                     </div>
                   ) : (
                     cantrips.map((spell) => {
@@ -329,8 +336,14 @@ const SpellsTab: React.FC<SpellsTabProps> = ({ character, onUpdate }) => {
               <CardContent>
                 <div className="space-y-3">
                   {leveledSpells.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No spells learned yet
+                    <div className="py-4">
+                      <EmptyState
+                        illustration={<Book className="h-10 w-10" />}
+                        title="No spells learned"
+                        description="You haven't learned any spells yet. Learn spells as you level up or find spellbooks."
+                        variant="minimal"
+                        maxWidth="sm"
+                      />
                     </div>
                   ) : (
                     leveledSpells.map((spell) => {

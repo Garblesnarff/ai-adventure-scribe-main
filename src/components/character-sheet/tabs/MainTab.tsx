@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,11 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Character } from '@/types/character';
 import DiceRoller from '@/components/ui/dice-roller';
-import { 
-  Heart, 
-  Shield, 
-  Zap, 
-  Target, 
+import {
+  Heart,
+  Shield,
+  Zap,
+  Target,
   Clock,
   Plus,
   Minus,
@@ -158,9 +160,15 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
   const isStabilized = combatState.deathSaves.successes >= 3;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <motion.div
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      variants={cardContainer}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Combat Vitals */}
-      <Card>
+      <motion.div variants={cardItem}>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Heart className="w-5 h-5 text-red-500" />
@@ -414,9 +422,11 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Core Stats */}
-      <Card>
+      <motion.div variants={cardItem}>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-500" />
@@ -490,9 +500,11 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Character Description */}
-      <Card className="lg:col-span-2">
+      <motion.div variants={cardItem} className="lg:col-span-2">
+        <Card>
         <CardHeader>
           <CardTitle>Character Description</CardTitle>
         </CardHeader>
@@ -517,7 +529,8 @@ const MainTab: React.FC<MainTabProps> = ({ character, onUpdate }) => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Heart, Dice1, TrendingUp } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * HitPointsSelection component for determining maximum hit points
@@ -144,163 +146,194 @@ const HitPointsSelection: React.FC = () => {
       </div>
     ) : (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Hit Points</h2>
         <p className="text-muted-foreground">
           Determine your character's maximum hit points
         </p>
-      </div>
+      </motion.div>
 
       {/* Hit Point Calculation Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="w-5 h-5 text-red-500" />
-            Hit Point Breakdown
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Class:</span>
-              <span>{characterClass.name} (d{hitDie})</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Level:</span>
-              <span>{level}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Constitution Modifier:</span>
-              <span>{conModifier >= 0 ? '+' : ''}{conModifier}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>1st Level HP:</span>
-              <span>{hitDie} + {conModifier} = {hitDie + conModifier}</span>
-            </div>
-            {level > 1 && (
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-red-500" />
+              Hit Point Breakdown
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Additional Levels:</span>
-                <span>
-                  {method === 'average' 
-                    ? `${level - 1} × (${averagePerLevel} + ${conModifier}) = ${(level - 1) * (averagePerLevel + conModifier)}`
-                    : hasRolls 
-                      ? `${rollResults.slice(0, level - 1).map(r => `${r} + ${conModifier}`).join(' + ')} = ${rollResults.slice(0, level - 1).reduce((sum, roll) => sum + roll + conModifier, 0)}`
-                      : 'Not rolled yet'
-                  }
-                </span>
+                <span>Class:</span>
+                <span>{characterClass.name} (d{hitDie})</span>
               </div>
-            )}
-            <hr />
-            <div className="flex justify-between font-semibold">
-              <span>Maximum Hit Points:</span>
-              <span className="text-red-600">{maxHPPreview}</span>
+              <div className="flex justify-between">
+                <span>Level:</span>
+                <span>{level}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Constitution Modifier:</span>
+                <span>{conModifier >= 0 ? '+' : ''}{conModifier}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>1st Level HP:</span>
+                <span>{hitDie} + {conModifier} = {hitDie + conModifier}</span>
+              </div>
+              {level > 1 && (
+                <div className="flex justify-between">
+                  <span>Additional Levels:</span>
+                  <span>
+                    {method === 'average'
+                      ? `${level - 1} × (${averagePerLevel} + ${conModifier}) = ${(level - 1) * (averagePerLevel + conModifier)}`
+                      : hasRolls
+                        ? `${rollResults.slice(0, level - 1).map(r => `${r} + ${conModifier}`).join(' + ')} = ${rollResults.slice(0, level - 1).reduce((sum, roll) => sum + roll + conModifier, 0)}`
+                        : 'Not rolled yet'
+                    }
+                  </span>
+                </div>
+              )}
+              <hr />
+              <div className="flex justify-between font-semibold">
+                <span>Maximum Hit Points:</span>
+                <span className="text-red-600">{maxHPPreview}</span>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Method Selection */}
       {level > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Hit Point Method</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Choose how to determine hit points for levels beyond 1st
-            </p>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={method}
-              onValueChange={(value: 'roll' | 'average') => {
-                setMethod(value);
-                if (value === 'roll') {
-                  setRollResults([]);
-                }
-              }}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 p-3 border rounded">
-                  <RadioGroupItem value="average" id="average" />
-                  <div className="flex-1">
-                    <Label htmlFor="average" className="flex items-center gap-2 cursor-pointer">
-                      <TrendingUp className="w-4 h-4" />
-                      <div>
-                        <div className="font-medium">Take Average</div>
-                        <div className="text-sm text-muted-foreground">
-                          Reliable: {averagePerLevel} + Con modifier per level
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Hit Point Method</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Choose how to determine hit points for levels beyond 1st
+              </p>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={method}
+                onValueChange={(value: 'roll' | 'average') => {
+                  setMethod(value);
+                  if (value === 'roll') {
+                    setRollResults([]);
+                  }
+                }}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2 p-3 border rounded">
+                    <RadioGroupItem value="average" id="average" />
+                    <div className="flex-1">
+                      <Label htmlFor="average" className="flex items-center gap-2 cursor-pointer">
+                        <TrendingUp className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">Take Average</div>
+                          <div className="text-sm text-muted-foreground">
+                            Reliable: {averagePerLevel} + Con modifier per level
+                          </div>
                         </div>
-                      </div>
-                    </Label>
+                      </Label>
+                    </div>
+                    <Badge variant="secondary">Consistent</Badge>
                   </div>
-                  <Badge variant="secondary">Consistent</Badge>
-                </div>
 
-                <div className="flex items-center space-x-2 p-3 border rounded">
-                  <RadioGroupItem value="roll" id="roll" />
-                  <div className="flex-1">
-                    <Label htmlFor="roll" className="flex items-center gap-2 cursor-pointer">
-                      <Dice1 className="w-4 h-4" />
-                      <div>
-                        <div className="font-medium">Roll Hit Dice</div>
-                        <div className="text-sm text-muted-foreground">
-                          Risky: Roll d{hitDie} + Con modifier per level
+                  <div className="flex items-center space-x-2 p-3 border rounded">
+                    <RadioGroupItem value="roll" id="roll" />
+                    <div className="flex-1">
+                      <Label htmlFor="roll" className="flex items-center gap-2 cursor-pointer">
+                        <Dice1 className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">Roll Hit Dice</div>
+                          <div className="text-sm text-muted-foreground">
+                            Risky: Roll d{hitDie} + Con modifier per level
+                          </div>
                         </div>
-                      </div>
-                    </Label>
+                      </Label>
+                    </div>
+                    <Badge variant="outline">Variable</Badge>
                   </div>
-                  <Badge variant="outline">Variable</Badge>
                 </div>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Rolling Interface */}
       {method === 'roll' && level > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Dice1 className="w-5 h-5" />
-              Roll Hit Dice
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Roll a d{hitDie} for each level beyond 1st
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Roll Results */}
-              <div className="grid grid-cols-5 gap-2">
-                {Array.from({ length: level - 1 }, (_, i) => {
-                  const roll = rollResults[i];
-                  const isRolled = roll !== undefined;
-                  const isCurrentlyRolling = isRolling && i === rollResults.length;
-                  
-                  return (
-                    <div
-                      key={i}
-                      className={`p-3 border rounded text-center ${
-                        isRolled
-                          ? 'border-primary bg-primary/10'
-                          : isCurrentlyRolling
-                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-950 animate-pulse'
-                          : 'border-muted'
-                      }`}
-                    >
-                      <div className="text-xs text-muted-foreground">Level {i + 2}</div>
-                      <div className="text-lg font-semibold">
-                        {isCurrentlyRolling ? '🎲' : isRolled ? roll : '?'}
-                      </div>
-                      {isRolled && (
-                        <div className="text-xs text-muted-foreground">
-                          +{conModifier} Con
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.3 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Dice1 className="w-5 h-5" />
+                Roll Hit Dice
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Roll a d{hitDie} for each level beyond 1st
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Roll Results */}
+                <motion.div
+                  className="grid grid-cols-5 gap-2"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {Array.from({ length: level - 1 }, (_, i) => {
+                    const roll = rollResults[i];
+                    const isRolled = roll !== undefined;
+                    const isCurrentlyRolling = isRolling && i === rollResults.length;
+
+                    return (
+                      <motion.div
+                        key={i}
+                        variants={cardItem}
+                        className={`p-3 border rounded text-center ${
+                          isRolled
+                            ? 'border-primary bg-primary/10'
+                            : isCurrentlyRolling
+                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-950 animate-pulse'
+                            : 'border-muted'
+                        }`}
+                      >
+                        <div className="text-xs text-muted-foreground">Level {i + 2}</div>
+                        <div className="text-lg font-semibold">
+                          {isCurrentlyRolling ? '🎲' : isRolled ? roll : '?'}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        {isRolled && (
+                          <div className="text-xs text-muted-foreground">
+                            +{conModifier} Con
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
 
               {/* Roll Button */}
               <div className="flex justify-center">
@@ -336,33 +369,41 @@ const HitPointsSelection: React.FC = () => {
                   </Button>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Final HP Display */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="w-5 h-5 text-red-500" />
-            Final Hit Points
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-red-600 mb-2">
-              {maxHPPreview}
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.4 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-red-500" />
+              Final Hit Points
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-red-600 mb-2">
+                {maxHPPreview}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Maximum Hit Points
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Hit Dice: {level}d{hitDie}
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              Maximum Hit Points
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Hit Dice: {level}d{hitDie}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Manual Apply Button (fallback) */}
       <div className="flex justify-center">

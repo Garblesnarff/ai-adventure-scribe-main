@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { EmptyState } from '@/components/ui/empty-state';
 import SessionCard, { SessionListItem } from './SessionCard';
 
 const PAGE_SIZE = 10;
@@ -203,13 +204,16 @@ const CampaignSessions: React.FC = () => {
 
     if (sessions.length === 0) {
       return (
-        <Card className="p-6 text-center space-y-3">
-          <h3 className="text-lg font-semibold">No sessions yet</h3>
-          <p className="text-sm text-muted-foreground">
-            Start your first session to begin chronicling this campaign.
-          </p>
-          <Button onClick={openStartSession} className="mt-2">Start New Session</Button>
-        </Card>
+        <EmptyState
+          illustration="no-sessions"
+          title="No sessions yet"
+          description="Start your first session to begin chronicling this campaign and embarking on your adventure."
+          action={
+            <Button onClick={openStartSession}>
+              Start New Session
+            </Button>
+          }
+        />
       );
     }
 

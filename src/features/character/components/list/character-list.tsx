@@ -9,10 +9,10 @@ import { Character } from '@/types/character';
 import { baseRaces } from '@/data/raceOptions';
 import { classes } from '@/data/classOptions';
 import { MemoizedCharacterCard } from './character-card';
-import EmptyState from './empty-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import logger from '@/lib/logger';
 import { addNetworkListener, isOffline } from '@/utils/network';
-import { CharacterListSkeleton } from '@/components/skeletons/CharacterListSkeleton';
+import { FantasyLoader } from '@/components/ui/fantasy-loader';
 import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
 /**
@@ -230,8 +230,15 @@ const CharacterList: React.FC = () => {
             </div>
           </div>
 
-          {/* Skeleton Grid */}
-          <CharacterListSkeleton />
+          {/* Loading State */}
+          <div className="flex items-center justify-center py-12">
+            <FantasyLoader
+              type="dice"
+              size="lg"
+              label="Loading your heroes..."
+              tip="Every great adventure begins with a hero!"
+            />
+          </div>
         </div>
       </div>
     );
@@ -309,7 +316,19 @@ const CharacterList: React.FC = () => {
           </div>
         )}
 
-        {characters.length === 0 && <EmptyState onCreateNew={handleCreateNew} />}
+        {characters.length === 0 && (
+          <EmptyState
+            illustration="no-characters"
+            title="No characters yet"
+            description="You haven't created any characters yet. Forge your first hero to embark on epic adventures."
+            action={
+              <Button onClick={handleCreateNew}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Your First Character
+              </Button>
+            }
+          />
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Trash2, Play, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,6 +25,7 @@ import { useCampaignImageHotLoading } from '@/hooks/use-image-hot-loading';
 import { Skeleton } from '@/components/ui/skeleton';
 import logger from '@/lib/logger';
 import { Z_INDEX } from '@/constants/z-index';
+import { cardItem, hoverLift } from '@/utils/animations';
 
 interface CampaignCardProps {
   campaign: {
@@ -141,16 +144,23 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
   }, [hotLoadedImage, hasImage, imageLoading, coverImage]);
 
   return (
-    <Card
-      className="campaign-card featured-card group relative border-2 border-border/30 shadow-md transition-all duration-500 hover:shadow-2xl hover:shadow-infinite-purple/50 hover:border-infinite-gold aspect-square w-full"
-      style={{ padding: '2px' }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+    <motion.div
+      variants={cardItem}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      className="w-full"
     >
-      {/* Glow effect on hover - uses OVERLAY_EFFECT for visual effects */}
-      <div className={`absolute inset-0 z-[${Z_INDEX.OVERLAY_EFFECT}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
-        <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
-      </div>
+      <Card
+        variant="parchment"
+        className="campaign-card group relative overflow-hidden aspect-square w-full hover:shadow-xl hover:shadow-amber-500/20 border-amber-200/50"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Glow effect on hover - uses OVERLAY_EFFECT for visual effects */}
+        <div className={`absolute inset-0 z-[${Z_INDEX.OVERLAY_EFFECT}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
+          <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(245,158,11,0.3)]" />
+        </div>
       
       {/* Hero / thumbnail area */}
       <div
@@ -184,9 +194,9 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
           </div>
         )}
         {/* Overlay and popup for all cards */}
-        <div className="featured-overlay bg-gradient-to-b from-infinite-purple/80 via-transparent to-infinite-dark/90" />
-            <div className={`hover-popup ${isHovered ? `opacity-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 pointer-events-none'} absolute left-1/2 top-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
-          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-border">
+        <div className="featured-overlay bg-gradient-to-b from-amber-900/60 via-transparent to-amber-950/80" />
+            <div className={`hover-popup ${isHovered ? `opacity-100 pointer-events-auto z-[${Z_INDEX.CARD_HOVER}]` : 'opacity-0 pointer-events-none'} absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-200 w-80 max-w-full filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.2)]`}>
+          <div className="fantasy-card bg-gradient-to-br from-amber-50/98 to-amber-100/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border-2 border-amber-200/60">
             <div className="text-xl font-bold text-foreground mb-2 leading-tight break-words">{imageLoading ? <Skeleton className="h-6 w-48" /> : campaign.name}</div>
             {imageLoading ? (
               <Skeleton className="h-4 w-full" />
@@ -206,11 +216,11 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
             )}
             
             {/* Campaign badges in popup */}
-            <div className="campaign-badges flex gap-1 flex-wrap text-xs mt-2 mb-4">
-              {campaign.genre && <span className="inline-flex items-center px-2 py-1 rounded-full bg-infinite-purple/10 text-infinite-purple border border-infinite-purple/20 font-medium">{campaign.genre}</span>}
-              {campaign.difficulty_level && <span className="inline-flex items-center px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20 font-medium">{campaign.difficulty_level}</span>}
-              {campaign.campaign_length && <span className="inline-flex items-center px-2 py-1 rounded-full bg-secondary/10 text-secondary-foreground border border-secondary/20 font-medium">{campaign.campaign_length}</span>}
-              {campaign.tone && <span className="inline-flex items-center px-2 py-1 rounded-full bg-accent/10 text-accent-foreground border border-accent/20 font-medium">{campaign.tone}</span>}
+            <div className="campaign-badges flex gap-1.5 flex-wrap text-xs mt-2 mb-4">
+              {campaign.genre && <Badge variant="purple">{campaign.genre}</Badge>}
+              {campaign.difficulty_level && <Badge variant="gold">{campaign.difficulty_level}</Badge>}
+              {campaign.campaign_length && <Badge variant="teal">{campaign.campaign_length}</Badge>}
+              {campaign.tone && <Badge variant="info">{campaign.tone}</Badge>}
             </div>
 
             <div className="flex items-center gap-2 justify-end">
@@ -279,6 +289,7 @@ const CampaignCardComponent = ({ campaign, isFeatured = false, coverImage }: Cam
         campaignName={campaign.name}
       />
     </Card>
+    </motion.div>
   );
 };
 

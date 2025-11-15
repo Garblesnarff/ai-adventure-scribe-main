@@ -1,0 +1,675 @@
+/**
+ * Infinite Realms Component Styles
+ *
+ * Core visual language for the Fantasy-Tech Fusion aesthetic.
+ * Modern, clean UI with subtle fantasy elements and AI-powered feel.
+ *
+ * Design Principles:
+ * - Clean typography with dramatic hierarchy
+ * - Subtle textures, not overwhelming
+ * - Smooth animations, purposeful interactions
+ * - Glassmorphism for modern feel, parchment for fantasy touch
+ * - Glow effects for AI/magical moments
+ */
+
+/* ============================================
+   CARD VARIANTS
+   ============================================ */
+
+/**
+ * Fantasy Card - Parchment-style base
+ * Use for: Campaign cards, character cards, quest logs
+ */
+.fantasy-card {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(var(--card)) 0%,
+    hsl(var(--muted) / 0.3) 100%
+  );
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px hsl(var(--foreground) / 0.05),
+    0 4px 12px hsl(var(--foreground) / 0.08),
+    inset 0 1px 0 hsl(var(--background) / 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.fantasy-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsl(var(--foreground) / 0.01) 2px,
+      hsl(var(--foreground) / 0.01) 4px
+    );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.fantasy-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 8px hsl(var(--foreground) / 0.08),
+    0 12px 28px hsl(var(--foreground) / 0.12),
+    0 0 0 1px hsl(var(--infinite-purple) / 0.1),
+    inset 0 1px 0 hsl(var(--background) / 0.2);
+}
+
+/**
+ * Cosmic Panel - DM-style dark gradient
+ * Use for: DM responses, AI panels, memory visualizations
+ */
+.cosmic-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(45, 17, 85, 0.95) 0%,
+    rgba(15, 41, 69, 0.92) 50%,
+    rgba(30, 20, 60, 0.95) 100%
+  );
+  border: 1px solid hsl(var(--infinite-purple) / 0.3);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 32px hsl(var(--infinite-purple) / 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 20% 30%,
+    hsl(var(--infinite-purple) / 0.15) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/**
+ * Glass Panel - Modern glassmorphism
+ * Use for: Overlays, modals, floating panels
+ */
+.glass-panel {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--background) / 0.7) 0%,
+    hsl(var(--background) / 0.5) 100%
+  );
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid hsl(var(--border) / 0.3);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 32px hsl(var(--foreground) / 0.1),
+    inset 0 1px 0 hsl(var(--background) / 0.8);
+}
+
+/* ============================================
+   INTERACTION EFFECTS
+   ============================================ */
+
+/**
+ * Hover Glow Effects
+ * Use for: Buttons, interactive cards, important actions
+ */
+.hover-glow-purple {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.hover-glow-purple::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: hsl(var(--infinite-purple) / 0);
+  filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+  opacity: 0;
+}
+
+.hover-glow-purple:hover::after {
+  background: hsl(var(--infinite-purple) / 0.4);
+  opacity: 1;
+}
+
+.hover-glow-purple:hover {
+  box-shadow:
+    0 0 20px hsl(var(--infinite-purple) / 0.3),
+    0 0 40px hsl(var(--infinite-purple) / 0.15);
+}
+
+.hover-glow-gold {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.hover-glow-gold::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: hsl(var(--infinite-gold) / 0);
+  filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+  opacity: 0;
+}
+
+.hover-glow-gold:hover::after {
+  background: hsl(var(--infinite-gold) / 0.4);
+  opacity: 1;
+}
+
+.hover-glow-gold:hover {
+  box-shadow:
+    0 0 20px hsl(var(--infinite-gold) / 0.3),
+    0 0 40px hsl(var(--infinite-gold) / 0.15);
+  transform: scale(1.02);
+}
+
+/**
+ * Hover Lift Effect
+ * Use for: Cards, selectable items
+ */
+.hover-lift {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px hsl(var(--foreground) / 0.1),
+    0 8px 24px hsl(var(--foreground) / 0.08);
+}
+
+.hover-lift:active {
+  transform: translateY(0);
+}
+
+/* ============================================
+   STAT DISPLAYS
+   ============================================ */
+
+/**
+ * Stat Display - Circular stat badges
+ * Use for: Ability scores, HP, AC, modifiers
+ */
+.stat-display {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 64px;
+  padding: 0.75rem;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted) / 0.6) 100%
+  );
+  border: 2px solid hsl(var(--border));
+  border-radius: 50%;
+  box-shadow:
+    0 2px 8px hsl(var(--foreground) / 0.1),
+    inset 0 1px 0 hsl(var(--background) / 0.5);
+  transition: all 0.2s ease;
+}
+
+.stat-display:hover {
+  border-color: hsl(var(--infinite-purple));
+  box-shadow:
+    0 4px 12px hsl(var(--foreground) / 0.15),
+    0 0 16px hsl(var(--infinite-purple) / 0.2),
+    inset 0 1px 0 hsl(var(--background) / 0.6);
+  transform: scale(1.05);
+}
+
+.stat-display-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: hsl(var(--foreground));
+}
+
+.stat-display-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.25rem;
+}
+
+.stat-display-modifier {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--infinite-purple));
+}
+
+/**
+ * Large Stat Display - For prominent stats
+ * Use for: Main ability scores on character sheet
+ */
+.stat-display-large {
+  min-width: 80px;
+  min-height: 80px;
+  padding: 1rem;
+}
+
+.stat-display-large .stat-display-value {
+  font-size: 2rem;
+}
+
+.stat-display-large .stat-display-label {
+  font-size: 0.875rem;
+}
+
+/**
+ * Stat Display Small - For compact displays
+ * Use for: Character cards, quick reference
+ */
+.stat-display-small {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0.5rem;
+}
+
+.stat-display-small .stat-display-value {
+  font-size: 1.125rem;
+}
+
+.stat-display-small .stat-display-label {
+  font-size: 0.625rem;
+}
+
+/* ============================================
+   TYPOGRAPHY ENHANCEMENTS
+   ============================================ */
+
+/**
+ * Narrative Text - Enhanced readability for DM descriptions
+ * Use for: Story text, DM responses, quest descriptions
+ */
+.narrative-text {
+  font-family: var(--font-dm-serif-display), Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  color: hsl(var(--foreground));
+  font-weight: 400;
+}
+
+.narrative-text p {
+  margin-bottom: 1em;
+}
+
+.narrative-text em {
+  font-style: italic;
+  color: hsl(var(--infinite-purple));
+}
+
+.narrative-text strong {
+  font-weight: 600;
+  color: hsl(var(--infinite-gold));
+}
+
+/**
+ * Fantasy Heading - Dramatic headings
+ * Use for: Section titles, card headers, modal titles
+ */
+.fantasy-heading {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--infinite-purple)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-wrap: balance;
+}
+
+/**
+ * Label Text - UI labels
+ * Use for: Form labels, stat labels, category headers
+ */
+.label-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ============================================
+   PROGRESS & STATUS
+   ============================================ */
+
+/**
+ * Fantasy Progress Bar
+ * Use for: HP, XP, spell slots, encumbrance
+ */
+.fantasy-progress {
+  width: 100%;
+  height: 12px;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  box-shadow: inset 0 1px 2px hsl(var(--foreground) / 0.1);
+}
+
+.fantasy-progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--infinite-purple)) 0%,
+    hsl(var(--infinite-teal)) 100%
+  );
+  border-radius: 5px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px hsl(var(--infinite-purple) / 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.fantasy-progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+/**
+ * Status Badge
+ * Use for: Character conditions, campaign status, notifications
+ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid;
+  transition: all 0.2s ease;
+}
+
+.status-badge-success {
+  background: hsl(var(--infinite-teal) / 0.1);
+  border-color: hsl(var(--infinite-teal) / 0.3);
+  color: hsl(var(--infinite-teal));
+}
+
+.status-badge-warning {
+  background: hsl(var(--infinite-gold) / 0.1);
+  border-color: hsl(var(--infinite-gold) / 0.3);
+  color: hsl(var(--infinite-gold));
+}
+
+.status-badge-danger {
+  background: hsl(0 72% 51% / 0.1);
+  border-color: hsl(0 72% 51% / 0.3);
+  color: hsl(0 72% 51%);
+}
+
+.status-badge-info {
+  background: hsl(var(--infinite-purple) / 0.1);
+  border-color: hsl(var(--infinite-purple) / 0.3);
+  color: hsl(var(--infinite-purple));
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/**
+ * Fade In Animation
+ */
+.fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/**
+ * Slide In Animations
+ */
+.slide-in-up {
+  animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * Shimmer Effect
+ */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/**
+ * Pulse Effect
+ */
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/**
+ * Glow Pulse Effect
+ */
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 10px hsl(var(--infinite-purple) / 0.3),
+      0 0 20px hsl(var(--infinite-purple) / 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 20px hsl(var(--infinite-purple) / 0.5),
+      0 0 40px hsl(var(--infinite-purple) / 0.3);
+  }
+}
+
+/* ============================================
+   DECORATIVE ELEMENTS
+   ============================================ */
+
+/**
+ * Decorative Divider
+ * Use for: Section separators
+ */
+.decorative-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--border)) 50%,
+    transparent 100%
+  );
+  margin: 2rem 0;
+}
+
+.decorative-divider::before,
+.decorative-divider::after {
+  content: '◆';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--infinite-purple));
+  font-size: 0.5rem;
+}
+
+.decorative-divider::before {
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/**
+ * Corner Accent
+ * Use for: Cards, modals, special containers
+ */
+.corner-accent {
+  position: relative;
+}
+
+.corner-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border-top: 2px solid hsl(var(--infinite-purple) / 0.5);
+  border-left: 2px solid hsl(var(--infinite-purple) / 0.5);
+  border-top-left-radius: 8px;
+}
+
+.corner-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  border-bottom: 2px solid hsl(var(--infinite-purple) / 0.5);
+  border-right: 2px solid hsl(var(--infinite-purple) / 0.5);
+  border-bottom-right-radius: 8px;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+/**
+ * Touch-friendly sizing
+ */
+@media (max-width: 768px) {
+  .stat-display {
+    min-width: 56px;
+    min-height: 56px;
+  }
+
+  .stat-display-large {
+    min-width: 72px;
+    min-height: 72px;
+  }
+
+  .fantasy-heading {
+    font-size: 1.5rem;
+  }
+
+  .narrative-text {
+    font-size: 1rem;
+  }
+}
+
+/**
+ * Reduced motion support
+ */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-in-up,
+  .slide-in-left,
+  .slide-in-right,
+  .hover-lift,
+  .pulse,
+  .glow-pulse {
+    animation: none;
+  }
+
+  .fantasy-progress-fill::after {
+    animation: none;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

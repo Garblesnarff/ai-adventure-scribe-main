@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Loader2, LogOut } from 'lucide-react';
+import { Send, Loader2, LogOut, Sparkles, Swords, MessageCircle, Eye } from 'lucide-react';
 import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
 import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { toast } from 'sonner';
 import logger from '@/lib/logger';
 import { handleAsyncError } from '@/utils/error-handler';
+import { fadeInUp, typingDot } from '@/utils/animations';
+import { FantasyLoader } from '@/components/ui/fantasy-loader';
 
 interface SimpleGameChatProps {
   campaignId: string;
@@ -256,6 +259,34 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
     return choices;
   };
 
+  // Helper: determine the type of action from choice text
+  const getChoiceIcon = (choiceText: string) => {
+    const lowerChoice = choiceText.toLowerCase();
+
+    // Combat/Attack actions
+    if (lowerChoice.match(/attack|fight|strike|slash|stab|shoot|punch|kick|charge/)) {
+      return <Swords className="w-3.5 h-3.5" />;
+    }
+
+    // Perception/Investigation actions
+    if (lowerChoice.match(/look|examine|search|investigate|inspect|observe|check|peer/)) {
+      return <Eye className="w-3.5 h-3.5" />;
+    }
+
+    // Dialogue/Social actions
+    if (lowerChoice.match(/talk|speak|say|ask|tell|persuade|convince|negotiate|greet|call/)) {
+      return <MessageCircle className="w-3.5 h-3.5" />;
+    }
+
+    // Magic/Spell actions
+    if (lowerChoice.match(/cast|spell|magic|enchant|summon|conjure|channel/)) {
+      return <Sparkles className="w-3.5 h-3.5" />;
+    }
+
+    // Default action icon
+    return <Zap className="w-3.5 h-3.5" />;
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -267,10 +298,12 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
     return (
       <Card className="h-full">
         <CardContent className="flex items-center justify-center h-96">
-          <div className="flex flex-col items-center space-y-2">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="text-muted-foreground">Setting up your adventure...</p>
-          </div>
+          <FantasyLoader
+            type="spell"
+            size="lg"
+            label="Setting up your adventure..."
+            tip="The Dungeon Master is preparing your tale!"
+          />
         </CardContent>
       </Card>
     );
@@ -327,8 +360,11 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
           <ScrollArea className="flex-1 p-4 chat-scroll">
           {isLoadingHistory ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span className="text-muted-foreground">Loading conversation...</span>
+              <FantasyLoader
+                type="parchment"
+                size="default"
+                label="Loading conversation..."
+              />
             </div>
           ) : (
             <div className="space-y-4">
@@ -338,11 +374,20 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
                 </div>
               )}
               
-              {messages.map((message) => {
+              <AnimatePresence mode="popLayout">
+              {messages.map((message, index) => {
                 const choices = message.role !== 'user' ? extractChoices(message.content) : [];
 
                 return (
-                <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <motion.div
+                  key={message.id}
+                  variants={fadeInUp}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
                   <div className={`flex max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} items-start`}>
                     {message.role !== 'user' && (
                       <div className="flex-shrink-0 mr-3">
@@ -357,12 +402,18 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
 
                       {/* Render choices if present */}
                       {choices.length > 0 && (
-                        <div className="choice-list" role="list">
+                        <motion.div
+                          className="choice-list"
+                          role="list"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
                           {choices.map((c, i) => (
-                            <button
+                            <motion.button
                               key={i}
                               type="button"
-                              className={`choice-btn`}
+                              className="choice-btn flex items-center gap-2"
                               onClick={() => setCurrentMessage(c)}
                               onDoubleClick={async () => {
                                 setCurrentMessage(c);
@@ -372,36 +423,66 @@ export const SimpleGameChat: React.FC<SimpleGameChatProps> = ({
                                 }, 80);
                               }}
                               aria-label={`Choose ${c}`}
+                              whileHover={{ scale: 1.02, x: 4 }}
+                              whileTap={{ scale: 0.98 }}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.3 + i * 0.05 }}
                             >
-                              {String.fromCharCode(65 + i)}. {c}
-                            </button>
+                              <span className="flex items-center gap-1.5">
+                                {getChoiceIcon(c)}
+                                <span className="font-semibold">{String.fromCharCode(65 + i)}.</span>
+                              </span>
+                              {c}
+                            </motion.button>
                           ))}
-                        </div>
+                        </motion.div>
                       )}
 
                     </div>
                   </div>
-                </div>
+                </motion.div>
                 );
               })}
+              </AnimatePresence>
               
               {isSending && (
-                <div className="flex justify-start">
-                  <div className="rounded-lg px-5 py-3 dm-bubble mr-4 max-w-[80%]">
-                    <div className="text-sm font-medium mb-1">Dungeon Master</div>
-                    {streamingMessage ? (
-                      <div className="whitespace-pre-wrap">
-                        {streamingMessage}
-                        <span className="animate-pulse">|</span>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex justify-start"
+                >
+                  <div className="flex max-w-[80%] items-start">
+                    <div className="flex-shrink-0 mr-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium avatar-dm">
+                        <Sparkles className="w-5 h-5 animate-pulse" />
                       </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Thinking...</span>
-                      </div>
-                    )}
+                    </div>
+                    <div className="rounded-lg px-5 py-3 dm-bubble">
+                      <div className="text-sm font-medium mb-1">Dungeon Master</div>
+                      {streamingMessage ? (
+                        <div className="whitespace-pre-wrap">
+                          {streamingMessage}
+                          <motion.span
+                            animate={{ opacity: [1, 0.3, 1] }}
+                            transition={{ duration: 0.8, repeat: Infinity }}
+                            className="inline-block ml-0.5"
+                          >
+                            |
+                          </motion.span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-infinite-purple" />
+                          <span className="text-sm italic text-muted-foreground">
+                            The Dungeon Master weaves a tale...
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               )}
               
               <div ref={messagesEndRef} />

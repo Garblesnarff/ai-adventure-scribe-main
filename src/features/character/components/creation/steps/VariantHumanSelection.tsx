@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { feats, getFeatsByCategory, Feat } from '@/data/featOptions';
 import { AbilityScores } from '@/types/character';
 import { Users, Award, Settings, Eye } from 'lucide-react';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * VariantHumanSelection component for customizing Variant Human and Custom Lineage
@@ -195,23 +197,24 @@ const VariantHumanSelection: React.FC = () => {
   }, [selectedAbilities, selectedFeat, selectedSkill, selectedLanguage, selectedTool]);
 
   const getFeatCard = (feat: Feat) => (
-    <Card 
-      key={feat.id}
-      className={`cursor-pointer transition-all hover:shadow-md border-2 ${
-        selectedFeat === feat.id ? 'border-primary bg-primary/5' : 'border-muted'
-      }`}
-      onClick={() => setSelectedFeat(feat.id)}
-    >
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{feat.name}</CardTitle>
-        <Badge variant="outline" className="w-fit text-xs">
-          {feat.category}
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">{feat.description}</p>
-      </CardContent>
-    </Card>
+    <motion.div key={feat.id} variants={cardItem}>
+      <Card
+        className={`cursor-pointer transition-all hover:shadow-md border-2 ${
+          selectedFeat === feat.id ? 'border-primary bg-primary/5' : 'border-muted'
+        }`}
+        onClick={() => setSelectedFeat(feat.id)}
+      >
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">{feat.name}</CardTitle>
+          <Badge variant="outline" className="w-fit text-xs">
+            {feat.category}
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{feat.description}</p>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 
   return (
@@ -228,221 +231,262 @@ const VariantHumanSelection: React.FC = () => {
       </div>
     ) : (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div className="text-center" variants={fadeInUp} initial="hidden" animate="visible">
         <h2 className="text-3xl font-bold mb-2">
           {isVariantHuman ? 'Variant Human' : 'Custom Lineage'} Customization
         </h2>
         <p className="text-muted-foreground">
           Configure your {isVariantHuman ? 'variant human' : 'custom lineage'} traits and abilities
         </p>
-      </div>
+      </motion.div>
 
       {/* Ability Score Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Ability Score Increases
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {isVariantHuman 
-              ? 'Choose 2 different ability scores to increase by 1 each'
-              : 'Choose 1 ability score to increase by 2'
-            }
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {availableAbilities.map(ability => (
-              <div
-                key={ability}
-                className={`p-3 border rounded cursor-pointer transition-colors ${
-                  selectedAbilities.includes(ability)
-                    ? 'border-primary bg-primary/10'
-                    : 'border-muted hover:border-primary/50'
-                }`}
-                onClick={() => handleAbilitySelection(ability)}
-              >
-                <div className="font-medium capitalize">{ability}</div>
-                <div className="text-sm text-muted-foreground">
-                  {isVariantHuman ? '+1' : '+2'}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Selected: {selectedAbilities.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ')}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Feat Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5" />
-            Choose a Feat
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Select a feat to gain at 1st level
-          </p>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="all">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="combat">Combat</TabsTrigger>
-              <TabsTrigger value="magic">Magic</TabsTrigger>
-              <TabsTrigger value="utility">Utility</TabsTrigger>
-              <TabsTrigger value="social">Social</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {feats.map(getFeatCard)}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="combat" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {getFeatsByCategory('combat').map(getFeatCard)}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="magic" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {getFeatsByCategory('magic').map(getFeatCard)}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="utility" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {getFeatsByCategory('utility').map(getFeatCard)}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="social" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {getFeatsByCategory('social').map(getFeatCard)}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Variant Human Skill Selection */}
-      {isVariantHuman && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Skill Proficiency</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Choose one skill to gain proficiency in
-            </p>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={selectedSkill}
-              onValueChange={setSelectedSkill}
-            >
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {availableSkills.map(skill => (
-                  <div key={skill} className="flex items-center space-x-2">
-                    <RadioGroupItem value={skill} id={skill} />
-                    <Label htmlFor={skill} className="text-sm">{skill}</Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Language/Tool Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Additional Proficiency</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Choose an additional language or tool proficiency
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium">Language</Label>
-            <RadioGroup
-              value={selectedLanguage}
-              onValueChange={setSelectedLanguage}
-            >
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {availableLanguages.map(language => (
-                  <div key={language} className="flex items-center space-x-2">
-                    <RadioGroupItem value={language} id={`lang-${language}`} />
-                    <Label htmlFor={`lang-${language}`} className="text-sm">{language}</Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium">Tool Proficiency</Label>
-            <RadioGroup
-              value={selectedTool}
-              onValueChange={setSelectedTool}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {availableTools.map(tool => (
-                  <div key={tool} className="flex items-center space-x-2">
-                    <RadioGroupItem value={tool} id={`tool-${tool}`} />
-                    <Label htmlFor={`tool-${tool}`} className="text-sm">{tool}</Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom Lineage Additional Options */}
-      {isCustomLineage && (
+      <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              Additional Traits
+              <Settings className="w-5 h-5" />
+              Ability Score Increases
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {isVariantHuman
+                ? 'Choose 2 different ability scores to increase by 1 each'
+                : 'Choose 1 ability score to increase by 2'
+              }
+            </p>
+          </CardHeader>
+          <CardContent>
+            <motion.div
+              className="grid grid-cols-2 md:grid-cols-3 gap-3"
+              variants={cardContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              {availableAbilities.map(ability => (
+                <motion.div
+                  key={ability}
+                  variants={cardItem}
+                  className={`p-3 border rounded cursor-pointer transition-colors ${
+                    selectedAbilities.includes(ability)
+                      ? 'border-primary bg-primary/10'
+                      : 'border-muted hover:border-primary/50'
+                  }`}
+                  onClick={() => handleAbilitySelection(ability)}
+                >
+                  <div className="font-medium capitalize">{ability}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {isVariantHuman ? '+1' : '+2'}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Selected: {selectedAbilities.map(a => a.charAt(0).toUpperCase() + a.slice(1)).join(', ')}
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Feat Selection */}
+      <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              Choose a Feat
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Select a feat to gain at 1st level
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="all">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="combat">Combat</TabsTrigger>
+                <TabsTrigger value="magic">Magic</TabsTrigger>
+                <TabsTrigger value="utility">Utility</TabsTrigger>
+                <TabsTrigger value="social">Social</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="mt-4">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {feats.map(getFeatCard)}
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="combat" className="mt-4">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {getFeatsByCategory('combat').map(getFeatCard)}
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="magic" className="mt-4">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {getFeatsByCategory('magic').map(getFeatCard)}
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="utility" className="mt-4">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {getFeatsByCategory('utility').map(getFeatCard)}
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="social" className="mt-4">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {getFeatsByCategory('social').map(getFeatCard)}
+                </motion.div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Variant Human Skill Selection */}
+      {isVariantHuman && (
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Skill Proficiency</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Choose one skill to gain proficiency in
+              </p>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={selectedSkill}
+                onValueChange={setSelectedSkill}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {availableSkills.map(skill => (
+                    <div key={skill} className="flex items-center space-x-2">
+                      <RadioGroupItem value={skill} id={skill} />
+                      <Label htmlFor={skill} className="text-sm">{skill}</Label>
+                    </div>
+                  ))}
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Language/Tool Selection */}
+      <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Proficiency</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Choose an additional language or tool proficiency
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Size</Label>
+              <Label className="text-sm font-medium">Language</Label>
               <RadioGroup
-                value={customLineageSize}
-                onValueChange={(value: 'small' | 'medium') => setCustomLineageSize(value)}
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
               >
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="small" id="small" />
-                    <Label htmlFor="small">Small</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="medium" id="medium" />
-                    <Label htmlFor="medium">Medium</Label>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {availableLanguages.map(language => (
+                    <div key={language} className="flex items-center space-x-2">
+                      <RadioGroupItem value={language} id={`lang-${language}`} />
+                      <Label htmlFor={`lang-${language}`} className="text-sm">{language}</Label>
+                    </div>
+                  ))}
                 </div>
               </RadioGroup>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="darkvision"
-                checked={hasdarkvision}
-                onCheckedChange={(checked) => setHasDarkvision(checked === true)}
-              />
-              <Label htmlFor="darkvision">
-                Darkvision (60 feet) - If not selected, gain an additional skill proficiency instead
-              </Label>
+            <div>
+              <Label className="text-sm font-medium">Tool Proficiency</Label>
+              <RadioGroup
+                value={selectedTool}
+                onValueChange={setSelectedTool}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {availableTools.map(tool => (
+                    <div key={tool} className="flex items-center space-x-2">
+                      <RadioGroupItem value={tool} id={`tool-${tool}`} />
+                      <Label htmlFor={`tool-${tool}`} className="text-sm">{tool}</Label>
+                    </div>
+                  ))}
+                </div>
+              </RadioGroup>
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* Custom Lineage Additional Options */}
+      {isCustomLineage && (
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.5 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Additional Traits
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Size</Label>
+                <RadioGroup
+                  value={customLineageSize}
+                  onValueChange={(value: 'small' | 'medium') => setCustomLineageSize(value)}
+                >
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="small" id="small" />
+                      <Label htmlFor="small">Small</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="medium" id="medium" />
+                      <Label htmlFor="medium">Medium</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="darkvision"
+                  checked={hasdarkvision}
+                  onCheckedChange={(checked) => setHasDarkvision(checked === true)}
+                />
+                <Label htmlFor="darkvision">
+                  Darkvision (60 feet) - If not selected, gain an additional skill proficiency instead
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Manual Apply Button (fallback) */}

@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+/* Infinite Realms Component Library - Fantasy-Tech Fusion Design System */
+@import url('./styles/infinite-realms-components.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

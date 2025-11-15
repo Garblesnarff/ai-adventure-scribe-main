@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import {
   CHARACTER_ENHANCEMENTS,
   checkOptionAvailability
 } from '@/types/enhancement-options';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 interface CharacterEnhancementsProps {
   isOptional?: boolean;
@@ -145,50 +147,54 @@ export default function CharacterEnhancements({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Character Enhancements
-            {isOptional && <Badge variant="secondary">Optional</Badge>}
-          </CardTitle>
-          <CardDescription>
-            Add unique traits, quirks, and abilities that make your character memorable and provide interesting roleplay opportunities.
-            These enhancements can give mechanical benefits and story hooks for your DM to use.
-          </CardDescription>
-        </CardHeader>
+      <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Character Enhancements
+              {isOptional && <Badge variant="secondary">Optional</Badge>}
+            </CardTitle>
+            <CardDescription>
+              Add unique traits, quirks, and abilities that make your character memorable and provide interesting roleplay opportunities.
+              These enhancements can give mechanical benefits and story hooks for your DM to use.
+            </CardDescription>
+          </CardHeader>
 
-        {summary && (
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm font-medium">
-                  {selections.length} enhancement{selections.length !== 1 ? 's' : ''} selected
-                </span>
+          {summary && (
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium">
+                    {selections.length} enhancement{selections.length !== 1 ? 's' : ''} selected
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {summary.map(category => (
+                    <Badge key={category} variant="outline" className="capitalize">
+                      {category}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {summary.map(category => (
-                  <Badge key={category} variant="outline" className="capitalize">
-                    {category}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+            </CardContent>
+          )}
+        </Card>
+      </motion.div>
 
       {/* Recommendations */}
       {recommended.length > 0 && selections.length === 0 && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Recommended for your {state.character?.class?.name}:</strong>{' '}
-            {recommended.map(opt => opt.name).join(', ')}.
-            These enhancements complement your character build and provide great roleplay opportunities.
-          </AlertDescription>
-        </Alert>
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Recommended for your {state.character?.class?.name}:</strong>{' '}
+              {recommended.map(opt => opt.name).join(', ')}.
+              These enhancements complement your character build and provide great roleplay opportunities.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
 
       {/* Enhancement Selection Panel */}
@@ -203,61 +209,67 @@ export default function CharacterEnhancements({
 
       {/* Selection Summary */}
       {selections.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Your Character's Story</CardTitle>
-            <CardDescription>
-              Here's how your enhancements shape your character's personality and abilities:
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {selections.map(selection => {
-              const option = CHARACTER_ENHANCEMENTS.find(o => o.id === selection.optionId);
-              if (!option) return null;
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Your Character's Story</CardTitle>
+              <CardDescription>
+                Here's how your enhancements shape your character's personality and abilities:
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <motion.div className="space-y-4" variants={cardContainer} initial="hidden" animate="visible">
+                {selections.map(selection => {
+                  const option = CHARACTER_ENHANCEMENTS.find(o => o.id === selection.optionId);
+                  if (!option) return null;
 
-              return (
-                <div key={selection.optionId} className="border-l-2 border-primary/20 pl-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{option.icon}</span>
-                    <span className="font-medium">{option.name}</span>
-                    {selection.aiGenerated && (
-                      <Badge variant="outline" className="text-xs">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        AI
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    {Array.isArray(selection.value) ? (
-                      <ul className="list-disc list-inside">
-                        {(selection.value as string[]).map((value, index) => (
-                          <li key={index}>{value}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>{selection.value as string}</p>
-                    )}
-                    {selection.customValue && (
-                      <p className="italic">Note: {selection.customValue}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                  return (
+                    <motion.div key={selection.optionId} variants={cardItem} className="border-l-2 border-primary/20 pl-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{option.icon}</span>
+                        <span className="font-medium">{option.name}</span>
+                        {selection.aiGenerated && (
+                          <Badge variant="outline" className="text-xs">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            AI
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {Array.isArray(selection.value) ? (
+                          <ul className="list-disc list-inside">
+                            {(selection.value as string[]).map((value, index) => (
+                              <li key={index}>{value}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>{selection.value as string}</p>
+                        )}
+                        {selection.customValue && (
+                          <p className="italic">Note: {selection.customValue}</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Skip Option */}
       {isOptional && selections.length === 0 && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Optional Step:</strong> You can skip enhancements and create a standard character,
-            or add them later. However, selecting enhancements now will give your DM more material
-            to work with for personalized story moments.
-          </AlertDescription>
-        </Alert>
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Optional Step:</strong> You can skip enhancements and create a standard character,
+              or add them later. However, selecting enhancements now will give your DM more material
+              to work with for personalized story moments.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
       )}
     </div>
   );

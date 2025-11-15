@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MemoizedCharacterCard } from '@/components/character-list/character-card';
 import { Character } from '@/types/character';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import logger from '@/lib/logger';
 import { subscriptionManager } from '@/services/supabase-subscription-manager';
 
@@ -101,7 +102,17 @@ const CampaignCharacterList: React.FC = () => {
   const characters = transformCharacterData(data || []);
 
   if (!characters.length) {
-    return <div className="text-muted-foreground mt-4">No characters in this campaign yet.</div>;
+    return (
+      <div className="mt-4">
+        <EmptyState
+          illustration="no-characters"
+          title="No characters in this campaign"
+          description="No characters have been assigned to this campaign yet. Create characters and assign them to join this adventure."
+          variant="card"
+          maxWidth="md"
+        />
+      </div>
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +8,7 @@ import { isValidUUID } from '@/utils/validation';
 import { CampaignHeader } from './sections/CampaignHeader';
 import { CampaignCollapsible } from './sections/CampaignCollapsible';
 import { GameSession } from './sections/GameSession';
+import { fadeInUp, fadeInDown, cardItem } from '@/utils/animations';
 import logger from '@/lib/logger';
 
 /**
@@ -114,11 +116,17 @@ const CampaignView: React.FC = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-          <div className="flex justify-center items-center min-h-[200px]">
-            Loading campaign data...
-          </div>
-        </Card>
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+        >
+          <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <div className="flex justify-center items-center min-h-[200px]">
+              Loading campaign data...
+            </div>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -129,21 +137,46 @@ const CampaignView: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <CampaignHeader 
-          campaign={campaign}
-          isDeleting={isDeleting}
-          onDelete={handleDelete}
-        />
-        
-        <CampaignCollapsible
-          campaign={campaign}
-          isOpen={isDetailsOpen}
-          onOpenChange={setIsDetailsOpen}
-        />
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
+        <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+          <motion.div
+            variants={fadeInDown}
+            initial="hidden"
+            animate="visible"
+          >
+            <CampaignHeader
+              campaign={campaign}
+              isDeleting={isDeleting}
+              onDelete={handleDelete}
+            />
+          </motion.div>
 
-        <GameSession campaignId={campaign.id} />
-      </Card>
+          <motion.div
+            variants={cardItem}
+            initial="hidden"
+            animate="visible"
+          >
+            <CampaignCollapsible
+              campaign={campaign}
+              isOpen={isDetailsOpen}
+              onOpenChange={setIsDetailsOpen}
+            />
+          </motion.div>
+
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.2 }}
+          >
+            <GameSession campaignId={campaign.id} />
+          </motion.div>
+        </Card>
+      </motion.div>
     </div>
   );
 };

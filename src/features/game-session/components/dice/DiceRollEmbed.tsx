@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import { Howl } from 'howler';
 import * as THREE from 'three';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Play, Volume2 } from 'lucide-react';
 import logger from '@/lib/logger';
 import telemetry from '@/lib/telemetry';
+import { fadeInUp, cardContainer, cardItem, diceRoll, pulseSuccess } from '@/utils/animations';
 
 interface DiceRollEmbedProps {
   expression: string;
@@ -245,147 +247,196 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   };
 
   return (
-    <Card className="p-4 my-2 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Dice6 className="w-4 h-4 text-purple-600" />
-            <span className="font-mono text-sm font-semibold text-purple-800">
-              {expression}
-            </span>
-          </div>
-          {purpose && (
-            <Badge variant="outline" className="text-xs">
-              {purpose}
-            </Badge>
-          )}
-        </div>
-
-        {!hasRolled && (
-          <Button
-            onClick={handleRoll}
-            disabled={isRolling}
-            size="sm"
-            className="flex items-center gap-1"
-          >
-            <Play className="w-3 h-3" />
-            Roll
-          </Button>
-        )}
-      </div>
-
-      {/* 3D Dice Animation (feature-flagged) */}
-      {showAnimation && threeDEnabled && hasRolled && (
-        <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200">
-          {!contextLost ? (
-            <Canvas
-              key={canvasKey}
-              onCreated={handleCreated}
-              gl={{ powerPreference: 'high-performance', antialias: true, failIfMajorPerformanceCaveat: false }}
-              camera={{ position: [0, 0, 5] }}
-            >
-              <ambientLight intensity={0.5} />
-              <pointLight position={[10, 10, 10]} />
-
-              <group position={[0, 0, 0]}>
-                {result?.rolls.map((roll, index) => (
-                  <Dice3D
-                    key={index}
-                    value={isRolling ? undefined : roll.value}
-                    isRolling={isRolling}
-                    diceType={roll.dice}
-                  />
-                )) || (
-                  <Dice3D
-                    value={undefined}
-                    isRolling={isRolling}
-                    diceType={20}
-                  />
-                )}
-              </group>
-
-              <OrbitControls
-                enableRotate={false}
-                enableZoom={false}
-                enablePan={false}
-              />
-            </Canvas>
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-xs text-gray-600 bg-gray-50">
-              3D dice disabled after graphics context loss. Using fallback.
-            </div>
-          )}
-        </div>
-      )}
-
-      {showAnimation && !threeDEnabled && hasRolled && (
-        <div className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200 flex items-center justify-center text-xs text-gray-600 bg-gray-50">
-          3D dice unavailable. Showing results without 3D animation.
-        </div>
-      )}
-
-      {/* Results Display */}
-      {result && !isRolling && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-purple-800">
-                {result.total}
+    <motion.div
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+    >
+      <Card className="p-4 my-2 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Dice6 className="w-4 h-4 text-purple-600" />
+              <span className="font-mono text-sm font-semibold text-purple-800">
+                {expression}
               </span>
-              {getCriticalityBadge(result)}
-              {getAdvantageIndicator(result)}
             </div>
-
-            <div className="flex items-center gap-1 text-xs text-gray-600">
-              <Volume2 className="w-3 h-3" />
-              <span>d{result.rolls[0]?.dice || 20}</span>
-            </div>
+            {purpose && (
+              <Badge variant="outline" className="text-xs">
+                {purpose}
+              </Badge>
+            )}
           </div>
 
-          {/* Individual Die Results */}
-          {result.rolls.length > 1 && (
-            <div className="flex flex-wrap gap-1">
-              {result.rolls.map((roll, index) => {
-                const DiceIcon = getDiceIcon(Math.min(roll.value, 6));
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                      roll.critical
-                        ? 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <DiceIcon className="w-3 h-3" />
-                    <span>{roll.value}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Modifiers */}
-          {result.modifiers !== 0 && (
-            <div className="text-xs text-gray-600">
-              Base: {(result.total || 0) - (result.modifiers || 0)} {(result.modifiers || 0) >= 0 ? '+' : ''}{result.modifiers || 0}
-            </div>
-          )}
-
-          {/* Natural Roll for d20s */}
-          {result.naturalRoll && (
-            <div className="text-xs text-gray-600">
-              Natural {result.naturalRoll}
-            </div>
+          {!hasRolled && (
+            <Button
+              onClick={handleRoll}
+              disabled={isRolling}
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <Play className="w-3 h-3" />
+              Roll
+            </Button>
           )}
         </div>
-      )}
 
-      {isRolling && (
-        <div className="flex items-center justify-center py-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-          <span className="ml-2 text-sm text-purple-600">Rolling...</span>
-        </div>
-      )}
-    </Card>
+        {/* 3D Dice Animation (feature-flagged) */}
+        <AnimatePresence>
+          {showAnimation && threeDEnabled && hasRolled && (
+            <motion.div
+              variants={cardItem}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200"
+            >
+              {!contextLost ? (
+                <Canvas
+                  key={canvasKey}
+                  onCreated={handleCreated}
+                  gl={{ powerPreference: 'high-performance', antialias: true, failIfMajorPerformanceCaveat: false }}
+                  camera={{ position: [0, 0, 5] }}
+                >
+                  <ambientLight intensity={0.5} />
+                  <pointLight position={[10, 10, 10]} />
+
+                  <group position={[0, 0, 0]}>
+                    {result?.rolls.map((roll, index) => (
+                      <Dice3D
+                        key={index}
+                        value={isRolling ? undefined : roll.value}
+                        isRolling={isRolling}
+                        diceType={roll.dice}
+                      />
+                    )) || (
+                      <Dice3D
+                        value={undefined}
+                        isRolling={isRolling}
+                        diceType={20}
+                      />
+                    )}
+                  </group>
+
+                  <OrbitControls
+                    enableRotate={false}
+                    enableZoom={false}
+                    enablePan={false}
+                  />
+                </Canvas>
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-xs text-gray-600 bg-gray-50">
+                  3D dice disabled after graphics context loss. Using fallback.
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showAnimation && !threeDEnabled && hasRolled && (
+            <motion.div
+              variants={cardItem}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="h-24 mb-3 rounded-lg overflow-hidden border border-purple-200 flex items-center justify-center text-xs text-gray-600 bg-gray-50"
+            >
+              3D dice unavailable. Showing results without 3D animation.
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Results Display */}
+        <AnimatePresence>
+          {result && !isRolling && (
+            <motion.div
+              variants={cardContainer}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="space-y-2"
+            >
+              <motion.div
+                variants={pulseSuccess}
+                initial="initial"
+                animate="pulse"
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-purple-800">
+                    {result.total}
+                  </span>
+                  {getCriticalityBadge(result)}
+                  {getAdvantageIndicator(result)}
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <Volume2 className="w-3 h-3" />
+                  <span>d{result.rolls[0]?.dice || 20}</span>
+                </div>
+              </motion.div>
+
+              {/* Individual Die Results */}
+              {result.rolls.length > 1 && (
+                <motion.div
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="flex flex-wrap gap-1"
+                >
+                  {result.rolls.map((roll, index) => {
+                    const DiceIcon = getDiceIcon(Math.min(roll.value, 6));
+                    return (
+                      <motion.div
+                        key={index}
+                        variants={cardItem}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                          roll.critical
+                            ? 'bg-red-100 text-red-800 border border-red-300'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <DiceIcon className="w-3 h-3" />
+                        <span>{roll.value}</span>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              )}
+
+              {/* Modifiers */}
+              {result.modifiers !== 0 && (
+                <motion.div variants={cardItem} className="text-xs text-gray-600">
+                  Base: {(result.total || 0) - (result.modifiers || 0)} {(result.modifiers || 0) >= 0 ? '+' : ''}{result.modifiers || 0}
+                </motion.div>
+              )}
+
+              {/* Natural Roll for d20s */}
+              {result.naturalRoll && (
+                <motion.div variants={cardItem} className="text-xs text-gray-600">
+                  Natural {result.naturalRoll}
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isRolling && (
+            <motion.div
+              variants={diceRoll}
+              initial="rolling"
+              animate="rolling"
+              exit="result"
+              className="flex items-center justify-center py-4"
+            >
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+              <span className="ml-2 text-sm text-purple-600">Rolling...</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+    </motion.div>
   );
 };

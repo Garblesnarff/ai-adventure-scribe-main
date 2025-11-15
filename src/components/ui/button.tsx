@@ -19,6 +19,8 @@ const buttonVariants = cva(
         ghost: "border-transparent hover:bg-accent hover:text-accent-foreground",
         link: "border-transparent text-primary underline-offset-4 hover:underline",
         fantasy: "border-infinite-gold bg-gradient-to-r from-amber-50 to-yellow-50 text-infinite-gold hover:bg-amber-100/50 transition-all duration-300 ease-in-out hover:shadow-lg hover:-translate-y-0.5",
+        cosmic: "border-infinite-purple/30 bg-gradient-to-br from-[rgba(45,17,85,0.95)] to-[rgba(15,41,69,0.92)] text-white hover:from-[rgba(45,17,85,1)] hover:to-[rgba(15,41,69,0.98)] hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all duration-300",
+        parchment: "border-amber-200/50 bg-gradient-to-br from-[rgba(255,255,250,0.9)] to-[rgba(250,244,230,0.85)] text-amber-900 hover:from-[rgba(255,255,250,1)] hover:to-[rgba(250,244,230,0.95)] hover:shadow-lg transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

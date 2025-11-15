@@ -14,6 +14,8 @@ import logger from '@/lib/logger';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { analytics } from '@/services/analytics';
 import { useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 
 /**
  * CharacterFinalization component for character creation
@@ -264,10 +266,12 @@ const CharacterFinalization: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-center mb-6">Finalize Your Character</h2>
-      
+      <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+        <h2 className="text-2xl font-bold text-center mb-6">Finalize Your Character</h2>
+      </motion.div>
+
       {/* Character Summary */}
-      <div className="bg-muted/50 p-4 rounded-lg border">
+      <motion.div className="bg-muted/50 p-4 rounded-lg border" variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
         <h3 className="font-semibold mb-3 flex items-center">
           <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
           Character Summary
@@ -280,11 +284,11 @@ const CharacterFinalization: React.FC = () => {
           <div><strong>Alignment:</strong> {state.character?.alignment || 'Not set'}</div>
           <div><strong>Level:</strong> {state.character?.level || 1}</div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Proficiencies Summary */}
       {state.character && (
-        <div className="bg-muted/50 p-4 rounded-lg border">
+        <motion.div className="bg-muted/50 p-4 rounded-lg border" variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
           <h3 className="font-semibold mb-3 flex items-center">
             <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
             Proficiencies & Languages
@@ -311,12 +315,12 @@ const CharacterFinalization: React.FC = () => {
                 : 'None'}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6" variants={cardContainer} initial="hidden" animate="visible">
         {/* Left Column - Description */}
-        <div className="space-y-4">
+        <motion.div className="space-y-4" variants={cardItem}>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="character-description">Character Description</Label>
@@ -377,10 +381,10 @@ const CharacterFinalization: React.FC = () => {
               </p>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Right Column - Character Images */}
-        <div className="space-y-4">
+        <motion.div className="space-y-4" variants={cardItem}>
           {/* Theme Selector */}
           <div className="space-y-2">
             <Label>Design Sheet Theme</Label>
@@ -486,11 +490,11 @@ const CharacterFinalization: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
-      </div>
-      
+        </motion.div>
+      </motion.div>
+
       {/* AI Generation Tip */}
-      <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+      <motion.div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800" variants={fadeInUp} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
         <div className="flex items-start space-x-3">
           <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm">
@@ -500,7 +504,7 @@ const CharacterFinalization: React.FC = () => {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

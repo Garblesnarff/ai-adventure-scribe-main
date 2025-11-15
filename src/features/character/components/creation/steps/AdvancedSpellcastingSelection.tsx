@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,11 +24,11 @@ import {
 } from '@/data/spellcastingFeatures';
 import { spellApi } from '@/services/spellApi';
 import { Spell } from '@/types/character';
-import { 
-  Sparkles, 
-  BookOpen, 
-  Clock, 
-  Zap, 
+import {
+  Sparkles,
+  BookOpen,
+  Clock,
+  Zap,
   Star,
   Scroll,
   Crown,
@@ -275,48 +277,65 @@ const AdvancedSpellcastingSelection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
+      <motion.div
+        className="text-center"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
         <h2 className="text-3xl font-bold mb-2">Advanced Spellcasting</h2>
         <p className="text-muted-foreground">
           Configure your {characterClass?.name} spellcasting features
         </p>
-      </div>
+      </motion.div>
 
       {/* Spellcasting Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="w-5 h-5 text-purple-500" />
-            Spellcasting Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center p-3 border rounded">
-              <div className="text-2xl font-bold capitalize">
-                {spellcastingAbility?.substring(0, 3)}
-              </div>
-              <div className="text-xs text-muted-foreground">Spellcasting Ability</div>
-            </div>
-            <div className="text-center p-3 border rounded">
-              <div className="text-2xl font-bold">
-                +{Math.floor((level - 1) / 4) + 2 + abilityModifier}
-              </div>
-              <div className="text-xs text-muted-foreground">Spell Attack Bonus</div>
-            </div>
-            <div className="text-center p-3 border rounded">
-              <div className="text-2xl font-bold">
-                {8 + Math.floor((level - 1) / 4) + 2 + abilityModifier}
-              </div>
-              <div className="text-xs text-muted-foreground">Spell Save DC</div>
-            </div>
-            <div className="text-center p-3 border rounded">
-              <div className="text-2xl font-bold">{level}</div>
-              <div className="text-xs text-muted-foreground">Caster Level</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.1 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="w-5 h-5 text-purple-500" />
+              Spellcasting Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+              variants={cardContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
+                <div className="text-2xl font-bold capitalize">
+                  {spellcastingAbility?.substring(0, 3)}
+                </div>
+                <div className="text-xs text-muted-foreground">Spellcasting Ability</div>
+              </motion.div>
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
+                <div className="text-2xl font-bold">
+                  +{Math.floor((level - 1) / 4) + 2 + abilityModifier}
+                </div>
+                <div className="text-xs text-muted-foreground">Spell Attack Bonus</div>
+              </motion.div>
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
+                <div className="text-2xl font-bold">
+                  {8 + Math.floor((level - 1) / 4) + 2 + abilityModifier}
+                </div>
+                <div className="text-xs text-muted-foreground">Spell Save DC</div>
+              </motion.div>
+              <motion.div variants={cardItem} className="text-center p-3 border rounded">
+                <div className="text-2xl font-bold">{level}</div>
+                <div className="text-xs text-muted-foreground">Caster Level</div>
+              </motion.div>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <Tabs defaultValue={canPrepareSpells ? "preparation" : usesPactMagic ? "pact" : usesMetamagic ? "metamagic" : "ritual"}>
         <TabsList className="grid w-full grid-cols-4">
@@ -355,16 +374,23 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {availableSpells.map((spell) => 
-                    getSpellCard(
-                      spell, 
-                      preparedSpells.includes(spell.id),
-                      handleSpellPreparation,
-                      !preparedSpells.includes(spell.id) && preparedSpells.length >= maxPreparedSpells
-                    )
-                  )}
-                </div>
+                <motion.div
+                  className="space-y-3 max-h-96 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {availableSpells.map((spell) => (
+                    <motion.div key={spell.id} variants={cardItem}>
+                      {getSpellCard(
+                        spell,
+                        preparedSpells.includes(spell.id),
+                        handleSpellPreparation,
+                        !preparedSpells.includes(spell.id) && preparedSpells.length >= maxPreparedSpells
+                      )}
+                    </motion.div>
+                  ))}
+                </motion.div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -384,20 +410,25 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-3 border rounded">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <motion.div variants={cardItem} className="text-center p-3 border rounded">
                     <div className="text-2xl font-bold">{pactProgression?.pactSlots || 0}</div>
                     <div className="text-xs text-muted-foreground">Pact Magic Slots</div>
-                  </div>
-                  <div className="text-center p-3 border rounded">
+                  </motion.div>
+                  <motion.div variants={cardItem} className="text-center p-3 border rounded">
                     <div className="text-2xl font-bold">{pactProgression?.pactSlotLevel || 1}</div>
                     <div className="text-xs text-muted-foreground">Slot Level</div>
-                  </div>
-                  <div className="text-center p-3 border rounded">
+                  </motion.div>
+                  <motion.div variants={cardItem} className="text-center p-3 border rounded">
                     <div className="text-2xl font-bold">{maxPactSpells}</div>
                     <div className="text-xs text-muted-foreground">Spells Known</div>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
 
                 <div className="mb-4">
                   <div className="flex justify-between items-center">
@@ -414,18 +445,25 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <motion.div
+                  className="space-y-3 max-h-96 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
                   {availableSpells
                     .filter((spell: Spell) => spell.level <= (pactProgression?.pactSlotLevel || 1))
-                    .map((spell: Spell) => 
-                      getSpellCard(
-                        spell, 
-                        pactMagicSpells.includes(spell.id),
-                        handlePactSpellSelection,
-                        !pactMagicSpells.includes(spell.id) && pactMagicSpells.length >= maxPactSpells
-                      )
-                    )}
-                </div>
+                    .map((spell: Spell) => (
+                      <motion.div key={spell.id} variants={cardItem}>
+                        {getSpellCard(
+                          spell,
+                          pactMagicSpells.includes(spell.id),
+                          handlePactSpellSelection,
+                          !pactMagicSpells.includes(spell.id) && pactMagicSpells.length >= maxPactSpells
+                        )}
+                      </motion.div>
+                    ))}
+                </motion.div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -445,16 +483,21 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="text-center p-3 border rounded">
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <motion.div variants={cardItem} className="text-center p-3 border rounded">
                     <div className="text-2xl font-bold">{sorceryPoints}</div>
                     <div className="text-xs text-muted-foreground">Sorcery Points</div>
-                  </div>
-                  <div className="text-center p-3 border rounded">
+                  </motion.div>
+                  <motion.div variants={cardItem} className="text-center p-3 border rounded">
                     <div className="text-2xl font-bold">{maxMetamagicOptions}</div>
                     <div className="text-xs text-muted-foreground">Options Known</div>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
 
                 <div className="mb-4">
                   <div className="flex justify-between items-center">
@@ -471,21 +514,27 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <motion.div
+                  className="space-y-3 max-h-96 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
                   {metamagicOptions.map((option) => (
-                    <div
+                    <motion.div
                       key={option.id}
+                      variants={cardItem}
                       className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedMetamagic.includes(option.id) 
-                          ? 'border-primary bg-primary/5' 
+                        selectedMetamagic.includes(option.id)
+                          ? 'border-primary bg-primary/5'
                           : 'border-muted hover:border-primary/50'
                       } ${
                         !selectedMetamagic.includes(option.id) && selectedMetamagic.length >= maxMetamagicOptions
-                          ? 'opacity-50 cursor-not-allowed' 
+                          ? 'opacity-50 cursor-not-allowed'
                           : ''
                       }`}
                       onClick={() => handleMetamagicSelection(
-                        option.id, 
+                        option.id,
                         !selectedMetamagic.includes(option.id)
                       )}
                     >
@@ -505,9 +554,9 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                           onCheckedChange={(checked) => handleMetamagicSelection(option.id, checked === true)}
                         />
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -540,10 +589,16 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <motion.div
+                  className="space-y-3 max-h-96 overflow-y-auto"
+                  variants={cardContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
                   {availableRitualSpells.map((spell: Spell) => (
-                    <div
+                    <motion.div
                       key={spell.id}
+                      variants={cardItem}
                       className="p-3 border rounded-lg"
                     >
                       <div className="flex items-start justify-between">
@@ -561,9 +616,9 @@ const AdvancedSpellcastingSelection: React.FC = () => {
                           <p className="text-sm">{spell.description}</p>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -571,7 +626,13 @@ const AdvancedSpellcastingSelection: React.FC = () => {
       </Tabs>
 
       {/* Completion Status and Manual Apply Button */}
-      <div className="mt-6 space-y-4">
+      <motion.div
+        className="mt-6 space-y-4"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.2 }}
+      >
         {allSelectionsComplete && (
           <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center justify-center gap-2 text-green-700">
@@ -596,7 +657,7 @@ const AdvancedSpellcastingSelection: React.FC = () => {
             </Button>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

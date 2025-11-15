@@ -1,13 +1,15 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Campaign } from '@/types/game';
 import { ChevronDown } from 'lucide-react';
-import { 
+import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger 
+  CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import { CampaignDetails } from './CampaignDetails';
 import { CampaignParameters } from './CampaignParameters';
+import { cardContainer, cardItem } from '@/utils/animations';
 
 interface CampaignCollapsibleProps {
   campaign: Campaign;
@@ -43,10 +45,19 @@ export const CampaignCollapsible: React.FC<CampaignCollapsibleProps> = ({
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <CampaignDetails campaign={campaign} />
-          <CampaignParameters campaign={campaign} />
-        </div>
+        <motion.div
+          variants={cardContainer}
+          initial="hidden"
+          animate={isOpen ? "visible" : "hidden"}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <motion.div variants={cardItem}>
+            <CampaignDetails campaign={campaign} />
+          </motion.div>
+          <motion.div variants={cardItem}>
+            <CampaignParameters campaign={campaign} />
+          </motion.div>
+        </motion.div>
       </CollapsibleContent>
     </Collapsible>
   );
