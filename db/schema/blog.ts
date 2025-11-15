@@ -6,7 +6,8 @@
  */
 
 import { pgTable, uuid, text, timestamp, jsonb, index } from 'drizzle-orm/pg-core';
-import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
+
+import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 /**
  * Blog Authors Table

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+
 import logger from '@/lib/logger';
 
 /**
@@ -26,7 +27,7 @@ import logger from '@/lib/logger';
  */
 export function useLocalStorage<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
   // Initialize state with SSR-safety
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -59,7 +60,8 @@ export function useLocalStorage<T>(
   const setValue = useCallback(
     (value: T | ((prev: T) => T)) => {
       setStoredValue((previousValue) => {
-        const nextValue = value instanceof Function ? (value as (prev: T) => T)(previousValue) : value;
+        const nextValue =
+          value instanceof Function ? (value as (prev: T) => T)(previousValue) : value;
 
         if (Object.is(previousValue, nextValue)) {
           return previousValue;
@@ -80,7 +82,7 @@ export function useLocalStorage<T>(
         return nextValue;
       });
     },
-    [key]
+    [key],
   );
 
   // Sync with localStorage when value changes externally (e.g., in another tab)
@@ -129,7 +131,7 @@ export function useLocalStorage<T>(
  */
 export function useLocalStorageString(
   key: string,
-  defaultValue: string
+  defaultValue: string,
 ): [string, (value: string | ((prev: string) => string)) => void] {
   const [storedValue, setStoredValue] = useState<string>(() => {
     if (typeof window === 'undefined') {
@@ -158,7 +160,7 @@ export function useLocalStorageString(
         logger.error(`Error setting localStorage key "${key}":`, error);
       }
     },
-    [key, storedValue]
+    [key, storedValue],
   );
 
   useEffect(() => {

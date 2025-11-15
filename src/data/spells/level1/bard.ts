@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const bardLevel1Spells: Spell[] = [
-{
+  {
     id: 'animal-friendship',
     name: 'Animal Friendship',
     level: 1,
@@ -14,7 +14,8 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a morsel of food',
     duration: '24 hours',
-    description: 'This spell lets you convince a beast that you mean it no harm. Choose a beast that you can see within range.'
+    description:
+      'This spell lets you convince a beast that you mean it no harm. Choose a beast that you can see within range.',
   },
   {
     id: 'bane-bard',
@@ -29,8 +30,9 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a drop of blood',
     duration: 'Concentration, up to 1 minute',
-    description: 'Up to three creatures of your choice that you can see within range must make Charisma saving throws.',
-    concentration: true
+    description:
+      'Up to three creatures of your choice that you can see within range must make Charisma saving throws.',
+    concentration: true,
   },
   {
     id: 'charm-person-bard',
@@ -43,7 +45,7 @@ export const bardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You attempt to charm a humanoid you can see within range.'
+    description: 'You attempt to charm a humanoid you can see within range.',
   },
   {
     id: 'comprehend-languages-bard',
@@ -58,8 +60,9 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of soot and salt',
     duration: '1 hour',
-    description: 'For the duration, you understand the literal meaning of any spoken language that you hear.',
-    ritual: true
+    description:
+      'For the duration, you understand the literal meaning of any spoken language that you hear.',
+    ritual: true,
   },
   {
     id: 'cure-wounds-bard',
@@ -72,8 +75,9 @@ export const bardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
-    damage: '1d8'
+    description:
+      'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
+    damage: '1d8',
   },
   {
     id: 'detect-magic-bard',
@@ -88,7 +92,7 @@ export const bardLevel1Spells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'disguise-self-bard',
@@ -101,7 +105,8 @@ export const bardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You make yourself look different until the spell ends or until you use your action to dismiss it.'
+    description:
+      'You make yourself look different until the spell ends or until you use your action to dismiss it.',
   },
   {
     id: 'dissonant-whispers',
@@ -113,8 +118,9 @@ export const bardLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Instantaneous',
-    description: 'You whisper a discordant melody that only one creature of your choice within range can hear, wracking it with terrible pain.',
-    damage: '3d6'
+    description:
+      'You whisper a discordant melody that only one creature of your choice within range can hear, wracking it with terrible pain.',
+    damage: '3d6',
   },
   {
     id: 'faerie-fire',
@@ -126,8 +132,9 @@ export const bardLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'Each object in a 20-foot cube within range is outlined in blue, green, or violet light (your choice).',
-    concentration: true
+    description:
+      'Each object in a 20-foot cube within range is outlined in blue, green, or violet light (your choice).',
+    concentration: true,
   },
   {
     id: 'feather-fall-bard',
@@ -141,7 +148,8 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small feather or piece of down',
     duration: '1 minute',
-    description: 'Choose up to five falling creatures within range. A falling creature\'s rate of descent slows to 60 feet per round until the spell ends.'
+    description:
+      "Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends.",
   },
   {
     id: 'healing-word-bard',
@@ -153,8 +161,9 @@ export const bardLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Instantaneous',
-    description: 'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
-    damage: '1d4'
+    description:
+      'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
+    damage: '1d4',
   },
   {
     id: 'heroism',
@@ -167,8 +176,9 @@ export const bardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'A willing creature you touch is imbued with bravery. Until the spell ends, the creature is immune to being frightened and gains temporary hit points equal to your spellcasting ability modifier at the start of each of its turns.',
-    concentration: true
+    description:
+      'A willing creature you touch is imbued with bravery. Until the spell ends, the creature is immune to being frightened and gains temporary hit points equal to your spellcasting ability modifier at the start of each of its turns.',
+    concentration: true,
   },
   {
     id: 'identify-bard',
@@ -185,7 +195,7 @@ export const bardLevel1Spells: Spell[] = [
     materialCost: 100,
     duration: 'Instantaneous',
     description: 'You choose one object that you must touch throughout the casting of the spell.',
-    ritual: true
+    ritual: true,
   },
   {
     id: 'longstrider-bard',
@@ -200,7 +210,8 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of dirt',
     duration: '1 hour',
-    description: 'You touch a creature. The target\'s speed increases by 10 feet until the spell ends.'
+    description:
+      "You touch a creature. The target's speed increases by 10 feet until the spell ends.",
   },
   {
     id: 'silent-image-bard',
@@ -215,8 +226,9 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: 'Concentration, up to 10 minutes',
-    description: 'You create the image of an object, a creature, or some other visible phenomenon that is no larger than a 15-foot cube.',
-    concentration: true
+    description:
+      'You create the image of an object, a creature, or some other visible phenomenon that is no larger than a 15-foot cube.',
+    concentration: true,
   },
   {
     id: 'sleep-bard',
@@ -231,7 +243,8 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of fine sand, rose petals, or a cricket',
     duration: '1 minute',
-    description: 'This spell sends creatures into a magical slumber. Roll 5d8; the result is how many hit points of creatures this spell can affect.'
+    description:
+      'This spell sends creatures into a magical slumber. Roll 5d8; the result is how many hit points of creatures this spell can affect.',
   },
   {
     id: 'speak-with-animals',
@@ -244,12 +257,13 @@ export const bardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '10 minutes',
-    description: 'You gain the ability to comprehend and verbally communicate with beasts for the duration.',
-    ritual: true
+    description:
+      'You gain the ability to comprehend and verbally communicate with beasts for the duration.',
+    ritual: true,
   },
   {
     id: 'tashas-hideous-laughter',
-    name: 'Tasha\'s Hideous Laughter',
+    name: "Tasha's Hideous Laughter",
     level: 1,
     school: 'Enchantment',
     castingTime: '1 action',
@@ -260,8 +274,9 @@ export const bardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'tiny tarts and a feather that is waved in the air',
     duration: 'Concentration, up to 1 minute',
-    description: 'A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter if this spell affects it.',
-    concentration: true
+    description:
+      'A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter if this spell affects it.',
+    concentration: true,
   },
   {
     id: 'thunderwave-bard',
@@ -275,6 +290,6 @@ export const bardLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Instantaneous',
     description: 'A wave of thunderous force sweeps out from you.',
-    damage: '2d8'
+    damage: '2d8',
   },
 ];

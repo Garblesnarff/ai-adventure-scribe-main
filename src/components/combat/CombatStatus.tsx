@@ -6,11 +6,6 @@
  * Integrates with GameContext and CombatContext for real-time updates
  */
 
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { useGame } from '@/contexts/GameContext';
-import { useCombat } from '@/contexts/CombatContext';
 import {
   Sword,
   Users,
@@ -20,8 +15,14 @@ import {
   Dice6,
   Clock,
   Shield,
-  Heart
+  Heart,
 } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { useCombat } from '@/contexts/CombatContext';
+import { useGame } from '@/contexts/GameContext';
 
 interface CombatStatusProps {
   className?: string;
@@ -61,7 +62,7 @@ export const CombatStatus: React.FC<CombatStatusProps> = ({ className }) => {
     if (!combatState.isInCombat || !combatState.activeEncounter) return null;
 
     const currentParticipant = combatState.activeEncounter.participants.find(
-      p => p.id === combatState.activeEncounter?.currentTurnParticipantId
+      (p) => p.id === combatState.activeEncounter?.currentTurnParticipantId,
     );
 
     if (!currentParticipant) return null;
@@ -69,12 +70,12 @@ export const CombatStatus: React.FC<CombatStatusProps> = ({ className }) => {
     return {
       name: currentParticipant.name,
       initiative: currentParticipant.initiative?.value || 0,
-      hp: currentParticipant.hitPoints
+      hp: currentParticipant.hitPoints,
     };
   };
 
   const currentTurn = getCurrentTurnInfo();
-  const pendingRolls = gameState.diceRollQueue.pendingRolls.filter(r => r.status === 'pending');
+  const pendingRolls = gameState.diceRollQueue.pendingRolls.filter((r) => r.status === 'pending');
 
   return (
     <Card className={`p-3 bg-white/90 backdrop-blur-sm border-2 ${className}`}>

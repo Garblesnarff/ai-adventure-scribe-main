@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { AlertCircle, Sparkles } from 'lucide-react';
+
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * QuotaDisplay Component
@@ -13,12 +14,14 @@ export function QuotaDisplay() {
   const { data: quota, isLoading } = useQuery({
     queryKey: ['llm-quota'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Not authenticated');
 
       const response = await fetch('http://localhost:8888/v1/llm/quota', {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -48,17 +51,21 @@ export function QuotaDisplay() {
   const isVeryLow = quota.remaining < 2;
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
-      isVeryLow
-        ? 'bg-red-500/30 border-red-500/50 animate-pulse'
-        : isLow
-          ? 'bg-orange-500/20 border-orange-500/30'
-          : 'bg-infinite-gold/20 border-infinite-gold/30'
-    }`}>
+    <div
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+        isVeryLow
+          ? 'bg-red-500/30 border-red-500/50 animate-pulse'
+          : isLow
+            ? 'bg-orange-500/20 border-orange-500/30'
+            : 'bg-infinite-gold/20 border-infinite-gold/30'
+      }`}
+    >
       {isLow && <AlertCircle className="w-3 h-3 text-red-400" />}
-      <span className={`text-xs font-medium ${
-        isVeryLow ? 'text-red-300' : isLow ? 'text-orange-300' : 'text-infinite-gold'
-      }`}>
+      <span
+        className={`text-xs font-medium ${
+          isVeryLow ? 'text-red-300' : isLow ? 'text-orange-300' : 'text-infinite-gold'
+        }`}
+      >
         🎲 Daily Credits: {quota.remaining}/{quota.limits.daily.llm}
       </span>
       {isLow && (
@@ -68,7 +75,9 @@ export function QuotaDisplay() {
           onClick={(e) => {
             e.preventDefault();
             // TODO: Navigate to upgrade page when it exists
-            alert('Upgrade to Pro for unlimited adventures! Visit https://infiniterealms.app/pricing');
+            alert(
+              'Upgrade to Pro for unlimited adventures! Visit https://infiniterealms.app/pricing',
+            );
           }}
         >
           <Sparkles className="w-3 h-3" />

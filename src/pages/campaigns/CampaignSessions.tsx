@@ -1,13 +1,16 @@
-import React from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+
+import SessionCard from './SessionCard';
+
+import type { SessionListItem } from './SessionCard';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import { EmptyState } from '@/components/ui/empty-state';
-import SessionCard, { SessionListItem } from './SessionCard';
+import { supabase } from '@/integrations/supabase/client';
 
 const PAGE_SIZE = 10;
 const SESSION_EXPIRY_MS = 1000 * 60 * 60 * 24; // 24 hours
@@ -27,22 +30,17 @@ const CampaignSessions: React.FC = () => {
   const { toast } = useToast();
   const [continuingId, setContinuingId] = React.useState<string | null>(null);
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-    error,
-  } = useInfiniteQuery({
-    queryKey: ['campaign', campaignId, 'sessions'],
-    queryFn: async ({ pageParam = 0 }): Promise<SessionListItem[]> => {
-      if (!campaignId) return [];
-      const from = pageParam * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const { data: rows, error: fetchError } = await supabase
-        .from('game_sessions')
-        .select(`
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage, error } =
+    useInfiniteQuery({
+      queryKey: ['campaign', campaignId, 'sessions'],
+      queryFn: async ({ pageParam = 0 }): Promise<SessionListItem[]> => {
+        if (!campaignId) return [];
+        const from = pageParam * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+        const { data: rows, error: fetchError } = await supabase
+          .from('game_sessions')
+          .select(
+            `
           id,
           session_number,
           status,
@@ -53,25 +51,24 @@ const CampaignSessions: React.FC = () => {
           turn_count,
           created_at,
           character:characters ( id, name, image_url )
-        `)
-        .eq('campaign_id', campaignId)
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        `,
+          )
+          .eq('campaign_id', campaignId)
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
-      if (fetchError) {
-        throw fetchError;
-      }
+        if (fetchError) {
+          throw fetchError;
+        }
 
-      return (rows ?? []) as SessionListItem[];
-    },
-    getNextPageParam: (lastPage, pages) => (lastPage.length === PAGE_SIZE ? pages.length : undefined),
-    enabled: Boolean(campaignId),
-  });
+        return (rows ?? []) as SessionListItem[];
+      },
+      getNextPageParam: (lastPage, pages) =>
+        lastPage.length === PAGE_SIZE ? pages.length : undefined,
+      enabled: Boolean(campaignId),
+    });
 
-  const sessions = React.useMemo(
-    () => (data?.pages ? data.pages.flat() : []),
-    [data?.pages]
-  );
+  const sessions = React.useMemo(() => (data?.pages ? data.pages.flat() : []), [data?.pages]);
 
   React.useEffect(() => {
     if (!campaignId) return;
@@ -87,7 +84,7 @@ const CampaignSessions: React.FC = () => {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['campaign', campaignId, 'sessions'] });
-        }
+        },
       )
       .subscribe();
 
@@ -119,7 +116,8 @@ const CampaignSessions: React.FC = () => {
       if (!session.character?.id) {
         toast({
           title: 'Character required',
-          description: 'This session is missing a character link. Please reassign before continuing.',
+          description:
+            'This session is missing a character link. Please reassign before continuing.',
           variant: 'destructive',
         });
         return;
@@ -179,7 +177,7 @@ const CampaignSessions: React.FC = () => {
         setContinuingId(null);
       }
     },
-    [campaignId, navigate, queryClient, toast]
+    [campaignId, navigate, queryClient, toast],
   );
 
   const renderContent = () => {
@@ -204,16 +202,15 @@ const CampaignSessions: React.FC = () => {
 
     if (sessions.length === 0) {
       return (
-        <EmptyState
-          illustration="no-sessions"
-          title="No sessions yet"
-          description="Start your first session to begin chronicling this campaign and embarking on your adventure."
-          action={
-            <Button onClick={openStartSession}>
-              Start New Session
-            </Button>
-          }
-        />
+        <Card className="p-6 text-center space-y-3">
+          <h3 className="text-lg font-semibold">No sessions yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Start your first session to begin chronicling this campaign.
+          </p>
+          <Button onClick={openStartSession} className="mt-2">
+            Start New Session
+          </Button>
+        </Card>
       );
     }
 
@@ -248,7 +245,9 @@ const CampaignSessions: React.FC = () => {
             Review past sessions and continue your adventure right where you left off.
           </p>
         </div>
-        <Button onClick={openStartSession} className="md:self-center">Start New Session</Button>
+        <Button onClick={openStartSession} className="md:self-center">
+          Start New Session
+        </Button>
       </div>
       {renderContent()}
     </div>

@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+
+import type { Memory, MemoryType } from '@/components/game/memory/types';
+import type { Campaign } from '@/types/campaign';
+import type { Character } from '@/types/character';
+import type { ChatMessage } from '@/types/game';
+
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { AIService } from '@/services/ai-service';
-import { ChatMessage } from '@/types/game';
-import { Character } from '@/types/character';
-import { Campaign } from '@/types/campaign';
-import { Memory, MemoryType } from '@/components/game/memory/types';
 import logger from '@/lib/logger';
+import { AIService } from '@/services/ai-service';
 
 interface InitialGreetingProps {
   sessionId: string | null;
@@ -71,10 +73,19 @@ export const useInitialGreeting = ({
       hasTriggeredRef.current = true;
       generateInitialGreeting();
     }
-  }, [sessionId, sessionData, characterId, campaignId, messages.length, state.hasGenerated, state.isGenerating, messagesLoading]);
+  }, [
+    sessionId,
+    sessionData,
+    characterId,
+    campaignId,
+    messages.length,
+    state.hasGenerated,
+    state.isGenerating,
+    messagesLoading,
+  ]);
 
   const generateInitialGreeting = async () => {
-    setState(prev => ({ ...prev, isGenerating: true, error: null }));
+    setState((prev) => ({ ...prev, isGenerating: true, error: null }));
 
     try {
       logger.info('[Initial Greeting] Starting generation for session:', sessionId);
@@ -86,22 +97,29 @@ export const useInitialGreeting = ({
         .eq('session_id', sessionId!);
 
       if (countError) {
-        logger.warn('[Initial Greeting] Failed to check existing messages, continuing with caution', countError);
+        logger.warn(
+          '[Initial Greeting] Failed to check existing messages, continuing with caution',
+          countError,
+        );
       }
 
       if ((existingMessageCount ?? 0) > 0) {
-        logger.info('[Initial Greeting] Detected existing dialogue entries; skipping automated greeting.');
-        setState(prev => ({ ...prev, isGenerating: false, hasGenerated: true }));
+        logger.info(
+          '[Initial Greeting] Detected existing dialogue entries; skipping automated greeting.',
+        );
+        setState((prev) => ({ ...prev, isGenerating: false, hasGenerated: true }));
         return;
       }
 
       // Fetch character data
       const { data: characterData, error: characterError } = await supabase
         .from('characters')
-        .select(`
+        .select(
+          `
           *,
           character_stats(*)
-        `)
+        `,
+        )
         .eq('id', characterId as string)
         .single();
 
@@ -121,7 +139,10 @@ export const useInitialGreeting = ({
       }
 
       // Build initial greeting prompt (not currently used externally, but kept for reference)
-      const greetingPrompt = buildGreetingPrompt(characterData as unknown as Character, campaignData as unknown as Campaign);
+      const greetingPrompt = buildGreetingPrompt(
+        characterData as unknown as Character,
+        campaignData as unknown as Campaign,
+      );
 
       logger.info('[Initial Greeting] Generated prompt for AI service');
 
@@ -146,29 +167,36 @@ export const useInitialGreeting = ({
         timestamp: new Date().toISOString(),
       };
 
-      logger.info('[Initial Greeting] Generated initial greeting:', greetingMessage.text.substring(0, 100) + '...');
+      logger.info(
+        '[Initial Greeting] Generated initial greeting:',
+        greetingMessage.text.substring(0, 100) + '...',
+      );
 
       // Call the callback to add the message to the conversation
       await onGreetingGenerated(greetingMessage);
 
       // Create initial memories if callback is provided
       if (onMemoryCreated) {
-        await createInitialMemories(characterData as unknown as Character, campaignData as unknown as Campaign, openingText, onMemoryCreated);
+        await createInitialMemories(
+          characterData as unknown as Character,
+          campaignData as unknown as Campaign,
+          openingText,
+          onMemoryCreated,
+        );
       }
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isGenerating: false,
-        hasGenerated: true
+        hasGenerated: true,
       }));
-
     } catch (error) {
       logger.error('[Initial Greeting] Error generating greeting:', error);
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         isGenerating: false,
-        error: error instanceof Error ? error.message : 'Failed to generate initial greeting'
+        error: error instanceof Error ? error.message : 'Failed to generate initial greeting',
       }));
 
       // Provide a fallback greeting to prevent empty state
@@ -177,22 +205,23 @@ export const useInitialGreeting = ({
         const fallbackMessage: ChatMessage = {
           id: crypto.randomUUID(),
           sender: 'dm',
-          text: "You find yourself standing at the threshold of adventure. The world stretches before you, full of mysteries waiting to be uncovered. What do you do?",
+          text: 'You find yourself standing at the threshold of adventure. The world stretches before you, full of mysteries waiting to be uncovered. What do you do?',
           timestamp: new Date().toISOString(),
         };
         await onGreetingGenerated(fallbackMessage);
 
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          hasGenerated: true
+          hasGenerated: true,
         }));
       } catch (fallbackError) {
         logger.error('[Initial Greeting] Fallback greeting also failed:', fallbackError);
 
         toast({
-          title: "Adventure Setup",
-          description: "Had trouble setting up your adventure. You can still start by describing what your character does!",
-          variant: "default",
+          title: 'Adventure Setup',
+          description:
+            'Had trouble setting up your adventure. You can still start by describing what your character does!',
+          variant: 'default',
         });
       }
     }
@@ -225,7 +254,7 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
     character: Character,
     campaign: Campaign,
     greetingText: string,
-    onMemoryCreated: (memory: Omit<Memory, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+    onMemoryCreated: (memory: Omit<Memory, 'id' | 'created_at' | 'updated_at'>) => Promise<void>,
   ) => {
     try {
       logger.info('[Initial Greeting] Creating foundational memories');
@@ -241,8 +270,8 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
           character_id: character.id,
           character_name: character.name,
           is_player_character: true,
-          is_initial_memory: true
-        }
+          is_initial_memory: true,
+        },
       });
 
       // Create campaign world memory
@@ -255,8 +284,8 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
         metadata: {
           campaign_id: campaign.id,
           campaign_name: campaign.name,
-          is_initial_memory: true
-        }
+          is_initial_memory: true,
+        },
       });
 
       // Create opening scene memory from the DM's greeting
@@ -269,8 +298,8 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
         metadata: {
           scene_type: 'opening',
           is_initial_memory: true,
-          turn_count: 0
-        }
+          turn_count: 0,
+        },
       });
 
       // Create atmosphere memory
@@ -284,8 +313,8 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
           importance: 3,
           metadata: {
             scene_type: 'opening',
-            is_initial_memory: true
-          }
+            is_initial_memory: true,
+          },
         });
       }
 
@@ -299,11 +328,23 @@ Write in second person ("You...") and present tense. Length: 2-3 paragraphs.`;
   const extractAtmosphereFromGreeting = (greetingText: string): string | null => {
     // Simple extraction of atmospheric details from the greeting
     // This could be enhanced with more sophisticated parsing
-    const sentences = greetingText.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    const atmosphericWords = ['weather', 'sun', 'moon', 'wind', 'air', 'smell', 'sound', 'feeling', 'atmosphere', 'mood', 'ambiance'];
+    const sentences = greetingText.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+    const atmosphericWords = [
+      'weather',
+      'sun',
+      'moon',
+      'wind',
+      'air',
+      'smell',
+      'sound',
+      'feeling',
+      'atmosphere',
+      'mood',
+      'ambiance',
+    ];
 
-    const atmosphericSentences = sentences.filter(sentence =>
-      atmosphericWords.some(word => sentence.toLowerCase().includes(word))
+    const atmosphericSentences = sentences.filter((sentence) =>
+      atmosphericWords.some((word) => sentence.toLowerCase().includes(word)),
     );
 
     return atmosphericSentences.length > 0

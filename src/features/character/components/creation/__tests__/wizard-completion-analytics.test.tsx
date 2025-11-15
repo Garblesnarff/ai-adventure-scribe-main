@@ -1,15 +1,14 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import WizardContent from '@/components/character-creation/wizard/WizardContent';
 import * as AnalyticsModule from '@/services/analytics';
 
 // Mock wizardSteps to a single final step to immediately trigger save path
 vi.mock('@/components/character-creation/wizard/constants', () => ({
-  wizardSteps: [
-    { component: () => null, label: 'Finalization' },
-  ],
+  wizardSteps: [{ component: () => null, label: 'Finalization' }],
 }));
 
 // Mock CharacterContext to provide a valid character
@@ -59,12 +58,14 @@ describe('Character creation completion analytics', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('fires analytics on successful save', async () => {
-    const spy = vi.spyOn(AnalyticsModule.analytics, 'characterCreationCompleted').mockImplementation(() => {});
+    const spy = vi
+      .spyOn(AnalyticsModule.analytics, 'characterCreationCompleted')
+      .mockImplementation(() => {});
 
     render(
-      <MemoryRouter initialEntries={["/app/characters/create?campaign=cmp-xyz"]}>
+      <MemoryRouter initialEntries={['/app/characters/create?campaign=cmp-xyz']}>
         <WizardContent />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Click the completion button

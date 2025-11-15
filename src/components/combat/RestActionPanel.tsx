@@ -1,25 +1,26 @@
 /**
  * Rest Action Panel Component
- * 
+ *
  * Provides UI for taking short and long rests during combat with options for
  * hit dice selection and other rest-related choices.
- * 
+ *
  * Dependencies:
  * - useCombat from '@/contexts/CombatContext'
  * - shadcn/ui components for UI
- * 
+ *
  * Usage: Used within CombatActionPanel when 'short_rest' or 'long_rest' is selected
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
+import { Coffee, Moon } from 'lucide-react';
 import React, { useState } from 'react';
-import { useCombat } from '@/contexts/CombatContext';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Coffee, Moon } from 'lucide-react';
+import { useCombat } from '@/contexts/CombatContext';
 
 // ===========================
 // Props Interface
@@ -38,13 +39,13 @@ const RestActionPanel: React.FC<RestActionPanelProps> = ({
   restType,
   onRestSubmit,
   onCancel,
-  className = ''
+  className = '',
 }) => {
   const { state } = useCombat();
   const { activeEncounter } = state;
-  
+
   const [hitDiceToRoll, setHitDiceToRoll] = useState<number>(1);
-  
+
   if (!activeEncounter) {
     return (
       <Card className={`w-full ${className}`}>
@@ -61,7 +62,7 @@ const RestActionPanel: React.FC<RestActionPanelProps> = ({
   }
 
   const currentParticipant = activeEncounter.participants.find(
-    p => p.id === activeEncounter.currentTurnParticipantId
+    (p) => p.id === activeEncounter.currentTurnParticipantId,
   );
 
   if (!currentParticipant) {
@@ -80,7 +81,7 @@ const RestActionPanel: React.FC<RestActionPanelProps> = ({
   }
 
   const maxHitDice = currentParticipant.hitDice?.current || 0;
-  
+
   const handleHitDiceChange = (value: string) => {
     const num = parseInt(value) || 0;
     setHitDiceToRoll(Math.max(0, Math.min(num, maxHitDice)));
@@ -103,9 +104,7 @@ const RestActionPanel: React.FC<RestActionPanelProps> = ({
             {restType === 'short' ? 'Short Rest' : 'Long Rest'}
           </CardTitle>
         </div>
-        <p className="text-sm text-gray-600">
-          {currentParticipant.name}
-        </p>
+        <p className="text-sm text-gray-600">{currentParticipant.name}</p>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -122,9 +121,7 @@ const RestActionPanel: React.FC<RestActionPanelProps> = ({
                 onChange={(e) => handleHitDiceChange(e.target.value)}
                 className="w-20"
               />
-              <span className="text-sm text-gray-500">
-                / {maxHitDice} available
-              </span>
+              <span className="text-sm text-gray-500">/ {maxHitDice} available</span>
             </div>
             <p className="text-sm text-gray-500">
               Roll hit dice to recover hit points during short rest
@@ -148,7 +145,11 @@ const RestActionPanel: React.FC<RestActionPanelProps> = ({
         <div className="flex space-x-2 pt-4">
           <Button
             onClick={handleSubmit}
-            className={restType === 'short' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}
+            className={
+              restType === 'short'
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }
           >
             Take {restType === 'short' ? 'Short' : 'Long'} Rest
           </Button>

@@ -1,9 +1,9 @@
 /**
  * Model Usage Tracker Service
- * 
+ *
  * Tracks usage of free tier AI models to implement proper rate limiting
  * and fallback to paid models when free limits are exhausted.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -41,7 +41,7 @@ export class ModelUsageTracker {
   canUseModel(modelId: string, dailyLimit: number): boolean {
     this.ensureModelExists(modelId, dailyLimit);
     const usage = this.usageData[modelId];
-    
+
     return usage.usageCount < usage.dailyLimit;
   }
 
@@ -54,10 +54,10 @@ export class ModelUsageTracker {
   recordUsage(modelId: string, dailyLimit: number): number {
     this.ensureModelExists(modelId, dailyLimit);
     const usage = this.usageData[modelId];
-    
+
     usage.usageCount++;
     this.saveUsageData();
-    
+
     logger.info(`Model usage recorded for ${modelId}: ${usage.usageCount}/${usage.dailyLimit}`);
     return usage.usageCount;
   }
@@ -71,7 +71,7 @@ export class ModelUsageTracker {
   getRemainingUsage(modelId: string, dailyLimit: number): number {
     this.ensureModelExists(modelId, dailyLimit);
     const usage = this.usageData[modelId];
-    
+
     return Math.max(0, usage.dailyLimit - usage.usageCount);
   }
 
@@ -81,14 +81,17 @@ export class ModelUsageTracker {
    * @param dailyLimit - The daily limit for this model
    * @returns Usage statistics
    */
-  getUsageStats(modelId: string, dailyLimit: number): { used: number; limit: number; remaining: number } {
+  getUsageStats(
+    modelId: string,
+    dailyLimit: number,
+  ): { used: number; limit: number; remaining: number } {
     this.ensureModelExists(modelId, dailyLimit);
     const usage = this.usageData[modelId];
-    
+
     return {
       used: usage.usageCount,
       limit: usage.dailyLimit,
-      remaining: this.getRemainingUsage(modelId, dailyLimit)
+      remaining: this.getRemainingUsage(modelId, dailyLimit),
     };
   }
 

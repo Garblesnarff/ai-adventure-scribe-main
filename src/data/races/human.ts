@@ -3,8 +3,12 @@ import type { CharacterRace } from '@/types/character';
 import { getHeightWeightRange } from '@/data/appearance/physicalTraits';
 
 const ranges = getHeightWeightRange('human');
-const heightRange: [number, number] = ranges ? [...ranges.heightRange] as [number, number] : [56, 76];
-const weightRange: [number, number] = ranges ? [...ranges.weightRange] as [number, number] : [114, 270];
+const heightRange: [number, number] = ranges
+  ? ([...ranges.heightRange] as [number, number])
+  : [56, 76];
+const weightRange: [number, number] = ranges
+  ? ([...ranges.weightRange] as [number, number])
+  : [114, 270];
 
 export const human: CharacterRace = {
   id: 'human',
@@ -29,10 +33,10 @@ export const human: CharacterRace = {
         constitution: 1,
         intelligence: 1,
         wisdom: 1,
-        charisma: 1
+        charisma: 1,
       },
       traits: ['Versatile'],
-      languages: ['Choice of One']
+      languages: ['Choice of One'],
     },
     {
       id: 'variant-human',
@@ -43,7 +47,7 @@ export const human: CharacterRace = {
       traits: ['Skills', 'Feat', 'Extra Language or Tool Proficiency'],
       languages: ['Choice of One or Tool Proficiency'],
       weaponProficiencies: [],
-      armorProficiencies: []
+      armorProficiencies: [],
     },
     {
       id: 'custom-lineage',
@@ -53,7 +57,7 @@ export const human: CharacterRace = {
       abilityScoreIncrease: {},
       traits: ['Variable Size', 'Feat', 'Darkvision or Skill Proficiency'],
       languages: ['Common', 'Choice of One'],
-      speed: 30
-    }
-  ]
+      speed: 30,
+    },
+  ],
 };

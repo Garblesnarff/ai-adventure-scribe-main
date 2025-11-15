@@ -9,7 +9,9 @@
  * - TTFB (Time to First Byte)
  */
 
-import { onCLS, onINP, onFCP, onLCP, onTTFB, Metric } from 'web-vitals';
+import { onCLS, onINP, onFCP, onLCP, onTTFB } from 'web-vitals';
+
+import type { Metric } from 'web-vitals';
 
 /**
  * Performance metric thresholds (in milliseconds or score)
@@ -84,7 +86,7 @@ function logMetric(metric: Metric): void {
 
   console.log(
     `${color}[Performance] ${metric.name}: ${formattedValue} (${rating})${reset}`,
-    metric
+    metric,
   );
 }
 

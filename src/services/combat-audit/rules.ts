@@ -1,4 +1,4 @@
-import { CombatAction, RuleViolation } from './types';
+import type { CombatAction, RuleViolation } from './types';
 
 /**
  * Finds the most recent attack roll by a specific actor in a list of actions.
@@ -8,7 +8,7 @@ import { CombatAction, RuleViolation } from './types';
  */
 function findRecentAttackRoll(actions: CombatAction[], actorId: string): CombatAction | null {
   const recentActions = actions
-    .filter(a => a.actorId === actorId && a.actionType === 'attack_roll')
+    .filter((a) => a.actorId === actorId && a.actionType === 'attack_roll')
     .sort((a, b) => b.timestamp - a.timestamp);
   return recentActions[0] || null;
 }
@@ -58,7 +58,7 @@ function createViolation(
   suggestion: string,
   ruleReference: string,
   autoFixable: boolean,
-  actionId?: string
+  actionId?: string,
 ): RuleViolation {
   return {
     id: `violation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -85,14 +85,20 @@ export function validateAction(action: CombatAction, allActions: CombatAction[])
 
   // Rule 1: Initiative must be rolled before other actions.
   if (action.actionType !== 'initiative' && action.phase !== 'pre-combat') {
-    const hasInitiative = allActions.some(a => a.actionType === 'initiative');
+    const hasInitiative = allActions.some((a) => a.actionType === 'initiative');
     if (!hasInitiative) {
-      violations.push(createViolation(
-        action.combatId, 'missing_initiative', 'critical',
-        'Combat actions attempted without rolling initiative first.',
-        'Roll initiative (1d20+dex modifier) for all participants before combat begins.',
-        'PHB p.189 - Initiative', true, action.id
-      ));
+      violations.push(
+        createViolation(
+          action.combatId,
+          'missing_initiative',
+          'critical',
+          'Combat actions attempted without rolling initiative first.',
+          'Roll initiative (1d20+dex modifier) for all participants before combat begins.',
+          'PHB p.189 - Initiative',
+          true,
+          action.id,
+        ),
+      );
     }
   }
 
@@ -100,53 +106,83 @@ export function validateAction(action: CombatAction, allActions: CombatAction[])
   if (action.actionType === 'damage_roll') {
     const recentAttack = findRecentAttackRoll(allActions, action.actorId);
     if (!recentAttack || !recentAttack.data.success) {
-      violations.push(createViolation(
-        action.combatId, 'damage_without_attack', 'critical',
-        'Damage was rolled without a preceding successful attack.',
-        'Ensure an attack roll hits before rolling for damage.',
-        'PHB p.196 - Making an Attack', true, action.id
-      ));
+      violations.push(
+        createViolation(
+          action.combatId,
+          'damage_without_attack',
+          'critical',
+          'Damage was rolled without a preceding successful attack.',
+          'Ensure an attack roll hits before rolling for damage.',
+          'PHB p.196 - Making an Attack',
+          true,
+          action.id,
+        ),
+      );
     }
   }
 
   // Rule 3: Attack rolls must specify the target's AC.
   if (action.actionType === 'attack_roll' && !action.data.targetAC) {
-    violations.push(createViolation(
-      action.combatId, 'missing_ac', 'high',
-      'Attack roll made without specifying target AC.',
-      'Provide the target\'s Armor Class for the attack roll.',
-      'PHB p.194 - Armor Class', true, action.id
-    ));
+    violations.push(
+      createViolation(
+        action.combatId,
+        'missing_ac',
+        'high',
+        'Attack roll made without specifying target AC.',
+        "Provide the target's Armor Class for the attack roll.",
+        'PHB p.194 - Armor Class',
+        true,
+        action.id,
+      ),
+    );
   }
 
   // Rule 4: Saving throws must specify a DC.
   if (action.actionType === 'save' && !action.data.dc) {
-    violations.push(createViolation(
-      action.combatId, 'missing_dc', 'high',
-      'Saving throw made without a specified DC.',
-      'Provide the Difficulty Class for the saving throw.',
-      'PHB p.174 - Saving Throws', true, action.id
-    ));
+    violations.push(
+      createViolation(
+        action.combatId,
+        'missing_dc',
+        'high',
+        'Saving throw made without a specified DC.',
+        'Provide the Difficulty Class for the saving throw.',
+        'PHB p.174 - Saving Throws',
+        true,
+        action.id,
+      ),
+    );
   }
 
   // Rule 5: Validate dice formula notation.
   if (action.data.formula && !isValidDiceFormula(action.data.formula)) {
-    violations.push(createViolation(
-      action.combatId, 'invalid_formula', 'medium',
-      `Invalid dice formula used: "${action.data.formula}".`,
-      'Use standard D&D dice notation (e.g., "1d20+5", "2d6+3").',
-      'PHB p.6 - Dice', true, action.id
-    ));
+    violations.push(
+      createViolation(
+        action.combatId,
+        'invalid_formula',
+        'medium',
+        `Invalid dice formula used: "${action.data.formula}".`,
+        'Use standard D&D dice notation (e.g., "1d20+5", "2d6+3").',
+        'PHB p.6 - Dice',
+        true,
+        action.id,
+      ),
+    );
   }
 
   // Rule 6: Check for missing modifiers.
   if (action.data.formula && isMissingModifiers(action.data.formula, action.actionType)) {
-    violations.push(createViolation(
-      action.combatId, 'missing_modifiers', 'medium',
-      'Dice roll may be missing ability or proficiency modifiers.',
-      'Ensure formulas include relevant bonuses (e.g., "1d20+5" instead of "1d20").',
-      'PHB p.173 - Modifiers', true, action.id
-    ));
+    violations.push(
+      createViolation(
+        action.combatId,
+        'missing_modifiers',
+        'medium',
+        'Dice roll may be missing ability or proficiency modifiers.',
+        'Ensure formulas include relevant bonuses (e.g., "1d20+5" instead of "1d20").',
+        'PHB p.173 - Modifiers',
+        true,
+        action.id,
+      ),
+    );
   }
 
   return violations;

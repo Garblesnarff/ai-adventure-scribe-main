@@ -1,14 +1,14 @@
 /**
  * Spell Management Utilities
- * 
+ *
  * Provides functions for D&D 5e spell slot calculations, management, and casting mechanics.
  * Based on PHB rules for spellcasting classes. Handles multiclassing by summing slots from all classes.
- * 
+ *
  * Dependencies:
  * - Character types from '@/types/character'
  * - Combat types from '@/types/combat'
  * - classOptions and spellOptions from '@/data/'
- * 
+ *
  * @author Cline
  */
 
@@ -16,12 +16,17 @@
 // Imports
 // ===========================
 
-import { Character, Spell } from '@/types/character';
-import { CombatParticipant, CombatAction } from '@/types/combat';
+import type { Character } from '@/types/character';
+import type { CombatParticipant, CombatAction } from '@/types/combat';
+
 import { classes as classOptions } from '@/data/classOptions';
 import { spellApi } from '@/services/spellApi';
-import { validateSpellCast } from '@/utils/spellComponents';
-import { consumeMaterialComponents, trackComponentUsage } from '@/utils/spellComponents';
+import { Spell } from '@/types/character';
+import {
+  validateSpellCast,
+  consumeMaterialComponents,
+  trackComponentUsage,
+} from '@/utils/spellComponents';
 
 // ===========================
 // Type Helpers
@@ -47,7 +52,10 @@ export interface SpellSlotConfig {
  * @param level - Character level in this class
  * @returns Spell slot counts per level
  */
-function calculateClassSpellSlots(className: string, level: number): Partial<Record<SpellSlotLevel, number>> {
+function calculateClassSpellSlots(
+  className: string,
+  level: number,
+): Partial<Record<SpellSlotLevel, number>> {
   // Hardcoded PHB spell slot progression for full casters (simplified for levels 1-5; expand as needed)
   const fullCasterProgression: Record<number, Partial<Record<SpellSlotLevel, number>>> = {
     1: { 1: 2 },
@@ -61,9 +69,10 @@ function calculateClassSpellSlots(className: string, level: number): Partial<Rec
   };
 
   // For half casters (paladin, ranger), use half the level
-  const effectiveLevel = className.toLowerCase().includes('paladin') || className.toLowerCase().includes('ranger') 
-    ? Math.floor(level / 2) 
-    : level;
+  const effectiveLevel =
+    className.toLowerCase().includes('paladin') || className.toLowerCase().includes('ranger')
+      ? Math.floor(level / 2)
+      : level;
 
   const slots = fullCasterProgression[effectiveLevel] || { 1: 0 };
 
@@ -78,7 +87,17 @@ function calculateClassSpellSlots(className: string, level: number): Partial<Rec
  */
 export function calculateSpellSlots(character: Character): Record<SpellSlotLevel, SpellSlotConfig> {
   if (!character.classLevels || character.classLevels.length === 0) {
-    return { 1: { max: 0, current: 0 }, 2: { max: 0, current: 0 }, 3: { max: 0, current: 0 }, 4: { max: 0, current: 0 }, 5: { max: 0, current: 0 }, 6: { max: 0, current: 0 }, 7: { max: 0, current: 0 }, 8: { max: 0, current: 0 }, 9: { max: 0, current: 0 } };
+    return {
+      1: { max: 0, current: 0 },
+      2: { max: 0, current: 0 },
+      3: { max: 0, current: 0 },
+      4: { max: 0, current: 0 },
+      5: { max: 0, current: 0 },
+      6: { max: 0, current: 0 },
+      7: { max: 0, current: 0 },
+      8: { max: 0, current: 0 },
+      9: { max: 0, current: 0 },
+    };
   }
 
   const totalSlots: Partial<Record<SpellSlotLevel, number>> = {};
@@ -87,9 +106,12 @@ export function calculateSpellSlots(character: Character): Record<SpellSlotLevel
   let fullCasterLevels = 0;
   let halfCasterLevels = 0;
 
-  character.classLevels.forEach(classLevel => {
-    const classOption = classOptions.find(c => c.name.toLowerCase() === classLevel.className.toLowerCase());
-    const isFullCaster = classOption?.spellcasting && !['warlock'].includes(classOption.name.toLowerCase()); // Warlock uses pact slots
+  character.classLevels.forEach((classLevel) => {
+    const classOption = classOptions.find(
+      (c) => c.name.toLowerCase() === classLevel.className.toLowerCase(),
+    );
+    const isFullCaster =
+      classOption?.spellcasting && !['warlock'].includes(classOption.name.toLowerCase()); // Warlock uses pact slots
     if (isFullCaster) {
       fullCasterLevels += classLevel.level;
     } else if (classOption?.spellcasting) {
@@ -109,10 +131,16 @@ export function calculateSpellSlots(character: Character): Record<SpellSlotLevel
   }
 
   // Ensure current doesn't exceed max
-  const slots: Record<SpellSlotLevel, SpellSlotConfig> = {} as Record<SpellSlotLevel, SpellSlotConfig>;
+  const slots: Record<SpellSlotLevel, SpellSlotConfig> = {} as Record<
+    SpellSlotLevel,
+    SpellSlotConfig
+  >;
   for (let i = 1; i <= 9; i++) {
     const max = totalSlots[i as SpellSlotLevel] || 0;
-    slots[i as SpellSlotLevel] = { max, current: Math.min(max, character.spellSlots?.[i as SpellSlotLevel]?.current || max) };
+    slots[i as SpellSlotLevel] = {
+      max,
+      current: Math.min(max, character.spellSlots?.[i as SpellSlotLevel]?.current || max),
+    };
   }
 
   return slots;
@@ -142,10 +170,16 @@ export function deductSpellSlot(character: Character, level: SpellSlotLevel): Ch
  */
 export function restoreSpellSlots(character: Character): Character {
   const maxSlots = calculateSpellSlots(character);
-  const updatedSlots: Record<SpellSlotLevel, SpellSlotConfig> = {} as Record<SpellSlotLevel, SpellSlotConfig>;
-  
+  const updatedSlots: Record<SpellSlotLevel, SpellSlotConfig> = {} as Record<
+    SpellSlotLevel,
+    SpellSlotConfig
+  >;
+
   for (let i = 1; i <= 9; i++) {
-    updatedSlots[i as SpellSlotLevel] = { ...maxSlots[i as SpellSlotLevel], current: maxSlots[i as SpellSlotLevel].max };
+    updatedSlots[i as SpellSlotLevel] = {
+      ...maxSlots[i as SpellSlotLevel],
+      current: maxSlots[i as SpellSlotLevel].max,
+    };
   }
 
   return { ...character, spellSlots: updatedSlots, activeConcentration: null };
@@ -163,7 +197,7 @@ export async function castSpell(
   action: Partial<CombatAction>,
   participant: CombatParticipant,
   spellId: string,
-  spellLevel: SpellSlotLevel
+  spellLevel: SpellSlotLevel,
 ): Promise<{ updatedParticipant: CombatParticipant; updatedAction: CombatAction }> {
   // Find the spell being cast
   const spell = await spellApi.getSpellById(spellId);
@@ -191,8 +225,8 @@ export async function castSpell(
       spellcasting: {
         ability: 'intelligence', // Placeholder
         ritualCasting: false, // Placeholder
-      }
-    }
+      },
+    },
   } as unknown as {
     preparedSpells: string[];
     spellSlots?: Record<SpellSlotLevel, SpellSlotConfig>;
@@ -218,14 +252,19 @@ export async function castSpell(
 
   // Deduct slot
   const updatedSlots = { ...participant.spellSlots };
-  updatedSlots[spellLevel] = { ...updatedSlots[spellLevel], current: updatedSlots[spellLevel].current - 1 };
+  updatedSlots[spellLevel] = {
+    ...updatedSlots[spellLevel],
+    current: updatedSlots[spellLevel].current - 1,
+  };
 
   // Set concentration if spell requires it
   let concentrationSpell = null;
   if (spell.concentration && !participant.activeConcentration) {
     concentrationSpell = spell.name;
   } else if (spell.concentration && participant.activeConcentration) {
-    throw new Error(`${participant.name} is already concentrating on ${participant.activeConcentration}`);
+    throw new Error(
+      `${participant.name} is already concentrating on ${participant.activeConcentration}`,
+    );
   }
 
   const updatedParticipant: CombatParticipant = {
@@ -236,7 +275,7 @@ export async function castSpell(
 
   // Create detailed action description with component information
   let description = `${action.description} (Cast ${spell.name} using level ${spellLevel} slot)`;
-  
+
   // Add component information to the action description
   const components = [];
   if (spell.components_verbal) components.push('V');
@@ -252,7 +291,7 @@ export async function castSpell(
   }
 
   const fullAction: CombatAction = {
-    ...action as CombatAction,
+    ...(action as CombatAction),
     description,
     // Add spell-specific fields
     spellName: spell.name,
@@ -263,13 +302,13 @@ export async function castSpell(
       material: spell.components_material || false,
       materialDescription: spell.material_components,
       materialCost: spell.material_cost,
-      materialConsumed: spell.material_consumed || false
-    }
+      materialConsumed: spell.material_consumed || false,
+    },
   };
 
   // Handle material component consumption and tracking
   const componentTracking = { trackingMessage: '' }; // Mock for now - implement trackComponentUsage properly
-  
+
   if (componentTracking.trackingMessage) {
     fullAction.description += ` [${componentTracking.trackingMessage}]`;
   }
@@ -283,7 +322,10 @@ export async function castSpell(
  * @param damageTaken - If damage was taken, triggers concentration save (Con save DC 10 or half damage, whichever higher)
  * @returns True if concentration maintained, false if dropped
  */
-export function checkConcentration(participant: CombatParticipant, damageTaken: number = 0): boolean {
+export function checkConcentration(
+  participant: CombatParticipant,
+  damageTaken: number = 0,
+): boolean {
   if (!participant.activeConcentration) return true;
 
   if (damageTaken === 0) return true;
@@ -292,10 +334,12 @@ export function checkConcentration(participant: CombatParticipant, damageTaken: 
 
   // A proper implementation would also check for proficiency in Constitution saving throws.
   // For now, we'll just use the ability modifier.
-  const conMod = typeof (participant as unknown as { abilityScores?: { constitution?: { modifier?: number } } })
-    .abilityScores?.constitution?.modifier === 'number'
-    ? ((participant as unknown as { abilityScores?: { constitution?: { modifier?: number } } }).abilityScores!.constitution!.modifier as number)
-    : 0;
+  const conMod =
+    typeof (participant as unknown as { abilityScores?: { constitution?: { modifier?: number } } })
+      .abilityScores?.constitution?.modifier === 'number'
+      ? ((participant as unknown as { abilityScores?: { constitution?: { modifier?: number } } })
+          .abilityScores!.constitution!.modifier as number)
+      : 0;
   const roll = Math.floor(Math.random() * 20) + 1 + conMod;
 
   const maintained = roll >= dc;

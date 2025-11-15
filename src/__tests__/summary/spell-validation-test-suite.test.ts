@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  validateSpellSelection,
-  getSpellcastingInfo,
-  getRacialSpells
-} from '@/utils/spell-validation';
+
 import {
   mockWizard,
   mockCleric,
@@ -11,8 +7,13 @@ import {
   mockHuman,
   mockHighElfSubrace,
   mockTieflingSubrace,
-  createMockCharacter
+  createMockCharacter,
 } from '@/__tests__/helpers/spell-test-helpers';
+import {
+  validateSpellSelection,
+  getSpellcastingInfo,
+  getRacialSpells,
+} from '@/utils/spell-validation';
 
 /**
  * Comprehensive Spell Validation Test Suite Summary
@@ -46,7 +47,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
       const result = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation'], // 2 instead of 3 cantrips
-        ['magic-missile', 'shield'] // 2 instead of 6 spells
+        ['magic-missile', 'shield'], // 2 instead of 6 spells
       );
 
       expect(result.valid).toBe(false);
@@ -83,13 +84,18 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
     });
 
     it('should integrate racial spells with class spells', () => {
-      const highElfWizard = createMockCharacter('High Elf Wizard', mockWizard, mockHuman, mockHighElfSubrace);
+      const highElfWizard = createMockCharacter(
+        'High Elf Wizard',
+        mockWizard,
+        mockHuman,
+        mockHighElfSubrace,
+      );
 
       // High Elf Wizard gets 3 class + 1 racial = 4 cantrips
       const result = validateSpellSelection(
         highElfWizard,
         ['mage-hand', 'prestidigitation', 'light', 'minor-illusion'], // 4 cantrips
-        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'] // 6 spells
+        ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'color-spray'], // 6 spells
       );
 
       expect(result.valid).toBe(true);
@@ -105,7 +111,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
       const resultWithDivineSpells = validateSpellSelection(
         wizardCharacter,
         ['mage-hand', 'prestidigitation', 'guidance'], // guidance = CLERIC cantrip
-        ['magic-missile', 'shield', 'cure-wounds', 'healing-word', 'bless', 'guiding-bolt'] // ALL divine spells
+        ['magic-missile', 'shield', 'cure-wounds', 'healing-word', 'bless', 'guiding-bolt'], // ALL divine spells
       );
 
       // BUG: This returns true when it should return false
@@ -118,7 +124,13 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
       // );
 
       console.log('🚨 CRITICAL BUG DETECTED: Wizard can select divine spells');
-      console.log('📋 Divine spells that should be rejected:', ['guidance', 'cure-wounds', 'healing-word', 'bless', 'guiding-bolt']);
+      console.log('📋 Divine spells that should be rejected:', [
+        'guidance',
+        'cure-wounds',
+        'healing-word',
+        'bless',
+        'guiding-bolt',
+      ]);
     });
 
     it('DOCUMENTS THE ROOT CAUSE: Placeholder validation function', () => {
@@ -143,10 +155,17 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
       // This test shows what the validation SHOULD do
 
       const expectedBehavior = {
-        wizardValidSpells: ['magic-missile', 'shield', 'detect-magic', 'burning-hands', 'sleep', 'fireball'],
+        wizardValidSpells: [
+          'magic-missile',
+          'shield',
+          'detect-magic',
+          'burning-hands',
+          'sleep',
+          'fireball',
+        ],
         wizardInvalidSpells: ['cure-wounds', 'healing-word', 'bless', 'guiding-bolt', 'sanctuary'],
         clericValidSpells: ['cure-wounds', 'healing-word', 'bless', 'guiding-bolt', 'sanctuary'],
-        clericInvalidSpells: ['magic-missile', 'shield', 'fireball', 'counterspell', 'teleport']
+        clericInvalidSpells: ['magic-missile', 'shield', 'fireball', 'counterspell', 'teleport'],
       };
 
       // When fixed, validation should reject cross-class spells
@@ -169,7 +188,12 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
     });
 
     it('should handle racial spells for non-spellcasters', () => {
-      const tieflingFighter = createMockCharacter('Tiefling Fighter', mockFighter, mockHuman, mockTieflingSubrace);
+      const tieflingFighter = createMockCharacter(
+        'Tiefling Fighter',
+        mockFighter,
+        mockHuman,
+        mockTieflingSubrace,
+      );
 
       const result = validateSpellSelection(tieflingFighter, ['thaumaturgy'], []);
 
@@ -184,7 +208,11 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
 
       // But this throws an error (another bug to fix)
       expect(() => {
-        validateSpellSelection(createMockCharacter('Test', mockWizard, mockHuman), null as any, null as any);
+        validateSpellSelection(
+          createMockCharacter('Test', mockWizard, mockHuman),
+          null as any,
+          null as any,
+        );
       }).toThrow();
     });
   });
@@ -199,7 +227,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
         'src/__tests__/edge-cases/racial-spell-integration.test.ts',
         'src/__tests__/performance/spell-validation-performance.test.ts',
         'src/__tests__/accessibility/spell-selection-accessibility.test.tsx',
-        'src/__tests__/helpers/spell-test-helpers.ts'
+        'src/__tests__/helpers/spell-test-helpers.ts',
       ];
 
       expect(testFiles).toHaveLength(8);
@@ -222,7 +250,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
         edgeCaseTests: 'Multiclass scenarios, racial bonuses, error conditions',
         performanceTests: 'Large datasets, concurrent validations, memory usage',
         accessibilityTests: 'Keyboard navigation, screen readers, ARIA compliance',
-        securityTests: 'Input validation, SQL injection prevention, authorization'
+        securityTests: 'Input validation, SQL injection prevention, authorization',
       };
 
       expect(Object.keys(testCategories)).toHaveLength(8);
@@ -242,7 +270,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
         phase3: 'Add frontend spell filtering by class',
         phase4: 'Populate database with complete D&D 5E spell lists',
         phase5: 'Add comprehensive error messages',
-        phase6: 'Update all tests to expect correct behavior'
+        phase6: 'Update all tests to expect correct behavior',
       };
 
       expect(Object.keys(bugFixStrategy)).toHaveLength(6);
@@ -280,7 +308,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
         'Handle edge cases': '✅ Multiclass, racial spells, error conditions',
         'Performance testing': '✅ Large datasets, concurrent operations',
         'Accessibility compliance': '✅ WCAG 2.1 guidelines tested',
-        '100% rule compliance': '✅ D&D 5E rules enforced'
+        '100% rule compliance': '✅ D&D 5E rules enforced',
       };
 
       expect(Object.keys(requirements)).toHaveLength(8);
@@ -300,14 +328,14 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
         '5. Implement spell level progression validation',
         '6. Add support for domain/patron spells',
         '7. Test with real D&D 5E scenarios',
-        '8. Update documentation with testing guidelines'
+        '8. Update documentation with testing guidelines',
       ];
 
       expect(nextSteps).toHaveLength(8);
       expect(nextSteps[0]).toContain('isSpellValidForClass');
 
       console.log('📋 Next Steps to Complete Implementation:');
-      nextSteps.forEach(step => {
+      nextSteps.forEach((step) => {
         console.log(`  ${step}`);
       });
     });
@@ -321,7 +349,7 @@ describe('D&D 5E Spell Validation Test Suite - Complete Coverage', () => {
         'Edge Case Tests': '✅ Multiclass and racial scenarios',
         'Performance Tests': '✅ Large datasets and concurrency',
         'Accessibility Tests': '✅ WCAG compliance and screen readers',
-        'Security Tests': '✅ Input validation and authorization'
+        'Security Tests': '✅ Input validation and authorization',
       };
 
       expect(Object.keys(coverageAreas)).toHaveLength(8);

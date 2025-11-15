@@ -7,7 +7,8 @@
 
 import { eq, and, isNull, desc, asc, sql } from 'drizzle-orm';
 import { db } from '../../../src/infrastructure/database/index.js';
-import { gameSessions, dialogueHistory, type GameSession, type NewGameSession, type DialogueHistory, type NewDialogueHistory } from '../../../db/session-schema.js';
+import { gameSessions, dialogueHistory, type GameSession, type NewGameSession, type DialogueHistory, type NewDialogueHistory } from '../../../db/schema/index.js';
+import { InternalServerError } from '../lib/errors.js';
 
 /**
  * Message with pagination metadata
@@ -43,7 +44,7 @@ export class SessionService {
       })
       .returning();
 
-    if (!session) throw new Error('Failed to create session');
+    if (!session) throw new InternalServerError('Failed to create session');
     return session;
   }
 
@@ -142,7 +143,7 @@ export class SessionService {
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
-    if (!updated) throw new Error('Failed to complete session');
+    if (!updated) throw new InternalServerError('Failed to complete session');
     return updated;
   }
 
@@ -151,11 +152,11 @@ export class SessionService {
    */
   static async updateSessionState(
     sessionId: string,
-    stateUpdate: Record<string, any>
+    stateUpdate: Record<string, unknown>
   ): Promise<GameSession> {
     // Get current state
     const current = await this.getSessionById(sessionId);
-    const currentState = (current?.sessionState as Record<string, any>) || {};
+    const currentState = (current?.sessionState as Record<string, unknown>) || {};
 
     // Merge with update
     const newState = {
@@ -173,7 +174,7 @@ export class SessionService {
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
-    if (!updated) throw new Error('Failed to update session state');
+    if (!updated) throw new InternalServerError('Failed to update session state');
     return updated;
   }
 
@@ -185,8 +186,8 @@ export class SessionService {
     speakerType: string;
     speakerId?: string;
     message: string;
-    context?: Record<string, any>;
-    images?: any[];
+    context?: Record<string, unknown>;
+    images?: unknown[];
   }): Promise<DialogueHistory> {
     const [msg] = await db
       .insert(dialogueHistory)
@@ -196,12 +197,11 @@ export class SessionService {
         speakerId: data.speakerId || null,
         message: data.message,
         context: data.context || null,
-        images: data.images || null,
         timestamp: new Date(),
       })
       .returning();
 
-    if (!msg) throw new Error('Failed to add message');
+    if (!msg) throw new InternalServerError('Failed to add message');
     return msg;
   }
 
@@ -254,14 +254,14 @@ export class SessionService {
    */
   static async appendCombatLog(
     sessionId: string,
-    entry: any,
+    entry: unknown,
     maxEntries: number = 500
   ): Promise<void> {
     const session = await this.getSessionById(sessionId);
     if (!session) return;
 
-    const currentState = (session.sessionState as any) || {};
-    const combatLog = currentState.combatLog || [];
+    const currentState = (session.sessionState as Record<string, unknown>) || {};
+    const combatLog = (currentState.combatLog as unknown[]) || [];
 
     const newEntry = {
       timestamp: new Date().toISOString(),
@@ -283,7 +283,7 @@ export class SessionService {
    */
   static async appendRollEvent(
     sessionId: string,
-    event: { kind: string; payload: any }
+    event: { kind: string; payload: unknown }
   ): Promise<void> {
     await this.appendCombatLog(sessionId, {
       kind: event.kind,

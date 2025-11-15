@@ -11,7 +11,7 @@ describe('Encounter validation', () => {
       participants: { hostiles: [{ ref: 'srd:orc', count: 1 }], friendlies: [] },
       terrain: { features: [] },
       objectives: [],
-      startState: { initiative: 'roll', surprise: false }
+      startState: { initiative: 'roll', surprise: false },
     } as any;
 
     const res = validateEncounterSpec(spec, defaultMonsters);
@@ -27,7 +27,7 @@ describe('Encounter validation', () => {
       participants: { hostiles: [{ ref: 'srd:wolf', count: 4 }], friendlies: [] },
       terrain: { features: [] },
       objectives: [],
-      startState: { initiative: 'roll', surprise: false }
+      startState: { initiative: 'roll', surprise: false },
     } as any;
 
     const res = validateEncounterSpec(spec, defaultMonsters);

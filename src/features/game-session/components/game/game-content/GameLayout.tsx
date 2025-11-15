@@ -1,8 +1,9 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { GameLeftPanel } from './GameLeftPanel';
-import { GameRightPanel } from './GameRightPanel';
-import { GameMainContent } from './GameMainContent';
+
 import { GameCombatSheet } from './GameCombatSheet';
+import { GameLeftPanel } from './GameLeftPanel';
+import { GameMainContent } from './GameMainContent';
+import { GameRightPanel } from './GameRightPanel';
 import { FloatingActionPanel } from '../FloatingActionPanel';
 
 /**
@@ -97,10 +98,7 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
           }`}
         >
           {/* Left Campaign Panel */}
-          <GameLeftPanel
-            isCollapsed={isLeftCollapsed}
-            onToggle={() => setIsLeftCollapsed(true)}
-          />
+          <GameLeftPanel isCollapsed={isLeftCollapsed} onToggle={() => setIsLeftCollapsed(true)} />
 
           {/* Main Content Area */}
           <GameMainContent
@@ -145,11 +143,7 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
           />
 
           {/* Combat Tracker Sheet */}
-          <GameCombatSheet
-            showTracker={showTracker}
-            setShowTracker={setShowTracker}
-            isDM={isDM}
-          />
+          <GameCombatSheet showTracker={showTracker} setShowTracker={setShowTracker} isDM={isDM} />
         </div>
       </div>
     </div>

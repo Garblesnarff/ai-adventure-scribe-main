@@ -1,5 +1,5 @@
-import { FC } from 'react';
-import { Character } from '@/types/character';
+import type { Character } from '@/types/character';
+import type { FC } from 'react';
 
 /**
  * Interface defining the structure of a wizard step

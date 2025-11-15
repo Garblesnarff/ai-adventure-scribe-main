@@ -1,26 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  getLevelFromExperience,
-  getExperienceForLevel,
-  getProficiencyBonus,
-  canMulticlass,
-  getClassFeaturesForLevel,
-  getAllClassFeaturesUpToLevel
-} from '@/data/levelProgression';
-import { AbilityScores } from '@/types/character';
-import FeatSelection from './FeatSelection';
-import HitPointsSelection from './HitPointsSelection';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
 import {
   TrendingUp,
   Star,
@@ -29,8 +6,32 @@ import {
   ChevronRight,
   Plus,
   AlertCircle,
-  Trophy
+  Trophy,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import FeatSelection from './FeatSelection';
+import HitPointsSelection from './HitPointsSelection';
+
+import type { AbilityScores } from '@/types/character';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import {
+  getLevelFromExperience,
+  getExperienceForLevel,
+  getProficiencyBonus,
+  canMulticlass,
+  getClassFeaturesForLevel,
+  getAllClassFeaturesUpToLevel,
+} from '@/data/levelProgression';
 
 /**
  * CharacterAdvancement component for leveling up characters
@@ -41,7 +42,9 @@ const CharacterAdvancement: React.FC = () => {
   const { toast } = useToast();
   const character = state.character;
 
-  const [selectedAdvancement, setSelectedAdvancement] = useState<'level-up' | 'multiclass'>('level-up');
+  const [selectedAdvancement, setSelectedAdvancement] = useState<'level-up' | 'multiclass'>(
+    'level-up',
+  );
   const [selectedMulticlass, setSelectedMulticlass] = useState<string>('');
   const [showFeatureSelection, setShowFeatureSelection] = useState(false);
   const [showHitPointsSelection, setShowHitPointsSelection] = useState(false);
@@ -49,7 +52,7 @@ const CharacterAdvancement: React.FC = () => {
   const currentLevel = character?.level || 1;
   const currentExperience = character?.experience || 0;
   const currentClass = character?.class;
-  
+
   const nextLevel = currentLevel + 1;
   const experienceNeeded = getExperienceForLevel(nextLevel);
   const experienceToNextLevel = Math.max(0, experienceNeeded - currentExperience);
@@ -59,22 +62,42 @@ const CharacterAdvancement: React.FC = () => {
   const totalLevel = currentLevel; // In full implementation, would sum all class levels
 
   const newClassFeatures = currentClass ? getClassFeaturesForLevel(currentClass.id, nextLevel) : [];
-  const hasAbilityScoreImprovement = newClassFeatures.some(feature => feature.abilityScoreImprovement);
+  const hasAbilityScoreImprovement = newClassFeatures.some(
+    (feature) => feature.abilityScoreImprovement,
+  );
 
   // Multiclassing validation
-  const availableClasses = ['fighter', 'wizard', 'rogue', 'cleric', 'barbarian', 'bard', 'druid', 'monk', 'paladin', 'ranger', 'sorcerer', 'warlock'];
-  const multiclassOptions = character?.abilityScores ? availableClasses
-    .filter(className => className !== currentClass?.id)
-    .map(className => {
-      const validation = canMulticlass(
-        currentClass?.id || '', 
-        className, 
-        character.abilityScores as Record<keyof AbilityScores, { score: number; modifier: number }>
-      );
-      return { className, ...validation };
-    }) : [];
+  const availableClasses = [
+    'fighter',
+    'wizard',
+    'rogue',
+    'cleric',
+    'barbarian',
+    'bard',
+    'druid',
+    'monk',
+    'paladin',
+    'ranger',
+    'sorcerer',
+    'warlock',
+  ];
+  const multiclassOptions = character?.abilityScores
+    ? availableClasses
+        .filter((className) => className !== currentClass?.id)
+        .map((className) => {
+          const validation = canMulticlass(
+            currentClass?.id || '',
+            className,
+            character.abilityScores as Record<
+              keyof AbilityScores,
+              { score: number; modifier: number }
+            >,
+          );
+          return { className, ...validation };
+        })
+    : [];
 
-  const validMulticlassOptions = multiclassOptions.filter(option => option.canMulticlass);
+  const validMulticlassOptions = multiclassOptions.filter((option) => option.canMulticlass);
 
   /**
    * Handle level up
@@ -100,12 +123,12 @@ const CharacterAdvancement: React.FC = () => {
 
     const updates = {
       level: nextLevel,
-      ...additionalUpdates
+      ...additionalUpdates,
     };
 
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: updates
+      payload: updates,
     });
 
     toast({
@@ -158,9 +181,7 @@ const CharacterAdvancement: React.FC = () => {
       <div className="space-y-6">
         <HitPointsSelection />
         <div className="flex justify-center">
-          <Button onClick={() => applyLevelUp()}>
-            Complete Level Up
-          </Button>
+          <Button onClick={() => applyLevelUp()}>Complete Level Up</Button>
         </div>
       </div>
     );
@@ -168,25 +189,12 @@ const CharacterAdvancement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <motion.div
-        className="text-center"
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Character Advancement</h2>
-        <p className="text-muted-foreground">
-          Level up your character and gain new abilities
-        </p>
-      </motion.div>
+        <p className="text-muted-foreground">Level up your character and gain new abilities</p>
+      </div>
 
       {/* Current Status */}
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.1 }}
-      >
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -215,29 +223,25 @@ const CharacterAdvancement: React.FC = () => {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium">Progress to Level {nextLevel}</span>
               <span className="text-sm text-muted-foreground">
-                {experienceToNextLevel > 0 
+                {experienceToNextLevel > 0
                   ? `${experienceToNextLevel.toLocaleString()} XP needed`
-                  : 'Ready to level up!'
-                }
+                  : 'Ready to level up!'}
               </span>
             </div>
-            <Progress 
-              value={currentLevel >= 20 ? 100 : Math.min(100, (currentExperience / experienceNeeded) * 100)} 
+            <Progress
+              value={
+                currentLevel >= 20
+                  ? 100
+                  : Math.min(100, (currentExperience / experienceNeeded) * 100)
+              }
               className="w-full h-3"
             />
           </div>
         </CardContent>
       </Card>
-      </motion.div>
 
       {/* Level Up Section */}
       {canLevelUp && (
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.2 }}
-        >
         <Card className="border-primary bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
@@ -249,7 +253,9 @@ const CharacterAdvancement: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold">Level {nextLevel} {currentClass.name}</h3>
+                  <h3 className="font-semibold">
+                    Level {nextLevel} {currentClass.name}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Advance to the next level and gain new features
                   </p>
@@ -281,16 +287,9 @@ const CharacterAdvancement: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        </motion.div>
       )}
 
       {/* Current Level Features */}
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.3 }}
-      >
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -307,25 +306,16 @@ const CharacterAdvancement: React.FC = () => {
                 </Badge>
                 <div className="flex-1">
                   <div className="font-medium">{feature.featureName}</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {feature.description}
-                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">{feature.description}</div>
                 </div>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-      </motion.div>
 
       {/* Multiclassing Section */}
       {currentLevel >= 2 && (
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.4 }}
-        >
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -347,17 +337,16 @@ const CharacterAdvancement: React.FC = () => {
                       onClick={() => handleMulticlass(option.className)}
                     >
                       <div className="font-medium capitalize">{option.className}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Requirements met
-                      </div>
+                      <div className="text-sm text-muted-foreground">Requirements met</div>
                     </div>
                   ))}
                 </div>
-                
+
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Multiclassing is an advanced optional rule. Make sure you understand the implications before proceeding.
+                    Multiclassing is an advanced optional rule. Make sure you understand the
+                    implications before proceeding.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -366,23 +355,25 @@ const CharacterAdvancement: React.FC = () => {
                 <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-medium mb-2">Multiclassing Not Available</h3>
                 <p className="text-sm text-muted-foreground">
-                  You don't meet the ability score requirements for multiclassing into other classes.
+                  You don't meet the ability score requirements for multiclassing into other
+                  classes.
                 </p>
                 <div className="mt-4 space-y-2">
-                  {multiclassOptions.filter(option => !option.canMulticlass).map((option) => (
-                    <div key={option.className} className="text-sm">
-                      <span className="capitalize font-medium">{option.className}:</span>
-                      <span className="text-muted-foreground ml-2">
-                        {option.requirements.join(', ')}
-                      </span>
-                    </div>
-                  ))}
+                  {multiclassOptions
+                    .filter((option) => !option.canMulticlass)
+                    .map((option) => (
+                      <div key={option.className} className="text-sm">
+                        <span className="capitalize font-medium">{option.className}:</span>
+                        <span className="text-muted-foreground ml-2">
+                          {option.requirements.join(', ')}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
-        </motion.div>
       )}
     </div>
   );

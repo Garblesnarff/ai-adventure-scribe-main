@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { calculateRange, getHeightWeightRange } from './physicalTraits';
 
 describe('physicalTraits height/weight calculations', () => {

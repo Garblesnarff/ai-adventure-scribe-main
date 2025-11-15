@@ -1,21 +1,24 @@
 /**
  * Combat System Test Page
- * 
+ *
  * A test page to validate combat system functionality end-to-end.
  * Demonstrates all combat components working together in a D&D tabletop style.
  */
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Swords, Users, Play, Square } from 'lucide-react';
-import { CombatProvider } from '@/contexts/CombatContext';
-import InitiativeTracker from './InitiativeTracker';
+import React, { useState } from 'react';
+
 import CombatActionPanel from './CombatActionPanel';
 import HPTracker from './HPTracker';
-import { CombatParticipant } from '@/types/combat';
+import InitiativeTracker from './InitiativeTracker';
+
+import type { CombatParticipant } from '@/types/combat';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { CombatProvider } from '@/contexts/CombatContext';
 import logger from '@/lib/logger';
 
 // ===========================
@@ -40,7 +43,7 @@ const CombatTestPageContent: React.FC = () => {
       actionTaken: false,
       bonusActionTaken: false,
       reactionTaken: false,
-      movementUsed: 0
+      movementUsed: 0,
     },
     {
       name: 'Elara Moonwhisper',
@@ -55,7 +58,7 @@ const CombatTestPageContent: React.FC = () => {
       actionTaken: false,
       bonusActionTaken: false,
       reactionTaken: false,
-      movementUsed: 0
+      movementUsed: 0,
     },
     {
       name: 'Orc Warrior',
@@ -68,9 +71,9 @@ const CombatTestPageContent: React.FC = () => {
       conditions: [
         {
           name: 'frightened',
-          description: 'Frightened by Elara\'s intimidating presence',
-          duration: 2
-        }
+          description: "Frightened by Elara's intimidating presence",
+          duration: 2,
+        },
       ],
       deathSaves: { successes: 0, failures: 0 },
       actionTaken: false,
@@ -86,11 +89,11 @@ const CombatTestPageContent: React.FC = () => {
             damageRoll: '1d12+3',
             damageType: 'slashing',
             reach: 5,
-            description: 'Melee weapon attack'
-          }
+            description: 'Melee weapon attack',
+          },
         ],
-        specialAbilities: ['Aggressive']
-      }
+        specialAbilities: ['Aggressive'],
+      },
     },
     {
       name: 'Goblin Scout',
@@ -115,18 +118,18 @@ const CombatTestPageContent: React.FC = () => {
             damageRoll: '1d6+2',
             damageType: 'slashing',
             reach: 5,
-            description: 'Melee weapon attack'
-          }
+            description: 'Melee weapon attack',
+          },
         ],
-        specialAbilities: ['Nimble Escape']
-      }
-    }
+        specialAbilities: ['Nimble Escape'],
+      },
+    },
   ];
 
   const handleStartTestCombat = async () => {
     // This would normally be provided by the session/campaign context
     const testSessionId = 'test-session-123';
-    
+
     try {
       // Start combat with test participants
       // Note: This would normally use the useCombat hook, but since we're in a test,
@@ -149,7 +152,6 @@ const CombatTestPageContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50 to-orange-100 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        
         {/* Header */}
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
@@ -161,7 +163,7 @@ const CombatTestPageContent: React.FC = () => {
                   <p className="text-gray-600">Testing tabletop-style combat mechanics</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 {!testCombatStarted ? (
                   <Button onClick={handleStartTestCombat} size="lg">
@@ -186,11 +188,11 @@ const CombatTestPageContent: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Combat Status</p>
-                  <p className="text-2xl font-bold">
-                    {testCombatStarted ? 'ACTIVE' : 'INACTIVE'}
-                  </p>
+                  <p className="text-2xl font-bold">{testCombatStarted ? 'ACTIVE' : 'INACTIVE'}</p>
                 </div>
-                <Swords className={`w-8 h-8 ${testCombatStarted ? 'text-red-500' : 'text-gray-400'}`} />
+                <Swords
+                  className={`w-8 h-8 ${testCombatStarted ? 'text-red-500' : 'text-gray-400'}`}
+                />
               </div>
             </CardContent>
           </Card>
@@ -210,8 +212,12 @@ const CombatTestPageContent: React.FC = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="bg-blue-100">2 Players</Badge>
-                <Badge variant="outline" className="bg-red-100">2 Monsters</Badge>
+                <Badge variant="outline" className="bg-blue-100">
+                  2 Players
+                </Badge>
+                <Badge variant="outline" className="bg-red-100">
+                  2 Monsters
+                </Badge>
               </div>
             </CardContent>
           </Card>
@@ -220,7 +226,6 @@ const CombatTestPageContent: React.FC = () => {
         {testCombatStarted ? (
           /* Combat Interface */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
             {/* Left Column - Initiative Tracker */}
             <div className="space-y-4">
               <InitiativeTracker className="sticky top-4" />
@@ -245,9 +250,10 @@ const CombatTestPageContent: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-gray-600">
-                  This test page demonstrates the D&D 5e combat system with the following components:
+                  This test page demonstrates the D&D 5e combat system with the following
+                  components:
                 </p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="border-blue-200 bg-blue-50">
                     <CardContent className="pt-4">
@@ -291,9 +297,10 @@ const CombatTestPageContent: React.FC = () => {
                 <div className="bg-amber-50 p-4 rounded-lg border-amber-200 border">
                   <h4 className="font-semibold mb-2">Test Scenario</h4>
                   <p className="text-sm text-gray-700">
-                    Two adventurers (Thorin the Dwarf Fighter and Elara the Elf Wizard) face off against 
-                    an Orc Warrior and a critically wounded Goblin Scout. The combat demonstrates 
-                    initiative tracking, HP management, conditions (frightened), and death saves.
+                    Two adventurers (Thorin the Dwarf Fighter and Elara the Elf Wizard) face off
+                    against an Orc Warrior and a critically wounded Goblin Scout. The combat
+                    demonstrates initiative tracking, HP management, conditions (frightened), and
+                    death saves.
                   </p>
                 </div>
 

@@ -1,7 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+import type { Character } from '@/types/character';
+
 import {
   mockWizard,
   mockCleric,
@@ -9,9 +12,8 @@ import {
   mockHuman,
   mockHighElfSubrace,
   mockTieflingSubrace,
-  createMockCharacter
+  createMockCharacter,
 } from '@/__tests__/helpers/spell-test-helpers';
-import { Character } from '@/types/character';
 
 /**
  * Spell Selection Component Tests
@@ -25,18 +27,18 @@ import { Character } from '@/types/character';
 // Mock the useSpellSelection hook
 const mockUseSpellSelection = vi.fn();
 vi.mock('@/hooks/useSpellSelection', () => ({
-  useSpellSelection: mockUseSpellSelection
+  useSpellSelection: mockUseSpellSelection,
 }));
 
 // Mock the spell service
 const mockSpellService = {
   getClassSpells: vi.fn(),
   validateSpellForClass: vi.fn(),
-  getSpellDetails: vi.fn()
+  getSpellDetails: vi.fn(),
 };
 
 vi.mock('@/services/spellApi', () => ({
-  spellApi: mockSpellService
+  spellApi: mockSpellService,
 }));
 
 // Create a mock SpellSelection component for testing
@@ -63,25 +65,25 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
               { id: 'mage-hand', name: 'Mage Hand', school: 'Conjuration' },
               { id: 'prestidigitation', name: 'Prestidigitation', school: 'Transmutation' },
               { id: 'light', name: 'Light', school: 'Evocation' },
-              { id: 'minor-illusion', name: 'Minor Illusion', school: 'Illusion' }
+              { id: 'minor-illusion', name: 'Minor Illusion', school: 'Illusion' },
             ]);
             setAvailableSpells([
               { id: 'magic-missile', name: 'Magic Missile', school: 'Evocation' },
               { id: 'shield', name: 'Shield', school: 'Abjuration' },
               { id: 'detect-magic', name: 'Detect Magic', school: 'Divination' },
-              { id: 'burning-hands', name: 'Burning Hands', school: 'Evocation' }
+              { id: 'burning-hands', name: 'Burning Hands', school: 'Evocation' },
             ]);
           } else if (character.class.name === 'Cleric') {
             setAvailableCantrips([
               { id: 'guidance', name: 'Guidance', school: 'Divination' },
               { id: 'thaumaturgy', name: 'Thaumaturgy', school: 'Transmutation' },
-              { id: 'sacred-flame', name: 'Sacred Flame', school: 'Evocation' }
+              { id: 'sacred-flame', name: 'Sacred Flame', school: 'Evocation' },
             ]);
             setAvailableSpells([
               { id: 'cure-wounds', name: 'Cure Wounds', school: 'Evocation' },
               { id: 'healing-word', name: 'Healing Word', school: 'Evocation' },
               { id: 'bless', name: 'Bless', school: 'Enchantment' },
-              { id: 'guiding-bolt', name: 'Guiding Bolt', school: 'Evocation' }
+              { id: 'guiding-bolt', name: 'Guiding Bolt', school: 'Evocation' },
             ]);
           }
           setIsLoading(false);
@@ -98,15 +100,18 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
   const handleCantripToggle = async (cantripId: string) => {
     // Validate spell is allowed for this class
     try {
-      const validation = await mockSpellService.validateSpellForClass(cantripId, character.class.name);
+      const validation = await mockSpellService.validateSpellForClass(
+        cantripId,
+        character.class.name,
+      );
       if (!validation.valid) {
         setErrors([`${character.class.name} cannot learn ${cantripId}`]);
         return;
       }
 
-      setSelectedCantrips(prev => {
+      setSelectedCantrips((prev) => {
         if (prev.includes(cantripId)) {
-          return prev.filter(id => id !== cantripId);
+          return prev.filter((id) => id !== cantripId);
         } else {
           // Enforce limits based on class
           const maxCantrips = character.class.spellcasting?.cantripsKnown || 0;
@@ -126,15 +131,18 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
   const handleSpellToggle = async (spellId: string) => {
     // Validate spell is allowed for this class
     try {
-      const validation = await mockSpellService.validateSpellForClass(spellId, character.class.name);
+      const validation = await mockSpellService.validateSpellForClass(
+        spellId,
+        character.class.name,
+      );
       if (!validation.valid) {
         setErrors([`${character.class.name} cannot learn ${spellId}`]);
         return;
       }
 
-      setSelectedSpells(prev => {
+      setSelectedSpells((prev) => {
         if (prev.includes(spellId)) {
-          return prev.filter(id => id !== spellId);
+          return prev.filter((id) => id !== spellId);
         } else {
           // Enforce limits based on class
           const maxSpells = character.class.spellcasting?.spellsKnown || 1;
@@ -164,18 +172,24 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
 
   return (
     <div data-testid="spell-selection">
-      <h2>Spell Selection for {character.name} ({character.class.name})</h2>
+      <h2>
+        Spell Selection for {character.name} ({character.class.name})
+      </h2>
 
       {errors.length > 0 && (
         <div data-testid="error-messages" className="error-messages">
           {errors.map((error, index) => (
-            <div key={index} className="error">{error}</div>
+            <div key={index} className="error">
+              {error}
+            </div>
           ))}
         </div>
       )}
 
       <div data-testid="cantrips-section">
-        <h3>Cantrips ({selectedCantrips.length}/{maxCantrips})</h3>
+        <h3>
+          Cantrips ({selectedCantrips.length}/{maxCantrips})
+        </h3>
         <div className="spell-list">
           {availableCantrips.map((cantrip) => (
             <div key={cantrip.id} className="spell-option">
@@ -194,7 +208,9 @@ const SpellSelectionComponent: React.FC<{ character: Character }> = ({ character
       </div>
 
       <div data-testid="spells-section">
-        <h3>Spells ({selectedSpells.length}/{maxSpells})</h3>
+        <h3>
+          Spells ({selectedSpells.length}/{maxSpells})
+        </h3>
         <div className="spell-list">
           {availableSpells.map((spell) => (
             <div key={spell.id} className="spell-option">
@@ -293,7 +309,10 @@ describe('Spell Selection Component Tests', () => {
 
       // Mock validation to reject cleric spells for wizard
       mockSpellService.validateSpellForClass.mockImplementation(async (spellId, className) => {
-        if (className === 'Wizard' && ['guidance', 'cure-wounds', 'healing-word'].includes(spellId)) {
+        if (
+          className === 'Wizard' &&
+          ['guidance', 'cure-wounds', 'healing-word'].includes(spellId)
+        ) {
           return { valid: false, error: `${className} cannot learn ${spellId}` };
         }
         return { valid: true };
@@ -308,7 +327,10 @@ describe('Spell Selection Component Tests', () => {
       // Try to programmatically trigger validation for a cleric spell
       // (This simulates if somehow a cleric spell was available in the UI)
       const cantripToggle = async (spellId: string) => {
-        const validation = await mockSpellService.validateSpellForClass(spellId, wizardCharacter.class.name);
+        const validation = await mockSpellService.validateSpellForClass(
+          spellId,
+          wizardCharacter.class.name,
+        );
         return validation;
       };
 
@@ -490,13 +512,13 @@ describe('Spell Selection Component Tests', () => {
         {
           character: createMockCharacter('Test Wizard', mockWizard, mockHuman),
           expectedCantrips: 3,
-          expectedSpells: 6
+          expectedSpells: 6,
         },
         {
           character: createMockCharacter('Test Cleric', mockCleric, mockHuman),
           expectedCantrips: 3,
-          expectedSpells: 1
-        }
+          expectedSpells: 1,
+        },
       ];
 
       for (const testCase of testCases) {

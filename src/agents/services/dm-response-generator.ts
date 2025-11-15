@@ -1,9 +1,9 @@
 /**
  * Dungeon Master Response Generator
- * 
+ *
  * Generates AI Dungeon Master responses based on campaign context, player input, and game state.
  * Loads campaign data, recent memories, character details, and generates environment, character interactions, opportunities, and mechanics.
- * 
+ *
  * Dependencies:
  * - Supabase client (src/integrations/supabase/client.ts)
  * - DMResponse and CampaignContext types (src/types/dm.ts)
@@ -15,7 +15,7 @@
  * - OpportunityGenerator (src/agents/services/response/OpportunityGenerator.ts)
  * - MechanicsGenerator (src/agents/services/response/MechanicsGenerator.ts)
  * - Character types (src/types/character.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -40,7 +40,6 @@ import { OpportunityGenerator } from './response/opportunity-generator';
 import { Memory } from '@/components/game/memory/types';
 import { Character, CharacterBackground, CharacterClass, CharacterRace } from '@/types/character';
 import { CampaignContext, DMResponse } from '@/types/dm';
-
 
 interface ConversationState {
   currentNPC: string | null;
@@ -71,14 +70,14 @@ export class DMResponseGenerator {
 
   /**
    * Creates a new DMResponseGenerator instance.
-   * 
+   *
    * @param {string} campaignId - The campaign ID
    * @param {string} sessionId - The session ID
    */
   constructor(campaignId: string, sessionId: string) {
     this.campaignId = campaignId;
     this.sessionId = sessionId;
-    
+
     this.campaignLoader = new CampaignContextLoader();
     this.memoryManager = new MemoryManager();
     this.environmentGenerator = new EnvironmentGenerator();
@@ -89,20 +88,20 @@ export class DMResponseGenerator {
 
   /**
    * Loads campaign context, recent memories, and character details in parallel.
-   * 
+   *
    * @returns {Promise<void>}
    */
   async initialize(): Promise<void> {
     await Promise.all([
       this.loadCampaignContext(),
       this.loadRecentMemories(),
-      this.loadCharacterDetails()
+      this.loadCharacterDetails(),
     ]);
   }
 
   /**
    * Loads campaign context from the database.
-   * 
+   *
    * @private
    * @returns {Promise<void>}
    */
@@ -112,7 +111,7 @@ export class DMResponseGenerator {
 
   /**
    * Loads recent memories for the session.
-   * 
+   *
    * @private
    * @returns {Promise<void>}
    */
@@ -122,7 +121,7 @@ export class DMResponseGenerator {
 
   /**
    * Loads character details for the session.
-   * 
+   *
    * @private
    * @returns {Promise<void>}
    */
@@ -136,39 +135,69 @@ export class DMResponseGenerator {
     if (session?.character_id) {
       const { data: characterData } = await supabase
         .from('characters')
-        .select(`
+        .select(
+          `
           *,
           character_stats (*),
           character_equipment (*)
-        `)
+        `,
+        )
         .eq('id', session.character_id)
         .single();
-      
+
       if (characterData) {
         this.character = {
           id: characterData.id,
           user_id: characterData.user_id,
           name: characterData.name,
-          race: (characterData.race as unknown) as CharacterRace,
-          class: (characterData.class as unknown) as CharacterClass,
+          race: characterData.race as unknown as CharacterRace,
+          class: characterData.class as unknown as CharacterClass,
           level: characterData.level,
-          background: characterData.background ? (characterData.background as unknown) as CharacterBackground : null,
+          background: characterData.background
+            ? (characterData.background as unknown as CharacterBackground)
+            : null,
           description: characterData.description,
-          abilityScores: characterData.character_stats?.[0] ? {
-            strength: { score: characterData.character_stats[0].strength, modifier: Math.floor((characterData.character_stats[0].strength - 10) / 2), savingThrow: false },
-            dexterity: { score: characterData.character_stats[0].dexterity, modifier: Math.floor((characterData.character_stats[0].dexterity - 10) / 2), savingThrow: false },
-            constitution: { score: characterData.character_stats[0].constitution, modifier: Math.floor((characterData.character_stats[0].constitution - 10) / 2), savingThrow: false },
-            intelligence: { score: characterData.character_stats[0].intelligence, modifier: Math.floor((characterData.character_stats[0].intelligence - 10) / 2), savingThrow: false },
-            wisdom: { score: characterData.character_stats[0].wisdom, modifier: Math.floor((characterData.character_stats[0].wisdom - 10) / 2), savingThrow: false },
-            charisma: { score: characterData.character_stats[0].charisma, modifier: Math.floor((characterData.character_stats[0].charisma - 10) / 2), savingThrow: false }
-          } : undefined,
+          abilityScores: characterData.character_stats?.[0]
+            ? {
+                strength: {
+                  score: characterData.character_stats[0].strength,
+                  modifier: Math.floor((characterData.character_stats[0].strength - 10) / 2),
+                  savingThrow: false,
+                },
+                dexterity: {
+                  score: characterData.character_stats[0].dexterity,
+                  modifier: Math.floor((characterData.character_stats[0].dexterity - 10) / 2),
+                  savingThrow: false,
+                },
+                constitution: {
+                  score: characterData.character_stats[0].constitution,
+                  modifier: Math.floor((characterData.character_stats[0].constitution - 10) / 2),
+                  savingThrow: false,
+                },
+                intelligence: {
+                  score: characterData.character_stats[0].intelligence,
+                  modifier: Math.floor((characterData.character_stats[0].intelligence - 10) / 2),
+                  savingThrow: false,
+                },
+                wisdom: {
+                  score: characterData.character_stats[0].wisdom,
+                  modifier: Math.floor((characterData.character_stats[0].wisdom - 10) / 2),
+                  savingThrow: false,
+                },
+                charisma: {
+                  score: characterData.character_stats[0].charisma,
+                  modifier: Math.floor((characterData.character_stats[0].charisma - 10) / 2),
+                  savingThrow: false,
+                },
+              }
+            : undefined,
           experience: characterData.experience_points || 0,
           alignment: characterData.alignment || '',
           personalityTraits: [],
           ideals: [],
           bonds: [],
           flaws: [],
-          equipment: characterData.character_equipment?.map(item => item.item_name) || []
+          equipment: characterData.character_equipment?.map((item) => item.item_name) || [],
         };
       }
     }
@@ -176,7 +205,7 @@ export class DMResponseGenerator {
 
   /**
    * Retrieves the world ID associated with the campaign.
-   * 
+   *
    * @private
    * @returns {Promise<string>} The world ID
    */
@@ -186,19 +215,22 @@ export class DMResponseGenerator {
       .select('id')
       .eq('campaign_id', this.campaignId)
       .single();
-    
+
     return data?.id;
   }
 
   /**
    * Generates a Dungeon Master response based on player input and context.
-   * 
+   *
    * @param {string} playerMessage - The player's message or action
    * @param {ResponseContext} responseContext - Context including player intent and conversation state
    * @returns {Promise<DMResponse>} The generated DM response
    * @throws {Error} If context or character details fail to load
    */
-  async generateResponse(playerMessage: string, responseContext: ResponseContext): Promise<DMResponse> {
+  async generateResponse(
+    playerMessage: string,
+    responseContext: ResponseContext,
+  ): Promise<DMResponse> {
     if (!this.context || !this.character) {
       await this.initialize();
     }
@@ -216,28 +248,28 @@ export class DMResponseGenerator {
     if (playerIntent === 'dialogue' && conversationState.currentNPC) {
       // Generate focused NPC interaction
       characters = await this.characterGenerator.generateInteractions(
-        worldId, 
+        worldId,
         this.character,
-        conversationState
+        conversationState,
       );
-      
+
       // Minimal environment description for dialogue
       environment = {
-        description: "The conversation continues...",
+        description: 'The conversation continues...',
         atmosphere: this.context.setting?.atmosphere || 'neutral',
-        sensoryDetails: []
+        sensoryDetails: [],
       };
-      
+
       // Generate dialogue-specific opportunities
       opportunities = {
         immediate: [
-          "Continue the conversation",
-          "Change the subject",
-          "End the conversation",
-          "Ask about local rumors"
+          'Continue the conversation',
+          'Change the subject',
+          'End the conversation',
+          'Ask about local rumors',
         ],
         nearby: [],
-        questHooks: []
+        questHooks: [],
       };
     } else {
       // Generate full scene description
@@ -245,7 +277,7 @@ export class DMResponseGenerator {
         this.environmentGenerator.generateEnvironment(this.context, this.character),
         this.characterGenerator.generateInteractions(worldId, this.character),
         this.opportunityGenerator.generateOpportunities(this.campaignId, this.context),
-        this.mechanicsGenerator.generateMechanics(this.context)
+        this.mechanicsGenerator.generateMechanics(this.context),
       ]);
     }
 
@@ -253,7 +285,7 @@ export class DMResponseGenerator {
       environment,
       characters,
       mechanics,
-      opportunities
+      opportunities,
     };
   }
 }

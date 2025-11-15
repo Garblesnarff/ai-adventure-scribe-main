@@ -1,16 +1,19 @@
+import { FileText, Heart, Brain, Link, Frown } from 'lucide-react';
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Character } from '@/types/character';
+
 import PersonalityManager from '../PersonalityManager';
 import CharacterOverview from './components/CharacterOverview';
-import EnhancementDetails from './components/EnhancementDetails';
 import EditableDescription from './components/EditableDescription';
-import { FileText, Heart, Brain, Link, Frown } from 'lucide-react';
+import EnhancementDetails from './components/EnhancementDetails';
+
+import type { Character } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 
 interface NotesTabProps {
   character: Character;
@@ -27,7 +30,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
     setNotes(newNotes);
     onUpdate({
       ...character,
-      sessionNotes: newNotes
+      sessionNotes: newNotes,
     });
   };
 

@@ -1,20 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
+import { Play, Plus } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+
+import { CharacterSelectionSkeleton } from '@/components/skeletons/CharacterSelectionSkeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Play, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { isCampaignCharacterFlowEnabled } from '@/config/featureFlags';
-import { CharacterSelectionSkeleton } from '@/components/skeletons/CharacterSelectionSkeleton';
 import { Z_INDEX } from '@/constants/z-index';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Character {
   id: string;
@@ -61,18 +57,22 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
 
   // Fetch available characters
   const { data: characters, isLoading } = useQuery({
-    queryKey: isCampaignCharacterFlowEnabled() ? ['campaign', campaignId, 'characters', 'play'] : ['user-characters'],
+    queryKey: isCampaignCharacterFlowEnabled()
+      ? ['campaign', campaignId, 'characters', 'play']
+      : ['user-characters'],
     queryFn: async () => {
       let query = supabase
         .from('characters')
-        .select(`
+        .select(
+          `
           id, name, race, class, level, avatar_url, background_image,
           character_stats (
             strength, dexterity, constitution,
             intelligence, wisdom, charisma,
             armor_class, max_hit_points
           )
-        `)
+        `,
+        )
         .order('created_at', { ascending: false });
 
       if (isCampaignCharacterFlowEnabled()) {
@@ -93,7 +93,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
     navigate(`/app/game/${campaignId}?character=${character.id}`);
     onClose();
     toast({
-      title: "Starting Adventure!",
+      title: 'Starting Adventure!',
       description: `Beginning your journey with ${character.name} in ${campaignName}.`,
     });
   };
@@ -115,7 +115,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
             Select a character to play in "{campaignName}"
           </p>
         </DialogHeader>
-        
+
         <div className="mt-4">
           {isLoading ? (
             <CharacterSelectionSkeleton />
@@ -132,12 +132,19 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                 const stats = character.character_stats;
 
                 // Resolve background image
-                const backgroundImage = character.background_image || new URL('/card-background.jpeg', import.meta.url).href;
+                const backgroundImage =
+                  character.background_image ||
+                  new URL('/card-background.jpeg', import.meta.url).href;
 
                 return (
-                  <Card key={character.id} className="group cursor-pointer hover:shadow-2xl hover:shadow-infinite-purple/40 transition-all duration-500 overflow-hidden border-2 border-border/60 hover:border-infinite-gold/90 hover:scale-[1.02] relative bg-white dark:bg-background">
+                  <Card
+                    key={character.id}
+                    className="group cursor-pointer hover:shadow-2xl hover:shadow-infinite-purple/40 transition-all duration-500 overflow-hidden border-2 border-border/60 hover:border-infinite-gold/90 hover:scale-[1.02] relative bg-white dark:bg-background"
+                  >
                     {/* Glow effect on hover - uses BACKGROUND_LAYER for visual effects within card */}
-                    <div className={`absolute inset-0 z-[${Z_INDEX.BACKGROUND_LAYER}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}>
+                    <div
+                      className={`absolute inset-0 z-[${Z_INDEX.BACKGROUND_LAYER}] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+                    >
                       <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(168,85,247,0.4)]" />
                     </div>
 
@@ -146,7 +153,7 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                       style={{
                         backgroundImage: `url(${backgroundImage})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center'
+                        backgroundPosition: 'center',
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/80 to-white/95 dark:from-background/60 dark:via-background/80 dark:to-background/95" />
@@ -163,7 +170,9 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                     <CardContent className="p-4 pt-10 bg-white dark:bg-background">
                       <div className="space-y-3">
                         <div>
-                          <h3 className="font-semibold text-lg text-foreground">{character.name}</h3>
+                          <h3 className="font-semibold text-lg text-foreground">
+                            {character.name}
+                          </h3>
                           <p className="text-sm text-muted-foreground">
                             Level {character.level} {character.race} {character.class}
                           </p>
@@ -175,7 +184,9 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                             <div className="flex gap-4 text-sm bg-gray-100 dark:bg-muted p-2 rounded-md border border-gray-200 dark:border-border">
                               <div className="flex items-center gap-1">
                                 <span className="font-semibold text-foreground">HP:</span>
-                                <span className="text-foreground">{stats.max_hit_points || '—'}</span>
+                                <span className="text-foreground">
+                                  {stats.max_hit_points || '—'}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="font-semibold text-foreground">AC:</span>
@@ -187,27 +198,39 @@ const CharacterSelectionModal: React.FC<CharacterSelectionModalProps> = ({
                             <div className="grid grid-cols-3 gap-2 text-xs">
                               <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">STR</span>
-                                <span className="text-lg font-bold text-foreground">{getModifier(stats.strength)}</span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {getModifier(stats.strength)}
+                                </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">DEX</span>
-                                <span className="text-lg font-bold text-foreground">{getModifier(stats.dexterity)}</span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {getModifier(stats.dexterity)}
+                                </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">CON</span>
-                                <span className="text-lg font-bold text-foreground">{getModifier(stats.constitution)}</span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {getModifier(stats.constitution)}
+                                </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">INT</span>
-                                <span className="text-lg font-bold text-foreground">{getModifier(stats.intelligence)}</span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {getModifier(stats.intelligence)}
+                                </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">WIS</span>
-                                <span className="text-lg font-bold text-foreground">{getModifier(stats.wisdom)}</span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {getModifier(stats.wisdom)}
+                                </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-muted/50 rounded border border-gray-200 dark:border-border shadow-sm">
                                 <span className="font-semibold text-muted-foreground">CHA</span>
-                                <span className="text-lg font-bold text-foreground">{getModifier(stats.charisma)}</span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {getModifier(stats.charisma)}
+                                </span>
                               </div>
                             </div>
                           </>

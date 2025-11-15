@@ -1,14 +1,15 @@
-import React from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Shuffle, Heart, Crown, Shield, Zap } from 'lucide-react';
-import { personalityService } from '@/services/personalityService';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import logger from '@/lib/logger';
+import { personalityService } from '@/services/personalityService';
 
 /**
  * PersonalitySelection component for character creation
@@ -26,7 +27,7 @@ const PersonalitySelection: React.FC = () => {
   const handlePersonalityTraitsChange = (traits: string[]) => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { personalityTraits: traits }
+      payload: { personalityTraits: traits },
     });
   };
 
@@ -37,7 +38,7 @@ const PersonalitySelection: React.FC = () => {
   const handleIdealChange = (ideal: string) => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { ideals: [ideal] }
+      payload: { ideals: [ideal] },
     });
   };
 
@@ -48,7 +49,7 @@ const PersonalitySelection: React.FC = () => {
   const handleBondChange = (bond: string) => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { bonds: [bond] }
+      payload: { bonds: [bond] },
     });
   };
 
@@ -59,7 +60,7 @@ const PersonalitySelection: React.FC = () => {
   const handleFlawChange = (flaw: string) => {
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { flaws: [flaw] }
+      payload: { flaws: [flaw] },
     });
   };
 
@@ -68,11 +69,14 @@ const PersonalitySelection: React.FC = () => {
    * @param fieldType - Type of field to randomize
    * @param index - Index for traits (0 or 1)
    */
-  const handleRandomize = async (fieldType: 'traits' | 'ideals' | 'bonds' | 'flaws', index?: number) => {
+  const handleRandomize = async (
+    fieldType: 'traits' | 'ideals' | 'bonds' | 'flaws',
+    index?: number,
+  ) => {
     try {
       const options = {
         background: selectedBackground?.id,
-        alignment: state.character?.alignment
+        alignment: state.character?.alignment,
       };
 
       const element = await personalityService.getRandomPersonalityElement(fieldType, options);
@@ -117,16 +121,16 @@ const PersonalitySelection: React.FC = () => {
       }
 
       toast({
-        title: "Randomized!",
+        title: 'Randomized!',
         description: `Generated a random ${fieldType.slice(0, -1)} for your character.`,
         duration: 1500,
       });
     } catch (error) {
       logger.error('Error randomizing personality element:', error);
       toast({
-        title: "Error",
-        description: "Failed to randomize. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to randomize. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -138,7 +142,7 @@ const PersonalitySelection: React.FC = () => {
     try {
       const options = {
         background: selectedBackground?.id,
-        alignment: state.character?.alignment
+        alignment: state.character?.alignment,
       };
 
       const batchData = await personalityService.getBatchRandomPersonality(options);
@@ -165,16 +169,16 @@ const PersonalitySelection: React.FC = () => {
       }
 
       toast({
-        title: "All Randomized!",
-        description: "Generated a complete personality for your character.",
+        title: 'All Randomized!',
+        description: 'Generated a complete personality for your character.',
         duration: 2000,
       });
     } catch (error) {
       logger.error('Error randomizing all personality elements:', error);
       toast({
-        title: "Error",
-        description: "Failed to randomize all fields. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to randomize all fields. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -196,8 +200,7 @@ const PersonalitySelection: React.FC = () => {
             <p className="text-muted-foreground">
               {selectedBackground
                 ? `Shape your ${selectedBackground.name}'s personality with traits, ideals, bonds, and flaws`
-                : "Shape your character's personality with traits, ideals, bonds, and flaws"
-              }
+                : "Shape your character's personality with traits, ideals, bonds, and flaws"}
             </p>
           </div>
         </div>
@@ -209,13 +212,9 @@ const PersonalitySelection: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2 mb-2">
               <Crown className="w-4 h-4 text-infinite-teal" />
-              <h3 className="font-semibold">
-                {selectedBackground.name} Background
-              </h3>
+              <h3 className="font-semibold">{selectedBackground.name} Background</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {selectedBackground.description}
-            </p>
+            <p className="text-sm text-muted-foreground">{selectedBackground.description}</p>
           </CardContent>
         </Card>
       )}
@@ -247,7 +246,9 @@ const PersonalitySelection: React.FC = () => {
             <div className="space-y-3">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="trait-1" className="text-xs text-muted-foreground">Trait 1</Label>
+                  <Label htmlFor="trait-1" className="text-xs text-muted-foreground">
+                    Trait 1
+                  </Label>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -262,13 +263,20 @@ const PersonalitySelection: React.FC = () => {
                   id="trait-1"
                   placeholder="e.g., I idolize a particular hero of my faith..."
                   value={state.character?.personalityTraits?.[0] || ''}
-                  onChange={(e) => handlePersonalityTraitsChange([e.target.value, state.character?.personalityTraits?.[1] || ''])}
+                  onChange={(e) =>
+                    handlePersonalityTraitsChange([
+                      e.target.value,
+                      state.character?.personalityTraits?.[1] || '',
+                    ])
+                  }
                   className="min-h-[60px] transition-all duration-200 focus:ring-2 focus:ring-infinite-purple focus:border-infinite-purple"
                 />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="trait-2" className="text-xs text-muted-foreground">Trait 2</Label>
+                  <Label htmlFor="trait-2" className="text-xs text-muted-foreground">
+                    Trait 2
+                  </Label>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -283,7 +291,12 @@ const PersonalitySelection: React.FC = () => {
                   id="trait-2"
                   placeholder="e.g., I can find common ground between enemies..."
                   value={state.character?.personalityTraits?.[1] || ''}
-                  onChange={(e) => handlePersonalityTraitsChange([state.character?.personalityTraits?.[0] || '', e.target.value])}
+                  onChange={(e) =>
+                    handlePersonalityTraitsChange([
+                      state.character?.personalityTraits?.[0] || '',
+                      e.target.value,
+                    ])
+                  }
                   className="min-h-[60px] transition-all duration-200 focus:ring-2 focus:ring-infinite-purple focus:border-infinite-purple"
                 />
               </div>
@@ -400,8 +413,9 @@ const PersonalitySelection: React.FC = () => {
           <div className="space-y-1">
             <h4 className="font-medium text-amber-900 dark:text-amber-100">Personality Tips</h4>
             <p className="text-sm text-amber-700 dark:text-amber-200">
-              Use the randomize buttons to get inspiration from official D&D backgrounds, or write your own unique personality elements.
-              These will shape how your character interacts with the world and other players.
+              Use the randomize buttons to get inspiration from official D&D backgrounds, or write
+              your own unique personality elements. These will shape how your character interacts
+              with the world and other players.
             </p>
           </div>
         </div>

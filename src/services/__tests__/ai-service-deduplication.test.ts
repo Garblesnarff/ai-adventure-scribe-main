@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { AIService } from '../ai-service';
 
 // Mock the logger to avoid console output during tests

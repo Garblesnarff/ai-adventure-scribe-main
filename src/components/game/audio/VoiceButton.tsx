@@ -1,5 +1,6 @@
-import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -24,16 +25,10 @@ export const VolumeButton: React.FC<VolumeButtonProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          className={`transition-colors ${
-            isSpeaking ? 'text-primary' : ''
-          }`}
+          className={`transition-colors ${isSpeaking ? 'text-primary' : ''}`}
           onClick={onToggleMute}
         >
-          {isMuted ? (
-            <VolumeX className="h-5 w-5" />
-          ) : (
-            <Volume2 className="h-5 w-5" />
-          )}
+          {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </Button>
       </TooltipTrigger>
       <TooltipContent>

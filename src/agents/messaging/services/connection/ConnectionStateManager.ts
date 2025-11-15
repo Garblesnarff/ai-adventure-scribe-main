@@ -1,14 +1,14 @@
 /**
  * Connection State Manager
- * 
+ *
  * This file defines the ConnectionStateManager class, responsible for managing
  * and reacting to changes in the application's connection state (e.g., to a
  * backend service or network). It handles events for connection restoration
  * and loss, and attempts to synchronize state upon reconnection.
- * 
+ *
  * Main Class:
  * - ConnectionStateManager: Manages connection state and related events.
- * 
+ *
  * Key Dependencies:
  * - EventEmitter (./event-emitter.ts)
  * - MessageQueueService (`../message-queue-service.ts`)
@@ -16,45 +16,44 @@
  * - MessagePersistenceService (`../storage/message-persistence-service.ts`)
  * - ConnectionState type (`./types.ts`)
  * - General message types (`../../types.ts`)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
-// Project Services & Utilities (assuming kebab-case filenames)
-import { EventEmitter } from './event-emitter';
-import { MessageQueueService } from '../message-queue-service';
-import { OfflineStateService } from '../offline/offline-state-service';
-import { MessagePersistenceService } from '../storage/message-persistence-service';
+// Project Services & Utilities
+import { EventEmitter } from './EventEmitter';
+import { MessageQueueService } from '../MessageQueueService';
+import { OfflineStateService } from '../offline/OfflineStateService';
+import { MessagePersistenceService } from '../storage/MessagePersistenceService';
 
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../../types';
 import { ConnectionState } from './types';
 import { logger } from '../../../../lib/logger';
 
-
 export class ConnectionStateManager {
   private state: ConnectionState = {
     status: 'disconnected',
     lastConnected: null,
     lastDisconnected: null,
-    reconnecting: false
+    reconnecting: false,
   };
 
   constructor(
     private eventEmitter: EventEmitter,
     private queueService: MessageQueueService,
     private persistenceService: MessagePersistenceService,
-    private offlineService: OfflineStateService
+    private offlineService: OfflineStateService,
   ) {}
 
   public async handleConnectionRestored(): Promise<void> {
     logger.info('[ConnectionStateManager] Connection restored');
-    
+
     this.state = {
       ...this.state,
       status: 'connected',
       lastConnected: new Date(),
-      reconnecting: false
+      reconnecting: false,
     };
 
     this.eventEmitter.emit('connectionStateChanged', this.state);
@@ -63,12 +62,12 @@ export class ConnectionStateManager {
 
   public async handleConnectionLost(): Promise<void> {
     logger.info('[ConnectionStateManager] Connection lost');
-    
+
     this.state = {
       ...this.state,
       status: 'disconnected',
       lastDisconnected: new Date(),
-      reconnecting: false
+      reconnecting: false,
     };
 
     this.eventEmitter.emit('connectionStateChanged', this.state);
@@ -94,25 +93,24 @@ export class ConnectionStateManager {
           deliveryStatus: {
             delivered: false,
             timestamp: new Date(),
-            attempts: 0
+            attempts: 0,
           },
           retryCount: 0,
-          maxRetries: this.queueService.getConfig().maxRetries
+          maxRetries: this.queueService.getConfig().maxRetries,
         });
       }
 
       await this.offlineService.updateOnlineStatus(true);
-      
+
       this.eventEmitter.emit('reconnectionSuccessful', {
         timestamp: new Date(),
-        pendingMessages: pendingMessages.length
+        pendingMessages: pendingMessages.length,
       });
-
     } catch (error) {
       logger.error('[ConnectionStateManager] Error handling reconnection:', error);
       this.eventEmitter.emit('reconnectionError', {
         error,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     }
   }

@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { ChatMessage } from '@/types/game';
-import { MessageVoicePlayer } from './MessageVoicePlayer';
-import { MessageImageSection } from './MessageImageSection';
-import { removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
+
 import { formatNarrative } from './formatNarrative';
-import { cn } from '@/lib/utils';
+import { MessageImageSection } from './MessageImageSection';
+import { MessageVoicePlayer } from './MessageVoicePlayer';
+
+import type { ChatMessage } from '@/types/game';
+
 import { Button } from '@/components/ui/button';
-import { slideInRight, fadeIn } from '@/utils/animations';
+import { cn } from '@/lib/utils';
+import { removeRollRequestsFromMessage } from '@/utils/rollRequestParser';
 
 interface DMMessageProps {
   message: ChatMessage;
@@ -52,15 +53,17 @@ export const DMMessage: React.FC<DMMessageProps> = ({
     return null;
   }
 
-  const { content, charCount, paragraphCount } = useMemo(() => formatNarrative(cleanContent), [cleanContent]);
+  const { content, charCount, paragraphCount } = useMemo(
+    () => formatNarrative(cleanContent),
+    [cleanContent],
+  );
   const exceedsClampThreshold = charCount > 800 || paragraphCount > 4;
   const shouldClamp = exceedsClampThreshold && !isExpanded;
 
   const narrativeClass = cn(
-    'narrative-text max-w-[72ch] lg:max-w-[78ch] text-[15px] md:text-base leading-7 text-white/95 tracking-normal hyphens-auto',
+    'dm-narrative max-w-[72ch] lg:max-w-[78ch] text-[15px] md:text-base leading-7 text-white/90 tracking-normal hyphens-auto',
     'selection:bg-infinite-purple/20 selection:text-white break-words',
-    'transition-colors duration-200 group-hover:text-white',
-    shouldClamp && 'max-h-[22rem] overflow-hidden clamp-fade'
+    shouldClamp && 'max-h-[22rem] overflow-hidden clamp-fade',
   );
 
   const hasContextMetadata = Boolean(message.context?.emotion || message.context?.location);
@@ -69,19 +72,12 @@ export const DMMessage: React.FC<DMMessageProps> = ({
     : '';
 
   return (
-    <motion.div
-      className={cn('w-full', hasAnyImage ? 'relative pb-48 md:pb-60' : '')}
-      variants={slideInRight}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className={cn('w-full', hasAnyImage ? 'relative pb-48 md:pb-60' : '')}>
       <article
         aria-label="Dungeon Master message"
         className={cn(
-          'message-bubble dm-bubble cosmic-panel relative overflow-hidden rounded-3xl',
-          'px-5 py-4 md:px-6 md:py-5 shadow-lg md:shadow-xl transition-all duration-300',
-          'hover:shadow-2xl hover:shadow-infinite-purple/30 hover:border-infinite-purple/40',
-          'group'
+          'message-bubble dm-bubble relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#2d1155]/90 via-[#251147]/88 to-[#0b2336]/85',
+          'px-5 py-4 md:px-6 md:py-5 shadow-lg md:shadow-xl transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-infinite-purple/20',
         )}
       >
         <div className={narrativeClass}>{content}</div>
@@ -132,11 +128,6 @@ export const DMMessage: React.FC<DMMessageProps> = ({
             )}
           </div>
         )}
-
-        {/* Subtle texture overlay on hover */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" />
-        </div>
       </article>
 
       {/* Timestamp & voice controls */}
@@ -150,11 +141,9 @@ export const DMMessage: React.FC<DMMessageProps> = ({
         )}
 
         {isLastInGroup && timestamp && (
-          <div className="text-[11px] uppercase tracking-[0.35em] text-white/60">
-            {timestamp}
-          </div>
+          <div className="text-[11px] uppercase tracking-[0.35em] text-white/60">{timestamp}</div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };

@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import fetch from 'node-fetch';
 import { requireAuth } from '../../middleware/auth.js';
 import { planRateLimit } from '../../middleware/rate-limit.js';
-import { checkQuotaAndConsume, getQuotaStatus } from '../../services/ai-usage-service.js';
+import { AIUsageService } from '../../services/ai-usage-service.js';
 import { getCircuitBreaker, CircuitOpenError } from '../../utils/circuit-breaker.js';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
@@ -96,7 +96,7 @@ export default function llmRouter() {
     const plan = (req as any).user?.plan as string || 'free';
 
     try {
-      const quotaStatus = await getQuotaStatus({ userId, plan, type: 'llm' });
+      const quotaStatus = await AIUsageService.getQuotaStatus({ userId, plan, type: 'llm' });
       return res.json(quotaStatus);
     } catch (error) {
       return res.status(500).json({ error: 'Failed to fetch quota status' });
@@ -127,7 +127,7 @@ export default function llmRouter() {
     // Quota check (per user/org per day)
     const userId = (req as any).user?.userId as string;
     const plan = (req as any).user?.plan as string || 'free';
-    const quota = await checkQuotaAndConsume({ userId, plan, type: 'llm', units: 1 });
+    const quota = await AIUsageService.checkQuotaAndConsume({ userId, plan, type: 'llm', units: 1 });
     if (!quota.allowed) {
       res.setHeader('Retry-After', String(Math.max(1, Math.ceil((new Date(quota.resetAt).getTime() - Date.now()) / 1000))));
       return res.status(402).json({ error: 'AI quota exceeded', remaining: quota.remaining, resetAt: quota.resetAt });

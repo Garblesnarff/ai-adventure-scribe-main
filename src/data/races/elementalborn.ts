@@ -14,17 +14,19 @@ export const elementalborn: CharacterRace = {
       id: 'air-elementalborn',
       name: 'Air Elementalborn',
       description: 'Can hold their breath indefinitely and have innate levitation magic.',
-      backgroundImage: '/images/races/subraces/air-elementalborn-elementalborn-sub-race-card-background.png',
+      backgroundImage:
+        '/images/races/subraces/air-elementalborn-elementalborn-sub-race-card-background.png',
       abilityScoreIncrease: { constitution: 1, dexterity: 1 },
-      traits: ['Unending Breath', 'Mingle with the Wind']
+      traits: ['Unending Breath', 'Mingle with the Wind'],
     },
     {
       id: 'earth-elementalborn',
       name: 'Earth Elementalborn',
       description: 'Possess extra strength and can traverse difficult terrain with ease.',
-      backgroundImage: '/images/races/subraces/earth-elementalborn-elementalborn-sub-race-card-background.png',
+      backgroundImage:
+        '/images/races/subraces/earth-elementalborn-elementalborn-sub-race-card-background.png',
       abilityScoreIncrease: { constitution: 1, strength: 1 },
-      traits: ['Earth Walk', 'Merge with Stone']
+      traits: ['Earth Walk', 'Merge with Stone'],
     },
     {
       id: 'fire-elementalborn',
@@ -32,15 +34,16 @@ export const elementalborn: CharacterRace = {
       description: 'Have a resistance to fire and can produce flames.',
       backgroundImage: '/images/races/subraces/fire-elementalborn-elementalborn-sub-race-card.png',
       abilityScoreIncrease: { constitution: 1, intelligence: 1 },
-      traits: ['Darkvision', 'Fire Resistance', 'Reach to the Blaze']
+      traits: ['Darkvision', 'Fire Resistance', 'Reach to the Blaze'],
     },
     {
       id: 'water-elementalborn',
       name: 'Water Elementalborn',
       description: 'Can breathe underwater, have a swim speed, and have a resistance to acid.',
-      backgroundImage: '/images/races/subraces/water-elementalborn-elementalborn-sub-race-card-background.png',
+      backgroundImage:
+        '/images/races/subraces/water-elementalborn-elementalborn-sub-race-card-background.png',
       abilityScoreIncrease: { constitution: 1, wisdom: 1 },
-      traits: ['Amphibious', 'Swim Speed', 'Call to the Wave']
-    }
-  ]
+      traits: ['Amphibious', 'Swim Speed', 'Call to the Wave'],
+    },
+  ],
 };

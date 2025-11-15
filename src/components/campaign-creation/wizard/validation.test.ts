@@ -1,10 +1,12 @@
+import { vi } from 'vitest';
+
 import {
   validateBasicDetails,
   validateGenreSelection,
   validateCampaignParameters,
   validateCompleteCampaign,
 } from './validation';
-import { vi } from 'vitest';
+
 import type { Campaign } from '@/types/campaign'; // Assuming Campaign type is available
 
 // Mock toast function
@@ -103,23 +105,23 @@ describe('Campaign Validation Functions', () => {
     });
 
     it('should return false and call toast if campaign object itself is missing parameters', () => {
-        const campaign = {} as Partial<Campaign>; // No parameters
-        expect(validateCampaignParameters(campaign, mockToast)).toBe(false);
-        // It will call toast for the first missing parameter it checks (difficulty_level)
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'Missing Difficulty Level',
-          description: 'Please select a difficulty level for your campaign.',
-          variant: 'destructive',
-        });
+      const campaign = {} as Partial<Campaign>; // No parameters
+      expect(validateCampaignParameters(campaign, mockToast)).toBe(false);
+      // It will call toast for the first missing parameter it checks (difficulty_level)
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Missing Difficulty Level',
+        description: 'Please select a difficulty level for your campaign.',
+        variant: 'destructive',
+      });
     });
 
     it('should return false and call toast if campaign object is null', () => {
-        expect(validateCampaignParameters(null, mockToast)).toBe(false);
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'Missing Difficulty Level',
-          description: 'Please select a difficulty level for your campaign.',
-          variant: 'destructive',
-        });
+      expect(validateCampaignParameters(null, mockToast)).toBe(false);
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Missing Difficulty Level',
+        description: 'Please select a difficulty level for your campaign.',
+        variant: 'destructive',
+      });
     });
 
     const fields: Array<{
@@ -144,11 +146,11 @@ describe('Campaign Validation Functions', () => {
         key: 'tone',
         title: 'Missing Campaign Tone', // Corrected title
         description: 'Please select a campaign tone for your campaign.',
-        validPrevious: { difficulty_level: 'Easy', campaign_length: 'Short'},
+        validPrevious: { difficulty_level: 'Easy', campaign_length: 'Short' },
       },
     ];
 
-    fields.forEach(field => {
+    fields.forEach((field) => {
       it(`should return false and call toast if ${field.key} is missing`, () => {
         // Create a campaign object that is valid up to the point of the field being tested
         const campaignToTest = { ...field.validPrevious };
@@ -175,7 +177,8 @@ describe('Campaign Validation Functions', () => {
       difficulty_level: 'Medium',
       campaign_length: 'Medium',
       tone: 'Epic',
-      setting: { // Other settings can remain nested if not validated by these specific functions
+      setting: {
+        // Other settings can remain nested if not validated by these specific functions
         custom_rules: 'None',
         player_level: 1,
         starting_gold: 100,

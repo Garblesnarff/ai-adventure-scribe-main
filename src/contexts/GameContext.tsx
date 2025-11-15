@@ -14,20 +14,31 @@
  * @author AI Dungeon Master Team
  */
 
-import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect, useRef, useMemo } from 'react';
-import logger from '@/lib/logger';
-import { DiceRollRequest, DiceRollQueue, DiceRollRequestType } from '@/types/combat';
-import { useCombat } from '@/contexts/CombatContext';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from 'react';
 import { v4 as uuidv4 } from 'uuid';
+
+import type { DiceRollRequest, DiceRollQueue, DiceRollRequestType } from '@/types/combat';
+import type { ReactNode } from 'react';
+
+import { useCombat } from '@/contexts/CombatContext';
+import logger from '@/lib/logger';
 import { throttle } from '@/lib/utils';
 
 // Game phase types
 export type GamePhase =
-  | 'exploration'      // General adventuring, skill checks, social interaction
-  | 'combat'          // Active combat with initiative order
-  | 'social'          // Heavy dialogue, negotiation, roleplay
-  | 'puzzle'          // Problem-solving, investigation
-  | 'rest';           // Short/long rest periods
+  | 'exploration' // General adventuring, skill checks, social interaction
+  | 'combat' // Active combat with initiative order
+  | 'social' // Heavy dialogue, negotiation, roleplay
+  | 'puzzle' // Problem-solving, investigation
+  | 'rest'; // Short/long rest periods
 
 // Game state interface
 export interface GameState {
@@ -73,10 +84,10 @@ const initialState: GameState = {
     pendingRolls: [],
     isProcessingRoll: false,
     currentBatchId: undefined,
-    completedBatchRolls: []
+    completedBatchRolls: [],
   },
   isInCombat: false,
-  pendingActions: []
+  pendingActions: [],
 };
 
 // Game context value interface
@@ -122,16 +133,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        currentPhase: action.payload
+        currentPhase: action.payload,
       };
 
     case 'ADD_DICE_ROLL_REQUEST': {
       // Check for duplicates based on type, purpose, and participant
-      const isDuplicate = state.diceRollQueue.pendingRolls.some(roll =>
-        roll.requestType === action.payload.requestType &&
-        roll.description === action.payload.description &&
-        roll.participantId === action.payload.participantId &&
-        roll.status === 'pending'
+      const isDuplicate = state.diceRollQueue.pendingRolls.some(
+        (roll) =>
+          roll.requestType === action.payload.requestType &&
+          roll.description === action.payload.description &&
+          roll.participantId === action.payload.participantId &&
+          roll.status === 'pending',
       );
 
       if (isDuplicate) {
@@ -144,29 +156,31 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         diceRollQueue: {
           ...state.diceRollQueue,
           pendingRolls: [...state.diceRollQueue.pendingRolls, action.payload],
-          currentRollId: state.diceRollQueue.currentRollId || action.payload.id
-        }
+          currentRollId: state.diceRollQueue.currentRollId || action.payload.id,
+        },
       };
     }
 
     case 'COMPLETE_DICE_ROLL': {
-      const completedRolls = state.diceRollQueue.pendingRolls.map(roll =>
+      const completedRolls = state.diceRollQueue.pendingRolls.map((roll) =>
         roll.id === action.payload.id
           ? { ...roll, status: 'completed' as const, result: action.payload.result }
-          : roll
+          : roll,
       );
 
       // Find the completed roll
-      const completedRoll = completedRolls.find(roll => roll.id === action.payload.id);
+      const completedRoll = completedRolls.find((roll) => roll.id === action.payload.id);
 
       // If this roll is part of a batch, add to completedBatchRolls
-      const updatedBatchRolls = completedRoll?.batchId === state.diceRollQueue.currentBatchId && completedRoll
-        ? [...state.diceRollQueue.completedBatchRolls, completedRoll]
-        : state.diceRollQueue.completedBatchRolls;
+      const updatedBatchRolls =
+        completedRoll?.batchId === state.diceRollQueue.currentBatchId && completedRoll
+          ? [...state.diceRollQueue.completedBatchRolls, completedRoll]
+          : state.diceRollQueue.completedBatchRolls;
 
       // Remove completed rolls after a short delay and set next current roll
-      const remainingPendingRolls = completedRolls.filter(roll => roll.status === 'pending');
-      const nextCurrentRollId = remainingPendingRolls.length > 0 ? remainingPendingRolls[0].id : undefined;
+      const remainingPendingRolls = completedRolls.filter((roll) => roll.status === 'pending');
+      const nextCurrentRollId =
+        remainingPendingRolls.length > 0 ? remainingPendingRolls[0].id : undefined;
 
       return {
         ...state,
@@ -175,20 +189,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           pendingRolls: completedRolls,
           currentRollId: nextCurrentRollId,
           isProcessingRoll: false,
-          completedBatchRolls: updatedBatchRolls
-        }
+          completedBatchRolls: updatedBatchRolls,
+        },
       };
     }
 
     case 'CANCEL_DICE_ROLL': {
-      const cancelledRolls = state.diceRollQueue.pendingRolls.map(roll =>
-        roll.id === action.payload
-          ? { ...roll, status: 'cancelled' as const }
-          : roll
+      const cancelledRolls = state.diceRollQueue.pendingRolls.map((roll) =>
+        roll.id === action.payload ? { ...roll, status: 'cancelled' as const } : roll,
       );
 
-      const remainingAfterCancel = cancelledRolls.filter(roll => roll.status === 'pending');
-      const nextAfterCancel = remainingAfterCancel.length > 0 ? remainingAfterCancel[0].id : undefined;
+      const remainingAfterCancel = cancelledRolls.filter((roll) => roll.status === 'pending');
+      const nextAfterCancel =
+        remainingAfterCancel.length > 0 ? remainingAfterCancel[0].id : undefined;
 
       return {
         ...state,
@@ -196,8 +209,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.diceRollQueue,
           pendingRolls: cancelledRolls,
           currentRollId: nextAfterCancel,
-          isProcessingRoll: false
-        }
+          isProcessingRoll: false,
+        },
       };
     }
 
@@ -207,8 +220,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         diceRollQueue: {
           ...state.diceRollQueue,
           currentBatchId: action.payload,
-          completedBatchRolls: []
-        }
+          completedBatchRolls: [],
+        },
       };
 
     case 'CLEAR_BATCH':
@@ -217,17 +230,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         diceRollQueue: {
           ...state.diceRollQueue,
           currentBatchId: undefined,
-          completedBatchRolls: []
-        }
+          completedBatchRolls: [],
+        },
       };
 
     case 'CLEAR_DICE_ROLL_QUEUE':
       // Change Detection: Check if queue is already empty
       // Comparison Strategy: Array length check and boolean primitive comparison
-      if (state.diceRollQueue.pendingRolls.length === 0 &&
-          state.diceRollQueue.isProcessingRoll === false &&
-          !state.diceRollQueue.currentBatchId &&
-          state.diceRollQueue.completedBatchRolls.length === 0) {
+      if (
+        state.diceRollQueue.pendingRolls.length === 0 &&
+        state.diceRollQueue.isProcessingRoll === false &&
+        !state.diceRollQueue.currentBatchId &&
+        state.diceRollQueue.completedBatchRolls.length === 0
+      ) {
         return state; // Queue already cleared, return same reference to prevent re-render
       }
       return {
@@ -236,8 +251,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           pendingRolls: [],
           isProcessingRoll: false,
           currentBatchId: undefined,
-          completedBatchRolls: []
-        }
+          completedBatchRolls: [],
+        },
       };
 
     case 'SET_COMBAT_STATE': {
@@ -245,16 +260,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // Only update state if combat state values actually change
       // Comparison Strategy: All values are primitives (boolean, string | undefined)
       const newPhase = action.payload.isInCombat ? 'combat' : 'exploration';
-      if (state.isInCombat === action.payload.isInCombat &&
-          state.currentTurnPlayerId === action.payload.currentTurnPlayerId &&
-          state.currentPhase === newPhase) {
+      if (
+        state.isInCombat === action.payload.isInCombat &&
+        state.currentTurnPlayerId === action.payload.currentTurnPlayerId &&
+        state.currentPhase === newPhase
+      ) {
         return state; // No change, return same reference to prevent re-render
       }
       return {
         ...state,
         isInCombat: action.payload.isInCombat,
         currentTurnPlayerId: action.payload.currentTurnPlayerId,
-        currentPhase: newPhase
+        currentPhase: newPhase,
       };
     }
 
@@ -263,8 +280,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         lastAiResponse: {
           timestamp: new Date(),
-          rollRequests: action.payload.rollRequests
-        }
+          rollRequests: action.payload.rollRequests,
+        },
       };
 
     case 'ADD_PENDING_ACTION':
@@ -275,7 +292,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        pendingActions: [...state.pendingActions, action.payload]
+        pendingActions: [...state.pendingActions, action.payload],
       };
 
     case 'REMOVE_PENDING_ACTION':
@@ -286,7 +303,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        pendingActions: state.pendingActions.filter(action => action !== action.payload)
+        pendingActions: state.pendingActions.filter((action) => action !== action.payload),
       };
 
     default:
@@ -309,7 +326,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Deep equality is NOT needed because we only track primitive values, not nested objects
   const prevCombatStateRef = useRef({
     isInCombat: false,
-    currentTurnPlayerId: undefined as string | undefined
+    currentTurnPlayerId: undefined as string | undefined,
   });
 
   // Ref to always access latest state without causing useCallback dependencies to change
@@ -333,15 +350,16 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // - Prevents infinite loops by storing previous values in ref
     // - No deep equality needed as we're only comparing primitives
     const prevState = prevCombatStateRef.current;
-    if (prevState.isInCombat !== isInCombat ||
-        prevState.currentTurnPlayerId !== currentTurnPlayerId) {
-
+    if (
+      prevState.isInCombat !== isInCombat ||
+      prevState.currentTurnPlayerId !== currentTurnPlayerId
+    ) {
       // Update ref to track new values
       prevCombatStateRef.current = { isInCombat, currentTurnPlayerId };
 
       dispatch({
         type: 'SET_COMBAT_STATE',
-        payload: { isInCombat, currentTurnPlayerId }
+        payload: { isInCombat, currentTurnPlayerId },
       });
     }
   }, [combatState.isInCombat, combatState.activeEncounter?.currentTurnParticipantId]);
@@ -349,13 +367,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Auto-cleanup completed/cancelled rolls after delay
   useEffect(() => {
     const completedOrCancelled = state.diceRollQueue.pendingRolls.filter(
-      roll => roll.status === 'completed' || roll.status === 'cancelled'
+      (roll) => roll.status === 'completed' || roll.status === 'cancelled',
     );
 
     if (completedOrCancelled.length > 0) {
       const timeoutId = setTimeout(() => {
         dispatch({
-          type: 'CLEAR_DICE_ROLL_QUEUE'
+          type: 'CLEAR_DICE_ROLL_QUEUE',
         });
       }, 2000); // Clear after 2 seconds
 
@@ -370,21 +388,22 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Only uses dispatch (stable) and local variables, so no external dependencies needed.
    * Dependencies: [] - no external dependencies, uses only dispatch and local scope
    */
-  const requestDiceRoll = useCallback((
-    request: Omit<DiceRollRequest, 'id' | 'timestamp' | 'status'>
-  ): string => {
-    const rollRequest: DiceRollRequest = {
-      ...request,
-      id: uuidv4(),
-      timestamp: new Date(),
-      status: 'pending'
-    };
+  const requestDiceRoll = useCallback(
+    (request: Omit<DiceRollRequest, 'id' | 'timestamp' | 'status'>): string => {
+      const rollRequest: DiceRollRequest = {
+        ...request,
+        id: uuidv4(),
+        timestamp: new Date(),
+        status: 'pending',
+      };
 
-    logger.info('🎲 Requesting dice roll:', rollRequest);
-    dispatch({ type: 'ADD_DICE_ROLL_REQUEST', payload: rollRequest });
+      logger.info('🎲 Requesting dice roll:', rollRequest);
+      dispatch({ type: 'ADD_DICE_ROLL_REQUEST', payload: rollRequest });
 
-    return rollRequest.id;
-  }, []); // No dependencies - only uses dispatch and function parameters
+      return rollRequest.id;
+    },
+    [],
+  ); // No dependencies - only uses dispatch and function parameters
 
   /**
    * Complete a dice roll with the result
@@ -420,9 +439,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const currentState = stateRef.current;
     if (!currentState.diceRollQueue.currentRollId) return null;
 
-    return currentState.diceRollQueue.pendingRolls.find(
-      roll => roll.id === currentState.diceRollQueue.currentRollId && roll.status === 'pending'
-    ) || null;
+    return (
+      currentState.diceRollQueue.pendingRolls.find(
+        (roll) => roll.id === currentState.diceRollQueue.currentRollId && roll.status === 'pending',
+      ) || null
+    );
   }, []); // Empty deps - uses stateRef to always get fresh state
 
   /**
@@ -436,7 +457,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Count pending rolls that belong to the current batch
     const pendingBatchRolls = pendingRolls.filter(
-      roll => roll.batchId === currentBatchId && roll.status === 'pending'
+      (roll) => roll.batchId === currentBatchId && roll.status === 'pending',
     );
 
     // Batch is complete when no pending rolls remain with this batchId
@@ -487,76 +508,79 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Since requestDiceRoll has stable reference (empty deps), this handler won't recreate unnecessarily.
    * Dependencies: [requestDiceRoll] - needed for calling requestDiceRoll within the handler
    */
-  const processAiResponse = useCallback((rollRequests: any[]) => {
-    logger.info('🤖 Processing AI response with roll requests:', rollRequests);
+  const processAiResponse = useCallback(
+    (rollRequests: any[]) => {
+      logger.info('🤖 Processing AI response with roll requests:', rollRequests);
 
-    if (!rollRequests || !Array.isArray(rollRequests)) return;
+      if (!rollRequests || !Array.isArray(rollRequests)) return;
 
-    // Generate batchId if multiple rolls are requested
-    const batchId = rollRequests.length > 1 ? uuidv4() : undefined;
+      // Generate batchId if multiple rolls are requested
+      const batchId = rollRequests.length > 1 ? uuidv4() : undefined;
 
-    if (batchId) {
-      logger.info('🎲 Creating batch with ID:', batchId);
-      dispatch({ type: 'SET_CURRENT_BATCH', payload: batchId });
-    }
-
-    // Track this AI response
-    const processedRollRequests: DiceRollRequest[] = [];
-
-    const seenKeys = new Set<string>();
-
-    rollRequests.forEach((request: any) => {
-      try {
-        // Convert AI request format to our internal format
-        const rollRequest: Omit<DiceRollRequest, 'id' | 'timestamp' | 'status'> = {
-          requestType: request.type as DiceRollRequestType,
-          participantId: request.participantId,
-          description: request.purpose || request.description || 'Dice roll requested',
-          rollConfig: {
-            dieType: 20, // Default to d20, parse from formula if available
-            count: 1,
-            modifier: 0,
-            advantage: request.advantage || false,
-            disadvantage: request.disadvantage || false,
-            ...parseRollFormula(request.formula)
-          },
-          batchId, // Assign batch ID
-          dc: request.dc, // Extract DC for skill checks and saves
-          ac: request.ac  // Extract AC for attack rolls
-        };
-
-        const dedupeKey = [
-          rollRequest.requestType,
-          rollRequest.participantId || 'any',
-          rollRequest.description,
-          rollRequest.rollConfig.dieType,
-          rollRequest.rollConfig.count,
-          rollRequest.rollConfig.modifier,
-          rollRequest.rollConfig.advantage ? 'adv' : '',
-          rollRequest.rollConfig.disadvantage ? 'dis' : ''
-        ].join('|');
-
-        if (seenKeys.has(dedupeKey)) {
-          logger.info('🎲 Skipping duplicate AI roll request before queue:', rollRequest);
-          return;
-        }
-
-        seenKeys.add(dedupeKey);
-
-        const rollId = requestDiceRoll(rollRequest);
-        processedRollRequests.push({
-          ...rollRequest,
-          id: rollId,
-          timestamp: new Date(),
-          status: 'pending'
-        });
-      } catch (error) {
-        logger.warn('Failed to process roll request:', request, error);
+      if (batchId) {
+        logger.info('🎲 Creating batch with ID:', batchId);
+        dispatch({ type: 'SET_CURRENT_BATCH', payload: batchId });
       }
-    });
 
-    dispatch({ type: 'SET_AI_RESPONSE', payload: { rollRequests: processedRollRequests } });
-  }, [requestDiceRoll]); // Depends on requestDiceRoll (stable reference)
+      // Track this AI response
+      const processedRollRequests: DiceRollRequest[] = [];
+
+      const seenKeys = new Set<string>();
+
+      rollRequests.forEach((request: any) => {
+        try {
+          // Convert AI request format to our internal format
+          const rollRequest: Omit<DiceRollRequest, 'id' | 'timestamp' | 'status'> = {
+            requestType: request.type as DiceRollRequestType,
+            participantId: request.participantId,
+            description: request.purpose || request.description || 'Dice roll requested',
+            rollConfig: {
+              dieType: 20, // Default to d20, parse from formula if available
+              count: 1,
+              modifier: 0,
+              advantage: request.advantage || false,
+              disadvantage: request.disadvantage || false,
+              ...parseRollFormula(request.formula),
+            },
+            batchId, // Assign batch ID
+            dc: request.dc, // Extract DC for skill checks and saves
+            ac: request.ac, // Extract AC for attack rolls
+          };
+
+          const dedupeKey = [
+            rollRequest.requestType,
+            rollRequest.participantId || 'any',
+            rollRequest.description,
+            rollRequest.rollConfig.dieType,
+            rollRequest.rollConfig.count,
+            rollRequest.rollConfig.modifier,
+            rollRequest.rollConfig.advantage ? 'adv' : '',
+            rollRequest.rollConfig.disadvantage ? 'dis' : '',
+          ].join('|');
+
+          if (seenKeys.has(dedupeKey)) {
+            logger.info('🎲 Skipping duplicate AI roll request before queue:', rollRequest);
+            return;
+          }
+
+          seenKeys.add(dedupeKey);
+
+          const rollId = requestDiceRoll(rollRequest);
+          processedRollRequests.push({
+            ...rollRequest,
+            id: rollId,
+            timestamp: new Date(),
+            status: 'pending',
+          });
+        } catch (error) {
+          logger.warn('Failed to process roll request:', request, error);
+        }
+      });
+
+      dispatch({ type: 'SET_AI_RESPONSE', payload: { rollRequests: processedRollRequests } });
+    },
+    [requestDiceRoll],
+  ); // Depends on requestDiceRoll (stable reference)
 
   /**
    * Update combat state integration
@@ -571,9 +595,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Change Detection: Only dispatch if combat state values actually change
     // Uses stateRef to access current state without adding dependencies
     const currentState = stateRef.current;
-    if (currentState.isInCombat === isInCombat &&
-        currentState.currentTurnPlayerId === currentTurnPlayerId) {
-      logger.info('⚔️ Combat state unchanged, skipping dispatch:', { isInCombat, currentTurnPlayerId });
+    if (
+      currentState.isInCombat === isInCombat &&
+      currentState.currentTurnPlayerId === currentTurnPlayerId
+    ) {
+      logger.info('⚔️ Combat state unchanged, skipping dispatch:', {
+        isInCombat,
+        currentTurnPlayerId,
+      });
       return; // Early return prevents unnecessary dispatch and re-render
     }
     dispatch({ type: 'SET_COMBAT_STATE', payload: { isInCombat, currentTurnPlayerId } });
@@ -595,19 +624,15 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    */
   const throttledUpdateCombatState = useMemo(
     () => throttle(updateCombatState, 100),
-    [updateCombatState]
+    [updateCombatState],
   ); // 100ms - Combat state updates should be near-instant but can be throttled slightly
 
-  const throttledSetGamePhase = useMemo(
-    () => throttle(setGamePhase, 250),
-    [setGamePhase]
-  ); // 250ms - Phase transitions are less frequent but can happen during rapid state changes
+  const throttledSetGamePhase = useMemo(() => throttle(setGamePhase, 250), [setGamePhase]); // 250ms - Phase transitions are less frequent but can happen during rapid state changes
 
   const throttledProcessAiResponse = useMemo(
     () => throttle(processAiResponse, 500),
-    [processAiResponse]
+    [processAiResponse],
   ); // 500ms - AI responses are async and don't need immediate processing
-
 
   const contextValue: GameContextValue = {
     state,
@@ -621,14 +646,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearBatch,
     setGamePhase: throttledSetGamePhase,
     processAiResponse: throttledProcessAiResponse,
-    updateCombatState: throttledUpdateCombatState
+    updateCombatState: throttledUpdateCombatState,
   };
 
-  return (
-    <GameContext.Provider value={contextValue}>
-      {children}
-    </GameContext.Provider>
-  );
+  return <GameContext.Provider value={contextValue}>{children}</GameContext.Provider>;
 };
 
 /**
@@ -658,7 +679,7 @@ function parseRollFormula(formula?: string): Partial<DiceRollRequest['rollConfig
     return {
       count: countStr ? parseInt(countStr) : 1,
       dieType: parseInt(dieTypeStr),
-      modifier: modifierStr ? parseInt(modifierStr) : 0
+      modifier: modifierStr ? parseInt(modifierStr) : 0,
     };
   } catch (error) {
     logger.warn('Failed to parse roll formula:', formula, error);

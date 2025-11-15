@@ -7,11 +7,15 @@ export interface EncounterValidation {
 }
 
 // Minimal dataset surface for validation; caller can pass full SRD list.
-export function validateEncounterSpec(spec: EncounterSpec, monsters: MonsterDef[], party?: PartySnapshot): EncounterValidation {
+export function validateEncounterSpec(
+  spec: EncounterSpec,
+  monsters: MonsterDef[],
+  party?: PartySnapshot,
+): EncounterValidation {
   const issues: string[] = [];
 
   // Build lookup
-  const byId = new Map(monsters.map(m => [m.id, m] as const));
+  const byId = new Map(monsters.map((m) => [m.id, m] as const));
 
   // Sanity: hostiles exist
   if (!spec.participants.hostiles.length) {
@@ -33,13 +37,16 @@ export function validateEncounterSpec(spec: EncounterSpec, monsters: MonsterDef[
     // Basic R/I/V coverage checks if party given
     if (party && (def.resistances || def.immunities || def.vulnerabilities)) {
       const partyDamage = new Set<string>();
-      for (const m of party.members) (m.damageTypes ?? []).forEach(t => partyDamage.add(t));
-      const hasMagic = party.members.some(m => m.hasMagicalAttacks);
-      const hasNonmagicalImmunity = def.immunities?.some(t => /nonmagical/i.test(t));
-      if ((def.immunities?.some(t => partyDamage.has(t)) && !hasMagic) || (hasNonmagicalImmunity && !hasMagic)) {
+      for (const m of party.members) (m.damageTypes ?? []).forEach((t) => partyDamage.add(t));
+      const hasMagic = party.members.some((m) => m.hasMagicalAttacks);
+      const hasNonmagicalImmunity = def.immunities?.some((t) => /nonmagical/i.test(t));
+      if (
+        (def.immunities?.some((t) => partyDamage.has(t)) && !hasMagic) ||
+        (hasNonmagicalImmunity && !hasMagic)
+      ) {
         issues.push(`Party may lack counters: ${def.name} immune to ${def.immunities.join(', ')}`);
       }
-      if (def.resistances?.every(t => partyDamage.has(t)) && !hasMagic) {
+      if (def.resistances?.every((t) => partyDamage.has(t)) && !hasMagic) {
         issues.push(`Low damage diversity vs ${def.name} resistances.`);
       }
     }
@@ -51,7 +58,9 @@ export function validateEncounterSpec(spec: EncounterSpec, monsters: MonsterDef[
   // Budget tolerance ±10% (or 25 XP minimum)
   const tol = Math.max(25, Math.round(spec.xpBudget * 0.1));
   if (Math.abs(effectiveXp - spec.xpBudget) > tol) {
-    issues.push(`Effective XP ${effectiveXp} deviates from budget ${spec.xpBudget} by more than ${tol}.`);
+    issues.push(
+      `Effective XP ${effectiveXp} deviates from budget ${spec.xpBudget} by more than ${tol}.`,
+    );
   }
 
   // Guard against extreme swarm

@@ -1,9 +1,10 @@
-import * as React from 'react';
 import { X } from 'lucide-react';
+import * as React from 'react';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
 
 export interface MultiSelectOption {
   value: string;

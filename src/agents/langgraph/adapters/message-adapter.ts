@@ -10,12 +10,7 @@
  * @module langgraph/adapters
  */
 
-import {
-  BaseMessage,
-  HumanMessage,
-  AIMessage,
-  SystemMessage
-} from '@langchain/core/messages';
+import { BaseMessage, HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
 import { MessageType, QueuedMessage } from '../../messaging/types';
 
 /**
@@ -42,9 +37,10 @@ export class LangGraphMessageAdapter {
    * - STATE_UPDATE → SystemMessage (system events)
    */
   static toBaseMessage(customMessage: QueuedMessage): BaseMessage {
-    const content = typeof customMessage.content === 'string'
-      ? customMessage.content
-      : JSON.stringify(customMessage.content);
+    const content =
+      typeof customMessage.content === 'string'
+        ? customMessage.content
+        : JSON.stringify(customMessage.content);
 
     const metadata = {
       id: customMessage.id,
@@ -187,9 +183,10 @@ export class LangGraphMessageAdapter {
     return {
       id: metadata.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role,
-      content: typeof baseMessage.content === 'string'
-        ? baseMessage.content
-        : JSON.stringify(baseMessage.content),
+      content:
+        typeof baseMessage.content === 'string'
+          ? baseMessage.content
+          : JSON.stringify(baseMessage.content),
       timestamp: metadata.timestamp ? new Date(metadata.timestamp) : new Date(),
       metadata: {
         sender: metadata.sender,
@@ -203,13 +200,13 @@ export class LangGraphMessageAdapter {
    * Convert array of BaseMessages to GameMessages
    */
   static toGameMessages(baseMessages: BaseMessage[]): GameMessage[] {
-    return baseMessages.map(msg => this.toGameMessage(msg));
+    return baseMessages.map((msg) => this.toGameMessage(msg));
   }
 
   /**
    * Convert array of GameMessages to BaseMessages
    */
   static fromGameMessages(gameMessages: GameMessage[]): BaseMessage[] {
-    return gameMessages.map(msg => this.fromGameMessage(msg));
+    return gameMessages.map((msg) => this.fromGameMessage(msg));
   }
 }

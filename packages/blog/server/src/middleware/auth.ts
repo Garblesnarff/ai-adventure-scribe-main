@@ -1,7 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import { getBearerToken, AuthTokenPayload } from '../lib/jwt.js';
-import { verifySupabaseToken } from '../lib/supabase.js';
 import { createClient } from '../lib/db.js';
+import { getBearerToken } from '../lib/jwt.js';
+import { verifySupabaseToken } from '../lib/supabase.js';
+
+import type { AuthTokenPayload } from '../lib/jwt.js';
+import type { Request, Response, NextFunction } from 'express';
+
 
 declare global {
   namespace Express {

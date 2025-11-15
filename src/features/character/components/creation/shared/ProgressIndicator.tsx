@@ -1,6 +1,8 @@
 import React from 'react';
-import SharedProgressIndicator from '@/components/shared/ProgressIndicator';
+
 import { wizardSteps } from '../wizard/constants';
+
+import SharedProgressIndicator from '@/components/shared/ProgressIndicator';
 
 interface ProgressIndicatorProps {
   currentStep: number;

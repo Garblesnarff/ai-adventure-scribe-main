@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import type { BlogMediaAsset } from '@/types/blog';
+
 import {
   BLOG_MEDIA_BUCKET,
   BLOG_MEDIA_PREFIX,
@@ -20,7 +22,10 @@ interface UploadInput {
   prefix?: string;
 }
 
-export function useBlogMedia(prefix: string = BLOG_MEDIA_PREFIX, bucket: string = BLOG_MEDIA_BUCKET) {
+export function useBlogMedia(
+  prefix: string = BLOG_MEDIA_PREFIX,
+  bucket: string = BLOG_MEDIA_BUCKET,
+) {
   return useQuery<BlogMediaAsset[]>({
     queryKey: [BLOG_MEDIA_QUERY_KEY, bucket, prefix],
     queryFn: () => listBlogMedia(prefix, bucket),
@@ -28,10 +33,19 @@ export function useBlogMedia(prefix: string = BLOG_MEDIA_PREFIX, bucket: string 
   });
 }
 
-export function useUploadBlogMedia(prefix: string = BLOG_MEDIA_PREFIX, bucket: string = BLOG_MEDIA_BUCKET) {
+export function useUploadBlogMedia(
+  prefix: string = BLOG_MEDIA_PREFIX,
+  bucket: string = BLOG_MEDIA_BUCKET,
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ file, filename, contentType, bucket: customBucket, prefix: customPrefix }: UploadInput) => {
+    mutationFn: async ({
+      file,
+      filename,
+      contentType,
+      bucket: customBucket,
+      prefix: customPrefix,
+    }: UploadInput) => {
       const targetBucket = customBucket || bucket;
       const targetPrefix = customPrefix || prefix;
       const finalFilename = filename || (file instanceof File ? file.name : `asset-${Date.now()}`);
@@ -58,15 +72,21 @@ export function useUploadBlogMedia(prefix: string = BLOG_MEDIA_PREFIX, bucket: s
       return { asset, bucket: targetBucket, prefix: targetPrefix };
     },
     onSuccess: ({ asset, bucket: resolvedBucket, prefix: resolvedPrefix }) => {
-      queryClient.setQueryData<BlogMediaAsset[] | undefined>([BLOG_MEDIA_QUERY_KEY, resolvedBucket, resolvedPrefix], (old) =>
-        old ? [asset, ...old] : [asset],
+      queryClient.setQueryData<BlogMediaAsset[] | undefined>(
+        [BLOG_MEDIA_QUERY_KEY, resolvedBucket, resolvedPrefix],
+        (old) => (old ? [asset, ...old] : [asset]),
       );
-      queryClient.invalidateQueries({ queryKey: [BLOG_MEDIA_QUERY_KEY, resolvedBucket, resolvedPrefix] });
+      queryClient.invalidateQueries({
+        queryKey: [BLOG_MEDIA_QUERY_KEY, resolvedBucket, resolvedPrefix],
+      });
     },
   });
 }
 
-export function useDeleteBlogMedia(prefix: string = BLOG_MEDIA_PREFIX, bucket: string = BLOG_MEDIA_BUCKET) {
+export function useDeleteBlogMedia(
+  prefix: string = BLOG_MEDIA_PREFIX,
+  bucket: string = BLOG_MEDIA_BUCKET,
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ path, bucket: targetBucket }: { path: string; bucket?: string }) =>
@@ -74,15 +94,23 @@ export function useDeleteBlogMedia(prefix: string = BLOG_MEDIA_PREFIX, bucket: s
     onMutate: async ({ path, bucket: targetBucket }) => {
       const resolvedBucket = targetBucket || bucket;
       await queryClient.cancelQueries({ queryKey: [BLOG_MEDIA_QUERY_KEY, resolvedBucket, prefix] });
-      const previous = queryClient.getQueryData<BlogMediaAsset[]>([BLOG_MEDIA_QUERY_KEY, resolvedBucket, prefix]);
-      queryClient.setQueryData<BlogMediaAsset[]>([BLOG_MEDIA_QUERY_KEY, resolvedBucket, prefix], (old) =>
-        old?.filter((asset) => asset.path !== path) ?? [],
+      const previous = queryClient.getQueryData<BlogMediaAsset[]>([
+        BLOG_MEDIA_QUERY_KEY,
+        resolvedBucket,
+        prefix,
+      ]);
+      queryClient.setQueryData<BlogMediaAsset[]>(
+        [BLOG_MEDIA_QUERY_KEY, resolvedBucket, prefix],
+        (old) => old?.filter((asset) => asset.path !== path) ?? [],
       );
       return { previous, resolvedBucket };
     },
     onError: (_error, _variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData([BLOG_MEDIA_QUERY_KEY, context.resolvedBucket ?? bucket, prefix], context.previous);
+        queryClient.setQueryData(
+          [BLOG_MEDIA_QUERY_KEY, context.resolvedBucket ?? bucket, prefix],
+          context.previous,
+        );
       }
     },
     onSettled: (_data, _error, _variables, context) => {

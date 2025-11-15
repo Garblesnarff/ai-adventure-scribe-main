@@ -1,11 +1,14 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { ChatMessage } from '@/types/game';
+
 import { MessageRenderer } from './MessageRenderer';
+
+import type { ChatMessage } from '@/types/game';
+
 import { DiceRollRequest } from '@/components/game/DiceRollRequest';
-import { useGame } from '@/contexts/GameContext';
 import { Z_INDEX } from '@/constants/z-index';
-import { rollDice } from '@/utils/diceUtils';
+import { useGame } from '@/contexts/GameContext';
 import logger from '@/lib/logger';
+import { rollDice } from '@/utils/diceUtils';
 import { handleAsyncError } from '@/utils/error-handler';
 
 interface MessageListContainerProps {
@@ -74,7 +77,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
     }
 
     const groups: { sender: string; messages: ChatMessage[]; isPlayer: boolean }[] = [];
-    let currentGroup = { sender: messages[0].sender, messages: [messages[0]], isPlayer: messages[0].sender === 'player' };
+    let currentGroup = {
+      sender: messages[0].sender,
+      messages: [messages[0]],
+      isPlayer: messages[0].sender === 'player',
+    };
 
     for (let i = 1; i < messages.length; i++) {
       const message = messages[i];
@@ -82,7 +89,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         currentGroup.messages.push(message);
       } else {
         groups.push(currentGroup);
-        currentGroup = { sender: message.sender, messages: [message], isPlayer: message.sender === 'player' };
+        currentGroup = {
+          sender: message.sender,
+          messages: [message],
+          isPlayer: message.sender === 'player',
+        };
       }
     }
     groups.push(currentGroup);
@@ -92,7 +103,11 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
   // Handle dice roll from queue
   const handleDiceRoll = React.useCallback(
     async (formula: string, advantage?: boolean, disadvantage?: boolean) => {
-      logger.info('[MessageListContainer] Handling dice roll from queue:', { formula, advantage, disadvantage });
+      logger.info('[MessageListContainer] Handling dice roll from queue:', {
+        formula,
+        advantage,
+        disadvantage,
+      });
 
       const currentRoll = getCurrentDiceRoll();
       if (!currentRoll) {
@@ -166,7 +181,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         });
       }
     },
-    [onSendMessage, getCurrentDiceRoll, completeDiceRoll]
+    [onSendMessage, getCurrentDiceRoll, completeDiceRoll],
   );
 
   // Handle manual dice result input
@@ -208,7 +223,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         });
       }
     },
-    [onSendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll]
+    [onSendMessage, onSendFullMessage, getCurrentDiceRoll, completeDiceRoll],
   );
 
   return (
@@ -224,8 +239,13 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
       )}
 
       {groupedMessages.map((group, groupIndex) => (
-        <div key={`group-${groupIndex}`} className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}>
-          <div className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}>
+        <div
+          key={`group-${groupIndex}`}
+          className={`flex ${group.isPlayer ? 'justify-end' : 'justify-start'} group`}
+        >
+          <div
+            className={`flex max-w-[90%] ${group.isPlayer ? 'flex-row-reverse' : 'flex-row'} items-start`}
+          >
             {/* Avatar for first message in group */}
             {!group.isPlayer ? (
               <div className="flex-shrink-0 mr-3 mb-2">
@@ -255,7 +275,9 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
               </div>
             )}
 
-            <div className={`flex flex-col ${group.isPlayer ? 'items-end' : 'items-start'} space-y-2 w-full`}>
+            <div
+              className={`flex flex-col ${group.isPlayer ? 'items-end' : 'items-start'} space-y-2 w-full`}
+            >
               {group.messages.map((message, msgIndex) => {
                 const messageId = message.id || message.timestamp || `${groupIndex}-${msgIndex}`;
                 return (
@@ -292,7 +314,9 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         if (!currentRoll) return null;
 
         return (
-          <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}>
+          <div
+            className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}
+          >
             <DiceRollRequest
               request={{
                 type: currentRoll.requestType as any,

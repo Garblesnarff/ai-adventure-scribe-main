@@ -13,18 +13,19 @@
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // SDK/library imports
- // ============================
+// ============================
+// SDK/library imports
+// ============================
 import React from 'react';
 
- // ============================
- // Project modules
- // ============================
-import { CampaignProvider } from '@/contexts/CampaignContext';
+// ============================
+// Project modules
+// ============================
 import WizardContent from './wizard/WizardContent';
-import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
+
 import { CampaignErrorFallback } from '@/components/error/CampaignErrorFallback';
+import { CampaignProvider } from '@/contexts/CampaignContext';
+import { ErrorBoundary } from '@/shared/components/error/ErrorBoundary';
 
 /**
  * Campaign Wizard Component
@@ -45,12 +46,7 @@ const CampaignWizard: React.FC = () => {
   return (
     <ErrorBoundary
       level="feature"
-      fallback={
-        <CampaignErrorFallback
-          reset={handleReset}
-          showReturnToCampaigns={true}
-        />
-      }
+      fallback={<CampaignErrorFallback reset={handleReset} showReturnToCampaigns={true} />}
     >
       <CampaignProvider key={resetKey}>
         <WizardContent />

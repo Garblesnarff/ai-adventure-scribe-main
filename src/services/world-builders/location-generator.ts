@@ -1,9 +1,11 @@
 import { getGeminiApiManager } from '../gemini-api-manager-singleton';
+
 import type { GeminiApiManager } from '../gemini-api-manager';
-import { supabase } from '@/integrations/supabase/client';
+
 import { GEMINI_TEXT_MODEL } from '@/config/ai';
-import { getAveragePartyLevel } from '@/utils/character-level-utils';
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { getAveragePartyLevel } from '@/utils/character-level-utils';
 
 export interface LocationRequest {
   type: 'settlement' | 'dungeon' | 'wilderness' | 'landmark' | 'building' | 'room';
@@ -67,24 +69,24 @@ export class LocationGenerator {
   static async generateLocation(request: LocationRequest): Promise<GeneratedLocation> {
     try {
       const geminiManager = this.getGeminiManager();
-      
+
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-        
+
         const prompt = this.buildLocationPrompt(request);
-        
+
         const response = await model.generateContent(prompt);
         const text = await response.response.text();
-        
+
         try {
           // Extract JSON from the response
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (!jsonMatch) {
             throw new Error('No JSON found in location generation response');
           }
-          
+
           const locationData = JSON.parse(jsonMatch[0]);
-          
+
           // Add metadata
           const location: GeneratedLocation = {
             ...locationData,
@@ -95,11 +97,10 @@ export class LocationGenerator {
               sessionId: request.context.sessionId,
               narrativeWeight: this.calculateNarrativeWeight(locationData, request),
               storyArc: request.context.currentStory,
-            }
+            },
           };
-          
+
           return location;
-          
         } catch (parseError) {
           logger.error('Failed to parse location JSON:', parseError);
           throw new Error('Failed to generate location: Invalid response format');
@@ -108,10 +109,11 @@ export class LocationGenerator {
 
       logger.info(`🏰 Generated location: ${result.name}`);
       return result;
-
     } catch (error) {
       logger.error('Location generation failed:', error);
-      throw new Error(`Failed to generate location: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate location: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -187,16 +189,16 @@ export class LocationGenerator {
    */
   private static calculateNarrativeWeight(
     location: { type?: string; narrativeHooks?: string[]; secrets?: string[] },
-    request: LocationRequest
+    request: LocationRequest,
   ): number {
     let weight = 5; // Base weight
-    
+
     // Increase weight for story-critical locations
     if (request.context.currentStory && (location.narrativeHooks?.length || 0) > 2) weight += 2;
     if ((location.secrets?.length || 0) > 2) weight += 1;
     if (location.type === 'dungeon' || location.type === 'landmark') weight += 1;
     if (request.atmosphere === 'dangerous' || request.atmosphere === 'sacred') weight += 1;
-    
+
     return Math.min(weight, 10);
   }
 
@@ -214,8 +216,8 @@ export class LocationGenerator {
           ...location,
           generatedAt: location.metadata.createdAt.toISOString(),
           generator: 'LocationGenerator',
-          version: '1.0'
-        }
+          version: '1.0',
+        },
       };
 
       const { data, error } = await supabase
@@ -231,7 +233,6 @@ export class LocationGenerator {
 
       logger.info(`💾 Saved location "${location.name}" with ID: ${data.id}`);
       return data.id;
-
     } catch (error) {
       logger.error('Error saving location:', error);
       throw error;
@@ -243,14 +244,13 @@ export class LocationGenerator {
    */
   static async createLocation(request: LocationRequest): Promise<GeneratedLocation> {
     const location = await this.generateLocation(request);
-    
+
     try {
       const locationId = await this.saveLocation(location);
       location.id = locationId;
-      
+
       logger.info(`✅ Created location "${location.name}" successfully`);
       return location;
-      
     } catch (saveError) {
       logger.warn('Location generated but failed to save:', saveError);
       // Return the generated location even if save failed
@@ -265,13 +265,15 @@ export class LocationGenerator {
     campaignId: string,
     sessionId: string,
     playerAction: string,
-    currentLocationId?: string
+    currentLocationId?: string,
   ): Promise<GeneratedLocation> {
     try {
       // Security check: Get campaign details and verify user ownership
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-      
+
       const { data: campaign } = await supabase
         .from('campaigns')
         .select('*')
@@ -285,7 +287,7 @@ export class LocationGenerator {
 
       // Determine location type based on player action
       const locationType = this.inferLocationTypeFromAction(playerAction);
-      
+
       const request: LocationRequest = {
         type: locationType,
         size: 'medium',
@@ -296,11 +298,10 @@ export class LocationGenerator {
           genre: campaign.genre || 'fantasy',
           currentStory: playerAction,
           playerLevel: await getAveragePartyLevel(campaignId, sessionId),
-        }
+        },
       };
 
       return await this.createLocation(request);
-
     } catch (error) {
       logger.error('Failed to generate contextual location:', error);
       throw error;
@@ -312,20 +313,36 @@ export class LocationGenerator {
    */
   private static inferLocationTypeFromAction(action: string): LocationRequest['type'] {
     const actionLower = action.toLowerCase();
-    
-    if (actionLower.includes('enter') || actionLower.includes('building') || actionLower.includes('shop')) {
+
+    if (
+      actionLower.includes('enter') ||
+      actionLower.includes('building') ||
+      actionLower.includes('shop')
+    ) {
       return 'building';
     }
-    if (actionLower.includes('forest') || actionLower.includes('wilderness') || actionLower.includes('travel')) {
+    if (
+      actionLower.includes('forest') ||
+      actionLower.includes('wilderness') ||
+      actionLower.includes('travel')
+    ) {
       return 'wilderness';
     }
-    if (actionLower.includes('dungeon') || actionLower.includes('cave') || actionLower.includes('underground')) {
+    if (
+      actionLower.includes('dungeon') ||
+      actionLower.includes('cave') ||
+      actionLower.includes('underground')
+    ) {
       return 'dungeon';
     }
-    if (actionLower.includes('town') || actionLower.includes('city') || actionLower.includes('village')) {
+    if (
+      actionLower.includes('town') ||
+      actionLower.includes('city') ||
+      actionLower.includes('village')
+    ) {
       return 'settlement';
     }
-    
+
     // Default to a generic building/room
     return 'room';
   }

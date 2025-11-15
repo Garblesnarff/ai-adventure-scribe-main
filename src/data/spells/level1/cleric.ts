@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const clericLevel1Spells: Spell[] = [
-{
+  {
     id: 'bane',
     name: 'Bane',
     level: 1,
@@ -14,8 +14,9 @@ export const clericLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a drop of blood',
     duration: 'Concentration, up to 1 minute',
-    description: 'Up to three creatures of your choice that you can see within range must make Charisma saving throws. Whenever a target that fails this saving throw makes an attack roll or a saving throw before the spell ends, the target must roll a d4 and subtract the number rolled from the attack roll or saving throw.',
-    concentration: true
+    description:
+      'Up to three creatures of your choice that you can see within range must make Charisma saving throws. Whenever a target that fails this saving throw makes an attack roll or a saving throw before the spell ends, the target must roll a d4 and subtract the number rolled from the attack roll or saving throw.',
+    concentration: true,
   },
   {
     id: 'bless',
@@ -30,8 +31,9 @@ export const clericLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a sprinkling of holy water',
     duration: 'Concentration, up to 1 minute',
-    description: 'You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw.',
-    concentration: true
+    description:
+      'You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw.',
+    concentration: true,
   },
   {
     id: 'command',
@@ -43,7 +45,8 @@ export const clericLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: '1 round',
-    description: 'You speak a one-word command to a creature you can see within range. The target must succeed on a Wisdom saving throw or follow the command on its next turn.'
+    description:
+      'You speak a one-word command to a creature you can see within range. The target must succeed on a Wisdom saving throw or follow the command on its next turn.',
   },
   {
     id: 'create-or-destroy-water',
@@ -52,13 +55,15 @@ export const clericLevel1Spells: Spell[] = [
     school: 'Transmutation',
     castingTime: '1 action',
     range: '30 feet',
-    components: 'V, S, M (a drop of water if creating water or a few grains of sand if destroying it)',
+    components:
+      'V, S, M (a drop of water if creating water or a few grains of sand if destroying it)',
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a drop of water if creating water or a few grains of sand if destroying it',
+    materialDescription:
+      'a drop of water if creating water or a few grains of sand if destroying it',
     duration: 'Instantaneous',
-    description: 'You either create or destroy water.'
+    description: 'You either create or destroy water.',
   },
   {
     id: 'cure-wounds',
@@ -71,8 +76,9 @@ export const clericLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier. This spell has no effect on undead or constructs.',
-    damage: '1d8'
+    description:
+      'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier. This spell has no effect on undead or constructs.',
+    damage: '1d8',
   },
   {
     id: 'detect-evil-and-good',
@@ -85,8 +91,9 @@ export const clericLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you, as well as where the creature is located unless the creature is behind total cover.',
-    concentration: true
+    description:
+      'For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you, as well as where the creature is located unless the creature is behind total cover.',
+    concentration: true,
   },
   {
     id: 'detect-magic-cleric',
@@ -101,7 +108,7 @@ export const clericLevel1Spells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'detect-poison-and-disease',
@@ -116,9 +123,10 @@ export const clericLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a yew leaf',
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
+    description:
+      'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'guiding-bolt',
@@ -131,8 +139,9 @@ export const clericLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A flash of light streaks toward a creature of your choice within range. Make a ranged spell attack against the target. On a hit, the target takes 4d6 radiant damage, and the next attack roll made against this target before the end of your next turn has advantage.',
-    damage: '4d6'
+    description:
+      'A flash of light streaks toward a creature of your choice within range. Make a ranged spell attack against the target. On a hit, the target takes 4d6 radiant damage, and the next attack roll made against this target before the end of your next turn has advantage.',
+    damage: '4d6',
   },
   {
     id: 'healing-word',
@@ -144,8 +153,9 @@ export const clericLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Instantaneous',
-    description: 'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
-    damage: '1d4'
+    description:
+      'A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier.',
+    damage: '1d4',
   },
   {
     id: 'inflict-wounds',
@@ -158,8 +168,9 @@ export const clericLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'Make a melee spell attack against a creature you can reach. On a hit, the target takes 3d10 necrotic damage.',
-    damage: '3d10'
+    description:
+      'Make a melee spell attack against a creature you can reach. On a hit, the target takes 3d10 necrotic damage.',
+    damage: '3d10',
   },
   {
     id: 'protection-from-evil-and-good-cleric',
@@ -175,8 +186,9 @@ export const clericLevel1Spells: Spell[] = [
     materialDescription: 'holy water or powdered silver and iron, which the spell consumes',
     materialConsumed: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
-    concentration: true
+    description:
+      'Until the spell ends, one willing creature you touch is protected against certain types of creatures.',
+    concentration: true,
   },
   {
     id: 'purify-food-and-drink',
@@ -189,8 +201,9 @@ export const clericLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease.',
-    ritual: true
+    description:
+      'All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease.',
+    ritual: true,
   },
   {
     id: 'sanctuary',
@@ -205,7 +218,8 @@ export const clericLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small silver mirror',
     duration: '1 minute',
-    description: 'You ward a creature within range against attack. Until the spell ends, any creature who targets the warded creature with an attack or a harmful spell must first make a Wisdom saving throw.'
+    description:
+      'You ward a creature within range against attack. Until the spell ends, any creature who targets the warded creature with an attack or a harmful spell must first make a Wisdom saving throw.',
   },
   {
     id: 'shield-of-faith',
@@ -220,7 +234,8 @@ export const clericLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small parchment with a bit of holy text written on it',
     duration: 'Concentration, up to 10 minutes',
-    description: 'A shimmering field appears and surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration.',
-    concentration: true
+    description:
+      'A shimmering field appears and surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration.',
+    concentration: true,
   },
 ];

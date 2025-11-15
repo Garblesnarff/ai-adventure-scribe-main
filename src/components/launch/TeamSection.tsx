@@ -5,9 +5,10 @@
  * Replaces testimonials with genuine founder story and passion for D&D
  */
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Github, Linkedin, ExternalLink } from 'lucide-react';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const TeamSection: React.FC = () => {
@@ -21,9 +22,7 @@ export const TeamSection: React.FC = () => {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
             {team.headline}
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            {team.subtitle}
-          </p>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">{team.subtitle}</p>
         </div>
 
         {/* Team Members */}
@@ -36,20 +35,17 @@ export const TeamSection: React.FC = () => {
                   <div className="flex items-start gap-6">
                     {/* Avatar Placeholder */}
                     <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-amber-500 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-                      {member.name.split(' ').map(n => n[0]).join('')}
+                      {member.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
                     </div>
 
                     {/* Member Details */}
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-white mb-2">
-                        {member.name}
-                      </h3>
-                      <p className="text-amber-400 font-semibold mb-4">
-                        {member.role}
-                      </p>
-                      <p className="text-gray-300 leading-relaxed mb-4">
-                        {member.bio}
-                      </p>
+                      <h3 className="text-2xl font-bold text-white mb-2">{member.name}</h3>
+                      <p className="text-amber-400 font-semibold mb-4">{member.role}</p>
+                      <p className="text-gray-300 leading-relaxed mb-4">{member.bio}</p>
 
                       {/* Social Links */}
                       {member.links && (
@@ -105,15 +101,13 @@ export const TeamSection: React.FC = () => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-amber-600/20 rounded-2xl blur opacity-50"></div>
               <div className="relative bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-2xl p-8 backdrop-blur-sm">
-                <h3 className="text-2xl font-bold text-white mb-6">
-                  Our Story
-                </h3>
+                <h3 className="text-2xl font-bold text-white mb-6">Our Story</h3>
 
                 <div className="space-y-4 text-gray-300 leading-relaxed">
                   <p>
-                    Like many of you, I've spent countless nights around gaming tables, dice in hand,
-                    creating stories that become legendary memories. But I've also experienced the
-                    frustration of campaigns that fizzle out when schedules don't align.
+                    Like many of you, I've spent countless nights around gaming tables, dice in
+                    hand, creating stories that become legendary memories. But I've also experienced
+                    the frustration of campaigns that fizzle out when schedules don't align.
                   </p>
 
                   <p>
@@ -140,10 +134,7 @@ export const TeamSection: React.FC = () => {
                     asChild
                     className="border-purple-500/50 hover:border-purple-400 text-purple-300 hover:text-purple-200"
                   >
-                    <a
-                      href="/contact"
-                      className="flex items-center gap-2"
-                    >
+                    <a href="/contact" className="flex items-center gap-2">
                       Get in Touch
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -161,7 +152,8 @@ export const TeamSection: React.FC = () => {
               </div>
               <h4 className="text-lg font-semibold text-white mb-2">Player First</h4>
               <p className="text-sm text-gray-400">
-                Every decision we make prioritizes the player experience and the magic of tabletop RPGs.
+                Every decision we make prioritizes the player experience and the magic of tabletop
+                RPGs.
               </p>
             </div>
 
@@ -171,7 +163,8 @@ export const TeamSection: React.FC = () => {
               </div>
               <h4 className="text-lg font-semibold text-white mb-2">Innovation</h4>
               <p className="text-sm text-gray-400">
-                We're pushing the boundaries of what's possible with AI and interactive storytelling.
+                We're pushing the boundaries of what's possible with AI and interactive
+                storytelling.
               </p>
             </div>
 

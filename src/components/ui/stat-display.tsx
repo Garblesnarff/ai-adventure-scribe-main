@@ -9,35 +9,36 @@
  * <StatDisplay value={45} label="HP" max={60} variant="progress" />
  */
 
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const statDisplayVariants = cva(
-  "stat-display relative inline-flex flex-col items-center justify-center transition-all duration-200",
+  'stat-display relative inline-flex flex-col items-center justify-center transition-all duration-200',
   {
     variants: {
       variant: {
-        default: "stat-display",
-        large: "stat-display-large",
-        small: "stat-display-small",
-        circular: "rounded-full border-2",
-        hexagon: "stat-display aspect-square",
+        default: 'stat-display',
+        large: 'stat-display-large',
+        small: 'stat-display-small',
+        circular: 'rounded-full border-2',
+        hexagon: 'stat-display aspect-square',
       },
       color: {
-        default: "",
-        purple: "border-infinite-purple hover:border-infinite-purple hover:shadow-[0_0_16px_rgba(124,58,237,0.3)]",
-        gold: "border-infinite-gold hover:border-infinite-gold hover:shadow-[0_0_16px_rgba(245,158,11,0.3)]",
-        teal: "border-infinite-teal hover:border-infinite-teal hover:shadow-[0_0_16px_rgba(8,145,178,0.3)]",
-        danger: "border-red-500 hover:border-red-500 hover:shadow-[0_0_16px_rgba(239,68,68,0.3)]",
+        default: '',
+        purple:
+          'border-infinite-purple hover:border-infinite-purple hover:shadow-[0_0_16px_rgba(124,58,237,0.3)]',
+        gold: 'border-infinite-gold hover:border-infinite-gold hover:shadow-[0_0_16px_rgba(245,158,11,0.3)]',
+        teal: 'border-infinite-teal hover:border-infinite-teal hover:shadow-[0_0_16px_rgba(8,145,178,0.3)]',
+        danger: 'border-red-500 hover:border-red-500 hover:shadow-[0_0_16px_rgba(239,68,68,0.3)]',
       },
     },
     defaultVariants: {
-      variant: "default",
-      color: "default",
+      variant: 'default',
+      color: 'default',
     },
-  }
+  },
 );
 
 export interface StatDisplayProps
@@ -71,7 +72,7 @@ const StatDisplay = React.forwardRef<HTMLDivElement, StatDisplayProps>(
       animate = true,
       ...props
     },
-    ref
+    ref,
   ) => {
     const percentage = max ? (Number(value) / max) * 100 : 100;
     const isLow = percentage < 30;
@@ -106,15 +107,13 @@ const StatDisplay = React.forwardRef<HTMLDivElement, StatDisplayProps>(
         <motion.div
           className="stat-display-value"
           variants={animate ? valueVariants : undefined}
-          initial={animate ? "hidden" : undefined}
-          animate={animate ? "visible" : undefined}
+          initial={animate ? 'hidden' : undefined}
+          animate={animate ? 'visible' : undefined}
         >
           {value}
         </motion.div>
 
-        {label && (
-          <div className="stat-display-label">{label}</div>
-        )}
+        {label && <div className="stat-display-label">{label}</div>}
 
         {modifier !== undefined && (
           <div className="stat-display-modifier">
@@ -127,12 +126,12 @@ const StatDisplay = React.forwardRef<HTMLDivElement, StatDisplayProps>(
             <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
               <motion.div
                 className={cn(
-                  "h-full rounded-full transition-colors",
-                  isCritical ? "bg-red-500" : isLow ? "bg-yellow-500" : "bg-infinite-purple"
+                  'h-full rounded-full transition-colors',
+                  isCritical ? 'bg-red-500' : isLow ? 'bg-yellow-500' : 'bg-infinite-purple',
                 )}
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
               />
             </div>
             <div className="text-[0.625rem] text-muted-foreground text-center mt-0.5">
@@ -163,17 +162,13 @@ const StatDisplay = React.forwardRef<HTMLDivElement, StatDisplayProps>(
     }
 
     return (
-      <div
-        ref={ref}
-        className={cn(statDisplayVariants({ variant, color }), className)}
-        {...props}
-      >
+      <div ref={ref} className={cn(statDisplayVariants({ variant, color }), className)} {...props}>
         {Content}
       </div>
     );
-  }
+  },
 );
 
-StatDisplay.displayName = "StatDisplay";
+StatDisplay.displayName = 'StatDisplay';
 
 export { StatDisplay, statDisplayVariants };

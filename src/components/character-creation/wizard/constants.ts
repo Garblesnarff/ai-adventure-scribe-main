@@ -1,19 +1,20 @@
-import { WizardStep } from './types';
-import BasicInfo from '../steps/BasicInfo';
-import PhysicalStep from '../steps/PhysicalStep';
-import PersonalitySelection from '../steps/PersonalitySelection';
-import RaceSelection from '../steps/RaceSelection';
-import SubraceSelection from '../steps/SubraceSelection';
-import ClassSelection from '../steps/ClassSelection';
-import ClassFeatureSelection from '../steps/ClassFeatureSelection';
 import AbilityScoresSelection from '../steps/AbilityScoresSelection';
-import BackgroundSelection from '../steps/BackgroundSelection';
-import ProficienciesSelection from '../steps/ProficienciesSelection';
-import SpellSelection from '../steps/SpellSelection';
 import AdvancedSpellcastingSelection from '../steps/AdvancedSpellcastingSelection';
-import EquipmentSelection from '../steps/EquipmentSelection';
+import BackgroundSelection from '../steps/BackgroundSelection';
+import BasicInfo from '../steps/BasicInfo';
 import CharacterEnhancements from '../steps/CharacterEnhancements';
 import CharacterFinalization from '../steps/CharacterFinalization';
+import ClassFeatureSelection from '../steps/ClassFeatureSelection';
+import ClassSelection from '../steps/ClassSelection';
+import EquipmentSelection from '../steps/EquipmentSelection';
+import PersonalitySelection from '../steps/PersonalitySelection';
+import PhysicalStep from '../steps/PhysicalStep';
+import RaceSelection from '../steps/RaceSelection';
+import SpellSelection from '../steps/SpellSelection';
+import SubraceSelection from '../steps/SubraceSelection';
+import ProficienciesSelection from '../steps/ProficienciesSelection';
+
+import type { WizardStep } from './types';
 
 /**
  * Array of steps for the character creation wizard
@@ -30,11 +31,11 @@ import CharacterFinalization from '../steps/CharacterFinalization';
 export const wizardSteps: WizardStep[] = [
   {
     component: BasicInfo,
-    label: 'Basic Info'
+    label: 'Basic Info',
   },
   {
     component: RaceSelection,
-    label: 'Race'
+    label: 'Race',
   },
   {
     component: SubraceSelection,
@@ -45,27 +46,27 @@ export const wizardSteps: WizardStep[] = [
       if (!character.race.subraces || character.race.subraces.length === 0) return true;
       if (character.subrace) return true;
       return false;
-    }
+    },
   },
   {
     component: PhysicalStep,
-    label: 'Physical'
+    label: 'Physical',
   },
   {
     component: ClassSelection,
-    label: 'Class'
+    label: 'Class',
   },
   {
     component: ClassFeatureSelection,
-    label: 'Class Features'
+    label: 'Class Features',
   },
   {
     component: AbilityScoresSelection,
-    label: 'Ability Scores'
+    label: 'Ability Scores',
   },
   {
     component: BackgroundSelection,
-    label: 'Background'
+    label: 'Background',
   },
   {
     component: PersonalitySelection,
@@ -73,15 +74,15 @@ export const wizardSteps: WizardStep[] = [
     skipCondition: (character) => {
       // Skip if no background selected yet
       return !character?.background;
-    }
+    },
   },
   {
     component: ProficienciesSelection,
-    label: 'Proficiencies & Languages'
+    label: 'Proficiencies & Languages',
   },
   {
     component: SpellSelection,
-    label: 'Spells'
+    label: 'Spells',
   },
   {
     component: AdvancedSpellcastingSelection,
@@ -101,18 +102,18 @@ export const wizardSteps: WizardStep[] = [
 
       // Skip if none of the advanced features are needed
       return !(needsPreparation || needsPactMagic || needsMetamagic || needsRituals);
-    }
+    },
   },
   {
     component: EquipmentSelection,
-    label: 'Equipment'
+    label: 'Equipment',
   },
   {
     component: CharacterEnhancements,
-    label: 'Enhancements'
+    label: 'Enhancements',
   },
   {
     component: CharacterFinalization,
-    label: 'Finalization'
-  }
+    label: 'Finalization',
+  },
 ];

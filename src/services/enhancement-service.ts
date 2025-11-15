@@ -5,19 +5,19 @@
  * integrating with Supabase database and AI generation services.
  */
 
+import { enhancementAI } from './enhancement-ai-generator';
+
+import type { Campaign } from '@/types/campaign';
+import type { Character } from '@/types/character';
+import type { AbilityScore, EnhancementOption, OptionSelection } from '@/types/enhancement-options';
+
+import logger from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 import {
-  EnhancementOption,
-  OptionSelection,
   EnhancementPackage,
   validateOptionSelection,
-  checkOptionAvailability
+  checkOptionAvailability,
 } from '@/types/enhancement-options';
-import { enhancementAI } from './enhancement-ai-generator';
-import { Character } from '@/types/character';
-import { Campaign } from '@/types/campaign';
-import logger from '@/lib/logger';
-import { AbilityScore } from '@/types/enhancement-options';
 
 // Value allowed for an option selection persisted in DB
 type OptionSelectionValue = string | string[] | number;
@@ -90,12 +90,11 @@ export class EnhancementService {
   /**
    * Get all available enhancement options
    */
-  public async getEnhancementOptions(category?: 'character' | 'campaign'): Promise<EnhancementOption[]> {
+  public async getEnhancementOptions(
+    category?: 'character' | 'campaign',
+  ): Promise<EnhancementOption[]> {
     try {
-      let query = supabase
-        .from('enhancement_options')
-        .select('*')
-        .eq('is_active', true);
+      let query = supabase.from('enhancement_options').select('*').eq('is_active', true);
 
       if (category) {
         query = query.eq('category', category);
@@ -117,7 +116,7 @@ export class EnhancementService {
    */
   public async getSelections(
     targetId: string,
-    targetType: 'character' | 'campaign'
+    targetType: 'character' | 'campaign',
   ): Promise<OptionSelection[]> {
     try {
       const column = targetType === 'character' ? 'character_id' : 'campaign_id';
@@ -143,32 +142,27 @@ export class EnhancementService {
   public async saveSelections(
     targetId: string,
     targetType: 'character' | 'campaign',
-    selections: OptionSelection[]
+    selections: OptionSelection[],
   ): Promise<void> {
     try {
       const column = targetType === 'character' ? 'character_id' : 'campaign_id';
 
       // Delete existing selections
-      await supabase
-        .from('enhancement_selections')
-        .delete()
-        .eq(column, targetId);
+      await supabase.from('enhancement_selections').delete().eq(column, targetId);
 
       // Insert new selections
       if (selections.length > 0) {
-        const records = selections.map(selection => ({
+        const records = selections.map((selection) => ({
           [column]: targetId,
           option_id: selection.optionId,
           selection_value: selection.value,
           custom_value: selection.customValue,
           ai_generated: selection.aiGenerated || false,
           ai_prompt_used: null, // Could be enhanced to track prompts
-          generation_context: null
+          generation_context: null,
         }));
 
-        const { error } = await supabase
-          .from('enhancement_selections')
-          .insert(records);
+        const { error } = await supabase.from('enhancement_selections').insert(records);
 
         if (error) throw error;
       }
@@ -184,7 +178,7 @@ export class EnhancementService {
   public async addSelection(
     targetId: string,
     targetType: 'character' | 'campaign',
-    selection: OptionSelection
+    selection: OptionSelection,
   ): Promise<void> {
     try {
       const column = targetType === 'character' ? 'character_id' : 'campaign_id';
@@ -196,12 +190,10 @@ export class EnhancementService {
         custom_value: selection.customValue,
         ai_generated: selection.aiGenerated || false,
         ai_prompt_used: null,
-        generation_context: null
+        generation_context: null,
       };
 
-      const { error } = await supabase
-        .from('enhancement_selections')
-        .insert(record);
+      const { error } = await supabase.from('enhancement_selections').insert(record);
 
       if (error) throw error;
     } catch (error) {
@@ -216,7 +208,7 @@ export class EnhancementService {
   public async removeSelection(
     targetId: string,
     targetType: 'character' | 'campaign',
-    optionId: string
+    optionId: string,
   ): Promise<void> {
     try {
       const column = targetType === 'character' ? 'character_id' : 'campaign_id';
@@ -241,12 +233,12 @@ export class EnhancementService {
     optionId: string,
     character?: Character,
     campaign?: Campaign,
-    existingSelections?: OptionSelection[]
+    existingSelections?: OptionSelection[],
   ): Promise<string> {
     try {
       // Get the option details
       const options = await this.getEnhancementOptions();
-      const option = options.find(o => o.id === optionId);
+      const option = options.find((o) => o.id === optionId);
 
       if (!option || !option.aiGenerated || !option.aiGenerationPrompt) {
         throw new Error('Option is not AI-generated or missing prompt');
@@ -259,8 +251,8 @@ export class EnhancementService {
         context: {
           character,
           campaign,
-          existingSelections
-        }
+          existingSelections,
+        },
       });
 
       return result;
@@ -277,12 +269,12 @@ export class EnhancementService {
     category: 'character' | 'campaign',
     character?: Character,
     campaign?: Campaign,
-    existingSelections?: OptionSelection[]
+    existingSelections?: OptionSelection[],
   ): Promise<string[]> {
     try {
       return await enhancementAI.generateRecommendations(
         { character, campaign, existingSelections },
-        category
+        category,
       );
     } catch (error) {
       logger.error('Failed to get recommendations:', error);
@@ -297,13 +289,13 @@ export class EnhancementService {
     selections: OptionSelection[],
     options: EnhancementOption[],
     character?: Character,
-    campaign?: Campaign
+    campaign?: Campaign,
   ): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     // Check individual selection validity
     for (const selection of selections) {
-      const option = options.find(o => o.id === selection.optionId);
+      const option = options.find((o) => o.id === selection.optionId);
       if (!option) {
         errors.push(`Option ${selection.optionId} not found`);
         continue;
@@ -314,14 +306,14 @@ export class EnhancementService {
       }
 
       // Check availability
-      const selectedOptionIds = selections.map(s => s.optionId);
+      const selectedOptionIds = selections.map((s) => s.optionId);
       if (!checkOptionAvailability(option, character, campaign, selectedOptionIds)) {
         errors.push(`Option ${option.name} is not available for current context`);
       }
     }
 
     // Check for conflicts
-    const optionIds = selections.map(s => s.optionId);
+    const optionIds = selections.map((s) => s.optionId);
     const duplicates = optionIds.filter((id, index) => optionIds.indexOf(id) !== index);
     if (duplicates.length > 0) {
       errors.push(`Duplicate selections: ${duplicates.join(', ')}`);
@@ -329,7 +321,7 @@ export class EnhancementService {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -339,7 +331,7 @@ export class EnhancementService {
   public applyEnhancementEffects(
     selections: OptionSelection[],
     options: EnhancementOption[],
-    target: Character | Campaign
+    target: Character | Campaign,
   ): {
     mechanical: Partial<NonNullable<EnhancementOption['mechanicalEffects']>>;
     campaign: Partial<NonNullable<EnhancementOption['campaignEffects']>>;
@@ -352,11 +344,11 @@ export class EnhancementService {
     } = {
       mechanical: {},
       campaign: {},
-      narrative: []
+      narrative: [],
     };
 
-    selections.forEach(selection => {
-      const option = options.find(o => o.id === selection.optionId);
+    selections.forEach((selection) => {
+      const option = options.find((o) => o.id === selection.optionId);
       if (!option) return;
 
       // Apply mechanical effects for characters
@@ -373,7 +365,7 @@ export class EnhancementService {
       effects.narrative.push({
         option: option.name,
         value: selection.value,
-        custom: selection.customValue
+        custom: selection.customValue,
       });
     });
 
@@ -407,7 +399,7 @@ export class EnhancementService {
       mutuallyExclusiveWith: record.mutually_exclusive_with ?? undefined,
       aiGenerated: record.ai_generated ?? undefined,
       aiGenerationPrompt: record.ai_generation_prompt ?? undefined,
-      aiContext: record.ai_context ?? undefined
+      aiContext: record.ai_context ?? undefined,
     };
   }
 
@@ -420,7 +412,7 @@ export class EnhancementService {
       value: record.selection_value,
       customValue: record.custom_value,
       aiGenerated: record.ai_generated,
-      timestamp: record.created_at
+      timestamp: record.created_at,
     };
   }
 }

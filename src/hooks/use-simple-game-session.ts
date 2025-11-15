@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
 export interface GameSession {
@@ -39,9 +40,10 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
 
       if (countError) throw countError;
 
-      const nextSessionNumber = existingSessions.length > 0 && existingSessions[0]?.session_number
-        ? existingSessions[0].session_number + 1 
-        : 1;
+      const nextSessionNumber =
+        existingSessions.length > 0 && existingSessions[0]?.session_number
+          ? existingSessions[0].session_number + 1
+          : 1;
 
       // Create new session
       const { data, error } = await supabase
@@ -89,7 +91,7 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
       }
 
       // Look for an active session first
-      const sessionToResume = existingSessions?.find(s => s.status === 'active');
+      const sessionToResume = existingSessions?.find((s) => s.status === 'active');
 
       if (sessionToResume) {
         logger.info('📚 Resuming existing active session:', sessionToResume.id);
@@ -99,14 +101,16 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
 
       // If no active session, look for the most recent completed session
       // and create a new session based on its state for continuity
-      const lastCompletedSession = existingSessions?.find(s => s.status === 'completed');
+      const lastCompletedSession = existingSessions?.find((s) => s.status === 'completed');
 
       if (lastCompletedSession) {
-        logger.info('📚 Creating new session continuing from previous session:', lastCompletedSession.id);
+        logger.info(
+          '📚 Creating new session continuing from previous session:',
+          lastCompletedSession.id,
+        );
         // Create a new session but maintain continuity from the last one
-        const sessionNumber = Math.max(
-          ...(existingSessions?.map(s => s.session_number || 1) || [1])
-        ) + 1;
+        const sessionNumber =
+          Math.max(...(existingSessions?.map((s) => s.session_number || 1) || [1])) + 1;
 
         const { data: newSession, error: createError } = await supabase
           .from('game_sessions')
@@ -116,7 +120,7 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
             session_number: sessionNumber,
             status: 'active',
             // Add a summary note about continuation
-            summary: `Continuing from Session ${lastCompletedSession.session_number || 1}`
+            summary: `Continuing from Session ${lastCompletedSession.session_number || 1}`,
           })
           .select()
           .single();
@@ -130,7 +134,6 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
       // No existing sessions found, create the first one
       logger.info('📚 No existing sessions found, creating first session');
       return await createGameSession(campaignId, characterId);
-
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to get session';
       setError(errorMessage);
@@ -154,7 +157,12 @@ export const useSimpleGameSession = (campaignId?: string, characterId?: string) 
       if (error) throw error;
 
       if (session?.id === sessionId) {
-        setSession({ ...session, status: 'completed', end_time: new Date().toISOString(), summary });
+        setSession({
+          ...session,
+          status: 'completed',
+          end_time: new Date().toISOString(),
+          summary,
+        });
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to end session';

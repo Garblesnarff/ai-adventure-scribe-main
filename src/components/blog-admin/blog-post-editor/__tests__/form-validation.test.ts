@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+
 import { blogPostSchema } from '../blog-post-editor';
+
 import { slugify } from '@/utils/slug';
 import { generateExcerpt } from '@/utils/text-helpers';
 
@@ -192,9 +194,10 @@ describe('Form Validation', () => {
 
   describe('Excerpt Generation', () => {
     it('generates excerpt from markdown content', () => {
-      const markdown = '# Heading\n\nThis is a paragraph with **bold** and *italic* text.\n\nAnother paragraph.';
+      const markdown =
+        '# Heading\n\nThis is a paragraph with **bold** and *italic* text.\n\nAnother paragraph.';
       const excerpt = generateExcerpt(markdown, 50);
-      
+
       expect(excerpt.length).toBeLessThanOrEqual(53);
       expect(excerpt).not.toContain('#');
       expect(excerpt).not.toContain('**');
@@ -204,7 +207,7 @@ describe('Form Validation', () => {
     it('truncates long content with ellipsis', () => {
       const longContent = 'A'.repeat(300);
       const excerpt = generateExcerpt(longContent, 100);
-      
+
       expect(excerpt.length).toBeLessThanOrEqual(103);
       expect(excerpt.endsWith('...')).toBe(true);
     });
@@ -212,7 +215,7 @@ describe('Form Validation', () => {
     it('returns short content as-is', () => {
       const shortContent = 'Short post';
       const excerpt = generateExcerpt(shortContent, 100);
-      
+
       expect(excerpt).toBe(shortContent);
       expect(excerpt.endsWith('...')).toBe(false);
     });
@@ -225,7 +228,7 @@ describe('Form Validation', () => {
     it('removes markdown formatting from excerpt', () => {
       const markdown = '**Bold** _italic_ `code` [link](url)';
       const excerpt = generateExcerpt(markdown, 100);
-      
+
       expect(excerpt).not.toContain('**');
       expect(excerpt).not.toContain('_');
       expect(excerpt).not.toContain('`');

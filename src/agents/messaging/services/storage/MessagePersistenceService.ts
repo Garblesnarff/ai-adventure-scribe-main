@@ -1,29 +1,28 @@
 /**
  * Message Persistence Service
- * 
+ *
  * This file defines the MessagePersistenceService class, a singleton service
  * responsible for managing the persistence of messages to client-side storage
  * (IndexedDB). It handles storing new messages, updating their status, retrieving
  * unsent messages, and managing the persisted state of the message queue.
- * 
+ *
  * Main Class:
  * - MessagePersistenceService: Manages message persistence using IndexedDBService.
- * 
+ *
  * Key Dependencies:
  * - IndexedDBService (`./indexed-db-service.ts`)
  * - Various message and queue state types.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
-// Project Services (assuming kebab-case filenames)
-import { IndexedDBService } from './indexed-db-service';
+// Project Services
+import { IndexedDBService } from './IndexedDBService';
 
 // Project Types
 import { QueuedMessage } from '../../types';
 import { StoredMessage, QueueState } from './types';
 import { logger } from '../../../../lib/logger';
-
 
 export class MessagePersistenceService {
   private static instance: MessagePersistenceService;
@@ -61,7 +60,7 @@ export class MessagePersistenceService {
 
   public async updateMessageStatus(
     messageId: string,
-    status: StoredMessage['status']
+    status: StoredMessage['status'],
   ): Promise<void> {
     await this.storage.updateMessageStatus(messageId, status);
     logger.info('[MessagePersistence] Message status updated:', messageId, status);

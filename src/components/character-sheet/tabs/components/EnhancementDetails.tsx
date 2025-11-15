@@ -1,19 +1,11 @@
+import { Sparkles, Zap, Users, Globe, Sword, Shield, Target, Book, Award } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { Character } from '@/types/character';
+import type { OptionSelection } from '@/types/enhancement-options';
+
 import { Badge } from '@/components/ui/badge';
-import { Character } from '@/types/character';
-import { OptionSelection } from '@/types/enhancement-options';
-import {
-  Sparkles,
-  Zap,
-  Users,
-  Globe,
-  Sword,
-  Shield,
-  Target,
-  Book,
-  Award
-} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface EnhancementDetailsProps {
   character: Character;
@@ -34,12 +26,15 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
   const formatAbilityBonus = (abilityBonus: Record<string, number>) => {
     return Object.entries(abilityBonus).map(([ability, bonus]) => ({
       ability: ability.charAt(0).toUpperCase() + ability.slice(1),
-      bonus: bonus > 0 ? `+${bonus}` : bonus.toString()
+      bonus: bonus > 0 ? `+${bonus}` : bonus.toString(),
     }));
   };
 
   // Helper function to render array as badges
-  const renderArrayAsBadges = (items: string[], variant: 'default' | 'secondary' | 'outline' = 'outline') => {
+  const renderArrayAsBadges = (
+    items: string[],
+    variant: 'default' | 'secondary' | 'outline' = 'outline',
+  ) => {
     if (!items || items.length === 0) {
       return <span className="text-sm text-muted-foreground italic">None</span>;
     }
@@ -77,8 +72,7 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
               <div className="mt-1 text-xs text-muted-foreground">
                 {Array.isArray(selection.value)
                   ? selection.value.join(', ')
-                  : selection.value.toString()
-                }
+                  : selection.value.toString()}
               </div>
             )}
           </div>
@@ -103,9 +97,7 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
               Enhancement Selections
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {renderSelections(enhancementSelections)}
-          </CardContent>
+          <CardContent>{renderSelections(enhancementSelections)}</CardContent>
         </Card>
       )}
 
@@ -121,9 +113,7 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
                   Enhancement Traits
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {renderArrayAsBadges(enhancementEffects.traits, 'default')}
-              </CardContent>
+              <CardContent>{renderArrayAsBadges(enhancementEffects.traits, 'default')}</CardContent>
             </Card>
           )}
 
@@ -143,28 +133,37 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
           )}
 
           {/* Ability Bonuses */}
-          {enhancementEffects.abilityBonus && Object.keys(enhancementEffects.abilityBonus).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-blue-500" />
-                  Ability Score Bonuses
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {formatAbilityBonus(enhancementEffects.abilityBonus).map(({ ability, bonus }, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 rounded border bg-background/50">
-                      <span className="text-sm font-medium">{ability}</span>
-                      <Badge variant={bonus.startsWith('+') ? 'default' : 'destructive'} className="text-xs">
-                        {bonus}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {enhancementEffects.abilityBonus &&
+            Object.keys(enhancementEffects.abilityBonus).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-blue-500" />
+                    Ability Score Bonuses
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {formatAbilityBonus(enhancementEffects.abilityBonus).map(
+                      ({ ability, bonus }, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 rounded border bg-background/50"
+                        >
+                          <span className="text-sm font-medium">{ability}</span>
+                          <Badge
+                            variant={bonus.startsWith('+') ? 'default' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {bonus}
+                          </Badge>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Languages */}
           {enhancementEffects.languages && enhancementEffects.languages.length > 0 && (
@@ -175,9 +174,7 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
                   Languages
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {renderArrayAsBadges(enhancementEffects.languages)}
-              </CardContent>
+              <CardContent>{renderArrayAsBadges(enhancementEffects.languages)}</CardContent>
             </Card>
           )}
 
@@ -190,9 +187,7 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
                   Equipment
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {renderArrayAsBadges(enhancementEffects.equipment)}
-              </CardContent>
+              <CardContent>{renderArrayAsBadges(enhancementEffects.equipment)}</CardContent>
             </Card>
           )}
 
@@ -230,22 +225,23 @@ const EnhancementDetails: React.FC<EnhancementDetailsProps> = ({ character }) =>
 
       {/* Show message if no enhancement effects */}
       {enhancementEffects &&
-       (!enhancementEffects.traits || enhancementEffects.traits.length === 0) &&
-       (!enhancementEffects.skillBonus || enhancementEffects.skillBonus.length === 0) &&
-       (!enhancementEffects.abilityBonus || Object.keys(enhancementEffects.abilityBonus).length === 0) &&
-       (!enhancementEffects.languages || enhancementEffects.languages.length === 0) &&
-       (!enhancementEffects.equipment || enhancementEffects.equipment.length === 0) &&
-       (!enhancementEffects.resistances || enhancementEffects.resistances.length === 0) &&
-       (!enhancementEffects.expertise || enhancementEffects.expertise.length === 0) && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center text-muted-foreground">
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No enhancement effects currently active</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        (!enhancementEffects.traits || enhancementEffects.traits.length === 0) &&
+        (!enhancementEffects.skillBonus || enhancementEffects.skillBonus.length === 0) &&
+        (!enhancementEffects.abilityBonus ||
+          Object.keys(enhancementEffects.abilityBonus).length === 0) &&
+        (!enhancementEffects.languages || enhancementEffects.languages.length === 0) &&
+        (!enhancementEffects.equipment || enhancementEffects.equipment.length === 0) &&
+        (!enhancementEffects.resistances || enhancementEffects.resistances.length === 0) &&
+        (!enhancementEffects.expertise || enhancementEffects.expertise.length === 0) && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center text-muted-foreground">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No enhancement effects currently active</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 };

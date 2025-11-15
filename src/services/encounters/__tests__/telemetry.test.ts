@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { recordEncounterOutcome, getDifficultyAdjustment } from '@/services/encounters/telemetry';
 
 describe('Encounter telemetry', () => {

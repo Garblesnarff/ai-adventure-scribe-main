@@ -1,31 +1,30 @@
 /**
  * Message Queue Service
- * 
+ *
  * This file defines the MessageQueueService class, a singleton service
  * responsible for managing an in-memory queue of messages. It handles
  * enqueuing, dequeuing, peeking, and clearing messages, as well as
- * queue validation and configuration. It uses QueueStateManager for 
+ * queue validation and configuration. It uses QueueStateManager for
  * persisting queue snapshots and metrics, and QueueValidator for integrity checks.
- * 
+ *
  * Main Class:
  * - MessageQueueService: Manages the message queue.
- * 
+ *
  * Key Dependencies:
  * - QueueStateManager (`./queue/queue-state-manager.ts`)
  * - QueueValidator (`./queue/queue-validator.ts`)
  * - Message types from '../types'.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
-// Project Utilities (assuming kebab-case filenames)
-import { QueueStateManager } from './queue/queue-state-manager';
-import { QueueValidator } from './queue/queue-validator';
+// Project Utilities
+import { QueueStateManager } from './queue/QueueStateManager';
+import { QueueValidator } from './queue/QueueValidator';
 
 // Project Types
 import { QueuedMessage, MessageQueueConfig } from '../types';
 import { logger } from '../../../lib/logger';
-
 
 export class MessageQueueService {
   private static instance: MessageQueueService;
@@ -39,7 +38,7 @@ export class MessageQueueService {
       maxRetries: 3,
       retryDelay: 1000,
       timeoutDuration: 5000,
-      maxQueueSize: 100
+      maxQueueSize: 100,
     };
     this.stateManager = QueueStateManager.getInstance();
   }
@@ -93,14 +92,14 @@ export class MessageQueueService {
   }
 
   public getQueueIds(): string[] {
-    return this.messageQueue.map(msg => msg.id);
+    return this.messageQueue.map((msg) => msg.id);
   }
 
   public async validateQueue(): Promise<boolean> {
     return (
       QueueValidator.validateQueueIntegrity(this.messageQueue) &&
       QueueValidator.validateQueueOrder(this.messageQueue) &&
-      await this.stateManager.validateQueueState(this.messageQueue)
+      (await this.stateManager.validateQueueState(this.messageQueue))
     );
   }
 

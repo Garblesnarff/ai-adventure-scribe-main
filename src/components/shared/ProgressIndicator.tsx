@@ -1,8 +1,9 @@
-import React from 'react';
-import { Progress } from '@/components/ui/progress';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Circle, ArrowRight } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 /**
  * @interface Step
@@ -68,7 +69,8 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
     title: 'text-lg font-semibold',
     badge: 'text-sm',
     progressBarGradient: 'from-blue-500 to-purple-600',
-    stepPreviewCard: 'p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 border-blue-200 dark:border-blue-800',
+    stepPreviewCard:
+      'p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 border-blue-200 dark:border-blue-800',
     currentStepText: 'font-medium text-foreground',
     currentStepDot: 'bg-primary',
     currentStepLabel: 'text-primary font-semibold',
@@ -80,10 +82,10 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       const isCurrent = index === currentStep;
 
       const stepLabelStyle = isCurrent
-        ? (theme.currentStepLabel || defaultTheme.currentStepLabel)
+        ? theme.currentStepLabel || defaultTheme.currentStepLabel
         : isCompleted
-        ? 'text-success'
-        : 'text-muted-foreground';
+          ? 'text-success'
+          : 'text-muted-foreground';
 
       return (
         <div
@@ -97,16 +99,16 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
               {isCompleted ? (
                 <CheckCircle className="w-4 h-4 text-success" />
               ) : isCurrent ? (
-                <Circle className={`w-4 h-4 ${theme.currentStepLabel || defaultTheme.currentStepLabel}`} />
+                <Circle
+                  className={`w-4 h-4 ${theme.currentStepLabel || defaultTheme.currentStepLabel}`}
+                />
               ) : (
                 <Circle className="w-4 h-4" />
               )}
             </>
           )}
           <span className="hidden sm:inline">{step.label}</span>
-          {index < steps.length - 1 && (
-            <ArrowRight className="w-3 h-3 hidden md:inline" />
-          )}
+          {index < steps.length - 1 && <ArrowRight className="w-3 h-3 hidden md:inline" />}
         </div>
       );
     });
@@ -122,10 +124,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
           </Badge>
         </div>
         <div className="relative">
-          <Progress
-            value={progress}
-            className="h-3 transition-all duration-500 ease-out"
-          />
+          <Progress value={progress} className="h-3 transition-all duration-500 ease-out" />
           <div
             className={`absolute top-0 left-0 h-3 bg-gradient-to-r ${theme.progressBarGradient || defaultTheme.progressBarGradient} rounded-full transition-all duration-500 ease-out opacity-20`}
             style={{ width: `${progress}%` }}
@@ -138,7 +137,8 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
         </Card>
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
-            Currently: <span className={theme.currentStepText || defaultTheme.currentStepText}>
+            Currently:{' '}
+            <span className={theme.currentStepText || defaultTheme.currentStepText}>
               {steps[currentStep]?.label || 'Unknown Step'}
             </span>
           </p>
@@ -149,7 +149,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                   key={i}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     i <= currentStep
-                      ? (theme.currentStepDot || defaultTheme.currentStepDot)
+                      ? theme.currentStepDot || defaultTheme.currentStepDot
                       : 'bg-muted-foreground/30'
                   }`}
                 />

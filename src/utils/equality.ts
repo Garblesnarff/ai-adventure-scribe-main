@@ -68,9 +68,8 @@ export function deepEqual(a: any, b: any): boolean {
 
     if (keysA.length !== keysB.length) return false;
 
-    return keysA.every(key =>
-      Object.prototype.hasOwnProperty.call(b, key) &&
-      deepEqual(a[key], b[key])
+    return keysA.every(
+      (key) => Object.prototype.hasOwnProperty.call(b, key) && deepEqual(a[key], b[key]),
     );
   }
 
@@ -112,10 +111,7 @@ export function shallowEqual(a: Record<string, any>, b: Record<string, any>): bo
   if (keysA.length !== keysB.length) return false;
 
   // Compare top-level properties by reference
-  return keysA.every(key =>
-    Object.prototype.hasOwnProperty.call(b, key) &&
-    a[key] === b[key]
-  );
+  return keysA.every((key) => Object.prototype.hasOwnProperty.call(b, key) && a[key] === b[key]);
 }
 
 /**
@@ -134,10 +130,10 @@ export function shallowEqual(a: Record<string, any>, b: Record<string, any>): bo
  */
 export function pick<T extends Record<string, any>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Pick<T, K> {
   const result = {} as Pick<T, K>;
-  keys.forEach(key => {
+  keys.forEach((key) => {
     if (key in obj) {
       result[key] = obj[key];
     }
@@ -163,7 +159,7 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
 export function arrayEqual<T>(
   a: T[],
   b: T[],
-  compareFn: (x: T, y: T) => boolean = (x, y) => x === y
+  compareFn: (x: T, y: T) => boolean = (x, y) => x === y,
 ): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;

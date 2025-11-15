@@ -1,27 +1,17 @@
+import { Package, Coins, Dice1, TrendingUp, Shield, Sword, Shirt } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+
+import type { Equipment } from '@/data/equipmentOptions';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  startingGoldByClass, 
-  allEquipment, 
-  Equipment,
-  calculateArmorClass 
-} from '@/data/equipmentOptions';
-import { 
-  Package, 
-  Coins, 
-  Dice1, 
-  TrendingUp,
-  Shield,
-  Sword,
-  Shirt
-} from 'lucide-react';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { startingGoldByClass, allEquipment, calculateArmorClass } from '@/data/equipmentOptions';
 
 /**
  * Starting Equipment Selection component for character creation
@@ -32,7 +22,7 @@ const StartingEquipmentSelection: React.FC = () => {
   const { toast } = useToast();
   const character = state.character;
   const characterClass = character?.class;
-  
+
   const [method, setMethod] = useState<'package' | 'gold'>('package');
   const [rolledGold, setRolledGold] = useState<number>(0);
   const [hasRolledGold, setHasRolledGold] = useState(false);
@@ -57,56 +47,85 @@ const StartingEquipmentSelection: React.FC = () => {
   const getStartingEquipmentPackage = (classId: string): Equipment[] => {
     const packages: Record<string, string[]> = {
       fighter: [
-        'chain-mail', 'shield', 'longsword', 'handaxe', 'handaxe', 
-        'light-crossbow', 'explorers-pack'
+        'chain-mail',
+        'shield',
+        'longsword',
+        'handaxe',
+        'handaxe',
+        'light-crossbow',
+        'explorers-pack',
       ],
-      wizard: [
-        'dagger', 'quarterstaff', 'component-pouch', 'scholars-pack', 'spellbook'
-      ],
+      wizard: ['dagger', 'quarterstaff', 'component-pouch', 'scholars-pack', 'spellbook'],
       rogue: [
-        'leather-armor', 'shortsword', 'shortsword', 'thieves-tools', 
-        'shortbow', 'burglars-pack'
+        'leather-armor',
+        'shortsword',
+        'shortsword',
+        'thieves-tools',
+        'shortbow',
+        'burglars-pack',
       ],
-      cleric: [
-        'chain-shirt', 'shield', 'mace', 'light-crossbow', 'priests-pack', 'holy-symbol'
-      ],
+      cleric: ['chain-shirt', 'shield', 'mace', 'light-crossbow', 'priests-pack', 'holy-symbol'],
       barbarian: [
-        'leather-armor', 'shield', 'handaxe', 'handaxe', 'javelin', 'javelin', 
-        'explorers-pack'
+        'leather-armor',
+        'shield',
+        'handaxe',
+        'handaxe',
+        'javelin',
+        'javelin',
+        'explorers-pack',
       ],
-      bard: [
-        'leather-armor', 'dagger', 'rapier', 'lute', 'entertainers-pack'
-      ],
+      bard: ['leather-armor', 'dagger', 'rapier', 'lute', 'entertainers-pack'],
       druid: [
-        'leather-armor', 'shield', 'scimitar', 'shield', 'explorers-pack', 'druidcraft-focus'
+        'leather-armor',
+        'shield',
+        'scimitar',
+        'shield',
+        'explorers-pack',
+        'druidcraft-focus',
       ],
       monk: [
-        'shortsword', 'dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'explorers-pack'
+        'shortsword',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'dart',
+        'explorers-pack',
       ],
       paladin: [
-        'chain-mail', 'shield', 'longsword', 'javelin', 'javelin', 'javelin', 'javelin', 'javelin', 'priests-pack', 'holy-symbol'
+        'chain-mail',
+        'shield',
+        'longsword',
+        'javelin',
+        'javelin',
+        'javelin',
+        'javelin',
+        'javelin',
+        'priests-pack',
+        'holy-symbol',
       ],
-      ranger: [
-        'leather-armor', 'shortsword', 'shortsword', 'longbow', 'explorers-pack'
-      ],
-      sorcerer: [
-        'dagger', 'dagger', 'component-pouch', 'light-crossbow', 'dungeoneer-pack'
-      ],
-      warlock: [
-        'leather-armor', 'dagger', 'simple-weapon', 'light-crossbow', 'scholars-pack'
-      ]
+      ranger: ['leather-armor', 'shortsword', 'shortsword', 'longbow', 'explorers-pack'],
+      sorcerer: ['dagger', 'dagger', 'component-pouch', 'light-crossbow', 'dungeoneer-pack'],
+      warlock: ['leather-armor', 'dagger', 'simple-weapon', 'light-crossbow', 'scholars-pack'],
     };
 
     const equipmentIds = packages[classId] || [];
-    return equipmentIds.map(id => {
-      const item = allEquipment.find(eq => eq.id === id);
-      return item || {
-        id,
-        name: id.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        category: 'gear' as const,
-        cost: { amount: 0, currency: 'gp' as const },
-        description: `Starting ${classId} equipment`
-      };
+    return equipmentIds.map((id) => {
+      const item = allEquipment.find((eq) => eq.id === id);
+      return (
+        item || {
+          id,
+          name: id.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+          category: 'gear' as const,
+          cost: { amount: 0, currency: 'gp' as const },
+          description: `Starting ${classId} equipment`,
+        }
+      );
     });
   };
 
@@ -119,16 +138,16 @@ const StartingEquipmentSelection: React.FC = () => {
     // Simple dice roll simulation - in a real app you'd use proper dice rolling
     const numDice = parseInt(goldData.dice.split('d')[0]);
     const dieSize = parseInt(goldData.dice.split('d')[1]);
-    
+
     let total = 0;
     for (let i = 0; i < numDice; i++) {
       total += Math.floor(Math.random() * dieSize) + 1;
     }
-    
+
     const finalAmount = total * goldData.multiplier;
     setRolledGold(finalAmount);
     setHasRolledGold(true);
-    
+
     toast({
       title: 'Starting Gold Rolled',
       description: `Rolled ${total} × ${goldData.multiplier} = ${finalAmount} gp`,
@@ -144,21 +163,24 @@ const StartingEquipmentSelection: React.FC = () => {
       const inventory = startingEquipment.map((equipment, index) => ({
         itemId: equipment.id,
         quantity: 1,
-        equipped: false
+        equipped: false,
       }));
 
       // Auto-equip appropriate items
-      const equippedInventory = inventory.map(item => {
-        const equipment = allEquipment.find(eq => eq.id === item.itemId);
-        const shouldEquip = equipment && (
-          equipment.category === 'armor' ||
-          equipment.category === 'shield' ||
-          (equipment.category === 'weapon' && inventory.filter(i => {
-            const eq = allEquipment.find(e => e.id === i.itemId);
-            return eq?.category === 'weapon';
-          }).indexOf(item) < 2) // Equip first 2 weapons
-        );
-        
+      const equippedInventory = inventory.map((item) => {
+        const equipment = allEquipment.find((eq) => eq.id === item.itemId);
+        const shouldEquip =
+          equipment &&
+          (equipment.category === 'armor' ||
+            equipment.category === 'shield' ||
+            (equipment.category === 'weapon' &&
+              inventory
+                .filter((i) => {
+                  const eq = allEquipment.find((e) => e.id === i.itemId);
+                  return eq?.category === 'weapon';
+                })
+                .indexOf(item) < 2)); // Equip first 2 weapons
+
         return { ...item, equipped: shouldEquip || false };
       });
 
@@ -166,8 +188,8 @@ const StartingEquipmentSelection: React.FC = () => {
         type: 'UPDATE_CHARACTER',
         payload: {
           inventory: equippedInventory,
-          currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 }
-        }
+          currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+        },
       });
 
       toast({
@@ -188,8 +210,8 @@ const StartingEquipmentSelection: React.FC = () => {
         type: 'UPDATE_CHARACTER',
         payload: {
           inventory: [],
-          currency: { cp: 0, sp: 0, ep: 0, gp: rolledGold, pp: 0 }
-        }
+          currency: { cp: 0, sp: 0, ep: 0, gp: rolledGold, pp: 0 },
+        },
       });
 
       toast({
@@ -200,23 +222,23 @@ const StartingEquipmentSelection: React.FC = () => {
   };
 
   const startingEquipment = getStartingEquipmentPackage(characterClass.id);
-  
+
   // Calculate estimated AC from starting equipment with unarmored defense support
   const estimatedAC = () => {
-    const armor = startingEquipment.find(eq => eq.category === 'armor');
-    const shield = startingEquipment.find(eq => eq.category === 'shield');
+    const armor = startingEquipment.find((eq) => eq.category === 'armor');
+    const shield = startingEquipment.find((eq) => eq.category === 'shield');
     const dexMod = character?.abilityScores?.dexterity?.modifier || 0;
     const conMod = character?.abilityScores?.constitution?.modifier || 0;
     const wisMod = character?.abilityScores?.wisdom?.modifier || 0;
-    
+
     return calculateArmorClass(
-      armor || null, 
-      shield || null, 
+      armor || null,
+      shield || null,
       dexMod,
       0, // otherBonuses
       characterClass.name,
       conMod,
-      wisMod
+      wisMod,
     );
   };
 
@@ -310,8 +332,12 @@ const StartingEquipmentSelection: React.FC = () => {
                   <div key={index} className="flex items-center gap-2 p-2 border rounded text-sm">
                     {equipment.category === 'weapon' && <Sword className="w-4 h-4 text-red-500" />}
                     {equipment.category === 'armor' && <Shirt className="w-4 h-4 text-blue-500" />}
-                    {equipment.category === 'shield' && <Shield className="w-4 h-4 text-gray-500" />}
-                    {!['weapon', 'armor', 'shield'].includes(equipment.category) && <Package className="w-4 h-4 text-green-500" />}
+                    {equipment.category === 'shield' && (
+                      <Shield className="w-4 h-4 text-gray-500" />
+                    )}
+                    {!['weapon', 'armor', 'shield'].includes(equipment.category) && (
+                      <Package className="w-4 h-4 text-green-500" />
+                    )}
                     <span>{equipment.name}</span>
                   </div>
                 ))}
@@ -340,14 +366,17 @@ const StartingEquipmentSelection: React.FC = () => {
                 <div className="text-sm text-muted-foreground mb-4">
                   Average: {goldData?.average} gp
                 </div>
-                
+
                 {hasRolledGold ? (
                   <div className="space-y-2">
                     <div className="text-3xl font-bold text-yellow-600">{rolledGold} gp</div>
-                    <Button variant="outline" onClick={() => {
-                      setHasRolledGold(false);
-                      setRolledGold(0);
-                    }}>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setHasRolledGold(false);
+                        setRolledGold(0);
+                      }}
+                    >
                       Roll Again
                     </Button>
                   </div>
@@ -358,10 +387,10 @@ const StartingEquipmentSelection: React.FC = () => {
                   </Button>
                 )}
               </div>
-              
+
               <div className="text-sm text-muted-foreground">
-                With starting gold, you'll need to purchase all equipment from the shop. 
-                This allows for complete customization but requires more planning.
+                With starting gold, you'll need to purchase all equipment from the shop. This allows
+                for complete customization but requires more planning.
               </div>
             </div>
           </CardContent>
@@ -370,11 +399,7 @@ const StartingEquipmentSelection: React.FC = () => {
 
       {/* Apply Button */}
       <div className="flex justify-center">
-        <Button 
-          onClick={applyEquipment} 
-          size="lg"
-          disabled={method === 'gold' && !hasRolledGold}
-        >
+        <Button onClick={applyEquipment} size="lg" disabled={method === 'gold' && !hasRolledGold}>
           <TrendingUp className="w-4 h-4 mr-2" />
           Apply {method === 'package' ? 'Equipment Package' : 'Starting Gold'}
         </Button>

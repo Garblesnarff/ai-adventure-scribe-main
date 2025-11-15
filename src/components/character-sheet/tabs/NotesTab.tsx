@@ -1,18 +1,19 @@
+import { FileText, Heart, Brain, Link, Frown } from 'lucide-react';
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Character } from '@/types/character';
+
 import PersonalityManager from '../PersonalityManager';
 import CharacterOverview from './components/CharacterOverview';
-import EnhancementDetails from './components/EnhancementDetails';
 import EditableDescription from './components/EditableDescription';
-import { FileText, Heart, Brain, Link, Frown } from 'lucide-react';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
+import EnhancementDetails from './components/EnhancementDetails';
+
+import type { Character } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 
 interface NotesTabProps {
   character: Character;
@@ -29,7 +30,7 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
     setNotes(newNotes);
     onUpdate({
       ...character,
-      sessionNotes: newNotes
+      sessionNotes: newNotes,
     });
   };
 
@@ -56,23 +57,17 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
 
         {/* Description Tab */}
         <TabsContent value="description">
-          <motion.div
-            className="space-y-6"
-            variants={cardContainer}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="space-y-6">
             {/* Character Portrait and Description */}
-            <motion.div variants={cardItem}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-blue-500" />
-                    Character Description
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-500" />
+                  Character Description
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Portrait */}
                   <div className="text-center">
                     {character.image_url ? (
@@ -115,29 +110,26 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
                 </div>
               </CardContent>
             </Card>
-            </motion.div>
 
             {/* Backstory */}
-            <motion.div variants={cardItem}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Backstory</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <EditableDescription
-                    label=""
-                    value={character.backstory_elements || ''}
-                    field="backstory_elements"
-                    character={character}
-                    onUpdate={onUpdate}
-                    placeholder="Tell your character's story. Where do they come from? What drives them? What are their goals?"
-                    className="min-h-[150px]"
-                    isAiGenerated={!!character.backstory_elements}
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Backstory</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EditableDescription
+                  label=""
+                  value={character.backstory_elements || ''}
+                  field="backstory_elements"
+                  character={character}
+                  onUpdate={onUpdate}
+                  placeholder="Tell your character's story. Where do they come from? What drives them? What are their goals?"
+                  className="min-h-[150px]"
+                  isAiGenerated={!!character.backstory_elements}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Enhancements Tab */}
@@ -147,21 +139,19 @@ const NotesTab: React.FC<NotesTabProps> = ({ character, onUpdate }) => {
 
         {/* Notes Tab */}
         <TabsContent value="notes">
-          <motion.div {...fadeInUp}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Session Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => handleSessionNotesChange(e.target.value)}
-                  placeholder="Keep track of important events, NPCs met, quests received, and other session notes..."
-                  className="min-h-[300px] resize-none"
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Session Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={notes}
+                onChange={(e) => handleSessionNotesChange(e.target.value)}
+                placeholder="Keep track of important events, NPCs met, quests received, and other session notes..."
+                className="min-h-[300px] resize-none"
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build outputs
+dist/
+server/dist/
+build/
+.vite/
+coverage/
+
+# Generated files
+*.min.js
+*.min.css
+database.types.ts
+src/integrations/supabase/types.ts
+
+# Archives and deprecated code
+archive/
+src/archive/
+unify-graphql/
+unify-service-layer/
+src/engine/
+
+# Configuration and lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Documentation (preserve original formatting)
+*.md
+
+# Supabase
+supabase/
+
+# Python virtual environments
+**/.venv/
+**/__pycache__/
+crewai-service/
+
+# Logs
+*.log

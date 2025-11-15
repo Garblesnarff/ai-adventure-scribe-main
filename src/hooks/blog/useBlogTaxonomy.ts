@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import type { BlogCategory, BlogTag } from '@/types/blog';
+
 import {
   createBlogCategory,
   createBlogTag,
@@ -15,7 +17,8 @@ export const BLOG_CATEGORIES_QUERY_KEY = 'blog-categories';
 export const BLOG_TAGS_QUERY_KEY = 'blog-tags';
 
 const generateTempId = () => {
-  const globalCrypto = typeof globalThis !== 'undefined' ? (globalThis.crypto as Crypto | undefined) : undefined;
+  const globalCrypto =
+    typeof globalThis !== 'undefined' ? (globalThis.crypto as Crypto | undefined) : undefined;
   if (globalCrypto?.randomUUID) {
     return globalCrypto.randomUUID();
   }
@@ -72,23 +75,30 @@ export function useCreateBlogCategory() {
 export function useUpdateBlogCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, values }: { id: string; values: { title?: string; slug?: string; description?: string | null } }) =>
-      updateBlogCategory(id, values),
+    mutationFn: ({
+      id,
+      values,
+    }: {
+      id: string;
+      values: { title?: string; slug?: string; description?: string | null };
+    }) => updateBlogCategory(id, values),
     onMutate: async ({ id, values }) => {
       await queryClient.cancelQueries({ queryKey: [BLOG_CATEGORIES_QUERY_KEY] });
       const previous = queryClient.getQueryData<BlogCategory[]>([BLOG_CATEGORIES_QUERY_KEY]);
-      queryClient.setQueryData<BlogCategory[]>([BLOG_CATEGORIES_QUERY_KEY], (old) =>
-        old?.map((category) =>
-          category.id === id
-            ? {
-                ...category,
-                ...(values.title !== undefined ? { title: values.title } : {}),
-                ...(values.slug !== undefined ? { slug: values.slug } : {}),
-                ...(values.description !== undefined ? { description: values.description } : {}),
-                updatedAt: new Date().toISOString(),
-              }
-            : category,
-        ) ?? [],
+      queryClient.setQueryData<BlogCategory[]>(
+        [BLOG_CATEGORIES_QUERY_KEY],
+        (old) =>
+          old?.map((category) =>
+            category.id === id
+              ? {
+                  ...category,
+                  ...(values.title !== undefined ? { title: values.title } : {}),
+                  ...(values.slug !== undefined ? { slug: values.slug } : {}),
+                  ...(values.description !== undefined ? { description: values.description } : {}),
+                  updatedAt: new Date().toISOString(),
+                }
+              : category,
+          ) ?? [],
       );
       return { previous };
     },
@@ -110,8 +120,9 @@ export function useDeleteBlogCategory() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: [BLOG_CATEGORIES_QUERY_KEY] });
       const previous = queryClient.getQueryData<BlogCategory[]>([BLOG_CATEGORIES_QUERY_KEY]);
-      queryClient.setQueryData<BlogCategory[]>([BLOG_CATEGORIES_QUERY_KEY], (old) =>
-        old?.filter((category) => category.id !== id) ?? [],
+      queryClient.setQueryData<BlogCategory[]>(
+        [BLOG_CATEGORIES_QUERY_KEY],
+        (old) => old?.filter((category) => category.id !== id) ?? [],
       );
       return { previous };
     },
@@ -160,23 +171,30 @@ export function useCreateBlogTag() {
 export function useUpdateBlogTag() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, values }: { id: string; values: { name?: string; slug?: string; description?: string | null } }) =>
-      updateBlogTag(id, values),
+    mutationFn: ({
+      id,
+      values,
+    }: {
+      id: string;
+      values: { name?: string; slug?: string; description?: string | null };
+    }) => updateBlogTag(id, values),
     onMutate: async ({ id, values }) => {
       await queryClient.cancelQueries({ queryKey: [BLOG_TAGS_QUERY_KEY] });
       const previous = queryClient.getQueryData<BlogTag[]>([BLOG_TAGS_QUERY_KEY]);
-      queryClient.setQueryData<BlogTag[]>([BLOG_TAGS_QUERY_KEY], (old) =>
-        old?.map((tag) =>
-          tag.id === id
-            ? {
-                ...tag,
-                ...(values.name !== undefined ? { name: values.name } : {}),
-                ...(values.slug !== undefined ? { slug: values.slug } : {}),
-                ...(values.description !== undefined ? { description: values.description } : {}),
-                updatedAt: new Date().toISOString(),
-              }
-            : tag,
-        ) ?? [],
+      queryClient.setQueryData<BlogTag[]>(
+        [BLOG_TAGS_QUERY_KEY],
+        (old) =>
+          old?.map((tag) =>
+            tag.id === id
+              ? {
+                  ...tag,
+                  ...(values.name !== undefined ? { name: values.name } : {}),
+                  ...(values.slug !== undefined ? { slug: values.slug } : {}),
+                  ...(values.description !== undefined ? { description: values.description } : {}),
+                  updatedAt: new Date().toISOString(),
+                }
+              : tag,
+          ) ?? [],
       );
       return { previous };
     },
@@ -198,8 +216,9 @@ export function useDeleteBlogTag() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: [BLOG_TAGS_QUERY_KEY] });
       const previous = queryClient.getQueryData<BlogTag[]>([BLOG_TAGS_QUERY_KEY]);
-      queryClient.setQueryData<BlogTag[]>([BLOG_TAGS_QUERY_KEY], (old) =>
-        old?.filter((tag) => tag.id !== id) ?? [],
+      queryClient.setQueryData<BlogTag[]>(
+        [BLOG_TAGS_QUERY_KEY],
+        (old) => old?.filter((tag) => tag.id !== id) ?? [],
       );
       return { previous };
     },

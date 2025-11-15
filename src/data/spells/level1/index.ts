@@ -1,13 +1,13 @@
-import { Spell } from '@/types/character';
-
-import { wizardLevel1Spells } from './wizard';
-import { clericLevel1Spells } from './cleric';
 import { bardLevel1Spells } from './bard';
+import { clericLevel1Spells } from './cleric';
 import { druidLevel1Spells } from './druid';
-import { sorcererLevel1Spells } from './sorcerer';
-import { warlockLevel1Spells } from './warlock';
 import { paladinLevel1Spells } from './paladin';
 import { rangerLevel1Spells } from './ranger';
+import { sorcererLevel1Spells } from './sorcerer';
+import { warlockLevel1Spells } from './warlock';
+import { wizardLevel1Spells } from './wizard';
+
+import type { Spell } from '@/types/character';
 
 export const firstLevelSpells: Spell[] = [
   ...wizardLevel1Spells,
@@ -17,5 +17,5 @@ export const firstLevelSpells: Spell[] = [
   ...sorcererLevel1Spells,
   ...warlockLevel1Spells,
   ...paladinLevel1Spells,
-  ...rangerLevel1Spells
+  ...rangerLevel1Spells,
 ];

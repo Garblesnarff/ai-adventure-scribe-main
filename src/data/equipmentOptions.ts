@@ -12,5 +12,5 @@ export {
   getArmorByType,
   convertCurrency,
   formatCurrency,
-  getStartingEquipment
+  getStartingEquipment,
 } from './equipment/api';

@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const wizardLevel1Spells: Spell[] = [
-{
+  {
     id: 'alarm',
     name: 'Alarm',
     level: 1,
@@ -14,8 +14,9 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a tiny bell and a piece of fine silver wire',
     duration: '8 hours',
-    description: 'You set an alarm against unwanted intrusion. Choose a door, a window, or an area within range that is no larger than a 20-foot cube.',
-    ritual: true
+    description:
+      'You set an alarm against unwanted intrusion. Choose a door, a window, or an area within range that is no larger than a 20-foot cube.',
+    ritual: true,
   },
   {
     id: 'burning-hands',
@@ -28,8 +29,9 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips.',
-    damage: '3d6'
+    description:
+      'As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips.',
+    damage: '3d6',
   },
   {
     id: 'charm-person',
@@ -42,7 +44,8 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You attempt to charm a humanoid you can see within range. It must make a Wisdom saving throw, and it does so with advantage if you or your companions are fighting it.'
+    description:
+      'You attempt to charm a humanoid you can see within range. It must make a Wisdom saving throw, and it does so with advantage if you or your companions are fighting it.',
   },
   {
     id: 'hideous-laughter',
@@ -57,8 +60,9 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'tiny tarts and a feather that is waved in the air',
     duration: 'Concentration, up to 1 minute',
-    description: 'A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter if this spell affects it.',
-    concentration: true
+    description:
+      'A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter if this spell affects it.',
+    concentration: true,
   },
   {
     id: 'color-spray',
@@ -73,7 +77,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of powder or sand that is colored red, yellow, and blue',
     duration: '1 round',
-    description: 'A dazzling array of flashing, colored light springs from your hand. Roll 6d10; the total is how many hit points of creatures this spell can affect.'
+    description:
+      'A dazzling array of flashing, colored light springs from your hand. Roll 6d10; the total is how many hit points of creatures this spell can affect.',
   },
   {
     id: 'comprehend-languages',
@@ -88,8 +93,9 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of soot and salt',
     duration: '1 hour',
-    description: 'For the duration, you understand the literal meaning of any spoken language that you hear.',
-    ritual: true
+    description:
+      'For the duration, you understand the literal meaning of any spoken language that you hear.',
+    ritual: true,
   },
   {
     id: 'detect-magic',
@@ -102,9 +108,10 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you sense the presence of magic within 30 feet of you. If you sense magic in this way, you can use your action to see a faint aura around any visible creature or object in the area that bears magic.',
+    description:
+      'For the duration, you sense the presence of magic within 30 feet of you. If you sense magic in this way, you can use your action to see a faint aura around any visible creature or object in the area that bears magic.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'disguise-self',
@@ -117,7 +124,8 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 hour',
-    description: 'You make yourself—including your clothing, armor, weapons, and other belongings on your person—look different until the spell ends or until you use your action to dismiss it.'
+    description:
+      'You make yourself—including your clothing, armor, weapons, and other belongings on your person—look different until the spell ends or until you use your action to dismiss it.',
   },
   {
     id: 'expeditious-retreat',
@@ -130,8 +138,9 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'This spell allows you to move at an incredible pace. When you cast this spell, and then as a bonus action on each of your turns until the spell ends, you can take the Dash action.',
-    concentration: true
+    description:
+      'This spell allows you to move at an incredible pace. When you cast this spell, and then as a bonus action on each of your turns until the spell ends, you can take the Dash action.',
+    concentration: true,
   },
   {
     id: 'false-life',
@@ -146,7 +155,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small amount of alcohol or distilled spirits',
     duration: '1 hour',
-    description: 'Bolstering yourself with a necromantic facsimile of life, you gain 1d4 + 4 temporary hit points for the duration.'
+    description:
+      'Bolstering yourself with a necromantic facsimile of life, you gain 1d4 + 4 temporary hit points for the duration.',
   },
   {
     id: 'feather-fall',
@@ -160,7 +170,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a small feather or piece of down',
     duration: '1 minute',
-    description: 'Choose up to five falling creatures within range. A falling creature\'s rate of descent slows to 60 feet per round until the spell ends.'
+    description:
+      "Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends.",
   },
   {
     id: 'find-familiar',
@@ -169,16 +180,19 @@ export const wizardLevel1Spells: Spell[] = [
     school: 'Conjuration',
     castingTime: '1 hour',
     range: '10 feet',
-    components: 'V, S, M (10 gp worth of charcoal, incense, and herbs that must be consumed by fire in a brass brazier)',
+    components:
+      'V, S, M (10 gp worth of charcoal, incense, and herbs that must be consumed by fire in a brass brazier)',
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: '10 gp worth of charcoal, incense, and herbs that must be consumed by fire in a brass brazier',
+    materialDescription:
+      '10 gp worth of charcoal, incense, and herbs that must be consumed by fire in a brass brazier',
     materialCost: 10,
     materialConsumed: true,
     duration: 'Instantaneous',
-    description: 'You gain the service of a familiar, a spirit that takes an animal form you choose.',
-    ritual: true
+    description:
+      'You gain the service of a familiar, a spirit that takes an animal form you choose.',
+    ritual: true,
   },
   {
     id: 'fog-cloud',
@@ -191,8 +205,9 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 hour',
-    description: 'You create a 20-foot-radius sphere of fog centered on a point within range. The sphere spreads around corners, and its area is heavily obscured.',
-    concentration: true
+    description:
+      'You create a 20-foot-radius sphere of fog centered on a point within range. The sphere spreads around corners, and its area is heavily obscured.',
+    concentration: true,
   },
   {
     id: 'grease',
@@ -207,7 +222,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a bit of pork rind or butter',
     duration: '1 minute',
-    description: 'Slick grease covers the ground in a 10-foot square centered on a point within range and turns it into difficult terrain for the duration.'
+    description:
+      'Slick grease covers the ground in a 10-foot square centered on a point within range and turns it into difficult terrain for the duration.',
   },
   {
     id: 'illusory-script',
@@ -224,8 +240,9 @@ export const wizardLevel1Spells: Spell[] = [
     materialCost: 10,
     materialConsumed: true,
     duration: '10 days',
-    description: 'You write on parchment, paper, or some other suitable writing material and imbue it with a potent illusion that lasts for the duration.',
-    ritual: true
+    description:
+      'You write on parchment, paper, or some other suitable writing material and imbue it with a potent illusion that lasts for the duration.',
+    ritual: true,
   },
   {
     id: 'identify',
@@ -241,8 +258,9 @@ export const wizardLevel1Spells: Spell[] = [
     materialDescription: 'a pearl worth at least 100 gp and an owl feather',
     materialCost: 100,
     duration: 'Instantaneous',
-    description: 'You choose one object that you must touch throughout the casting of the spell. If it is a magic item or some other magic-imbued object, you learn its properties and how to use them.',
-    ritual: true
+    description:
+      'You choose one object that you must touch throughout the casting of the spell. If it is a magic item or some other magic-imbued object, you learn its properties and how to use them.',
+    ritual: true,
   },
   {
     id: 'jump',
@@ -251,13 +269,14 @@ export const wizardLevel1Spells: Spell[] = [
     school: 'Transmutation',
     castingTime: '1 action',
     range: 'Touch',
-    components: 'V, S, M (a grasshopper\'s hind leg)',
+    components: "V, S, M (a grasshopper's hind leg)",
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a grasshopper\'s hind leg',
+    materialDescription: "a grasshopper's hind leg",
     duration: '1 minute',
-    description: 'You touch a creature. The creature\'s jump distance is tripled until the spell ends.'
+    description:
+      "You touch a creature. The creature's jump distance is tripled until the spell ends.",
   },
   {
     id: 'longstrider',
@@ -272,7 +291,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of dirt',
     duration: '1 hour',
-    description: 'You touch a creature. The target\'s speed increases by 10 feet until the spell ends.'
+    description:
+      "You touch a creature. The target's speed increases by 10 feet until the spell ends.",
   },
   {
     id: 'mage-armor',
@@ -287,7 +307,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a piece of cured leather',
     duration: '8 hours',
-    description: 'You touch a willing creature who isn\'t wearing armor, and a protective magical force surrounds it until the spell ends. The target\'s base AC becomes 13 + its Dex modifier.'
+    description:
+      "You touch a willing creature who isn't wearing armor, and a protective magical force surrounds it until the spell ends. The target's base AC becomes 13 + its Dex modifier.",
   },
   {
     id: 'magic-missile',
@@ -300,8 +321,9 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You create three glowing darts of magical force. Each dart hits a creature of your choice that you can see within range. A dart deals 1d4 + 1 force damage to its target.',
-    damage: '1d4+1'
+    description:
+      'You create three glowing darts of magical force. Each dart hits a creature of your choice that you can see within range. A dart deals 1d4 + 1 force damage to its target.',
+    damage: '1d4+1',
   },
   {
     id: 'protection-from-evil-and-good',
@@ -317,8 +339,9 @@ export const wizardLevel1Spells: Spell[] = [
     materialDescription: 'holy water or powdered silver and iron, which the spell consumes',
     materialConsumed: true,
     duration: 'Concentration, up to 10 minutes',
-    description: 'Until the spell ends, one willing creature you touch is protected against certain types of creatures: aberrations, celestials, elementals, fey, fiends, and undead.',
-    concentration: true
+    description:
+      'Until the spell ends, one willing creature you touch is protected against certain types of creatures: aberrations, celestials, elementals, fey, fiends, and undead.',
+    concentration: true,
   },
   {
     id: 'shield',
@@ -331,7 +354,8 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '1 round',
-    description: 'An invisible barrier of magical force appears and protects you. Until the start of your next turn, you have a +5 bonus to AC, including against the triggering attack, and you take no damage from magic missile.'
+    description:
+      'An invisible barrier of magical force appears and protects you. Until the start of your next turn, you have a +5 bonus to AC, including against the triggering attack, and you take no damage from magic missile.',
   },
   {
     id: 'silent-image',
@@ -346,8 +370,9 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: 'Concentration, up to 10 minutes',
-    description: 'You create the image of an object, a creature, or some other visible phenomenon that is no larger than a 15-foot cube.',
-    concentration: true
+    description:
+      'You create the image of an object, a creature, or some other visible phenomenon that is no larger than a 15-foot cube.',
+    concentration: true,
   },
   {
     id: 'sleep',
@@ -362,11 +387,12 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of fine sand, rose petals, or a cricket',
     duration: '1 minute',
-    description: 'This spell sends creatures into a magical slumber. Roll 5d8; the result is how many hit points of creatures this spell can affect.'
+    description:
+      'This spell sends creatures into a magical slumber. Roll 5d8; the result is how many hit points of creatures this spell can affect.',
   },
   {
     id: 'tensers-floating-disk',
-    name: 'Tenser\'s Floating Disk',
+    name: "Tenser's Floating Disk",
     level: 1,
     school: 'Conjuration',
     castingTime: '1 action',
@@ -377,8 +403,9 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a drop of mercury',
     duration: '1 hour',
-    description: 'This spell creates a circular, horizontal plane of force, 3 feet in diameter and 1 inch thick, that floats 3 feet above the ground in an unoccupied space of your choice that you can see within range.',
-    ritual: true
+    description:
+      'This spell creates a circular, horizontal plane of force, 3 feet in diameter and 1 inch thick, that floats 3 feet above the ground in an unoccupied space of your choice that you can see within range.',
+    ritual: true,
   },
   {
     id: 'thunderwave',
@@ -391,8 +418,9 @@ export const wizardLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A wave of thunderous force sweeps out from you. Each creature in a 15-foot cube originating from you must make a Constitution saving throw.',
-    damage: '2d8'
+    description:
+      'A wave of thunderous force sweeps out from you. Each creature in a 15-foot cube originating from you must make a Constitution saving throw.',
+    damage: '2d8',
   },
   {
     id: 'unseen-servant',
@@ -407,7 +435,8 @@ export const wizardLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a piece of string and a bit of wood',
     duration: '1 hour',
-    description: 'This spell creates an invisible, mindless, shapeless force that performs simple tasks at your command until the spell ends.',
-    ritual: true
+    description:
+      'This spell creates an invisible, mindless, shapeless force that performs simple tasks at your command until the spell ends.',
+    ritual: true,
   },
 ];

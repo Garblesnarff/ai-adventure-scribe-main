@@ -21,8 +21,7 @@ export class GeminiImageService {
   private usageToday = 0;
   private readonly DAILY_FREE_LIMIT = 500; // Google AI free tier limit
 
-  constructor() {
-  }
+  constructor() {}
 
   /**
    * Check if we can use the free tier today
@@ -75,18 +74,22 @@ export class GeminiImageService {
     if (!this.canUseFreeToday()) {
       throw new Error(
         `Gemini free tier limit exceeded for today (${this.DAILY_FREE_LIMIT} requests). ` +
-        'Please try again tomorrow or use a paid alternative.'
+          'Please try again tomorrow or use a paid alternative.',
       );
     }
 
     try {
-      const ref = referenceImage || (referenceImages && referenceImages.length > 0 ? referenceImages[0] : undefined);
+      const ref =
+        referenceImage ||
+        (referenceImages && referenceImages.length > 0 ? referenceImages[0] : undefined);
       const imageData = await llmApiClient.generateImage({ prompt, referenceImage: ref });
       this.recordUsage();
       return imageData;
     } catch (error) {
       logger.error('Error generating image (server-proxy):', error);
-      throw new Error(`Gemini image generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Gemini image generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -98,7 +101,7 @@ export class GeminiImageService {
     return {
       used: this.usageToday,
       limit: this.DAILY_FREE_LIMIT,
-      remaining: this.getRemainingFreeRequests()
+      remaining: this.getRemainingFreeRequests(),
     };
   }
 }

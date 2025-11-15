@@ -1,10 +1,11 @@
+import { Plus, Users } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Plus, Users } from 'lucide-react';
+
 import CampaignList from '@/components/campaign-list/campaign-list';
 import { ErrorBoundary, CampaignErrorFallback } from '@/components/error';
 import { ErrorBoundaryTest } from '@/components/error/ErrorBoundaryTest';
+import { Button } from '@/components/ui/button';
 
 /**
  * Index page component serving as the landing page
@@ -34,14 +35,17 @@ const Index = () => {
         className={`relative bg-no-repeat py-16 sm:py-20 md:py-24 px-4 bg-gradient-to-br from-slate-900 via-purple-900/40 to-indigo-900 ${!isMobile ? 'bg-fixed' : 'bg-scroll'}`}
         style={{
           backgroundImage: "url('/hero_header.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center center"
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/25 to-black/40"></div>
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="mb-8 sm:mb-12 md:mb-16"></div>
-          <p className="text-lg sm:text-xl text-white/95 mb-8 sm:mb-12 max-w-3xl mx-auto drop-shadow-lg leading-relaxed px-4">Step into boundless worlds of adventure, where every choice shapes destiny and legends are forged in the fires of imagination</p>
+          <p className="text-lg sm:text-xl text-white/95 mb-8 sm:mb-12 max-w-3xl mx-auto drop-shadow-lg leading-relaxed px-4">
+            Step into boundless worlds of adventure, where every choice shapes destiny and legends
+            are forged in the fires of imagination
+          </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
             <Button
               onClick={() => navigate('/app/campaigns/create')}
@@ -69,7 +73,9 @@ const Index = () => {
         <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-8 bg-background/80 backdrop-blur-sm rounded-2xl p-6 border border-border/30 shadow-lg">
           <div className="flex-1 max-w-md">
             <div className="relative">
-              <label htmlFor="campaign-search" className="sr-only">Search campaigns</label>
+              <label htmlFor="campaign-search" className="sr-only">
+                Search campaigns
+              </label>
               <input
                 type="text"
                 placeholder="Search your campaigns by name or genre..."
@@ -82,7 +88,7 @@ const Index = () => {
               <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <select
               value={sortBy}
@@ -97,11 +103,7 @@ const Index = () => {
 
         <ErrorBoundary
           level="feature"
-          fallback={
-            <CampaignErrorFallback
-              showReturnToCampaigns={false}
-            />
-          }
+          fallback={<CampaignErrorFallback showReturnToCampaigns={false} />}
         >
           <CampaignList searchTerm={searchTerm} sortBy={sortBy} />
         </ErrorBoundary>

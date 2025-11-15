@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const wizardCantrips: Spell[] = [
-{
+  {
     id: 'acid-splash',
     name: 'Acid Splash',
     level: 0,
@@ -12,8 +12,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You hurl a bubble of acid. Choose one creature within range, or choose two creatures within range that are within 5 feet of each other. A target must succeed on a Dexterity saving throw or take 1d6 acid damage.',
-    damage: '1d6'
+    description:
+      'You hurl a bubble of acid. Choose one creature within range, or choose two creatures within range that are within 5 feet of each other. A target must succeed on a Dexterity saving throw or take 1d6 acid damage.',
+    damage: '1d6',
   },
   {
     id: 'chill-touch',
@@ -26,8 +27,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave.',
-    damage: '1d8'
+    description:
+      'You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave.',
+    damage: '1d8',
   },
   {
     id: 'dancing-lights',
@@ -42,8 +44,9 @@ export const wizardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a bit of phosphorus or wychwood, or a glowworm',
     duration: 'Concentration, up to 1 minute',
-    description: 'You create up to four torch-sized lights within range, making them appear as torches, lanterns, or glowing orbs that hover in the air for the duration.',
-    concentration: true
+    description:
+      'You create up to four torch-sized lights within range, making them appear as torches, lanterns, or glowing orbs that hover in the air for the duration.',
+    concentration: true,
   },
   {
     id: 'fire-bolt',
@@ -56,8 +59,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage.',
-    damage: '1d10'
+    description:
+      'You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage.',
+    damage: '1d10',
   },
   {
     id: 'light',
@@ -71,7 +75,8 @@ export const wizardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a firefly or phosphorescent moss',
     duration: '1 hour',
-    description: 'You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet.'
+    description:
+      'You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet.',
   },
   {
     id: 'mage-hand',
@@ -84,8 +89,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
-    concentration: true
+    description:
+      'A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action.',
+    concentration: true,
   },
   {
     id: 'mending',
@@ -100,7 +106,8 @@ export const wizardCantrips: Spell[] = [
     material: true,
     materialDescription: 'two lodestones',
     duration: 'Instantaneous',
-    description: 'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.'
+    description:
+      'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.',
   },
   {
     id: 'message',
@@ -115,7 +122,8 @@ export const wizardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a short piece of copper wire',
     duration: '1 round',
-    description: 'You point your finger toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear.'
+    description:
+      'You point your finger toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear.',
   },
   {
     id: 'minor-illusion',
@@ -129,7 +137,8 @@ export const wizardCantrips: Spell[] = [
     material: true,
     materialDescription: 'a bit of fleece',
     duration: '1 minute',
-    description: 'You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again.'
+    description:
+      'You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again.',
   },
   {
     id: 'poison-spray',
@@ -142,8 +151,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The creature must succeed on a Constitution saving throw or take 1d12 poison damage.',
-    damage: '1d12'
+    description:
+      'You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The creature must succeed on a Constitution saving throw or take 1d12 poison damage.',
+    damage: '1d12',
   },
   {
     id: 'prestidigitation',
@@ -156,7 +166,8 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Up to 1 hour',
-    description: 'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.'
+    description:
+      'This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor magical effects within range.',
   },
   {
     id: 'ray-of-frost',
@@ -169,8 +180,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, it takes 1d8 cold damage, and its speed is reduced by 10 feet until the start of your next turn.',
-    damage: '1d8'
+    description:
+      'A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, it takes 1d8 cold damage, and its speed is reduced by 10 feet until the start of your next turn.',
+    damage: '1d8',
   },
   {
     id: 'shocking-grasp',
@@ -183,8 +195,9 @@ export const wizardCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have advantage on the attack roll if the target is wearing armor made of metal.',
-    damage: '1d8'
+    description:
+      'Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have advantage on the attack roll if the target is wearing armor made of metal.',
+    damage: '1d8',
   },
   {
     id: 'true-strike',
@@ -196,7 +209,8 @@ export const wizardCantrips: Spell[] = [
     components: 'S',
     somatic: true,
     duration: 'Concentration, up to 1 round',
-    description: 'You extend your hand and point a finger at a target in range. Your magic grants you a brief insight into the target\'s defenses.',
-    concentration: true
+    description:
+      "You extend your hand and point a finger at a target in range. Your magic grants you a brief insight into the target's defenses.",
+    concentration: true,
   },
 ];

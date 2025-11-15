@@ -7,10 +7,12 @@
  * @module campaign-generator
  */
 
-import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { buildCampaignDescriptionPrompt } from './shared/prompts';
 import { getGeminiManager } from './shared/utils';
+
 import type { CampaignParams } from './shared/types';
+
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import logger from '@/lib/logger';
 
 /**

@@ -1,24 +1,23 @@
 /**
  * Rule Requirement Checker Utility
- * 
+ *
  * This file defines the RuleRequirementChecker class, responsible for checking
  * various types of requirements for game rules or actions. It evaluates
  * prerequisites, proficiencies, spell slots, action economy, and material
  * components based on a given context.
- * 
+ *
  * Main Class:
  * - RuleRequirementChecker: Checks if rule requirements are met.
- * 
+ *
  * Key Dependencies:
  * - RuleRequirement type (likely from `@/types/agent` or a more specific rule type definition).
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
 // Project Types
 import { RuleRequirement } from '@/types/agent'; // Assuming RuleRequirement is a defined type
 import { logger } from '../../../lib/logger';
-
 
 export class RuleRequirementChecker {
   async check(requirement: RuleRequirement): Promise<boolean> {
@@ -47,7 +46,7 @@ export class RuleRequirementChecker {
 
     if (!character || !prerequisites) return false;
 
-    return prerequisites.every(prereq => {
+    return prerequisites.every((prereq) => {
       switch (prereq.type) {
         case 'feature':
           return character.features?.includes(prereq.value);
@@ -65,7 +64,7 @@ export class RuleRequirementChecker {
     const { requiredProficiencies } = requirement.data;
     const proficiencies = requirement.context?.character?.proficiencies || [];
 
-    return requiredProficiencies.every(prof => proficiencies.includes(prof));
+    return requiredProficiencies.every((prof) => proficiencies.includes(prof));
   }
 
   private checkSpellSlot(requirement: RuleRequirement): boolean {
@@ -86,14 +85,14 @@ export class RuleRequirementChecker {
     const { components } = requirement.data;
     const availableComponents = requirement.context?.components || [];
 
-    return components.every(component => {
+    return components.every((component) => {
       if (component.type === 'material' && component.cost) {
-        const hasComponent = availableComponents.find(c => 
-          c.name === component.name && c.value >= component.cost
+        const hasComponent = availableComponents.find(
+          (c) => c.name === component.name && c.value >= component.cost,
         );
         return !!hasComponent;
       }
-      return availableComponents.some(c => c.name === component.name);
+      return availableComponents.some((c) => c.name === component.name);
     });
   }
 }

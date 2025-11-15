@@ -61,8 +61,17 @@ export interface Equipment {
     damageBonus?: number;
     acBonus?: number;
     saveBonus?: number;
-    abilityScoreBonus?: { ability: 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma'; bonus: number };
+    abilityScoreBonus?: {
+      ability: 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
+      bonus: number;
+    };
     specialProperties?: string[];
-    spellEffects?: { spellName: string; spellLevel?: number; charges?: number; maxCharges?: number; rechargeRate?: 'daily' | 'dawn' | 'dusk' | 'weekly' | 'monthly' }[];
+    spellEffects?: {
+      spellName: string;
+      spellLevel?: number;
+      charges?: number;
+      maxCharges?: number;
+      rechargeRate?: 'daily' | 'dawn' | 'dusk' | 'weekly' | 'monthly';
+    }[];
   };
 }

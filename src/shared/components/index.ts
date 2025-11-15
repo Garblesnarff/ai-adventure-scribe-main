@@ -60,11 +60,7 @@ export {
 } from './error';
 
 // Skeleton Components (Loading States)
-export {
-  CharacterListSkeleton,
-  CharacterSelectionSkeleton,
-  TimelineSkeleton,
-} from './skeletons';
+export { CharacterListSkeleton, CharacterSelectionSkeleton, TimelineSkeleton } from './skeletons';
 
 // Other Shared Components
 export { ProgressIndicator } from './ProgressIndicator';

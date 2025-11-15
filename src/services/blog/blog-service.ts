@@ -1,5 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 import type {
   BlogCategory,
   BlogMediaAsset,
@@ -10,6 +8,9 @@ import type {
   SignedUploadRequest,
   SignedUploadResponse,
 } from '@/types/blog';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { supabase } from '@/integrations/supabase/client';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 const BLOG_MEDIA_BUCKET = 'blog-media';
@@ -94,12 +95,8 @@ const mapBlogPost = (row: any): BlogPost => ({
   authorRole: row.authorRole ?? null,
   categoryIds: toStringArray(row.category_ids ?? row.categoryIds),
   tagIds: toStringArray(row.tag_ids ?? row.tagIds),
-  categories: Array.isArray(row.categories)
-    ? row.categories.map(mapCategory)
-    : undefined,
-  tags: Array.isArray(row.tags)
-    ? row.tags.map(mapTag)
-    : undefined,
+  categories: Array.isArray(row.categories) ? row.categories.map(mapCategory) : undefined,
+  tags: Array.isArray(row.tags) ? row.tags.map(mapTag) : undefined,
 });
 
 const buildInsertPayload = (input: BlogPostMutationInput) => ({
@@ -156,9 +153,7 @@ const fetchWithAuth = async (path: string, options: RequestInit = {}): Promise<R
 };
 
 export const listBlogPosts = async (filters?: BlogPostListFilters): Promise<BlogPost[]> => {
-  let query = supabaseClient
-    .from('blog_posts')
-    .select(`
+  let query = supabaseClient.from('blog_posts').select(`
       id,
       title,
       slug,
@@ -256,7 +251,10 @@ export const createBlogPost = async (input: BlogPostMutationInput): Promise<Blog
   return mapBlogPost(data);
 };
 
-export const updateBlogPost = async (id: string, input: Partial<BlogPostMutationInput>): Promise<BlogPost> => {
+export const updateBlogPost = async (
+  id: string,
+  input: Partial<BlogPostMutationInput>,
+): Promise<BlogPost> => {
   if (!id) throw new Error('Missing blog post id');
   const payload = buildUpdatePayload(input);
 
@@ -283,10 +281,7 @@ export const updateBlogPost = async (id: string, input: Partial<BlogPostMutation
 };
 
 export const deleteBlogPost = async (id: string): Promise<void> => {
-  const { error } = await supabaseClient
-    .from('blog_posts')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabaseClient.from('blog_posts').delete().eq('id', id);
 
   if (error) {
     throw new Error(error.message);
@@ -306,7 +301,11 @@ export const listBlogCategories = async (): Promise<BlogCategory[]> => {
   return (data ?? []).map(mapCategory);
 };
 
-export const createBlogCategory = async (input: { title: string; slug: string; description?: string | null; }): Promise<BlogCategory> => {
+export const createBlogCategory = async (input: {
+  title: string;
+  slug: string;
+  description?: string | null;
+}): Promise<BlogCategory> => {
   const { data, error } = await supabaseClient
     .from('blog_categories')
     .insert({
@@ -324,7 +323,10 @@ export const createBlogCategory = async (input: { title: string; slug: string; d
   return mapCategory(data);
 };
 
-export const updateBlogCategory = async (id: string, input: { title?: string; slug?: string; description?: string | null; }): Promise<BlogCategory> => {
+export const updateBlogCategory = async (
+  id: string,
+  input: { title?: string; slug?: string; description?: string | null },
+): Promise<BlogCategory> => {
   const { data, error } = await supabaseClient
     .from('blog_categories')
     .update({
@@ -344,10 +346,7 @@ export const updateBlogCategory = async (id: string, input: { title?: string; sl
 };
 
 export const deleteBlogCategory = async (id: string): Promise<void> => {
-  const { error } = await supabaseClient
-    .from('blog_categories')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabaseClient.from('blog_categories').delete().eq('id', id);
 
   if (error) {
     throw new Error(error.message);
@@ -367,7 +366,11 @@ export const listBlogTags = async (): Promise<BlogTag[]> => {
   return (data ?? []).map(mapTag);
 };
 
-export const createBlogTag = async (input: { name: string; slug: string; description?: string | null; }): Promise<BlogTag> => {
+export const createBlogTag = async (input: {
+  name: string;
+  slug: string;
+  description?: string | null;
+}): Promise<BlogTag> => {
   const { data, error } = await supabaseClient
     .from('blog_tags')
     .insert({
@@ -385,7 +388,10 @@ export const createBlogTag = async (input: { name: string; slug: string; descrip
   return mapTag(data);
 };
 
-export const updateBlogTag = async (id: string, input: { name?: string; slug?: string; description?: string | null; }): Promise<BlogTag> => {
+export const updateBlogTag = async (
+  id: string,
+  input: { name?: string; slug?: string; description?: string | null },
+): Promise<BlogTag> => {
   const { data, error } = await supabaseClient
     .from('blog_tags')
     .update({
@@ -405,17 +411,17 @@ export const updateBlogTag = async (id: string, input: { name?: string; slug?: s
 };
 
 export const deleteBlogTag = async (id: string): Promise<void> => {
-  const { error } = await supabaseClient
-    .from('blog_tags')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabaseClient.from('blog_tags').delete().eq('id', id);
 
   if (error) {
     throw new Error(error.message);
   }
 };
 
-export const listBlogMedia = async (prefix: string = BLOG_MEDIA_PREFIX, bucket: string = BLOG_MEDIA_BUCKET): Promise<BlogMediaAsset[]> => {
+export const listBlogMedia = async (
+  prefix: string = BLOG_MEDIA_PREFIX,
+  bucket: string = BLOG_MEDIA_BUCKET,
+): Promise<BlogMediaAsset[]> => {
   const { data, error } = await supabaseClient.storage
     .from(bucket)
     .list(prefix, { limit: 500, offset: 0 });
@@ -449,7 +455,9 @@ export const listBlogMedia = async (prefix: string = BLOG_MEDIA_PREFIX, bucket: 
   return assets;
 };
 
-export const requestSignedUpload = async (params: SignedUploadRequest): Promise<SignedUploadResponse> => {
+export const requestSignedUpload = async (
+  params: SignedUploadRequest,
+): Promise<SignedUploadResponse> => {
   const res = await fetchWithAuth('/v1/blog/media/sign-upload', {
     method: 'POST',
     body: JSON.stringify({
@@ -462,7 +470,11 @@ export const requestSignedUpload = async (params: SignedUploadRequest): Promise<
   return data;
 };
 
-export const uploadWithSignedUrl = async (signedUrl: string, file: Blob, contentType: string): Promise<void> => {
+export const uploadWithSignedUrl = async (
+  signedUrl: string,
+  file: Blob,
+  contentType: string,
+): Promise<void> => {
   const res = await fetch(signedUrl, {
     method: 'PUT',
     headers: {
@@ -477,7 +489,10 @@ export const uploadWithSignedUrl = async (signedUrl: string, file: Blob, content
   }
 };
 
-export const deleteBlogMedia = async (path: string, bucket: string = BLOG_MEDIA_BUCKET): Promise<void> => {
+export const deleteBlogMedia = async (
+  path: string,
+  bucket: string = BLOG_MEDIA_BUCKET,
+): Promise<void> => {
   const { error } = await supabaseClient.storage.from(bucket).remove([path]);
   if (error) {
     throw new Error(error.message);

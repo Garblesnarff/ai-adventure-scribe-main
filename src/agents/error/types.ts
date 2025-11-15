@@ -3,14 +3,14 @@ export enum ErrorCategory {
   DATABASE = 'database',
   VALIDATION = 'validation',
   AGENT = 'agent',
-  SYSTEM = 'system'
+  SYSTEM = 'system',
 }
 
 export enum ErrorSeverity {
   LOW = 1,
   MEDIUM = 2,
   HIGH = 3,
-  CRITICAL = 4
+  CRITICAL = 4,
 }
 
 export interface ErrorMetadata {

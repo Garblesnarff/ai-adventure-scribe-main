@@ -5,9 +5,10 @@
  * Features: Visual roadmap, status indicators, feature lists per phase
  */
 
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, ArrowRight, Calendar } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
 import { launchPageContent } from '@/data/launchPageContent';
 
 export const RoadmapSection: React.FC = () => {
@@ -23,28 +24,28 @@ export const RoadmapSection: React.FC = () => {
           badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
           icon: 'text-amber-400',
           bg: 'from-amber-900/40 to-gray-900/40 border-amber-500/20',
-          glow: 'shadow-[0_0_20px_rgba(251,191,36,0.2)]'
+          glow: 'shadow-[0_0_20px_rgba(251,191,36,0.2)]',
         };
       case 'upcoming':
         return {
           badge: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
           icon: 'text-gray-400',
           bg: 'from-gray-900/40 to-gray-800/40 border-gray-500/20',
-          glow: ''
+          glow: '',
         };
       case 'completed':
         return {
           badge: 'bg-green-500/20 text-green-300 border-green-500/30',
           icon: 'text-green-400',
           bg: 'from-green-900/40 to-gray-900/40 border-green-500/20',
-          glow: ''
+          glow: '',
         };
       default:
         return {
           badge: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
           icon: 'text-gray-400',
           bg: 'from-gray-900/40 to-gray-800/40 border-gray-500/20',
-          glow: ''
+          glow: '',
         };
     }
   };
@@ -57,9 +58,7 @@ export const RoadmapSection: React.FC = () => {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
             {roadmap.headline}
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            {roadmap.subtitle}
-          </p>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">{roadmap.subtitle}</p>
         </div>
 
         {/* Roadmap */}
@@ -76,21 +75,23 @@ export const RoadmapSection: React.FC = () => {
                   )}
 
                   {/* Phase Card */}
-                  <div className={`relative bg-gradient-to-br ${styling.bg} rounded-2xl p-8 backdrop-blur-sm border transition-all duration-300 ${styling.glow}`}>
+                  <div
+                    className={`relative bg-gradient-to-br ${styling.bg} rounded-2xl p-8 backdrop-blur-sm border transition-all duration-300 ${styling.glow}`}
+                  >
                     <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                       {/* Phase Header */}
                       <div className="flex items-center gap-4">
                         {/* Phase Number */}
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-gray-900 text-xl font-bold ${phase.status === 'current' ? 'bg-gradient-to-br from-amber-400 to-amber-600' : 'bg-gray-600'}`}>
+                        <div
+                          className={`w-16 h-16 rounded-full flex items-center justify-center text-gray-900 text-xl font-bold ${phase.status === 'current' ? 'bg-gradient-to-br from-amber-400 to-amber-600' : 'bg-gray-600'}`}
+                        >
                           {phase.phase}
                         </div>
 
                         {/* Phase Info */}
                         <div>
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-2xl font-bold text-white">
-                              {phase.title}
-                            </h3>
+                            <h3 className="text-2xl font-bold text-white">{phase.title}</h3>
                             <Badge className={`${styling.badge} border`}>
                               {phase.status === 'current' && (
                                 <>
@@ -107,9 +108,7 @@ export const RoadmapSection: React.FC = () => {
                               )}
                             </Badge>
                           </div>
-                          <p className="text-gray-400 mb-2">
-                            {phase.description}
-                          </p>
+                          <p className="text-gray-400 mb-2">{phase.description}</p>
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Calendar className="w-4 h-4" />
                             <span>{phase.timeline}</span>
@@ -119,16 +118,12 @@ export const RoadmapSection: React.FC = () => {
 
                       {/* Features List */}
                       <div className="flex-1 lg:ml-8">
-                        <h4 className="text-lg font-semibold text-white mb-4">
-                          Key Features
-                        </h4>
+                        <h4 className="text-lg font-semibold text-white mb-4">Key Features</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {phase.features.map((feature, featureIndex) => (
                             <div key={featureIndex} className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${styling.icon}`}></div>
-                              <span className="text-gray-300 text-sm">
-                                {feature}
-                              </span>
+                              <span className="text-gray-300 text-sm">{feature}</span>
                             </div>
                           ))}
                         </div>
@@ -163,13 +158,11 @@ export const RoadmapSection: React.FC = () => {
             <div className="flex items-start gap-4">
               <Clock className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Timeline Updates
-                </h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Timeline Updates</h3>
                 <p className="text-gray-400 leading-relaxed">
-                  Our roadmap is flexible and will evolve based on beta feedback and technical requirements.
-                  Major updates will be communicated to our beta community first, with public updates
-                  shared regularly on our development blog.
+                  Our roadmap is flexible and will evolve based on beta feedback and technical
+                  requirements. Major updates will be communicated to our beta community first, with
+                  public updates shared regularly on our development blog.
                 </p>
               </div>
             </div>
@@ -177,9 +170,7 @@ export const RoadmapSection: React.FC = () => {
 
           {/* Call to Action */}
           <div className="mt-16 text-center">
-            <p className="text-gray-400 text-lg mb-4">
-              Want to influence our roadmap?
-            </p>
+            <p className="text-gray-400 text-lg mb-4">Want to influence our roadmap?</p>
             <p className="text-purple-400 font-semibold">
               Join the beta and help us prioritize features
             </p>

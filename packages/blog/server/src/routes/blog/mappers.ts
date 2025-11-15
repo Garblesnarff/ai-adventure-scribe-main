@@ -1,5 +1,6 @@
 import { createExcerpt, renderMarkdown } from '../../../utils/markdown.js';
-import {
+
+import type {
   BlogCategory,
   BlogCategoryRow,
   BlogPost,

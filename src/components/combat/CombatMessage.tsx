@@ -1,13 +1,22 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { DiceRoll } from '@/utils/diceUtils';
-import { DetectedCombatAction } from '@/utils/combatDetection';
 import { Sword, Shield, Zap, Heart, Skull, Target, Dice6 } from 'lucide-react';
+import React from 'react';
+
+import type { DetectedCombatAction } from '@/utils/combatDetection';
+import type { DiceRoll } from '@/utils/diceUtils';
+
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export interface CombatMessageData {
-  type: 'attack_roll' | 'damage_roll' | 'saving_throw' | 'skill_check' | 'initiative' | 'death_save' | 'concentration_save';
+  type:
+    | 'attack_roll'
+    | 'damage_roll'
+    | 'saving_throw'
+    | 'skill_check'
+    | 'initiative'
+    | 'death_save'
+    | 'concentration_save';
   actor: string;
   target?: string;
   roll: DiceRoll;
@@ -72,17 +81,25 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
 
   const formatDiceResult = (roll: DiceRoll) => {
     const { dieType, count, results, modifier, total } = roll;
-    
+
     // Handle advantage/disadvantage display
     if (roll.advantage || roll.disadvantage) {
       const keptResults = roll.keptResults || results;
-      const droppedResults = results.filter(r => !keptResults.includes(r));
-      
+      const droppedResults = results.filter((r) => !keptResults.includes(r));
+
       return (
         <div className="flex flex-col gap-1">
           <div className="text-sm">
-            <span className="font-medium">{count}d{dieType}</span>
-            {modifier !== 0 && <span> {modifier >= 0 ? '+' : ''}{modifier}</span>}
+            <span className="font-medium">
+              {count}d{dieType}
+            </span>
+            {modifier !== 0 && (
+              <span>
+                {' '}
+                {modifier >= 0 ? '+' : ''}
+                {modifier}
+              </span>
+            )}
             <span className="ml-2 text-xs text-muted-foreground">
               ({roll.advantage ? 'Advantage' : 'Disadvantage'})
             </span>
@@ -97,9 +114,7 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
               </span>
             )}
           </div>
-          <div className="font-bold text-lg">
-            Total: {total}
-          </div>
+          <div className="font-bold text-lg">Total: {total}</div>
         </div>
       );
     }
@@ -108,15 +123,21 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
     return (
       <div className="flex flex-col gap-1">
         <div className="text-sm">
-          <span className="font-medium">{count}d{dieType}</span>
-          {modifier !== 0 && <span> {modifier >= 0 ? '+' : ''}{modifier}</span>}
+          <span className="font-medium">
+            {count}d{dieType}
+          </span>
+          {modifier !== 0 && (
+            <span>
+              {' '}
+              {modifier >= 0 ? '+' : ''}
+              {modifier}
+            </span>
+          )}
         </div>
         <div className="text-xs text-muted-foreground">
           [{results.join(', ')}] {modifier !== 0 && `${modifier >= 0 ? '+' : ''}${modifier}`}
         </div>
-        <div className="font-bold text-lg">
-          Total: {total}
-        </div>
+        <div className="font-bold text-lg">Total: {total}</div>
       </div>
     );
   };
@@ -130,12 +151,10 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
       const success = data.roll.total >= data.dc;
       return (
         <div className="flex items-center gap-2">
-          <Badge variant={success ? "default" : "destructive"} className="text-xs">
-            {success ? "Success" : "Failure"}
+          <Badge variant={success ? 'default' : 'destructive'} className="text-xs">
+            {success ? 'Success' : 'Failure'}
           </Badge>
-          <span className="text-sm text-muted-foreground">
-            vs DC {data.dc}
-          </span>
+          <span className="text-sm text-muted-foreground">vs DC {data.dc}</span>
         </div>
       );
     }
@@ -150,8 +169,8 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
 
     if (data.success !== undefined) {
       return (
-        <Badge variant={data.success ? "default" : "destructive"} className="text-xs">
-          {data.success ? "Success" : "Failure"}
+        <Badge variant={data.success ? 'default' : 'destructive'} className="text-xs">
+          {data.success ? 'Success' : 'Failure'}
         </Badge>
       );
     }
@@ -162,7 +181,11 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
   const getBorderClass = () => {
     switch (data.type) {
       case 'attack_roll':
-        return data.critical ? 'border-l-red-500' : data.success ? 'border-l-green-500' : 'border-l-gray-500';
+        return data.critical
+          ? 'border-l-red-500'
+          : data.success
+            ? 'border-l-green-500'
+            : 'border-l-gray-500';
       case 'damage_roll':
         return 'border-l-orange-500';
       case 'saving_throw':
@@ -184,9 +207,7 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
     <Card className={`p-3 mb-2 bg-card/80 border-l-4 ${getBorderClass()}`}>
       <div className="flex items-start gap-3">
         {/* Icon and Type */}
-        <div className={`p-2 rounded-full text-white ${getTypeColor()}`}>
-          {getTypeIcon()}
-        </div>
+        <div className={`p-2 rounded-full text-white ${getTypeColor()}`}>{getTypeIcon()}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -201,26 +222,18 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
                 </>
               )}
             </div>
-            {timestamp && (
-              <span className="text-xs text-muted-foreground">{timestamp}</span>
-            )}
+            {timestamp && <span className="text-xs text-muted-foreground">{timestamp}</span>}
           </div>
 
           {/* Action Description */}
-          <div className="text-sm text-muted-foreground mb-3">
-            {data.description}
-          </div>
+          <div className="text-sm text-muted-foreground mb-3">{data.description}</div>
 
           <Separator className="my-2" />
 
           {/* Dice Roll Display */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              {formatDiceResult(data.roll)}
-            </div>
-            <div className="flex items-center">
-              {getResultText()}
-            </div>
+            <div>{formatDiceResult(data.roll)}</div>
+            <div className="flex items-center">{getResultText()}</div>
           </div>
 
           {/* Additional Action Info */}
@@ -253,7 +266,10 @@ interface InitiativeMessageProps {
   timestamp?: string;
 }
 
-export const InitiativeMessage: React.FC<InitiativeMessageProps> = ({ participants, timestamp }) => {
+export const InitiativeMessage: React.FC<InitiativeMessageProps> = ({
+  participants,
+  timestamp,
+}) => {
   const sortedParticipants = [...participants].sort((a, b) => b.initiative - a.initiative);
 
   return (
@@ -263,14 +279,15 @@ export const InitiativeMessage: React.FC<InitiativeMessageProps> = ({ participan
           <Dice6 className="w-4 h-4" />
         </div>
         <span className="font-semibold">Initiative Order</span>
-        {timestamp && (
-          <span className="text-xs text-muted-foreground ml-auto">{timestamp}</span>
-        )}
+        {timestamp && <span className="text-xs text-muted-foreground ml-auto">{timestamp}</span>}
       </div>
 
       <div className="space-y-2">
         {sortedParticipants.map((participant, index) => (
-          <div key={participant.name} className="flex items-center justify-between p-2 bg-white rounded">
+          <div
+            key={participant.name}
+            className="flex items-center justify-between p-2 bg-white rounded"
+          >
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="text-xs min-w-6 justify-center">
                 {index + 1}
@@ -279,7 +296,8 @@ export const InitiativeMessage: React.FC<InitiativeMessageProps> = ({ participan
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground">
-                [{participant.roll.results.join(', ')}] {participant.roll.modifier >= 0 ? '+' : ''}{participant.roll.modifier}
+                [{participant.roll.results.join(', ')}] {participant.roll.modifier >= 0 ? '+' : ''}
+                {participant.roll.modifier}
               </span>
               <Badge variant="secondary" className="font-mono">
                 {participant.initiative}
@@ -314,16 +332,20 @@ export const CombatSummaryMessage: React.FC<CombatSummaryProps> = ({ summary, ti
           <Shield className="w-4 h-4" />
         </div>
         <span className="font-semibold">Combat Summary</span>
-        {timestamp && (
-          <span className="text-xs text-muted-foreground ml-auto">{timestamp}</span>
-        )}
+        {timestamp && <span className="text-xs text-muted-foreground ml-auto">{timestamp}</span>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="space-y-2">
-          <div className="text-sm"><strong>Outcome:</strong> {summary.outcome}</div>
-          <div className="text-sm"><strong>Rounds:</strong> {summary.rounds}</div>
-          <div className="text-sm"><strong>Total Damage:</strong> {summary.totalDamage}</div>
+          <div className="text-sm">
+            <strong>Outcome:</strong> {summary.outcome}
+          </div>
+          <div className="text-sm">
+            <strong>Rounds:</strong> {summary.rounds}
+          </div>
+          <div className="text-sm">
+            <strong>Total Damage:</strong> {summary.totalDamage}
+          </div>
         </div>
       </div>
 
@@ -332,7 +354,10 @@ export const CombatSummaryMessage: React.FC<CombatSummaryProps> = ({ summary, ti
       <div className="space-y-2">
         <h4 className="font-medium text-sm mb-2">Participant Summary:</h4>
         {summary.participants.map((participant) => (
-          <div key={participant.name} className="flex items-center justify-between p-2 bg-white rounded text-xs">
+          <div
+            key={participant.name}
+            className="flex items-center justify-between p-2 bg-white rounded text-xs"
+          >
             <span className="font-medium">{participant.name}</span>
             <div className="flex items-center gap-4">
               <span className="text-red-600">-{participant.damageTaken} HP</span>

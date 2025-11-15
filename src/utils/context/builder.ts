@@ -1,10 +1,14 @@
-import { supabase } from '@/integrations/supabase/client';
-import { GameContext } from '@/types/game';
-import { Campaign, ThematicElements } from '@/types/campaign';
-import { Character } from '@/types/character';
-import { Memory, MemoryContext } from '@/types/memory';
 import { createDefaultContext } from './contextDefaults';
+
+import type { ThematicElements } from '@/types/campaign';
+import type { GameContext } from '@/types/game';
+import type { Memory } from '@/types/memory';
+
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { Campaign } from '@/types/campaign';
+import { Character } from '@/types/character';
+import { MemoryContext } from '@/types/memory';
 
 interface ContextParams {
   campaignId: string;
@@ -47,7 +51,7 @@ class GameContextBuilder {
   private compose(
     campaignResult: PromiseSettledResult<CampaignRow | null>,
     characterResult: PromiseSettledResult<CharacterRow | null>,
-    memoryResult: PromiseSettledResult<Memory[] | null>
+    memoryResult: PromiseSettledResult<Memory[] | null>,
   ): GameContext {
     const context = createDefaultContext();
 
@@ -72,7 +76,7 @@ class GameContextBuilder {
 
     if (characterResult.status === 'fulfilled' && characterResult.value) {
       const character = characterResult.value;
-      const stats = character.character_stats?.[0] || {} as CharacterStatsRow;
+      const stats = character.character_stats?.[0] || ({} as CharacterStatsRow);
       context.character = {
         basic: {
           name: character.name,
@@ -81,7 +85,11 @@ class GameContextBuilder {
           level: character.level || 1,
         },
         stats: {
-          health: { current: stats.current_hit_points || 10, max: stats.max_hit_points || 10, temporary: 0 },
+          health: {
+            current: stats.current_hit_points || 10,
+            max: stats.max_hit_points || 10,
+            temporary: 0,
+          },
           armorClass: stats.armor_class || 10,
           abilities: {
             strength: stats.strength || 10,
@@ -103,10 +111,10 @@ class GameContextBuilder {
     if (memoryResult.status === 'fulfilled' && memoryResult.value) {
       const memories = memoryResult.value as Memory[];
       context.memories = {
-        recent: memories.filter(m => m.type === 'event').slice(0, 5),
-        locations: memories.filter(m => m.type === 'location'),
-        characters: memories.filter(m => m.type === 'character'),
-        plot: memories.filter(m => m.type === 'plot'),
+        recent: memories.filter((m) => m.type === 'event').slice(0, 5),
+        locations: memories.filter((m) => m.type === 'location'),
+        characters: memories.filter((m) => m.type === 'character'),
+        plot: memories.filter((m) => m.type === 'plot'),
       };
     }
 

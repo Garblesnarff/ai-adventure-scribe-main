@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { supabase } from '@/integrations/supabase/client';
 
 describe('Atomic Character Creation', () => {

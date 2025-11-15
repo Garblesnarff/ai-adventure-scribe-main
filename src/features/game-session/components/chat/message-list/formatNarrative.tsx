@@ -54,9 +54,12 @@ const formatInline = (line: string): React.ReactNode[] => {
       nodes.push(line.slice(lastIndex, match.index));
     }
     nodes.push(
-      <em key={`em-${match.index}-${inner}`} className="font-medium italic text-infinite-purple-light">
+      <em
+        key={`em-${match.index}-${inner}`}
+        className="font-medium italic text-infinite-purple-light"
+      >
         {inner}
-      </em>
+      </em>,
     );
     lastIndex = match.index + fullMatch.length;
   }
@@ -69,7 +72,10 @@ const formatInline = (line: string): React.ReactNode[] => {
 };
 
 const renderBlock = (block: string, index: number): React.ReactNode => {
-  const lines = block.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const lines = block
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   if (!lines.length) {
     return null;
   }
@@ -79,16 +85,16 @@ const renderBlock = (block: string, index: number): React.ReactNode => {
     return (
       <ul key={`ul-${index}`} className="dm-list space-y-2 pl-5 list-disc">
         {lines.map((line, liIndex) => (
-          <li key={`li-${index}-${liIndex}`}>{formatInline(line.replace(BULLET_PATTERN, '').trim())}</li>
+          <li key={`li-${index}-${liIndex}`}>
+            {formatInline(line.replace(BULLET_PATTERN, '').trim())}
+          </li>
         ))}
       </ul>
     );
   }
 
   const isDialogue = lines.length === 1 && DIALOGUE_PATTERN.test(lines[0]);
-  const className = isDialogue
-    ? 'italic text-infinite-teal-light font-serif text-[16px]'
-    : '';
+  const className = isDialogue ? 'italic text-infinite-teal-light font-serif text-[16px]' : '';
 
   if (lines.length === 1) {
     return (
@@ -109,7 +115,9 @@ const renderBlock = (block: string, index: number): React.ReactNode => {
   );
 };
 
-export const formatNarrative = (text: string): { content: React.ReactNode; charCount: number; paragraphCount: number } => {
+export const formatNarrative = (
+  text: string,
+): { content: React.ReactNode; charCount: number; paragraphCount: number } => {
   const trimmed = text?.trim?.() ?? '';
 
   if (!trimmed) {

@@ -21,27 +21,27 @@ export interface ParsedDiceCommand {
  */
 export function parseDiceCommand(input: string): ParsedDiceCommand | null {
   const trimmed = input.trim();
-  
+
   // Check if it's a dice command
   const commandRegex = /^\/(?:roll|r)\s+(.+)$/i;
   const match = trimmed.match(commandRegex);
-  
+
   if (!match) {
     return null;
   }
 
   const commandContent = match[1].trim();
-  
+
   // Parse advantage/disadvantage
   let advantage = false;
   let disadvantage = false;
   let cleanContent = commandContent;
-  
+
   if (/\b(?:adv|advantage)\b/i.test(commandContent)) {
     advantage = true;
     cleanContent = cleanContent.replace(/\b(?:adv|advantage)\b/gi, '').trim();
   }
-  
+
   if (/\b(?:dis|disadvantage)\b/i.test(commandContent)) {
     disadvantage = true;
     cleanContent = cleanContent.replace(/\b(?:dis|disadvantage)\b/gi, '').trim();
@@ -58,7 +58,7 @@ export function parseDiceCommand(input: string): ParsedDiceCommand | null {
   // Parse dice formula: XdY+Z or XdY-Z or XdY
   const diceRegex = /^(\d+)d(\d+)([+-]\d+)?$/i;
   const diceMatch = cleanContent.match(diceRegex);
-  
+
   if (!diceMatch) {
     return {
       isValid: false,
@@ -68,7 +68,7 @@ export function parseDiceCommand(input: string): ParsedDiceCommand | null {
       modifier: 0,
       advantage: false,
       disadvantage: false,
-      error: `Invalid dice formula: "${cleanContent}". Use format like "1d20", "2d6+3", etc.`
+      error: `Invalid dice formula: "${cleanContent}". Use format like "1d20", "2d6+3", etc.`,
     };
   }
 
@@ -87,7 +87,7 @@ export function parseDiceCommand(input: string): ParsedDiceCommand | null {
       modifier,
       advantage: false,
       disadvantage: false,
-      error: "Number of dice must be between 1 and 100"
+      error: 'Number of dice must be between 1 and 100',
     };
   }
 
@@ -100,7 +100,7 @@ export function parseDiceCommand(input: string): ParsedDiceCommand | null {
       modifier,
       advantage: false,
       disadvantage: false,
-      error: `Invalid die type: d${dieType}. Use d4, d6, d8, d10, d12, d20, or d100`
+      error: `Invalid die type: d${dieType}. Use d4, d6, d8, d10, d12, d20, or d100`,
     };
   }
 
@@ -123,7 +123,7 @@ export function parseDiceCommand(input: string): ParsedDiceCommand | null {
     modifier,
     advantage,
     disadvantage,
-    label
+    label,
   };
 }
 
@@ -132,13 +132,13 @@ export function parseDiceCommand(input: string): ParsedDiceCommand | null {
  */
 export function getDiceCommandSuggestions(input: string): string[] {
   const trimmed = input.trim().toLowerCase();
-  
+
   if (!trimmed.startsWith('/r')) {
     return [];
   }
 
   const suggestions: string[] = [];
-  
+
   // Basic commands
   if ('/roll'.startsWith(trimmed) || '/r'.startsWith(trimmed)) {
     suggestions.push('/roll 1d20', '/roll 1d20+5', '/roll 2d6', '/roll 1d4');
@@ -152,7 +152,7 @@ export function getDiceCommandSuggestions(input: string): string[] {
       '/roll 1d20 dis "Attack with disadvantage"',
       '/roll 2d6 "Damage"',
       '/roll 1d8+3 "Longsword damage"',
-      '/roll 1d4 "Dagger damage"'
+      '/roll 1d4 "Dagger damage"',
     );
   }
 

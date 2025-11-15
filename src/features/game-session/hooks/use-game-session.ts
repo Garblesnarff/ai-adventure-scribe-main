@@ -28,26 +28,27 @@
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // SDK/library imports
- // ============================
+// ============================
+// SDK/library imports
+// ============================
 import { useState, useEffect, useCallback, useRef } from 'react';
 
- // ============================
- // External integrations
- // ============================
+// ============================
+// External integrations
+// ============================
+import type { GameSession } from '@/types/game';
+
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
- // ============================
- // Project hooks
- // ============================
-import { useToast } from '@/hooks/use-toast';
-import { useTelemetry } from '@/hooks/use-telemetry';
+// ============================
+// Project hooks
+// ============================
 
- // ============================
- // Project types
- // ============================
-import { GameSession } from '@/types/game';
+// ============================
+// Project types
+// ============================
 import logger from '@/lib/logger';
 
 const SESSION_EXPIRY_TIME = 1000 * 60 * 60 * 24; // 24 hours (was 1 hour)
@@ -93,7 +94,9 @@ export interface ExtendedGameSession extends GameSession {
 
 export const useGameSession = (campaignId?: string, characterId?: string) => {
   const [sessionData, setSessionData] = useState<ExtendedGameSession | null>(null);
-  const [sessionState, setSessionState] = useState<'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle'>('idle');
+  const [sessionState, setSessionState] = useState<
+    'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle'
+  >('idle');
   const { toast } = useToast();
 
   const currentSessionId = sessionData?.id || null;
@@ -139,7 +142,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     // Guard: Validate session data before setting
     if (!isValidSession(data)) {
       logger.warn('⚠️ [safeSetSessionData] Attempted to set invalid session data', {
-        providedData: data
+        providedData: data,
       });
       return;
     }
@@ -202,64 +205,66 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
    * @param {string} charId - Character ID
    * @returns {Promise<string | null>} The new session ID or null if failed
    */
-  const createGameSession = useCallback(async (
-    campId: string,
-    charId: string
-  ): Promise<string | null> => {
-    // Guard: Validate required parameters
-    if (!campId || !charId) {
-      logger.warn('⚠️ [createGameSession] Missing required parameters', { campId, charId });
-      toastRef.current({
-        title: "Error",
-        description: "Campaign or Character ID missing for session creation.",
-        variant: "destructive"
-      });
-      if (mountedRef.current) {
-        setSessionState('error');
+  const createGameSession = useCallback(
+    async (campId: string, charId: string): Promise<string | null> => {
+      // Guard: Validate required parameters
+      if (!campId || !charId) {
+        logger.warn('⚠️ [createGameSession] Missing required parameters', { campId, charId });
+        toastRef.current({
+          title: 'Error',
+          description: 'Campaign or Character ID missing for session creation.',
+          variant: 'destructive',
+        });
+        if (mountedRef.current) {
+          setSessionState('error');
+        }
+        return null;
       }
-      return null;
-    }
 
-    if (mountedRef.current) {
-      setSessionState('loading');
-    }
+      if (mountedRef.current) {
+        setSessionState('loading');
+      }
 
-    const { data, error } = await supabase
-      .from('game_sessions')
-      .insert([{
-        session_number: 1,
-        status: 'active',
-        campaign_id: campId,
-        character_id: charId,
-        turn_count: 0,
-        current_scene_description: "The adventure begins...",
-        session_notes: ""
-      }])
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .insert([
+          {
+            session_number: 1,
+            status: 'active',
+            campaign_id: campId,
+            character_id: charId,
+            turn_count: 0,
+            current_scene_description: 'The adventure begins...',
+            session_notes: '',
+          },
+        ])
+        .select()
+        .single();
 
-    // Guard: Check if component unmounted during async operation
-    if (!mountedRef.current) {
-      logger.warn('⚠️ [createGameSession] Component unmounted during session creation');
-      return null;
-    }
+      // Guard: Check if component unmounted during async operation
+      if (!mountedRef.current) {
+        logger.warn('⚠️ [createGameSession] Component unmounted during session creation');
+        return null;
+      }
 
-    if (error) {
-      logger.error('[createGameSession] Error creating game session:', error);
-      setSessionState('error');
-      toastRef.current({
-        title: "Error",
-        description: "Failed to create game session",
-        variant: "destructive"
-      });
-      return null;
-    }
+      if (error) {
+        logger.error('[createGameSession] Error creating game session:', error);
+        setSessionState('error');
+        toastRef.current({
+          title: 'Error',
+          description: 'Failed to create game session',
+          variant: 'destructive',
+        });
+        return null;
+      }
 
-    setSessionData(data as ExtendedGameSession);
-    setSessionState('active');
-    logger.info('✅ [createGameSession] Session created successfully:', data.id);
-    return data.id;
-  }, []); // Stable dependencies - uses refs and parameters instead
+      setSessionData(data as ExtendedGameSession);
+      setSessionState('active');
+      logger.info('✅ [createGameSession] Session created successfully:', data.id);
+      return data.id;
+    },
+    [],
+  ); // Stable dependencies - uses refs and parameters instead
 
   /**
    * Generates a summary string for the session based on dialogue history.
@@ -279,7 +284,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     // Guard: Validate sessionId parameter
     if (!sessionId) {
       logger.warn('⚠️ [generateSessionSummary] Called without valid sessionId');
-      return "No activity recorded in this session";
+      return 'No activity recorded in this session';
     }
 
     try {
@@ -291,23 +296,23 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
       if (error) {
         logger.error('[generateSessionSummary] Error fetching dialogue history:', error);
-        return "No activity recorded in this session";
+        return 'No activity recorded in this session';
       }
 
       if (!messages?.length) {
         logger.info('[generateSessionSummary] No messages found for session:', sessionId);
-        return "No activity recorded in this session";
+        return 'No activity recorded in this session';
       }
 
       // Simple summary generation - can be enhanced with AI later
       const messageCount = messages.length;
-      const playerActions = messages.filter(m => m.speaker_type === 'player').length;
-      const dmResponses = messages.filter(m => m.speaker_type === 'dm').length;
+      const playerActions = messages.filter((m) => m.speaker_type === 'player').length;
+      const dmResponses = messages.filter((m) => m.speaker_type === 'dm').length;
 
       return `Session completed with ${messageCount} total interactions: ${playerActions} player actions and ${dmResponses} DM responses.`;
     } catch (err) {
       logger.error('[generateSessionSummary] Error generating session summary:', err);
-      return "No activity recorded in this session";
+      return 'No activity recorded in this session';
     }
   };
 
@@ -338,14 +343,15 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         sessionId: session.id,
         startTime: new Date(startTime).toISOString(),
         currentTime: new Date(currentTime).toISOString(),
-        elapsedHours: Math.round(elapsed / (1000 * 60 * 60) * 100) / 100,
-        expiryHours: SESSION_EXPIRY_TIME / (1000 * 60 * 60)
+        elapsedHours: Math.round((elapsed / (1000 * 60 * 60)) * 100) / 100,
+        expiryHours: SESSION_EXPIRY_TIME / (1000 * 60 * 60),
       });
     } else {
       logger.info(`✅ Session ${session.id} still active:`, {
         sessionId: session.id,
-        elapsedHours: Math.round(elapsed / (1000 * 60 * 60) * 100) / 100,
-        remainingHours: Math.round((SESSION_EXPIRY_TIME - elapsed) / (1000 * 60 * 60) * 100) / 100
+        elapsedHours: Math.round((elapsed / (1000 * 60 * 60)) * 100) / 100,
+        remainingHours:
+          Math.round(((SESSION_EXPIRY_TIME - elapsed) / (1000 * 60 * 60)) * 100) / 100,
       });
     }
 
@@ -371,7 +377,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     // Guard: Validate sessionId parameter
     if (!sessionIdToClean) {
       logger.warn('⚠️ [cleanupSession] Called without valid sessionId');
-      return "No activity recorded in this session";
+      return 'No activity recorded in this session';
     }
 
     if (mountedRef.current) {
@@ -391,7 +397,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       .update({
         end_time: new Date().toISOString(),
         summary,
-        status: 'completed' as const
+        status: 'completed' as const,
       })
       .eq('id', sessionIdToClean);
 
@@ -404,14 +410,14 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     if (error) {
       logger.error('[cleanupSession] Error cleaning up session:', error);
       toastRef.current({
-        title: "Error",
-        description: "Failed to cleanup session properly",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to cleanup session properly',
+        variant: 'destructive',
       });
     } else {
       setSessionState('expired');
       // Use functional update to get current value
-      setSessionData(prev => {
+      setSessionData((prev) => {
         if (prev && prev.id === sessionIdToClean) {
           return { ...prev, status: 'completed', end_time: new Date().toISOString(), summary };
         }
@@ -421,7 +427,6 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     }
     return summary;
   }, []); // Stable dependencies - uses refs and parameters
-
 
   /**
    * Updates game session state in both local state and Supabase.
@@ -445,7 +450,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     // Guard: Validate newState parameter
     if (!newState || typeof newState !== 'object') {
       logger.warn('⚠️ [updateGameSessionState] Invalid newState parameter', {
-        providedValue: newState
+        providedValue: newState,
       });
       return;
     }
@@ -453,7 +458,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     // Guard: Prevent updating critical immutable properties
     if ('id' in newState) {
       logger.warn('⚠️ [updateGameSessionState] Cannot update session id', {
-        attemptedUpdate: newState
+        attemptedUpdate: newState,
       });
       return;
     }
@@ -468,7 +473,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     let sessId: string | null = null;
     let currentState: 'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle' = 'idle';
 
-    setSessionData(prev => {
+    setSessionData((prev) => {
       // Guard: Validate session before optimistic update
       if (prev && isValidSession(prev)) {
         sessId = prev.id;
@@ -479,7 +484,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     });
 
     // Capture current session state for validation
-    setSessionState(prev => {
+    setSessionState((prev) => {
       currentState = prev;
       return prev;
     });
@@ -488,7 +493,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     if (!sessId) {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - session not initialized', {
         attemptedUpdate: newState,
-        currentSessionState: currentState
+        currentSessionState: currentState,
       });
       return;
     }
@@ -496,14 +501,14 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     // Guard: Prevent updates during inappropriate states
     if (currentState === 'loading') {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - session is loading', {
-        attemptedUpdate: newState
+        attemptedUpdate: newState,
       });
       return;
     }
 
     if (currentState === 'error') {
       logger.warn('⚠️ [updateGameSessionState] Cannot update - session is in error state', {
-        attemptedUpdate: newState
+        attemptedUpdate: newState,
       });
       return;
     }
@@ -530,9 +535,9 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     if (error) {
       logger.error('[updateGameSessionState] Error updating game session state:', error);
       toastRef.current({
-        title: "Error",
-        description: "Failed to save game state. Changes may be lost.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to save game state. Changes may be lost.',
+        variant: 'destructive',
       });
       // Potentially revert optimistic update here or refetch
     } else if (data) {
@@ -540,7 +545,6 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       logger.info('✅ [updateGameSessionState] Session updated successfully:', sessId);
     }
   }, []); // Stable dependencies - uses refs and functional updates
-
 
   /**
    * Initialize and maintain session
@@ -580,7 +584,12 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
     // Acquire lock: Mark initialization as in progress IMMEDIATELY after guards
     initializingRef.current = true;
-    logger.info('🔓 [Session Init] Acquired lock - campaignId:', campaignId, 'characterId:', characterId);
+    logger.info(
+      '🔓 [Session Init] Acquired lock - campaignId:',
+      campaignId,
+      'characterId:',
+      characterId,
+    );
 
     // Create new AbortController for this initialization cycle
     // This allows us to cancel the operation if the component unmounts
@@ -618,7 +627,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         }
 
         if (existingSessionError) {
-          logger.error("[Session Init] Error fetching existing sessions:", existingSessionError);
+          logger.error('[Session Init] Error fetching existing sessions:', existingSessionError);
           // If we can't fetch sessions, create a new one
           const newSessionId = await createGameSession(campaignId, characterId);
           if (newSessionId && mountedRef.current) {
@@ -628,12 +637,17 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         }
 
         // Look for an active session first
-        let sessionToResume = existingSessions?.find(s => s.status === 'active') as ExtendedGameSession | undefined;
+        let sessionToResume = existingSessions?.find((s) => s.status === 'active') as
+          | ExtendedGameSession
+          | undefined;
 
         // If we have an active session, check if it's expired
         if (sessionToResume) {
           if (isSessionExpired(sessionToResume)) {
-            logger.info('[Session Init] Found active session but expired, cleaning up:', sessionToResume.id);
+            logger.info(
+              '[Session Init] Found active session but expired, cleaning up:',
+              sessionToResume.id,
+            );
             await cleanupSession(sessionToResume.id);
             // Check abort status after async cleanup operation
             if (abortSignal.aborted || !mountedRef.current) {
@@ -654,26 +668,31 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
         // If no active session, look for the most recent completed session
         // and create a new session based on its state
-        const lastCompletedSession = existingSessions?.find(s => s.status === 'completed');
+        const lastCompletedSession = existingSessions?.find((s) => s.status === 'completed');
 
         if (lastCompletedSession) {
-          logger.info('[Session Init] Creating continuation from previous:', lastCompletedSession.id);
+          logger.info(
+            '[Session Init] Creating continuation from previous:',
+            lastCompletedSession.id,
+          );
           // Create a new session but maintain continuity from the last one
-          const sessionNumber = Math.max(
-            ...(existingSessions?.map(s => s.session_number || 1) || [1])
-          ) + 1;
+          const sessionNumber =
+            Math.max(...(existingSessions?.map((s) => s.session_number || 1) || [1])) + 1;
 
           const { data, error } = await supabase
             .from('game_sessions')
-            .insert([{
-              session_number: sessionNumber,
-              status: 'active',
-              campaign_id: campaignId,
-              character_id: characterId,
-              turn_count: 0,
-              current_scene_description: lastCompletedSession.current_scene_description || "Continuing your adventure...",
-              session_notes: `Continuing from Session ${lastCompletedSession.session_number || 1}`
-            }])
+            .insert([
+              {
+                session_number: sessionNumber,
+                status: 'active',
+                campaign_id: campaignId,
+                character_id: characterId,
+                turn_count: 0,
+                current_scene_description:
+                  lastCompletedSession.current_scene_description || 'Continuing your adventure...',
+                session_notes: `Continuing from Session ${lastCompletedSession.session_number || 1}`,
+              },
+            ])
             .select()
             .single();
 
@@ -683,9 +702,9 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
             logger.error('[Session Init] Error creating continuation session:', error);
             setSessionState('error');
             toastRef.current({
-              title: "Error",
-              description: "Failed to create game session",
-              variant: "destructive"
+              title: 'Error',
+              description: 'Failed to create game session',
+              variant: 'destructive',
             });
             return;
           }
@@ -703,15 +722,14 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         if (newSessionId && mountedRef.current) {
           sessionInitializedRef.current = true; // Mark as successfully initialized
         }
-
       } catch (error) {
         logger.error('[Session Init] Error in session initialization:', error);
         if (mountedRef.current) {
           setSessionState('error');
           toastRef.current({
-            title: "Error",
-            description: "Failed to initialize game session",
-            variant: "destructive"
+            title: 'Error',
+            description: 'Failed to initialize game session',
+            variant: 'destructive',
           });
         }
         // On error, release lock to allow retry
@@ -742,7 +760,6 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     };
   }, [campaignId, characterId, createGameSession, cleanupSession]); // Stable dependencies now
 
-
   // Periodic cleanup check with stable references
   // This effect runs every CLEANUP_INTERVAL (15 minutes) to check for expired sessions
   useEffect(() => {
@@ -754,7 +771,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       }
 
       // Use functional state read to avoid stale closure
-      setSessionData(currentSession => {
+      setSessionData((currentSession) => {
         // Guard: Validate session exists with required properties
         if (!isValidSession(currentSession)) {
           return currentSession;
@@ -766,7 +783,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         }
 
         // Guard: Additional session state validation - must be in 'active' state
-        setSessionState(state => {
+        setSessionState((state) => {
           if (state !== 'active') {
             logger.info('[Periodic Cleanup] Session not in active state, skipping:', state);
             return state;
@@ -778,7 +795,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
         if (isSessionExpired(currentSession)) {
           logger.info('[Periodic Cleanup] Session expired, cleaning up:', currentSession.id);
           // Don't await here to avoid blocking the interval
-          cleanupSession(currentSession.id).catch(err => {
+          cleanupSession(currentSession.id).catch((err) => {
             logger.error('[Periodic Cleanup] Error in cleanup:', err);
           });
         }
@@ -801,6 +818,6 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     sessionState,
     updateGameSessionState,
     createGameSession, // Expose create if manual creation is ever needed
-    isSessionReady // Helper to check if session is ready for operations
+    isSessionReady, // Helper to check if session is ready for operations
   };
 };

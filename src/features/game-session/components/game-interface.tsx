@@ -1,23 +1,23 @@
 /**
  * Game Interface Component
- * 
+ *
  * Main container for the gameplay interface.
  * Initializes the game session, provides message and memory context,
  * and renders the core game content.
- * 
+ *
  * Dependencies:
  * - React
  * - useGameSession hook (src/hooks/use-game-session.ts)
  * - MessageProvider (src/contexts/MessageContext.tsx)
  * - MemoryProvider (src/contexts/MemoryContext.tsx)
  * - GameContent component (src/components/game/GameContent.tsx)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
- // ============================
- // SDK/library imports
- // ============================
+// ============================
+// SDK/library imports
+// ============================
 import React from 'react';
 
 // Context providers and Feature components remain the same
@@ -39,18 +39,17 @@ import React from 'react';
 
 // Let's adjust GameContent to take over provider setup based on its own session.
 
- // ============================
- // Feature components
- // ============================
+// ============================
+// Feature components
+// ============================
 import GameContent from './game/GameContent';
-
 
 /**
  * Main gameplay interface component.
- * 
+ *
  * Renders the core game content. Session and context providers
  * will be handled within or by GameContent.
- * 
+ *
  * @returns {JSX.Element} The gameplay interface UI
  */
 export const GameInterface: React.FC = () => {

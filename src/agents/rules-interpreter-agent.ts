@@ -1,9 +1,9 @@
 /**
  * Rules Interpreter Agent
- * 
+ *
  * Interprets and enforces game rules.
  * Validates player actions, processes rule results, and communicates with other agents.
- * 
+ *
  * Dependencies:
  * - Agent interfaces and types (src/agents/types.ts)
  * - Edge function caller (src/utils/edgeFunctionHandler.ts)
@@ -12,7 +12,7 @@
  * - Error handling services (src/agents/error/services/ErrorHandlingService.ts)
  * - Validation services (src/agents/rules/services/ValidationService.ts)
  * - Validation results processor (src/agents/rules/services/ValidationResultsProcessor.ts)
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -28,8 +28,8 @@ import { MessagePriority, MessageType } from './messaging/types';
 // Services
 import { AgentMessagingService } from './messaging/agent-messaging-service';
 import { ErrorHandlingService } from './error/services/error-handling-service'; // Assuming kebab-case
-import { ValidationResultsProcessor } from './rules/services/validation-results-processor';
-import { ValidationService } from './rules/services/validation-service';
+import { ValidationResultsProcessor } from './rules/services/ValidationResultsProcessor';
+import { ValidationService } from './rules/services/ValidationService';
 import { validateEncounterSpec } from './rules/validators/encounter-validator';
 import { EncounterSpec, MonsterDef } from '@/types/encounters';
 
@@ -55,7 +55,8 @@ export class RulesInterpreterAgent implements Agent {
     this.id = 'rules_interpreter_1';
     this.role = 'Rules Interpreter';
     this.goal = 'Ensure accurate interpretation and application of fantasy RPG rules';
-    this.backstory = 'An expert in fantasy tabletop RPG rules with comprehensive knowledge of game mechanics';
+    this.backstory =
+      'An expert in fantasy tabletop RPG rules with comprehensive knowledge of game mechanics';
     this.verbose = true;
     this.allowDelegation = true;
     this.messagingService = AgentMessagingService.getInstance();
@@ -65,7 +66,7 @@ export class RulesInterpreterAgent implements Agent {
 
   /**
    * Executes a rules interpretation task, validates rules, processes results, and communicates with other agents.
-   * 
+   *
    * @param {AgentTask} task - The task to execute
    * @returns {Promise<AgentResult>} The result of the task execution
    */
@@ -75,8 +76,9 @@ export class RulesInterpreterAgent implements Agent {
     try {
       logger.info(`Rules Interpreter executing task: ${task.description}`);
 
-      const ruleValidations = task.context?.ruleType ? 
-        await this.validationService.validateRules(task.context) : null;
+      const ruleValidations = task.context?.ruleType
+        ? await this.validationService.validateRules(task.context)
+        : null;
 
       // EncounterSpec validation path (internal use)
       let encounterValidation: any = null;
@@ -99,43 +101,45 @@ export class RulesInterpreterAgent implements Agent {
       const processedResults = await this.resultsProcessor.processResults(ruleValidations);
 
       await errorHandler.handleOperation(
-        async () => this.messagingService.sendMessage(
-          this.id,
-          'dm_agent_1',
-          MessageType.TASK,
-          {
-            taskDescription: task.description,
-          validationResults: processedResults,
-          encounterValidation
-          },
-          MessagePriority.HIGH
-        ),
+        async () =>
+          this.messagingService.sendMessage(
+            this.id,
+            'dm_agent_1',
+            MessageType.TASK,
+            {
+              taskDescription: task.description,
+              validationResults: processedResults,
+              encounterValidation,
+            },
+            MessagePriority.HIGH,
+          ),
         {
           category: ErrorCategory.AGENT,
           context: 'RulesInterpreterAgent.executeTask.sendMessage',
-          severity: ErrorSeverity.MEDIUM
-        }
+          severity: ErrorSeverity.MEDIUM,
+        },
       );
 
       const data = await errorHandler.handleOperation(
-        async () => callEdgeFunction('rules-interpreter-execute', {
-          task,
-          agentContext: {
-            role: this.role,
-            goal: this.goal,
-            backstory: this.backstory,
-            validationResults: processedResults
-          }
-        }),
+        async () =>
+          callEdgeFunction('rules-interpreter-execute', {
+            task,
+            agentContext: {
+              role: this.role,
+              goal: this.goal,
+              backstory: this.backstory,
+              validationResults: processedResults,
+            },
+          }),
         {
           category: ErrorCategory.NETWORK,
           context: 'RulesInterpreterAgent.executeTask.edgeFunction',
           severity: ErrorSeverity.HIGH,
           retryConfig: {
             maxRetries: 3,
-            initialDelay: 1000
-          }
-        }
+            initialDelay: 1000,
+          },
+        },
       );
 
       if (!data) throw new Error('Failed to execute task');
@@ -146,14 +150,14 @@ export class RulesInterpreterAgent implements Agent {
         data: {
           ...data,
           validationResults: processedResults,
-          encounterValidation
-        }
+          encounterValidation,
+        },
       };
     } catch (error) {
       logger.error('Error executing Rules Interpreter task:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to execute task'
+        message: error instanceof Error ? error.message : 'Failed to execute task',
       };
     }
   }

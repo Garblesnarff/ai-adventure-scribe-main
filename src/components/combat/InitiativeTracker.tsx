@@ -7,26 +7,18 @@
  * Designed to feel like a physical initiative tracker at the table.
  */
 
+import { Sword, Shield, Heart, Clock, UserX, Skull, ChevronRight, Dices, Plus } from 'lucide-react';
 import React from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
+
+import type { CombatParticipant, ConditionName } from '@/types/combat';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Sword, 
-  Shield, 
-  Heart, 
-  Clock, 
-  UserX, 
-  Skull,
-  ChevronRight,
-  Dices,
-  Plus
-} from 'lucide-react';
 import { useCombat } from '@/contexts/CombatContext';
-import { CombatParticipant, ConditionName } from '@/types/combat';
 import { cn } from '@/lib/utils';
 
 // ===========================
@@ -69,9 +61,10 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
   roundNumber,
   onSelectParticipant,
 }) => {
-  const hpPercent = participant.maxHitPoints > 0
-    ? (participant.currentHitPoints / participant.maxHitPoints) * 100
-    : 0;
+  const hpPercent =
+    participant.maxHitPoints > 0
+      ? (participant.currentHitPoints / participant.maxHitPoints) * 100
+      : 0;
   const isDead = participant.currentHitPoints === 0 && participant.deathSaves.failures >= 3;
   const isUnconscious = participant.currentHitPoints === 0 && participant.deathSaves.failures < 3;
   const needsDeathSave = participant.currentHitPoints === 0 && !isDead;
@@ -96,24 +89,22 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
     isCurrentTurn
       ? 'border-amber-300/70 bg-amber-50 dark:bg-amber-900/30 ring-1 ring-amber-200'
       : 'border-border bg-card hover:bg-muted/60',
-    isDead && 'opacity-60 grayscale'
+    isDead && 'opacity-60 grayscale',
   );
 
   return (
     <div className={rowClasses} onClick={() => onSelectParticipant?.(participant.id)}>
       {/* Turn Indicator & Initiative */}
       <div className="flex items-center space-x-3">
-        {isCurrentTurn && (
-          <ChevronRight className="w-5 h-5 text-amber-600 animate-pulse" />
-        )}
-        
+        {isCurrentTurn && <ChevronRight className="w-5 h-5 text-amber-600 animate-pulse" />}
+
         <div className="flex flex-col items-center">
           <div className="text-lg font-bold text-gray-700 min-w-[2rem] text-center">
             {participant.initiative}
           </div>
           <div className="text-xs text-gray-500">init</div>
         </div>
-        
+
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
           {getParticipantTypeIcon()}
         </div>
@@ -122,25 +113,32 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
       {/* Participant Info */}
       <div className="flex-1 ml-4">
         <div className="flex items-center gap-2">
-          <h4 className={`font-semibold ${isDead ? 'line-through' : ''}`}>
-            {participant.name}
-          </h4>
-          
+          <h4 className={`font-semibold ${isDead ? 'line-through' : ''}`}>{participant.name}</h4>
+
           {/* Action Status Indicators */}
           {isCurrentTurn && (
             <div className="flex flex-wrap gap-1">
               {participant.actionTaken && (
-                <Badge variant="secondary" className="text-[0.65rem] font-medium uppercase tracking-wide bg-amber-100 text-amber-800">
+                <Badge
+                  variant="secondary"
+                  className="text-[0.65rem] font-medium uppercase tracking-wide bg-amber-100 text-amber-800"
+                >
                   Action
                 </Badge>
               )}
               {participant.bonusActionTaken && (
-                <Badge variant="secondary" className="text-[0.65rem] font-medium uppercase tracking-wide bg-orange-100 text-orange-800">
+                <Badge
+                  variant="secondary"
+                  className="text-[0.65rem] font-medium uppercase tracking-wide bg-orange-100 text-orange-800"
+                >
                   Bonus
                 </Badge>
               )}
               {participant.reactionTaken && (
-                <Badge variant="secondary" className="text-[0.65rem] font-medium uppercase tracking-wide bg-yellow-100 text-yellow-800">
+                <Badge
+                  variant="secondary"
+                  className="text-[0.65rem] font-medium uppercase tracking-wide bg-yellow-100 text-yellow-800"
+                >
                   Reaction
                 </Badge>
               )}
@@ -150,16 +148,11 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
 
         {/* HP Bar */}
         <div className="mt-2 flex items-center gap-2">
-          <Progress 
-            value={hpPercent} 
-            className="h-2 flex-1"
-          />
+          <Progress value={hpPercent} className="h-2 flex-1" />
           <span className="min-w-[4rem] text-right text-sm font-medium">
             {participant.currentHitPoints}/{participant.maxHitPoints}
             {participant.temporaryHitPoints > 0 && (
-              <span className="text-blue-500">
-                +{participant.temporaryHitPoints}
-              </span>
+              <span className="text-blue-500">+{participant.temporaryHitPoints}</span>
             )}
           </span>
         </div>
@@ -169,22 +162,24 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
           <div className="flex items-center space-x-1 mt-1">
             <span className="text-xs text-red-600 font-medium">Death Saves:</span>
             <div className="flex space-x-1">
-              {[1, 2, 3].map(i => (
-                <div key={`success-${i}`} className={`w-2 h-2 rounded-full ${
-                  i <= participant.deathSaves.successes 
-                    ? 'bg-green-500' 
-                    : 'bg-gray-300'
-                }`} />
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={`success-${i}`}
+                  className={`w-2 h-2 rounded-full ${
+                    i <= participant.deathSaves.successes ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                />
               ))}
             </div>
             <span className="text-xs mx-1">/</span>
             <div className="flex space-x-1">
-              {[1, 2, 3].map(i => (
-                <div key={`failure-${i}`} className={`w-2 h-2 rounded-full ${
-                  i <= participant.deathSaves.failures 
-                    ? 'bg-red-500' 
-                    : 'bg-gray-300'
-                }`} />
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={`failure-${i}`}
+                  className={`w-2 h-2 rounded-full ${
+                    i <= participant.deathSaves.failures ? 'bg-red-500' : 'bg-gray-300'
+                  }`}
+                />
               ))}
             </div>
           </div>
@@ -197,16 +192,16 @@ const ParticipantRow: React.FC<ParticipantRowProps> = ({
           <Shield className="h-4 w-4 text-muted-foreground" />
           <span>AC {participant.armorClass}</span>
         </div>
-        
+
         {/* Condition Icons */}
         {participant.conditions.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {participant.conditions.map((condition, index) => {
               const ConditionIcon = CONDITION_ICONS[condition.name]?.icon || UserX;
               const colorClass = CONDITION_ICONS[condition.name]?.color || 'bg-gray-500';
-              
+
               return (
-                <div 
+                <div
                   key={index}
                   className={`rounded-full p-1 text-white ${colorClass}`}
                   title={`${condition.name}${condition.duration > 0 ? ` (${condition.duration} rounds)` : ''}`}
@@ -260,9 +255,7 @@ const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({
   const elapsedSeconds = activeEncounter.roundsElapsed * 6;
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
-  const timeDisplay = minutes > 0 
-    ? `${minutes}m ${seconds}s` 
-    : `${seconds} seconds`;
+  const timeDisplay = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds} seconds`;
 
   return (
     <Card className={cn('flex h-full w-full flex-col', className)}>
@@ -299,11 +292,7 @@ const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({
             <Dices className="mr-2 h-4 w-4" />
             Roll Initiative
           </Button>
-          <Button
-            size="sm"
-            onClick={nextTurn}
-            className="flex-1 min-w-[140px]"
-          >
+          <Button size="sm" onClick={nextTurn} className="flex-1 min-w-[140px]">
             <ChevronRight className="mr-2 h-4 w-4" />
             Next Turn
           </Button>

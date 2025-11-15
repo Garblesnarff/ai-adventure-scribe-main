@@ -1,7 +1,8 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { GameSidePanel } from '@/components/game/MemoryPanel';
 import * as AnalyticsModule from '@/services/analytics';
 
@@ -27,22 +28,27 @@ describe('Campaign hub tab analytics', () => {
   });
 
   it('fires analytics on tab switch to Memories', async () => {
-    const spy = vi.spyOn(AnalyticsModule.analytics, 'campaignTabViewed').mockImplementation(() => {});
+    const spy = vi
+      .spyOn(AnalyticsModule.analytics, 'campaignTabViewed')
+      .mockImplementation(() => {});
 
     render(
-      <MemoryRouter initialEntries={["/app/game/cmp-123"]}>
+      <MemoryRouter initialEntries={['/app/game/cmp-123']}>
         <Routes>
-          <Route path="/app/game/:id" element={
-            <GameSidePanel
-              sessionData={{ session_notes: '' } as any}
-              updateGameSessionState={async () => {}}
-              combatMode={false}
-              isCollapsed={false}
-              onToggle={() => {}}
-            />
-          } />
+          <Route
+            path="/app/game/:id"
+            element={
+              <GameSidePanel
+                sessionData={{ session_notes: '' } as any}
+                updateGameSessionState={async () => {}}
+                combatMode={false}
+                isCollapsed={false}
+                onToggle={() => {}}
+              />
+            }
+          />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Find any button that, when clicked, switches header to Memories

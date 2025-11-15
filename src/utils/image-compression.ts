@@ -1,14 +1,14 @@
 export async function compressImage(
   file: File,
   maxSizeMB: number = 1,
-  maxWidthOrHeight: number = 1920
+  maxWidthOrHeight: number = 1920,
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const img = new Image();
-      
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -55,7 +55,7 @@ export async function compressImage(
               }
             },
             file.type,
-            q
+            q,
           );
         };
 
@@ -80,14 +80,14 @@ export async function compressImage(
 export async function convertToWebP(
   file: File,
   quality: number = 0.85,
-  maxWidthOrHeight: number = 1920
+  maxWidthOrHeight: number = 1920,
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const img = new Image();
-      
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -125,7 +125,7 @@ export async function convertToWebP(
             resolve(blob);
           },
           'image/webp',
-          quality
+          quality,
         );
       };
 

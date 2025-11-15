@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Character, CharacterClass } from '@/types/character';
-import { 
-  getProficiencyBonus,
-  getAllClassFeaturesUpToLevel,
-  getMulticlassProficiencies 
-} from '@/data/levelProgression';
-import { useMulticlassing } from '@/hooks/use-multiclassing';
-import { 
-  Users, 
-  Star, 
-  Shield, 
-  Sword, 
+import {
+  Users,
+  Star,
+  Shield,
+  Sword,
   BookOpen,
   ChevronDown,
   ChevronRight,
   Plus,
-  ArrowUp
+  ArrowUp,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import type { Character, CharacterClass } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import {
+  getProficiencyBonus,
+  getAllClassFeaturesUpToLevel,
+  getMulticlassProficiencies,
+} from '@/data/levelProgression';
+import { useMulticlassing } from '@/hooks/use-multiclassing';
 import logger from '@/lib/logger';
 
 interface MulticlassManagerProps {
@@ -41,7 +43,11 @@ interface ClassLevel {
  * MulticlassManager component for managing multiclass characters
  * Shows class levels, combined features, and progression tracking
  */
-const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpdate, availableClasses = [] }) => {
+const MulticlassManager: React.FC<MulticlassManagerProps> = ({
+  character,
+  onUpdate,
+  availableClasses = [],
+}) => {
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
   const {
     isProcessing,
@@ -53,24 +59,26 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
     getHitPoints,
     getSpellcasting,
     isMulticlassed,
-    getTotalLevel
+    getTotalLevel,
   } = useMulticlassing(character, onUpdate);
 
   // Prepare class levels data
-  const classLevels: ClassLevel[] = character.classLevels 
-    ? character.classLevels.map(cls => ({
+  const classLevels: ClassLevel[] = character.classLevels
+    ? character.classLevels.map((cls) => ({
         classId: cls.classId,
         className: cls.className,
         level: cls.level,
-        hitDie: cls.hitDie
+        hitDie: cls.hitDie,
       }))
-    : character.class 
-      ? [{
-          classId: character.class.id,
-          className: character.class.name,
-          level: character.level || 1,
-          hitDie: character.class.hitDie
-        }]
+    : character.class
+      ? [
+          {
+            classId: character.class.id,
+            className: character.class.name,
+            level: character.level || 1,
+            hitDie: character.class.hitDie,
+          },
+        ]
       : [];
 
   const totalLevel = getTotalLevel();
@@ -146,7 +154,11 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
             <h4 className="font-medium mb-3">Class Levels</h4>
             <div className="flex flex-wrap gap-2">
               {classLevels.map((cls) => (
-                <Badge key={cls.classId} variant="outline" className="px-3 py-1 flex items-center gap-1">
+                <Badge
+                  key={cls.classId}
+                  variant="outline"
+                  className="px-3 py-1 flex items-center gap-1"
+                >
                   {cls.className} {cls.level}
                   <Button
                     size="sm"
@@ -179,7 +191,7 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {availableClasses
-                .filter(cls => !classLevels.some(existing => existing.className === cls.name))
+                .filter((cls) => !classLevels.some((existing) => existing.className === cls.name))
                 .map((cls) => (
                   <div
                     key={cls.id}
@@ -187,16 +199,15 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
                     onClick={() => handleAddClass(cls)}
                   >
                     <div className="font-medium capitalize">{cls.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {cls.hitDie}-sided hit die
-                    </div>
+                    <div className="text-sm text-muted-foreground">{cls.hitDie}-sided hit die</div>
                   </div>
                 ))}
             </div>
-            
+
             {validationResult && !validationResult.canMulticlass && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                <strong>Cannot Multiclass:</strong> {validationResult.missingRequirements.join(', ')}
+                <strong>Cannot Multiclass:</strong>{' '}
+                {validationResult.missingRequirements.join(', ')}
               </div>
             )}
           </CardContent>
@@ -217,9 +228,13 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
               Combined spell slot progression from multiple spellcasting classes
             </p>
             <div className="mb-4">
-              <div className="text-sm font-medium">Combined Caster Level: {spellcasting.combinedCasterLevel}</div>
+              <div className="text-sm font-medium">
+                Combined Caster Level: {spellcasting.combinedCasterLevel}
+              </div>
               <div className="text-xs text-muted-foreground">
-                {spellcasting.spellcastingClasses.map(cls => `${cls.className} (${cls.level})`).join(', ')}
+                {spellcasting.spellcastingClasses
+                  .map((cls) => `${cls.className} (${cls.level})`)
+                  .join(', ')}
               </div>
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -267,7 +282,7 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
                 <h4 className="font-medium mb-2">Saving Throws</h4>
                 <div className="text-sm">
                   {proficiencies.savingThrows
-                    .map(st => st.charAt(0).toUpperCase() + st.slice(1))
+                    .map((st) => st.charAt(0).toUpperCase() + st.slice(1))
                     .join(', ')}
                 </div>
               </div>
@@ -292,7 +307,9 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {classLevels.map((cls) => (
               <div key={cls.classId} className="text-center p-3 border rounded">
-                <div className="text-lg font-bold">{cls.level}d{cls.hitDie}</div>
+                <div className="text-lg font-bold">
+                  {cls.level}d{cls.hitDie}
+                </div>
                 <div className="text-xs text-muted-foreground">{cls.className}</div>
               </div>
             ))}
@@ -309,13 +326,17 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
 
           return (
             <Card key={cls.classId}>
-              <CardHeader 
+              <CardHeader
                 className="cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => toggleClassExpansion(cls.classId)}
               >
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                    {isExpanded ? (
+                      <ChevronDown className="w-5 h-5" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5" />
+                    )}
                     {cls.className} (Level {cls.level})
                   </div>
                   <Badge variant="secondary">d{cls.hitDie}</Badge>
@@ -327,26 +348,33 @@ const MulticlassManager: React.FC<MulticlassManagerProps> = ({ character, onUpda
                     {/* Multiclass Proficiencies Gained */}
                     {Object.keys(multiclassProfs).length > 0 && (
                       <div>
-                        <h4 className="font-medium mb-2">Proficiencies Gained from Multiclassing</h4>
+                        <h4 className="font-medium mb-2">
+                          Proficiencies Gained from Multiclassing
+                        </h4>
                         <div className="space-y-2 text-sm">
                           {multiclassProfs.armor && (
                             <div>
-                              <span className="font-medium">Armor:</span> {multiclassProfs.armor.join(', ')}
+                              <span className="font-medium">Armor:</span>{' '}
+                              {multiclassProfs.armor.join(', ')}
                             </div>
                           )}
                           {multiclassProfs.weapons && (
                             <div>
-                              <span className="font-medium">Weapons:</span> {multiclassProfs.weapons.join(', ')}
+                              <span className="font-medium">Weapons:</span>{' '}
+                              {multiclassProfs.weapons.join(', ')}
                             </div>
                           )}
                           {multiclassProfs.tools && (
                             <div>
-                              <span className="font-medium">Tools:</span> {multiclassProfs.tools.join(', ')}
+                              <span className="font-medium">Tools:</span>{' '}
+                              {multiclassProfs.tools.join(', ')}
                             </div>
                           )}
                           {multiclassProfs.skillChoices && (
                             <div>
-                              <span className="font-medium">Skills:</span> Choose {multiclassProfs.numSkillChoices} from {multiclassProfs.skillChoices.join(', ')}
+                              <span className="font-medium">Skills:</span> Choose{' '}
+                              {multiclassProfs.numSkillChoices} from{' '}
+                              {multiclassProfs.skillChoices.join(', ')}
                             </div>
                           )}
                         </div>

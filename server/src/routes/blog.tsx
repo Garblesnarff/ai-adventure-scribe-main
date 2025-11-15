@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { fetchBlogPostBySlug, fetchPublishedBlogPosts } from '../services/blog-service.js';
+import { BlogService } from '../services/blog-service.js';
 import { getSiteConfig } from '../config/site.js';
 import { resolveAssetsForEntries } from '../lib/manifest.js';
 import { BlogIndexPage } from '../views/blog/index.js';
@@ -12,7 +12,7 @@ export function blogRouter() {
   router.get('/', async (_req, res) => {
     try {
       const [posts, assets] = await Promise.all([
-        fetchPublishedBlogPosts(),
+        BlogService.fetchPublishedBlogPosts(),
         resolveAssetsForEntries(['index.html', 'src/blog-client.ts']),
       ]);
       const site = getSiteConfig();
@@ -31,8 +31,8 @@ export function blogRouter() {
 
     try {
       const [post, allPosts, assets] = await Promise.all([
-        fetchBlogPostBySlug(slug),
-        fetchPublishedBlogPosts(),
+        BlogService.fetchBlogPostBySlug(slug),
+        BlogService.fetchPublishedBlogPosts(),
         resolveAssetsForEntries(['index.html', 'src/blog-client.ts']),
       ]);
 

@@ -1,18 +1,28 @@
-import { Json } from '@/integrations/supabase/types';
+import type { Json } from '@/integrations/supabase/types';
 
 /**
  * Base memory types - matches database constraint in memories table
  */
 export type MemoryType =
-  | 'general' | 'npc' | 'location' | 'quest' | 'item' | 'event'
-  | 'story_beat' | 'character_moment' | 'world_detail' | 'dialogue_gem'
-  | 'atmosphere' | 'plot_point' | 'foreshadowing';
+  | 'general'
+  | 'npc'
+  | 'location'
+  | 'quest'
+  | 'item'
+  | 'event'
+  | 'story_beat'
+  | 'character_moment'
+  | 'world_detail'
+  | 'dialogue_gem'
+  | 'atmosphere'
+  | 'plot_point'
+  | 'foreshadowing';
 
 /**
  * Memory subcategories for better organization
  */
-export type MemorySubcategory = 
-  | 'current_location' 
+export type MemorySubcategory =
+  | 'current_location'
   | 'previous_location'
   | 'npc'
   | 'player'
@@ -29,9 +39,19 @@ export type MemorySubcategory =
  */
 export function isValidMemoryType(type: string): type is MemoryType {
   return [
-    'general', 'npc', 'location', 'quest', 'item', 'event',
-    'story_beat', 'character_moment', 'world_detail', 'dialogue_gem',
-    'atmosphere', 'plot_point', 'foreshadowing'
+    'general',
+    'npc',
+    'location',
+    'quest',
+    'item',
+    'event',
+    'story_beat',
+    'character_moment',
+    'world_detail',
+    'dialogue_gem',
+    'atmosphere',
+    'plot_point',
+    'foreshadowing',
   ].includes(type);
 }
 
@@ -50,7 +70,7 @@ export function isValidMemorySubcategory(subcategory: string): subcategory is Me
     'description',
     'environment',
     'item',
-    'general'
+    'general',
   ].includes(subcategory);
 }
 

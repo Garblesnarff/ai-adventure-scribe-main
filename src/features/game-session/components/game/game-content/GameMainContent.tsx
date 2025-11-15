@@ -1,18 +1,21 @@
+import { Dice6, Sword, X } from 'lucide-react';
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MessageHandler } from '../message/MessageHandler';
-import { MessageList } from '../../chat/MessageList';
+
 import { ChatInput } from '../../chat/ChatInput';
+import { MessageList } from '../../chat/MessageList';
+import { MessageHandler } from '../message/MessageHandler';
 import { StatsBar } from '../StatsBar';
+import { TimelineRail } from '../TimelineRail';
+import { GamePanelControls } from './GamePanelControls';
+
 import { CombatStatus } from '@/components/combat/CombatStatus';
 import { SafetyBanner } from '@/components/safety/SafetyBanner';
-import { TimelineRail } from '../TimelineRail';
-import { useMessageContext } from '@/contexts/MessageContext';
-import { Dice6, Sword, X } from 'lucide-react';
-import { usePendingRolls } from '@/hooks/use-pending-rolls';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+
 import { useCampaign } from '@/contexts/CampaignContext';
-import { GamePanelControls } from './GamePanelControls';
+import { useMessageContext } from '@/contexts/MessageContext';
+import { usePendingRolls } from '@/hooks/use-pending-rolls';
 
 /**
  * GameMainContent Component
@@ -76,18 +79,38 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
   const { state: campaignState } = useCampaign();
 
   return (
-    <div className={`flex-1 min-w-0 min-h-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}>
+    <div
+      className={`flex-1 min-w-0 min-h-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}
+    >
       <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/40 overflow-hidden transition-all duration-300 hover:shadow-3xl hover-glow mobile-chat h-full bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm">
         {/* Enhanced Cinematic Header with Improved Visual Hierarchy */}
         <div className="relative p-3 md:p-4 border-b border-white/10 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-md overflow-hidden transition-all duration-500">
           {/* Enhanced Animated Background Particles */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-70" style={{animationDelay: '0s'}}></div>
-            <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-infinite-teal rounded-full animate-pulse opacity-50" style={{animationDelay: '1s'}}></div>
-            <div className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-infinite-purple rounded-full animate-pulse opacity-60" style={{animationDelay: '2s'}}></div>
-            <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-infinite-gold rounded-full animate-pulse opacity-40" style={{animationDelay: '0.5s'}}></div>
-            <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-infinite-teal rounded-full animate-pulse opacity-30" style={{animationDelay: '1.5s'}}></div>
-            <div className="absolute top-1/6 left-2/3 w-1 h-1 bg-infinite-purple rounded-full animate-pulse opacity-50" style={{animationDelay: '2.5s'}}></div>
+            <div
+              className="absolute top-1/4 left-1/4 w-2 h-2 bg-infinite-gold rounded-full animate-pulse opacity-70"
+              style={{ animationDelay: '0s' }}
+            ></div>
+            <div
+              className="absolute top-1/2 left-3/4 w-1 h-1 bg-infinite-teal rounded-full animate-pulse opacity-50"
+              style={{ animationDelay: '1s' }}
+            ></div>
+            <div
+              className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-infinite-purple rounded-full animate-pulse opacity-60"
+              style={{ animationDelay: '2s' }}
+            ></div>
+            <div
+              className="absolute top-1/3 right-1/4 w-1 h-1 bg-infinite-gold rounded-full animate-pulse opacity-40"
+              style={{ animationDelay: '0.5s' }}
+            ></div>
+            <div
+              className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-infinite-teal rounded-full animate-pulse opacity-30"
+              style={{ animationDelay: '1.5s' }}
+            ></div>
+            <div
+              className="absolute top-1/6 left-2/3 w-1 h-1 bg-infinite-purple rounded-full animate-pulse opacity-50"
+              style={{ animationDelay: '2.5s' }}
+            ></div>
           </div>
 
           {/* Enhanced Atmospheric Gradient Overlay */}
@@ -103,13 +126,16 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-sm">
                   <div className="flex items-center gap-3 bg-infinite-gold/20 px-4 py-2 rounded-full border border-infinite-gold/30 w-fit">
                     <div className="w-2 h-2 bg-infinite-gold rounded-full animate-pulse"></div>
-                    <span className="font-display text-infinite-gold font-medium text-responsive-sm">Chapter {sessionData.turn_count ?? 0}</span>
+                    <span className="font-display text-infinite-gold font-medium text-responsive-sm">
+                      Chapter {sessionData.turn_count ?? 0}
+                    </span>
                   </div>
                   <div className="hidden md:block h-4 w-px bg-white/20"></div>
                   {showSceneBlurb && (
                     <div className="flex-1 hidden xl:block">
                       <p className="text-narrative text-muted-foreground leading-relaxed text-xs line-clamp-2">
-                        {sessionData.current_scene_description ?? "Your infinite story unfolds across realms of endless possibility..."}
+                        {sessionData.current_scene_description ??
+                          'Your infinite story unfolds across realms of endless possibility...'}
                       </p>
                     </div>
                   )}
@@ -149,7 +175,7 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
                 onSceneBlurbToggle={() => setShowSceneBlurb(!showSceneBlurb)}
               />
               <Button
-                variant={showTracker ? "destructive" : "outline"}
+                variant={showTracker ? 'destructive' : 'outline'}
                 size="lg"
                 onClick={() => setShowTracker(!showTracker)}
                 className={`relative overflow-hidden transition-all duration-300 border-2 hover-glow focus-glow ${
@@ -178,12 +204,16 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 px-4 py-2 bg-infinite-teal/20 rounded-full border border-infinite-teal/40 glass">
                   <div className="w-2 h-2 bg-infinite-teal rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-xs font-display font-medium text-infinite-teal">Realm Active</span>
+                  <span className="text-xs font-display font-medium text-infinite-teal">
+                    Realm Active
+                  </span>
                 </div>
                 {showTracker && (
                   <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 rounded-full border border-red-400/40 glass">
                     <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse shadow-lg"></div>
-                    <span className="text-xs font-display font-medium text-red-400">Tracker Open</span>
+                    <span className="text-xs font-display font-medium text-red-400">
+                      Tracker Open
+                    </span>
                   </div>
                 )}
               </div>
@@ -197,7 +227,9 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
           {isCombatDetected && (
             <div className="mx-3 mt-3 mb-1 px-3 py-2 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
               <div className="text-sm text-red-700 font-medium">⚔️ Combat in progress</div>
-              <Button size="sm" variant="outline" onClick={() => setShowTracker(true)}>Open Tracker</Button>
+              <Button size="sm" variant="outline" onClick={() => setShowTracker(true)}>
+                Open Tracker
+              </Button>
             </div>
           )}
 
@@ -233,9 +265,12 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
                           <div className="absolute -inset-1 bg-gradient-to-r from-infinite-purple to-infinite-teal rounded-full blur opacity-30 animate-ping"></div>
                         </div>
                         <div className="space-y-3">
-                          <h3 className="text-lg font-semibold text-card-foreground">Crafting Opening Scene</h3>
+                          <h3 className="text-lg font-semibold text-card-foreground">
+                            Crafting Opening Scene
+                          </h3>
                           <p className="text-sm text-muted-foreground leading-relaxed">
-                            The Dungeon Master is generating your personalized adventure introduction based on your character and campaign.
+                            The Dungeon Master is generating your personalized adventure
+                            introduction based on your character and campaign.
                           </p>
                         </div>
                         <div className="flex items-center justify-center gap-1">
@@ -261,7 +296,9 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
                         <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                         <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce"></div>
                       </div>
-                      <span className="text-xs text-muted-foreground font-medium">Dungeon Master is thinking...</span>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        Dungeon Master is thinking...
+                      </span>
                     </div>
                   </div>
                 )}
@@ -274,8 +311,7 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
                       <span className="text-sm font-medium">
                         {pendingRequests.length === 1
                           ? `Please complete the ${pendingRequests[0].type} roll above`
-                          : `Please complete ${pendingRequests.length} pending rolls above`
-                        }
+                          : `Please complete ${pendingRequests.length} pending rolls above`}
                       </span>
                     </div>
                   </div>

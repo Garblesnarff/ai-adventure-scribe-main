@@ -1,6 +1,50 @@
 import type { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import winston from 'winston';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Winston Logger Configuration
+const logLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+const logsDir = path.join(__dirname, '../../../logs');
+
+export const logger = winston.createLogger({
+  level: logLevel,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'ai-adventure-scribe' },
+  transports: [
+    // Write to console
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+    // Write errors to file
+    new winston.transports.File({
+      filename: path.join(logsDir, 'error.log'),
+      level: 'error',
+    }),
+    // Write all logs to combined file
+    new winston.transports.File({
+      filename: path.join(logsDir, 'combined.log'),
+    }),
+  ],
+});
+
+// Create child loggers for different modules
+export const combatLogger = logger.child({ module: 'combat' });
+export const spellLogger = logger.child({ module: 'spells' });
+export const progressionLogger = logger.child({ module: 'progression' });
+
+// Request Logger Middleware Types and Configuration
 export type RequestLoggerOptions = {
   headerName?: string;
 };
@@ -59,20 +103,19 @@ export function errorLoggingMiddleware() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return function onError(err: any, req: Request, res: Response, _next: NextFunction) {
     const rid = (res.locals && (res.locals as any).requestId) || (req as any).requestId;
-    const payload = {
-      level: 'error',
-      msg: 'request.error',
+
+    // Use Winston logger for structured error logging
+    logger.error('Request error', {
       requestId: rid,
       method: req.method,
-      url: req.originalUrl || req.url,
+      path: req.originalUrl || req.url,
       status: res.statusCode || 500,
-      error: {
-        message: err?.message,
-        name: err?.name,
-        stack: err?.stack,
-      },
-    };
-    console.error(JSON.stringify(payload));
+      error: err?.message,
+      errorName: err?.name,
+      stack: err?.stack,
+      user: (req as any).user?.id,
+    });
+
     if (!res.headersSent) {
       res.status(500).json({ error: 'Internal Server Error' });
     }

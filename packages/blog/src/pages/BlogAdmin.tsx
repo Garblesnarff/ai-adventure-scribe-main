@@ -1,10 +1,11 @@
-import React from 'react';
 import { FileText, FolderTree, Tags, Image } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BlogPostsList } from '@/components/blog-admin/blog-posts-list';
+import React from 'react';
+
 import { BlogCategoryManager } from '@/components/blog-admin/blog-category-manager';
-import { BlogTagManager } from '@/components/blog-admin/blog-tag-manager';
 import { BlogMediaManager } from '@/components/blog-admin/blog-media-manager';
+import { BlogPostsList } from '@/components/blog-admin/blog-posts-list';
+import { BlogTagManager } from '@/components/blog-admin/blog-tag-manager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 
 const BlogAdmin: React.FC = () => {

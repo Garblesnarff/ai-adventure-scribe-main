@@ -1,6 +1,8 @@
 import React from 'react';
-import { ChatMessage } from '@/types/game';
+
 import { MessageMetadata } from './MessageMetadata';
+
+import type { ChatMessage } from '@/types/game';
 
 interface PlayerMessageProps {
   message: ChatMessage;
@@ -43,7 +45,10 @@ export const PlayerMessage: React.FC<PlayerMessageProps> = ({
 
         {/* Truncation expander */}
         {isLongMessage && (
-          <button onClick={onToggleExpanded} className="text-xs text-primary hover:underline mt-1 inline-block">
+          <button
+            onClick={onToggleExpanded}
+            className="text-xs text-primary hover:underline mt-1 inline-block"
+          >
             {isExpanded ? 'Read less' : 'Read more'}
           </button>
         )}

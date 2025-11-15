@@ -1,8 +1,13 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
+
 import type { BlogPostStatus } from '@/types/blog';
 
-const STATUS_VARIANTS: Record<BlogPostStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+import { Badge } from '@/components/ui/badge';
+
+const STATUS_VARIANTS: Record<
+  BlogPostStatus,
+  { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
+> = {
   draft: { label: 'Draft', variant: 'secondary' },
   review: { label: 'In Review', variant: 'outline' },
   scheduled: { label: 'Scheduled', variant: 'outline' },

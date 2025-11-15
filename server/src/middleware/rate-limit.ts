@@ -13,25 +13,78 @@ export type PlanRateConfig = {
   perUser?: { windowMs: number; maxByPlan: Record<PlanName, number> };
 };
 
+// Helper to get environment variable with fallback
+function getEnvInt(key: string, fallback: number): number {
+  const val = process.env[key];
+  return val ? parseInt(val, 10) : fallback;
+}
+
+// Build limits from environment variables with fallback to hardcoded defaults
+function buildLimits(): Record<string, PlanRateConfig> {
+  return {
+    llm: {
+      key: 'llm',
+      perIp: {
+        windowMs: getEnvInt('RATE_LIMIT_LLM_IP_WINDOW', 60_000),
+        maxByPlan: {
+          free: getEnvInt('RATE_LIMIT_LLM_IP_FREE', 20),
+          pro: getEnvInt('RATE_LIMIT_LLM_IP_PRO', 120),
+          enterprise: getEnvInt('RATE_LIMIT_LLM_IP_ENTERPRISE', 600),
+        },
+      },
+      perUser: {
+        windowMs: getEnvInt('RATE_LIMIT_LLM_USER_WINDOW', 60_000),
+        maxByPlan: {
+          free: getEnvInt('RATE_LIMIT_LLM_USER_FREE', 10),
+          pro: getEnvInt('RATE_LIMIT_LLM_USER_PRO', 60),
+          enterprise: getEnvInt('RATE_LIMIT_LLM_USER_ENTERPRISE', 300),
+        },
+      },
+    },
+    images: {
+      key: 'images',
+      perIp: {
+        windowMs: getEnvInt('RATE_LIMIT_IMAGES_IP_WINDOW', 60_000),
+        maxByPlan: {
+          free: getEnvInt('RATE_LIMIT_IMAGES_IP_FREE', 10),
+          pro: getEnvInt('RATE_LIMIT_IMAGES_IP_PRO', 60),
+          enterprise: getEnvInt('RATE_LIMIT_IMAGES_IP_ENTERPRISE', 300),
+        },
+      },
+      perUser: {
+        windowMs: getEnvInt('RATE_LIMIT_IMAGES_USER_WINDOW', 60_000),
+        maxByPlan: {
+          free: getEnvInt('RATE_LIMIT_IMAGES_USER_FREE', 5),
+          pro: getEnvInt('RATE_LIMIT_IMAGES_USER_PRO', 30),
+          enterprise: getEnvInt('RATE_LIMIT_IMAGES_USER_ENTERPRISE', 150),
+        },
+      },
+    },
+    default: {
+      key: 'global',
+      perIp: {
+        windowMs: getEnvInt('RATE_LIMIT_DEFAULT_IP_WINDOW', 60_000),
+        maxByPlan: {
+          free: getEnvInt('RATE_LIMIT_DEFAULT_IP_FREE', 60),
+          pro: getEnvInt('RATE_LIMIT_DEFAULT_IP_PRO', 600),
+          enterprise: getEnvInt('RATE_LIMIT_DEFAULT_IP_ENTERPRISE', 2000),
+        },
+      },
+      perUser: {
+        windowMs: getEnvInt('RATE_LIMIT_DEFAULT_USER_WINDOW', 60_000),
+        maxByPlan: {
+          free: getEnvInt('RATE_LIMIT_DEFAULT_USER_FREE', 60),
+          pro: getEnvInt('RATE_LIMIT_DEFAULT_USER_PRO', 600),
+          enterprise: getEnvInt('RATE_LIMIT_DEFAULT_USER_ENTERPRISE', 2000),
+        },
+      },
+    },
+  };
+}
+
 // Default limits used by planRateLimit if caller doesn't pass a config
-const DEFAULT_LIMITS: Record<string, PlanRateConfig> = {
-  // Generous defaults; tests can override plan via X-Plan header
-  llm: {
-    key: 'llm',
-    perIp: { windowMs: 60_000, maxByPlan: { free: 20, pro: 120, enterprise: 600 } },
-    perUser: { windowMs: 60_000, maxByPlan: { free: 10, pro: 60, enterprise: 300 } },
-  },
-  images: {
-    key: 'images',
-    perIp: { windowMs: 60_000, maxByPlan: { free: 10, pro: 60, enterprise: 300 } },
-    perUser: { windowMs: 60_000, maxByPlan: { free: 5, pro: 30, enterprise: 150 } },
-  },
-  default: {
-    key: 'global',
-    perIp: { windowMs: 60_000, maxByPlan: { free: 60, pro: 600, enterprise: 2000 } },
-    perUser: { windowMs: 60_000, maxByPlan: { free: 60, pro: 600, enterprise: 2000 } },
-  },
-};
+// Now built from environment variables with fallbacks to hardcoded defaults
+const DEFAULT_LIMITS: Record<string, PlanRateConfig> = buildLimits();
 
 // Internal bucket structure for sliding window counters
 interface RateBucket { count: number; windowStart: number }
@@ -114,7 +167,20 @@ export function planRateLimit(configOrKey?: Partial<PlanRateConfig> | string) {
       if (ipRes.count > ipMax) {
         const retryAfterSec = Math.ceil(ipRes.resetMs / 1000);
         res.setHeader('Retry-After', String(Math.max(retryAfterSec, 1)));
-        return res.status(429).json({ error: 'Too many requests', scope: 'ip', retryAfter: retryAfterSec });
+        return res.status(429).json({
+          error: {
+            name: 'RateLimitError',
+            message: 'Too many requests from this IP, please try again later',
+            code: 'RATE_LIMIT_EXCEEDED',
+            statusCode: 429,
+            details: {
+              scope: 'ip',
+              limit: ipMax,
+              window: cfg.perIp.windowMs / 1000,
+              retryAfter: Math.max(retryAfterSec, 1),
+            }
+          }
+        });
       }
 
       // Per-user (if available)
@@ -125,7 +191,20 @@ export function planRateLimit(configOrKey?: Partial<PlanRateConfig> | string) {
         if (uRes.count > uMax) {
           const retryAfterSec = Math.ceil(uRes.resetMs / 1000);
           res.setHeader('Retry-After', String(Math.max(retryAfterSec, 1)));
-          return res.status(429).json({ error: 'Too many requests', scope: 'user', retryAfter: retryAfterSec });
+          return res.status(429).json({
+            error: {
+              name: 'RateLimitError',
+              message: 'Too many requests from this user, please try again later',
+              code: 'RATE_LIMIT_EXCEEDED',
+              statusCode: 429,
+              details: {
+                scope: 'user',
+                limit: uMax,
+                window: cfg.perUser.windowMs / 1000,
+                retryAfter: Math.max(retryAfterSec, 1),
+              }
+            }
+          });
         }
       }
 
@@ -150,7 +229,20 @@ export function createRateLimiter(options: { windowMs: number; max: number; key?
       if (resu.count > max) {
         const retryAfterSec = Math.ceil(resu.resetMs / 1000);
         res.setHeader('Retry-After', String(Math.max(retryAfterSec, 1)));
-        return res.status(429).json({ error: 'Too many requests', retryAfter: retryAfterSec });
+        return res.status(429).json({
+          error: {
+            name: 'RateLimitError',
+            message: 'Too many requests, please try again later',
+            code: 'RATE_LIMIT_EXCEEDED',
+            statusCode: 429,
+            details: {
+              scope: 'ip',
+              limit: max,
+              window: windowMs / 1000,
+              retryAfter: Math.max(retryAfterSec, 1),
+            }
+          }
+        });
       }
       return next();
     } catch {

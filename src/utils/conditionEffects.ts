@@ -8,9 +8,12 @@
  * @author AI Assistant
  */
 
-import { CombatParticipant, Condition, ConditionName, DiceRoll, DamageType } from '@/types/combat';
 import { d20 } from './diceRolls';
+
+import type { CombatParticipant, Condition, ConditionName, DiceRoll } from '@/types/combat';
+
 import { Equipment } from '@/data/equipmentOptions';
+import { DamageType } from '@/types/combat';
 
 // ===========================
 // Condition Effect Definitions
@@ -26,7 +29,11 @@ interface ConditionModifiers {
 
 interface ConditionDefinition {
   description: string;
-  getModifiers: (participant: CombatParticipant, rollType: string, target?: CombatParticipant) => ConditionModifiers;
+  getModifiers: (
+    participant: CombatParticipant,
+    rollType: string,
+    target?: CombatParticipant,
+  ) => ConditionModifiers;
   onApply?: (participant: CombatParticipant, condition: Condition) => CombatParticipant;
   onRemove?: (participant: CombatParticipant, condition: Condition) => CombatParticipant;
   effect: string[];
@@ -35,46 +42,56 @@ interface ConditionDefinition {
 // Core condition effects mapping
 const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
   blinded: {
-    description: 'Can\'t see enemies or allies. All attacks have disadvantage. Attacks against this creature have advantage.',
+    description:
+      "Can't see enemies or allies. All attacks have disadvantage. Attacks against this creature have advantage.",
     getModifiers: (participant, rollType, target) => {
       const isAttacker = participant.participantType === 'player' || !target;
       if (isAttacker) {
         // Attacker is blinded
-        return rollType === 'attack' ? {
-          advantage: false,
-          disadvantage: true,
-          bonus: 0,
-          autoFail: false,
-          description: 'Blind - Disadvantage on attacks'
-        } : {
-          advantage: false,
-          disadvantage: false,
-          bonus: 0,
-          autoFail: false,
-          description: ''
-        };
+        return rollType === 'attack'
+          ? {
+              advantage: false,
+              disadvantage: true,
+              bonus: 0,
+              autoFail: false,
+              description: 'Blind - Disadvantage on attacks',
+            }
+          : {
+              advantage: false,
+              disadvantage: false,
+              bonus: 0,
+              autoFail: false,
+              description: '',
+            };
       } else {
         // Target is blinded (attacks against them get advantage)
-        return rollType === 'defense' ? {
-          advantage: true,
-          disadvantage: false,
-          bonus: 0,
-          autoFail: false,
-          description: 'Blind - Advantage on attacks vs blinded target'
-        } : {
-          advantage: false,
-          disadvantage: false,
-          bonus: 0,
-          autoFail: false,
-          description: ''
-        };
+        return rollType === 'defense'
+          ? {
+              advantage: true,
+              disadvantage: false,
+              bonus: 0,
+              autoFail: false,
+              description: 'Blind - Advantage on attacks vs blinded target',
+            }
+          : {
+              advantage: false,
+              disadvantage: false,
+              bonus: 0,
+              autoFail: false,
+              description: '',
+            };
       }
     },
-    effect: ['Can\'t see enemies or allies', 'All attacks have disadvantage', 'Attacks against this creature have advantage']
+    effect: [
+      "Can't see enemies or allies",
+      'All attacks have disadvantage',
+      'Attacks against this creature have advantage',
+    ],
   },
 
   charmed: {
-    description: 'Regards the charmer as a friendly acquaintance. Cannot target the charmer with attacks or damage.',
+    description:
+      'Regards the charmer as a friendly acquaintance. Cannot target the charmer with attacks or damage.',
     getModifiers: (participant, rollType, target) => {
       // Charmed creatures cannot attack their charmer
       // Note: This is a simplified implementation - in full D&D it would track who charmed them
@@ -84,7 +101,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: false,
           bonus: 0,
           autoFail: true,
-          description: 'Charmed - Cannot attack charmer'
+          description: 'Charmed - Cannot attack charmer',
         };
       }
       return {
@@ -92,51 +109,56 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: ''
+        description: '',
       };
     },
-    effect: ['Cannot attack charmer', 'Regards charmer as friendly', 'Cannot be harmed by charmer']
+    effect: ['Cannot attack charmer', 'Regards charmer as friendly', 'Cannot be harmed by charmer'],
   },
 
   deafened: {
     description: 'Cannot hear sounds. Automatically fails saving throws based on hearing.',
     getModifiers: (participant, rollType) => {
       // Auto-fail saves that rely on hearing (some DM discretion needed)
-      return rollType === 'hearing_dependent' ? {
-        advantage: false,
-        disadvantage: false,
-        bonus: 0,
-        autoFail: true,
-        description: 'Deafened - Auto-fail hearing-based saves'
-      } : {
-        advantage: false,
-        disadvantage: false,
-        bonus: 0,
-        autoFail: false,
-        description: ''
-      };
+      return rollType === 'hearing_dependent'
+        ? {
+            advantage: false,
+            disadvantage: false,
+            bonus: 0,
+            autoFail: true,
+            description: 'Deafened - Auto-fail hearing-based saves',
+          }
+        : {
+            advantage: false,
+            disadvantage: false,
+            bonus: 0,
+            autoFail: false,
+            description: '',
+          };
     },
-    effect: ['Cannot hear sounds', 'Auto-fail hearing-based saves', 'Cannot understand speech']
+    effect: ['Cannot hear sounds', 'Auto-fail hearing-based saves', 'Cannot understand speech'],
   },
 
   frightened: {
-    description: 'Afraid of a creature. Cannot willingly move closer to it. Attacks have disadvantage.',
+    description:
+      'Afraid of a creature. Cannot willingly move closer to it. Attacks have disadvantage.',
     getModifiers: (participant, rollType) => {
-      return rollType === 'attack' ? {
-        advantage: false,
-        disadvantage: true,
-        bonus: 0,
-        autoFail: false,
-        description: 'Frightened - Disadvantage on attacks'
-      } : {
-        advantage: false,
-        disadvantage: false,
-        bonus: 0,
-        autoFail: false,
-        description: ''
-      };
+      return rollType === 'attack'
+        ? {
+            advantage: false,
+            disadvantage: true,
+            bonus: 0,
+            autoFail: false,
+            description: 'Frightened - Disadvantage on attacks',
+          }
+        : {
+            advantage: false,
+            disadvantage: false,
+            bonus: 0,
+            autoFail: false,
+            description: '',
+          };
     },
-    effect: ['Cannot approach source of fear', 'Disadvantage on attacks and ability checks']
+    effect: ['Cannot approach source of fear', 'Disadvantage on attacks and ability checks'],
   },
 
   grappled: {
@@ -148,17 +170,17 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: 'Grappled - Speed 0, cannot move'
+        description: 'Grappled - Speed 0, cannot move',
       };
     },
     onApply: (participant, condition) => {
       return {
         ...participant,
         movementUsed: participant.speed, // Effectively 0 speed
-        conditions: [...participant.conditions, condition]
+        conditions: [...participant.conditions, condition],
       };
     },
-    effect: ['Speed becomes 0', 'Cannot move', 'Can break free with Athletics or Acrobatics']
+    effect: ['Speed becomes 0', 'Cannot move', 'Can break free with Athletics or Acrobatics'],
   },
 
   incapacitated: {
@@ -169,14 +191,15 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: true, // Cannot take most actions
-        description: 'Incapacitated - Cannot take actions'
+        description: 'Incapacitated - Cannot take actions',
       };
     },
-    effect: ['Cannot take actions', 'Cannot speak', 'Cannot respond to stimuli']
+    effect: ['Cannot take actions', 'Cannot speak', 'Cannot respond to stimuli'],
   },
 
   invisible: {
-    description: 'Cannot be seen. Attacks have advantage. Attacks against this creature have disadvantage.',
+    description:
+      'Cannot be seen. Attacks have advantage. Attacks against this creature have disadvantage.',
     getModifiers: (participant, rollType) => {
       if (rollType === 'attack') {
         // Invisible creature attacking - advantage
@@ -185,7 +208,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: false,
           bonus: 0,
           autoFail: false,
-          description: 'Invisible - Advantage on attacks'
+          description: 'Invisible - Advantage on attacks',
         };
       } else if (rollType === 'defense') {
         // Being attacked while invisible - disadvantage for attacker
@@ -194,7 +217,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: true,
           bonus: 0,
           autoFail: false,
-          description: 'Invisible - Disadvantage on attacks vs target'
+          description: 'Invisible - Disadvantage on attacks vs target',
         };
       }
       return {
@@ -202,10 +225,10 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: ''
+        description: '',
       };
     },
-    effect: ['Cannot be seen', 'Advantage on attacks', 'Attacks against target have disadvantage']
+    effect: ['Cannot be seen', 'Advantage on attacks', 'Attacks against target have disadvantage'],
   },
 
   paralyzed: {
@@ -217,10 +240,16 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: dexAndStrSaves,
-        description: dexAndStrSaves ? 'Paralyzed - Auto-fail DEX/STR saves' : 'Paralyzed - Cannot move or act'
+        description: dexAndStrSaves
+          ? 'Paralyzed - Auto-fail DEX/STR saves'
+          : 'Paralyzed - Cannot move or act',
       };
     },
-    effect: ['Cannot move, speak, or take actions', 'Auto-fail DEX and STR saves', 'Critical hits automatically hit']
+    effect: [
+      'Cannot move, speak, or take actions',
+      'Auto-fail DEX and STR saves',
+      'Critical hits automatically hit',
+    ],
   },
 
   petrified: {
@@ -231,30 +260,37 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: true, // Effectively unconscious
-        description: 'Petrified - Cannot move or act'
+        description: 'Petrified - Cannot move or act',
       };
     },
-    effect: ['Turned to stone', 'Cannot move, speak, or take actions', 'Weight increases', 'Becomes unconscious']
+    effect: [
+      'Turned to stone',
+      'Cannot move, speak, or take actions',
+      'Weight increases',
+      'Becomes unconscious',
+    ],
   },
 
   poisoned: {
     description: 'Poisoned. Disadvantage on attack rolls and ability checks.',
     getModifiers: (participant, rollType) => {
-      return rollType === 'attack' || rollType === 'ability_check' ? {
-        advantage: false,
-        disadvantage: true,
-        bonus: 0,
-        autoFail: false,
-        description: 'Poisoned - Disadvantage on attacks and checks'
-      } : {
-        advantage: false,
-        disadvantage: false,
-        bonus: 0,
-        autoFail: false,
-        description: ''
-      };
+      return rollType === 'attack' || rollType === 'ability_check'
+        ? {
+            advantage: false,
+            disadvantage: true,
+            bonus: 0,
+            autoFail: false,
+            description: 'Poisoned - Disadvantage on attacks and checks',
+          }
+        : {
+            advantage: false,
+            disadvantage: false,
+            bonus: 0,
+            autoFail: false,
+            description: '',
+          };
     },
-    effect: ['Disadvantage on attack rolls and ability checks']
+    effect: ['Disadvantage on attack rolls and ability checks'],
   },
 
   prone: {
@@ -267,7 +303,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: false,
           bonus: 0,
           autoFail: false,
-          description: 'Prone - Advantage on melee attacks vs prone target'
+          description: 'Prone - Advantage on melee attacks vs prone target',
         };
       } else if (rollType === 'ranged_attack') {
         // Attacking while prone
@@ -276,7 +312,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: true,
           bonus: 0,
           autoFail: false,
-          description: 'Prone - Disadvantage on ranged attacks'
+          description: 'Prone - Disadvantage on ranged attacks',
         };
       }
       return {
@@ -284,10 +320,14 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: ''
+        description: '',
       };
     },
-    effect: ['Melee attacks vs prone target have advantage', 'Ranged attacks vs prone have disadvantage', 'Can stand as half move']
+    effect: [
+      'Melee attacks vs prone target have advantage',
+      'Ranged attacks vs prone have disadvantage',
+      'Can stand as half move',
+    ],
   },
 
   restrained: {
@@ -299,7 +339,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: true,
           bonus: 0,
           autoFail: false,
-          description: 'Restrained - Disadvantage on defense'
+          description: 'Restrained - Disadvantage on defense',
         };
       } else if (rollType === 'dexterity_save') {
         return {
@@ -307,7 +347,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: false,
           bonus: 0,
           autoFail: true,
-          description: 'Restrained - Auto-fail DEX saves'
+          description: 'Restrained - Auto-fail DEX saves',
         };
       }
       return {
@@ -315,17 +355,17 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: ''
+        description: '',
       };
     },
     onApply: (participant, condition) => {
       return {
         ...participant,
         movementUsed: participant.speed, // Speed = 0
-        conditions: [...participant.conditions, condition]
+        conditions: [...participant.conditions, condition],
       };
     },
-    effect: ['Speed becomes 0', 'Attacks have advantage vs restrained', 'Auto-fail DEX saves']
+    effect: ['Speed becomes 0', 'Attacks have advantage vs restrained', 'Auto-fail DEX saves'],
   },
 
   stunned: {
@@ -337,10 +377,17 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: dexAndStrSaves,
-        description: dexAndStrSaves ? 'Stunned - Auto-fail DEX/STR saves' : 'Stunned - Cannot take actions'
+        description: dexAndStrSaves
+          ? 'Stunned - Auto-fail DEX/STR saves'
+          : 'Stunned - Cannot take actions',
       };
     },
-    effect: ['Cannot take actions', 'Auto-fail DEX and STR saves', 'Cannot move', 'Ignores effects that require attention']
+    effect: [
+      'Cannot take actions',
+      'Auto-fail DEX and STR saves',
+      'Cannot move',
+      'Ignores effects that require attention',
+    ],
   },
 
   unconscious: {
@@ -352,7 +399,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: true,
           bonus: 0,
           autoFail: false,
-          description: 'Unconscious - Auto-fail saves, critical hits automatically hit'
+          description: 'Unconscious - Auto-fail saves, critical hits automatically hit',
         };
       }
       return {
@@ -360,16 +407,22 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: true, // Cannot take most actions
-        description: 'Unconscious - Cannot act'
+        description: 'Unconscious - Cannot act',
       };
     },
-    effect: ['Unconscious and unaware', 'Auto-fail saves', 'Critical hits automatically hit', 'Cannot take actions']
+    effect: [
+      'Unconscious and unaware',
+      'Auto-fail saves',
+      'Critical hits automatically hit',
+      'Cannot take actions',
+    ],
   },
 
   exhaustion: {
     description: 'Exhausted from pushing beyond normal limits. Effects increase with level (1-6).',
     getModifiers: (participant, rollType) => {
-      const exhaustionLevel = participant.conditions.find(c => c.name === 'exhaustion')?.level || 0;
+      const exhaustionLevel =
+        participant.conditions.find((c) => c.name === 'exhaustion')?.level || 0;
 
       // Level 3 or higher gives disadvantage on attacks and saves
       if (exhaustionLevel >= 3 && (rollType === 'attack' || rollType === 'save')) {
@@ -378,7 +431,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: true,
           bonus: 0,
           autoFail: false,
-          description: `Exhaustion level ${exhaustionLevel} - Disadvantage on attacks and saves`
+          description: `Exhaustion level ${exhaustionLevel} - Disadvantage on attacks and saves`,
         };
       }
 
@@ -389,7 +442,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
           disadvantage: true,
           bonus: 0,
           autoFail: false,
-          description: `Exhaustion level ${exhaustionLevel} - Disadvantage on ability checks`
+          description: `Exhaustion level ${exhaustionLevel} - Disadvantage on ability checks`,
         };
       }
 
@@ -398,12 +451,19 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: ''
+        description: '',
       };
     },
     // Exhaustion doesn't have special onApply effects like speed reduction
     // These are handled by external calculations
-    effect: ['Level 1+: Disadvantage on ability checks', 'Level 3+: Disadvantage on attacks and saves', 'Level 2+: Speed halved', 'Level 4+: Hit point max halved', 'Level 5+: Speed reduced to 0', 'Level 6+: Death']
+    effect: [
+      'Level 1+: Disadvantage on ability checks',
+      'Level 3+: Disadvantage on attacks and saves',
+      'Level 2+: Speed halved',
+      'Level 4+: Hit point max halved',
+      'Level 5+: Speed reduced to 0',
+      'Level 6+: Death',
+    ],
   },
 
   surprised: {
@@ -416,11 +476,14 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
         disadvantage: false,
         bonus: 0,
         autoFail: false,
-        description: 'Surprised - Cannot take actions this turn'
+        description: 'Surprised - Cannot take actions this turn',
       };
     },
-    effect: ['Can\'t take an action on first turn', 'Attacks against surprised creatures have advantage']
-  }
+    effect: [
+      "Can't take an action on first turn",
+      'Attacks against surprised creatures have advantage',
+    ],
+  },
 };
 
 // ===========================
@@ -438,7 +501,7 @@ const CONDITION_EFFECTS: Record<ConditionName, ConditionDefinition> = {
 export function getConditionModifiers(
   participant: CombatParticipant,
   rollType: string,
-  target?: CombatParticipant
+  target?: CombatParticipant,
 ): ConditionModifiers {
   const allConditions = participant.conditions;
   const cumulativeModifiers: ConditionModifiers = {
@@ -446,7 +509,7 @@ export function getConditionModifiers(
     disadvantage: false,
     bonus: 0,
     autoFail: false,
-    description: ''
+    description: '',
   };
 
   const descriptions: string[] = [];
@@ -485,13 +548,16 @@ export function getConditionModifiers(
  * @param condition - Condition being applied
  * @returns Updated participant with effects applied
  */
-export function applyConditionEffects(participant: CombatParticipant, condition: Condition): CombatParticipant {
+export function applyConditionEffects(
+  participant: CombatParticipant,
+  condition: Condition,
+): CombatParticipant {
   const conditionDef = CONDITION_EFFECTS[condition.name as ConditionName];
   if (!conditionDef?.onApply) {
     // If no specific apply logic, just return updated participant
     return {
       ...participant,
-      conditions: [...participant.conditions, condition]
+      conditions: [...participant.conditions, condition],
     };
   }
 
@@ -505,13 +571,16 @@ export function applyConditionEffects(participant: CombatParticipant, condition:
  * @param condition - Condition being removed
  * @returns Updated participant with effects removed
  */
-export function removeConditionEffects(participant: CombatParticipant, condition: Condition): CombatParticipant {
+export function removeConditionEffects(
+  participant: CombatParticipant,
+  condition: Condition,
+): CombatParticipant {
   const conditionDef = CONDITION_EFFECTS[condition.name as ConditionName];
   if (!conditionDef?.onRemove) {
     // Remove condition from array
     return {
       ...participant,
-      conditions: participant.conditions.filter(c => c.name !== condition.name)
+      conditions: participant.conditions.filter((c) => c.name !== condition.name),
     };
   }
 
@@ -533,7 +602,7 @@ export function removeConditionEffects(participant: CombatParticipant, condition
 export function handleConditionSave(
   participant: CombatParticipant,
   condition: Condition,
-  saveModifier: number = 0
+  saveModifier: number = 0,
 ): { success: boolean; roll: DiceRoll } {
   // Most conditions use Constitution saves
   const totalModifier = saveModifier; // Simplified - would normally calculate based on CON modifier
@@ -577,7 +646,7 @@ export function getExhaustionEffects(level: number): string[] {
     3: ['Disadvantage on attack rolls and saving throws'],
     4: ['Hit points maximum halved'],
     5: ['Speed reduced to 0'],
-    6: ['Death']
+    6: ['Death'],
   };
 
   const effects: string[] = [];
@@ -619,8 +688,11 @@ export function getConditionEffects(conditionName: ConditionName): string[] {
  * @param conditionName - Condition name to check for
  * @returns Boolean indicating presence
  */
-export function hasCondition(participant: CombatParticipant, conditionName: ConditionName): boolean {
-  return participant.conditions.some(c => c.name === conditionName);
+export function hasCondition(
+  participant: CombatParticipant,
+  conditionName: ConditionName,
+): boolean {
+  return participant.conditions.some((c) => c.name === conditionName);
 }
 
 export { CONDITION_EFFECTS };

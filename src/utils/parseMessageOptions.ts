@@ -14,7 +14,7 @@ export interface ActionOption {
 }
 
 export interface ParsedMessage {
-  content: string;      // Narrative content without options
+  content: string; // Narrative content without options
   options: ActionOption[];
   hasOptions: boolean;
 }
@@ -32,7 +32,7 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
     return {
       content: '',
       options: [],
-      hasOptions: false
+      hasOptions: false,
     };
   }
 
@@ -63,7 +63,7 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
       id: `option-${number}`,
       number,
       text: `${boldText}${cleanDescription ? `, ${cleanDescription}` : ''}`,
-      fullText: fullOptionText
+      fullText: fullOptionText,
     });
 
     // Track where options start in the content
@@ -88,7 +88,7 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
         number: letterCode,
         letter: letterStr,
         text: `${boldText}${cleanDescription ? `, ${cleanDescription}` : ''}`,
-        fullText: fullOptionText
+        fullText: fullOptionText,
       });
 
       // Track where options start in the content
@@ -113,7 +113,7 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
         id: `option-${number}`,
         number,
         text: fullText.trim(),
-        fullText: fullText.trim()
+        fullText: fullText.trim(),
       });
 
       if (options.length === 1) {
@@ -134,7 +134,7 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
         number: letterCode,
         letter: letterStr,
         text: fullText.trim(),
-        fullText: fullText.trim()
+        fullText: fullText.trim(),
       });
 
       if (options.length === 1) {
@@ -165,7 +165,7 @@ export function parseMessageOptions(messageContent: string): ParsedMessage {
   return {
     content: narrativeContent.trim(),
     options,
-    hasOptions: options.length > 0
+    hasOptions: options.length > 0,
   };
 }
 
@@ -210,7 +210,7 @@ function convertToFirstPerson(text: string): string {
 
   // Handle "you're" -> "I'm"
   converted = converted.replace(/\byou're\b/gi, (match) => {
-    return match === 'You\'re' ? 'I\'m' : 'I\'m';
+    return match === "You're" ? "I'm" : "I'm";
   });
 
   // Handle "you have" -> "I have"
@@ -220,7 +220,7 @@ function convertToFirstPerson(text: string): string {
 
   // Handle "you've" -> "I've"
   converted = converted.replace(/\byou've\b/gi, (match) => {
-    return match === 'You\'ve' ? 'I\'ve' : 'I\'ve';
+    return match === "You've" ? "I've" : "I've";
   });
 
   // Handle "you will" -> "I will"
@@ -230,7 +230,7 @@ function convertToFirstPerson(text: string): string {
 
   // Handle "you'll" -> "I'll"
   converted = converted.replace(/\byou'll\b/gi, (match) => {
-    return match === 'You\'ll' ? 'I\'ll' : 'I\'ll';
+    return match === "You'll" ? "I'll" : "I'll";
   });
 
   // Handle "yourself" -> "myself"

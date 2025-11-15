@@ -15,36 +15,36 @@
  * />
  */
 
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { User, Heart, Shield, Zap } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "./badge";
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { User, Heart, Shield, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from './badge';
 
 const characterPortraitVariants = cva(
-  "relative inline-flex items-center justify-center rounded-lg overflow-hidden bg-gradient-to-br from-muted to-muted/60 transition-all duration-300",
+  'relative inline-flex items-center justify-center rounded-lg overflow-hidden bg-gradient-to-br from-muted to-muted/60 transition-all duration-300',
   {
     variants: {
       size: {
-        xs: "h-8 w-8 text-xs",
-        sm: "h-12 w-12 text-sm",
-        md: "h-16 w-16 text-base",
-        lg: "h-24 w-24 text-lg",
-        xl: "h-32 w-32 text-xl",
-        "2xl": "h-40 w-40 text-2xl",
+        xs: 'h-8 w-8 text-xs',
+        sm: 'h-12 w-12 text-sm',
+        md: 'h-16 w-16 text-base',
+        lg: 'h-24 w-24 text-lg',
+        xl: 'h-32 w-32 text-xl',
+        '2xl': 'h-40 w-40 text-2xl',
       },
       variant: {
-        default: "border-2 border-border",
-        fantasy: "border-2 border-amber-200/50 shadow-md",
-        cosmic: "border-2 border-infinite-purple/30 shadow-lg shadow-infinite-purple/20",
+        default: 'border-2 border-border',
+        fantasy: 'border-2 border-amber-200/50 shadow-md',
+        cosmic: 'border-2 border-infinite-purple/30 shadow-lg shadow-infinite-purple/20',
       },
     },
     defaultVariants: {
-      size: "md",
-      variant: "default",
+      size: 'md',
+      variant: 'default',
     },
-  }
+  },
 );
 
 export interface CharacterPortraitProps
@@ -78,10 +78,7 @@ export interface CharacterPortraitProps
   animate?: boolean;
 }
 
-const CharacterPortrait = React.forwardRef<
-  HTMLDivElement,
-  CharacterPortraitProps
->(
+const CharacterPortrait = React.forwardRef<HTMLDivElement, CharacterPortraitProps>(
   (
     {
       className,
@@ -102,15 +99,15 @@ const CharacterPortrait = React.forwardRef<
       animate = true,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isHovered, setIsHovered] = React.useState(false);
 
     // Generate initials from name
     const initials = name
-      .split(" ")
+      .split(' ')
       .map((word) => word[0])
-      .join("")
+      .join('')
       .toUpperCase()
       .slice(0, 2);
 
@@ -118,10 +115,10 @@ const CharacterPortrait = React.forwardRef<
     const hpPercentage = hp && maxHp ? (hp / maxHp) * 100 : 100;
     const hpColor =
       hpPercentage <= 25
-        ? "text-red-500"
+        ? 'text-red-500'
         : hpPercentage <= 50
-        ? "text-yellow-500"
-        : "text-green-500";
+          ? 'text-yellow-500'
+          : 'text-green-500';
 
     const containerVariants = {
       hidden: { opacity: 0, scale: 0.8 },
@@ -139,11 +136,7 @@ const CharacterPortrait = React.forwardRef<
       <>
         {/* Avatar */}
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={name}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <img src={imageUrl} alt={name} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="flex items-center justify-center text-muted-foreground font-semibold">
             {initials || <User className="h-1/2 w-1/2" />}
@@ -153,10 +146,7 @@ const CharacterPortrait = React.forwardRef<
         {/* Level Badge */}
         {level !== undefined && (
           <div className="absolute top-1 left-1 z-10">
-            <Badge
-              variant="purple"
-              className="text-xs font-bold px-1.5 py-0.5"
-            >
+            <Badge variant="purple" className="text-xs font-bold px-1.5 py-0.5">
               {level}
             </Badge>
           </div>
@@ -168,8 +158,10 @@ const CharacterPortrait = React.forwardRef<
             <div className="flex items-center justify-around gap-1 text-white text-[0.625rem]">
               {hp !== undefined && maxHp !== undefined && (
                 <div className="flex items-center gap-0.5">
-                  <Heart className={cn("h-3 w-3", hpColor)} fill="currentColor" />
-                  <span className="font-semibold tabular-nums">{hp}/{maxHp}</span>
+                  <Heart className={cn('h-3 w-3', hpColor)} fill="currentColor" />
+                  <span className="font-semibold tabular-nums">
+                    {hp}/{maxHp}
+                  </span>
                 </div>
               )}
               {ac !== undefined && (
@@ -192,11 +184,7 @@ const CharacterPortrait = React.forwardRef<
         {status.length > 0 && (
           <div className="absolute top-1 right-1 z-10 flex flex-col gap-1">
             {status.slice(0, 3).map((effect, index) => (
-              <Badge
-                key={index}
-                variant="warning"
-                className="text-[0.625rem] px-1 py-0"
-              >
+              <Badge key={index} variant="warning" className="text-[0.625rem] px-1 py-0">
                 {effect}
               </Badge>
             ))}
@@ -227,9 +215,9 @@ const CharacterPortrait = React.forwardRef<
         {/* Glow Effect on Hover */}
         <div
           className={cn(
-            "absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none",
-            "bg-gradient-to-br from-infinite-purple/20 to-infinite-teal/20",
-            isHovered && "opacity-100"
+            'absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none',
+            'bg-gradient-to-br from-infinite-purple/20 to-infinite-teal/20',
+            isHovered && 'opacity-100',
           )}
         />
       </>
@@ -264,9 +252,9 @@ const CharacterPortrait = React.forwardRef<
         {Content}
       </div>
     );
-  }
+  },
 );
 
-CharacterPortrait.displayName = "CharacterPortrait";
+CharacterPortrait.displayName = 'CharacterPortrait';
 
 export { CharacterPortrait, characterPortraitVariants };

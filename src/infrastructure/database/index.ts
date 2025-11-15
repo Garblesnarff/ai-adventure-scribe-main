@@ -19,11 +19,7 @@
  */
 
 // Supabase clients and utilities
-export {
-  supabase,
-  supabaseService,
-  verifySupabaseToken,
-} from './supabase-client.js';
+export { supabase, supabaseService, verifySupabaseToken } from './supabase-client.js';
 
 // Drizzle ORM client
 export { db, pgPool } from './drizzle-client.js';
@@ -34,8 +30,4 @@ export { createClient as createPgClient } from './pg-client.js';
 export type { Db as PgDb } from './pg-client.js';
 
 // Shared types
-export type {
-  PgPool,
-  SupabaseClientType,
-  TokenVerificationResult,
-} from './types.js';
+export type { PgPool, SupabaseClientType, TokenVerificationResult } from './types.js';

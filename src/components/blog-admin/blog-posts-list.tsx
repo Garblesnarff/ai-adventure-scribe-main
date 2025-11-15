@@ -1,7 +1,4 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 import {
   Plus,
   Search,
@@ -15,23 +12,14 @@ import {
   Undo2,
   Trash2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+import { BlogStatusBadge } from './blog-status-badge';
+
+import type { BlogPost, BlogPostStatus, BlogPostListFilters } from '@/types/blog';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,18 +30,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BlogStatusBadge } from './blog-status-badge';
 import {
-  useBlogPosts,
-  useUpdateBlogPostById,
-  useDeleteBlogPost,
-} from '@/hooks/blog/useBlogPosts';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useBlogPosts, useUpdateBlogPostById, useDeleteBlogPost } from '@/hooks/blog/useBlogPosts';
 import { useBlogCategories, useBlogTags } from '@/hooks/blog/useBlogTaxonomy';
-import type { BlogPost, BlogPostStatus, BlogPostListFilters } from '@/types/blog';
 
 const STATUS_FILTERS: Array<{ value: BlogPostStatus | 'all'; label: string }> = [
   { value: 'all', label: 'All Statuses' },
@@ -197,11 +196,12 @@ export const BlogPostsList: React.FC = () => {
       (filters.status && filters.status !== 'all') ||
       filters.categoryId ||
       filters.tagId ||
-      filters.scheduledOnly
+      filters.scheduledOnly,
   );
 
   const renderTagBadges = (tagIds?: string[]) => {
-    if (!tagIds || tagIds.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
+    if (!tagIds || tagIds.length === 0)
+      return <span className="text-xs text-muted-foreground">—</span>;
     const names = tagIds
       .map((id) => tagLookup.get(id))
       .filter((name): name is string => Boolean(name));
@@ -403,7 +403,9 @@ export const BlogPostsList: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {posts.map((post) => {
-                      const categoryName = post.categoryIds?.map((id) => categoryLookup.get(id)).find(Boolean);
+                      const categoryName = post.categoryIds
+                        ?.map((id) => categoryLookup.get(id))
+                        .find(Boolean);
                       const isPending = isActionPending(post.id);
                       return (
                         <TableRow key={post.id} data-state={isPending ? 'loading' : undefined}>
@@ -432,7 +434,9 @@ export const BlogPostsList: React.FC = () => {
                               <span className="text-xs text-muted-foreground">—</span>
                             )}
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell">{renderTagBadges(post.tagIds)}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {renderTagBadges(post.tagIds)}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-end gap-1">
                               <Button
@@ -447,7 +451,9 @@ export const BlogPostsList: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => window.open(`/blog/${post.slug}`, '_blank', 'noopener')}
+                                onClick={() =>
+                                  window.open(`/blog/${post.slug}`, '_blank', 'noopener')
+                                }
                                 aria-label={`Preview ${post.title}`}
                                 disabled={isPending}
                               >
@@ -508,7 +514,9 @@ export const BlogPostsList: React.FC = () => {
 
             <div className="grid gap-3 md:hidden">
               {posts.map((post) => {
-                const categoryName = post.categoryIds?.map((id) => categoryLookup.get(id)).find(Boolean);
+                const categoryName = post.categoryIds
+                  ?.map((id) => categoryLookup.get(id))
+                  .find(Boolean);
                 const isPending = isActionPending(post.id);
                 return (
                   <div key={post.id} className="space-y-3 rounded-lg border border-border p-4">
@@ -528,9 +536,7 @@ export const BlogPostsList: React.FC = () => {
                         <span>Category</span>
                         <span>{categoryName ?? '—'}</span>
                       </div>
-                      <div className="flex flex-wrap gap-1">
-                        {renderTagBadges(post.tagIds)}
-                      </div>
+                      <div className="flex flex-wrap gap-1">{renderTagBadges(post.tagIds)}</div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
@@ -607,7 +613,10 @@ export const BlogPostsList: React.FC = () => {
         )}
       </CardContent>
 
-      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete post?</AlertDialogTitle>

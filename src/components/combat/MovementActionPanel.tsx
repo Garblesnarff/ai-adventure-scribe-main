@@ -1,15 +1,22 @@
 /**
  * Movement Action Panel Component
- * 
+ *
  * Allows players to move their characters and handles opportunity attacks
  */
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCombat } from '@/contexts/CombatContext';
 import { ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCombat } from '@/contexts/CombatContext';
 import logger from '@/lib/logger';
 
 interface MovementActionPanelProps {
@@ -21,30 +28,30 @@ interface MovementActionPanelProps {
 const MovementActionPanel: React.FC<MovementActionPanelProps> = ({
   participantId,
   currentPosition,
-  availableMovement
+  availableMovement,
 }) => {
   const { state, moveParticipant } = useCombat();
   const { activeEncounter } = state;
-  
+
   const [targetPosition, setTargetPosition] = useState<string>('');
-  
+
   const positionOptions = [
     { value: 'melee', label: 'Melee Range (5 ft)' },
     { value: 'adjacent', label: 'Adjacent (10 ft)' },
     { value: 'ranged', label: 'Ranged (30 ft)' },
-    { value: 'distant', label: 'Distant (60+ ft)' }
+    { value: 'distant', label: 'Distant (60+ ft)' },
   ];
-  
+
   const handleMove = async () => {
     if (!targetPosition || !activeEncounter) return;
-    
+
     try {
       await moveParticipant(participantId, currentPosition, targetPosition);
     } catch (error) {
       logger.error('Error moving participant:', error);
     }
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -60,7 +67,7 @@ const MovementActionPanel: React.FC<MovementActionPanelProps> = ({
         <div className="text-sm text-muted-foreground">
           Available Movement: {availableMovement} feet
         </div>
-        
+
         <div className="flex gap-2 items-end">
           <div className="flex-1">
             <label className="text-sm font-medium">Move To</label>
@@ -70,8 +77,8 @@ const MovementActionPanel: React.FC<MovementActionPanelProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {positionOptions
-                  .filter(option => option.value !== currentPosition)
-                  .map(option => (
+                  .filter((option) => option.value !== currentPosition)
+                  .map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -79,11 +86,8 @@ const MovementActionPanel: React.FC<MovementActionPanelProps> = ({
               </SelectContent>
             </Select>
           </div>
-          
-          <Button 
-            onClick={handleMove}
-            disabled={!targetPosition || availableMovement <= 0}
-          >
+
+          <Button onClick={handleMove} disabled={!targetPosition || availableMovement <= 0}>
             Move
           </Button>
         </div>

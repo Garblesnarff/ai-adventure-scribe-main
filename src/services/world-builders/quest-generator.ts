@@ -1,14 +1,25 @@
 import { getGeminiApiManager } from '../gemini-api-manager-singleton';
-import type { GeminiApiManager } from '../gemini-api-manager';
-import { supabase } from '@/integrations/supabase/client';
-import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { MemoryManager } from '../memory-manager';
-import { getAveragePartyLevel } from '@/utils/character-level-utils';
-import logger from '@/lib/logger';
+
+import type { GeminiApiManager } from '../gemini-api-manager';
 import type { Memory } from '@/types/memory';
 
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
+import { supabase } from '@/integrations/supabase/client';
+import logger from '@/lib/logger';
+import { getAveragePartyLevel } from '@/utils/character-level-utils';
+
 export interface QuestRequest {
-  type: 'main' | 'side' | 'personal' | 'fetch' | 'kill' | 'escort' | 'investigation' | 'social' | 'exploration';
+  type:
+    | 'main'
+    | 'side'
+    | 'personal'
+    | 'fetch'
+    | 'kill'
+    | 'escort'
+    | 'investigation'
+    | 'social'
+    | 'exploration';
   difficulty: 'trivial' | 'easy' | 'medium' | 'hard' | 'deadly';
   urgency: 'immediate' | 'soon' | 'whenever' | 'background';
   scope: 'single-session' | 'multi-session' | 'campaign-arc';
@@ -28,24 +39,24 @@ export interface QuestRequest {
 
 export interface GeneratedQuest {
   id?: string;
-  
+
   // Core Quest Info
   title: string;
   description: string;
   type: string;
   difficulty: string;
   estimatedTime: string;
-  
+
   // Quest Structure
   objective: {
     primary: string;
     secondary: string[];
     hidden: string[];
   };
-  
+
   // Quest Progression
   stages: QuestStage[];
-  
+
   // Rewards & Consequences
   rewards: {
     experience: number;
@@ -54,13 +65,13 @@ export interface GeneratedQuest {
     reputation: string[];
     storyImpact: string[];
   };
-  
+
   consequences: {
     success: string[];
     failure: string[];
     partialSuccess: string[];
   };
-  
+
   // Story Integration
   lore: string;
   backstory: string;
@@ -70,7 +81,7 @@ export interface GeneratedQuest {
     otherQuests: string[];
     factions: string[];
   };
-  
+
   // Gameplay Elements
   challenges: {
     combat: string[];
@@ -78,14 +89,14 @@ export interface GeneratedQuest {
     exploration: string[];
     puzzles: string[];
   };
-  
+
   // Narrative Hooks
   hooks: {
     initial: string[];
     ongoing: string[];
     twists: string[];
   };
-  
+
   // Metadata
   metadata: {
     createdAt: Date;
@@ -129,24 +140,24 @@ export class QuestGenerator {
   static async generateQuest(request: QuestRequest): Promise<GeneratedQuest> {
     try {
       const geminiManager = this.getGeminiManager();
-      
+
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-        
+
         const prompt = await this.buildQuestPrompt(request);
-        
+
         const response = await model.generateContent(prompt);
         const text = await response.response.text();
-        
+
         try {
           // Extract JSON from the response
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (!jsonMatch) {
             throw new Error('No JSON found in quest generation response');
           }
-          
+
           const questData = JSON.parse(jsonMatch[0]);
-          
+
           // Add metadata
           const quest: GeneratedQuest = {
             ...questData,
@@ -161,11 +172,10 @@ export class QuestGenerator {
               scope: request.scope,
               narrativeWeight: this.calculateNarrativeWeight(questData, request),
               storyArc: request.context.currentStory,
-            }
+            },
           };
-          
+
           return quest;
-          
         } catch (parseError) {
           logger.error('Failed to parse quest JSON:', parseError);
           throw new Error('Failed to generate quest: Invalid response format');
@@ -174,10 +184,11 @@ export class QuestGenerator {
 
       logger.info(`⚔️ Generated quest: ${result.title} (${result.type})`);
       return result;
-
     } catch (error) {
       logger.error('Quest generation failed:', error);
-      throw new Error(`Failed to generate quest: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate quest: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -192,7 +203,7 @@ export class QuestGenerator {
     if (context.sessionId && context.recentMemories) {
       const memories = context.recentMemories.slice(0, 5);
       if (memories.length > 0) {
-        memoryContext = `<recent_memories>\n${memories.map(m => `  <memory>${m.content}</memory>`).join('\n')}\n</recent_memories>`;
+        memoryContext = `<recent_memories>\n${memories.map((m) => `  <memory>${m.content}</memory>`).join('\n')}\n</recent_memories>`;
       }
     }
 
@@ -311,24 +322,28 @@ export class QuestGenerator {
    * Calculate narrative importance of quest
    */
   private static calculateNarrativeWeight(
-    quest: { stages?: unknown[]; connections?: { npcs?: unknown[] }; hooks?: { twists?: unknown[] } },
-    request: QuestRequest
+    quest: {
+      stages?: unknown[];
+      connections?: { npcs?: unknown[] };
+      hooks?: { twists?: unknown[] };
+    },
+    request: QuestRequest,
   ): number {
     let weight = 5; // Base weight
-    
+
     // Adjust based on quest type and scope
     if (request.type === 'main') weight += 3;
     else if (request.type === 'personal') weight += 2;
     else if (request.type === 'side') weight += 1;
-    
+
     if (request.scope === 'campaign-arc') weight += 2;
     else if (request.scope === 'multi-session') weight += 1;
-    
+
     // Increase weight for complex quests
     if ((quest.stages?.length || 0) > 3) weight += 1;
     if ((quest.connections?.npcs?.length || 0) > 2) weight += 1;
     if ((quest.hooks?.twists?.length || 0) > 1) weight += 1;
-    
+
     return Math.min(weight, 10);
   }
 
@@ -349,15 +364,11 @@ export class QuestGenerator {
           ...quest,
           generatedAt: quest.metadata.createdAt.toISOString(),
           generator: 'QuestGenerator',
-          version: '1.0'
-        }
+          version: '1.0',
+        },
       };
 
-      const { data, error } = await supabase
-        .from('quests')
-        .insert(questData)
-        .select('id')
-        .single();
+      const { data, error } = await supabase.from('quests').insert(questData).select('id').single();
 
       if (error) {
         logger.error('Error saving quest:', error);
@@ -366,7 +377,6 @@ export class QuestGenerator {
 
       logger.info(`💾 Saved quest "${quest.title}" with ID: ${data.id}`);
       return data.id;
-
     } catch (error) {
       logger.error('Error saving quest:', error);
       throw error;
@@ -378,14 +388,13 @@ export class QuestGenerator {
    */
   static async createQuest(request: QuestRequest): Promise<GeneratedQuest> {
     const quest = await this.generateQuest(request);
-    
+
     try {
       const questId = await this.saveQuest(quest);
       quest.id = questId;
-      
+
       logger.info(`✅ Created quest "${quest.title}" successfully`);
       return quest;
-      
     } catch (saveError) {
       logger.warn('Quest generated but failed to save:', saveError);
       // Return the generated quest even if save failed
@@ -400,21 +409,24 @@ export class QuestGenerator {
     campaignId: string,
     sessionId: string,
     characterId: string,
-    questType: QuestRequest['type'] = 'side'
+    questType: QuestRequest['type'] = 'side',
   ): Promise<GeneratedQuest> {
     try {
       // Security check: Get campaign details and verify user ownership
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-      
+
       // Get campaign and character details with user validation
       const [campaign, memories] = await Promise.all([
-        supabase.from('campaigns')
+        supabase
+          .from('campaigns')
           .select('*')
           .eq('id', campaignId)
           .eq('user_id', user.id) // Ensure user owns this campaign
           .single(),
-        MemoryManager.getRelevantMemories(sessionId, 'quest opportunities', 5)
+        MemoryManager.getRelevantMemories(sessionId, 'quest opportunities', 5),
       ]);
 
       if (!campaign.data) {
@@ -433,11 +445,10 @@ export class QuestGenerator {
           genre: campaign.data.genre || 'fantasy',
           playerLevel: await getAveragePartyLevel(campaignId, sessionId),
           recentMemories: memories,
-        }
+        },
       };
 
       return await this.createQuest(request);
-
     } catch (error) {
       logger.error('Failed to generate memory-based quest:', error);
       throw error;
@@ -450,14 +461,14 @@ export class QuestGenerator {
   static async generateQuestHook(
     campaignId: string,
     sessionId: string,
-    contextMessage: string
+    contextMessage: string,
   ): Promise<{ title: string; hook: string; questType: string }> {
     try {
       const geminiManager = this.getGeminiManager();
-      
+
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-        
+
         const prompt = `<task>
   <description>Generate a quest hook based on the current game context</description>
 </task>
@@ -483,28 +494,27 @@ export class QuestGenerator {
 
         const response = await model.generateContent(prompt);
         const text = await response.response.text();
-        
+
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           return JSON.parse(jsonMatch[0]);
         }
-        
+
         // Fallback if JSON parsing fails
         return {
-          title: "Mysterious Opportunity",
-          hook: "Something interesting has caught your attention...",
-          questType: "side"
+          title: 'Mysterious Opportunity',
+          hook: 'Something interesting has caught your attention...',
+          questType: 'side',
         };
       });
 
       return result;
-
     } catch (error) {
       logger.error('Failed to generate quest hook:', error);
       return {
-        title: "Adventure Awaits",
-        hook: "A new opportunity presents itself...",
-        questType: "side"
+        title: 'Adventure Awaits',
+        hook: 'A new opportunity presents itself...',
+        questType: 'side',
       };
     }
   }

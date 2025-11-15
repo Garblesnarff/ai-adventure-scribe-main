@@ -26,9 +26,9 @@ export const useSessionValidator = ({
     if (!sessionId || !campaignId || !characterId) {
       logger.error('Missing required IDs:', { sessionId, campaignId, characterId });
       toast({
-        title: "Session Error",
-        description: "Missing required session information",
-        variant: "destructive",
+        title: 'Session Error',
+        description: 'Missing required session information',
+        variant: 'destructive',
       });
       return false;
     }
@@ -45,9 +45,9 @@ export const useSessionValidator = ({
     if (error || !session) {
       logger.error('Session validation failed:', error || 'Session not found');
       toast({
-        title: "Session Error",
-        description: "Invalid game session. Please try starting a new game.",
-        variant: "destructive",
+        title: 'Session Error',
+        description: 'Invalid game session. Please try starting a new game.',
+        variant: 'destructive',
       });
       return false;
     }

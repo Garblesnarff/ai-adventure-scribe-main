@@ -11,6 +11,7 @@
  */
 
 import { toast } from 'sonner';
+
 import logger from '@/lib/logger';
 
 /**
@@ -48,16 +49,13 @@ export interface ErrorHandlerOptions {
  * }
  * ```
  */
-export function handleAsyncError(
-  error: unknown,
-  options: ErrorHandlerOptions = {}
-): void {
+export function handleAsyncError(error: unknown, options: ErrorHandlerOptions = {}): void {
   const {
     userMessage = 'An error occurred',
     logLevel = 'error',
     showToast = true,
     onError,
-    context
+    context,
   } = options;
 
   // Extract error message
@@ -67,7 +65,7 @@ export function handleAsyncError(
   const logContext: Record<string, unknown> = {
     error,
     errorMessage,
-    ...context
+    ...context,
   };
 
   // Log the error with appropriate level
@@ -77,7 +75,7 @@ export function handleAsyncError(
   if (showToast) {
     toast.error(userMessage, {
       description: errorMessage,
-      duration: 5000
+      duration: 5000,
     });
   }
 
@@ -115,7 +113,7 @@ export function handleAsyncError(
  */
 export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
   fn: T,
-  options?: ErrorHandlerOptions
+  options?: ErrorHandlerOptions,
 ): T {
   return (async (...args: Parameters<T>) => {
     try {
@@ -134,10 +132,7 @@ export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
  * @param error - The error that occurred
  * @param options - Configuration options for error handling
  */
-export function handleAPIError(
-  error: unknown,
-  options: ErrorHandlerOptions = {}
-): void {
+export function handleAPIError(error: unknown, options: ErrorHandlerOptions = {}): void {
   let userMessage = options.userMessage || 'Network request failed';
 
   // Check for common HTTP error patterns
@@ -161,7 +156,7 @@ export function handleAPIError(
 
   handleAsyncError(error, {
     ...options,
-    userMessage
+    userMessage,
   });
 }
 
@@ -174,14 +169,14 @@ export function handleAPIError(
  */
 export function handleValidationError(
   message: string,
-  options: Omit<ErrorHandlerOptions, 'userMessage'> = {}
+  options: Omit<ErrorHandlerOptions, 'userMessage'> = {},
 ): void {
   logger.warn('Validation error:', message);
 
   if (options.showToast !== false) {
     toast.error('Validation Error', {
       description: message,
-      duration: 4000
+      duration: 4000,
     });
   }
 

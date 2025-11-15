@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -39,14 +40,14 @@ interface CampaignCardProps {
 const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onSelect, className }) => (
   <Card
     className={cn(
-      "w-full p-4 mb-3 cursor-pointer hover:shadow-lg transition whitespace-normal",
-      className
+      'w-full p-4 mb-3 cursor-pointer hover:shadow-lg transition whitespace-normal',
+      className,
     )}
     tabIndex={0}
     role="button"
     aria-label={`Select campaign ${campaign.name}`}
     onClick={() => onSelect(campaign.id)}
-    onKeyDown={e => {
+    onKeyDown={(e) => {
       if (e.key === 'Enter' || e.key === ' ') onSelect(campaign.id);
     }}
   >

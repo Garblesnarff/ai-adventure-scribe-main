@@ -7,9 +7,11 @@
  * @module opening-message-generator
  */
 
-import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import { getGeminiManager } from './shared/utils';
+
 import type { GameContext } from './shared/types';
+
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
 import logger from '@/lib/logger';
 
 /**
@@ -33,9 +35,7 @@ import logger from '@/lib/logger';
  * });
  * ```
  */
-export async function generateOpeningMessage(params: {
-  context: GameContext;
-}): Promise<string> {
+export async function generateOpeningMessage(params: { context: GameContext }): Promise<string> {
   logger.info('Generating opening message for new session...');
 
   try {

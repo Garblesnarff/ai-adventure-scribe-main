@@ -1,6 +1,7 @@
+import { ChevronRight } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+
 import { useCampaign } from '@/contexts/CampaignContext';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useEntityLabel } from '@/hooks/use-entity-label';
@@ -36,8 +37,14 @@ const Breadcrumbs: React.FC = () => {
   const campaignNameFromContext = campaignState.campaign?.name || null;
   const characterNameFromContext = characterState.character?.name || null;
 
-  const { label: campaignNameFetched, loading: campaignLoading } = useEntityLabel('campaign', campaignId);
-  const { label: characterNameFetched, loading: characterLoading } = useEntityLabel('character', characterId);
+  const { label: campaignNameFetched, loading: campaignLoading } = useEntityLabel(
+    'campaign',
+    campaignId,
+  );
+  const { label: characterNameFetched, loading: characterLoading } = useEntityLabel(
+    'character',
+    characterId,
+  );
   const { label: sessionLabel, loading: sessionLoading } = useEntityLabel('session', sessionId);
 
   /**
@@ -68,9 +75,7 @@ const Breadcrumbs: React.FC = () => {
     // Remove any URL parameters
     segment = segment.split('?')[0];
     // Capitalize first letter and add spaces before capital letters
-    return segment
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, str => str.toUpperCase());
+    return segment.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
   };
 
   /**
@@ -86,15 +91,13 @@ const Breadcrumbs: React.FC = () => {
     pathSegments.length === 0 ||
     (pathSegments.length === 1 && pathSegments[0] === 'app') ||
     location.pathname === '/app/characters'
-  ) return null;
+  )
+    return null;
 
   return (
     <div id="app-breadcrumbs" className="container mx-auto px-4 py-2">
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <Link
-          to="/app"
-          className="hover:text-foreground transition-colors"
-        >
+        <Link to="/app" className="hover:text-foreground transition-colors">
           Home
         </Link>
         {pathSegments.map((segment, index) => {

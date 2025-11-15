@@ -6,6 +6,7 @@
  */
 
 import type { CombatParticipant, DiceRoll, DeathSaveResult } from './types';
+
 import { rollDie } from '@/utils/diceRolls';
 
 /**
@@ -128,7 +129,7 @@ export function stabilize(participant: CombatParticipant): CombatParticipant {
  */
 export function checkMassiveDamage(
   participant: CombatParticipant,
-  damageAmount: number
+  damageAmount: number,
 ): { instantDeath: boolean; excessDamage: number } {
   if (participant.currentHitPoints > 0) {
     return { instantDeath: false, excessDamage: 0 };

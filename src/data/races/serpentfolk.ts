@@ -10,5 +10,5 @@ export const serpentfolk: CharacterRace = {
   abilityScoreIncrease: { charisma: 2, intelligence: 1 },
   speed: 30,
   languages: ['Common', 'Abyssal', 'Draconic'],
-  subraces: []
+  subraces: [],
 };

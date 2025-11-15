@@ -1,11 +1,13 @@
-import * as React from 'react';
 import { Eye, Code, FileText } from 'lucide-react';
+import { marked } from 'marked';
+import * as React from 'react';
+import sanitizeHtml from 'sanitize-html';
+
+import { logger } from '../../../lib/logger';
+
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { marked } from 'marked';
-import sanitizeHtml from 'sanitize-html';
-import { logger } from '../../../lib/logger';
 
 interface MarkdownEditorProps {
   value: string;
@@ -27,7 +29,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   const renderMarkdown = (markdown: string): string => {
     try {
       const rawHtml = marked.parse(markdown, { async: false }) as string;
-      
+
       const cleanHtml = sanitizeHtml(rawHtml, {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat([
           'img',
@@ -71,15 +73,16 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = value.substring(start, end);
-    const newText = value.substring(0, start) + before + selectedText + after + value.substring(end);
-    
+    const newText =
+      value.substring(0, start) + before + selectedText + after + value.substring(end);
+
     onChange(newText);
 
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(
         start + before.length,
-        start + before.length + selectedText.length
+        start + before.length + selectedText.length,
       );
     }, 0);
   };

@@ -18,7 +18,7 @@
  * ```
  */
 // Supabase clients and utilities
-export { supabase, supabaseService, verifySupabaseToken, } from './supabase-client.js';
+export { supabase, supabaseService, verifySupabaseToken } from './supabase-client.js';
 // Drizzle ORM client
 export { db, pgPool } from './drizzle-client.js';
 // PostgreSQL client factory

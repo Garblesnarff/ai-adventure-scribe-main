@@ -8,17 +8,11 @@
  * @module narration-service
  */
 
-import { GEMINI_TEXT_MODEL } from '@/config/ai';
-import { MemoryManager } from '../memory-manager';
-import type { Memory, MemoryContext } from '../memory-manager';
-import { WorldBuilderService } from '../world-builders/world-builder-service';
-import { voiceConsistencyService } from '../voice-consistency-service';
-import type { SessionVoiceContext } from '../voice-consistency-service';
-import { detectCombatFromText } from '@/utils/combatDetection';
-import logger from '@/lib/logger';
-import { SessionStateService } from '../session-state-service';
 import { AgentOrchestrator } from '../crewai/agent-orchestrator';
-
+import { MemoryManager } from '../memory-manager';
+import { SessionStateService } from '../session-state-service';
+import { voiceConsistencyService } from '../voice-consistency-service';
+import { WorldBuilderService } from '../world-builders/world-builder-service';
 import {
   buildDMPersonaPrompt,
   buildGameContextPrompt,
@@ -33,12 +27,14 @@ import {
   getOrCreateDeduped,
   addEquipmentContext,
 } from './shared/utils';
-import type {
-  ChatMessage,
-  GameContext,
-  AIResponse,
-  NarrationSegment,
-} from './shared/types';
+
+import type { Memory, MemoryContext } from '../memory-manager';
+import type { SessionVoiceContext } from '../voice-consistency-service';
+import type { ChatMessage, GameContext, AIResponse, NarrationSegment } from './shared/types';
+
+import { GEMINI_TEXT_MODEL } from '@/config/ai';
+import logger from '@/lib/logger';
+import { detectCombatFromText } from '@/utils/combatDetection';
 
 /**
  * Parameters for chatWithDM function
@@ -65,7 +61,7 @@ export async function chatWithDM(params: ChatParams): Promise<AIResponse> {
   const key = keyFor(
     params.context?.sessionId,
     params.message,
-    (params.conversationHistory || []).length
+    (params.conversationHistory || []).length,
   );
 
   return getOrCreateDeduped(key, async () => {
@@ -77,7 +73,7 @@ export async function chatWithDM(params: ChatParams): Promise<AIResponse> {
           relevantMemories = await MemoryManager.getRelevantMemories(
             params.context.sessionId,
             params.message,
-            8
+            8,
           );
           logger.info(`📚 Retrieved ${relevantMemories.length} relevant memories`);
         } catch (memoryError) {
@@ -91,7 +87,7 @@ export async function chatWithDM(params: ChatParams): Promise<AIResponse> {
       // Detect combat from player message
       const combatDetection = detectCombatFromText(params.message);
       logger.info(
-        `⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`
+        `⚔️ Combat detection: ${combatDetection.isCombat ? 'YES' : 'NO'} (confidence: ${Math.round(combatDetection.confidence * 100)}%)`,
       );
 
       if (combatDetection.isCombat) {
@@ -106,21 +102,12 @@ export async function chatWithDM(params: ChatParams): Promise<AIResponse> {
 
       // Optional path: delegate to CrewAI orchestrator
       if (useCrewAI() && params.context.sessionId) {
-        const crewResult = await attemptCrewAI(
-          params,
-          relevantMemories,
-          combatDetection
-        );
+        const crewResult = await attemptCrewAI(params, relevantMemories, combatDetection);
         if (crewResult) return crewResult;
       }
 
       // Use local Gemini API
-      return await generateGeminiResponse(
-        params,
-        relevantMemories,
-        voiceContext,
-        combatDetection
-      );
+      return await generateGeminiResponse(params, relevantMemories, voiceContext, combatDetection);
     } catch (geminiError) {
       logger.error('Local Gemini API failed:', geminiError);
       throw new Error('Failed to get DM response - AI service unavailable');
@@ -134,7 +121,7 @@ export async function chatWithDM(params: ChatParams): Promise<AIResponse> {
 async function attemptCrewAI(
   params: ChatParams,
   relevantMemories: Memory[],
-  combatDetection: any
+  combatDetection: any,
 ): Promise<AIResponse | null> {
   try {
     logger.info('Using CrewAI microservice for chat...');
@@ -157,19 +144,19 @@ async function attemptCrewAI(
           rr.type === 'check'
             ? 'Check'
             : rr.type === 'save'
-            ? 'Saving Throw'
-            : rr.type === 'attack'
-            ? 'Attack'
-            : rr.type === 'damage'
-            ? 'Damage'
-            : 'Initiative';
+              ? 'Saving Throw'
+              : rr.type === 'attack'
+                ? 'Attack'
+                : rr.type === 'damage'
+                  ? 'Damage'
+                  : 'Initiative';
         const purpose = rr.purpose || (rr.type === 'check' ? 'Ability/Skill Check' : typeLabel);
         const target = rr.dc ? ` (DC ${rr.dc})` : rr.ac ? ` (AC ${rr.ac})` : '';
         const advantage = rr.advantage
           ? ' with advantage'
           : rr.disadvantage
-          ? ' with disadvantage'
-          : '';
+            ? ' with disadvantage'
+            : '';
         finalText = `Please roll ${purpose}${target}${advantage}.`;
       } else {
         const geminiText = await generateFallbackNarration(params.message);
@@ -237,7 +224,7 @@ async function postProcessResponse(params: ChatParams, responseText: string): Pr
     const extractionResult = await MemoryManager.extractMemories(
       memoryContext,
       params.message,
-      responseText
+      responseText,
     );
 
     if (extractionResult.memories.length > 0) {
@@ -254,7 +241,7 @@ async function postProcessResponse(params: ChatParams, responseText: string): Pr
       params.context.sessionId!,
       params.context.characterId,
       params.message,
-      responseText
+      responseText,
     );
 
     if (
@@ -263,7 +250,7 @@ async function postProcessResponse(params: ChatParams, responseText: string): Pr
         0
     ) {
       logger.info(
-        `🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`
+        `🌍 World expanded: +${worldExpansion.locations.length} locations, +${worldExpansion.npcs.length} NPCs, +${worldExpansion.quests.length} quests`,
       );
     }
   } catch (worldError) {

@@ -1,25 +1,21 @@
+import { Users, Sword, Heart, Zap, Clock } from 'lucide-react';
 import React from 'react';
-import { useCombat } from '@/contexts/CombatContext';
-import { Card, CardContent } from '../ui/card';
+
 import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
-import { 
-  Users, 
-  Sword, 
-  Heart, 
-  Zap, 
-  Clock 
-} from 'lucide-react';
+import { Card, CardContent } from '../ui/card';
 import { Progress } from '../ui/progress';
+import { ScrollArea } from '../ui/scroll-area';
+
+import { useCombat } from '@/contexts/CombatContext';
 
 /**
  * CombatSummary - Compact combat overview for game sidebar
  * Shows initiative order, current turn, participant HP, and recent actions
- * 
+ *
  * Dependencies:
  * - CombatContext for combat state and actions
  * - ui/card, ui/button, ui/scroll-area, ui/progress for styling
- * 
+ *
  * Usage: Render in combat tab; updates live during combat
  */
 export const CombatSummary: React.FC = () => {
@@ -35,7 +31,9 @@ export const CombatSummary: React.FC = () => {
     );
   }
 
-  const currentParticipant = activeEncounter.participants.find(p => p.id === activeEncounter.currentTurnParticipantId);
+  const currentParticipant = activeEncounter.participants.find(
+    (p) => p.id === activeEncounter.currentTurnParticipantId,
+  );
   const recentActions = activeEncounter.actions.slice(-5); // Last 5 actions
 
   return (
@@ -65,13 +63,13 @@ export const CombatSummary: React.FC = () => {
             const isPlayer = participant.participantType === 'player';
 
             return (
-              <div 
-                key={participant.id} 
+              <div
+                key={participant.id}
                 className={`p-2 rounded-md border ${
-                  isCurrentTurn 
-                    ? 'border-primary bg-primary/5' 
-                    : isPlayer 
-                      ? 'border-blue-200 bg-blue-50' 
+                  isCurrentTurn
+                    ? 'border-primary bg-primary/5'
+                    : isPlayer
+                      ? 'border-blue-200 bg-blue-50'
                       : 'border-red-200 bg-red-50'
                 }`}
               >
@@ -83,26 +81,27 @@ export const CombatSummary: React.FC = () => {
                 </div>
                 <div className="space-y-1 mt-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span>HP: {participant.currentHitPoints}/{participant.maxHitPoints}</span>
+                    <span>
+                      HP: {participant.currentHitPoints}/{participant.maxHitPoints}
+                    </span>
                     <span className="text-muted-foreground">AC: {participant.armorClass}</span>
                   </div>
-                  <Progress 
-                    value={hpPercent} 
+                  <Progress
+                    value={hpPercent}
                     className={`h-1 ${hpPercent > 50 ? 'bg-green-500' : hpPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'}`}
                   />
                 </div>
                 {participant.conditions.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {participant.conditions.slice(0, 3).map(condition => (
-                      <span 
-                        key={condition.name} 
-                        className="px-1 py-0.5 bg-muted text-xs rounded"
-                      >
+                    {participant.conditions.slice(0, 3).map((condition) => (
+                      <span key={condition.name} className="px-1 py-0.5 bg-muted text-xs rounded">
                         {condition.name}
                       </span>
                     ))}
                     {participant.conditions.length > 3 && (
-                      <span className="text-xs text-muted-foreground">+{participant.conditions.length - 3}</span>
+                      <span className="text-xs text-muted-foreground">
+                        +{participant.conditions.length - 3}
+                      </span>
                     )}
                   </div>
                 )}
@@ -127,7 +126,7 @@ export const CombatSummary: React.FC = () => {
           </h4>
           <ScrollArea className="h-20">
             <div className="space-y-1 text-xs text-muted-foreground">
-              {recentActions.map(action => (
+              {recentActions.map((action) => (
                 <div key={action.id} className="truncate">
                   {action.description}
                 </div>
@@ -142,9 +141,9 @@ export const CombatSummary: React.FC = () => {
         <div className="pt-2 border-t text-xs text-muted-foreground">
           <div>Current: {currentParticipant.name}</div>
           <div className="text-[10px]">
-            Action: {currentParticipant.actionTaken ? 'Used' : 'Available'} | 
-            Bonus: {currentParticipant.bonusActionTaken ? 'Used' : 'Available'} | 
-            Reaction: {currentParticipant.reactionTaken ? 'Used' : 'Available'}
+            Action: {currentParticipant.actionTaken ? 'Used' : 'Available'} | Bonus:{' '}
+            {currentParticipant.bonusActionTaken ? 'Used' : 'Available'} | Reaction:{' '}
+            {currentParticipant.reactionTaken ? 'Used' : 'Available'}
           </div>
         </div>
       )}

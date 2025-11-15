@@ -1,21 +1,21 @@
 /**
  * Message Delivery Service
- * 
+ *
  * This file defines the MessageDeliveryService class, a singleton service
  * responsible for delivering messages within the agent messaging system.
  * It interacts with Supabase to persist communications and uses other services
  * like Acknowledgment, ErrorHandling, and CircuitBreaker to ensure reliable delivery.
- * 
+ *
  * Main Class:
  * - MessageDeliveryService: Handles the delivery of queued messages.
- * 
+ *
  * Key Dependencies:
  * - Supabase client (`@/integrations/supabase/client`)
  * - MessageAcknowledgmentService (./message-acknowledgment-service.ts)
  * - ErrorHandlingService (`../../error/services/error-handling-service.ts`)
  * - CircuitBreakerService (`../../error/services/circuit-breaker-service.ts`)
  * - Various message and error types.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -32,7 +32,6 @@ import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsServi
 import { ErrorCategory, ErrorSeverity } from '../../error/types';
 import { QueuedMessage } from '../types';
 import { logger } from '../../../lib/logger';
-
 
 export class MessageDeliveryService {
   private static instance: MessageDeliveryService;
@@ -65,32 +64,33 @@ export class MessageDeliveryService {
 
     try {
       const { error } = await this.errorHandler.handleDatabaseOperation(
-        async () => supabase.from('agent_communications').insert({
-          sender_id: message.sender,
-          receiver_id: message.receiver,
-          message_type: message.type,
-          content: message.content,
-          created_at: new Date().toISOString()
-        }),
+        async () =>
+          supabase.from('agent_communications').insert({
+            sender_id: message.sender,
+            receiver_id: message.receiver,
+            message_type: message.type,
+            content: message.content,
+            created_at: new Date().toISOString(),
+          }),
         {
           category: ErrorCategory.DATABASE,
           context,
           severity: ErrorSeverity.HIGH,
           retryConfig: {
             maxRetries: 3,
-            initialDelay: 1000
-          }
-        }
+            initialDelay: 1000,
+          },
+        },
       );
 
       if (error) throw error;
 
       await this.acknowledgmentService.createAcknowledgment(message.id);
-      
+
       message.deliveryStatus = {
         delivered: true,
         timestamp: new Date(),
-        attempts: message.deliveryStatus.attempts + 1
+        attempts: message.deliveryStatus.attempts + 1,
       };
 
       this.circuitBreaker.recordSuccess(context);
@@ -99,14 +99,14 @@ export class MessageDeliveryService {
       logger.error('[MessageDeliveryService] Delivery error:', error);
       this.circuitBreaker.recordError(context);
       this.diagnostics.recordFailure(error instanceof Error ? error.message : 'Delivery error');
-      
+
       message.deliveryStatus = {
         delivered: false,
         timestamp: new Date(),
         attempts: message.deliveryStatus.attempts + 1,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
-      
+
       return false;
     }
   }
@@ -121,23 +121,21 @@ export class MessageDeliveryService {
         originalMessageId: message.id,
         originalType: message.type,
         error: 'Maximum retry attempts exceeded',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
-      await supabase
-        .from('agent_communications')
-        .insert({
-          sender_id: message.sender,
-          receiver_id: message.receiver,
-          message_type: 'FAILED_DELIVERY',
-          content: failureContent,
-          created_at: new Date().toISOString()
-        });
+      await supabase.from('agent_communications').insert({
+        sender_id: message.sender,
+        receiver_id: message.receiver,
+        message_type: 'FAILED_DELIVERY',
+        content: failureContent,
+        created_at: new Date().toISOString(),
+      });
 
       await this.acknowledgmentService.updateAcknowledgment(
         message.id,
         'failed',
-        'Maximum retry attempts exceeded'
+        'Maximum retry attempts exceeded',
       );
 
       this.diagnostics.recordDeadLetter(message);

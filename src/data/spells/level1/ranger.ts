@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const rangerLevel1Spells: Spell[] = [
-{
+  {
     id: 'alarm-ranger',
     name: 'Alarm',
     level: 1,
@@ -15,7 +15,7 @@ export const rangerLevel1Spells: Spell[] = [
     materialDescription: 'a tiny bell and a piece of fine silver wire',
     duration: '8 hours',
     description: 'You set an alarm against unwanted intrusion.',
-    ritual: true
+    ritual: true,
   },
   {
     id: 'animal-friendship-ranger',
@@ -30,7 +30,7 @@ export const rangerLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a morsel of food',
     duration: '24 hours',
-    description: 'This spell lets you convince a beast that you mean it no harm.'
+    description: 'This spell lets you convince a beast that you mean it no harm.',
   },
   {
     id: 'cure-wounds-ranger',
@@ -43,8 +43,9 @@ export const rangerLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
-    damage: '1d8'
+    description:
+      'A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier.',
+    damage: '1d8',
   },
   {
     id: 'detect-magic-ranger',
@@ -59,7 +60,7 @@ export const rangerLevel1Spells: Spell[] = [
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'detect-poison-and-disease-ranger',
@@ -74,9 +75,10 @@ export const rangerLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a yew leaf',
     duration: 'Concentration, up to 10 minutes',
-    description: 'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
+    description:
+      'For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   },
   {
     id: 'fog-cloud-ranger',
@@ -90,7 +92,7 @@ export const rangerLevel1Spells: Spell[] = [
     somatic: true,
     duration: 'Concentration, up to 1 hour',
     description: 'You create a 20-foot-radius sphere of fog centered on a point within range.',
-    concentration: true
+    concentration: true,
   },
   {
     id: 'goodberry-ranger',
@@ -105,11 +107,12 @@ export const rangerLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a sprig of mistletoe',
     duration: '24 hours',
-    description: 'Up to ten berries appear in your hand and are infused with magic for the duration.'
+    description:
+      'Up to ten berries appear in your hand and are infused with magic for the duration.',
   },
   {
     id: 'hunters-mark',
-    name: 'Hunter\'s Mark',
+    name: "Hunter's Mark",
     level: 1,
     school: 'Divination',
     castingTime: '1 bonus action',
@@ -117,8 +120,9 @@ export const rangerLevel1Spells: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Concentration, up to 1 hour',
-    description: 'You choose a creature you can see within range and mystically mark it as your quarry.',
-    concentration: true
+    description:
+      'You choose a creature you can see within range and mystically mark it as your quarry.',
+    concentration: true,
   },
   {
     id: 'jump-ranger',
@@ -127,13 +131,14 @@ export const rangerLevel1Spells: Spell[] = [
     school: 'Transmutation',
     castingTime: '1 action',
     range: 'Touch',
-    components: 'V, S, M (a grasshopper\'s hind leg)',
+    components: "V, S, M (a grasshopper's hind leg)",
     verbal: true,
     somatic: true,
     material: true,
-    materialDescription: 'a grasshopper\'s hind leg',
+    materialDescription: "a grasshopper's hind leg",
     duration: '1 minute',
-    description: 'You touch a creature. The creature\'s jump distance is tripled until the spell ends.'
+    description:
+      "You touch a creature. The creature's jump distance is tripled until the spell ends.",
   },
   {
     id: 'longstrider-ranger',
@@ -148,7 +153,8 @@ export const rangerLevel1Spells: Spell[] = [
     material: true,
     materialDescription: 'a pinch of dirt',
     duration: '1 hour',
-    description: 'You touch a creature. The target\'s speed increases by 10 feet until the spell ends.'
+    description:
+      "You touch a creature. The target's speed increases by 10 feet until the spell ends.",
   },
   {
     id: 'speak-with-animals-ranger',
@@ -161,7 +167,8 @@ export const rangerLevel1Spells: Spell[] = [
     verbal: true,
     somatic: true,
     duration: '10 minutes',
-    description: 'You gain the ability to comprehend and verbally communicate with beasts for the duration.',
-    ritual: true
-  }
+    description:
+      'You gain the ability to comprehend and verbally communicate with beasts for the duration.',
+    ritual: true,
+  },
 ];

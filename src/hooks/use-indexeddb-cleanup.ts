@@ -20,6 +20,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+
 import { IndexedDBService } from '../agents/messaging/services/storage/IndexedDBService';
 import { logger } from '../lib/logger';
 
@@ -62,28 +63,33 @@ export function useIndexedDBCleanup(): UseIndexedDBCleanupReturn {
     }
   }, []);
 
-  const manualCleanup = useCallback(async (maxAgeMs?: number): Promise<number> => {
-    setIsLoading(true);
-    setError(null);
+  const manualCleanup = useCallback(
+    async (maxAgeMs?: number): Promise<number> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const service = IndexedDBService.getInstance();
-      const deletedCount = await service.manualCleanup(maxAgeMs);
+      try {
+        const service = IndexedDBService.getInstance();
+        const deletedCount = await service.manualCleanup(maxAgeMs);
 
-      // Refresh stats after cleanup
-      refreshStats();
+        // Refresh stats after cleanup
+        refreshStats();
 
-      logger.info(`[useIndexedDBCleanup] Manual cleanup completed: ${deletedCount} messages deleted`);
-      return deletedCount;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Cleanup failed';
-      setError(errorMessage);
-      logger.error('[useIndexedDBCleanup] Manual cleanup error:', err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [refreshStats]);
+        logger.info(
+          `[useIndexedDBCleanup] Manual cleanup completed: ${deletedCount} messages deleted`,
+        );
+        return deletedCount;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Cleanup failed';
+        setError(errorMessage);
+        logger.error('[useIndexedDBCleanup] Manual cleanup error:', err);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshStats],
+  );
 
   // Load initial stats on mount
   useEffect(() => {
@@ -92,9 +98,12 @@ export function useIndexedDBCleanup(): UseIndexedDBCleanupReturn {
 
   // Optionally refresh stats periodically (every 5 minutes)
   useEffect(() => {
-    const interval = setInterval(() => {
-      refreshStats();
-    }, 5 * 60 * 1000); // 5 minutes
+    const interval = setInterval(
+      () => {
+        refreshStats();
+      },
+      5 * 60 * 1000,
+    ); // 5 minutes
 
     return () => clearInterval(interval);
   }, [refreshStats]);
@@ -116,9 +125,8 @@ export function formatCleanupStats(stats: CleanupStats): {
   totalDeletedText: string;
   lastDeletedText: string;
 } {
-  const lastCleanupText = stats.lastCleanupTime > 0
-    ? new Date(stats.lastCleanupTime).toLocaleString()
-    : 'Never';
+  const lastCleanupText =
+    stats.lastCleanupTime > 0 ? new Date(stats.lastCleanupTime).toLocaleString() : 'Never';
 
   const totalDeletedText = stats.totalMessagesDeleted.toLocaleString();
   const lastDeletedText = stats.lastDeletedCount.toLocaleString();

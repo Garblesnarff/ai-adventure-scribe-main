@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+
 import CampaignCharacterList from './CampaignCharacterList';
 import CreateCharacterPanel from './CreateCharacterPanel';
+
+import { Button } from '@/components/ui/button';
 
 interface Props {
   mode?: 'list' | 'create';
@@ -35,9 +37,7 @@ const CampaignCharacters: React.FC<Props> = ({ mode = 'list' }) => {
         </Button>
       </div>
       <CampaignCharacterList />
-      {mode === 'create' && (
-        <CreateCharacterPanel open onClose={closeCreate} />
-      )}
+      {mode === 'create' && <CreateCharacterPanel open onClose={closeCreate} />}
     </div>
   );
 };

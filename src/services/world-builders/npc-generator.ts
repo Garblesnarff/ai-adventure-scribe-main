@@ -1,12 +1,23 @@
 import { getGeminiApiManager } from '../gemini-api-manager-singleton';
+
 import type { GeminiApiManager } from '../gemini-api-manager';
-import { supabase } from '@/integrations/supabase/client';
+
 import { GEMINI_TEXT_MODEL } from '@/config/ai';
-import { getAveragePartyLevel } from '@/utils/character-level-utils';
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { getAveragePartyLevel } from '@/utils/character-level-utils';
 
 export interface NPCRequest {
-  role: 'shopkeeper' | 'guard' | 'noble' | 'commoner' | 'villain' | 'ally' | 'mentor' | 'mysterious' | 'authority';
+  role:
+    | 'shopkeeper'
+    | 'guard'
+    | 'noble'
+    | 'commoner'
+    | 'villain'
+    | 'ally'
+    | 'mentor'
+    | 'mysterious'
+    | 'authority';
   importance: 'minor' | 'major' | 'critical';
   location?: string;
   purpose?: string; // Why this NPC exists in the story
@@ -43,7 +54,7 @@ export interface GeneratedNPC {
   role: string;
   occupation: string;
   socialStatus: string;
-  
+
   // Personality & Psychology
   personality: {
     traits: string[];
@@ -53,14 +64,14 @@ export interface GeneratedNPC {
     mannerisms: string[];
     speech: string;
   };
-  
+
   // Motivations & Goals
   goals: {
     immediate: string[];
     longTerm: string[];
     secret: string[];
   };
-  
+
   // Relationships & History
   background: string;
   relationships: {
@@ -69,12 +80,12 @@ export interface GeneratedNPC {
     family: string[];
     organizations: string[];
   };
-  
+
   // Story Integration
   secrets: string[];
   questHooks: string[];
   narrativeRole: string;
-  
+
   // Practical Details
   appearance: {
     physicalFeatures: string[];
@@ -82,14 +93,14 @@ export interface GeneratedNPC {
     equipment: string[];
     distinguishingMarks: string[];
   };
-  
-  // Gameplay Mechanics  
+
+  // Gameplay Mechanics
   abilities: {
     notableSkills: string[];
     combatRole?: string;
     specialAbilities: string[];
   };
-  
+
   // Story Metadata
   metadata: {
     createdAt: Date;
@@ -113,24 +124,24 @@ export class NPCGenerator {
   static async generateNPC(request: NPCRequest): Promise<GeneratedNPC> {
     try {
       const geminiManager = this.getGeminiManager();
-      
+
       const result = await geminiManager.executeWithRotation(async (genAI) => {
         const model = genAI.getGenerativeModel({ model: GEMINI_TEXT_MODEL });
-        
+
         const prompt = this.buildNPCPrompt(request);
-        
+
         const response = await model.generateContent(prompt);
         const text = await response.response.text();
-        
+
         try {
           // Extract JSON from the response
           const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (!jsonMatch) {
             throw new Error('No JSON found in NPC generation response');
           }
-          
+
           const npcData = JSON.parse(jsonMatch[0]);
-          
+
           // Add metadata
           const npc: GeneratedNPC = {
             ...npcData,
@@ -143,11 +154,10 @@ export class NPCGenerator {
               narrativeWeight: this.calculateNarrativeWeight(npcData, request),
               storyArc: request.context.currentStory,
               locationId: request.location,
-            }
+            },
           };
-          
+
           return npc;
-          
         } catch (parseError) {
           logger.error('Failed to parse NPC JSON:', parseError);
           throw new Error('Failed to generate NPC: Invalid response format');
@@ -156,10 +166,11 @@ export class NPCGenerator {
 
       logger.info(`👤 Generated NPC: ${result.name} (${result.role})`);
       return result;
-
     } catch (error) {
       logger.error('NPC generation failed:', error);
-      throw new Error(`Failed to generate NPC: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate NPC: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -272,21 +283,21 @@ export class NPCGenerator {
    */
   private static calculateNarrativeWeight(
     npc: { secrets?: string[]; questHooks?: string[]; goals?: { secret?: string[] } },
-    request: NPCRequest
+    request: NPCRequest,
   ): number {
     let weight = 5; // Base weight
-    
+
     // Adjust based on importance
     if (request.importance === 'critical') weight += 3;
     else if (request.importance === 'major') weight += 2;
     else if (request.importance === 'minor') weight += 0;
-    
+
     // Increase weight for story-rich NPCs
     if ((npc.secrets?.length || 0) > 1) weight += 1;
     if ((npc.questHooks?.length || 0) > 2) weight += 1;
     if ((npc.goals?.secret?.length || 0) > 0) weight += 1;
     if (['villain', 'mentor', 'ally'].includes(request.role)) weight += 1;
-    
+
     return Math.min(weight, 10);
   }
 
@@ -315,15 +326,11 @@ export class NPCGenerator {
           ...npc,
           generatedAt: npc.metadata.createdAt.toISOString(),
           generator: 'NPCGenerator',
-          version: '1.0'
-        }
+          version: '1.0',
+        },
       };
 
-      const { data, error } = await supabase
-        .from('npcs')
-        .insert(npcData)
-        .select('id')
-        .single();
+      const { data, error } = await supabase.from('npcs').insert(npcData).select('id').single();
 
       if (error) {
         logger.error('Error saving NPC:', error);
@@ -332,7 +339,6 @@ export class NPCGenerator {
 
       logger.info(`💾 Saved NPC "${npc.name}" with ID: ${data.id}`);
       return data.id;
-
     } catch (error) {
       logger.error('Error saving NPC:', error);
       throw error;
@@ -344,14 +350,13 @@ export class NPCGenerator {
    */
   static async createNPC(request: NPCRequest): Promise<GeneratedNPC> {
     const npc = await this.generateNPC(request);
-    
+
     try {
       const npcId = await this.saveNPC(npc);
       npc.id = npcId;
-      
+
       logger.info(`✅ Created NPC "${npc.name}" successfully`);
       return npc;
-      
     } catch (saveError) {
       logger.warn('NPC generated but failed to save:', saveError);
       // Return the generated NPC even if save failed
@@ -366,13 +371,15 @@ export class NPCGenerator {
     campaignId: string,
     sessionId: string,
     playerAction: string,
-    locationName?: string
+    locationName?: string,
   ): Promise<GeneratedNPC> {
     try {
       // Security check: Get campaign details and verify user ownership
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-      
+
       const { data: campaign } = await supabase
         .from('campaigns')
         .select('*')
@@ -387,7 +394,7 @@ export class NPCGenerator {
       // Infer NPC type from player action and location
       const npcRole = this.inferNPCRoleFromContext(playerAction, locationName);
       const importance = this.inferImportanceFromAction(playerAction);
-      
+
       const request: NPCRequest = {
         role: npcRole,
         importance,
@@ -398,11 +405,10 @@ export class NPCGenerator {
           currentStory: playerAction,
           locationName,
           playerLevel: await getAveragePartyLevel(campaignId, sessionId),
-        }
+        },
       };
 
       return await this.createNPC(request);
-
     } catch (error) {
       logger.error('Failed to generate contextual NPC:', error);
       throw error;
@@ -412,32 +418,53 @@ export class NPCGenerator {
   /**
    * Infer NPC role from context
    */
-  private static inferNPCRoleFromContext(
-    action: string, 
-    location?: string
-  ): NPCRequest['role'] {
+  private static inferNPCRoleFromContext(action: string, location?: string): NPCRequest['role'] {
     const actionLower = action.toLowerCase();
     const locationLower = location?.toLowerCase() || '';
-    
-    if (locationLower.includes('shop') || actionLower.includes('buy') || actionLower.includes('trade')) {
+
+    if (
+      locationLower.includes('shop') ||
+      actionLower.includes('buy') ||
+      actionLower.includes('trade')
+    ) {
       return 'shopkeeper';
     }
-    if (locationLower.includes('guard') || actionLower.includes('guard') || locationLower.includes('gate')) {
+    if (
+      locationLower.includes('guard') ||
+      actionLower.includes('guard') ||
+      locationLower.includes('gate')
+    ) {
       return 'guard';
     }
-    if (actionLower.includes('noble') || locationLower.includes('palace') || locationLower.includes('manor')) {
+    if (
+      actionLower.includes('noble') ||
+      locationLower.includes('palace') ||
+      locationLower.includes('manor')
+    ) {
       return 'noble';
     }
-    if (actionLower.includes('help') || actionLower.includes('mentor') || actionLower.includes('learn')) {
+    if (
+      actionLower.includes('help') ||
+      actionLower.includes('mentor') ||
+      actionLower.includes('learn')
+    ) {
       return 'mentor';
     }
-    if (actionLower.includes('enemy') || actionLower.includes('villain') || actionLower.includes('boss')) {
+    if (
+      actionLower.includes('enemy') ||
+      actionLower.includes('villain') ||
+      actionLower.includes('boss')
+    ) {
       return 'villain';
     }
-    if (actionLower.includes('mysterious') || actionLower.includes('strange') || actionLower.includes('hooded')) {
+    if (
+      actionLower.includes('mysterious') ||
+      actionLower.includes('strange') ||
+      actionLower.includes('hooded')
+    ) {
       return 'mysterious';
     }
-    
+
     // Default to commoner
     return 'commoner';
   }
@@ -447,14 +474,22 @@ export class NPCGenerator {
    */
   private static inferImportanceFromAction(action: string): NPCRequest['importance'] {
     const actionLower = action.toLowerCase();
-    
-    if (actionLower.includes('boss') || actionLower.includes('main') || actionLower.includes('important')) {
+
+    if (
+      actionLower.includes('boss') ||
+      actionLower.includes('main') ||
+      actionLower.includes('important')
+    ) {
       return 'critical';
     }
-    if (actionLower.includes('quest') || actionLower.includes('help') || actionLower.includes('leader')) {
+    if (
+      actionLower.includes('quest') ||
+      actionLower.includes('help') ||
+      actionLower.includes('leader')
+    ) {
       return 'major';
     }
-    
+
     return 'minor';
   }
 }

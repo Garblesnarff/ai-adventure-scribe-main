@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { rollDie, roll4d6DropLowest, generateAbilityScores } from './diceRolls';
 
 describe('diceRolls utilities', () => {
@@ -18,7 +19,7 @@ describe('diceRolls utilities', () => {
       const sides = 6;
       const rolls = Array.from({ length: 1000 }, () => rollDie(sides));
       const counts = new Array(sides + 1).fill(0);
-      rolls.forEach(roll => {
+      rolls.forEach((roll) => {
         counts[roll]++;
       });
       // Check if all numbers from 1 to sides appear
@@ -50,13 +51,14 @@ describe('diceRolls utilities', () => {
     it('should correctly drop the lowest roll', () => {
       // Mock Math.random to control the rolls
       const mockMath = Object.create(global.Math);
-      mockMath.random = vi.fn()
-        .mockReturnValueOnce(0/6) // roll 1 (0/6 * 6 + 1 = 1)
-        .mockReturnValueOnce(1/6) // roll 2 (1/6 * 6 + 1 = 2)
-        .mockReturnValueOnce(2/6) // roll 3 (2/6 * 6 + 1 = 3)
-        .mockReturnValueOnce(3/6); // roll 4 (3/6 * 6 + 1 = 4)
+      mockMath.random = vi
+        .fn()
+        .mockReturnValueOnce(0 / 6) // roll 1 (0/6 * 6 + 1 = 1)
+        .mockReturnValueOnce(1 / 6) // roll 2 (1/6 * 6 + 1 = 2)
+        .mockReturnValueOnce(2 / 6) // roll 3 (2/6 * 6 + 1 = 3)
+        .mockReturnValueOnce(3 / 6); // roll 4 (3/6 * 6 + 1 = 4)
       global.Math = mockMath;
-      
+
       // Rolls are 1, 2, 3, 4. Lowest (1) is dropped. Sum = 2+3+4 = 9.
       expect(roll4d6DropLowest()).toBe(9);
 
@@ -66,11 +68,12 @@ describe('diceRolls utilities', () => {
 
     it('should handle cases where multiple dice have the same lowest value', () => {
       const mockMath = Object.create(global.Math);
-      mockMath.random = vi.fn()
-        .mockReturnValueOnce(0/6) // roll 1
-        .mockReturnValueOnce(0/6) // roll 1
-        .mockReturnValueOnce(5/6) // roll 6
-        .mockReturnValueOnce(4/6); // roll 5
+      mockMath.random = vi
+        .fn()
+        .mockReturnValueOnce(0 / 6) // roll 1
+        .mockReturnValueOnce(0 / 6) // roll 1
+        .mockReturnValueOnce(5 / 6) // roll 6
+        .mockReturnValueOnce(4 / 6); // roll 5
       global.Math = mockMath;
 
       // Rolls are 1, 1, 6, 5. One 1 is dropped. Sum = 1+6+5 = 12.
@@ -88,7 +91,7 @@ describe('diceRolls utilities', () => {
 
     it('each score should be between 3 and 18', () => {
       const scores = generateAbilityScores();
-      scores.forEach(score => {
+      scores.forEach((score) => {
         expect(score).toBeGreaterThanOrEqual(3);
         expect(score).toBeLessThanOrEqual(18);
       });

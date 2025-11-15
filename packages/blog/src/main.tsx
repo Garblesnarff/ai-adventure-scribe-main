@@ -1,11 +1,12 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import BlogIndex from './pages/BlogIndex';
-import BlogPost from './pages/BlogPost';
+
 import BlogAdmin from './pages/BlogAdmin';
 import BlogEditor from './pages/BlogEditor';
+import BlogIndex from './pages/BlogIndex';
+import BlogPost from './pages/BlogPost';
 import './index.css';
 
 const queryClient = new QueryClient();

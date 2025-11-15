@@ -19,7 +19,4 @@ export type {
 } from './rest-client';
 
 // CrewAI types
-export type {
-  CrewAIRollRequest,
-  CrewAIResponse,
-} from './crewai-client';
+export type { CrewAIRollRequest, CrewAIResponse } from './crewai-client';

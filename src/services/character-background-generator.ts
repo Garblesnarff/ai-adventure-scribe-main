@@ -9,7 +9,9 @@
  */
 
 import { openRouterService } from './openrouter-service';
-import { Character } from '@/types/character';
+
+import type { Character } from '@/types/character';
+
 import logger from '@/lib/logger';
 
 interface ImageGenerationOptions {
@@ -34,13 +36,20 @@ export class CharacterBackgroundGenerator {
    */
   async generateCharacterBackground(
     character: Character,
-    options: ImageGenerationOptions = {}
+    options: ImageGenerationOptions = {},
   ): Promise<string> {
-    const { retryAttempts = this.maxRetries, fallbackToDefault = true, referenceImageUrl } = options;
+    const {
+      retryAttempts = this.maxRetries,
+      fallbackToDefault = true,
+      referenceImageUrl,
+    } = options;
 
     try {
-      logger.info('Generating character card background with reference image:', referenceImageUrl ? 'yes' : 'no');
-      
+      logger.info(
+        'Generating character card background with reference image:',
+        referenceImageUrl ? 'yes' : 'no',
+      );
+
       const prompt = this.createImagePrompt(character, !!referenceImageUrl);
       logger.debug('Background generation prompt:', prompt);
 
@@ -52,7 +61,10 @@ export class CharacterBackgroundGenerator {
           referenceImageBase64 = await this.convertImageUrlToBase64(referenceImageUrl);
           logger.info('Successfully converted reference character sheet to base64');
         } catch (error) {
-          logger.warn('Failed to convert reference image to base64, proceeding without vision input:', error);
+          logger.warn(
+            'Failed to convert reference image to base64, proceeding without vision input:',
+            error,
+          );
         }
       }
 
@@ -61,7 +73,6 @@ export class CharacterBackgroundGenerator {
 
       logger.info('Successfully generated character card background');
       return imageUrl;
-
     } catch (error) {
       logger.error('Failed to generate character background:', error);
 
@@ -90,22 +101,24 @@ export class CharacterBackgroundGenerator {
     if (hasReferenceImage) {
       // Vision-enabled prompt: Use reference character sheet image
       promptParts.push(
-        "Using the provided character sheet image as reference, generate a complete fantasy character card.",
-        "The reference image shows the character from multiple angles with detailed design.",
+        'Using the provided character sheet image as reference, generate a complete fantasy character card.',
+        'The reference image shows the character from multiple angles with detailed design.',
         `The character is ${name}, a ${race} ${characterClass}.`,
-        "Create a square card background (1:1 aspect ratio) with the character centered.",
-        "Place the character from the reference image in the center of the card.",
+        'Create a square card background (1:1 aspect ratio) with the character centered.',
+        'Place the character from the reference image in the center of the card.',
         "Add a thematic fantasy background that complements the character's race and class.",
         "Include elegant text overlay at the bottom: '[name]' on the first line, '[race] [class]' on the second line.",
-        "Use fantasy-style typography with subtle glow or shadow effects.",
-        "The text should be readable and match the fantasy theme without overwhelming the character.",
-        "Background should frame the character without distracting from them - subtle mystical elements, atmospheric lighting.",
-        "Ensure the final image is a complete character card ready for display."
+        'Use fantasy-style typography with subtle glow or shadow effects.',
+        'The text should be readable and match the fantasy theme without overwhelming the character.',
+        'Background should frame the character without distracting from them - subtle mystical elements, atmospheric lighting.',
+        'Ensure the final image is a complete character card ready for display.',
       );
 
       // Theme based on race/class
       if (race.includes('elf')) {
-        promptParts.push('Theme: Mystical forest or ancient elven architecture with soft glowing lights');
+        promptParts.push(
+          'Theme: Mystical forest or ancient elven architecture with soft glowing lights',
+        );
       } else if (race.includes('dwarf')) {
         promptParts.push('Theme: Stone mountain hall or forge with warm torchlight');
       } else if (characterClass.includes('wizard') || characterClass.includes('sorcerer')) {
@@ -119,20 +132,20 @@ export class CharacterBackgroundGenerator {
       // Text-only prompt for fallback
       promptParts.push(
         `Create a complete fantasy character card for ${name}, a ${race} ${characterClass}`,
-        "Square 1:1 aspect ratio card format.",
-        "Center a fantasy character illustration matching the description.",
-        "Add thematic background appropriate for race and class.",
+        'Square 1:1 aspect ratio card format.',
+        'Center a fantasy character illustration matching the description.',
+        'Add thematic background appropriate for race and class.',
         "Include text overlay: '[name]' on first line, '[race] [class]' on second line in elegant fantasy font.",
-        "Professional fantasy card art style with atmospheric lighting."
+        'Professional fantasy card art style with atmospheric lighting.',
       );
     }
 
     // Common style requirements
     promptParts.push(
-      "Style: Epic fantasy character card art, high detail, professional digital illustration.",
-      "Composition: Character centered, text at bottom, balanced design.",
-      "Quality: High resolution, rich colors, atmospheric lighting, no artifacts.",
-      "Format: Square 1:1 aspect ratio, suitable for card display."
+      'Style: Epic fantasy character card art, high detail, professional digital illustration.',
+      'Composition: Character centered, text at bottom, balanced design.',
+      'Quality: High resolution, rich colors, atmospheric lighting, no artifacts.',
+      'Format: Square 1:1 aspect ratio, suitable for card display.',
     );
 
     return promptParts.join('\n\n');
@@ -141,7 +154,11 @@ export class CharacterBackgroundGenerator {
   /**
    * Generate image with retry logic
    */
-  private async generateWithRetry(prompt: string, maxAttempts: number, referenceImage?: string): Promise<string> {
+  private async generateWithRetry(
+    prompt: string,
+    maxAttempts: number,
+    referenceImage?: string,
+  ): Promise<string> {
     let lastError: Error | null = null;
     const chosenModel = 'google/gemini-2.5-flash-image-preview';
 
@@ -164,7 +181,7 @@ export class CharacterBackgroundGenerator {
         if (attempt < maxAttempts) {
           /* DEPRECATED: Removed fallback to gpt-image-1-mini (using OpenRouter only) */
           const waitTime = Math.pow(2, attempt - 1) * 1000;
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
         }
       }
     }

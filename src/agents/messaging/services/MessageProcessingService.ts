@@ -1,20 +1,20 @@
 /**
  * Message Processing Service
- * 
+ *
  * This file defines the MessageProcessingService class, a singleton service
  * responsible for processing individual messages from the message queue.
  * It coordinates message delivery, persistence updates, and retry logic.
- * 
+ *
  * Main Class:
  * - MessageProcessingService: Processes messages for delivery.
- * 
+ *
  * Key Dependencies:
  * - MessageQueueService (./message-queue-service.ts)
  * - MessageDeliveryService (./message-delivery-service.ts)
  * - MessagePersistenceService (./storage/message-persistence-service.ts)
  * - useToast hook (`@/hooks/use-toast`) - (Note: useToast usage in a class is unconventional)
  * - Various message types from '../types'.
- * 
+ *
  * @author AI Dungeon Master Team
  */
 
@@ -27,7 +27,6 @@ import { MessageDiagnosticsService } from './diagnostics/MessageDiagnosticsServi
 // Project Types
 import { MessagePriority, MessageType, QueuedMessage } from '../types';
 import { logger } from '../../../lib/logger';
-
 
 export class MessageProcessingService {
   private static instance: MessageProcessingService;
@@ -53,7 +52,7 @@ export class MessageProcessingService {
   public async processMessage(message: QueuedMessage): Promise<boolean> {
     try {
       const delivered = await this.deliveryService.deliverMessage(message);
-      
+
       if (delivered) {
         await this.persistenceService.updateMessageStatus(message.id, 'sent');
         await this.deliveryService.confirmDelivery(message.id);
@@ -83,7 +82,7 @@ export class MessageProcessingService {
     receiver: string,
     type: MessageType,
     content: any,
-    priority: MessagePriority = MessagePriority.MEDIUM
+    priority: MessagePriority = MessagePriority.MEDIUM,
   ): Promise<QueuedMessage> {
     return {
       id: crypto.randomUUID(),
@@ -96,10 +95,10 @@ export class MessageProcessingService {
       deliveryStatus: {
         delivered: false,
         timestamp: new Date(),
-        attempts: 0
+        attempts: 0,
       },
       retryCount: 0,
-      maxRetries: this.queueService.getConfig().maxRetries
+      maxRetries: this.queueService.getConfig().maxRetries,
     };
   }
 }

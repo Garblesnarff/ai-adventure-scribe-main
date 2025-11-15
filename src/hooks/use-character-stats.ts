@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { Character, Ability, AbilityScores } from '@/types/character';
-import { 
-  calculateAllCharacterStats, 
-  CharacterStats 
-} from '@/utils/character-calculations';
+
+import type { Character, Ability, AbilityScores } from '@/types/character';
+import type { CharacterStats } from '@/utils/character-calculations';
+
 import logger from '@/lib/logger';
+import { calculateAllCharacterStats } from '@/utils/character-calculations';
 
 /**
  * Hook for calculating and memoizing character statistics
@@ -13,7 +13,7 @@ import logger from '@/lib/logger';
 export const useCharacterStats = (character: Character | null): CharacterStats | null => {
   return useMemo(() => {
     if (!character) return null;
-    
+
     try {
       return calculateAllCharacterStats(character);
     } catch (error) {
@@ -45,7 +45,7 @@ export const useCharacterStats = (character: Character | null): CharacterStats |
  */
 export const useCharacterStatValue = <K extends keyof CharacterStats>(
   character: Character | null,
-  statKey: K
+  statKey: K,
 ): CharacterStats[K] | null => {
   const stats = useCharacterStats(character);
   return stats ? stats[statKey] : null;
@@ -57,12 +57,20 @@ export const useCharacterStatValue = <K extends keyof CharacterStats>(
 export const useIsSpellcaster = (character: Character | null): boolean => {
   return useMemo(() => {
     if (!character?.class) return false;
-    
+
     const spellcastingClasses = [
-      'Wizard', 'Sorcerer', 'Warlock', 'Bard', 'Cleric', 'Druid',
-      'Paladin', 'Ranger', 'Eldritch Knight', 'Arcane Trickster'
+      'Wizard',
+      'Sorcerer',
+      'Warlock',
+      'Bard',
+      'Cleric',
+      'Druid',
+      'Paladin',
+      'Ranger',
+      'Eldritch Knight',
+      'Arcane Trickster',
     ];
-    
+
     return spellcastingClasses.includes(character.class.name);
   }, [character?.class?.name]);
 };
@@ -73,22 +81,22 @@ export const useIsSpellcaster = (character: Character | null): boolean => {
 export const useLevelProgression = (character: Character | null) => {
   return useMemo(() => {
     if (!character) return null;
-    
+
     const currentLevel = character.level || 1;
     const currentXP = character.experience || 0;
-    
+
     // D&D 5e XP thresholds
     const xpThresholds = [
-      0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
-      85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
+      0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000,
+      165000, 195000, 225000, 265000, 305000, 355000,
     ];
-    
+
     const nextLevelXP = xpThresholds[currentLevel] || xpThresholds[19];
     const previousLevelXP = xpThresholds[currentLevel - 1] || 0;
     const progressXP = currentXP - previousLevelXP;
     const requiredXP = nextLevelXP - previousLevelXP;
     const progressPercent = currentLevel >= 20 ? 100 : (progressXP / requiredXP) * 100;
-    
+
     return {
       currentLevel,
       currentXP,
@@ -109,25 +117,31 @@ export const useLevelProgression = (character: Character | null) => {
 export const useEffectiveAbilityScores = (character: Character | null) => {
   return useMemo(() => {
     if (!character?.abilityScores) return null;
-    
+
     const baseScores = character.abilityScores;
-    const racialBonuses = { ...character.race?.abilityScoreIncrease, ...character.subrace?.abilityScoreIncrease };
-    
-    const effectiveScores = (Object.entries(baseScores) as [keyof AbilityScores, Ability][]).reduce((acc, [ability, data]) => {
-      const racialBonus = racialBonuses[ability] || 0;
-      const effectiveScore = data.score + racialBonus;
-      
-      acc[ability] = {
-        ...data,
-        score: effectiveScore,
-        baseScore: data.score,
-        racialBonus,
-        modifier: Math.floor((effectiveScore - 10) / 2),
-      };
-      
-      return acc;
-    }, {} as Record<keyof AbilityScores, Ability & { baseScore: number; racialBonus: number }>);
-    
+    const racialBonuses = {
+      ...character.race?.abilityScoreIncrease,
+      ...character.subrace?.abilityScoreIncrease,
+    };
+
+    const effectiveScores = (Object.entries(baseScores) as [keyof AbilityScores, Ability][]).reduce(
+      (acc, [ability, data]) => {
+        const racialBonus = racialBonuses[ability] || 0;
+        const effectiveScore = data.score + racialBonus;
+
+        acc[ability] = {
+          ...data,
+          score: effectiveScore,
+          baseScore: data.score,
+          racialBonus,
+          modifier: Math.floor((effectiveScore - 10) / 2),
+        };
+
+        return acc;
+      },
+      {} as Record<keyof AbilityScores, Ability & { baseScore: number; racialBonus: number }>,
+    );
+
     return effectiveScores;
   }, [
     character?.abilityScores,

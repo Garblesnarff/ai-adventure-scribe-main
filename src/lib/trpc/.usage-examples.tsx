@@ -1,12 +1,13 @@
 /**
  * tRPC Usage Examples
- * 
+ *
  * This file contains copy-paste examples for common tRPC patterns.
  * Not imported anywhere - just for developer reference.
  */
 
-import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+
+import { trpc } from '@/lib/trpc';
 
 // ============================================
 // 1. BASIC QUERY
@@ -19,7 +20,7 @@ export function BasicQueryExample() {
 
   return (
     <ul>
-      {data?.map(post => (
+      {data?.map((post) => (
         <li key={post.id}>{post.title}</li>
       ))}
     </ul>
@@ -77,9 +78,7 @@ export function MutationWithInvalidationExample() {
   });
 
   return (
-    <button onClick={() => createPost.mutate({ title: 'Test', content: 'Test' })}>
-      Create
-    </button>
+    <button onClick={() => createPost.mutate({ title: 'Test', content: 'Test' })}>Create</button>
   );
 }
 
@@ -124,9 +123,11 @@ export function OptimisticUpdateExample() {
     },
   });
 
-  return <button onClick={() => createPost.mutate({ title: 'Test', content: 'Test' })}>
-    Create (Optimistic)
-  </button>;
+  return (
+    <button onClick={() => createPost.mutate({ title: 'Test', content: 'Test' })}>
+      Create (Optimistic)
+    </button>
+  );
 }
 
 // ============================================
@@ -143,7 +144,7 @@ export function OptimisticDeleteExample() {
       // Optimistically remove from cache
       utils.blog.getPosts.setData(
         undefined,
-        (old) => old?.filter((post) => post.id !== variables.id) || []
+        (old) => old?.filter((post) => post.id !== variables.id) || [],
       );
 
       return { previous };
@@ -247,15 +248,13 @@ export function FullCRUDExample() {
         Create
       </button>
 
-      {posts?.map(post => (
+      {posts?.map((post) => (
         <div key={post.id}>
           <h3>{post.title}</h3>
           <button onClick={() => updatePost.mutate({ id: post.id, title: 'Updated' })}>
             Update
           </button>
-          <button onClick={() => deletePost.mutate({ id: post.id })}>
-            Delete
-          </button>
+          <button onClick={() => deletePost.mutate({ id: post.id })}>Delete</button>
         </div>
       ))}
     </div>

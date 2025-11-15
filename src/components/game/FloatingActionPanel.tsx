@@ -1,11 +1,13 @@
+import { Dice6, Heart, Shield, Zap, Plus, X } from 'lucide-react';
 import React, { useState } from 'react';
+
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { Dice6, Heart, Shield, Zap, Plus, X } from 'lucide-react';
+
+import { Z_INDEX } from '@/constants/z-index';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useCombat } from '@/contexts/CombatContext';
 import logger from '@/lib/logger';
-import { Z_INDEX } from '@/constants/z-index';
 
 interface FloatingActionPanelProps {
   isVisible: boolean;
@@ -20,7 +22,7 @@ interface FloatingActionPanelProps {
 export const FloatingActionPanel: React.FC<FloatingActionPanelProps> = ({
   isVisible,
   onToggle,
-  combatMode
+  combatMode,
 }) => {
   const { state: characterState } = useCharacter();
   const { state: combatState } = useCombat();
@@ -31,9 +33,10 @@ export const FloatingActionPanel: React.FC<FloatingActionPanelProps> = ({
   if (!character) return null;
 
   // Quick stats for easy reference
-  const maxHp = Math.max(1,
+  const maxHp = Math.max(
+    1,
     character.level * (character.class?.hitDie || 8) +
-    character.abilityScores.constitution.modifier * character.level
+      character.abilityScores.constitution.modifier * character.level,
   );
 
   const armorClass = 10 + character.abilityScores.dexterity.modifier;
@@ -66,7 +69,9 @@ export const FloatingActionPanel: React.FC<FloatingActionPanelProps> = ({
   }
 
   return (
-    <div className={`fixed left-4 bottom-4 z-[${Z_INDEX.FLOATING_PANEL}] md:left-6 md:bottom-6 animate-in slide-in-from-bottom-2 duration-300`}>
+    <div
+      className={`fixed left-4 bottom-4 z-[${Z_INDEX.FLOATING_PANEL}] md:left-6 md:bottom-6 animate-in slide-in-from-bottom-2 duration-300`}
+    >
       <Card className="glass-strong border-2 border-infinite-purple/30 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-3 border-b border-white/10 bg-gradient-to-r from-infinite-purple/10 to-infinite-teal/10">

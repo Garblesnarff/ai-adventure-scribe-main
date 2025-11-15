@@ -14,7 +14,7 @@ import type {
   DamageType,
   DiceRoll,
   ReactionOpportunity,
-  DeathSaves
+  DeathSaves,
 } from '@/types/combat';
 
 // Re-export types from the main types file for convenience
@@ -27,7 +27,7 @@ export type {
   DamageType,
   DiceRoll,
   ReactionOpportunity,
-  DeathSaves
+  DeathSaves,
 };
 
 /**

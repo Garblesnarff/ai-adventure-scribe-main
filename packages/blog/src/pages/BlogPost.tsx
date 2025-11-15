@@ -1,11 +1,14 @@
+import { ArrowLeft, Calendar, Clock, User, Tag, Home } from 'lucide-react';
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, User, Tag, Home } from 'lucide-react';
+
+import type { BlogPost } from '@/types/blog';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBlogPostBySlug } from '@/hooks/blog/useBlogPosts';
-import type { BlogPost } from '@/types/blog';
+
 
 const BlogPost: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();

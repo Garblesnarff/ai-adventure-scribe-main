@@ -6,10 +6,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { getRecordedMetrics, clearRecordedMetrics } from '@/utils/performance/web-vitals';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getRecordedMetrics, clearRecordedMetrics } from '@/utils/performance/web-vitals';
 
 interface MetricData {
   name: string;
@@ -25,8 +26,7 @@ export function PerformanceMonitor() {
   // Only show in development or when localStorage flag is set
   useEffect(() => {
     const shouldShow =
-      import.meta.env.DEV ||
-      localStorage.getItem('showPerformanceMonitor') === 'true';
+      import.meta.env.DEV || localStorage.getItem('showPerformanceMonitor') === 'true';
 
     setIsVisible(shouldShow);
   }, []);
@@ -81,12 +81,7 @@ export function PerformanceMonitor() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {!isVisible && (
-        <Button
-          onClick={handleToggle}
-          variant="outline"
-          size="sm"
-          className="shadow-lg"
-        >
+        <Button onClick={handleToggle} variant="outline" size="sm" className="shadow-lg">
           Show Performance
         </Button>
       )}
@@ -94,24 +89,12 @@ export function PerformanceMonitor() {
       {isVisible && (
         <Card className="w-80 shadow-2xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Web Vitals Monitor
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Web Vitals Monitor</CardTitle>
             <div className="flex gap-1">
-              <Button
-                onClick={handleClear}
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs"
-              >
+              <Button onClick={handleClear} variant="ghost" size="sm" className="h-6 text-xs">
                 Clear
               </Button>
-              <Button
-                onClick={handleToggle}
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs"
-              >
+              <Button onClick={handleToggle} variant="ghost" size="sm" className="h-6 text-xs">
                 Hide
               </Button>
             </div>
@@ -151,7 +134,8 @@ export function PerformanceMonitor() {
             <div className="mt-4 rounded-md bg-muted p-2 text-xs text-muted-foreground">
               <p className="font-medium">Metrics are stored in sessionStorage</p>
               <p className="mt-1">
-                Run <code className="rounded bg-background px-1">npm run lighthouse</code> for full audit
+                Run <code className="rounded bg-background px-1">npm run lighthouse</code> for full
+                audit
               </p>
             </div>
           </CardContent>

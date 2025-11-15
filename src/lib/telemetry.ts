@@ -82,9 +82,7 @@ export function logMemoryUsage(sessionId?: string): void {
   const stats = getMemoryStats();
   if (stats) {
     const level = stats.percentage > 80 ? 'warn' : 'info';
-    const message = stats.percentage > 80
-      ? '⚠️ High memory usage detected'
-      : '📊 Memory usage';
+    const message = stats.percentage > 80 ? '⚠️ High memory usage detected' : '📊 Memory usage';
 
     logger[level](message, {
       ...stats,
@@ -251,7 +249,7 @@ export function trackPageLifecycle(sessionId?: string): () => void {
 export function startSessionHeartbeat(sessionId: string, intervalMs: number = 30000): () => void {
   logger.info('💓 Session heartbeat started', {
     sessionId,
-    intervalSeconds: intervalMs / 1000
+    intervalSeconds: intervalMs / 1000,
   });
 
   const startTime = Date.now();

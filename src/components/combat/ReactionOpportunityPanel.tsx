@@ -1,16 +1,18 @@
 /**
  * Reaction Opportunity Panel Component
- * 
+ *
  * Displays available reaction opportunities to players during combat.
  * Allows players to select and execute reactions or dismiss opportunities.
  */
 
-import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
-import { ReactionOpportunity, ActionType } from '@/types/combat';
+import React from 'react';
+
+import type { ReactionOpportunity, ActionType } from '@/types/combat';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useCombat } from '@/contexts/CombatContext';
 
 interface ReactionOpportunityPanelProps {
@@ -22,7 +24,7 @@ interface ReactionOpportunityPanelProps {
 const ReactionOpportunityPanel: React.FC<ReactionOpportunityPanelProps> = ({
   opportunities,
   onReactionSelected,
-  onOpportunityDismissed
+  onOpportunityDismissed,
 }) => {
   const { state } = useCombat();
   const { activeEncounter } = state;
@@ -38,13 +40,13 @@ const ReactionOpportunityPanel: React.FC<ReactionOpportunityPanelProps> = ({
           <AlertTriangle className="w-5 h-5" />
           Reaction Opportunities
         </CardTitle>
-        <p className="text-sm text-amber-700">
-          Choose a reaction or dismiss to continue
-        </p>
+        <p className="text-sm text-amber-700">Choose a reaction or dismiss to continue</p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {opportunities.map(opportunity => {
-          const participant = activeEncounter?.participants.find(p => p.id === opportunity.participantId);
+        {opportunities.map((opportunity) => {
+          const participant = activeEncounter?.participants.find(
+            (p) => p.id === opportunity.participantId,
+          );
           if (!participant) return null;
 
           return (
@@ -53,14 +55,14 @@ const ReactionOpportunityPanel: React.FC<ReactionOpportunityPanelProps> = ({
                 {participant.name}: {opportunity.triggerDescription}
               </div>
               <div className="flex gap-2 flex-wrap">
-                {opportunity.availableReactions.map(reaction => (
+                {opportunity.availableReactions.map((reaction) => (
                   <Button
                     key={reaction}
                     size="sm"
                     onClick={() => onReactionSelected(opportunity, reaction)}
                     className="bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
                   >
-                    {reaction.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {reaction.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                   </Button>
                 ))}
                 <Button

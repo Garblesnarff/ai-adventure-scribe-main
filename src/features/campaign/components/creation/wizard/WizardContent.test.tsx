@@ -1,18 +1,18 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import React from 'react';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { vi } from 'vitest';
+
 // WizardContent will be imported dynamically later
 // import WizardContent from './WizardContent';
-import { CampaignProvider, useCampaign } from '@/contexts/CampaignContext';
 // Constants will be mocked with vi.doMock, so no direct import needed for it here for mocking purposes.
 // import * as Constants from './constants';
-import { useToast } from '@/components/ui/use-toast';
-import { useNavigate } from 'react-router-dom';
 import { useCampaignSave } from './useCampaignSave';
 // Validation will be mocked with vi.mock as it doesn't have hoisting issues with its dependencies.
 import * as Validation from './validation';
 
+import { useToast } from '@/components/ui/use-toast';
+import { CampaignProvider, useCampaign } from '@/contexts/CampaignContext';
 
 // Define Mocks for Step Components globally
 const MockStep1 = vi.fn(() => <div data-testid="mock-step-1">Step 1 Content</div>);
@@ -44,7 +44,7 @@ vi.mock('@/components/ui/use-toast', () => ({
 
 const mockNavigateFn = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
-  const original = await importOriginal() as object;
+  const original = (await importOriginal()) as object;
   return { ...original, useNavigate: () => mockNavigateFn };
 });
 
@@ -55,16 +55,23 @@ vi.mock('./useCampaignSave', () => ({
 }));
 
 const mockCampaignDispatch = vi.fn();
-const mockCampaignState = { campaign: { name: 'Test Campaign', setting: {}, genre: '', campaignParameters: {}, basicDetails: {} } };
+const mockCampaignState = {
+  campaign: {
+    name: 'Test Campaign',
+    setting: {},
+    genre: '',
+    campaignParameters: {},
+    basicDetails: {},
+  },
+};
 vi.mock('@/contexts/CampaignContext', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     useCampaign: () => ({ state: mockCampaignState, dispatch: mockCampaignDispatch }),
     CampaignProvider: actual.CampaignProvider,
   };
 });
-
 
 describe('WizardContent', () => {
   let WizardContent: React.ComponentType<any>; // To hold the dynamically imported component
@@ -88,13 +95,19 @@ describe('WizardContent', () => {
         <CampaignProvider>
           <WizardContent />
         </CampaignProvider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCampaignState.campaign = { name: 'Test Campaign Initial', setting: {}, genre: 'Initial Genre', campaignParameters: {param: 'initial'}, basicDetails:{detail: 'initial'} };
+    mockCampaignState.campaign = {
+      name: 'Test Campaign Initial',
+      setting: {},
+      genre: 'Initial Genre',
+      campaignParameters: { param: 'initial' },
+      basicDetails: { detail: 'initial' },
+    };
     mockUseCampaignSaveReturn.isSaving = false;
   });
 
@@ -124,7 +137,10 @@ describe('WizardContent', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
-      expect(mockValidateGenreSelection).toHaveBeenCalledWith(mockCampaignState.campaign, mockToastFn);
+      expect(mockValidateGenreSelection).toHaveBeenCalledWith(
+        mockCampaignState.campaign,
+        mockToastFn,
+      );
       expect(screen.getByTestId('mock-step-2')).toBeInTheDocument(); // Check if Step 2 is rendered
       expect(MockStep2).toHaveBeenCalledTimes(1);
       expect(screen.queryByTestId('mock-step-1')).not.toBeInTheDocument(); // Step 1 should not be there
@@ -139,7 +155,10 @@ describe('WizardContent', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
-      expect(mockValidateGenreSelection).toHaveBeenCalledWith(mockCampaignState.campaign, mockToastFn);
+      expect(mockValidateGenreSelection).toHaveBeenCalledWith(
+        mockCampaignState.campaign,
+        mockToastFn,
+      );
       // Toast is called by the validation function itself as per current WizardContent structure
       // expect(mockToastFn).toHaveBeenCalled(); // This assertion depends on validateGenreSelection calling toast
 
@@ -162,7 +181,6 @@ describe('WizardContent', () => {
       expect(MockStep2).toHaveBeenCalledTimes(1);
       expect(screen.getByText(`Step 2 of ${mockWizardStepsArray.length}`)).toBeInTheDocument();
 
-
       // Now click Previous
       fireEvent.click(screen.getByRole('button', { name: /Previous/i }));
 
@@ -184,7 +202,6 @@ describe('WizardContent', () => {
       // Check that no unintended navigation or re-render of step 2 happened
       expect(screen.queryByTestId('mock-step-2')).not.toBeInTheDocument();
       expect(screen.getByText(`Step 1 of ${mockWizardStepsArray.length}`)).toBeInTheDocument();
-
     });
   });
 
@@ -207,7 +224,10 @@ describe('WizardContent', () => {
       // Click "Finish" button (which is the "Next" button on the final step)
       fireEvent.click(screen.getByRole('button', { name: /Finish/i }));
 
-      expect(mockValidateCompleteCampaign).toHaveBeenCalledWith(mockCampaignState.campaign, mockToastFn);
+      expect(mockValidateCompleteCampaign).toHaveBeenCalledWith(
+        mockCampaignState.campaign,
+        mockToastFn,
+      );
       expect(mockSaveCampaignFn).not.toHaveBeenCalled();
       expect(mockNavigateFn).not.toHaveBeenCalled();
       expect(screen.getByTestId('mock-step-2')).toBeInTheDocument(); // Still on final step
@@ -226,7 +246,6 @@ describe('WizardContent', () => {
       // Default mock already resolves, but specific value might be desired.
       mockSaveCampaignFn.mockResolvedValueOnce(testCampaignId);
 
-
       // Click "Finish" button
       await fireEvent.click(screen.getByRole('button', { name: /Finish/i }));
 
@@ -236,7 +255,10 @@ describe('WizardContent', () => {
       // Using a small timeout or await Promise.resolve() can sometimes help in tests if act() isn't sufficient.
       // However, testing-library's fireEvent and screen queries usually handle this well with mocked promises.
 
-      expect(mockValidateCompleteCampaign).toHaveBeenCalledWith(mockCampaignState.campaign, mockToastFn);
+      expect(mockValidateCompleteCampaign).toHaveBeenCalledWith(
+        mockCampaignState.campaign,
+        mockToastFn,
+      );
       expect(mockSaveCampaignFn).toHaveBeenCalledWith(mockCampaignState.campaign);
 
       // Check for success toast
@@ -260,7 +282,10 @@ describe('WizardContent', () => {
       // Click "Finish" button
       await fireEvent.click(screen.getByRole('button', { name: /Finish/i }));
 
-      expect(mockValidateCompleteCampaign).toHaveBeenCalledWith(mockCampaignState.campaign, mockToastFn);
+      expect(mockValidateCompleteCampaign).toHaveBeenCalledWith(
+        mockCampaignState.campaign,
+        mockToastFn,
+      );
       expect(mockSaveCampaignFn).toHaveBeenCalledWith(mockCampaignState.campaign);
 
       // Check for error toast

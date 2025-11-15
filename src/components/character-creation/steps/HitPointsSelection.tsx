@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
 import { Heart, Dice1, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
 
 /**
  * HitPointsSelection component for determining maximum hit points
@@ -39,7 +40,7 @@ const HitPointsSelection: React.FC = () => {
     }
 
     const firstLevelHP = hitDie + conModifier;
-    
+
     if (useRolls && rollResults.length >= level - 1) {
       // Use rolled values for subsequent levels
       const additionalHP = rollResults
@@ -74,14 +75,14 @@ const HitPointsSelection: React.FC = () => {
 
     // Animate rolling each level
     for (let i = 0; i < level - 1; i++) {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       const roll = rollHitDie();
       newRolls.push(roll);
       setRollResults([...newRolls]);
     }
 
     setIsRolling(false);
-    
+
     toast({
       title: 'Hit Dice Rolled',
       description: `Rolled ${newRolls.join(', ')} on d${hitDie}s.`,
@@ -98,21 +99,21 @@ const HitPointsSelection: React.FC = () => {
     const hitPoints = {
       maximum: maxHP,
       current: maxHP,
-      temporary: 0
+      temporary: 0,
     };
 
     const hitDice = {
       total: level,
       remaining: level,
-      type: `d${hitDie}`
+      type: `d${hitDie}`,
     };
 
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: {
         hitPoints,
-        hitDice
-      }
+        hitDice,
+      },
     });
 
     toast({
@@ -133,22 +134,17 @@ const HitPointsSelection: React.FC = () => {
   const maxHPPreview = calculateHitPoints(method === 'roll');
   const hasRolls = rollResults.length >= Math.max(0, level - 1);
 
-  return (
-    !characterClass ? (
-      <div className="text-center space-y-4">
-        <Heart className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Class Required</h2>
-        <p className="text-muted-foreground">
-          Please select a class first to determine hit points.
-        </p>
-      </div>
-    ) : (
+  return !characterClass ? (
+    <div className="text-center space-y-4">
+      <Heart className="w-16 h-16 mx-auto text-muted-foreground" />
+      <h2 className="text-2xl font-bold">Class Required</h2>
+      <p className="text-muted-foreground">Please select a class first to determine hit points.</p>
+    </div>
+  ) : (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Hit Points</h2>
-        <p className="text-muted-foreground">
-          Determine your character's maximum hit points
-        </p>
+        <p className="text-muted-foreground">Determine your character's maximum hit points</p>
       </div>
 
       {/* Hit Point Calculation Summary */}
@@ -163,7 +159,9 @@ const HitPointsSelection: React.FC = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Class:</span>
-              <span>{characterClass.name} (d{hitDie})</span>
+              <span>
+                {characterClass.name} (d{hitDie})
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Level:</span>
@@ -171,22 +169,31 @@ const HitPointsSelection: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span>Constitution Modifier:</span>
-              <span>{conModifier >= 0 ? '+' : ''}{conModifier}</span>
+              <span>
+                {conModifier >= 0 ? '+' : ''}
+                {conModifier}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>1st Level HP:</span>
-              <span>{hitDie} + {conModifier} = {hitDie + conModifier}</span>
+              <span>
+                {hitDie} + {conModifier} = {hitDie + conModifier}
+              </span>
             </div>
             {level > 1 && (
               <div className="flex justify-between">
                 <span>Additional Levels:</span>
                 <span>
-                  {method === 'average' 
+                  {method === 'average'
                     ? `${level - 1} × (${averagePerLevel} + ${conModifier}) = ${(level - 1) * (averagePerLevel + conModifier)}`
-                    : hasRolls 
-                      ? `${rollResults.slice(0, level - 1).map(r => `${r} + ${conModifier}`).join(' + ')} = ${rollResults.slice(0, level - 1).reduce((sum, roll) => sum + roll + conModifier, 0)}`
-                      : 'Not rolled yet'
-                  }
+                    : hasRolls
+                      ? `${rollResults
+                          .slice(0, level - 1)
+                          .map((r) => `${r} + ${conModifier}`)
+                          .join(
+                            ' + ',
+                          )} = ${rollResults.slice(0, level - 1).reduce((sum, roll) => sum + roll + conModifier, 0)}`
+                      : 'Not rolled yet'}
                 </span>
               </div>
             )}
@@ -276,7 +283,7 @@ const HitPointsSelection: React.FC = () => {
                   const roll = rollResults[i];
                   const isRolled = roll !== undefined;
                   const isCurrentlyRolling = isRolling && i === rollResults.length;
-                  
+
                   return (
                     <div
                       key={i}
@@ -284,8 +291,8 @@ const HitPointsSelection: React.FC = () => {
                         isRolled
                           ? 'border-primary bg-primary/10'
                           : isCurrentlyRolling
-                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-950 animate-pulse'
-                          : 'border-muted'
+                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-950 animate-pulse'
+                            : 'border-muted'
                       }`}
                     >
                       <div className="text-xs text-muted-foreground">Level {i + 2}</div>
@@ -293,9 +300,7 @@ const HitPointsSelection: React.FC = () => {
                         {isCurrentlyRolling ? '🎲' : isRolled ? roll : '?'}
                       </div>
                       {isRolled && (
-                        <div className="text-xs text-muted-foreground">
-                          +{conModifier} Con
-                        </div>
+                        <div className="text-xs text-muted-foreground">+{conModifier} Con</div>
                       )}
                     </div>
                   );
@@ -304,11 +309,7 @@ const HitPointsSelection: React.FC = () => {
 
               {/* Roll Button */}
               <div className="flex justify-center">
-                <Button
-                  onClick={handleRollHitDice}
-                  disabled={isRolling || hasRolls}
-                  size="lg"
-                >
+                <Button onClick={handleRollHitDice} disabled={isRolling || hasRolls} size="lg">
                   {isRolling ? (
                     <>Rolling... 🎲</>
                   ) : hasRolls ? (
@@ -351,12 +352,8 @@ const HitPointsSelection: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="text-center">
-            <div className="text-4xl font-bold text-red-600 mb-2">
-              {maxHPPreview}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Maximum Hit Points
-            </div>
+            <div className="text-4xl font-bold text-red-600 mb-2">{maxHPPreview}</div>
+            <div className="text-sm text-muted-foreground">Maximum Hit Points</div>
             <div className="text-xs text-muted-foreground mt-1">
               Hit Dice: {level}d{hitDie}
             </div>
@@ -371,7 +368,6 @@ const HitPointsSelection: React.FC = () => {
         </Button>
       </div>
     </div>
-    )
   );
 };
 

@@ -2,7 +2,10 @@ import { getGeminiApiManager } from '@/services/gemini-api-manager-singleton';
 import type { GeminiApiManager } from '@/services/gemini-api-manager';
 import { GEMINI_TEXT_MODEL } from '@/config/ai';
 
-import type { Memory as UIMemory, MemoryType as UIMemoryType } from '@/components/game/memory/types';
+import type {
+  Memory as UIMemory,
+  MemoryType as UIMemoryType,
+} from '@/components/game/memory/types';
 import type { EnhancedMemory, MemoryQueryOptions } from '@/types/memory';
 
 import { MemoryImportanceService } from './MemoryImportanceService';
@@ -40,7 +43,9 @@ export class MemoryService {
     return importanceService.embedQuery(content);
   }
 
-  static async saveMemories(memories: Array<Omit<Memory, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  static async saveMemories(
+    memories: Array<Omit<Memory, 'id' | 'created_at' | 'updated_at'>>,
+  ): Promise<void> {
     if (!memories?.length) return;
     const toInsert = await Promise.all(
       memories.map(async (m) => {
@@ -50,7 +55,7 @@ export class MemoryService {
         const evaluated = await importanceService.evaluate(
           m.content,
           String(type),
-          String(category)
+          String(category),
         );
         const importance = typeof rawImportance === 'number' ? rawImportance : evaluated.importance;
         return {
@@ -58,12 +63,16 @@ export class MemoryService {
           importance: Math.max(1, Math.min(5, importance)),
           embedding: evaluated.embedding,
         };
-      })
+      }),
     );
     await repository.insertMemories(toInsert as Array<Record<string, any>>);
   }
 
-  static async getRelevantMemories(sessionId: string, query: string, limit = 10): Promise<Memory[]> {
+  static async getRelevantMemories(
+    sessionId: string,
+    query: string,
+    limit = 10,
+  ): Promise<Memory[]> {
     const queryEmbedding = await importanceService.embedQuery(query);
     if (queryEmbedding) {
       const matches = await repository.matchMemories(sessionId, queryEmbedding, limit, 0.7);
@@ -72,7 +81,10 @@ export class MemoryService {
     return repository.loadTopMemories(sessionId, limit);
   }
 
-  static async getFictionReadyMemories(sessionId: string, minNarrativeWeight = 6): Promise<Memory[]> {
+  static async getFictionReadyMemories(
+    sessionId: string,
+    minNarrativeWeight = 6,
+  ): Promise<Memory[]> {
     return repository.loadFictionReadyMemories(sessionId, minNarrativeWeight);
   }
 
@@ -84,11 +96,15 @@ export class MemoryService {
     const narrativeWeight = Math.min((original.narrative_weight || 0) + boost, 10);
     await repository.updateMemoryScores(memoryId, {
       importance,
-      narrative_weight: narrativeWeight
+      narrative_weight: narrativeWeight,
     });
   }
 
-  static async extractMemories(context: MemoryContext, userMessage: string, aiResponse: string): Promise<MemoryExtractionResult> {
+  static async extractMemories(
+    context: MemoryContext,
+    userMessage: string,
+    aiResponse: string,
+  ): Promise<MemoryExtractionResult> {
     try {
       const geminiManager = MemoryService.getGeminiManager();
       return await geminiManager.executeWithRotation(async (genAI) => {
@@ -151,7 +167,7 @@ Extract 1-4 key memories in this JSON format:
     content: string,
     type: EnhancedMemory['type'],
     category: EnhancedMemory['category'],
-    context: Partial<EnhancedMemory['context']> = {}
+    context: Partial<EnhancedMemory['context']> = {},
   ): Promise<void> {
     const { importance, embedding } = await importanceService.evaluate(content, type, category);
     const metadata = {
@@ -167,10 +183,17 @@ Extract 1-4 key memories in this JSON format:
         importance,
         metadata,
         embedding,
-      }
+      },
     ]);
 
-    this.sceneTracker.updateFromMemory({ type, content, context, category, importance, metadata } as Partial<EnhancedMemory>);
+    this.sceneTracker.updateFromMemory({
+      type,
+      content,
+      context,
+      category,
+      importance,
+      metadata,
+    } as Partial<EnhancedMemory>);
   }
 
   async retrieveMemories(options: MemoryQueryOptions = {}): Promise<EnhancedMemory[]> {
@@ -181,12 +204,20 @@ Extract 1-4 key memories in this JSON format:
     return Promise.all(data.map((item) => repository.transformDatabaseMemory(item)));
   }
 
-  private async semanticSearch(query: string, options: MemoryQueryOptions): Promise<EnhancedMemory[]> {
+  private async semanticSearch(
+    query: string,
+    options: MemoryQueryOptions,
+  ): Promise<EnhancedMemory[]> {
     const queryEmbedding = await importanceService.embedQuery(query);
     if (!queryEmbedding) {
       return this.retrieveMemories({ ...options, semanticSearch: false });
     }
-    const data = await repository.matchMemories(this.sessionId, queryEmbedding, options.limit || 10, 0.7);
+    const data = await repository.matchMemories(
+      this.sessionId,
+      queryEmbedding,
+      options.limit || 10,
+      0.7,
+    );
     return Promise.all(data.map((item: any) => repository.transformDatabaseMemory(item)));
   }
 }

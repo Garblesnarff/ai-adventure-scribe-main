@@ -1,7 +1,8 @@
+import { Send, Paperclip, Smile, Dice6, Loader2 } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Paperclip, Smile, Dice6, Loader2 } from 'lucide-react';
 import { mightBeDiceCommand, getDiceCommandSuggestions } from '@/utils/diceCommandParser';
 
 interface ChatInputProps {
@@ -38,7 +39,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
     // Check for dice command and show suggestions
     const isDiceCommand = mightBeDiceCommand(input);
     setShowDiceSuggestions(isDiceCommand);
-    
+
     if (isDiceCommand) {
       const suggestions = getDiceCommandSuggestions(input);
       setDiceSuggestions(suggestions);
@@ -96,14 +97,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
 
   return (
     <div className="px-4 pb-4">
-      <div className="chat-composer transition-all duration-300 focus-within:ring-2 focus-within:ring-infinite-purple/50 focus-within:ring-offset-2 focus-within:ring-offset-background focus-within:border-infinite-purple/60 focus-within:shadow-xl focus-within:shadow-infinite-purple/20 rounded-2xl bg-card/90 backdrop-blur-sm border-2 border-border/60 hover:border-border hover:shadow-lg">
+      <div className="chat-composer transition-all duration-300 focus-within:ring-2 focus-within:ring-infinite-purple/30 focus-within:ring-offset-2 focus-within:ring-offset-background rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 hover:border-border hover:shadow-lg">
         <div className="flex items-end gap-3 p-3">
           {/* Enhanced Quick action buttons with better touch targets */}
           <div className="flex items-center gap-1 pb-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation transition-all hover:scale-105"
+              className="h-10 w-10 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation"
               disabled={isDisabled}
               aria-label="Attach file"
               title="Attach file"
@@ -113,7 +114,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
             <Button
               variant="ghost"
               size="sm"
-              className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation transition-all hover:scale-105"
+              className="h-10 w-10 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation"
               disabled={isDisabled}
               aria-label="Insert emoji"
               title="Insert emoji"
@@ -124,7 +125,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
               variant="ghost"
               size="sm"
               onClick={handleQuickDiceRoll}
-              className="h-10 w-10 p-0 text-muted-foreground hover:text-infinite-purple hover:bg-infinite-purple/10 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation transition-all hover:scale-105 hover:shadow-md hover:shadow-infinite-purple/30"
+              className="h-10 w-10 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg min-h-[44px] min-w-[44px] touch-manipulation"
               disabled={isDisabled}
               title="Quick dice roll (1d20)"
               aria-label="Quick dice roll (1d20)"
@@ -182,8 +183,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
             disabled={!canSend}
             className={`h-12 w-12 p-0 rounded-xl transition-all duration-200 min-h-[48px] min-w-[48px] touch-manipulation ${
               canSend
-                ? 'bg-gradient-to-br from-infinite-purple to-infinite-teal text-white shadow-lg shadow-infinite-purple/50 hover:shadow-xl hover:shadow-infinite-purple/60 hover:scale-105 active:scale-95 hover:from-infinite-purple-dark hover:to-infinite-teal-dark'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
+                ? 'bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
             aria-label="Send message"
           >
@@ -196,19 +197,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
         </div>
 
         {/* Helper text */}
-        <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground/80">
+        <div className="flex justify-between items-center mt-3 text-xs text-gray-400">
           <span>
             {showDiceSuggestions ? (
-              <>Type <code className="bg-muted px-1.5 py-0.5 rounded text-infinite-purple font-mono">/roll 1d20</code> for dice rolls</>
+              <>
+                Type <code className="bg-gray-100 px-1 rounded">/roll 1d20</code> for dice rolls
+              </>
             ) : (
-              <>Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-semibold border border-border">Enter</kbd> to send • <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-semibold border border-border">Shift+Enter</kbd> for new line • <code className="bg-muted px-1.5 py-0.5 rounded text-infinite-purple font-mono">/roll</code> for dice</>
+              <>
+                Press Enter to send, Shift+Enter for new line •{' '}
+                <code className="bg-gray-100 px-1 rounded">/roll</code> for dice
+              </>
             )}
           </span>
-          {isExpanded && (
-            <span className="text-muted-foreground">
-              {input.length}/1000
-            </span>
-          )}
+          {isExpanded && <span className="text-gray-500">{input.length}/1000 characters</span>}
         </div>
       </div>
     </div>

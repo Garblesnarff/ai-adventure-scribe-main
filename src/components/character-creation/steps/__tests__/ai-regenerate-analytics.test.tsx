@@ -1,7 +1,8 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import CharacterFinalization from '@/components/character-creation/steps/CharacterFinalization';
 import * as AnalyticsModule from '@/services/analytics';
 
@@ -13,7 +14,7 @@ vi.mock('@/services/character-description-generator', () => ({
       personality_traits: 'traits',
       backstory_elements: 'backstory',
     })),
-  }
+  },
 }));
 
 vi.mock('@/contexts/CharacterContext', async () => {
@@ -32,18 +33,21 @@ vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast: () => {}
 // Silence image generator network usage in this test file
 vi.mock('@/services/openrouter-service', () => ({ openRouterService: { uploadImage: vi.fn() } }));
 
-
 describe('AI regenerate analytics', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('dispatches analytics and triggers description generator on Regenerate click', async () => {
-    const spy = vi.spyOn(AnalyticsModule.analytics, 'aiRegenerateClicked').mockImplementation(() => {});
-    const { characterDescriptionGenerator } = await import('@/services/character-description-generator');
+    const spy = vi
+      .spyOn(AnalyticsModule.analytics, 'aiRegenerateClicked')
+      .mockImplementation(() => {});
+    const { characterDescriptionGenerator } = await import(
+      '@/services/character-description-generator'
+    );
 
     render(
-      <MemoryRouter initialEntries={["/app/characters/create?campaign=cmp-123"]}>
+      <MemoryRouter initialEntries={['/app/characters/create?campaign=cmp-123']}>
         <CharacterFinalization />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const btn = await screen.findByRole('button', { name: /Regenerate with AI/i });

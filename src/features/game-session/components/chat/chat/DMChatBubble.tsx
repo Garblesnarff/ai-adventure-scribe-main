@@ -1,16 +1,22 @@
+import { Play, Pause, Volume2, VolumeX, AlertCircle, RefreshCw } from 'lucide-react';
 import React, { useMemo } from 'react';
+
+import type { NarrationSegment } from '@/hooks/use-ai-response';
+import type { ChatMessage } from '@/services/ai-service';
+
+import { DiceRollEmbed } from '@/components/DiceRollEmbed';
+import { ActionOptions } from '@/components/game/ActionOptions';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Play, Pause, Volume2, VolumeX, AlertCircle, RefreshCw } from 'lucide-react';
-import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { ChatMessage } from '@/services/ai-service';
-import { NarrationSegment } from '@/hooks/use-ai-response';
-import { ActionOptions } from '@/components/game/ActionOptions';
-import { parseMessageOptions, extractNarrativeContent, createPlayerMessageFromOption } from '@/utils/parseMessageOptions';
-import { DiceRollEmbed } from '@/components/DiceRollEmbed';
-import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
+import { useProgressiveVoice } from '@/hooks/use-progressive-voice';
 import logger from '@/lib/logger';
+import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
+import {
+  parseMessageOptions,
+  extractNarrativeContent,
+  createPlayerMessageFromOption,
+} from '@/utils/parseMessageOptions';
 
 interface DMChatBubbleProps {
   message: ChatMessage;
@@ -20,18 +26,18 @@ interface DMChatBubbleProps {
 
 // Helper function to convert NarrationSegments to AISegments
 const convertNarrationToAISegments = (narrationSegments: NarrationSegment[]) => {
-  return narrationSegments.map(segment => ({
-    type: segment.type === 'dm' ? 'dm' : 'character' as 'dm' | 'character',
+  return narrationSegments.map((segment) => ({
+    type: segment.type === 'dm' ? 'dm' : ('character' as 'dm' | 'character'),
     text: segment.text,
     character: segment.character,
-    voice_category: segment.voice_category
+    voice_category: segment.voice_category,
   }));
 };
 
 export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
   message,
   narrationSegments,
-  onOptionSelect
+  onOptionSelect,
 }) => {
   // Parse message content to separate narrative from options
   const parsedMessage = useMemo(() => {
@@ -60,11 +66,7 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
       if (diceExpr.index > lastIndex) {
         const textBefore = content.slice(lastIndex, diceExpr.index);
         if (textBefore) {
-          parts.push(
-            <span key={`text-${index}`}>
-              {textBefore}
-            </span>
-          );
+          parts.push(<span key={`text-${index}`}>{textBefore}</span>);
         }
       }
 
@@ -79,7 +81,7 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
           onRoll={(result: DiceRollResult) => {
             logger.info('Dice rolled:', result);
           }}
-        />
+        />,
       );
 
       lastIndex = diceExpr.index + diceExpr.length;
@@ -89,19 +91,11 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
     if (lastIndex < content.length) {
       const textAfter = content.slice(lastIndex);
       if (textAfter) {
-        parts.push(
-          <span key="text-final">
-            {textAfter}
-          </span>
-        );
+        parts.push(<span key="text-final">{textAfter}</span>);
       }
     }
 
-    return (
-      <div className="text-sm leading-relaxed mb-3">
-        {parts}
-      </div>
-    );
+    return <div className="text-sm leading-relaxed mb-3">{parts}</div>;
   }, [parsedMessage.content, message.content, diceExpressions]);
   const {
     segments,
@@ -116,28 +110,31 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
     speakPlainText,
     stopPlayback,
     toggleMute,
-    initializeAudioContext
+    initializeAudioContext,
   } = useProgressiveVoice();
 
   const [hasUserInteracted, setHasUserInteracted] = useLocalStorage<boolean>(
     'progressive-voice-user-interacted',
-    false
+    false,
   );
 
   // Handle option selection
-  const handleOptionSelect = React.useCallback((option: any) => {
-    if (onOptionSelect) {
-      const playerMessage = createPlayerMessageFromOption(option);
-      onOptionSelect(playerMessage);
-    }
-  }, [onOptionSelect]);
+  const handleOptionSelect = React.useCallback(
+    (option: any) => {
+      if (onOptionSelect) {
+        const playerMessage = createPlayerMessageFromOption(option);
+        onOptionSelect(playerMessage);
+      }
+    },
+    [onOptionSelect],
+  );
 
   // Check if this message is currently playing
   const isThisMessagePlaying = React.useMemo(() => {
     if (!isPlaying || segments.length === 0) return false;
     // Simple check: if we have segments and one is playing, assume it's this message
     // In a more complex system, we'd track which message's segments are active
-    return segments.some(segment => segment.isPlaying);
+    return segments.some((segment) => segment.isPlaying);
   }, [isPlaying, segments]);
 
   const handlePlayPause = React.useCallback(() => {
@@ -153,7 +150,7 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
       stopPlayback();
     } else if (!isProcessing) {
       logger.info('🎵 Playing message:', message.id);
-      
+
       if (narrationSegments && narrationSegments.length > 0) {
         logger.debug('🎭 Using AI segments for message playback');
         const aiSegments = convertNarrationToAISegments(narrationSegments);
@@ -176,7 +173,7 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
     narrationSegments,
     hasUserInteracted,
     setHasUserInteracted,
-    initializeAudioContext
+    initializeAudioContext,
   ]);
 
   const calculateProgress = () => {
@@ -188,13 +185,13 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
     // Simple time calculation - could be enhanced with actual audio durations
     const estimatedDuration = totalSegments * 3; // 3 seconds per segment estimate
     const currentTime = segmentIndex * 3;
-    
+
     const formatSeconds = (seconds: number) => {
       const mins = Math.floor(seconds / 60);
       const secs = seconds % 60;
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
-    
+
     return `${formatSeconds(currentTime)} / ${formatSeconds(estimatedDuration)}`;
   };
 
@@ -213,16 +210,18 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
 
         {/* Enhanced Message Bubble */}
         <div className="flex flex-col items-start space-y-3">
-          <div className={`relative px-6 py-4 rounded-2xl transition-all duration-300 glass-strong shadow-lg hover:shadow-xl ${
-            isThisMessagePlaying ? 'ring-2 ring-infinite-purple/70 shadow-2xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl' : 'hover:bg-card/80'
-          }`}>
+          <div
+            className={`relative px-6 py-4 rounded-2xl transition-all duration-300 glass-strong shadow-lg hover:shadow-xl ${
+              isThisMessagePlaying
+                ? 'ring-2 ring-infinite-purple/70 shadow-2xl bg-gradient-to-br from-card/90 to-card/60 backdrop-blur-xl'
+                : 'hover:bg-card/80'
+            }`}
+          >
             {/* Speech Bubble Tail */}
             <div className="absolute left-[-8px] top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-card/90"></div>
             <div className="absolute left-[-6px] top-6 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-card"></div>
             {/* Enhanced Message Content */}
-            <div className="text-narrative text-foreground-secondary">
-              {renderMessageContent}
-            </div>
+            <div className="text-narrative text-foreground-secondary">{renderMessageContent}</div>
 
             {/* Enhanced Voice Controls */}
             {isVoiceEnabled && (
@@ -286,18 +285,20 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
             )}
 
             {/* Enhanced Processing Indicator */}
-            {isProcessing && isThisMessagePlaying && !(currentSegmentIndex >= 0 && segments[currentSegmentIndex]) && (
-              <div className="flex items-center gap-3 pt-3 border-t border-white/10">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-infinite-purple/10 px-3 py-1 rounded-full">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-1.5 h-1.5 bg-infinite-gold rounded-full animate-bounce"></div>
+            {isProcessing &&
+              isThisMessagePlaying &&
+              !(currentSegmentIndex >= 0 && segments[currentSegmentIndex]) && (
+                <div className="flex items-center gap-3 pt-3 border-t border-white/10">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-infinite-purple/10 px-3 py-1 rounded-full">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 bg-infinite-purple rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-1.5 h-1.5 bg-infinite-teal rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-1.5 h-1.5 bg-infinite-gold rounded-full animate-bounce"></div>
+                    </div>
+                    <span className="font-medium">Weaving mystical audio...</span>
                   </div>
-                  <span className="font-medium">Weaving mystical audio...</span>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Enhanced Current Segment Info */}
             {isThisMessagePlaying && currentSegmentIndex >= 0 && segments[currentSegmentIndex] && (
@@ -347,10 +348,12 @@ export const DMChatBubble: React.FC<DMChatBubbleProps> = ({
 
           {/* Enhanced Timestamp */}
           <div className="text-xs text-muted-foreground/60 px-2 font-mono bg-card/30 rounded px-2 py-1">
-            {message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit'
-            }) : ''}
+            {message.timestamp
+              ? new Date(message.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : ''}
           </div>
         </div>
       </div>

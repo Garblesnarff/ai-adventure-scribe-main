@@ -1,33 +1,38 @@
 import React, { useState } from 'react';
-import { DiceRollEmbed } from '../features/game-session/components/dice/DiceRollEmbed';
+
 import { DMChatBubble } from '../features/game-session/components/chat/chat/DMChatBubble';
+import { DiceRollEmbed } from '../features/game-session/components/dice/DiceRollEmbed';
+import { logger } from '../lib/logger';
 import { type ChatMessage } from '../services/ai-service';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { logger } from '../lib/logger';
 
 export default function DiceTest() {
   const [customExpression, setCustomExpression] = useState('1d20+5');
   const [testMessages, setTestMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      content: 'You enter a dark dungeon. The ancient stones seem to whisper secrets. [DICE: 1d20+2 Perception] to notice any hidden details.',
+      content:
+        'You enter a dark dungeon. The ancient stones seem to whisper secrets. [DICE: 1d20+2 Perception] to notice any hidden details.',
       role: 'assistant',
-      timestamp: Date.now() - 30000
+      timestamp: Date.now() - 30000,
     },
     {
       id: '2',
-      content: 'A goblin leaps from the shadows, attacking with its rusty sword! [DICE: 1d20+4 attack] and [DICE: 1d6+2 damage] if it hits.',
+      content:
+        'A goblin leaps from the shadows, attacking with its rusty sword! [DICE: 1d20+4 attack] and [DICE: 1d6+2 damage] if it hits.',
       role: 'assistant',
-      timestamp: Date.now() - 20000
+      timestamp: Date.now() - 20000,
     },
     {
       id: '3',
-      content: 'Make a Constitution saving throw [DICE: 1d20+3 Constitution save] against the poison.',
+      content:
+        'Make a Constitution saving throw [DICE: 1d20+3 Constitution save] against the poison.',
       role: 'assistant',
-      timestamp: Date.now() - 10000
-    }
+      timestamp: Date.now() - 10000,
+    },
   ]);
 
   const addTestMessage = () => {
@@ -35,7 +40,7 @@ export default function DiceTest() {
       id: Date.now().toString(),
       content: `The DM asks you to make a test roll: [DICE: ${customExpression}] for your action.`,
       role: 'assistant',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
     setTestMessages([...testMessages, newMessage]);
   };
@@ -45,7 +50,7 @@ export default function DiceTest() {
       id: Date.now().toString(),
       content: `You have advantage on this roll! [DICE: 2d20kh1+5 attack with advantage] Strike with confidence!`,
       role: 'assistant',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
     setTestMessages([...testMessages, newMessage]);
   };
@@ -55,7 +60,7 @@ export default function DiceTest() {
       id: Date.now().toString(),
       content: `Critical hit! Roll damage: [DICE: 2d6+3 weapon damage] plus [DICE: 1d6 elemental damage]. The enemy staggers!`,
       role: 'assistant',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
     setTestMessages([...testMessages, newMessage]);
   };
@@ -66,8 +71,8 @@ export default function DiceTest() {
         <CardHeader>
           <CardTitle>🎲 Dice Rolling Integration Test</CardTitle>
           <CardDescription>
-            Testing the new inline dice rolling system integrated into DM chat messages.
-            Dice expressions use the format: [DICE: expression purpose]
+            Testing the new inline dice rolling system integrated into DM chat messages. Dice
+            expressions use the format: [DICE: expression purpose]
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,11 +93,7 @@ export default function DiceTest() {
             <Button onClick={addMultipleDiceMessage} variant="outline" size="sm">
               Add Multiple Dice
             </Button>
-            <Button
-              onClick={() => setTestMessages([])}
-              variant="destructive"
-              size="sm"
-            >
+            <Button onClick={() => setTestMessages([])} variant="destructive" size="sm">
               Clear All
             </Button>
           </div>
@@ -193,12 +194,24 @@ export default function DiceTest() {
             <div>
               <h4 className="font-semibold mb-2">🎯 Dice Expression Format:</h4>
               <ul className="text-sm space-y-1 text-gray-700">
-                <li>• <code>[DICE: 1d20+5]</code> - Basic roll with modifier</li>
-                <li>• <code>[DICE: 1d20+5 attack]</code> - Roll with purpose</li>
-                <li>• <code>[DICE: 2d20kh1+3 advantage]</code> - Advantage roll</li>
-                <li>• <code>[DICE: 2d20kl1+3 disadvantage]</code> - Disadvantage roll</li>
-                <li>• <code>[DICE: 2d6+3 damage]</code> - Damage roll</li>
-                <li>• <code>[DICE: 4d6kh3 ability]</code> - Ability score generation</li>
+                <li>
+                  • <code>[DICE: 1d20+5]</code> - Basic roll with modifier
+                </li>
+                <li>
+                  • <code>[DICE: 1d20+5 attack]</code> - Roll with purpose
+                </li>
+                <li>
+                  • <code>[DICE: 2d20kh1+3 advantage]</code> - Advantage roll
+                </li>
+                <li>
+                  • <code>[DICE: 2d20kl1+3 disadvantage]</code> - Disadvantage roll
+                </li>
+                <li>
+                  • <code>[DICE: 2d6+3 damage]</code> - Damage roll
+                </li>
+                <li>
+                  • <code>[DICE: 4d6kh3 ability]</code> - Ability score generation
+                </li>
               </ul>
             </div>
           </div>

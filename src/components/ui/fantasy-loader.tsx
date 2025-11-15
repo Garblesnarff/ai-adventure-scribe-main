@@ -10,34 +10,31 @@
  * <FantasyLoader type="dice" label="Rolling..." />
  */
 
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { Loader2, Sparkles, Dice6, Scroll } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { Loader2, Sparkles, Dice6, Scroll } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const fantasyLoaderVariants = cva(
-  "inline-flex flex-col items-center justify-center gap-3",
-  {
-    variants: {
-      size: {
-        sm: "text-sm",
-        default: "text-base",
-        lg: "text-lg",
-        xl: "text-xl",
-      },
+const fantasyLoaderVariants = cva('inline-flex flex-col items-center justify-center gap-3', {
+  variants: {
+    size: {
+      sm: 'text-sm',
+      default: 'text-base',
+      lg: 'text-lg',
+      xl: 'text-xl',
     },
-    defaultVariants: {
-      size: "default",
-    },
-  }
-);
+  },
+  defaultVariants: {
+    size: 'default',
+  },
+});
 
 export interface FantasyLoaderProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof fantasyLoaderVariants> {
   /** Type of loader animation */
-  type?: "parchment" | "spell" | "dice" | "cosmic" | "shimmer" | "spinner";
+  type?: 'parchment' | 'spell' | 'dice' | 'cosmic' | 'shimmer' | 'spinner';
   /** Optional label text */
   label?: string;
   /** Show loading tips */
@@ -45,31 +42,17 @@ export interface FantasyLoaderProps
 }
 
 const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
-  (
-    {
-      className,
-      size,
-      type = "spell",
-      label,
-      tip,
-      ...props
-    },
-    ref
-  ) => {
+  ({ className, size, type = 'spell', label, tip, ...props }, ref) => {
     const iconSize = {
       sm: 24,
       default: 32,
       lg: 48,
       xl: 64,
-    }[size || "default"];
+    }[size || 'default'];
 
     // Parchment Unrolling Animation
     const ParchmentLoader = () => (
-      <motion.div
-        className="relative"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      <motion.div className="relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <motion.div
           className="flex items-center justify-center"
           animate={{
@@ -78,14 +61,10 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
           transition={{
             duration: 2,
             repeat: Infinity,
-            ease: "linear",
+            ease: 'linear',
           }}
         >
-          <Scroll
-            className="text-infinite-gold"
-            size={iconSize}
-            strokeWidth={1.5}
-          />
+          <Scroll className="text-infinite-gold" size={iconSize} strokeWidth={1.5} />
         </motion.div>
       </motion.div>
     );
@@ -101,8 +80,8 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
             scale: [1, 1.1, 1],
           }}
           transition={{
-            rotate: { duration: 3, repeat: Infinity, ease: "linear" },
-            scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 3, repeat: Infinity, ease: 'linear' },
+            scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
           }}
         />
         {/* Inner sparkle */}
@@ -114,14 +93,10 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
           transition={{
             duration: 2,
             repeat: Infinity,
-            ease: "linear",
+            ease: 'linear',
           }}
         >
-          <Sparkles
-            className="text-infinite-purple"
-            size={iconSize * 0.6}
-            strokeWidth={1.5}
-          />
+          <Sparkles className="text-infinite-purple" size={iconSize * 0.6} strokeWidth={1.5} />
         </motion.div>
         {/* Pulsing glow */}
         <motion.div
@@ -133,7 +108,7 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
           transition={{
             duration: 2,
             repeat: Infinity,
-            ease: "easeInOut",
+            ease: 'easeInOut',
           }}
         />
       </div>
@@ -149,14 +124,10 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
         transition={{
           duration: 1.5,
           repeat: Infinity,
-          ease: "easeInOut",
+          ease: 'easeInOut',
         }}
       >
-        <Dice6
-          className="text-infinite-teal"
-          size={iconSize}
-          strokeWidth={1.5}
-        />
+        <Dice6 className="text-infinite-teal" size={iconSize} strokeWidth={1.5} />
       </motion.div>
     );
 
@@ -167,13 +138,13 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
           className="absolute inset-0 rounded-full"
           style={{
             background:
-              "conic-gradient(from 0deg, transparent, rgba(124, 58, 237, 0.8), transparent)",
+              'conic-gradient(from 0deg, transparent, rgba(124, 58, 237, 0.8), transparent)',
           }}
           animate={{ rotate: 360 }}
           transition={{
             duration: 1.5,
             repeat: Infinity,
-            ease: "linear",
+            ease: 'linear',
           }}
         />
         <div className="absolute inset-1 rounded-full bg-background" />
@@ -186,12 +157,12 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-infinite-purple/50 to-transparent"
           animate={{
-            x: ["-100%", "200%"],
+            x: ['-100%', '200%'],
           }}
           transition={{
             duration: 1.5,
             repeat: Infinity,
-            ease: "linear",
+            ease: 'linear',
           }}
         />
       </div>
@@ -204,14 +175,10 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
         transition={{
           duration: 1,
           repeat: Infinity,
-          ease: "linear",
+          ease: 'linear',
         }}
       >
-        <Loader2
-          className="text-infinite-purple"
-          size={iconSize}
-          strokeWidth={2}
-        />
+        <Loader2 className="text-infinite-purple" size={iconSize} strokeWidth={2} />
       </motion.div>
     );
 
@@ -230,7 +197,7 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
         ref={ref}
         className={cn(fantasyLoaderVariants({ size }), className)}
         role="status"
-        aria-label={label || "Loading"}
+        aria-label={label || 'Loading'}
         {...props}
       >
         {/* Loader Animation */}
@@ -261,12 +228,12 @@ const FantasyLoader = React.forwardRef<HTMLDivElement, FantasyLoaderProps>(
         )}
 
         {/* Screen reader text */}
-        <span className="sr-only">{label || "Loading"}</span>
+        <span className="sr-only">{label || 'Loading'}</span>
       </div>
     );
-  }
+  },
 );
 
-FantasyLoader.displayName = "FantasyLoader";
+FantasyLoader.displayName = 'FantasyLoader';
 
 export { FantasyLoader, fantasyLoaderVariants };

@@ -14,33 +14,34 @@
  * />
  */
 
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const selectableCardVariants = cva(
-  "relative group cursor-pointer rounded-lg border-2 p-4 transition-all duration-300",
+  'relative group cursor-pointer rounded-lg border-2 p-4 transition-all duration-300',
   {
     variants: {
       variant: {
-        default: "bg-card hover:bg-card-hover border-border hover:border-primary/50",
-        fantasy: "fantasy-card border-amber-200/50 hover:border-infinite-gold/60",
-        cosmic: "border-infinite-purple/30 bg-gradient-to-br from-[rgba(45,17,85,0.1)] to-[rgba(15,41,69,0.05)] hover:from-[rgba(45,17,85,0.2)] hover:to-[rgba(15,41,69,0.1)]",
+        default: 'bg-card hover:bg-card-hover border-border hover:border-primary/50',
+        fantasy: 'fantasy-card border-amber-200/50 hover:border-infinite-gold/60',
+        cosmic:
+          'border-infinite-purple/30 bg-gradient-to-br from-[rgba(45,17,85,0.1)] to-[rgba(15,41,69,0.05)] hover:from-[rgba(45,17,85,0.2)] hover:to-[rgba(15,41,69,0.1)]',
       },
       size: {
-        sm: "p-3 min-h-[80px]",
-        default: "p-4 min-h-[120px]",
-        lg: "p-6 min-h-[160px]",
-        xl: "p-8 min-h-[200px]",
+        sm: 'p-3 min-h-[80px]',
+        default: 'p-4 min-h-[120px]',
+        lg: 'p-6 min-h-[160px]',
+        xl: 'p-8 min-h-[200px]',
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: 'default',
+      size: 'default',
     },
-  }
+  },
 );
 
 export interface SelectableCardProps
@@ -87,7 +88,7 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isHovered, setIsHovered] = React.useState(false);
 
@@ -118,7 +119,7 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
             className="absolute top-2 right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-infinite-purple text-white shadow-lg"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
           >
             <Check className="h-4 w-4" />
           </motion.div>
@@ -150,9 +151,7 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
 
           {/* Description */}
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
           )}
 
           {/* Additional Content */}
@@ -163,8 +162,8 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
         {!disabled && (
           <div
             className={cn(
-              "absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-              "bg-gradient-to-br from-infinite-purple/5 to-infinite-teal/5 pointer-events-none"
+              'absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 group-hover:opacity-100',
+              'bg-gradient-to-br from-infinite-purple/5 to-infinite-teal/5 pointer-events-none',
             )}
           />
         )}
@@ -188,9 +187,9 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
           className={cn(
             selectableCardVariants({ variant, size }),
             selected &&
-              "border-infinite-purple bg-infinite-purple/5 shadow-lg shadow-infinite-purple/20",
-            disabled && "opacity-50 cursor-not-allowed",
-            className
+              'border-infinite-purple bg-infinite-purple/5 shadow-lg shadow-infinite-purple/20',
+            disabled && 'opacity-50 cursor-not-allowed',
+            className,
           )}
           variants={cardVariants}
           initial="hidden"
@@ -199,7 +198,7 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
             !disabled
               ? {
                   y: -4,
-                  boxShadow: "0 12px 28px rgba(0, 0, 0, 0.15)",
+                  boxShadow: '0 12px 28px rgba(0, 0, 0, 0.15)',
                   transition: { duration: 0.2 },
                 }
               : undefined
@@ -221,9 +220,9 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
         className={cn(
           selectableCardVariants({ variant, size }),
           selected &&
-            "border-infinite-purple bg-infinite-purple/5 shadow-lg shadow-infinite-purple/20",
-          disabled && "opacity-50 cursor-not-allowed",
-          className
+            'border-infinite-purple bg-infinite-purple/5 shadow-lg shadow-infinite-purple/20',
+          disabled && 'opacity-50 cursor-not-allowed',
+          className,
         )}
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
@@ -233,9 +232,9 @@ const SelectableCard = React.forwardRef<HTMLDivElement, SelectableCardProps>(
         {CardContent}
       </div>
     );
-  }
+  },
 );
 
-SelectableCard.displayName = "SelectableCard";
+SelectableCard.displayName = 'SelectableCard';
 
 export { SelectableCard, selectableCardVariants };

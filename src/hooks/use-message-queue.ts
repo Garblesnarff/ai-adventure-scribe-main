@@ -1,16 +1,16 @@
 // SDK Imports
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 // Project Imports
-import { supabase } from '@/integrations/supabase/client';
+import type { ChatMessage } from '@/types/game';
+
 import { useToast } from '@/hooks/use-toast'; // Assuming kebab-case
+import { supabase } from '@/integrations/supabase/client';
 
 // Project Types
-import { ChatMessage } from '@/types/game';
 import logger from '@/lib/logger';
-
 
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000;
@@ -36,7 +36,7 @@ export const useMessageQueue = (sessionId: string | null) => {
     mutationFn: async (message: ChatMessage) => {
       let retries = 0;
       let delay = INITIAL_RETRY_DELAY;
-      
+
       // Generate message ID on frontend to avoid database timing issues
       const messageId = uuidv4();
       const now = new Date().toISOString();
@@ -44,41 +44,41 @@ export const useMessageQueue = (sessionId: string | null) => {
       while (retries < MAX_RETRIES) {
         try {
           setQueueStatus(retries > 0 ? 'retrying' : 'processing');
-          
-          // Format the context to ensure it's compatible with Supabase's Json type
-          const contextData = message.context ? {
-            location: message.context.location || null,
-            emotion: message.context.emotion || null,
-            intent: message.context.intent || null
-          } : {};
 
-          const { error } = await supabase
-            .from('dialogue_history')
-            .insert({
-              id: messageId,
-              session_id: sessionId,
-              message: message.text,
-              speaker_type: message.sender,
-              context: contextData,
-              timestamp: now
-            });
+          // Format the context to ensure it's compatible with Supabase's Json type
+          const contextData = message.context
+            ? {
+                location: message.context.location || null,
+                emotion: message.context.emotion || null,
+                intent: message.context.intent || null,
+              }
+            : {};
+
+          const { error } = await supabase.from('dialogue_history').insert({
+            id: messageId,
+            session_id: sessionId,
+            message: message.text,
+            speaker_type: message.sender,
+            context: contextData,
+            timestamp: now,
+          });
 
           if (error) throw error;
-          
+
           // Return the message with the ID we generated (available immediately, no race condition)
           const persistedMessage: ChatMessage = {
             ...message,
             id: messageId,
-            timestamp: now
+            timestamp: now,
           };
-          
+
           logger.info(`[MessageQueue] Message persisted with ID: ${messageId}`);
-          
+
           // Process any queued messages if this one succeeded
           if (messageQueue.length > 0) {
             const batch = messageQueue.slice(0, MAX_BATCH_SIZE);
             await processMessageBatch(batch);
-            setMessageQueue(prev => prev.slice(MAX_BATCH_SIZE));
+            setMessageQueue((prev) => prev.slice(MAX_BATCH_SIZE));
           }
 
           setQueueStatus('idle');
@@ -86,16 +86,16 @@ export const useMessageQueue = (sessionId: string | null) => {
         } catch (error) {
           logger.error(`Attempt ${retries + 1} failed:`, error);
           retries++;
-          
+
           if (retries === MAX_RETRIES) {
             setQueueStatus('error');
             // Queue message for later retry if max retries reached
-            setMessageQueue(prev => [...prev, message]);
+            setMessageQueue((prev) => [...prev, message]);
             throw error;
           }
-          
+
           // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           delay *= 2; // Double the delay for next retry
         }
       }
@@ -103,9 +103,9 @@ export const useMessageQueue = (sessionId: string | null) => {
     onError: (error) => {
       logger.error('Error saving message:', error);
       toast({
-        title: "Error",
-        description: "Message will be retried automatically",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Message will be retried automatically',
+        variant: 'destructive',
       });
     },
     onSuccess: (persistedMessage) => {
@@ -120,22 +120,22 @@ export const useMessageQueue = (sessionId: string | null) => {
    */
   const processMessageBatch = async (batch: ChatMessage[]) => {
     const now = new Date().toISOString();
-    const formattedBatch = batch.map(message => ({
+    const formattedBatch = batch.map((message) => ({
       id: message.id || uuidv4(),
       session_id: sessionId,
       message: message.text,
       speaker_type: message.sender,
-      context: message.context ? {
-        location: message.context.location || null,
-        emotion: message.context.emotion || null,
-        intent: message.context.intent || null
-      } : {},
-      timestamp: message.timestamp || now
+      context: message.context
+        ? {
+            location: message.context.location || null,
+            emotion: message.context.emotion || null,
+            intent: message.context.intent || null,
+          }
+        : {},
+      timestamp: message.timestamp || now,
     }));
 
-    const { error } = await supabase
-      .from('dialogue_history')
-      .insert(formattedBatch);
+    const { error } = await supabase.from('dialogue_history').insert(formattedBatch);
 
     if (error) throw error;
   };
@@ -148,8 +148,8 @@ export const useMessageQueue = (sessionId: string | null) => {
       try {
         const batch = messageQueue.slice(0, MAX_BATCH_SIZE);
         await processMessageBatch(batch);
-        setMessageQueue(prev => prev.slice(MAX_BATCH_SIZE));
-        
+        setMessageQueue((prev) => prev.slice(MAX_BATCH_SIZE));
+
         if (messageQueue.length > 0) {
           // Schedule next batch
           setTimeout(retryQueuedMessages, INITIAL_RETRY_DELAY);
@@ -157,18 +157,18 @@ export const useMessageQueue = (sessionId: string | null) => {
       } catch (error) {
         logger.error('Error processing message batch:', error);
         toast({
-          title: "Error",
-          description: "Failed to process message batch. Will retry later.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to process message batch. Will retry later.',
+          variant: 'destructive',
         });
       }
     }
   };
 
-  return { 
-    messageMutation, 
+  return {
+    messageMutation,
     queueStatus,
     queueLength: messageQueue.length,
-    retryQueuedMessages
+    retryQueuedMessages,
   };
 };

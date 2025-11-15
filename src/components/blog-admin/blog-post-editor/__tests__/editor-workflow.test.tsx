@@ -1,11 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { BlogPostEditor } from '../blog-post-editor';
 
 const mockCategories = [
-  { id: 'cat-1', title: 'Technology', slug: 'technology', createdAt: '2024-01-01', updatedAt: null },
+  {
+    id: 'cat-1',
+    title: 'Technology',
+    slug: 'technology',
+    createdAt: '2024-01-01',
+    updatedAt: null,
+  },
   { id: 'cat-2', title: 'Design', slug: 'design', createdAt: '2024-01-01', updatedAt: null },
 ];
 
@@ -103,7 +110,7 @@ describe('Blog Editor Happy Path Workflow', () => {
           content: expect.stringContaining('Introduction'),
           excerpt: expect.stringContaining('brief introduction'),
           status: 'draft',
-        })
+        }),
       );
     });
 
@@ -122,7 +129,7 @@ describe('Blog Editor Happy Path Workflow', () => {
     const contentTextarea = screen.getByPlaceholderText(/write your post content/i);
     await user.type(
       contentTextarea,
-      '# Main Heading\n\nThis is a long paragraph with lots of interesting content that should be trimmed down to create a nice excerpt for the post listing page.'
+      '# Main Heading\n\nThis is a long paragraph with lots of interesting content that should be trimmed down to create a nice excerpt for the post listing page.',
     );
 
     const autoGenerateButton = screen.getByRole('button', { name: /auto-generate/i });
@@ -181,7 +188,7 @@ describe('Blog Editor Happy Path Workflow', () => {
         expect.objectContaining({
           status: 'scheduled',
           scheduledFor: expect.stringContaining('2025-12-31'),
-        })
+        }),
       );
     });
   });
@@ -266,7 +273,7 @@ describe('Blog Editor Happy Path Workflow', () => {
 
   it('updates existing post in edit mode', async () => {
     const user = userEvent.setup();
-    
+
     mockUpdatePost.mockResolvedValue({
       id: 'existing-1',
       title: 'Updated Post Title',
@@ -309,7 +316,7 @@ describe('Blog Editor Happy Path Workflow', () => {
           title: 'Updated Post Title',
           status: 'published',
           publishedAt: expect.any(String),
-        })
+        }),
       );
     });
   });

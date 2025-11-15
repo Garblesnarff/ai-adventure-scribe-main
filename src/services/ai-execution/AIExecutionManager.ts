@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
-
 import type { AIExecutionStrategy } from './AIExecutionStrategy';
+
+import logger from '@/lib/logger';
 
 interface ExecutionOptions {
   fallbackOnFailure?: boolean;
@@ -16,7 +16,7 @@ export class AIExecutionManager {
   public async execute(
     functionName: string,
     payload?: Record<string, unknown>,
-    options: ExecutionOptions = { fallbackOnFailure: true }
+    options: ExecutionOptions = { fallbackOnFailure: true },
   ): Promise<any> {
     const applicable = this.strategies.filter((strategy) => strategy.canExecute(functionName));
     if (!applicable.length) {

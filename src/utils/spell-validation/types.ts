@@ -1,5 +1,10 @@
 export interface SpellValidationError {
-  type: 'INVALID_SPELL' | 'COUNT_MISMATCH' | 'ABILITY_REQUIREMENT' | 'RACIAL_RESTRICTION' | 'LEVEL_REQUIREMENT';
+  type:
+    | 'INVALID_SPELL'
+    | 'COUNT_MISMATCH'
+    | 'ABILITY_REQUIREMENT'
+    | 'RACIAL_RESTRICTION'
+    | 'LEVEL_REQUIREMENT';
   message: string;
   spellId?: string;
   expected?: number;

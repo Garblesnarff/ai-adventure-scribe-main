@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
 /**
  * Interface defining the structure of a wizard step component props

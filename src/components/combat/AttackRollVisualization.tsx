@@ -6,22 +6,16 @@
  * with the enhanced attack system from attackUtils.ts.
  */
 
+import { Swords, Target, Zap, ShieldAlert, ShieldCheck, ArrowUp, ArrowDown } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { Equipment } from '@/data/equipmentOptions';
+import type { DiceRoll, DamageType } from '@/types/combat';
+
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import {
-  Swords,
-  Target,
-  Zap,
-  ShieldAlert,
-  ShieldCheck,
-  ArrowUp,
-  ArrowDown
-} from 'lucide-react';
-import { DiceRoll, DamageType } from '@/types/combat';
-import { Equipment } from '@/data/equipmentOptions';
 
 // ===========================
 // Component Props
@@ -76,7 +70,7 @@ const DamageDisplay: React.FC<DamageDisplayProps> = ({
   damageType,
   resistances = [],
   vulnerabilities = [],
-  immunities = []
+  immunities = [],
 }) => {
   const getDamageColor = (type: DamageType) => {
     const colorMap: Record<string, string> = {
@@ -89,12 +83,13 @@ const DamageDisplay: React.FC<DamageDisplayProps> = ({
       radiant: 'text-yellow-600',
       slashing: 'text-red-700',
       piercing: 'text-gray-700',
-      bludgeoning: 'text-orange-600'
+      bludgeoning: 'text-orange-600',
     };
     return colorMap[type] || 'text-gray-600';
   };
 
-  const hasModifiers = resistances.length > 0 || vulnerabilities.length > 0 || immunities.length > 0;
+  const hasModifiers =
+    resistances.length > 0 || vulnerabilities.length > 0 || immunities.length > 0;
 
   return (
     <div className="space-y-2">
@@ -106,9 +101,7 @@ const DamageDisplay: React.FC<DamageDisplayProps> = ({
           <div key={index} className="text-sm flex items-center justify-between">
             <span>
               {roll.count}d{roll.dieType}
-              {roll.modifier > 0 && (
-                <span className="text-green-600"> +{roll.modifier}</span>
-              )}
+              {roll.modifier > 0 && <span className="text-green-600"> +{roll.modifier}</span>}
             </span>
             <div className="text-right">
               {roll.results?.join(', ')} = {roll.total}
@@ -122,9 +115,7 @@ const DamageDisplay: React.FC<DamageDisplayProps> = ({
       {/* Final Damage Result */}
       <div className="flex items-center justify-between font-medium">
         <span>Total {damageType} Damage:</span>
-        <span className={`font-bold ${getDamageColor(damageType)}`}>
-          {totalDamage}
-        </span>
+        <span className={`font-bold ${getDamageColor(damageType)}`}>{totalDamage}</span>
       </div>
 
       {/* Damage Modifiers */}
@@ -158,7 +149,7 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
   attackerName,
   targetName,
   weapon,
-  attackResult
+  attackResult,
 }) => {
   const { resolution, damage, targetReducedHp, totalDamageDealt } = attackResult;
   const { hit, roll, acHit, criticalHit, criticalFail, advantage, disadvantage } = resolution;
@@ -179,9 +170,7 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
           <h3 className="font-bold text-lg">
             {attackerName} attacks {targetName} with {weaponName}
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Target AC: {acHit}
-          </p>
+          <p className="text-sm text-muted-foreground">Target AC: {acHit}</p>
         </div>
 
         {/* Advantage/Disadvantage Indicators */}
@@ -209,11 +198,17 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
           {/* Dice Visualization */}
           <div className="flex items-center justify-center gap-4">
             <div className="text-center">
-              <div className={`text-2xl font-bold ${
-                criticalHit ? 'text-green-600' :
-                criticalFail ? 'text-red-600' :
-                hit ? 'text-blue-600' : 'text-gray-600'
-              }`}>
+              <div
+                className={`text-2xl font-bold ${
+                  criticalHit
+                    ? 'text-green-600'
+                    : criticalFail
+                      ? 'text-red-600'
+                      : hit
+                        ? 'text-blue-600'
+                        : 'text-gray-600'
+                }`}
+              >
                 {roll.naturalRoll}
               </div>
               <div className="text-xs text-muted-foreground">Natural Roll</div>
@@ -231,11 +226,17 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
             <div className="text-2xl">=</div>
 
             <div className="text-center">
-              <div className={`text-2xl font-bold ${
-                criticalHit ? 'text-green-600' :
-                criticalFail ? 'text-red-600' :
-                hit ? 'text-blue-600' : 'text-gray-600'
-              }`}>
+              <div
+                className={`text-2xl font-bold ${
+                  criticalHit
+                    ? 'text-green-600'
+                    : criticalFail
+                      ? 'text-red-600'
+                      : hit
+                        ? 'text-blue-600'
+                        : 'text-gray-600'
+                }`}
+              >
                 {roll.total}
               </div>
               <div className="text-xs text-muted-foreground">Total</div>
@@ -268,16 +269,16 @@ const AttackRollVisualization: React.FC<AttackRollVisualizationProps> = ({
           </div>
 
           {/* HP Result */}
-          {targetReducedHp !== undefined && totalDamageDealt !== undefined && totalDamageDealt > 0 && (
-            <div className="text-center p-2 bg-blue-50 rounded">
-              <div className="text-sm font-medium text-blue-900">
-                Target HP reduced to {targetReducedHp}
-                {totalDamageDealt > 0 ? (
-                  <> ({totalDamageDealt} damage dealt)</>
-                ) : null}
+          {targetReducedHp !== undefined &&
+            totalDamageDealt !== undefined &&
+            totalDamageDealt > 0 && (
+              <div className="text-center p-2 bg-blue-50 rounded">
+                <div className="text-sm font-medium text-blue-900">
+                  Target HP reduced to {targetReducedHp}
+                  {totalDamageDealt > 0 ? <> ({totalDamageDealt} damage dealt)</> : null}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         {/* Damage Display */}

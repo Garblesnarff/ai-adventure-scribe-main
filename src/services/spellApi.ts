@@ -1,6 +1,8 @@
-import { Spell } from '@/types/character';
-import { supabase } from '@/integrations/supabase/client';
 import { localSpellService } from './localSpellService';
+
+import type { Spell } from '@/types/character';
+
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
@@ -110,7 +112,7 @@ function convertApiSpellToSpell(apiSpell: ServerSpell): Spell {
     ritual: apiSpell.ritual,
     damage: apiSpell.damage || false,
     attackSave: apiSpell.attackSave || '',
-    damageEffect: apiSpell.damageEffect || ''
+    damageEffect: apiSpell.damageEffect || '',
   };
 }
 
@@ -123,7 +125,9 @@ class SpellApiService {
       throw new Error('API unavailable, using local fallback');
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const token = session?.access_token;
 
     try {
@@ -153,7 +157,7 @@ class SpellApiService {
 
   private async tryApiWithFallback<T>(
     apiCall: () => Promise<T>,
-    fallbackCall: () => Promise<T>
+    fallbackCall: () => Promise<T>,
   ): Promise<T> {
     try {
       return await apiCall();
@@ -187,25 +191,30 @@ class SpellApiService {
 
         return apiSpells.map(convertApiSpellToSpell);
       },
-      () => localSpellService.getAllSpells(filters)
+      () => localSpellService.getAllSpells(filters),
     );
   }
 
   // Get spells available to a specific class at a specific level
-  async getClassSpells(className: string, level: number = 1): Promise<{ cantrips: Spell[], spells: Spell[] }> {
+  async getClassSpells(
+    className: string,
+    level: number = 1,
+  ): Promise<{ cantrips: Spell[]; spells: Spell[] }> {
     return this.tryApiWithFallback(
       async () => {
-        const response = await this.fetchWithAuth(`/v1/spells/class/${encodeURIComponent(className)}/level/${level}`);
+        const response = await this.fetchWithAuth(
+          `/v1/spells/class/${encodeURIComponent(className)}/level/${level}`,
+        );
         const apiSpells: ServerSpell[] = await response.json();
 
         const allSpells = apiSpells.map(convertApiSpellToSpell);
 
         return {
-          cantrips: allSpells.filter(spell => spell.level === 0),
-          spells: allSpells.filter(spell => spell.level > 0)
+          cantrips: allSpells.filter((spell) => spell.level === 0),
+          spells: allSpells.filter((spell) => spell.level > 0),
         };
       },
-      () => localSpellService.getClassSpells(className, level)
+      () => localSpellService.getClassSpells(className, level),
     );
   }
 
@@ -213,10 +222,12 @@ class SpellApiService {
   async getSpellProgression(className: string): Promise<SpellProgression[]> {
     return this.tryApiWithFallback(
       async () => {
-        const response = await this.fetchWithAuth(`/v1/spells/progression/${encodeURIComponent(className)}`);
+        const response = await this.fetchWithAuth(
+          `/v1/spells/progression/${encodeURIComponent(className)}`,
+        );
         return response.json();
       },
-      () => localSpellService.getSpellProgression(className)
+      () => localSpellService.getSpellProgression(className),
     );
   }
 
@@ -227,7 +238,7 @@ class SpellApiService {
         const response = await this.fetchWithAuth(`/v1/spells/multiclass/slots/${casterLevel}`);
         return response.json();
       },
-      () => localSpellService.getMulticlassSpellSlots(casterLevel)
+      () => localSpellService.getMulticlassSpellSlots(casterLevel),
     );
   }
 
@@ -238,12 +249,14 @@ class SpellApiService {
         const response = await this.fetchWithAuth('/v1/spells/classes');
         return response.json();
       },
-      () => localSpellService.getSpellcastingClasses()
+      () => localSpellService.getSpellcastingClasses(),
     );
   }
 
   // Calculate multiclass caster level and spell slots
-  async calculateMulticlassCasterLevel(classLevels: { className: string; level: number }[]): Promise<MulticlassCalculation> {
+  async calculateMulticlassCasterLevel(
+    classLevels: { className: string; level: number }[],
+  ): Promise<MulticlassCalculation> {
     return this.tryApiWithFallback(
       async () => {
         const response = await this.fetchWithAuth('/v1/spells/multiclass/calculate', {
@@ -252,7 +265,7 @@ class SpellApiService {
         });
         return response.json();
       },
-      () => localSpellService.calculateMulticlassCasterLevel(classLevels)
+      () => localSpellService.calculateMulticlassCasterLevel(classLevels),
     );
   }
 
@@ -264,7 +277,7 @@ class SpellApiService {
         const apiSpell: ServerSpell = await response.json();
         return convertApiSpellToSpell(apiSpell);
       },
-      () => localSpellService.getSpellById(spellId)
+      () => localSpellService.getSpellById(spellId),
     );
   }
 }

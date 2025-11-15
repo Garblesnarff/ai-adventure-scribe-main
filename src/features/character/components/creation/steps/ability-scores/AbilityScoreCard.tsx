@@ -1,7 +1,9 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
+
+import type { AbilityScores } from '@/types/character';
+
 import { Button } from '@/components/ui/button';
-import { AbilityScores } from '@/types/character';
+import { Card } from '@/components/ui/card';
 import { POINT_BUY_COSTS } from '@/utils/abilityScoreUtils';
 
 interface AbilityScoreCardProps {
@@ -25,8 +27,10 @@ const AbilityScoreCard: React.FC<AbilityScoreCardProps> = ({
   onScoreChange,
   isRollMode = false,
 }) => {
-  const isIncreaseDisabled = isRollMode || score === 15 || 
-    remainingPoints < (POINT_BUY_COSTS[score + 1] - POINT_BUY_COSTS[score]);
+  const isIncreaseDisabled =
+    isRollMode ||
+    score === 15 ||
+    remainingPoints < POINT_BUY_COSTS[score + 1] - POINT_BUY_COSTS[score];
   const isDecreaseDisabled = isRollMode || score === 8;
 
   return (
@@ -44,7 +48,8 @@ const AbilityScoreCard: React.FC<AbilityScoreCardProps> = ({
         <span className="text-2xl font-bold">
           {score}
           <span className="text-sm ml-2 text-muted-foreground">
-            ({modifier >= 0 ? '+' : ''}{modifier})
+            ({modifier >= 0 ? '+' : ''}
+            {modifier})
           </span>
         </span>
         <Button

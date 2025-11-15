@@ -1,7 +1,8 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, RefreshCw, Loader2 } from 'lucide-react';
+import React from 'react';
+
 import ChatImage from '@/components/game/ChatImage';
+import { Button } from '@/components/ui/button';
 
 interface MessageImageSectionProps {
   messageId: string;

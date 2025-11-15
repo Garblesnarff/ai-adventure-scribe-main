@@ -1,4 +1,4 @@
-import { EncounterGenerationInput, EncounterSpec } from '@/types/encounters';
+import type { EncounterGenerationInput, EncounterSpec } from '@/types/encounters';
 
 export function generateSocialEncounter(input: EncounterGenerationInput): EncounterSpec {
   return {
@@ -23,10 +23,12 @@ export function generateExplorationEncounter(input: EncounterGenerationInput): E
     objectives: ['overcome hazard'],
     startState: { initiative: 'fixed', surprise: false },
     followUps: ['progress-journey'],
-    hazards: [{
-      id: 'pitfall',
-      description: 'Concealed pit with spikes',
-      save: { ability: 'dex', dc: 13, timing: 'trigger' }
-    }]
+    hazards: [
+      {
+        id: 'pitfall',
+        description: 'Concealed pit with spikes',
+        save: { ability: 'dex', dc: 13, timing: 'trigger' },
+      },
+    ],
   };
 }

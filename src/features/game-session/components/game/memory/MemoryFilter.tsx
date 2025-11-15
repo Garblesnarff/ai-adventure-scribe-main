@@ -1,8 +1,10 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
+import React from 'react';
+
 import { MEMORY_CATEGORIES } from './memoryConstants';
 import { MemoryType, isValidMemoryType } from './types';
+
+import { Button } from '@/components/ui/button';
 
 interface MemoryFilterProps {
   selectedType: string | null;
@@ -21,7 +23,7 @@ export const MemoryFilter: React.FC<MemoryFilterProps> = ({ selectedType, onType
   return (
     <div className="p-4 border-b flex gap-2 overflow-x-auto">
       <Button
-        variant={!selectedType ? "default" : "outline"}
+        variant={!selectedType ? 'default' : 'outline'}
         size="sm"
         onClick={() => onTypeSelect(null)}
         className="flex items-center gap-2"
@@ -32,7 +34,7 @@ export const MemoryFilter: React.FC<MemoryFilterProps> = ({ selectedType, onType
       {MEMORY_CATEGORIES.map((category) => (
         <Button
           key={category.type}
-          variant={selectedType === category.type ? "default" : "outline"}
+          variant={selectedType === category.type ? 'default' : 'outline'}
           size="sm"
           onClick={() => onTypeSelect(category.type)}
           className="flex items-center gap-2"

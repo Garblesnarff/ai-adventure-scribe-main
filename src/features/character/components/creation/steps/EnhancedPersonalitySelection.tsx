@@ -1,16 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { Separator } from '@/components/ui/separator';
-import { backgrounds } from '@/data/backgroundOptions';
 import {
   Heart,
   Brain,
@@ -20,8 +7,20 @@ import {
   Copy,
   Lightbulb,
   BookOpen,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { backgrounds } from '@/data/backgroundOptions';
 
 /**
  * EnhancedPersonalitySelection component for character creation
@@ -33,19 +32,23 @@ const EnhancedPersonalitySelection: React.FC = () => {
   const character = state.character;
   const selectedBackground = character?.background;
 
-  const [personalityTraits, setPersonalityTraits] = useState<string[]>(character?.personalityTraits || ['', '']);
+  const [personalityTraits, setPersonalityTraits] = useState<string[]>(
+    character?.personalityTraits || ['', ''],
+  );
   const [ideal, setIdeal] = useState<string>(character?.ideals?.[0] || '');
   const [bond, setBond] = useState<string>(character?.bonds?.[0] || '');
   const [flaw, setFlaw] = useState<string>(character?.flaws?.[0] || '');
 
   // Get background suggestions
   const backgroundData = backgrounds.find((bg: any) => bg.id === selectedBackground?.id);
-  const suggestions = backgroundData ? {
-    traits: backgroundData.suggestedPersonalityTraits || [],
-    ideals: backgroundData.suggestedIdeals || [],
-    bonds: backgroundData.suggestedBonds || [],
-    flaws: backgroundData.suggestedFlaws || []
-  } : null;
+  const suggestions = backgroundData
+    ? {
+        traits: backgroundData.suggestedPersonalityTraits || [],
+        ideals: backgroundData.suggestedIdeals || [],
+        bonds: backgroundData.suggestedBonds || [],
+        flaws: backgroundData.suggestedFlaws || [],
+      }
+    : null;
 
   /**
    * Apply personality changes to character
@@ -54,30 +57,34 @@ const EnhancedPersonalitySelection: React.FC = () => {
     dispatch({
       type: 'UPDATE_CHARACTER',
       payload: {
-        personalityTraits: personalityTraits.filter(trait => trait.trim()),
+        personalityTraits: personalityTraits.filter((trait) => trait.trim()),
         ideals: ideal.trim() ? [ideal] : [],
         bonds: bond.trim() ? [bond] : [],
         flaws: flaw.trim() ? [flaw] : [],
         // Initialize inspiration system
         inspiration: false,
         personalityIntegration: {
-          activeTraits: personalityTraits.filter(trait => trait.trim()),
+          activeTraits: personalityTraits.filter((trait) => trait.trim()),
           inspirationTriggers: [],
-          inspirationHistory: []
-        }
-      }
+          inspirationHistory: [],
+        },
+      },
     });
 
     toast({
       title: 'Personality Updated',
-      description: 'Your character\'s personality elements have been saved.',
+      description: "Your character's personality elements have been saved.",
     });
   };
 
   /**
    * Use a suggested element
    */
-  const applySuggestion = (type: 'traits' | 'ideals' | 'bonds' | 'flaws', suggestion: string, index?: number) => {
+  const applySuggestion = (
+    type: 'traits' | 'ideals' | 'bonds' | 'flaws',
+    suggestion: string,
+    index?: number,
+  ) => {
     switch (type) {
       case 'traits':
         if (index !== undefined) {
@@ -149,37 +156,35 @@ const EnhancedPersonalitySelection: React.FC = () => {
     title: string,
     suggestions: string[],
     icon: React.ElementType,
-    colorClass: string
+    colorClass: string,
   ) => {
     if (!suggestions || suggestions.length === 0) return null;
 
     return (
-      <motion.div key={type} variants={cardItem}>
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <CardTitle className={`flex items-center gap-2 text-sm ${colorClass}`}>
-              {React.createElement(icon, { className: "w-4 h-4" })}
-              {title} Suggestions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {suggestions.slice(0, 3).map((suggestion, index) => (
-                <div
-                  key={index}
-                  className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors group"
-                  onClick={() => applySuggestion(type, suggestion, type === 'traits' ? 0 : undefined)}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs flex-1">{suggestion}</p>
-                    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
-                  </div>
+      <Card className="h-fit">
+        <CardHeader className="pb-3">
+          <CardTitle className={`flex items-center gap-2 text-sm ${colorClass}`}>
+            {React.createElement(icon, { className: 'w-4 h-4' })}
+            {title} Suggestions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {suggestions.slice(0, 3).map((suggestion, index) => (
+              <div
+                key={index}
+                className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors group"
+                onClick={() => applySuggestion(type, suggestion, type === 'traits' ? 0 : undefined)}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs flex-1">{suggestion}</p>
+                  <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -197,12 +202,7 @@ const EnhancedPersonalitySelection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <motion.div
-        className="text-center"
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Character Personality</h2>
         <p className="text-muted-foreground">
           Define your character's personality using D&D 5E elements
@@ -212,12 +212,12 @@ const EnhancedPersonalitySelection: React.FC = () => {
             {backgroundData.name} Background
           </Badge>
         )}
-      </motion.div>
+      </div>
 
       {/* Quick Actions */}
       {suggestions && (
         <div className="flex justify-center">
-          <Button 
+          <Button
             onClick={useRandomSuggestions}
             variant="outline"
             className="flex items-center gap-2"
@@ -253,7 +253,9 @@ const EnhancedPersonalitySelection: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="trait-1" className="text-sm">First Trait</Label>
+                    <Label htmlFor="trait-1" className="text-sm">
+                      First Trait
+                    </Label>
                     <Textarea
                       id="trait-1"
                       placeholder="e.g., I idolize a particular hero of my faith..."
@@ -268,7 +270,9 @@ const EnhancedPersonalitySelection: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="trait-2" className="text-sm">Second Trait</Label>
+                    <Label htmlFor="trait-2" className="text-sm">
+                      Second Trait
+                    </Label>
                     <Textarea
                       id="trait-2"
                       placeholder="e.g., I can find common ground between enemies..."
@@ -318,7 +322,8 @@ const EnhancedPersonalitySelection: React.FC = () => {
                     Bond
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    What connects your character to the world? People, places, or things they care about.
+                    What connects your character to the world? People, places, or things they care
+                    about.
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -358,74 +363,70 @@ const EnhancedPersonalitySelection: React.FC = () => {
         </div>
 
         {/* Right Column - Suggestions */}
-        <motion.div
-          className="space-y-4"
-          variants={cardContainer}
-          initial="hidden"
-          animate="visible"
-        >
+        <div className="space-y-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Lightbulb className="w-5 h-5 text-yellow-500" />
             Background Suggestions
           </h3>
 
           {suggestions ? (
-            <>
-              {renderSuggestions('traits', 'Personality Trait', suggestions.traits, Heart, 'text-red-500')}
+            <div className="space-y-4">
+              {renderSuggestions(
+                'traits',
+                'Personality Trait',
+                suggestions.traits,
+                Heart,
+                'text-red-500',
+              )}
               {renderSuggestions('ideals', 'Ideal', suggestions.ideals, Brain, 'text-blue-500')}
               {renderSuggestions('bonds', 'Bond', suggestions.bonds, Anchor, 'text-green-500')}
-              {renderSuggestions('flaws', 'Flaw', suggestions.flaws, AlertTriangle, 'text-orange-500')}
-            </>
+              {renderSuggestions(
+                'flaws',
+                'Flaw',
+                suggestions.flaws,
+                AlertTriangle,
+                'text-orange-500',
+              )}
+            </div>
           ) : (
-            <motion.div variants={cardItem}>
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground">
-                    No suggestions available for this background.
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">
+                  No suggestions available for this background.
+                </p>
+              </CardContent>
+            </Card>
           )}
-        </motion.div>
+        </div>
       </div>
 
       {/* Inspiration Info */}
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="border-gold-200 bg-gold-50 dark:bg-gold-950/20 dark:border-gold-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gold-700 dark:text-gold-300">
-              <Sparkles className="w-5 h-5" />
-              About Inspiration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-gold-600 dark:text-gold-400">
-            <p>
-              <strong>Inspiration</strong> is a rule the DM can use to reward you for playing your character
-              in a way that's true to their personality traits, ideals, bonds, and flaws. When you have
-              inspiration, you can spend it to gain advantage on one ability check, attack roll, or saving throw.
-            </p>
-            <Separator className="my-3 bg-gold-300 dark:bg-gold-700" />
-            <p className="text-xs">
-              Your DM tells you how to earn inspiration in the game. Typically, you gain it when you play
-              out your character's personality in a way that creates interesting complications or drives the story forward.
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <Card className="border-gold-200 bg-gold-50 dark:bg-gold-950/20 dark:border-gold-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-gold-700 dark:text-gold-300">
+            <Sparkles className="w-5 h-5" />
+            About Inspiration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-gold-600 dark:text-gold-400">
+          <p>
+            <strong>Inspiration</strong> is a rule the DM can use to reward you for playing your
+            character in a way that's true to their personality traits, ideals, bonds, and flaws.
+            When you have inspiration, you can spend it to gain advantage on one ability check,
+            attack roll, or saving throw.
+          </p>
+          <Separator className="my-3 bg-gold-300 dark:bg-gold-700" />
+          <p className="text-xs">
+            Your DM tells you how to earn inspiration in the game. Typically, you gain it when you
+            play out your character's personality in a way that creates interesting complications or
+            drives the story forward.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Completion Status */}
       <div className="text-center">
-        <Button 
-          onClick={applyPersonalityChanges}
-          size="lg"
-          className="w-full max-w-md"
-        >
+        <Button onClick={applyPersonalityChanges} size="lg" className="w-full max-w-md">
           Continue to Equipment Selection
         </Button>
       </div>

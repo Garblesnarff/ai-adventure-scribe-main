@@ -1,9 +1,21 @@
+import {
+  Loader2,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle,
+  Circle,
+  Map,
+  Wand2,
+  Settings,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
+
+import { wizardSteps } from '../wizard/constants';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, ArrowRight, CheckCircle, Circle, Map, Wand2, Settings, Sparkles } from 'lucide-react';
-import { wizardSteps } from '../wizard/constants';
 
 interface StepNavigationProps {
   currentStep: number;
@@ -26,26 +38,31 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
 }) => {
   const getStepIcon = (stepIndex: number) => {
     switch (stepIndex) {
-      case 0: return <Wand2 className="w-4 h-4" />;
-      case 1: return <Map className="w-4 h-4" />;
-      case 2: return <Settings className="w-4 h-4" />;
-      case 3: return <Sparkles className="w-4 h-4" />;
-      default: return <Circle className="w-4 h-4" />;
+      case 0:
+        return <Wand2 className="w-4 h-4" />;
+      case 1:
+        return <Map className="w-4 h-4" />;
+      case 2:
+        return <Settings className="w-4 h-4" />;
+      case 3:
+        return <Sparkles className="w-4 h-4" />;
+      default:
+        return <Circle className="w-4 h-4" />;
     }
   };
 
   const getMotivationalMessage = () => {
     switch (currentStep) {
       case 0:
-        return "Choose your realm and begin your epic tale";
+        return 'Choose your realm and begin your epic tale';
       case 1:
-        return "Define the scope of your legendary campaign";
+        return 'Define the scope of your legendary campaign';
       case 2:
-        return "Add unique elements to make your world unforgettable";
+        return 'Add unique elements to make your world unforgettable';
       case 3:
-        return "Complete your masterpiece and unleash your adventure";
+        return 'Complete your masterpiece and unleash your adventure';
       default:
-        return "Continue your quest";
+        return 'Continue your quest';
     }
   };
 
@@ -63,7 +80,9 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground">
-            {currentStep === totalSteps - 1 ? 'Almost there!' : `${totalSteps - currentStep - 1} steps remaining`}
+            {currentStep === totalSteps - 1
+              ? 'Almost there!'
+              : `${totalSteps - currentStep - 1} steps remaining`}
           </div>
         </div>
 
@@ -71,22 +90,22 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
         <div className="flex justify-between items-center">
           {wizardSteps.slice(0, 4).map((step, index) => (
             <div key={index} className="flex flex-col items-center space-y-1">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                index < currentStep
-                  ? 'bg-green-500 text-white'
-                  : index === currentStep
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-              }`}>
-                {index < currentStep ? (
-                  <CheckCircle className="w-4 h-4" />
-                ) : (
-                  getStepIcon(index)
-                )}
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  index < currentStep
+                    ? 'bg-green-500 text-white'
+                    : index === currentStep
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                }`}
+              >
+                {index < currentStep ? <CheckCircle className="w-4 h-4" /> : getStepIcon(index)}
               </div>
-              <span className={`text-xs text-center transition-all duration-300 ${
-                index === currentStep ? 'text-blue-600 font-medium' : 'text-muted-foreground'
-              }`}>
+              <span
+                className={`text-xs text-center transition-all duration-300 ${
+                  index === currentStep ? 'text-blue-600 font-medium' : 'text-muted-foreground'
+                }`}
+              >
                 {step.label}
               </span>
             </div>
@@ -96,9 +115,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
 
       {/* Motivational Message */}
       <div className="text-center">
-        <p className="text-sm text-muted-foreground italic">
-          {getMotivationalMessage()}
-        </p>
+        <p className="text-sm text-muted-foreground italic">{getMotivationalMessage()}</p>
       </div>
 
       {/* Navigation Buttons */}

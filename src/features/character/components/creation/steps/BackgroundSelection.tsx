@@ -1,16 +1,16 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useCharacter } from '@/contexts/CharacterContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { backgrounds } from '@/data/backgroundOptions';
-import { CharacterBackground } from '@/types/character';
-import { useToast } from '@/components/ui/use-toast';
-import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { BookOpen, Check, Sparkles, Users, Scroll } from 'lucide-react';
-import { fadeInUp, cardContainer, cardItem } from '@/utils/animations';
-import logger from '@/lib/logger';
+import React from 'react';
+
+import type { CharacterBackground } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 import { Z_INDEX } from '@/constants/z-index';
+import { useCharacter } from '@/contexts/CharacterContext';
+import { backgrounds } from '@/data/backgroundOptions';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import logger from '@/lib/logger';
 
 /**
  * Component for selecting character background during character creation
@@ -29,15 +29,15 @@ const BackgroundSelection: React.FC = () => {
     logger.info('Selecting background:', background);
     dispatch({
       type: 'UPDATE_CHARACTER',
-      payload: { background }
+      payload: { background },
     });
-    
+
     toast({
-      title: "Background Selected",
+      title: 'Background Selected',
       description: `You have chosen the ${background.name} background.`,
       duration: 1000,
     });
-    
+
     // Auto-scroll to navigation to proceed to next step
     scrollToNavigation();
   };
@@ -45,12 +45,7 @@ const BackgroundSelection: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <motion.div
-        className="text-center space-y-4"
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="text-center space-y-4">
         <div className="flex items-center justify-center space-x-3">
           <div className="p-3 bg-gradient-to-br from-infinite-teal to-infinite-teal-dark rounded-full shadow-lg">
             <Scroll className="w-8 h-8 text-white" />
@@ -62,15 +57,9 @@ const BackgroundSelection: React.FC = () => {
             <p className="text-muted-foreground">Your past shapes your character's story</p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Info Card */}
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.1 }}
-      >
       <Card className="glass rounded-2xl border-2 border-infinite-teal/20">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
@@ -79,29 +68,27 @@ const BackgroundSelection: React.FC = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">
-                <strong>Your background</strong> provides skill proficiencies, tool proficiencies, languages, and a unique feature that reflects your character's history before becoming an adventurer.
+                <strong>Your background</strong> provides skill proficiencies, tool proficiencies,
+                languages, and a unique feature that reflects your character's history before
+                becoming an adventurer.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
-      </motion.div>
 
       {/* Background Grid */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        variants={cardContainer}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {backgrounds.map((background) => {
           const isSelected = state.character?.background?.id === background.id;
 
           return (
-            <motion.div key={background.id} variants={cardItem}>
             <Card
+              key={background.id}
               className={`glass rounded-2xl hover-lift cursor-pointer transition-all duration-300 border-2 ${
-                isSelected ? 'border-infinite-teal ring-4 ring-infinite-teal/20 shadow-xl' : 'border-infinite-teal/20 hover:border-infinite-teal/50'
+                isSelected
+                  ? 'border-infinite-teal ring-4 ring-infinite-teal/20 shadow-xl'
+                  : 'border-infinite-teal/20 hover:border-infinite-teal/50'
               }`}
               onClick={() => handleBackgroundSelect(background)}
               role="button"
@@ -114,7 +101,9 @@ const BackgroundSelection: React.FC = () => {
             >
               {/* Selected Indicator */}
               {isSelected && (
-                <div className={`absolute top-4 right-4 z-[${Z_INDEX.DROPDOWN}] bg-infinite-teal text-white rounded-full p-2 shadow-lg`}>
+                <div
+                  className={`absolute top-4 right-4 z-[${Z_INDEX.DROPDOWN}] bg-infinite-teal text-white rounded-full p-2 shadow-lg`}
+                >
                   <Check className="w-5 h-5" />
                 </div>
               )}
@@ -125,7 +114,9 @@ const BackgroundSelection: React.FC = () => {
                   <h3 className="text-xl font-bold">{background.name}</h3>
                 </div>
 
-                <p className="text-sm text-muted-foreground leading-relaxed">{background.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {background.description}
+                </p>
 
                 <div className="space-y-3 pt-3 border-t border-border">
                   <div>
@@ -159,7 +150,8 @@ const BackgroundSelection: React.FC = () => {
                     <div>
                       <p className="font-medium text-sm mb-1">Languages:</p>
                       <p className="text-xs text-muted-foreground">
-                        Choose {background.languages} additional language{background.languages > 1 ? 's' : ''}
+                        Choose {background.languages} additional language
+                        {background.languages > 1 ? 's' : ''}
                       </p>
                     </div>
                   )}
@@ -169,15 +161,16 @@ const BackgroundSelection: React.FC = () => {
                       <Sparkles className="w-4 h-4 text-infinite-gold" />
                       Feature: {background.feature.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">{background.feature.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {background.feature.description}
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            </motion.div>
           );
         })}
-      </motion.div>
+      </div>
     </div>
   );
 };

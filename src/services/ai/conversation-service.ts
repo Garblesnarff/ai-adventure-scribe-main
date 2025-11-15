@@ -8,8 +8,9 @@
  * @module conversation-service
  */
 
-import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage } from './shared/types';
+
+import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
 
 /**

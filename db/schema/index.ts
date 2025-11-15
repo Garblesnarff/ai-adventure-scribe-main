@@ -16,3 +16,18 @@ export * from './reference.js';
 
 // Export all world-building tables and types
 export * from './world.js';
+
+// Export all combat tables and types
+export * from './combat.js';
+
+// Export all rest system tables and types
+export * from './rest.js';
+
+// Export all inventory tables and types
+export * from './inventory.js';
+
+// Export all progression tables and types
+export * from './progression.js';
+
+// Export all class features tables and types
+export * from './class-features.js';

@@ -23,7 +23,7 @@ export class ConsistencyValidator {
           isConsistent = false;
           logger.warn(
             '[ConsistencyValidator] Consistency check failed:',
-            `Expected ${lastSequence + 1}, got ${sequence.sequence_number}`
+            `Expected ${lastSequence + 1}, got ${sequence.sequence_number}`,
           );
           break;
         }

@@ -1,7 +1,7 @@
-import { Spell } from '@/types/character';
+import type { Spell } from '@/types/character';
 
 export const clericCantrips: Spell[] = [
-{
+  {
     id: 'guidance',
     name: 'Guidance',
     level: 0,
@@ -12,8 +12,9 @@ export const clericCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Concentration, up to 1 minute',
-    description: 'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice.',
-    concentration: true
+    description:
+      'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice.',
+    concentration: true,
   },
   {
     id: 'light-cleric',
@@ -27,7 +28,8 @@ export const clericCantrips: Spell[] = [
     material: true,
     materialDescription: 'a firefly or phosphorescent moss',
     duration: '1 hour',
-    description: 'You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet.'
+    description:
+      'You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet.',
   },
   {
     id: 'mending-cleric',
@@ -42,7 +44,8 @@ export const clericCantrips: Spell[] = [
     material: true,
     materialDescription: 'two lodestones',
     duration: 'Instantaneous',
-    description: 'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.'
+    description:
+      'This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin.',
   },
   {
     id: 'resistance',
@@ -57,8 +60,9 @@ export const clericCantrips: Spell[] = [
     material: true,
     materialDescription: 'a miniature cloak',
     duration: 'Concentration, up to 1 minute',
-    description: 'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice.',
-    concentration: true
+    description:
+      'You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice.',
+    concentration: true,
   },
   {
     id: 'sacred-flame',
@@ -71,8 +75,9 @@ export const clericCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'Flame-like radiance descends on a creature that you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 radiant damage.',
-    damage: '1d8'
+    description:
+      'Flame-like radiance descends on a creature that you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 radiant damage.',
+    damage: '1d8',
   },
   {
     id: 'spare-the-dying',
@@ -85,7 +90,8 @@ export const clericCantrips: Spell[] = [
     verbal: true,
     somatic: true,
     duration: 'Instantaneous',
-    description: 'You touch a living creature that has 0 hit points. The creature becomes stable. This spell has no effect on undead or constructs.'
+    description:
+      'You touch a living creature that has 0 hit points. The creature becomes stable. This spell has no effect on undead or constructs.',
   },
   {
     id: 'thaumaturgy',
@@ -97,6 +103,7 @@ export const clericCantrips: Spell[] = [
     components: 'V',
     verbal: true,
     duration: 'Up to 1 minute',
-    description: 'You manifest a minor wonder, a sign of supernatural power, within range. You create one of several magical effects within range.'
+    description:
+      'You manifest a minor wonder, a sign of supernatural power, within range. You create one of several magical effects within range.',
   },
 ];

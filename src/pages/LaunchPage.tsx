@@ -13,17 +13,18 @@
 
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { HeroSection } from '@/components/launch/HeroSection';
-import { VisionSection } from '@/components/launch/VisionSection';
-import { FounderStorySection } from '@/components/launch/FounderStorySection';
-import { FeaturesSection } from '@/components/launch/FeaturesSection';
-import { HowItWorksSection } from '@/components/launch/HowItWorksSection';
-import { TeamSection } from '@/components/launch/TeamSection';
-import { RoadmapSection } from '@/components/launch/RoadmapSection';
+
 import { EarlyAccessSection } from '@/components/launch/EarlyAccessSection';
 import { FAQSection } from '@/components/launch/FAQSection';
+import { FeaturesSection } from '@/components/launch/FeaturesSection';
 import { FinalCTASection } from '@/components/launch/FinalCTASection';
 import { FooterSection } from '@/components/launch/FooterSection';
+import { FounderStorySection } from '@/components/launch/FounderStorySection';
+import { HeroSection } from '@/components/launch/HeroSection';
+import { HowItWorksSection } from '@/components/launch/HowItWorksSection';
+import { RoadmapSection } from '@/components/launch/RoadmapSection';
+import { TeamSection } from '@/components/launch/TeamSection';
+import { VisionSection } from '@/components/launch/VisionSection';
 
 /**
  * Main Launch Page Component
@@ -40,7 +41,7 @@ const LaunchPage: React.FC = () => {
     if (window.gtag) {
       window.gtag('event', 'page_view', {
         page_title: 'Infinite Realms - Beta Launch',
-        page_location: window.location.href
+        page_location: window.location.href,
       });
     }
   }, []);
@@ -54,12 +55,21 @@ const LaunchPage: React.FC = () => {
           name="description"
           content="Be among the first to experience Infinite Realms, where every choice shapes destiny and legends are forged in the fires of imagination. Join our closed beta and shape the future of tabletop RPGs."
         />
-        <meta name="keywords" content="Infinite Realms, AI Dungeon Master, D&D AI, tabletop RPG, beta launch, fantasy gaming" />
+        <meta
+          name="keywords"
+          content="Infinite Realms, AI Dungeon Master, D&D AI, tabletop RPG, beta launch, fantasy gaming"
+        />
         <meta name="robots" content="index, follow" />
 
         {/* OpenGraph Tags */}
-        <meta property="og:title" content="Infinite Realms - Beta Launch | Step into Boundless Worlds of Adventure" />
-        <meta property="og:description" content="Be among the first to experience Infinite Realms, where every choice shapes destiny and legends are forged in the fires of imagination." />
+        <meta
+          property="og:title"
+          content="Infinite Realms - Beta Launch | Step into Boundless Worlds of Adventure"
+        />
+        <meta
+          property="og:description"
+          content="Be among the first to experience Infinite Realms, where every choice shapes destiny and legends are forged in the fires of imagination."
+        />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://infinite-realms.com/launch" />
         <meta property="og:image" content="https://infinite-realms.com/og-launch-image.jpg" />
@@ -67,7 +77,10 @@ const LaunchPage: React.FC = () => {
         {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Infinite Realms - Beta Launch" />
-        <meta name="twitter:description" content="Join the closed beta for Infinite Realms. Step into boundless worlds where every choice shapes destiny." />
+        <meta
+          name="twitter:description"
+          content="Join the closed beta for Infinite Realms. Step into boundless worlds where every choice shapes destiny."
+        />
         <meta name="twitter:image" content="https://infinite-realms.com/twitter-launch-card.jpg" />
 
         {/* Canonical URL */}

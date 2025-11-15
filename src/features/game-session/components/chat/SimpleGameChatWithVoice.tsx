@@ -1,25 +1,29 @@
 /**
  * SimpleGameChatWithVoice Component
- * 
+ *
  * Wrapper that provides voice capabilities to SimpleGameChat
  * by providing a MessageContext and integrating VoiceHandler
  */
 
+import { Send, Loader2, LogOut } from 'lucide-react';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
+import { DMChatBubble } from './chat/DMChatBubble';
+
+import type { ChatMessage, GameContext } from '@/services/ai-service';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Loader2, LogOut } from 'lucide-react';
-import { AIService, ChatMessage, GameContext } from '@/services/ai-service';
-import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { SimpleMessageProvider } from '@/contexts/SimpleMessageContext';
-import { DMChatBubble } from './chat/DMChatBubble';
 import { NarrationSegment } from '@/hooks/use-ai-response';
-import { toast } from 'sonner';
+import { useSimpleGameSession } from '@/hooks/use-simple-game-session';
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
+import { AIService } from '@/services/ai-service';
 import { handleAsyncError } from '@/utils/error-handler';
 
 interface SimpleGameChatWithVoiceProps {
@@ -35,7 +39,11 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
   campaignDetails,
   characterDetails,
 }) => {
-  const { session, loading: sessionLoading, endSession } = useSimpleGameSession(campaignId, characterId);
+  const {
+    session,
+    loading: sessionLoading,
+    endSession,
+  } = useSimpleGameSession(campaignId, characterId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -72,14 +80,14 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       const response = await AIService.chatWithDM({
         message: '',
         context,
-        conversationHistory: []
+        conversationHistory: [],
       });
 
       if (response) {
         // Validate response structure and ensure proper display text
         let displayText = '';
         let segments = undefined;
-        
+
         if (typeof response === 'string') {
           displayText = response;
         } else if (response && typeof response === 'object') {
@@ -89,13 +97,13 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
           // AI service returns 'narration_segments' (snake_case)
           segments = aiResponse.narration_segments || aiResponse.narrationSegments;
         }
-        
+
         // Fallback if no valid text found
         if (!displayText.trim()) {
           displayText = 'The DM begins your adventure...';
           logger.warn('⚠️ Empty response text, using fallback');
         }
-        
+
         const dmMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: 'assistant',
@@ -103,16 +111,19 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
           timestamp: new Date(),
           narrationSegments: segments as any[],
         };
-        
+
         setMessages([dmMessage]);
-        
+
         // Save opening message to database
         await saveMessageToDatabase(dmMessage, session.id);
       }
     } catch (error) {
       handleAsyncError(error, {
         userMessage: 'Failed to start adventure. Please try again.',
-        context: { location: 'SimpleGameChatWithVoice.generateOpeningMessage', sessionId: session.id }
+        context: {
+          location: 'SimpleGameChatWithVoice.generateOpeningMessage',
+          sessionId: session.id,
+        },
       });
     }
   }, [session?.id, campaignId, characterId, campaignDetails, characterDetails]);
@@ -126,7 +137,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
     setIsLoadingHistory(true);
     try {
       logger.info('📚 Loading conversation history for session:', session.id);
-      
+
       // Load message history from dialogue_history table
       const { data: historyData, error: historyError } = await supabase
         .from('dialogue_history')
@@ -141,17 +152,22 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
 
       if (historyData && historyData.length > 0) {
         logger.info(`📚 Loaded ${historyData.length} messages from history`);
-        
+
         // Convert database messages to ChatMessage format
         const loadedMessages: ChatMessage[] = historyData.map((msg: any) => ({
           id: msg.id,
-          role: msg.speaker_type === 'dm' ? 'assistant' : msg.speaker_type === 'player' ? 'user' : 'assistant',
+          role:
+            msg.speaker_type === 'dm'
+              ? 'assistant'
+              : msg.speaker_type === 'player'
+                ? 'user'
+                : 'assistant',
           content: msg.message,
           timestamp: new Date(msg.timestamp),
           // Note: Historical messages may not have narrationSegments
           narrationSegments: undefined,
         }));
-        
+
         setMessages(loadedMessages);
         setHasLoadedHistory(true);
       } else {
@@ -165,7 +181,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         userMessage: 'Failed to load history',
         logLevel: 'warn',
         showToast: false,
-        context: { location: 'SimpleGameChatWithVoice.loadHistory', sessionId: session.id }
+        context: { location: 'SimpleGameChatWithVoice.loadHistory', sessionId: session.id },
       });
       // Fallback to generating opening message if history loading fails
       await generateOpeningMessage();
@@ -187,14 +203,13 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
    */
   const saveMessageToDatabase = useCallback(async (message: ChatMessage, sessionId: string) => {
     try {
-      const { error } = await supabase
-        .from('dialogue_history')
-        .insert({
-          session_id: sessionId,
-          speaker_type: message.role === 'assistant' ? 'dm' : message.role === 'user' ? 'player' : 'system',
-          message: message.content,
-          timestamp: message.timestamp.toISOString(),
-        });
+      const { error } = await supabase.from('dialogue_history').insert({
+        session_id: sessionId,
+        speaker_type:
+          message.role === 'assistant' ? 'dm' : message.role === 'user' ? 'player' : 'system',
+        message: message.content,
+        timestamp: message.timestamp.toISOString(),
+      });
 
       if (error) {
         throw error;
@@ -204,7 +219,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
         userMessage: 'Failed to save message',
         logLevel: 'warn',
         showToast: false,
-        context: { location: 'SimpleGameChatWithVoice.saveMessageToDatabase', sessionId }
+        context: { location: 'SimpleGameChatWithVoice.saveMessageToDatabase', sessionId },
       });
       // Don't throw here to avoid breaking the UI flow
     }
@@ -213,111 +228,117 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
   /**
    * Send message to DM
    */
-  const sendMessage = useCallback(async (message: ChatMessage): Promise<void> => {
-    if (!session?.id || isSending) return;
+  const sendMessage = useCallback(
+    async (message: ChatMessage): Promise<void> => {
+      if (!session?.id || isSending) return;
 
-    const messageContent = typeof message === 'string' ? message : message.content;
-    if (!messageContent.trim()) return;
+      const messageContent = typeof message === 'string' ? message : message.content;
+      if (!messageContent.trim()) return;
 
-    setIsSending(true);
+      setIsSending(true);
 
-    // Add user message immediately
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: messageContent,
-      timestamp: new Date(),
-    };
-
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    
-    // Save user message to database
-    await saveMessageToDatabase(userMessage, session.id);
-
-    try {
-      const context: GameContext = {
-        sessionId: session.id,
-        campaignId,
-        characterId,
-        campaignDetails,
-        characterDetails,
+      // Add user message immediately
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: messageContent,
+        timestamp: new Date(),
       };
 
-      logger.info('🎭 Sending message to DM:', messageContent);
-      const response = await AIService.chatWithDM({
-        message: messageContent,
-        context,
-        conversationHistory: updatedMessages
-      });
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
 
-      if (response) {
-        // Validate response structure and ensure proper display text
-        let displayText = '';
-        let segments = undefined;
-        
-        if (typeof response === 'string') {
-          displayText = response;
-        } else if (response && typeof response === 'object') {
-          // Cast to any to handle the dynamic AI service response structure
-          const aiResponse = response as any;
-          displayText = aiResponse.text || aiResponse.content || '';
-          // AI service returns 'narration_segments' (snake_case)
-          segments = aiResponse.narration_segments || aiResponse.narrationSegments;
-        }
-        
-        // Fallback if no valid text found
-        if (!displayText.trim()) {
-          displayText = 'The DM responds to your action...';
-          logger.warn('⚠️ Empty response text, using fallback');
-        }
-        
-        const dmMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: displayText,
-          timestamp: new Date(),
-          narrationSegments: segments as any[],
+      // Save user message to database
+      await saveMessageToDatabase(userMessage, session.id);
+
+      try {
+        const context: GameContext = {
+          sessionId: session.id,
+          campaignId,
+          characterId,
+          campaignDetails,
+          characterDetails,
         };
 
-        setMessages(prev => [...prev, dmMessage]);
-        
-        // Save DM message to database
-        await saveMessageToDatabase(dmMessage, session.id);
-      }
-    } catch (error) {
-      handleAsyncError(error, {
-        userMessage: 'Failed to send message. Please try again.',
-        context: {
-          location: 'SimpleGameChatWithVoice.sendMessage',
-          sessionId: session.id,
-          messageContent: message.content.substring(0, 50)
-        }
-      });
+        logger.info('🎭 Sending message to DM:', messageContent);
+        const response = await AIService.chatWithDM({
+          message: messageContent,
+          context,
+          conversationHistory: updatedMessages,
+        });
 
-      // Remove user message on failure
-      setMessages(messages);
-    } finally {
-      setIsSending(false);
-    }
-  }, [session?.id, messages, isSending, campaignId, characterId, campaignDetails, characterDetails]);
+        if (response) {
+          // Validate response structure and ensure proper display text
+          let displayText = '';
+          let segments = undefined;
+
+          if (typeof response === 'string') {
+            displayText = response;
+          } else if (response && typeof response === 'object') {
+            // Cast to any to handle the dynamic AI service response structure
+            const aiResponse = response as any;
+            displayText = aiResponse.text || aiResponse.content || '';
+            // AI service returns 'narration_segments' (snake_case)
+            segments = aiResponse.narration_segments || aiResponse.narrationSegments;
+          }
+
+          // Fallback if no valid text found
+          if (!displayText.trim()) {
+            displayText = 'The DM responds to your action...';
+            logger.warn('⚠️ Empty response text, using fallback');
+          }
+
+          const dmMessage: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: displayText,
+            timestamp: new Date(),
+            narrationSegments: segments as any[],
+          };
+
+          setMessages((prev) => [...prev, dmMessage]);
+
+          // Save DM message to database
+          await saveMessageToDatabase(dmMessage, session.id);
+        }
+      } catch (error) {
+        handleAsyncError(error, {
+          userMessage: 'Failed to send message. Please try again.',
+          context: {
+            location: 'SimpleGameChatWithVoice.sendMessage',
+            sessionId: session.id,
+            messageContent: message.content.substring(0, 50),
+          },
+        });
+
+        // Remove user message on failure
+        setMessages(messages);
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [session?.id, messages, isSending, campaignId, characterId, campaignDetails, characterDetails],
+  );
 
   /**
    * Handle form submission
    */
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (currentMessage.trim() && !isSending) {
-      const message: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: currentMessage.trim(),
-        timestamp: new Date(),
-      };
-      sendMessage(message);
-      setCurrentMessage('');
-    }
-  }, [currentMessage, isSending, sendMessage]);
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (currentMessage.trim() && !isSending) {
+        const message: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: 'user',
+          content: currentMessage.trim(),
+          timestamp: new Date(),
+        };
+        sendMessage(message);
+        setCurrentMessage('');
+      }
+    },
+    [currentMessage, isSending, sendMessage],
+  );
 
   /**
    * End game session
@@ -328,8 +349,10 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       navigate('/');
       return;
     }
-    
-    if (window.confirm('Are you sure you want to end this adventure? Your progress will be saved.')) {
+
+    if (
+      window.confirm('Are you sure you want to end this adventure? Your progress will be saved.')
+    ) {
       try {
         await endSession(session.id);
         toast.success('Adventure ended. Your progress has been saved.');
@@ -337,7 +360,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       } catch (error) {
         handleAsyncError(error, {
           userMessage: 'Failed to end session properly, but navigating home.',
-          context: { location: 'SimpleGameChatWithVoice.handleEndSession', sessionId: session.id }
+          context: { location: 'SimpleGameChatWithVoice.handleEndSession', sessionId: session.id },
         });
         navigate('/');
       }
@@ -380,7 +403,9 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
       <div className="space-y-4">
         <Card className="h-[600px] flex flex-col relative">
           <CardHeader className="flex-shrink-0 p-4 pb-0">
-            <h3 className="text-lg font-semibold text-foreground opacity-80">Adventure Chronicle</h3>
+            <h3 className="text-lg font-semibold text-foreground opacity-80">
+              Adventure Chronicle
+            </h3>
           </CardHeader>
 
           <Button
@@ -396,7 +421,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
             {/* Messages Area */}
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-4 pb-4">
-                {messages.map((message, index) => (
+                {messages.map((message, index) =>
                   message.role === 'assistant' ? (
                     <DMChatBubble
                       key={index}
@@ -404,21 +429,16 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                       narrationSegments={message.narrationSegments as any}
                     />
                   ) : (
-                    <div
-                      key={index}
-                      className="flex justify-end"
-                    >
+                    <div key={index} className="flex justify-end">
                       <div className="max-w-[80%] p-4 rounded-lg shadow-sm bg-infinite-purple text-white ml-4">
-                        <div className="whitespace-pre-wrap leading-relaxed">
-                          {message.content}
-                        </div>
+                        <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
                         <div className="text-xs mt-2 text-infinite-purple-100">
                           {message.timestamp.toLocaleTimeString()}
                         </div>
                       </div>
                     </div>
-                  )
-                ))}
+                  ),
+                )}
 
                 {/* Loading indicator */}
                 {isSending && (
@@ -426,7 +446,9 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                     <div className="max-w-[80%] p-4 rounded-lg shadow-sm bg-muted text-foreground mr-4">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-muted-foreground">The DM ponders your actions...</span>
+                        <span className="text-muted-foreground">
+                          The DM ponders your actions...
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -460,7 +482,7 @@ export const SimpleGameChatWithVoice: React.FC<SimpleGameChatWithVoiceProps> = (
                   )}
                 </Button>
               </form>
-              
+
               <div className="text-xs text-muted-foreground mt-2 flex items-center justify-between">
                 <span>Press Enter to send • Shift+Enter for new line</span>
                 <span>{currentMessage.length}/500</span>

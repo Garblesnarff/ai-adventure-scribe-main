@@ -3,31 +3,32 @@
  * Displays when the DM requests a dice roll from the player
  */
 
-import React, { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Dice6, Zap, ArrowUp, ArrowDown, Target, AlertCircle, Info } from 'lucide-react';
-import logger from '@/lib/logger';
+import React, { useState, useMemo } from 'react';
+
 import { DiceRollEmbed } from '@/components/DiceRollEmbed';
-import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { useCharacter } from '@/contexts/CharacterContext';
+import logger from '@/lib/logger';
+import { cn } from '@/lib/utils';
+import { DiceEngine, type DiceRollResult } from '@/services/dice/DiceEngine';
 import {
   calculateRollWithBreakdown,
   parseAbilityName,
   SKILL_ABILITIES,
   SKILL_ALIASES,
-  type AbilityName
+  type AbilityName,
 } from '@/utils/characterModifiers';
 
 export interface RollRequest {
   type: 'attack' | 'save' | 'check' | 'damage' | 'initiative' | 'skill_check';
-  formula: string;  // "1d20+5" or "1d20+modifier" or "1d20+str"
-  purpose: string;  // "Arcana check to understand the mechanism"
-  dc?: number;      // Target DC if applicable
-  ac?: number;      // Target AC for attacks
+  formula: string; // "1d20+5" or "1d20+modifier" or "1d20+str"
+  purpose: string; // "Arcana check to understand the mechanism"
+  dc?: number; // Target DC if applicable
+  ac?: number; // Target AC for attacks
   advantage?: boolean;
   disadvantage?: boolean;
   modifier?: number; // Base modifier if not in formula
@@ -50,7 +51,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
   onRoll,
   onManualResult,
   onCancel,
-  className
+  className,
 }) => {
   const [manualMode, setManualMode] = useState(false);
   const [manualResult, setManualResult] = useState('');
@@ -70,7 +71,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         formula: request.formula,
         breakdown: [request.formula],
         totalModifier: 0,
-        isProficient: false
+        isProficient: false,
       };
     }
 
@@ -80,7 +81,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         formula: request.formula,
         breakdown: [request.formula],
         totalModifier: 0,
-        isProficient: false
+        isProficient: false,
       };
     }
 
@@ -89,7 +90,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         formula: request.formula,
         breakdown: [request.formula],
         totalModifier: 0,
-        isProficient: false
+        isProficient: false,
       };
     }
 
@@ -126,8 +127,18 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
 
         // Check for ability names in purpose
         if (!ability) {
-          for (const abilityName of ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']) {
-            if (purposeLower.includes(abilityName) || purposeLower.includes(abilityName.slice(0, 3))) {
+          for (const abilityName of [
+            'strength',
+            'dexterity',
+            'constitution',
+            'intelligence',
+            'wisdom',
+            'charisma',
+          ]) {
+            if (
+              purposeLower.includes(abilityName) ||
+              purposeLower.includes(abilityName.slice(0, 3))
+            ) {
               ability = abilityName as AbilityName;
               break;
             }
@@ -157,41 +168,59 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         formula: request.formula,
         breakdown: [request.formula],
         totalModifier: 0,
-        isProficient: false
+        isProficient: false,
       };
     }
   }, [character, request]);
 
   const getTypeColor = () => {
     switch (request.type) {
-      case 'attack': return 'border-red-200 bg-red-50';
-      case 'save': return 'border-orange-200 bg-orange-50';
-      case 'check': return 'border-blue-200 bg-blue-50';
-      case 'skill_check': return 'border-blue-200 bg-blue-50';
-      case 'damage': return 'border-purple-200 bg-purple-50';
-      case 'initiative': return 'border-green-200 bg-green-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 'attack':
+        return 'border-red-200 bg-red-50';
+      case 'save':
+        return 'border-orange-200 bg-orange-50';
+      case 'check':
+        return 'border-blue-200 bg-blue-50';
+      case 'skill_check':
+        return 'border-blue-200 bg-blue-50';
+      case 'damage':
+        return 'border-purple-200 bg-purple-50';
+      case 'initiative':
+        return 'border-green-200 bg-green-50';
+      default:
+        return 'border-gray-200 bg-gray-50';
     }
   };
 
   const getTypeIcon = () => {
     switch (request.type) {
-      case 'attack': return <Target className="w-4 h-4" />;
-      case 'save': return <AlertCircle className="w-4 h-4" />;
-      case 'initiative': return <Zap className="w-4 h-4" />;
-      default: return <Dice6 className="w-4 h-4" />;
+      case 'attack':
+        return <Target className="w-4 h-4" />;
+      case 'save':
+        return <AlertCircle className="w-4 h-4" />;
+      case 'initiative':
+        return <Zap className="w-4 h-4" />;
+      default:
+        return <Dice6 className="w-4 h-4" />;
     }
   };
 
   const getTypeLabel = () => {
     switch (request.type) {
-      case 'attack': return 'Attack Roll';
-      case 'save': return 'Saving Throw';
-      case 'check': return 'Ability Check';
-      case 'skill_check': return 'Skill Check';
-      case 'damage': return 'Damage Roll';
-      case 'initiative': return 'Initiative';
-      default: return 'Dice Roll';
+      case 'attack':
+        return 'Attack Roll';
+      case 'save':
+        return 'Saving Throw';
+      case 'check':
+        return 'Ability Check';
+      case 'skill_check':
+        return 'Skill Check';
+      case 'damage':
+        return 'Damage Roll';
+      case 'initiative':
+        return 'Initiative';
+      default:
+        return 'Dice Roll';
     }
   };
 
@@ -287,29 +316,33 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
               )}
             </div>
           )}
-          
+
           {/* Advantage/Disadvantage Controls */}
           {request.type !== 'damage' && (
             <div className="flex gap-2 mt-3">
               <Button
-                variant={hasAdvantage ? "default" : "outline"}
+                variant={hasAdvantage ? 'default' : 'outline'}
                 size="sm"
                 onClick={toggleAdvantage}
                 className={cn(
-                  "text-xs",
-                  hasAdvantage ? "bg-green-600 text-white" : "text-green-600 border-green-600 hover:bg-green-50"
+                  'text-xs',
+                  hasAdvantage
+                    ? 'bg-green-600 text-white'
+                    : 'text-green-600 border-green-600 hover:bg-green-50',
                 )}
               >
                 <ArrowUp className="w-3 h-3 mr-1" />
                 Advantage
               </Button>
               <Button
-                variant={hasDisadvantage ? "default" : "outline"}
+                variant={hasDisadvantage ? 'default' : 'outline'}
                 size="sm"
                 onClick={toggleDisadvantage}
                 className={cn(
-                  "text-xs",
-                  hasDisadvantage ? "bg-red-600 text-white" : "text-red-600 border-red-600 hover:bg-red-50"
+                  'text-xs',
+                  hasDisadvantage
+                    ? 'bg-red-600 text-white'
+                    : 'text-red-600 border-red-600 hover:bg-red-50',
                 )}
               >
                 <ArrowDown className="w-3 h-3 mr-1" />
@@ -376,9 +409,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
         ) : (
           <div className="space-y-3">
             <div>
-              <label className="text-sm text-slate-600 mb-1 block">
-                Enter your roll result:
-              </label>
+              <label className="text-sm text-slate-600 mb-1 block">Enter your roll result:</label>
               <Input
                 type="number"
                 value={manualResult}
@@ -389,7 +420,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
                 max="100"
               />
             </div>
-            
+
             <div className="flex gap-2">
               <Button
                 onClick={handleManualSubmit}
@@ -414,10 +445,9 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
 
         {/* Hint Text */}
         <p className="text-xs text-slate-500 mt-3 text-center">
-          {manualMode 
-            ? "Enter the total result of your dice roll"
-            : "Click 'Roll Dice' to automatically roll, or 'Enter Manually' if you prefer to roll physical dice"
-          }
+          {manualMode
+            ? 'Enter the total result of your dice roll'
+            : "Click 'Roll Dice' to automatically roll, or 'Enter Manually' if you prefer to roll physical dice"}
         </p>
       </div>
     </Card>

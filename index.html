@@ -8,20 +8,7 @@
     <meta name="author" content="InfiniteRealms" />
     <meta property="og:image" content="/og-image.png" />
 
-    <!-- Google Analytics GA4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      // Initialize GA4 with your measurement ID
-      // TODO: Replace G-XXXXXXXXXX with actual GA4 Measurement ID
-      gtag('config', 'G-XXXXXXXXXX', {
-        page_path: window.location.pathname,
-        send_page_view: true
-      });
-    </script>
+    <!-- Google Analytics is now initialized in React (see src/utils/analytics.ts) -->
   </head>
 
   <body>

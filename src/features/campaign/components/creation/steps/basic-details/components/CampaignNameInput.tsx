@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -20,7 +21,7 @@ const CampaignNameInput: React.FC<CampaignNameInputProps> = ({
   value,
   onChange,
   onBlur,
-  error
+  error,
 }) => {
   return (
     <div className="space-y-2">
@@ -36,9 +37,7 @@ const CampaignNameInput: React.FC<CampaignNameInputProps> = ({
         placeholder="Enter campaign name"
         className={error ? 'border-destructive' : ''}
       />
-      {error && (
-        <p className="text-sm text-destructive mt-1">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive mt-1">{error}</p>}
     </div>
   );
 };

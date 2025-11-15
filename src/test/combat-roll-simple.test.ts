@@ -3,9 +3,14 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { rollStateManager } from '../services/combat/rollStateManager';
-import { parseRollRequests, detectsSuccessfulAttack, detectsCriticalHit } from '../utils/rollRequestParser';
 import { DiceEngine } from '../services/dice/DiceEngine';
+import {
+  parseRollRequests,
+  detectsSuccessfulAttack,
+  detectsCriticalHit,
+} from '../utils/rollRequestParser';
 
 describe('Combat Roll Flow', () => {
   beforeEach(() => {
@@ -13,7 +18,7 @@ describe('Combat Roll Flow', () => {
   });
 
   it('should detect attack roll requests', () => {
-    const message = "Make an attack roll with your longsword (1d20+5) against AC 13";
+    const message = 'Make an attack roll with your longsword (1d20+5) against AC 13';
     const requests = parseRollRequests(message);
 
     expect(requests.length).toBeGreaterThan(0);
@@ -21,7 +26,7 @@ describe('Combat Roll Flow', () => {
   });
 
   it('should detect damage roll requests', () => {
-    const message = "Roll damage for your longsword (1d8+3)";
+    const message = 'Roll damage for your longsword (1d8+3)';
     const requests = parseRollRequests(message);
 
     expect(requests.length).toBeGreaterThan(0);
@@ -29,15 +34,15 @@ describe('Combat Roll Flow', () => {
   });
 
   it('should detect successful attacks', () => {
-    expect(detectsSuccessfulAttack("That hits!")).toBe(true);
-    expect(detectsSuccessfulAttack("18 hits AC 13")).toBe(true);
-    expect(detectsSuccessfulAttack("Critical hit!")).toBe(true);
+    expect(detectsSuccessfulAttack('That hits!')).toBe(true);
+    expect(detectsSuccessfulAttack('18 hits AC 13')).toBe(true);
+    expect(detectsSuccessfulAttack('Critical hit!')).toBe(true);
   });
 
   it('should detect critical hits', () => {
-    expect(detectsCriticalHit("Critical hit!")).toBe(true);
-    expect(detectsCriticalHit("Natural 20!")).toBe(true);
-    expect(detectsCriticalHit("nat 20")).toBe(true);
+    expect(detectsCriticalHit('Critical hit!')).toBe(true);
+    expect(detectsCriticalHit('Natural 20!')).toBe(true);
+    expect(detectsCriticalHit('nat 20')).toBe(true);
   });
 
   it('should manage attack roll state', () => {
@@ -46,7 +51,7 @@ describe('Combat Roll Flow', () => {
       weaponName: 'longsword',
       targetAC: 13,
       context: 'Attack with longsword',
-      actorId: 'player'
+      actorId: 'player',
     });
 
     expect(rollStateManager.getPendingRolls()).toHaveLength(1);
@@ -63,7 +68,7 @@ describe('Combat Roll Flow', () => {
       weaponName: 'shortsword',
       targetAC: 15,
       context: 'Attack with shortsword',
-      actorId: 'player'
+      actorId: 'player',
     });
 
     const result = rollStateManager.recordAttackRoll(rollId, 20, 15);

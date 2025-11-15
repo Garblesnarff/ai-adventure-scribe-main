@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+
+import type { Memory } from '@/components/game/memory/types';
+
+import { isValidMemoryType } from '@/components/game/memory/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Memory, isValidMemoryType } from '@/components/game/memory/types';
 import logger from '@/lib/logger';
 
 export const useMemoryRetrieval = (sessionId: string | null) => {
@@ -8,9 +11,9 @@ export const useMemoryRetrieval = (sessionId: string | null) => {
     queryKey: ['memories', sessionId],
     queryFn: async () => {
       if (!sessionId) return [];
-      
+
       logger.info('[Memory Retrieval] Fetching memories for session:', sessionId);
-      
+
       const { data, error } = await supabase
         .from('memories')
         .select('*')
@@ -23,14 +26,16 @@ export const useMemoryRetrieval = (sessionId: string | null) => {
       }
 
       logger.info(`[Memory Retrieval] Retrieved ${data.length} memories`);
-      
+
       // Transform and validate the data to match Memory type
       return data.map((memory): Memory => {
         // Validate and ensure memory type is correct
         const validatedType = isValidMemoryType(memory.type) ? memory.type : 'general';
-        
+
         if (validatedType !== memory.type) {
-          logger.warn(`[Memory Retrieval] Invalid memory type detected: ${memory.type}, defaulting to 'general'`);
+          logger.warn(
+            `[Memory Retrieval] Invalid memory type detected: ${memory.type}, defaulting to 'general'`,
+          );
         }
 
         return {
@@ -38,9 +43,8 @@ export const useMemoryRetrieval = (sessionId: string | null) => {
           type: validatedType,
           content: memory.content,
           importance: memory.importance || 0,
-          embedding: typeof memory.embedding === 'string' 
-            ? JSON.parse(memory.embedding)
-            : memory.embedding,
+          embedding:
+            typeof memory.embedding === 'string' ? JSON.parse(memory.embedding) : memory.embedding,
           metadata: memory.metadata,
           created_at: memory.created_at || new Date().toISOString(),
           session_id: memory.session_id,

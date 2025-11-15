@@ -1,7 +1,7 @@
+import type { AIExecutionStrategy } from './AIExecutionStrategy';
+
 import { supabase } from '@/integrations/supabase/client';
 import logger from '@/lib/logger';
-
-import type { AIExecutionStrategy } from './AIExecutionStrategy';
 
 export class EdgeFunctionStrategy implements AIExecutionStrategy {
   readonly name = 'supabase-edge-function';
@@ -20,8 +20,8 @@ export class EdgeFunctionStrategy implements AIExecutionStrategy {
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
 
     if (error) {

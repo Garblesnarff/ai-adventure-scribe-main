@@ -1,10 +1,17 @@
 import React from 'react';
-import { ChatMessage } from '@/types/game';
-import { CombatMessage, InitiativeMessage, CombatSummaryMessage } from '@/components/combat/CombatMessage';
-import { DiceRollMessage } from '@/components/game/DiceRollMessage';
+
 import { DMMessage } from './DMMessage';
-import { PlayerMessage } from './PlayerMessage';
 import { DynamicOptionsSection } from './DynamicOptionsSection';
+import { PlayerMessage } from './PlayerMessage';
+
+import type { ChatMessage } from '@/types/game';
+
+import {
+  CombatMessage,
+  InitiativeMessage,
+  CombatSummaryMessage,
+} from '@/components/combat/CombatMessage';
+import { DiceRollMessage } from '@/components/game/DiceRollMessage';
 import { parseMessageOptions } from '@/utils/parseMessageOptions';
 
 interface MessageRendererProps {
@@ -78,7 +85,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   };
 
   // Image presence (persisted or ephemeral) for DM messages
-  const hasMessageImages = isDM && Array.isArray((message as any).images) && (message as any).images.length > 0;
+  const hasMessageImages =
+    isDM && Array.isArray((message as any).images) && (message as any).images.length > 0;
   const firstMessageImgUrl = hasMessageImages ? (message as any).images[0]?.url : undefined;
   const ephemeralImgUrl = isDM && !hasMessageImages ? imageByMessage[messageId]?.url : undefined;
   const hasAnyImage = Boolean(firstMessageImgUrl || ephemeralImgUrl);
@@ -101,7 +109,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               participants={message.context.combatData.participants || []}
               timestamp={
                 message.timestamp
-                  ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  ? new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                   : undefined
               }
             />
@@ -110,7 +121,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               summary={message.context.combatData.summary}
               timestamp={
                 message.timestamp
-                  ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  ? new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                   : undefined
               }
             />
@@ -119,7 +133,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               data={message.context.combatData as any}
               timestamp={
                 message.timestamp
-                  ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  ? new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                   : undefined
               }
             />
@@ -131,7 +148,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           messageId={messageId}
           isFirstInGroup={isFirstInGroup}
           isLastInGroup={isLastInGroup}
-          displayContent={parsedMessage ? parsedMessage.content || messageWithOverlay : messageWithOverlay}
+          displayContent={
+            parsedMessage ? parsedMessage.content || messageWithOverlay : messageWithOverlay
+          }
           isExpanded={isExpanded}
           onToggleExpanded={toggleExpanded}
           imageUrl={firstMessageImgUrl || ephemeralImgUrl}

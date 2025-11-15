@@ -1,6 +1,8 @@
-import { CombatAction, RuleViolation, AuditReport } from './types';
-import { validateAction } from './rules';
 import { generateAuditReport } from './reporter';
+import { validateAction } from './rules';
+
+import type { CombatAction, RuleViolation, AuditReport } from './types';
+
 import logger from '@/lib/logger';
 
 /**

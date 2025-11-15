@@ -59,3 +59,11 @@ server.log
 
 # Vercel local project settings
 .vercel
+
+# Code analysis outputs
+ts-prune-output.txt
+knip-output.txt
+
+# Migration backups
+*.sql.backup
+logs/

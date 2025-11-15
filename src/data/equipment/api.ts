@@ -1,8 +1,9 @@
-import type { Equipment } from './types';
-import { weapons } from './weapons';
 import { armor } from './armor';
-import { shields } from './shields';
 import { adventuringGear } from './gear';
+import { shields } from './shields';
+import { weapons } from './weapons';
+
+import type { Equipment } from './types';
 
 const all: Equipment[] = [...weapons, ...armor, ...shields, ...adventuringGear];
 
@@ -13,10 +14,11 @@ export function calculateArmorClass(
   otherBonuses: number = 0,
   characterClass?: string,
   conModifier: number = 0,
-  wisModifier: number = 0
+  wisModifier: number = 0,
 ): number {
   const hasUnarmoredDefense =
-    characterClass && (characterClass.toLowerCase() === 'barbarian' || characterClass.toLowerCase() === 'monk');
+    characterClass &&
+    (characterClass.toLowerCase() === 'barbarian' || characterClass.toLowerCase() === 'monk');
   const isWearingArmor = equippedArmor !== null;
   if (hasUnarmoredDefense && !isWearingArmor) {
     let ac = 10 + dexModifier;
@@ -45,23 +47,29 @@ export function calculateArmorClass(
 }
 
 export function getEquipmentByCategory(category: Equipment['category']): Equipment[] {
-  return all.filter(item => item.category === category);
+  return all.filter((item) => item.category === category);
 }
 
 export function getWeaponsByType(weaponType: 'simple' | 'martial'): Equipment[] {
-  return weapons.filter(weapon => weapon.weaponType === weaponType);
+  return weapons.filter((weapon) => weapon.weaponType === weaponType);
 }
 
 export function getArmorByType(armorType: 'light' | 'medium' | 'heavy'): Equipment[] {
-  return armor.filter(a => a.armorType === armorType);
+  return armor.filter((a) => a.armorType === armorType);
 }
 
 export function convertCurrency(
   amount: number,
   fromCurrency: Equipment['cost']['currency'],
-  toCurrency: Equipment['cost']['currency']
+  toCurrency: Equipment['cost']['currency'],
 ): number {
-  const rates: Record<Equipment['cost']['currency'], number> = { cp: 1, sp: 10, ep: 50, gp: 100, pp: 1000 };
+  const rates: Record<Equipment['cost']['currency'], number> = {
+    cp: 1,
+    sp: 10,
+    ep: 50,
+    gp: 100,
+    pp: 1000,
+  };
   const valueInCopper = amount * rates[fromCurrency];
   return valueInCopper / rates[toCurrency];
 }
@@ -85,17 +93,18 @@ export function getStartingEquipment(className: string): Equipment[] {
     paladin: ['chain-mail', 'shield', 'longsword'],
     ranger: ['leather-armor', 'dagger', 'dagger', 'longbow'],
     sorcerer: ['dagger', 'dagger', 'light-crossbow'],
-    warlock: ['leather-armor', 'dagger', 'light-crossbow']
+    warlock: ['leather-armor', 'dagger', 'light-crossbow'],
   };
   const equipmentIds = packages[classId] || [];
-  const lookup = new Map(all.map(eq => [eq.id, eq] as const));
-  return equipmentIds.map(id =>
-    lookup.get(id) || {
-      id,
-      name: id.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      category: 'gear' as const,
-      cost: { amount: 0, currency: 'gp' as const },
-      description: `Starting ${className} equipment`
-    }
+  const lookup = new Map(all.map((eq) => [eq.id, eq] as const));
+  return equipmentIds.map(
+    (id) =>
+      lookup.get(id) || {
+        id,
+        name: id.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        category: 'gear' as const,
+        cost: { amount: 0, currency: 'gp' as const },
+        description: `Starting ${className} equipment`,
+      },
   );
 }

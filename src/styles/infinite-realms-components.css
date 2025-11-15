@@ -22,10 +22,7 @@
  */
 .fantasy-card {
   position: relative;
-  background: linear-gradient(135deg,
-    hsl(var(--card)) 0%,
-    hsl(var(--muted) / 0.3) 100%
-  );
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted) / 0.3) 100%);
   border: 1px solid hsl(var(--border) / 0.5);
   border-radius: 12px;
   box-shadow:
@@ -40,14 +37,13 @@
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      hsl(var(--foreground) / 0.01) 2px,
-      hsl(var(--foreground) / 0.01) 4px
-    );
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    hsl(var(--foreground) / 0.01) 2px,
+    hsl(var(--foreground) / 0.01) 4px
+  );
   pointer-events: none;
   opacity: 0.5;
 }
@@ -213,11 +209,7 @@
   min-width: 64px;
   min-height: 64px;
   padding: 0.75rem;
-  background: linear-gradient(
-    135deg,
-    hsl(var(--muted)) 0%,
-    hsl(var(--muted) / 0.6) 100%
-  );
+  background: linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--muted) / 0.6) 100%);
   border: 2px solid hsl(var(--border));
   border-radius: 50%;
   box-shadow:
@@ -332,11 +324,7 @@
   font-family: 'Cinzel', serif;
   font-weight: 600;
   letter-spacing: 0.03em;
-  background: linear-gradient(
-    135deg,
-    hsl(var(--foreground)) 0%,
-    hsl(var(--infinite-purple)) 100%
-  );
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--infinite-purple)) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -528,7 +516,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -544,7 +533,8 @@
 }
 
 @keyframes glowPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow:
       0 0 10px hsl(var(--infinite-purple) / 0.3),
       0 0 20px hsl(var(--infinite-purple) / 0.2);
@@ -567,12 +557,7 @@
 .decorative-divider {
   position: relative;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    hsl(var(--border)) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, hsl(var(--border)) 50%, transparent 100%);
   margin: 2rem 0;
 }
 

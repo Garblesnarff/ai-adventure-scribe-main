@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import type { Character, CharacterClass } from '@/types/character';
+
 import {
   getSpellPreparationType,
   calculateSpellPreparationLimits,
   validateSpellPreparation,
   getAvailableRitualSpells,
   canCastRituals,
-  getSpellPreparationInfo
+  getSpellPreparationInfo,
 } from '@/utils/spell-preparation';
-import type { Character, CharacterClass } from '@/types/character';
 
 vi.mock('@/services/spellApi', () => {
   return {
@@ -22,7 +24,7 @@ vi.mock('@/services/spellApi', () => {
             spells: [
               { id: 'cure-wounds', name: 'Cure Wounds', level: 1 } as any,
               { id: 'bless', name: 'Bless', level: 1 } as any,
-            ]
+            ],
           };
         }
         if (className === 'Bard') {
@@ -31,7 +33,7 @@ vi.mock('@/services/spellApi', () => {
             spells: [
               { id: 'healing-word', name: 'Healing Word', level: 1 } as any,
               { id: 'faerie-fire', name: 'Faerie Fire', level: 1 } as any,
-            ]
+            ],
           };
         }
         // Wizard
@@ -43,7 +45,7 @@ vi.mock('@/services/spellApi', () => {
           spells: [
             { id: 'magic-missile', name: 'Magic Missile', level: 1 } as any,
             { id: 'shield', name: 'Shield', level: 1 } as any,
-          ]
+          ],
         };
       }),
       getAllSpells: vi.fn(async (_filters?: any) => {
@@ -54,7 +56,7 @@ vi.mock('@/services/spellApi', () => {
           { id: 'shield', name: 'Shield', ritual: false, level: 1 } as any,
         ];
       }),
-    }
+    },
   };
 });
 
@@ -73,10 +75,16 @@ describe('Spell Preparation Utilities', () => {
       savingThrowProficiencies: ['intelligence', 'wisdom'],
       skillChoices: [],
       numSkillChoices: 2,
-      spellcasting: { ability: 'intelligence', cantripsKnown: 3, spellsKnown: 6, ritualCasting: true, spellbook: true },
+      spellcasting: {
+        ability: 'intelligence',
+        cantripsKnown: 3,
+        spellsKnown: 6,
+        ritualCasting: true,
+        spellbook: true,
+      },
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     cleric = {
@@ -91,7 +99,7 @@ describe('Spell Preparation Utilities', () => {
       spellcasting: { ability: 'wisdom', cantripsKnown: 3, ritualCasting: true } as any,
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
 
     bard = {
@@ -106,7 +114,7 @@ describe('Spell Preparation Utilities', () => {
       spellcasting: { ability: 'charisma', cantripsKnown: 2, spellsKnown: 4 } as any,
       classFeatures: [],
       armorProficiencies: [],
-      weaponProficiencies: []
+      weaponProficiencies: [],
     };
   });
 
@@ -121,8 +129,8 @@ describe('Spell Preparation Utilities', () => {
       constitution: { score: 10, modifier: 0, savingThrow: false },
       intelligence: { score: 14, modifier: 2, savingThrow: false },
       wisdom: { score: 14, modifier: 2, savingThrow: false },
-      charisma: { score: 12, modifier: 1, savingThrow: false }
-    }
+      charisma: { score: 12, modifier: 1, savingThrow: false },
+    },
   });
 
   it('getSpellPreparationType maps classes correctly', () => {
@@ -146,41 +154,52 @@ describe('Spell Preparation Utilities', () => {
     const limitsWiz = calculateSpellPreparationLimits(wizChar);
     expect(limitsWiz.spellsKnown).toBe(6);
     expect(limitsWiz.spellsPrepared).toBe(4); // int mod 2 + level 2 => 4
-    expect((limitsWiz.spellsPrepared ?? 0)).toBeGreaterThanOrEqual(1);
+    expect(limitsWiz.spellsPrepared ?? 0).toBeGreaterThanOrEqual(1);
   });
 
   it('validateSpellPreparation enforces availability and counts', async () => {
     const clericChar = makeCharacter(cleric, 3);
 
     // Too many prepared spells
-    const tooMany = await validateSpellPreparation(clericChar, ['cure-wounds', 'bless', 'extra-1', 'extra-2', 'extra-3', 'extra-4']);
+    const tooMany = await validateSpellPreparation(clericChar, [
+      'cure-wounds',
+      'bless',
+      'extra-1',
+      'extra-2',
+      'extra-3',
+      'extra-4',
+    ]);
     expect(tooMany.valid).toBe(false);
-    expect(tooMany.errors.some(e => e.includes('Can only prepare'))).toBe(true);
+    expect(tooMany.errors.some((e) => e.includes('Can only prepare'))).toBe(true);
 
     // Invalid prepared spell not in class list
     const invalid = await validateSpellPreparation(clericChar, ['cure-wounds', 'fireball']);
     expect(invalid.valid).toBe(false);
-    expect(invalid.errors.some(e => e.includes('is not available'))).toBe(true);
+    expect(invalid.errors.some((e) => e.includes('is not available'))).toBe(true);
 
     // Bard: known spells count enforced
     const bardChar = makeCharacter(bard, 1);
-    const known = await validateSpellPreparation(bardChar, [], ['healing-word', 'faerie-fire', 'extra-1', 'extra-2', 'extra-3']);
+    const known = await validateSpellPreparation(
+      bardChar,
+      [],
+      ['healing-word', 'faerie-fire', 'extra-1', 'extra-2', 'extra-3'],
+    );
     expect(known.valid).toBe(false);
-    expect(known.errors.some(e => e.includes('Can only know'))).toBe(true);
+    expect(known.errors.some((e) => e.includes('Can only know'))).toBe(true);
 
     // Wizard: prepared must be in spellbook
     const wizChar = makeCharacter(wizard, 1);
     const wiz = await validateSpellPreparation(wizChar, ['magic-missile'], [], []);
     // Missing in spellbook
     expect(wiz.valid).toBe(false);
-    expect(wiz.errors.some(e => e.includes('not in spellbook'))).toBe(true);
+    expect(wiz.errors.some((e) => e.includes('not in spellbook'))).toBe(true);
   });
 
   it('getAvailableRitualSpells filters to class-available rituals', async () => {
     const wizChar = makeCharacter(wizard, 1);
     const rituals = await getAvailableRitualSpells(wizChar);
     // Should only include rituals that are also in wizard class list
-    const ids = rituals.map(r => r.id);
+    const ids = rituals.map((r) => r.id);
     expect(ids).not.toContain('shield');
   });
 

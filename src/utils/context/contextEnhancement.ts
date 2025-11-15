@@ -2,9 +2,14 @@
  * Utilities for enhancing and merging different types of context
  */
 
-import { Campaign } from '@/types/campaign';
-import { Memory } from '@/components/game/memory/types';
-import { validateCampaignSetting, validateThematicElements, sortMemoriesByRelevance } from './contextValidation';
+import {
+  validateCampaignSetting,
+  validateThematicElements,
+  sortMemoriesByRelevance,
+} from './contextValidation';
+
+import type { Memory } from '@/components/game/memory/types';
+import type { Campaign } from '@/types/campaign';
 
 interface EnhancedGameContext {
   campaign: {
@@ -75,10 +80,10 @@ export const enhanceCampaignContext = (campaign: Campaign) => {
       name: campaign.name,
       description: campaign.description,
       genre: campaign.genre,
-      status: campaign.status || 'active'
+      status: campaign.status || 'active',
     },
     setting,
-    themes
+    themes,
   };
 };
 
@@ -88,21 +93,25 @@ export const enhanceCampaignContext = (campaign: Campaign) => {
  * @returns Categorized and enhanced memories
  */
 export const enhanceMemoryContext = (memories: Memory[]) => {
-  const enhancedMemories = memories.map(memory => ({
+  const enhancedMemories = memories.map((memory) => ({
     ...memory,
-    importance: Math.min(10, (memory.importance || 0) + 
-      (typeof memory.metadata === 'object' && memory.metadata !== null ? 
-        (memory.metadata as Record<string, number>).significance || 0 : 0))
+    importance: Math.min(
+      10,
+      (memory.importance || 0) +
+        (typeof memory.metadata === 'object' && memory.metadata !== null
+          ? (memory.metadata as Record<string, number>).significance || 0
+          : 0),
+    ),
   }));
 
   const sortedMemories = sortMemoriesByRelevance(enhancedMemories);
 
   return {
     recent: sortedMemories.slice(0, 5),
-    important: sortedMemories.filter(m => (m.importance || 0) >= 7),
-    locations: sortedMemories.filter(m => m.type === 'location'),
-    characters: sortedMemories.filter(m => m.type === 'character'),
-    plot: sortedMemories.filter(m => m.type === 'plot')
+    important: sortedMemories.filter((m) => (m.importance || 0) >= 7),
+    locations: sortedMemories.filter((m) => m.type === 'location'),
+    characters: sortedMemories.filter((m) => m.type === 'character'),
+    plot: sortedMemories.filter((m) => m.type === 'plot'),
   };
 };
 
@@ -118,36 +127,46 @@ export const buildEnhancedGameContext = (
   campaignContext: Campaign,
   characterContext?: unknown,
   memories: Memory[] = [],
-  quests?: unknown[]
+  quests?: unknown[],
 ): EnhancedGameContext => {
-  const c = characterContext && typeof characterContext === 'object' ? (characterContext as Record<string, unknown>) : null;
-  const character = c ? {
-    basic: {
-      name: typeof c.name === 'string' ? c.name : 'Unknown',
-      race: typeof c.race === 'string' ? c.race : 'Unknown',
-      class: typeof c.class === 'string' ? c.class : 'Unknown',
-      level: typeof c.level === 'number' ? c.level : 1
-    },
-    stats: (c.stats && typeof c.stats === 'object') ? (c.stats as Record<string, number>) : {},
-    equipment: Array.isArray(c.equipment)
-      ? (c.equipment as unknown[])
-          .filter((e): e is { name: string; type: string; equipped: boolean } => {
-            const o = e as Record<string, unknown>;
-            return typeof o?.name === 'string' && typeof o?.type === 'string' && typeof o?.equipped === 'boolean';
-          })
-      : []
-  } : undefined;
+  const c =
+    characterContext && typeof characterContext === 'object'
+      ? (characterContext as Record<string, unknown>)
+      : null;
+  const character = c
+    ? {
+        basic: {
+          name: typeof c.name === 'string' ? c.name : 'Unknown',
+          race: typeof c.race === 'string' ? c.race : 'Unknown',
+          class: typeof c.class === 'string' ? c.class : 'Unknown',
+          level: typeof c.level === 'number' ? c.level : 1,
+        },
+        stats: c.stats && typeof c.stats === 'object' ? (c.stats as Record<string, number>) : {},
+        equipment: Array.isArray(c.equipment)
+          ? (c.equipment as unknown[]).filter(
+              (e): e is { name: string; type: string; equipped: boolean } => {
+                const o = e as Record<string, unknown>;
+                return (
+                  typeof o?.name === 'string' &&
+                  typeof o?.type === 'string' &&
+                  typeof o?.equipped === 'boolean'
+                );
+              },
+            )
+          : [],
+      }
+    : undefined;
 
   const activeQuests = Array.isArray(quests)
     ? quests
-        .map(q => (q && typeof q === 'object' ? (q as Record<string, unknown>) : null))
+        .map((q) => (q && typeof q === 'object' ? (q as Record<string, unknown>) : null))
         .filter((q): q is Record<string, unknown> => !!q && typeof q.status === 'string')
-        .filter(q => q.status === 'active')
-        .map(q => ({
+        .filter((q) => q.status === 'active')
+        .map((q) => ({
           title: typeof q.title === 'string' ? q.title : 'Untitled Quest',
           description: typeof q.description === 'string' ? q.description : undefined,
           status: q.status as string,
-          progress: typeof q.progress === 'number' ? q.progress : undefined
+          progress: typeof q.progress === 'number' ? q.progress : undefined,
         }))
     : undefined;
 
@@ -155,6 +174,6 @@ export const buildEnhancedGameContext = (
     campaign: enhanceCampaignContext(campaignContext),
     character,
     memories: enhanceMemoryContext(memories),
-    activeQuests
+    activeQuests,
   };
 };

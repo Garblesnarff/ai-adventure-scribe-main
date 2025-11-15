@@ -7,9 +7,13 @@
  * created and stored in the database without constraint violations.
  */
 
-import { MemoryManager, MemoryType, Memory } from './src/services/memory-manager';
-import { supabase } from './src/integrations/supabase/client';
 import { randomUUID } from 'crypto';
+
+import { supabase } from './src/integrations/supabase/client';
+import { MemoryManager } from './src/services/memory-manager';
+
+import type { MemoryType, Memory } from './src/services/memory-manager';
+
 
 // Test session ID for consistent testing - using proper UUID format
 const TEST_SESSION_ID = randomUUID();

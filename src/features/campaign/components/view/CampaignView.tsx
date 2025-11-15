@@ -1,15 +1,15 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+
+import { CampaignCollapsible } from './sections/CampaignCollapsible';
+import { CampaignHeader } from './sections/CampaignHeader';
+import { GameSession } from './sections/GameSession';
+
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { isValidUUID } from '@/utils/validation';
-import { CampaignHeader } from './sections/CampaignHeader';
-import { CampaignCollapsible } from './sections/CampaignCollapsible';
-import { GameSession } from './sections/GameSession';
-import { fadeInUp, fadeInDown, cardItem } from '@/utils/animations';
 import logger from '@/lib/logger';
+import { isValidUUID } from '@/utils/validation';
 
 /**
  * CampaignView component displays campaign details and handles game sessions
@@ -29,9 +29,9 @@ const CampaignView: React.FC = () => {
   React.useEffect(() => {
     if (!id || !isValidUUID(id)) {
       toast({
-        title: "Invalid Campaign",
-        description: "The campaign ID is invalid. Redirecting to home page.",
-        variant: "destructive",
+        title: 'Invalid Campaign',
+        description: 'The campaign ID is invalid. Redirecting to home page.',
+        variant: 'destructive',
       });
       navigate('/');
       return;
@@ -53,24 +53,24 @@ const CampaignView: React.FC = () => {
           .maybeSingle();
 
         if (error) throw error;
-        
+
         if (!data) {
           toast({
-            title: "Campaign Not Found",
-            description: "The requested campaign could not be found. Redirecting to home page.",
-            variant: "destructive",
+            title: 'Campaign Not Found',
+            description: 'The requested campaign could not be found. Redirecting to home page.',
+            variant: 'destructive',
           });
           navigate('/');
           return;
         }
-        
+
         setCampaign(data);
       } catch (error) {
         logger.error('Error fetching campaign:', error);
         toast({
-          title: "Error",
-          description: "Failed to load campaign data. Please try again.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to load campaign data. Please try again.',
+          variant: 'destructive',
         });
         navigate('/');
       } finally {
@@ -89,24 +89,21 @@ const CampaignView: React.FC = () => {
       setIsDeleting(true);
       if (!id) throw new Error('No campaign ID provided');
 
-      const { error } = await supabase
-        .from('campaigns')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('campaigns').delete().eq('id', id);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Campaign deleted successfully",
+        title: 'Success',
+        description: 'Campaign deleted successfully',
       });
       navigate('/');
     } catch (error) {
       logger.error('Error deleting campaign:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete campaign",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete campaign',
+        variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
@@ -116,17 +113,11 @@ const CampaignView: React.FC = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-        >
-          <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-            <div className="flex justify-center items-center min-h-[200px]">
-              Loading campaign data...
-            </div>
-          </Card>
-        </motion.div>
+        <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+          <div className="flex justify-center items-center min-h-[200px]">
+            Loading campaign data...
+          </div>
+        </Card>
       </div>
     );
   }
@@ -137,46 +128,17 @@ const CampaignView: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.div
-        variants={fadeInUp}
-        initial="hidden"
-        animate="visible"
-      >
-        <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-          <motion.div
-            variants={fadeInDown}
-            initial="hidden"
-            animate="visible"
-          >
-            <CampaignHeader
-              campaign={campaign}
-              isDeleting={isDeleting}
-              onDelete={handleDelete}
-            />
-          </motion.div>
+      <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <CampaignHeader campaign={campaign} isDeleting={isDeleting} onDelete={handleDelete} />
 
-          <motion.div
-            variants={cardItem}
-            initial="hidden"
-            animate="visible"
-          >
-            <CampaignCollapsible
-              campaign={campaign}
-              isOpen={isDetailsOpen}
-              onOpenChange={setIsDetailsOpen}
-            />
-          </motion.div>
+        <CampaignCollapsible
+          campaign={campaign}
+          isOpen={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+        />
 
-          <motion.div
-            variants={fadeInUp}
-            initial="hidden"
-            animate="visible"
-            transition={{ delay: 0.2 }}
-          >
-            <GameSession campaignId={campaign.id} />
-          </motion.div>
-        </Card>
-      </motion.div>
+        <GameSession campaignId={campaign.id} />
+      </Card>
     </div>
   );
 };

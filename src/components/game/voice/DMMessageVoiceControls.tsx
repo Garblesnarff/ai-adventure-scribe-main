@@ -1,10 +1,12 @@
-import React, { useState, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
+import React, { useState, useCallback } from 'react';
+
+import type { NarrationSegment } from '@/hooks/use-ai-response';
+
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { useVoiceContext } from '@/contexts/VoiceContext';
-import { NarrationSegment } from '@/hooks/use-ai-response';
+import { cn } from '@/lib/utils';
 import { extractNarrativeContent } from '@/utils/parseMessageOptions';
 
 interface DMMessageVoiceControlsProps {
@@ -18,7 +20,7 @@ export function DMMessageVoiceControls({
   messageId,
   messageText,
   narrationSegments,
-  className
+  className,
 }: DMMessageVoiceControlsProps) {
   const {
     currentPlayingId,
@@ -28,7 +30,7 @@ export function DMMessageVoiceControls({
     volume,
     isMuted,
     setVolume,
-    toggleMute
+    toggleMute,
   } = useVoiceContext();
 
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -41,28 +43,37 @@ export function DMMessageVoiceControls({
 
   const isCurrentlyPlaying = currentPlayingId === messageId && isPlaying;
 
-  const handlePlayPause = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handlePlayPause = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (isCurrentlyPlaying) {
-      pauseMessage();
-    } else {
-      // Extract narrative content to exclude options from TTS
-      const narrativeText = extractNarrativeContent(messageText);
-      playMessage(messageId, narrativeText, narrationSegments);
-    }
-  }, [isCurrentlyPlaying, pauseMessage, playMessage, messageId, messageText, narrationSegments]);
+      if (isCurrentlyPlaying) {
+        pauseMessage();
+      } else {
+        // Extract narrative content to exclude options from TTS
+        const narrativeText = extractNarrativeContent(messageText);
+        playMessage(messageId, narrativeText, narrationSegments);
+      }
+    },
+    [isCurrentlyPlaying, pauseMessage, playMessage, messageId, messageText, narrationSegments],
+  );
 
-  const handleVolumeChange = useCallback((values: number[]) => {
-    setVolume(values[0]);
-  }, [setVolume]);
+  const handleVolumeChange = useCallback(
+    (values: number[]) => {
+      setVolume(values[0]);
+    },
+    [setVolume],
+  );
 
-  const handleVolumeToggle = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleMute();
-  }, [toggleMute]);
+  const handleVolumeToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMute();
+    },
+    [toggleMute],
+  );
 
   // Check if speech synthesis is available
   const [isVoiceAvailable] = useState(() => {
@@ -79,12 +90,12 @@ export function DMMessageVoiceControls({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 transition-all duration-200",
+        'flex items-center gap-2 transition-all duration-200',
         // Desktop: Show on hover, Mobile: Always show when playing or recently interacted
-        "opacity-0 group-hover:opacity-100",
-        isCurrentlyPlaying && "opacity-100",
-        isTouchDevice && "opacity-100", // Always visible on touch devices
-        className
+        'opacity-0 group-hover:opacity-100',
+        isCurrentlyPlaying && 'opacity-100',
+        isTouchDevice && 'opacity-100', // Always visible on touch devices
+        className,
       )}
       onClick={(e) => e.stopPropagation()}
     >
@@ -93,25 +104,25 @@ export function DMMessageVoiceControls({
         variant="ghost"
         size="sm"
         className={cn(
-          "h-6 w-6 p-0 rounded-full transition-all duration-150",
-          "hover:bg-accent/50 active:scale-95",
-          "text-muted-foreground hover:text-primary",
-          isCurrentlyPlaying && "text-primary bg-accent/30",
+          'h-6 w-6 p-0 rounded-full transition-all duration-150',
+          'hover:bg-accent/50 active:scale-95',
+          'text-muted-foreground hover:text-primary',
+          isCurrentlyPlaying && 'text-primary bg-accent/30',
           // Larger touch target on mobile
-          isTouchDevice && "h-8 w-8"
+          isTouchDevice && 'h-8 w-8',
         )}
         onClick={handlePlayPause}
         aria-label={
           isCurrentlyPlaying
-            ? "Pause reading this message"
-            : "Play this message with text-to-speech"
+            ? 'Pause reading this message'
+            : 'Play this message with text-to-speech'
         }
         aria-pressed={isCurrentlyPlaying}
       >
         {isCurrentlyPlaying ? (
-          <Pause className={cn("h-3 w-3", isTouchDevice && "h-4 w-4")} aria-hidden="true" />
+          <Pause className={cn('h-3 w-3', isTouchDevice && 'h-4 w-4')} aria-hidden="true" />
         ) : (
-          <Play className={cn("h-3 w-3", isTouchDevice && "h-4 w-4")} aria-hidden="true" />
+          <Play className={cn('h-3 w-3', isTouchDevice && 'h-4 w-4')} aria-hidden="true" />
         )}
       </Button>
 
@@ -123,10 +134,12 @@ export function DMMessageVoiceControls({
           aria-label="Currently playing message"
         >
           <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" aria-hidden="true" />
-          <span className={cn(
-            "text-xs text-primary font-medium",
-            isTouchDevice ? "inline" : "hidden md:inline"
-          )}>
+          <span
+            className={cn(
+              'text-xs text-primary font-medium',
+              isTouchDevice ? 'inline' : 'hidden md:inline',
+            )}
+          >
             Playing
           </span>
           <span className="sr-only">Playing message</span>
@@ -145,7 +158,7 @@ export function DMMessageVoiceControls({
             size="sm"
             className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-primary"
             onClick={handleVolumeToggle}
-            aria-label={isMuted ? "Unmute" : "Mute"}
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? (
               <VolumeX className="h-3 w-3" aria-hidden="true" />

@@ -1,9 +1,16 @@
-import * as React from 'react';
 import { X } from 'lucide-react';
+import * as React from 'react';
+
 import { Badge } from '@/components/ui/badge';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export interface MultiSelectOption {
   value: string;
@@ -105,10 +112,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           <CommandEmpty>No items found.</CommandEmpty>
           <CommandGroup className="max-h-64 overflow-auto">
             {options.map((option) => (
-              <CommandItem
-                key={option.value}
-                onSelect={() => handleSelect(option.value)}
-              >
+              <CommandItem key={option.value} onSelect={() => handleSelect(option.value)}>
                 <div
                   className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${
                     value.includes(option.value)

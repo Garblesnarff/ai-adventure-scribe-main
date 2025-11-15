@@ -1,8 +1,9 @@
-import type { BlogPost } from '../../services/blog-service.js';
-import type { SiteConfig } from '../../config/site.js';
-import type { ResolvedAssets } from '../../lib/manifest.js';
 import { BlogDocument, type BaseMeta } from './document.js';
 import { createBlogSchema, createSoftwareApplicationSchema } from './seo.js';
+
+import type { SiteConfig } from '../../config/site.js';
+import type { ResolvedAssets } from '../../lib/manifest.js';
+import type { BlogPost } from '../../services/blog-service.js';
 
 interface BlogIndexPageProps {
   site: SiteConfig;

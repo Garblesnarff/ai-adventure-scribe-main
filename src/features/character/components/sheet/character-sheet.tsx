@@ -1,8 +1,10 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+
+import CharacterSheetTabs from './character-sheet-tabs';
+
 import { Card } from '@/components/ui/card';
 import { useCharacterData } from '@/hooks/use-character-data';
-import CharacterSheetTabs from './character-sheet-tabs';
 
 /**
  * CharacterSheet component displays all character information
@@ -34,10 +36,7 @@ const CharacterSheet: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="p-6 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <CharacterSheetTabs 
-          character={character} 
-          onCharacterUpdate={refetch}
-        />
+        <CharacterSheetTabs character={character} onCharacterUpdate={refetch} />
       </Card>
     </div>
   );

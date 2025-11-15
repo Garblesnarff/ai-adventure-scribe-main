@@ -1,9 +1,11 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Character } from '@/types/character';
-import DiceRoller from '@/components/ui/dice-roller';
 import { Zap, Target } from 'lucide-react';
+import React from 'react';
+
+import type { Character } from '@/types/character';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DiceRoller from '@/components/ui/dice-roller';
 
 interface AbilitiesTabProps {
   character: Character;
@@ -12,24 +14,24 @@ interface AbilitiesTabProps {
 
 // D&D 5e Skills with their associated abilities
 const SKILLS = {
-  'Acrobatics': 'dexterity',
+  Acrobatics: 'dexterity',
   'Animal Handling': 'wisdom',
-  'Arcana': 'intelligence',
-  'Athletics': 'strength',
-  'Deception': 'charisma',
-  'History': 'intelligence',
-  'Insight': 'wisdom',
-  'Intimidation': 'charisma',
-  'Investigation': 'intelligence',
-  'Medicine': 'wisdom',
-  'Nature': 'intelligence',
-  'Perception': 'wisdom',
-  'Performance': 'charisma',
-  'Persuasion': 'charisma',
-  'Religion': 'intelligence',
+  Arcana: 'intelligence',
+  Athletics: 'strength',
+  Deception: 'charisma',
+  History: 'intelligence',
+  Insight: 'wisdom',
+  Intimidation: 'charisma',
+  Investigation: 'intelligence',
+  Medicine: 'wisdom',
+  Nature: 'intelligence',
+  Perception: 'wisdom',
+  Performance: 'charisma',
+  Persuasion: 'charisma',
+  Religion: 'intelligence',
   'Sleight of Hand': 'dexterity',
-  'Stealth': 'dexterity',
-  'Survival': 'wisdom',
+  Stealth: 'dexterity',
+  Survival: 'wisdom',
 } as const;
 
 type SkillName = keyof typeof SKILLS;
@@ -63,10 +65,12 @@ const AbilitiesTab: React.FC<AbilitiesTabProps> = ({ character, onUpdate }) => {
       },
     };
 
-    return classProfs[character.class?.name as keyof typeof classProfs] || {
-      skills: [],
-      saves: [],
-    };
+    return (
+      classProfs[character.class?.name as keyof typeof classProfs] || {
+        skills: [],
+        saves: [],
+      }
+    );
   };
 
   const { skills: proficientSkills, saves: proficientSaves } = getProficiencies();
@@ -75,14 +79,14 @@ const AbilitiesTab: React.FC<AbilitiesTabProps> = ({ character, onUpdate }) => {
     const ability = SKILLS[skill] as AbilityName;
     const abilityMod = character.abilityScores[ability].modifier;
     const isProficient = proficientSkills.includes(skill);
-    
+
     return abilityMod + (isProficient ? proficiencyBonus : 0);
   };
 
   const getSaveModifier = (ability: AbilityName): number => {
     const abilityMod = character.abilityScores[ability].modifier;
     const isProficient = proficientSaves.includes(ability);
-    
+
     return abilityMod + (isProficient ? proficiencyBonus : 0);
   };
 
@@ -108,9 +112,7 @@ const AbilitiesTab: React.FC<AbilitiesTabProps> = ({ character, onUpdate }) => {
                   <div className="text-2xl font-bold">{data.score}</div>
                   <div className="text-xs text-muted-foreground capitalize">{ability}</div>
                 </div>
-                <div className="text-lg text-muted-foreground">
-                  {formatModifier(data.modifier)}
-                </div>
+                <div className="text-lg text-muted-foreground">{formatModifier(data.modifier)}</div>
               </div>
               <DiceRoller
                 dice="1d20"
@@ -134,13 +136,11 @@ const AbilitiesTab: React.FC<AbilitiesTabProps> = ({ character, onUpdate }) => {
           {Object.entries(character.abilityScores).map(([ability, data]) => {
             const isProficient = proficientSaves.includes(ability as AbilityName);
             const modifier = getSaveModifier(ability as AbilityName);
-            
+
             return (
               <div key={ability} className="flex items-center justify-between p-2 border rounded">
                 <div className="flex items-center gap-2">
-                  {isProficient && (
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                  )}
+                  {isProficient && <div className="w-2 h-2 bg-primary rounded-full" />}
                   <span className="capitalize font-medium">{ability}</span>
                   <Badge variant="outline" className="text-xs">
                     {formatModifier(modifier)}
@@ -167,7 +167,7 @@ const AbilitiesTab: React.FC<AbilitiesTabProps> = ({ character, onUpdate }) => {
             {Object.entries(SKILLS).map(([skill, ability]) => {
               const isProficient = proficientSkills.includes(skill as SkillName);
               const modifier = getSkillModifier(skill as SkillName);
-              
+
               return (
                 <div key={skill} className="flex items-center justify-between p-2 border rounded">
                   <div className="flex items-center gap-2 flex-1">
@@ -185,11 +185,7 @@ const AbilitiesTab: React.FC<AbilitiesTabProps> = ({ character, onUpdate }) => {
                     </Badge>
                   </div>
                   <div className="ml-2">
-                    <DiceRoller
-                      dice="1d20"
-                      modifier={modifier}
-                      label={skill}
-                    />
+                    <DiceRoller dice="1d20" modifier={modifier} label={skill} />
                   </div>
                 </div>
               );

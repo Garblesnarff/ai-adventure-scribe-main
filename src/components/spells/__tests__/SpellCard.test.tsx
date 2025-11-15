@@ -1,8 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+
 import SpellCard from '../SpellCard';
-import { Spell } from '@/types/character';
+
+import type { Spell } from '@/types/character';
 
 /**
  * SpellCard Component Tests
@@ -24,8 +26,8 @@ vi.mock('@/utils/spellComponents', () => ({
     material: spell.material || false,
     materialDescription: spell.materialDescription,
     materialCost: spell.materialCost,
-    materialConsumed: spell.materialConsumed || false
-  })
+    materialConsumed: spell.materialConsumed || false,
+  }),
 }));
 
 describe('SpellCard Component', () => {
@@ -42,7 +44,7 @@ describe('SpellCard Component', () => {
     material: false,
     duration: 'Instantaneous',
     description: 'A dart of magical force strikes its target, dealing 1d4 + 1 force damage.',
-    damage: '1d4 + 1'
+    damage: '1d4 + 1',
   };
 
   const mockCantrip: Spell = {
@@ -58,7 +60,7 @@ describe('SpellCard Component', () => {
     material: false,
     duration: 'Concentration, up to 1 minute',
     description: 'A spectral, floating hand appears at a point you choose within range.',
-    concentration: true
+    concentration: true,
   };
 
   const mockRitualSpell: Spell = {
@@ -75,7 +77,7 @@ describe('SpellCard Component', () => {
     duration: 'Concentration, up to 10 minutes',
     description: 'For the duration, you sense the presence of magic within 30 feet of you.',
     concentration: true,
-    ritual: true
+    ritual: true,
   };
 
   const mockMaterialSpell: Spell = {
@@ -91,8 +93,9 @@ describe('SpellCard Component', () => {
     material: true,
     materialDescription: 'a tiny ball of bat guano and sulfur',
     duration: 'Instantaneous',
-    description: 'A bright streak flashes from your pointing finger to a point you choose within range.',
-    damage: '8d6'
+    description:
+      'A bright streak flashes from your pointing finger to a point you choose within range.',
+    damage: '8d6',
   };
 
   const mockOnToggle = vi.fn();
@@ -109,7 +112,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('Magic Missile')).toBeInTheDocument();
@@ -123,7 +126,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('Mage Hand')).toBeInTheDocument();
@@ -137,7 +140,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('Evocation')).toBeInTheDocument();
@@ -150,10 +153,14 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
-      expect(screen.getByText('A dart of magical force strikes its target, dealing 1d4 + 1 force damage.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'A dart of magical force strikes its target, dealing 1d4 + 1 force damage.',
+        ),
+      ).toBeInTheDocument();
     });
 
     it('should hide level badge when showLevel is false', () => {
@@ -164,7 +171,7 @@ describe('SpellCard Component', () => {
           isDisabled={false}
           onToggle={mockOnToggle}
           showLevel={false}
-        />
+        />,
       );
 
       expect(screen.queryByText('Level 1')).not.toBeInTheDocument();
@@ -180,7 +187,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('Concentration')).toBeInTheDocument();
@@ -193,7 +200,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('Ritual')).toBeInTheDocument();
@@ -207,7 +214,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('1d4 + 1')).toBeInTheDocument();
@@ -222,7 +229,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.getByText('1 action')).toBeInTheDocument();
@@ -237,7 +244,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       // Should have verbal and somatic icons
@@ -254,7 +261,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -268,7 +275,7 @@ describe('SpellCard Component', () => {
           isSelected={true}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -282,7 +289,7 @@ describe('SpellCard Component', () => {
           isSelected={true}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const card = container.firstChild as HTMLElement;
@@ -297,7 +304,7 @@ describe('SpellCard Component', () => {
           isDisabled={false}
           onToggle={mockOnToggle}
           colorTheme="gold"
-        />
+        />,
       );
 
       const card = container.firstChild as HTMLElement;
@@ -313,7 +320,7 @@ describe('SpellCard Component', () => {
           isDisabled={false}
           onToggle={mockOnToggle}
           colorTheme="teal"
-        />
+        />,
       );
 
       const card = container.firstChild as HTMLElement;
@@ -329,8 +336,8 @@ describe('SpellCard Component', () => {
           isDisabled={false}
           onToggle={mockOnToggle}
           // @ts-expect-error intentionally passing unexpected value to exercise default branch
-          colorTheme={"unknown" as any}
-        />
+          colorTheme={'unknown' as any}
+        />,
       );
 
       const card = container.firstChild as HTMLElement;
@@ -347,7 +354,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={true}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -361,7 +368,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={true}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const card = container.firstChild as HTMLElement;
@@ -375,10 +382,12 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={true}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
-      const card = screen.getByText('Magic Missile').closest('[role="button"]') || screen.getByText('Magic Missile').closest('div');
+      const card =
+        screen.getByText('Magic Missile').closest('[role="button"]') ||
+        screen.getByText('Magic Missile').closest('div');
       fireEvent.click(card!);
 
       expect(mockOnToggle).not.toHaveBeenCalled();
@@ -393,7 +402,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const card = screen.getByText('Magic Missile').closest('div')!;
@@ -409,7 +418,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -425,7 +434,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={true}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -443,7 +452,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       // Material component indicator should be present
@@ -459,7 +468,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -475,7 +484,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       const checkbox = screen.getByRole('checkbox', { name: 'Select Magic Missile' });
@@ -497,7 +506,7 @@ describe('SpellCard Component', () => {
           isDisabled={false}
           onToggle={mockOnToggle}
           className="custom-class"
-        />
+        />,
       );
 
       const card = container.firstChild as HTMLElement;
@@ -514,19 +523,14 @@ describe('SpellCard Component', () => {
       { school: 'Evocation', expectedClass: 'text-red-800' },
       { school: 'Illusion', expectedClass: 'text-indigo-800' },
       { school: 'Necromancy', expectedClass: 'text-gray-800' },
-      { school: 'Transmutation', expectedClass: 'text-green-800' }
+      { school: 'Transmutation', expectedClass: 'text-green-800' },
     ];
 
     schoolSpells.forEach(({ school, expectedClass }) => {
       it(`should apply correct color for ${school} school`, () => {
         const spell = { ...mockSpell, school };
         render(
-          <SpellCard
-            spell={spell}
-            isSelected={false}
-            isDisabled={false}
-            onToggle={mockOnToggle}
-          />
+          <SpellCard spell={spell} isSelected={false} isDisabled={false} onToggle={mockOnToggle} />,
         );
 
         const schoolBadge = screen.getByText(school);
@@ -537,12 +541,7 @@ describe('SpellCard Component', () => {
     it('should apply default color for unknown school', () => {
       const spell = { ...mockSpell, school: 'Unknown' };
       render(
-        <SpellCard
-          spell={spell}
-          isSelected={false}
-          isDisabled={false}
-          onToggle={mockOnToggle}
-        />
+        <SpellCard spell={spell} isSelected={false} isDisabled={false} onToggle={mockOnToggle} />,
       );
 
       const schoolBadge = screen.getByText('Unknown');
@@ -559,7 +558,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.queryByText('1d4 + 1')).not.toBeInTheDocument();
@@ -573,7 +572,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.queryByText('Concentration')).not.toBeInTheDocument();
@@ -587,7 +586,7 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
       expect(screen.queryByText('Ritual')).not.toBeInTheDocument();
@@ -596,7 +595,7 @@ describe('SpellCard Component', () => {
     it('should handle very long spell names gracefully', () => {
       const longNameSpell = {
         ...mockSpell,
-        name: 'This is a very long spell name that might cause layout issues'
+        name: 'This is a very long spell name that might cause layout issues',
       };
 
       render(
@@ -605,16 +604,21 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
-      expect(screen.getByText('This is a very long spell name that might cause layout issues')).toBeInTheDocument();
+      expect(
+        screen.getByText('This is a very long spell name that might cause layout issues'),
+      ).toBeInTheDocument();
     });
 
     it('should handle very long descriptions gracefully', () => {
       const longDescSpell = {
         ...mockSpell,
-        description: 'This is a very long description that goes on and on and might cause layout issues. '.repeat(10)
+        description:
+          'This is a very long description that goes on and on and might cause layout issues. '.repeat(
+            10,
+          ),
       };
 
       render(
@@ -623,10 +627,12 @@ describe('SpellCard Component', () => {
           isSelected={false}
           isDisabled={false}
           onToggle={mockOnToggle}
-        />
+        />,
       );
 
-      expect(screen.getByText((text) => text.startsWith('This is a very long description'))).toBeInTheDocument();
+      expect(
+        screen.getByText((text) => text.startsWith('This is a very long description')),
+      ).toBeInTheDocument();
     });
   });
 });
