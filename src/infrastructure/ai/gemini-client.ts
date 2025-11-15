@@ -1,5 +1,5 @@
-import { llmApiClient, type GenerateTextParams } from './llm-api-client';
-import { logger } from '../lib/logger';
+import { llmApiClient, type GenerateTextParams } from '@/services/llm-api-client';
+import logger from '@/lib/logger';
 
 type GeminiHistoryEntry = { role: 'user' | 'assistant' | 'system'; content: string };
 
