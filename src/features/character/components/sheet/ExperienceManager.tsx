@@ -9,20 +9,12 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { Character } from '@/types/character';
-import { 
+import {
   getLevelFromExperience,
   getExperienceForLevel,
-  experienceTable
+  experienceTable,
 } from '@/data/levelProgression';
-import { 
-  TrendingUp, 
-  Plus, 
-  Minus, 
-  Star,
-  Trophy,
-  Calendar,
-  Target
-} from 'lucide-react';
+import { TrendingUp, Plus, Minus, Star, Trophy, Calendar, Target } from 'lucide-react';
 
 interface ExperienceManagerProps {
   character: Character;
@@ -42,7 +34,7 @@ interface ExperienceEntry {
  */
 const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpdate }) => {
   const { toast } = useToast();
-  
+
   const [experienceAmount, setExperienceAmount] = useState<number>(0);
   const [experienceSource, setExperienceSource] = useState<string>('');
   const [showHistory, setShowHistory] = useState(false);
@@ -50,14 +42,16 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
   const currentExperience = character?.experience || 0;
   const currentLevel = character?.level || 1;
   const calculatedLevel = getLevelFromExperience(currentExperience);
-  
+
   const nextLevel = Math.min(20, currentLevel + 1);
   const nextLevelXP = getExperienceForLevel(nextLevel);
   const previousLevelXP = getExperienceForLevel(currentLevel);
-  
-  const progressToNextLevel = currentLevel >= 20 ? 100 : 
-    ((currentExperience - previousLevelXP) / (nextLevelXP - previousLevelXP)) * 100;
-  
+
+  const progressToNextLevel =
+    currentLevel >= 20
+      ? 100
+      : ((currentExperience - previousLevelXP) / (nextLevelXP - previousLevelXP)) * 100;
+
   const experienceNeeded = Math.max(0, nextLevelXP - currentExperience);
 
   // Mock experience history - in full implementation, this would be stored
@@ -67,22 +61,22 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
       amount: 300,
       source: 'Defeated goblin patrol',
       date: '2024-01-15',
-      type: 'gain'
+      type: 'gain',
     },
     {
-      id: '2', 
+      id: '2',
       amount: 150,
       source: 'Solved riddle puzzle',
       date: '2024-01-16',
-      type: 'gain'
+      type: 'gain',
     },
     {
       id: '3',
       amount: 450,
       source: 'Completed quest: Save the Village',
       date: '2024-01-18',
-      type: 'gain'
-    }
+      type: 'gain',
+    },
   ];
 
   /**
@@ -100,10 +94,10 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
 
     const newExperience = currentExperience + experienceAmount;
     const newLevel = getLevelFromExperience(newExperience);
-    
+
     onUpdate({
       ...character,
-      experience: newExperience
+      experience: newExperience,
     });
 
     if (newLevel > currentLevel) {
@@ -137,10 +131,10 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
     }
 
     const newExperience = Math.max(0, currentExperience - experienceAmount);
-    
+
     onUpdate({
       ...character,
-      experience: newExperience
+      experience: newExperience,
     });
 
     toast({
@@ -158,10 +152,10 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
    */
   const setToLevel = (targetLevel: number) => {
     const requiredXP = getExperienceForLevel(targetLevel);
-    
+
     onUpdate({
       ...character,
-      experience: requiredXP
+      experience: requiredXP,
     });
 
     toast({
@@ -209,7 +203,12 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
             <Progress value={progressToNextLevel} className="h-3" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{previousLevelXP.toLocaleString()} XP</span>
-              <span>{currentLevel >= 20 ? currentExperience.toLocaleString() : nextLevelXP.toLocaleString()} XP</span>
+              <span>
+                {currentLevel >= 20
+                  ? currentExperience.toLocaleString()
+                  : nextLevelXP.toLocaleString()}{' '}
+                XP
+              </span>
             </div>
           </div>
 
@@ -228,7 +227,8 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
                 </HexagonalBadge>
               </div>
               <div className="text-sm text-muted-foreground mt-1">
-                You have enough experience for level {calculatedLevel}. Visit the Character Advancement section to level up.
+                You have enough experience for level {calculatedLevel}. Visit the Character
+                Advancement section to level up.
               </div>
             </div>
           )}
@@ -270,7 +270,7 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
             </div>
 
             <div className="flex gap-2">
-              <Button 
+              <Button
                 onClick={awardExperience}
                 disabled={!experienceAmount || !experienceSource}
                 className="flex-1"
@@ -278,7 +278,7 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
                 <Plus className="w-4 h-4 mr-2" />
                 Award XP
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={removeExperience}
                 disabled={!experienceAmount || !experienceSource}
@@ -302,7 +302,7 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
-            {Array.from({ length: 20 }, (_, i) => i + 1).map(level => (
+            {Array.from({ length: 20 }, (_, i) => i + 1).map((level) => (
               <Button
                 key={level}
                 variant={level === currentLevel ? 'default' : 'outline'}
@@ -331,8 +331,8 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
             {Object.entries(experienceTable).map(([level, xp]) => (
-              <div 
-                key={level} 
+              <div
+                key={level}
                 className={`p-2 border rounded text-center ${
                   Number(level) === currentLevel ? 'bg-primary/10 border-primary' : ''
                 }`}
@@ -353,11 +353,7 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
               <Calendar className="w-5 h-5 text-indigo-500" />
               Experience History
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowHistory(!showHistory)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowHistory(!showHistory)}>
               {showHistory ? 'Hide' : 'Show'} History
             </Button>
           </div>
@@ -365,17 +361,23 @@ const ExperienceManager: React.FC<ExperienceManagerProps> = ({ character, onUpda
         {showHistory && (
           <CardContent>
             <div className="space-y-3">
-              {experienceHistory.length > 0 ? experienceHistory.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="font-medium">{entry.source}</div>
-                    <div className="text-sm text-muted-foreground">{entry.date}</div>
+              {experienceHistory.length > 0 ? (
+                experienceHistory.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium">{entry.source}</div>
+                      <div className="text-sm text-muted-foreground">{entry.date}</div>
+                    </div>
+                    <Badge variant={entry.type === 'gain' ? 'default' : 'destructive'}>
+                      {entry.type === 'gain' ? '+' : '-'}
+                      {entry.amount} XP
+                    </Badge>
                   </div>
-                  <Badge variant={entry.type === 'gain' ? 'default' : 'destructive'}>
-                    {entry.type === 'gain' ? '+' : '-'}{entry.amount} XP
-                  </Badge>
-                </div>
-              )) : (
+                ))
+              ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No experience history available
                 </div>

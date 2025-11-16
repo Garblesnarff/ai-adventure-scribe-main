@@ -18,7 +18,6 @@ interface CharacterOverviewProps {
  * description, personality notes, and theme information.
  */
 const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpdate }) => {
-
   return (
     <div className="space-y-6">
       {/* Character Portrait and Core Info */}
@@ -55,8 +54,7 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                     <div>
                       {character.subrace
                         ? `${character.subrace.name} (${character.race.name})`
-                        : character.race.name
-                      }
+                        : character.race.name}
                     </div>
                   )}
                   {character.class && (
@@ -64,12 +62,8 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                       Level {character.level || 1} {character.class.name}
                     </div>
                   )}
-                  {character.background && (
-                    <div>{character.background.name}</div>
-                  )}
-                  {character.alignment && (
-                    <div>{character.alignment}</div>
-                  )}
+                  {character.background && <div>{character.background.name}</div>}
+                  {character.alignment && <div>{character.alignment}</div>}
                 </div>
               </div>
             </div>
@@ -144,7 +138,10 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
       )}
 
       {/* Theme Information */}
-      {(character.theme || character.appearance || character.personality_traits || character.backstory_elements) && (
+      {(character.theme ||
+        character.appearance ||
+        character.personality_traits ||
+        character.backstory_elements) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -234,7 +231,10 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
       )}
 
       {/* Character Traits Summary */}
-      {(character.personalityTraits?.length || character.ideals?.length || character.bonds?.length || character.flaws?.length) && (
+      {(character.personalityTraits?.length ||
+        character.ideals?.length ||
+        character.bonds?.length ||
+        character.flaws?.length) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -246,7 +246,9 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {character.personalityTraits?.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Personality Traits</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                    Personality Traits
+                  </h4>
                   <div className="space-y-1">
                     {character.personalityTraits.map((trait, index) => (
                       <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs">
@@ -262,7 +264,12 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Ideals</h4>
                   <div className="space-y-1">
                     {character.ideals.map((ideal, index) => (
-                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs bg-blue-50 border-blue-200">
+                      <HexagonalBadge
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs bg-blue-50 border-blue-200"
+                      >
                         {ideal}
                       </HexagonalBadge>
                     ))}
@@ -275,7 +282,12 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Bonds</h4>
                   <div className="space-y-1">
                     {character.bonds.map((bond, index) => (
-                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs bg-green-50 border-green-200">
+                      <HexagonalBadge
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs bg-green-50 border-green-200"
+                      >
                         {bond}
                       </HexagonalBadge>
                     ))}
@@ -288,7 +300,12 @@ const CharacterOverview: React.FC<CharacterOverviewProps> = ({ character, onUpda
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Flaws</h4>
                   <div className="space-y-1">
                     {character.flaws.map((flaw, index) => (
-                      <HexagonalBadge key={index} variant="outline" size="sm" className="text-xs bg-red-50 border-red-200">
+                      <HexagonalBadge
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs bg-red-50 border-red-200"
+                      >
                         {flaw}
                       </HexagonalBadge>
                     ))}

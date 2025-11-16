@@ -16,7 +16,7 @@ import {
   Zap,
   Sparkles,
   BookOpen,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
 import logger from '@/lib/logger';
 
@@ -47,23 +47,24 @@ const SpellCard: React.FC<SpellCardProps> = ({
   onToggle,
   showLevel = true,
   className = '',
-  colorTheme = 'purple'
+  colorTheme = 'purple',
 }) => {
   const components = getComponentTrackingInfo(spell);
 
   // School color mapping for visual consistency
   const schoolColors: Record<string, string> = {
-    'Abjuration': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    'Conjuration': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    'Divination': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    'Enchantment': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-    'Evocation': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    'Illusion': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-    'Necromancy': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-    'Transmutation': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+    Abjuration: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    Conjuration: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    Divination: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    Enchantment: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+    Evocation: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    Illusion: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+    Necromancy: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+    Transmutation: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   };
 
-  const schoolColor = schoolColors[spell.school] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  const schoolColor =
+    schoolColors[spell.school] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 
   // Get theme-specific colors for selection highlighting
   const getThemeColors = () => {
@@ -73,28 +74,31 @@ const SpellCard: React.FC<SpellCardProps> = ({
           border: 'border-infinite-gold',
           bg: 'bg-infinite-gold/10',
           shadow: 'shadow-infinite-gold/20',
-          checkbox: 'data-[state=checked]:bg-infinite-gold data-[state=checked]:border-infinite-gold'
+          checkbox:
+            'data-[state=checked]:bg-infinite-gold data-[state=checked]:border-infinite-gold',
         };
       case 'purple':
         return {
           border: 'border-infinite-purple',
           bg: 'bg-infinite-purple/10',
           shadow: 'shadow-infinite-purple/20',
-          checkbox: 'data-[state=checked]:bg-infinite-purple data-[state=checked]:border-infinite-purple'
+          checkbox:
+            'data-[state=checked]:bg-infinite-purple data-[state=checked]:border-infinite-purple',
         };
       case 'teal':
         return {
           border: 'border-infinite-teal',
           bg: 'bg-infinite-teal/10',
           shadow: 'shadow-infinite-teal/20',
-          checkbox: 'data-[state=checked]:bg-infinite-teal data-[state=checked]:border-infinite-teal'
+          checkbox:
+            'data-[state=checked]:bg-infinite-teal data-[state=checked]:border-infinite-teal',
         };
       default:
         return {
           border: 'border-primary',
           bg: 'bg-primary/5',
           shadow: 'shadow-primary/20',
-          checkbox: 'data-[state=checked]:bg-primary data-[state=checked]:border-primary'
+          checkbox: 'data-[state=checked]:bg-primary data-[state=checked]:border-primary',
         };
     }
   };
@@ -106,9 +110,10 @@ const SpellCard: React.FC<SpellCardProps> = ({
       <Card
         className={`
           transition-all duration-200 cursor-pointer hover:shadow-md
-          ${isSelected
-            ? `${themeColors.border} ${themeColors.bg} shadow-sm ${themeColors.shadow}`
-            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+          ${
+            isSelected
+              ? `${themeColors.border} ${themeColors.bg} shadow-sm ${themeColors.shadow}`
+              : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
           }
           ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
           ${className}
@@ -118,7 +123,7 @@ const SpellCard: React.FC<SpellCardProps> = ({
             spellId: spell.id,
             isSelected,
             isDisabled,
-            willToggle: !isDisabled
+            willToggle: !isDisabled,
           });
           if (!isDisabled) {
             onToggle(spell.id);
@@ -150,7 +155,11 @@ const SpellCard: React.FC<SpellCardProps> = ({
                     {spell.concentration && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HexagonalBadge variant="secondary" size="sm" className="text-xs flex items-center gap-1">
+                          <HexagonalBadge
+                            variant="secondary"
+                            size="sm"
+                            className="text-xs flex items-center gap-1"
+                          >
                             <Timer className="w-3 h-3" />
                             Concentration
                           </HexagonalBadge>
@@ -164,7 +173,11 @@ const SpellCard: React.FC<SpellCardProps> = ({
                     {spell.ritual && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HexagonalBadge variant="secondary" size="sm" className="text-xs flex items-center gap-1">
+                          <HexagonalBadge
+                            variant="secondary"
+                            size="sm"
+                            className="text-xs flex items-center gap-1"
+                          >
                             <RotateCcw className="w-3 h-3" />
                             Ritual
                           </HexagonalBadge>
@@ -178,7 +191,11 @@ const SpellCard: React.FC<SpellCardProps> = ({
                     {spell.damage && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HexagonalBadge variant="destructive" size="sm" className="text-xs flex items-center gap-1">
+                          <HexagonalBadge
+                            variant="destructive"
+                            size="sm"
+                            className="text-xs flex items-center gap-1"
+                          >
                             <Zap className="w-3 h-3" />
                             {spell.damage}
                           </HexagonalBadge>
@@ -265,7 +282,9 @@ const SpellCard: React.FC<SpellCardProps> = ({
                   {components.material && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Gem className={`w-3 h-3 ${components.materialCost ? 'text-yellow-500' : 'text-purple-500'}`} />
+                        <Gem
+                          className={`w-3 h-3 ${components.materialCost ? 'text-yellow-500' : 'text-purple-500'}`}
+                        />
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="max-w-xs">
@@ -287,9 +306,7 @@ const SpellCard: React.FC<SpellCardProps> = ({
               </div>
 
               {/* Description */}
-              <p className="text-sm text-foreground leading-relaxed">
-                {spell.description}
-              </p>
+              <p className="text-sm text-foreground leading-relaxed">{spell.description}</p>
             </div>
           </div>
         </CardContent>

@@ -33,7 +33,7 @@ let __dice3dWarned = false;
 function Dice3D({
   value,
   isRolling,
-  diceType = 20
+  diceType = 20,
 }: {
   value?: number;
   isRolling: boolean;
@@ -60,36 +60,46 @@ function Dice3D({
   // Different dice shapes for different die types
   const getDiceGeometry = (sides: number) => {
     switch (sides) {
-      case 4: return <tetrahedronGeometry args={[1]} />;
-      case 6: return <boxGeometry args={[1, 1, 1]} />;
-      case 8: return <octahedronGeometry args={[1]} />;
-      case 10: return <coneGeometry args={[1, 1.5, 10]} />;
-      case 12: return <dodecahedronGeometry args={[1]} />;
-      case 20: return <icosahedronGeometry args={[1]} />;
-      default: return <icosahedronGeometry args={[1]} />;
+      case 4:
+        return <tetrahedronGeometry args={[1]} />;
+      case 6:
+        return <boxGeometry args={[1, 1, 1]} />;
+      case 8:
+        return <octahedronGeometry args={[1]} />;
+      case 10:
+        return <coneGeometry args={[1, 1.5, 10]} />;
+      case 12:
+        return <dodecahedronGeometry args={[1]} />;
+      case 20:
+        return <icosahedronGeometry args={[1]} />;
+      default:
+        return <icosahedronGeometry args={[1]} />;
     }
   };
 
   const getDiceColor = (sides: number) => {
     switch (sides) {
-      case 4: return '#ff6b6b';   // Red
-      case 6: return '#4ecdc4';   // Teal
-      case 8: return '#45b7d1';   // Blue
-      case 10: return '#96ceb4';  // Green
-      case 12: return '#ffeaa7';  // Yellow
-      case 20: return '#dda0dd';  // Purple
-      default: return '#dda0dd';
+      case 4:
+        return '#ff6b6b'; // Red
+      case 6:
+        return '#4ecdc4'; // Teal
+      case 8:
+        return '#45b7d1'; // Blue
+      case 10:
+        return '#96ceb4'; // Green
+      case 12:
+        return '#ffeaa7'; // Yellow
+      case 20:
+        return '#dda0dd'; // Purple
+      default:
+        return '#dda0dd';
     }
   };
 
   return (
     <mesh ref={meshRef} scale={isRolling ? [1.2, 1.2, 1.2] : [1, 1, 1]}>
       {getDiceGeometry(diceType)}
-      <meshStandardMaterial
-        color={getDiceColor(diceType)}
-        roughness={0.3}
-        metalness={0.1}
-      />
+      <meshStandardMaterial color={getDiceColor(diceType)} roughness={0.3} metalness={0.1} />
       {value && !isRolling && (
         <Text
           position={[0, 0, 0.6]}
@@ -106,25 +116,33 @@ function Dice3D({
 }
 
 // Audio for dice rolling
-const createDiceSound = () => new Howl({
-  src: ['/sounds/dice-roll.mp3', '/sounds/dice-roll.ogg'],
-  volume: 0.5,
-  onloaderror: () => {
-    // Fallback - use a simple beep or no sound
-    logger.debug('Dice roll sound not found, playing silently');
-  }
-});
+const createDiceSound = () =>
+  new Howl({
+    src: ['/sounds/dice-roll.mp3', '/sounds/dice-roll.ogg'],
+    volume: 0.5,
+    onloaderror: () => {
+      // Fallback - use a simple beep or no sound
+      logger.debug('Dice roll sound not found, playing silently');
+    },
+  });
 
 // Map die icons to values
 const getDiceIcon = (sides: number) => {
   switch (sides) {
-    case 1: return Dice1;
-    case 2: return Dice2;
-    case 3: return Dice3;
-    case 4: return Dice4;
-    case 5: return Dice5;
-    case 6: return Dice6;
-    default: return Dice6;
+    case 1:
+      return Dice1;
+    case 2:
+      return Dice2;
+    case 3:
+      return Dice3;
+    case 4:
+      return Dice4;
+    case 5:
+      return Dice5;
+    case 6:
+      return Dice6;
+    default:
+      return Dice6;
   }
 };
 
@@ -135,7 +153,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   autoRoll = false,
   showAnimation = true,
   advantage = false,
-  disadvantage = false
+  disadvantage = false,
 }) => {
   const [result, setResult] = useState<DiceRollResult | null>(null);
   const [isRolling, setIsRolling] = useState(false);
@@ -143,7 +161,8 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
   const [contextLost, setContextLost] = useState(false);
   const [canvasKey, setCanvasKey] = useState(0);
   const diceSound = useRef<Howl | null>(null);
-  const disable3D = String((import.meta as any)?.env?.VITE_DISABLE_DICE_3D ?? 'false').toLowerCase() === 'true';
+  const disable3D =
+    String((import.meta as any)?.env?.VITE_DISABLE_DICE_3D ?? 'false').toLowerCase() === 'true';
   const threeDEnabled = !disable3D && !__dice3dDead;
 
   // Handle WebGL context loss and restoration
@@ -160,18 +179,20 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
 
       if (!__dice3dWarned) {
         __dice3dWarned = true;
-        logger.warn('Dice 3D disabled after WebGL context loss; falling back to 2D/text for this session.');
+        logger.warn(
+          'Dice 3D disabled after WebGL context loss; falling back to 2D/text for this session.',
+        );
       }
     };
     const onRestored = () => {
       // We intentionally do not restore 3D once degraded for stability.
       setContextLost(false);
-      setCanvasKey(k => k + 1);
+      setCanvasKey((k) => k + 1);
     };
-    
+
     canvas.addEventListener('webglcontextlost', onLost as any, { passive: false });
     canvas.addEventListener('webglcontextrestored', onRestored as any);
-    
+
     return () => {
       canvas.removeEventListener('webglcontextlost', onLost as any);
       canvas.removeEventListener('webglcontextrestored', onRestored as any);
@@ -209,22 +230,25 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
     }
 
     // Add rolling animation delay
-    setTimeout(() => {
-      const rollResult = DiceEngine.roll(expression, {
-        purpose,
-        advantage,
-        disadvantage
-      });
-      setResult(rollResult);
-      setIsRolling(false);
+    setTimeout(
+      () => {
+        const rollResult = DiceEngine.roll(expression, {
+          purpose,
+          advantage,
+          disadvantage,
+        });
+        setResult(rollResult);
+        setIsRolling(false);
 
-      // Show result for 2 seconds before calling callback
-      setTimeout(() => {
-        if (onRoll) {
-          onRoll(rollResult);
-        }
-      }, 2000);
-    }, showAnimation ? 1500 : 100);
+        // Show result for 2 seconds before calling callback
+        setTimeout(() => {
+          if (onRoll) {
+            onRoll(rollResult);
+          }
+        }, 2000);
+      },
+      showAnimation ? 1500 : 100,
+    );
   };
 
   const getCriticalityBadge = (result: DiceRollResult) => {
@@ -241,35 +265,41 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
       );
     }
     if (result.naturalRoll === 1) {
-      return <Badge variant="secondary" className="text-xs">Critical Miss</Badge>;
+      return (
+        <Badge variant="secondary" className="text-xs">
+          Critical Miss
+        </Badge>
+      );
     }
     return null;
   };
 
   const getAdvantageIndicator = (result: DiceRollResult) => {
     if (result.advantage) {
-      return <Badge variant="default" className="text-xs bg-green-600">Advantage</Badge>;
+      return (
+        <Badge variant="default" className="text-xs bg-green-600">
+          Advantage
+        </Badge>
+      );
     }
     if (result.disadvantage) {
-      return <Badge variant="outline" className="text-xs border-red-600 text-red-600">Disadvantage</Badge>;
+      return (
+        <Badge variant="outline" className="text-xs border-red-600 text-red-600">
+          Disadvantage
+        </Badge>
+      );
     }
     return null;
   };
 
   return (
-    <motion.div
-      variants={fadeInUp}
-      initial="hidden"
-      animate="visible"
-    >
+    <motion.div variants={fadeInUp} initial="hidden" animate="visible">
       <Card className="p-4 my-2 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <Dice6 className="w-4 h-4 text-purple-600" />
-              <span className="font-mono text-sm font-semibold text-purple-800">
-                {expression}
-              </span>
+              <span className="font-mono text-sm font-semibold text-purple-800">{expression}</span>
             </div>
             {purpose && (
               <Badge variant="outline" className="text-xs">
@@ -305,7 +335,11 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
                 <Canvas
                   key={canvasKey}
                   onCreated={handleCreated}
-                  gl={{ powerPreference: 'high-performance', antialias: true, failIfMajorPerformanceCaveat: false }}
+                  gl={{
+                    powerPreference: 'high-performance',
+                    antialias: true,
+                    failIfMajorPerformanceCaveat: false,
+                  }}
                   camera={{ position: [0, 0, 5] }}
                 >
                   <ambientLight intensity={0.5} />
@@ -319,20 +353,10 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
                         isRolling={isRolling}
                         diceType={roll.dice}
                       />
-                    )) || (
-                      <Dice3D
-                        value={undefined}
-                        isRolling={isRolling}
-                        diceType={20}
-                      />
-                    )}
+                    )) || <Dice3D value={undefined} isRolling={isRolling} diceType={20} />}
                   </group>
 
-                  <OrbitControls
-                    enableRotate={false}
-                    enableZoom={false}
-                    enablePan={false}
-                  />
+                  <OrbitControls enableRotate={false} enableZoom={false} enablePan={false} />
                 </Canvas>
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-xs text-gray-600 bg-gray-50">
@@ -374,9 +398,7 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-purple-800">
-                    {result.total}
-                  </span>
+                  <span className="text-2xl font-bold text-purple-800">{result.total}</span>
                   {getCriticalityBadge(result)}
                   {getAdvantageIndicator(result)}
                 </div>
@@ -418,7 +440,9 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
               {/* Modifiers */}
               {result.modifiers !== 0 && (
                 <motion.div variants={cardItem} className="text-xs text-gray-600">
-                  Base: {(result.total || 0) - (result.modifiers || 0)} {(result.modifiers || 0) >= 0 ? '+' : ''}{result.modifiers || 0}
+                  Base: {(result.total || 0) - (result.modifiers || 0)}{' '}
+                  {(result.modifiers || 0) >= 0 ? '+' : ''}
+                  {result.modifiers || 0}
                 </motion.div>
               )}
 
