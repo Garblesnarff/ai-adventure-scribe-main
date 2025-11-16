@@ -31,3 +31,18 @@ export * from './progression.js';
 
 // Export all class features tables and types
 export * from './class-features.js';
+
+// Export all scenes and maps tables and types
+export * from './scenes.js';
+
+// Export all fog of war and vision tables and types
+export * from './fog-of-war.js';
+
+// Export all character permissions and folders tables and types
+export * from './character-permissions.js';
+
+// Export all drawings and measurements tables and types
+export * from './drawings.js';
+
+// Export all token tables and types
+export * from './tokens.js';
