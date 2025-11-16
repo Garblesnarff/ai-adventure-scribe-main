@@ -19,9 +19,9 @@ import { devtools, persist } from 'zustand/middleware';
 // Types
 // ===========================
 
-export type LayerType = 'background' | 'grid' | 'tokens' | 'effects' | 'drawings' | 'ui';
+export type LayerType = 'background' | 'grid' | 'tokens' | 'effects' | 'drawings' | 'ui' | 'fog' | 'walls';
 
-export type ToolType = 'select' | 'move' | 'measure' | 'draw' | 'pan';
+export type ToolType = 'select' | 'move' | 'measure' | 'draw' | 'pan' | 'wall' | 'fog-brush';
 
 export interface CameraState {
   x: number;
@@ -60,6 +60,19 @@ interface BattleMapState {
   hoveredTokenId: string | null;
   draggedTokenId: string | null;
 
+  // Fog of War
+  fogEnabled: boolean;
+  showFogToGM: boolean;
+  fogBrushSize: number;
+  fogBrushMode: 'reveal' | 'conceal';
+
+  // Walls
+  selectedWallId: string | null;
+  hoveredWallId: string | null;
+  wallDrawingActive: boolean;
+  wallSnapToGrid: boolean;
+  wallType: 'solid' | 'door' | 'window' | 'terrain';
+
   // Actions - Scene
   setActiveSceneId: (sceneId: string | null) => void;
 
@@ -90,6 +103,23 @@ interface BattleMapState {
 
   // Actions - Reset
   resetLayers: () => void;
+
+  // Actions - Fog of War
+  toggleFog: () => void;
+  setFogEnabled: (enabled: boolean) => void;
+  toggleShowFogToGM: () => void;
+  setShowFogToGM: (show: boolean) => void;
+  setFogBrushSize: (size: number) => void;
+  setFogBrushMode: (mode: 'reveal' | 'conceal') => void;
+
+  // Actions - Walls
+  selectWall: (wallId: string | null) => void;
+  setHoveredWall: (wallId: string | null) => void;
+  toggleWallDrawing: () => void;
+  setWallDrawingActive: (active: boolean) => void;
+  toggleWallSnapToGrid: () => void;
+  setWallSnapToGrid: (snap: boolean) => void;
+  setWallType: (type: 'solid' | 'door' | 'window' | 'terrain') => void;
 }
 
 // ===========================
@@ -119,6 +149,17 @@ const initialState = {
   targetedTokenIds: [],
   hoveredTokenId: null,
   draggedTokenId: null,
+  // Fog of War
+  fogEnabled: true,
+  showFogToGM: false,
+  fogBrushSize: 50,
+  fogBrushMode: 'reveal' as 'reveal' | 'conceal',
+  // Walls
+  selectedWallId: null,
+  hoveredWallId: null,
+  wallDrawingActive: false,
+  wallSnapToGrid: true,
+  wallType: 'solid' as 'solid' | 'door' | 'window' | 'terrain',
 };
 
 // ===========================
@@ -309,6 +350,69 @@ export const useBattleMapStore = create<BattleMapState>()(
             false,
             'battleMap/resetLayers',
           ),
+
+        // ===========================
+        // Fog of War Actions
+        // ===========================
+
+        toggleFog: () =>
+          set(
+            (state) => ({ fogEnabled: !state.fogEnabled }),
+            false,
+            'battleMap/toggleFog',
+          ),
+
+        setFogEnabled: (enabled) =>
+          set({ fogEnabled: enabled }, false, 'battleMap/setFogEnabled'),
+
+        toggleShowFogToGM: () =>
+          set(
+            (state) => ({ showFogToGM: !state.showFogToGM }),
+            false,
+            'battleMap/toggleShowFogToGM',
+          ),
+
+        setShowFogToGM: (show) =>
+          set({ showFogToGM: show }, false, 'battleMap/setShowFogToGM'),
+
+        setFogBrushSize: (size) =>
+          set({ fogBrushSize: size }, false, 'battleMap/setFogBrushSize'),
+
+        setFogBrushMode: (mode) =>
+          set({ fogBrushMode: mode }, false, 'battleMap/setFogBrushMode'),
+
+        // ===========================
+        // Walls Actions
+        // ===========================
+
+        selectWall: (wallId) =>
+          set({ selectedWallId: wallId }, false, 'battleMap/selectWall'),
+
+        setHoveredWall: (wallId) =>
+          set({ hoveredWallId: wallId }, false, 'battleMap/setHoveredWall'),
+
+        toggleWallDrawing: () =>
+          set(
+            (state) => ({ wallDrawingActive: !state.wallDrawingActive }),
+            false,
+            'battleMap/toggleWallDrawing',
+          ),
+
+        setWallDrawingActive: (active) =>
+          set({ wallDrawingActive: active }, false, 'battleMap/setWallDrawingActive'),
+
+        toggleWallSnapToGrid: () =>
+          set(
+            (state) => ({ wallSnapToGrid: !state.wallSnapToGrid }),
+            false,
+            'battleMap/toggleWallSnapToGrid',
+          ),
+
+        setWallSnapToGrid: (snap) =>
+          set({ wallSnapToGrid: snap }, false, 'battleMap/setWallSnapToGrid'),
+
+        setWallType: (type) =>
+          set({ wallType: type }, false, 'battleMap/setWallType'),
       }),
       {
         name: 'battle-map-storage',
@@ -319,6 +423,10 @@ export const useBattleMapStore = create<BattleMapState>()(
           layerLocked: state.layerLocked,
           camera: state.camera,
           selectedTool: state.selectedTool,
+          fogEnabled: state.fogEnabled,
+          showFogToGM: state.showFogToGM,
+          fogBrushSize: state.fogBrushSize,
+          wallSnapToGrid: state.wallSnapToGrid,
         }),
       },
     ),
@@ -406,3 +514,26 @@ export const useHoveredTokenId = () => useBattleMapStore((state) => state.hovere
  */
 export const useIsTokenHovered = (tokenId: string) =>
   useBattleMapStore((state) => state.hoveredTokenId === tokenId);
+
+/**
+ * Hook to get fog of war settings
+ */
+export const useFogSettings = () =>
+  useBattleMapStore((state) => ({
+    fogEnabled: state.fogEnabled,
+    showFogToGM: state.showFogToGM,
+    fogBrushSize: state.fogBrushSize,
+    fogBrushMode: state.fogBrushMode,
+  }));
+
+/**
+ * Hook to get wall settings
+ */
+export const useWallSettings = () =>
+  useBattleMapStore((state) => ({
+    selectedWallId: state.selectedWallId,
+    hoveredWallId: state.hoveredWallId,
+    wallDrawingActive: state.wallDrawingActive,
+    wallSnapToGrid: state.wallSnapToGrid,
+    wallType: state.wallType,
+  }));
