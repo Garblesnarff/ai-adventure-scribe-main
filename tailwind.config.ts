@@ -63,11 +63,17 @@ export default {
                     border: 'hsl(var(--sidebar-border))',
                     ring: 'hsl(var(--sidebar-ring))'
                 },
-                // InfiniteRealms Brand Colors
+                // InfiniteRealms Brand Colors (Lore-based naming)
                 'infinite-purple': '#6B46C1',
                 'infinite-gold': '#F59E0B',
                 'infinite-teal': '#0891B2',
                 'infinite-dark': '#1E1B4B',
+
+                // Lore-based Color Aliases
+                'shadowweave': '#6B46C1',      // Deep purple for mystical/magical elements
+                'emberlight': '#F59E0B',       // Warm gold for highlights and treasure
+                'crystalline': '#0891B2',      // Cool teal for water/ice elements
+                'electricCyan': '#06B6D4',     // Bright cyan for critical moments
             },
             fontFamily: {
                 sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
@@ -194,6 +200,10 @@ export default {
                     '0%': { opacity: '0', transform: 'scale(0.8)' },
                     '50%': { opacity: '1', transform: 'scale(1.1)' },
                     '100%': { opacity: '1', transform: 'scale(1)' }
+                },
+                'pulse-soft': {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.8' }
                 }
             },
             animation: {
@@ -214,7 +224,8 @@ export default {
                 'spin-slow': 'spin-slow 3s linear infinite',
                 'dice-roll': 'dice-roll 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                 'sparkle': 'sparkle 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                'celebration': 'celebration 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                'celebration': 'celebration 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                'pulse-soft': 'pulse-soft 2s ease-in-out infinite'
             }
         }
     },
