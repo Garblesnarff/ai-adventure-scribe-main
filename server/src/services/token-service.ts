@@ -332,7 +332,7 @@ export class TokenService {
 
     if (links.length === 0) return [];
 
-    const tokenIds = links.map((link) => link.tokenId);
+    const tokenIds = links.map((link: any) => link.tokenId);
 
     // Get all tokens
     const characterTokensList = await db.query.tokens.findMany({
@@ -500,9 +500,9 @@ export class TokenService {
     return this.updateToken(tokenId, userId, {
       imageUrl: config.imageUrl,
       avatarUrl: config.avatarUrl,
-      sizeWidth: config.sizeWidth,
-      sizeHeight: config.sizeHeight,
-      gridSize: config.gridSize,
+      sizeWidth: config.sizeWidth ?? undefined,
+      sizeHeight: config.sizeHeight ?? undefined,
+      gridSize: config.gridSize ?? undefined,
       tintColor: config.tintColor,
       scale: config.scale,
       opacity: config.opacity,

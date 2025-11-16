@@ -106,7 +106,7 @@ export class SceneService {
       with: {
         settings: true,
         layers: {
-          orderBy: (layers, { asc }) => [asc(layers.zIndex)],
+          orderBy: (layers: typeof sceneLayers, { asc }: any) => [asc(layers.zIndex)],
         },
       },
     });

@@ -55,7 +55,7 @@ export class VisionBlockerService {
   static async listVisionBlockers(sceneId: string): Promise<VisionBlockingShape[]> {
     const blockers = await db.query.visionBlockingShapes.findMany({
       where: eq(visionBlockingShapes.sceneId, sceneId),
-      orderBy: (vbs, { asc }) => [asc(vbs.createdAt)],
+      orderBy: (vbs: typeof visionBlockingShapes, { asc }: any) => [asc(vbs.createdAt)],
     });
 
     return blockers;
@@ -271,6 +271,7 @@ export class VisionBlockerService {
     // Validate all blockers
     for (let i = 0; i < blockers.length; i++) {
       const blocker = blockers[i];
+      if (!blocker) continue;
 
       if (!blocker.pointsData || blocker.pointsData.length < 2) {
         throw new ValidationError(`Blocker at index ${i}: must have at least 2 points`);
@@ -322,7 +323,7 @@ export class VisionBlockerService {
         eq(visionBlockingShapes.sceneId, sceneId),
         eq(visionBlockingShapes.shapeType, 'door')
       ),
-      orderBy: (vbs, { asc }) => [asc(vbs.createdAt)],
+      orderBy: (vbs: typeof visionBlockingShapes, { asc }: any) => [asc(vbs.createdAt)],
     });
 
     return doors;
