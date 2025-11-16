@@ -487,13 +487,363 @@ function BattleMapWithLayers({ sceneId }: { sceneId: string }) {
 - **LayerManager** (Phase 3.4): Layer orchestration
 - **LayersPanel** (Phase 3.4): Layer controls UI
 
+## Phase 5-10: Advanced Features
+
+### Token System (Phase 5)
+
+All token-related components in this directory:
+
+- **Token.tsx** - Main token component
+- **TokenImage.tsx** - Token image/avatar rendering
+- **TokenBorder.tsx** - Border with disposition colors
+- **TokenNameplate.tsx** - Name and status display
+- **TokenHealthBar.tsx** - HP visualization
+- **TokenResourceBars.tsx** - Additional resource tracking
+- **TokenConditionIcons.tsx** - Status conditions
+- **TokenAura.tsx** - Colored auras
+- **TokenParticles.tsx** - Particle effects
+- **TokenConcentration.tsx** - Concentration indicator
+- **TokenDeathState.tsx** - Death/unconscious visuals
+- **ElevationIndicator.tsx** - Elevation display
+- **TokenDragGhost.tsx** - Drag preview
+- **TokenInteraction.tsx** - Interaction handlers
+- **TokenEffectOverlay.tsx** - Visual effects
+
+### Vision & Lighting (Phase 6)
+
+- **VisionRange.tsx** - Vision range display
+- **VisionCone.tsx** - Directional vision
+- **VisionPolygon.tsx** - Calculated vision with occlusion
+- **LightSource.tsx** - Light emission
+- **WallSegment.tsx** - Vision blocking walls
+- **DoorObject.tsx** - Interactive doors
+
+### Fog of War (Phase 7)
+
+- **FogOfWar.tsx** - Complete fog system with brush tools
+
+### Drawing Tools (Phase 8)
+
+- **DrawingTool.tsx** - Main drawing interface
+- **FreehandDrawing.tsx** - Freehand paths
+- **ShapeDrawing.tsx** - Geometric shapes
+- **TextAnnotation.tsx** - Text labels
+- **DrawingsList.tsx** - Drawing management
+
+### Measurements & Templates (Phase 9)
+
+- **MeasurementTool.tsx** - Distance and area measurement
+- **AoETemplate.tsx** - Base template component
+- **ConeTemplate.tsx** - Cone-shaped AoE
+- **SphereTemplate.tsx** - Circular AoE
+- **CubeTemplate.tsx** - Square AoE
+- **LineTemplate.tsx** - Line AoE
+- **TemplateConfigPanel.tsx** - Template configuration UI
+
+### Combat Integration (Phase 10)
+
+- **CombatIntegration.tsx** - Combat tracker integration
+- **InitiativeIndicators.tsx** - Turn order visuals
+- **AttackTargeting.tsx** - Attack targeting system
+- **OpportunityAttackZones.tsx** - Threat zone visualization
+- **MovementTracking.tsx** - Movement distance tracking
+
+### Wall System (Phase 10)
+
+- **WallDrawingTool.tsx** - Wall placement tool
+- **WallSegment.tsx** - Individual wall rendering
+- **DoorObject.tsx** - Door states and interaction
+
+### Performance Optimization (Phase 11)
+
+- **PerformanceMonitor.tsx** - FPS and metrics display
+- **Utils:**
+  - `/src/utils/performance/lod.ts` - Level of Detail manager
+  - `/src/utils/performance/culling.ts` - Frustum culling
+  - Enhanced store with performance settings
+
+## Phase-by-Phase Breakdown
+
+### Phase 1-2: Foundation
+- Scene management
+- Basic rendering
+- Camera controls
+- Grid system
+
+### Phase 3: Background & Grid
+- BackgroundImage component
+- GridPlane with multiple grid types
+- Texture loading and optimization
+- Layer management basics
+
+### Phase 4: Layer System
+- LayerManager component
+- LayersPanel UI
+- Layer visibility, opacity, locking
+- Zustand store integration
+- Persistent user preferences
+
+### Phase 5: Token System
+- Complete token rendering
+- Size categories (tiny to gargantuan)
+- Drag and drop
+- Selection and targeting
+- Health bars and status
+
+### Phase 6: Vision & Lighting
+- Dynamic vision calculations
+- Light sources
+- Vision blockers (walls, doors)
+- Line of sight
+- Darkvision support
+
+### Phase 7: Fog of War
+- Player-specific fog
+- Brush tools (reveal/conceal)
+- GM controls
+- Fog persistence
+- Performance optimization
+
+### Phase 8: Drawing Tools
+- Freehand drawing
+- Geometric shapes
+- Text annotations
+- Color and style controls
+- Drawing management
+
+### Phase 9: Measurements & Templates
+- Distance measurement
+- Area calculation
+- AoE templates (cone, sphere, cube, line)
+- Template configuration
+- Grid snapping
+
+### Phase 10: Combat & Walls
+- Initiative tracking
+- Turn indicators
+- Attack targeting
+- Opportunity attack zones
+- Wall drawing
+- Door objects
+
+### Phase 11: Performance
+- Level of Detail (LOD) system
+- Frustum culling
+- Performance modes (low/medium/high)
+- FPS monitoring
+- Render statistics
+- Optimization utilities
+
+## Complete Integration Example
+
+```tsx
+import React, { useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import {
+  BattleCanvas,
+  LayerManager,
+  LayersPanel,
+  Token,
+  FogOfWar,
+  MeasurementTool,
+  DrawingTool,
+  PerformanceMonitor,
+} from '@/components/battle-map';
+import { useBattleMapStore } from '@/stores/useBattleMapStore';
+import { trpc } from '@/lib/trpc';
+
+interface BattleMapProps {
+  sceneId: string;
+  campaignId: string;
+}
+
+export const BattleMap: React.FC<BattleMapProps> = ({ sceneId, campaignId }) => {
+  // Fetch scene data
+  const { data: scene } = trpc.scenes.get.useQuery({ id: sceneId });
+  const { data: tokens } = trpc.tokens.list.useQuery({ sceneId });
+
+  // Store state
+  const selectedTool = useBattleMapStore((state) => state.selectedTool);
+  const setTool = useBattleMapStore((state) => state.setTool);
+  const performance = useBattleMapStore((state) => state.performance);
+  const setPerformanceMode = useBattleMapStore((state) => state.setPerformanceMode);
+
+  if (!scene) return <div>Loading...</div>;
+
+  return (
+    <div className="relative w-full h-screen">
+      {/* 3D Battle Map */}
+      <BattleCanvas sceneId={sceneId} performanceMode={performance.performanceMode}>
+        {/* Scene layers managed by LayerManager */}
+        <LayerManager sceneId={sceneId} />
+
+        {/* Additional overlays */}
+        <FogOfWar
+          sceneId={sceneId}
+          width={scene.width * scene.gridSize}
+          height={scene.height * scene.gridSize}
+          enabled={scene.settings.enableFogOfWar}
+        />
+
+        {/* Tools */}
+        {selectedTool === 'measure' && <MeasurementTool sceneId={sceneId} />}
+        {selectedTool === 'draw' && <DrawingTool sceneId={sceneId} />}
+      </BattleCanvas>
+
+      {/* UI Overlays */}
+      <div className="absolute top-4 right-4 z-50 space-y-2">
+        <LayersPanel sceneId={sceneId} side="right" />
+        <PerformanceMonitor visible={true} position="top-right" detailed={true} />
+      </div>
+
+      {/* Toolbar */}
+      <div className="absolute bottom-4 left-4 z-50 flex gap-2">
+        {(['select', 'move', 'measure', 'draw', 'pan'] as const).map((tool) => (
+          <button
+            key={tool}
+            onClick={() => setTool(tool)}
+            className={`px-4 py-2 rounded ${
+              selectedTool === tool ? 'bg-blue-600' : 'bg-gray-600'
+            } text-white`}
+          >
+            {tool}
+          </button>
+        ))}
+      </div>
+
+      {/* Performance Controls */}
+      <div className="absolute top-4 left-4 z-50">
+        <select
+          value={performance.performanceMode}
+          onChange={(e) => setPerformanceMode(e.target.value as any)}
+          className="px-3 py-2 rounded bg-gray-800 text-white"
+        >
+          <option value="low">Low Performance</option>
+          <option value="medium">Medium Performance</option>
+          <option value="high">High Performance</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+```
+
+## Integration with tRPC
+
+All battle map data is managed through tRPC routers:
+
+```typescript
+// Scenes
+import { trpc } from '@/lib/trpc';
+
+const { data: scenes } = trpc.scenes.list.useQuery({ campaignId });
+const createScene = trpc.scenes.create.useMutation();
+const updateScene = trpc.scenes.update.useMutation();
+
+// Tokens
+const { data: tokens } = trpc.tokens.list.useQuery({ sceneId });
+const createToken = trpc.tokens.create.useMutation();
+const updateToken = trpc.tokens.update.useMutation();
+
+// Fog of War
+const { data: fog } = trpc.fogOfWar.getRevealed.useQuery({ sceneId });
+const revealFog = trpc.fogOfWar.reveal.useMutation();
+
+// Drawings
+const { data: drawings } = trpc.drawings.list.useQuery({ sceneId });
+const createDrawing = trpc.drawings.create.useMutation();
+```
+
+See [API Reference](../../../docs/API_REFERENCE.md) for complete API documentation.
+
+## Performance Best Practices
+
+### 1. Use Performance Modes
+
+```typescript
+// Set based on user's hardware
+setPerformanceMode('low');   // 50 tokens, no effects
+setPerformanceMode('medium'); // 100 tokens, basic effects
+setPerformanceMode('high');   // 200+ tokens, all effects
+```
+
+### 2. Enable Culling and LOD
+
+```typescript
+import { LODManager } from '@/utils/performance/lod';
+import { FrustumCuller } from '@/utils/performance/culling';
+
+const lodManager = new LODManager();
+const culler = new FrustumCuller();
+
+// In render loop
+culler.updateFromCamera(camera);
+const visible = culler.getVisibleObjects(tokens);
+```
+
+### 3. Optimize Images
+
+- Use WebP format
+- Keep textures ≤ 2048×2048
+- Use power-of-two dimensions
+- Compress before upload
+
+### 4. Monitor Performance
+
+```tsx
+<PerformanceMonitor
+  visible={true}
+  detailed={true}
+  fpsWarningThreshold={30}
+/>
+```
+
 ## Future Enhancements
 
-Potential improvements for future phases:
-- Image caching across component instances
+### Planned Features
+- **Real-time Multiplayer** - WebSocket sync
+- **Weather Effects** - Rain, snow, fog
+- **Day/Night Cycle** - Dynamic lighting
+- **Animated Tokens** - GIF/video support
+- **3D Terrain** - Elevation and obstacles
+- **Audio Integration** - Ambient sounds
+- **Macro System** - Automation tools
+- **Mobile Optimization** - Touch controls
+
+### Potential Improvements
+- Image caching across instances
 - Dynamic image swapping with transitions
 - Image filters and effects
 - Support for tiled backgrounds
-- Background animations
 - Advanced layer blending modes
 - Layer grouping and nesting
+- Custom shaders
+- WebGPU support
+
+## Documentation Links
+
+- **[Foundry Integration Guide](../../../docs/FOUNDRY_INTEGRATION_GUIDE.md)** - Complete guide
+- **[API Reference](../../../docs/API_REFERENCE.md)** - tRPC endpoints
+- **[Component Guide](../../../docs/COMPONENT_GUIDE.md)** - All components
+- **[Deployment Guide](../../../docs/DEPLOYMENT.md)** - Production deployment
+- **[Quick Reference](../../../README_FOUNDRY.md)** - Quick start guide
+
+## Version History
+
+- **v1.0.0** (2025-11-16) - Initial release with all 11 phases complete
+  - Scene management
+  - Token system
+  - Vision and lighting
+  - Fog of war
+  - Drawing tools
+  - Measurements and templates
+  - Combat integration
+  - Wall system
+  - Performance optimizations
+
+---
+
+**Last Updated:** 2025-11-16
+**Status:** Production Ready
+**Phase:** 11 Complete

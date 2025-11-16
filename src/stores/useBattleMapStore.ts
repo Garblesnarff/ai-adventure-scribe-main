@@ -23,10 +23,23 @@ export type LayerType = 'background' | 'grid' | 'tokens' | 'effects' | 'drawings
 
 export type ToolType = 'select' | 'move' | 'measure' | 'draw' | 'pan' | 'wall' | 'fog-brush';
 
+export type PerformanceMode = 'low' | 'medium' | 'high';
+
 export interface CameraState {
   x: number;
   y: number;
   zoom: number;
+}
+
+export interface PerformanceSettings {
+  performanceMode: PerformanceMode;
+  enableParticles: boolean;
+  enableShadows: boolean;
+  enableAnimations: boolean;
+  maxVisibleTokens: number;
+  maxParticles: number;
+  enableFrustumCulling: boolean;
+  enableLOD: boolean;
 }
 
 export interface LayerState {
@@ -72,6 +85,9 @@ interface BattleMapState {
   wallDrawingActive: boolean;
   wallSnapToGrid: boolean;
   wallType: 'solid' | 'door' | 'window' | 'terrain';
+
+  // Performance
+  performance: PerformanceSettings;
 
   // Actions - Scene
   setActiveSceneId: (sceneId: string | null) => void;
@@ -120,6 +136,14 @@ interface BattleMapState {
   toggleWallSnapToGrid: () => void;
   setWallSnapToGrid: (snap: boolean) => void;
   setWallType: (type: 'solid' | 'door' | 'window' | 'terrain') => void;
+
+  // Actions - Performance
+  setPerformanceMode: (mode: PerformanceMode) => void;
+  setPerformanceSetting: <K extends keyof PerformanceSettings>(
+    key: K,
+    value: PerformanceSettings[K]
+  ) => void;
+  resetPerformanceSettings: () => void;
 }
 
 // ===========================
@@ -136,6 +160,17 @@ const defaultLayerState: LayerState = {
   visible: true,
   opacity: 1,
   locked: false,
+};
+
+const defaultPerformanceSettings: PerformanceSettings = {
+  performanceMode: 'high',
+  enableParticles: true,
+  enableShadows: true,
+  enableAnimations: true,
+  maxVisibleTokens: 200,
+  maxParticles: 100,
+  enableFrustumCulling: true,
+  enableLOD: true,
 };
 
 const initialState = {
@@ -160,6 +195,8 @@ const initialState = {
   wallDrawingActive: false,
   wallSnapToGrid: true,
   wallType: 'solid' as 'solid' | 'door' | 'window' | 'terrain',
+  // Performance
+  performance: defaultPerformanceSettings,
 };
 
 // ===========================
@@ -413,6 +450,62 @@ export const useBattleMapStore = create<BattleMapState>()(
 
         setWallType: (type) =>
           set({ wallType: type }, false, 'battleMap/setWallType'),
+
+        // ===========================
+        // Performance Actions
+        // ===========================
+
+        setPerformanceMode: (mode) => {
+          const presets: Record<PerformanceMode, PerformanceSettings> = {
+            low: {
+              performanceMode: 'low',
+              enableParticles: false,
+              enableShadows: false,
+              enableAnimations: false,
+              maxVisibleTokens: 50,
+              maxParticles: 0,
+              enableFrustumCulling: true,
+              enableLOD: true,
+            },
+            medium: {
+              performanceMode: 'medium',
+              enableParticles: true,
+              enableShadows: false,
+              enableAnimations: true,
+              maxVisibleTokens: 100,
+              maxParticles: 50,
+              enableFrustumCulling: true,
+              enableLOD: true,
+            },
+            high: {
+              performanceMode: 'high',
+              enableParticles: true,
+              enableShadows: true,
+              enableAnimations: true,
+              maxVisibleTokens: 200,
+              maxParticles: 100,
+              enableFrustumCulling: true,
+              enableLOD: true,
+            },
+          };
+
+          set({ performance: presets[mode] }, false, 'battleMap/setPerformanceMode');
+        },
+
+        setPerformanceSetting: (key, value) =>
+          set(
+            (state) => ({
+              performance: {
+                ...state.performance,
+                [key]: value,
+              },
+            }),
+            false,
+            'battleMap/setPerformanceSetting'
+          ),
+
+        resetPerformanceSettings: () =>
+          set({ performance: defaultPerformanceSettings }, false, 'battleMap/resetPerformanceSettings'),
       }),
       {
         name: 'battle-map-storage',
@@ -427,6 +520,7 @@ export const useBattleMapStore = create<BattleMapState>()(
           showFogToGM: state.showFogToGM,
           fogBrushSize: state.fogBrushSize,
           wallSnapToGrid: state.wallSnapToGrid,
+          performance: state.performance,
         }),
       },
     ),
@@ -537,3 +631,32 @@ export const useWallSettings = () =>
     wallSnapToGrid: state.wallSnapToGrid,
     wallType: state.wallType,
   }));
+
+/**
+ * Hook to get performance settings
+ */
+export const usePerformanceSettings = () => useBattleMapStore((state) => state.performance);
+
+/**
+ * Hook to get performance mode
+ */
+export const usePerformanceMode = () =>
+  useBattleMapStore((state) => state.performance.performanceMode);
+
+/**
+ * Hook to check if particles are enabled
+ */
+export const useParticlesEnabled = () =>
+  useBattleMapStore((state) => state.performance.enableParticles);
+
+/**
+ * Hook to check if shadows are enabled
+ */
+export const useShadowsEnabled = () =>
+  useBattleMapStore((state) => state.performance.enableShadows);
+
+/**
+ * Hook to check if animations are enabled
+ */
+export const useAnimationsEnabled = () =>
+  useBattleMapStore((state) => state.performance.enableAnimations);

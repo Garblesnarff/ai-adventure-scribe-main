@@ -116,3 +116,27 @@ export { ElevationMode, ShadowStyle } from './ElevationIndicator';
 export { TokenEffectOverlay, conditionToEffectType, conditionsToEffects } from './TokenEffectOverlay';
 export type { TokenEffectOverlayProps, EffectOverlayConfig } from './TokenEffectOverlay';
 export { StatusEffectType } from './TokenEffectOverlay';
+
+// Toolbar and Controls components (Phase 10)
+export { Toolbar, ResponsiveToolbar } from './Toolbar';
+export type { ToolbarProps, ResponsiveToolbarProps } from './Toolbar';
+
+export { ToolOptionsPanel } from './ToolOptionsPanel';
+export type { ToolOptionsPanelProps, ToolOptions } from './ToolOptionsPanel';
+
+export { QuickActionMenu, useQuickActionMenu, getDefaultQuickActions } from './QuickActionMenu';
+export type {
+  QuickActionMenuProps,
+  QuickAction,
+  UseQuickActionMenuOptions,
+  UseQuickActionMenuReturn,
+} from './QuickActionMenu';
+
+export { HotkeyGuide, HotkeyBadge } from './HotkeyGuide';
+export type { HotkeyGuideProps, HotkeyBadgeProps, ShortcutInfo } from './HotkeyGuide';
+
+export { MobileControls, useIsMobile, useTouchGestures } from './MobileControls';
+export type { MobileControlsProps, TouchGestureHandlers } from './MobileControls';
+
+export { SettingsPanel, useBattleMapSettings, DEFAULT_SETTINGS, STORAGE_KEY } from './SettingsPanel';
+export type { SettingsPanelProps, BattleMapSettings } from './SettingsPanel';
