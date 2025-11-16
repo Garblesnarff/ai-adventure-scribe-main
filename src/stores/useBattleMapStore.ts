@@ -54,6 +54,12 @@ interface BattleMapState {
   // Tools
   selectedTool: ToolType;
 
+  // Token Selection
+  selectedTokenIds: string[];
+  targetedTokenIds: string[];
+  hoveredTokenId: string | null;
+  draggedTokenId: string | null;
+
   // Actions - Scene
   setActiveSceneId: (sceneId: string | null) => void;
 
@@ -71,6 +77,16 @@ interface BattleMapState {
 
   // Actions - Tools
   setTool: (tool: ToolType) => void;
+
+  // Actions - Token Selection
+  selectToken: (tokenId: string, multiSelect?: boolean) => void;
+  deselectToken: (tokenId: string) => void;
+  toggleSelectToken: (tokenId: string) => void;
+  clearSelection: () => void;
+  targetToken: (tokenId: string, replace?: boolean) => void;
+  clearTargets: () => void;
+  setHoveredToken: (tokenId: string | null) => void;
+  setDraggedToken: (tokenId: string | null) => void;
 
   // Actions - Reset
   resetLayers: () => void;
@@ -99,6 +115,10 @@ const initialState = {
   layerLocked: {},
   camera: initialCamera,
   selectedTool: 'select' as ToolType,
+  selectedTokenIds: [],
+  targetedTokenIds: [],
+  hoveredTokenId: null,
+  draggedTokenId: null,
 };
 
 // ===========================
@@ -216,6 +236,66 @@ export const useBattleMapStore = create<BattleMapState>()(
         setTool: (tool) => set({ selectedTool: tool }, false, 'battleMap/setTool'),
 
         // ===========================
+        // Token Selection Actions
+        // ===========================
+
+        selectToken: (tokenId, multiSelect = false) =>
+          set(
+            (state) => ({
+              selectedTokenIds: multiSelect
+                ? [...state.selectedTokenIds, tokenId]
+                : [tokenId],
+            }),
+            false,
+            'battleMap/selectToken',
+          ),
+
+        deselectToken: (tokenId) =>
+          set(
+            (state) => ({
+              selectedTokenIds: state.selectedTokenIds.filter((id) => id !== tokenId),
+            }),
+            false,
+            'battleMap/deselectToken',
+          ),
+
+        toggleSelectToken: (tokenId) =>
+          set(
+            (state) => ({
+              selectedTokenIds: state.selectedTokenIds.includes(tokenId)
+                ? state.selectedTokenIds.filter((id) => id !== tokenId)
+                : [...state.selectedTokenIds, tokenId],
+            }),
+            false,
+            'battleMap/toggleSelectToken',
+          ),
+
+        clearSelection: () =>
+          set({ selectedTokenIds: [] }, false, 'battleMap/clearSelection'),
+
+        targetToken: (tokenId, replace = false) =>
+          set(
+            (state) => ({
+              targetedTokenIds: replace
+                ? [tokenId]
+                : state.targetedTokenIds.includes(tokenId)
+                  ? state.targetedTokenIds
+                  : [...state.targetedTokenIds, tokenId],
+            }),
+            false,
+            'battleMap/targetToken',
+          ),
+
+        clearTargets: () =>
+          set({ targetedTokenIds: [] }, false, 'battleMap/clearTargets'),
+
+        setHoveredToken: (tokenId) =>
+          set({ hoveredTokenId: tokenId }, false, 'battleMap/setHoveredToken'),
+
+        setDraggedToken: (tokenId) =>
+          set({ draggedTokenId: tokenId }, false, 'battleMap/setDraggedToken'),
+
+        // ===========================
         // Reset Actions
         // ===========================
 
@@ -288,3 +368,41 @@ export const useLayerOpacity = (layerId: string) =>
  */
 export const useLayerLocked = (layerId: string) =>
   useBattleMapStore((state) => state.layerLocked[layerId] ?? false);
+
+/**
+ * Hook to get selected token IDs
+ */
+export const useSelectedTokenIds = () => useBattleMapStore((state) => state.selectedTokenIds);
+
+/**
+ * Hook to get targeted token IDs
+ */
+export const useTargetedTokenIds = () => useBattleMapStore((state) => state.targetedTokenIds);
+
+/**
+ * Hook to get dragged token ID
+ */
+export const useDraggedTokenId = () => useBattleMapStore((state) => state.draggedTokenId);
+
+/**
+ * Hook to check if a specific token is selected
+ */
+export const useIsTokenSelected = (tokenId: string) =>
+  useBattleMapStore((state) => state.selectedTokenIds.includes(tokenId));
+
+/**
+ * Hook to check if a specific token is targeted
+ */
+export const useIsTokenTargeted = (tokenId: string) =>
+  useBattleMapStore((state) => state.targetedTokenIds.includes(tokenId));
+
+/**
+ * Hook to get hovered token ID
+ */
+export const useHoveredTokenId = () => useBattleMapStore((state) => state.hoveredTokenId);
+
+/**
+ * Hook to check if a specific token is hovered
+ */
+export const useIsTokenHovered = (tokenId: string) =>
+  useBattleMapStore((state) => state.hoveredTokenId === tokenId);

@@ -30,3 +30,89 @@ export type { LayerManagerProps, LayerConfig } from './LayerManager';
 
 export { LayersPanel } from './LayersPanel';
 export type { LayersPanelProps } from './LayersPanel';
+
+// Token Rendering components (Phase 4.1)
+export { Token, TokenGroup } from './Token';
+export type { TokenProps, TokenGroupProps } from './Token';
+
+export { TokenImage, usePreloadTokenImages, clearTokenTextureCache } from './TokenImage';
+export type { TokenImageProps } from './TokenImage';
+
+export { TokenBorder, TokenGlow, MultiLayerBorder } from './TokenBorder';
+export type { TokenBorderProps, TokenGlowProps, MultiLayerBorderProps } from './TokenBorder';
+
+export {
+  TokenNameplate,
+  TokenStatusBar,
+  TokenStatusIcons,
+} from './TokenNameplate';
+export type {
+  TokenNameplateProps,
+  TokenStatusBarProps,
+  TokenStatusIconsProps,
+  StatusIcon,
+} from './TokenNameplate';
+
+// Vision and Lighting components (Phase 4.4)
+export { VisionRange, MultiVisionRange, VisionRangeToggle } from './VisionRange';
+export type { VisionRangeProps, VisionRangeToggleProps } from './VisionRange';
+
+export { LightSource, CompositeLightSources } from './LightSource';
+export type { LightSourceProps, CompositeLightSourcesProps } from './LightSource';
+
+export { VisionCone, VisionConeIndicator, VisionConeEditor } from './VisionCone';
+export type { VisionConeProps, VisionConeEditorProps } from './VisionCone';
+
+// Token Interaction components (Phase 4.2)
+export { TokenInteraction, useTokenInteractionState } from './TokenInteraction';
+export type { TokenInteractionProps } from './TokenInteraction';
+
+export { TokenContextMenu } from './TokenContextMenu';
+export type { TokenContextMenuProps } from './TokenContextMenu';
+
+export { TokenDragGhost, TokenDragGhost2D, GridSnapPreview } from './TokenDragGhost';
+export type {
+  TokenDragGhostProps,
+  TokenDragGhost2DProps,
+  GridSnapPreviewProps,
+} from './TokenDragGhost';
+
+// Token Health & Status components (Phase 4.3)
+export { TokenHealthBar, TokenHealthBarCompact } from './TokenHealthBar';
+export type { TokenHealthBarProps } from './TokenHealthBar';
+
+export { TokenConditionIcons } from './TokenConditionIcons';
+export type { TokenConditionIconsProps } from './TokenConditionIcons';
+
+export { TokenConcentration, TokenConcentrationCompact } from './TokenConcentration';
+export type { TokenConcentrationProps } from './TokenConcentration';
+
+export {
+  TokenDeathState,
+  TokenProneIndicator,
+  TokenDeadOverlay,
+} from './TokenDeathState';
+export type { TokenDeathStateProps } from './TokenDeathState';
+
+export { TokenResourceBars, TokenSpellSlotsDots } from './TokenResourceBars';
+export type { TokenResourceBarsProps, ResourceType } from './TokenResourceBars';
+
+// Token Auras & Visual Effects (Phase 4.5)
+export { TokenAura, AuraPresets } from './TokenAura';
+export type { TokenAuraProps, AuraConfig } from './TokenAura';
+export { AuraVisibility, AuraAnimation } from './TokenAura';
+
+export { TokenParticles, MultiEffectParticles, ParticlePresets } from './TokenParticles';
+export type { TokenParticlesProps, MultiEffectParticlesProps } from './TokenParticles';
+
+export { ElevationIndicator, AnimatedElevationIndicator, AutoElevationIndicator } from './ElevationIndicator';
+export type {
+  ElevationIndicatorProps,
+  AnimatedElevationIndicatorProps,
+  AutoElevationIndicatorProps,
+} from './ElevationIndicator';
+export { ElevationMode, ShadowStyle } from './ElevationIndicator';
+
+export { TokenEffectOverlay, conditionToEffectType, conditionsToEffects } from './TokenEffectOverlay';
+export type { TokenEffectOverlayProps, EffectOverlayConfig } from './TokenEffectOverlay';
+export { StatusEffectType } from './TokenEffectOverlay';
