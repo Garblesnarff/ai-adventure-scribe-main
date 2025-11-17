@@ -33,6 +33,11 @@ export interface RevealAreaInput {
   isPermanent?: boolean;
 }
 
+/**
+ * Callback type for WebSocket broadcast
+ */
+export type BroadcastCallback = (message: any) => void;
+
 export class FogOfWarService {
   /**
    * Get all revealed areas for a user in a specific scene
@@ -60,7 +65,8 @@ export class FogOfWarService {
   static async revealArea(
     sceneId: string,
     userId: string,
-    input: RevealAreaInput
+    input: RevealAreaInput,
+    broadcast?: BroadcastCallback
   ): Promise<RevealedArea> {
     // Validate points
     if (!input.points || input.points.length < 3) {
@@ -118,7 +124,112 @@ export class FogOfWarService {
         });
     }
 
+    // Broadcast to WebSocket if callback provided
+    if (broadcast) {
+      broadcast({
+        type: 'fog:reveal',
+        sceneId,
+        userId,
+        timestamp: Date.now(),
+        data: {
+          areas: [newArea],
+          userId,
+        },
+      });
+    }
+
     return newArea;
+  }
+
+  /**
+   * Reveal multiple areas at once (batch operation)
+   * More efficient than calling revealArea multiple times
+   */
+  static async revealAreas(
+    sceneId: string,
+    userId: string,
+    inputs: RevealAreaInput[],
+    broadcast?: BroadcastCallback
+  ): Promise<RevealedArea[]> {
+    if (inputs.length === 0) {
+      return [];
+    }
+
+    const newAreas: RevealedArea[] = [];
+
+    // Validate and create all areas
+    for (const input of inputs) {
+      // Validate points
+      if (!input.points || input.points.length < 3) {
+        throw new ValidationError('A polygon must have at least 3 points');
+      }
+
+      // Validate each point has x and y
+      for (const point of input.points) {
+        if (typeof point.x !== 'number' || typeof point.y !== 'number') {
+          throw new ValidationError('Each point must have numeric x and y coordinates');
+        }
+      }
+
+      newAreas.push({
+        id: randomUUID(),
+        points: input.points,
+        revealedAt: new Date().toISOString(),
+        revealedBy: input.revealedBy,
+        isPermanent: input.isPermanent ?? true,
+      });
+    }
+
+    // Try to find existing fog record
+    const existingRecord = await db.query.fogOfWar.findFirst({
+      where: and(
+        eq(fogOfWar.sceneId, sceneId),
+        eq(fogOfWar.userId, userId)
+      ),
+    });
+
+    if (existingRecord) {
+      // Add to existing revealed areas
+      const updatedAreas = [...(existingRecord.revealedAreas as RevealedArea[]), ...newAreas];
+
+      const [updated] = await db
+        .update(fogOfWar)
+        .set({
+          revealedAreas: updatedAreas,
+          updatedAt: new Date(),
+        })
+        .where(eq(fogOfWar.id, existingRecord.id))
+        .returning();
+
+      if (!updated) {
+        throw new InternalServerError('Failed to update fog of war');
+      }
+    } else {
+      // Create new fog record
+      await db
+        .insert(fogOfWar)
+        .values({
+          sceneId,
+          userId,
+          revealedAreas: newAreas,
+        });
+    }
+
+    // Broadcast to WebSocket if callback provided
+    if (broadcast) {
+      broadcast({
+        type: 'fog:reveal',
+        sceneId,
+        userId,
+        timestamp: Date.now(),
+        data: {
+          areas: newAreas,
+          userId,
+        },
+      });
+    }
+
+    return newAreas;
   }
 
   /**
@@ -127,7 +238,8 @@ export class FogOfWarService {
   static async concealArea(
     sceneId: string,
     userId: string,
-    areaId: string
+    areaId: string,
+    broadcast?: BroadcastCallback
   ): Promise<boolean> {
     const existingRecord = await db.query.fogOfWar.findFirst({
       where: and(
@@ -141,6 +253,7 @@ export class FogOfWarService {
     }
 
     const currentAreas = existingRecord.revealedAreas as RevealedArea[];
+    const concealedArea = currentAreas.find((area) => area.id === areaId);
     const filteredAreas = currentAreas.filter((area) => area.id !== areaId);
 
     if (filteredAreas.length === currentAreas.length) {
@@ -156,7 +269,79 @@ export class FogOfWarService {
       })
       .where(eq(fogOfWar.id, existingRecord.id));
 
+    // Broadcast to WebSocket if callback provided
+    if (broadcast && concealedArea) {
+      broadcast({
+        type: 'fog:conceal',
+        sceneId,
+        userId,
+        timestamp: Date.now(),
+        data: {
+          areas: [concealedArea],
+          userId,
+        },
+      });
+    }
+
     return true;
+  }
+
+  /**
+   * Remove multiple revealed areas by IDs (batch operation)
+   */
+  static async concealAreas(
+    sceneId: string,
+    userId: string,
+    areaIds: string[],
+    broadcast?: BroadcastCallback
+  ): Promise<RevealedArea[]> {
+    if (areaIds.length === 0) {
+      return [];
+    }
+
+    const existingRecord = await db.query.fogOfWar.findFirst({
+      where: and(
+        eq(fogOfWar.sceneId, sceneId),
+        eq(fogOfWar.userId, userId)
+      ),
+    });
+
+    if (!existingRecord) {
+      return [];
+    }
+
+    const currentAreas = existingRecord.revealedAreas as RevealedArea[];
+    const areaIdSet = new Set(areaIds);
+    const concealedAreas = currentAreas.filter((area) => areaIdSet.has(area.id));
+    const remainingAreas = currentAreas.filter((area) => !areaIdSet.has(area.id));
+
+    if (concealedAreas.length === 0) {
+      return [];
+    }
+
+    await db
+      .update(fogOfWar)
+      .set({
+        revealedAreas: remainingAreas,
+        updatedAt: new Date(),
+      })
+      .where(eq(fogOfWar.id, existingRecord.id));
+
+    // Broadcast to WebSocket if callback provided
+    if (broadcast) {
+      broadcast({
+        type: 'fog:conceal',
+        sceneId,
+        userId,
+        timestamp: Date.now(),
+        data: {
+          areas: concealedAreas,
+          userId,
+        },
+      });
+    }
+
+    return concealedAreas;
   }
 
   /**

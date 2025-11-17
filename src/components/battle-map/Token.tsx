@@ -36,6 +36,8 @@ export interface TokenProps {
   isOwner?: boolean;
   /** Whether the current user is GM */
   isGM?: boolean;
+  /** Whether another user is moving this token */
+  isBeingMovedByOther?: boolean;
   /** Click handler */
   onClick?: (token: TokenData, event: ThreeEvent<MouseEvent>) => void;
   /** Context menu handler (right-click) */
@@ -86,6 +88,7 @@ export const Token: React.FC<TokenProps> = ({
   isHovered = false,
   isOwner = false,
   isGM = false,
+  isBeingMovedByOther = false,
   onClick,
   onContextMenu,
   onPointerEnter,
@@ -273,6 +276,25 @@ export const Token: React.FC<TokenProps> = ({
         isHovered={isHovered}
         borderWidth={borderWidth}
       />
+
+      {/* Visual indicator when being moved by another user */}
+      {isBeingMovedByOther && (
+        <mesh position={[0, 0, 0.1]}>
+          {isCircular ? (
+            <ringGeometry args={[
+              dimensions.pixelWidth / 2 + borderWidth * 2,
+              dimensions.pixelWidth / 2 + borderWidth * 3,
+              32
+            ]} />
+          ) : (
+            <planeGeometry args={[
+              dimensions.pixelWidth + borderWidth * 6,
+              dimensions.pixelHeight + borderWidth * 6
+            ]} />
+          )}
+          <meshBasicMaterial color="#fbbf24" opacity={0.5} transparent />
+        </mesh>
+      )}
 
       {/* Token Nameplate */}
       {token.displayName && (

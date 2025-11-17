@@ -7,14 +7,18 @@
  * - Dim (previously seen): Semi-transparent
  * - Revealed (currently visible): No fog
  *
+ * Real-time synchronization via WebSocket for multi-user sessions.
+ *
  * @module components/battle-map/FogOfWar
  */
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import type { Point2D } from '@/types/scene';
 import type { FogPolygon } from '@/utils/fog-calculations';
-import { polygonToThreeShape } from '@/utils/fog-calculations';
+import { polygonToThreeShape, simplifyPolygon } from '@/utils/fog-calculations';
+import type { RevealedArea } from '@/types/fog-of-war';
+import { useFogWebSocket } from '@/hooks/useFogWebSocket';
 
 // ===========================
 // Types
@@ -41,6 +45,16 @@ export interface FogOfWarProps {
   isGM?: boolean;
   /** Show fog to GM */
   showToGM?: boolean;
+  /** Scene ID for WebSocket sync */
+  sceneId?: string;
+  /** Auth token for WebSocket */
+  token?: string;
+  /** Current user ID */
+  userId?: string;
+  /** Callback when revealed areas updated from WebSocket */
+  onRevealedAreasUpdate?: (areas: RevealedArea[]) => void;
+  /** Enable real-time synchronization */
+  enableSync?: boolean;
 }
 
 /**
@@ -79,9 +93,90 @@ export function FogOfWar({
   fogColor = '#000000',
   isGM = false,
   showToGM = false,
+  sceneId,
+  token,
+  userId,
+  onRevealedAreasUpdate,
+  enableSync = false,
 }: FogOfWarProps) {
   const darkFogRef = useRef<THREE.Mesh>(null);
   const dimFogRef = useRef<THREE.Mesh>(null);
+
+  // State for remote fog updates
+  const [remoteFogAreas, setRemoteFogAreas] = useState<RevealedArea[]>([]);
+  const [isUpdatingByOther, setIsUpdatingByOther] = useState(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // WebSocket integration for real-time sync
+  const { isConnected, sendReveal, sendConceal } = useFogWebSocket(
+    {
+      sceneId,
+      token,
+      autoConnect: enableSync && !!sceneId && !!token,
+    },
+    {
+      onReveal: useCallback(
+        (areas: RevealedArea[], sourceUserId: string) => {
+          // Only process if from another user
+          if (sourceUserId !== userId) {
+            setRemoteFogAreas((prev) => [...prev, ...areas]);
+            setIsUpdatingByOther(true);
+
+            // Clear existing timeout
+            if (updateTimeoutRef.current) {
+              clearTimeout(updateTimeoutRef.current);
+            }
+
+            // Reset visual feedback after 2 seconds
+            updateTimeoutRef.current = setTimeout(() => {
+              setIsUpdatingByOther(false);
+            }, 2000);
+
+            // Notify parent component
+            if (onRevealedAreasUpdate) {
+              onRevealedAreasUpdate(areas);
+            }
+          }
+        },
+        [userId, onRevealedAreasUpdate]
+      ),
+      onConceal: useCallback(
+        (areas: RevealedArea[], sourceUserId: string) => {
+          // Only process if from another user
+          if (sourceUserId !== userId) {
+            const areaIds = new Set(areas.map((a) => a.id));
+            setRemoteFogAreas((prev) => prev.filter((a) => !areaIds.has(a.id)));
+            setIsUpdatingByOther(true);
+
+            // Clear existing timeout
+            if (updateTimeoutRef.current) {
+              clearTimeout(updateTimeoutRef.current);
+            }
+
+            // Reset visual feedback after 2 seconds
+            updateTimeoutRef.current = setTimeout(() => {
+              setIsUpdatingByOther(false);
+            }, 2000);
+          }
+        },
+        [userId]
+      ),
+    }
+  );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Merge local and remote revealed areas
+  const allRevealedAreas = useMemo(() => {
+    return [...revealedAreas, ...remoteFogAreas];
+  }, [revealedAreas, remoteFogAreas]);
 
   // Don't show to GM unless explicitly enabled
   const shouldShow = enabled && (!isGM || showToGM);
@@ -112,8 +207,8 @@ export function FogOfWar({
       shape.holes.push(hole);
     });
 
-    // Also cut out permanently revealed areas
-    revealedAreas.forEach((area) => {
+    // Also cut out all revealed areas (local + remote)
+    allRevealedAreas.forEach((area) => {
       if (area.points.length < 3) return;
 
       const hole = new THREE.Path();
@@ -128,16 +223,16 @@ export function FogOfWar({
     });
 
     return new THREE.ShapeGeometry(shape);
-  }, [width, height, revealedAreas, currentlyVisible]);
+  }, [width, height, allRevealedAreas, currentlyVisible]);
 
   // Create dim fog geometry (full scene with only currently visible cut out)
   const dimFogGeometry = useMemo(() => {
     // Only show dim fog over previously revealed areas
-    if (revealedAreas.length === 0) return null;
+    if (allRevealedAreas.length === 0) return null;
 
     const shapes: THREE.Shape[] = [];
 
-    revealedAreas.forEach((area) => {
+    allRevealedAreas.forEach((area) => {
       if (area.points.length < 3) return;
 
       const shape = new THREE.Shape();
@@ -154,7 +249,7 @@ export function FogOfWar({
     if (shapes.length === 0) return null;
 
     return new THREE.ShapeGeometry(shapes);
-  }, [revealedAreas]);
+  }, [allRevealedAreas]);
 
   // Material for dark fog
   const darkFogMaterial = useMemo(
@@ -217,6 +312,20 @@ export function FogOfWar({
           material={dimFogMaterial}
           renderOrder={101}
         />
+      )}
+
+      {/* Visual feedback when fog is being updated by another user */}
+      {isUpdatingByOther && enableSync && (
+        <mesh position={[width / 2, height / 2, 15]} renderOrder={200}>
+          <planeGeometry args={[width, height]} />
+          <meshBasicMaterial
+            color="#4ade80"
+            transparent
+            opacity={0.1}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+          />
+        </mesh>
       )}
     </group>
   );

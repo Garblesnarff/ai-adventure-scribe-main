@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { router, protectedProcedure } from '../trpc.js';
 import { FogOfWarService } from '../../services/fog-of-war-service.js';
+import { broadcastToScene } from '../../ws.js';
 
 /**
  * Schema for a point (x, y coordinates)
@@ -59,13 +60,16 @@ export const fogOfWarRouter = router({
     .input(z.object({
       sceneId: z.string().uuid(),
       polygon: revealAreaInputSchema,
+      targetUserId: z.string().uuid().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       try {
+        const targetUserId = input.targetUserId || ctx.user.userId;
         const revealedArea = await FogOfWarService.revealArea(
           input.sceneId,
-          ctx.user.userId,
-          input.polygon
+          targetUserId,
+          input.polygon,
+          (message) => broadcastToScene(input.sceneId, message)
         );
         return { revealedArea };
       } catch (error: any) {
@@ -83,19 +87,55 @@ export const fogOfWarRouter = router({
     }),
 
   /**
+   * Reveal multiple areas at once (batch operation)
+   */
+  revealBatch: protectedProcedure
+    .input(z.object({
+      sceneId: z.string().uuid(),
+      polygons: z.array(revealAreaInputSchema),
+      targetUserId: z.string().uuid().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const targetUserId = input.targetUserId || ctx.user.userId;
+        const revealedAreas = await FogOfWarService.revealAreas(
+          input.sceneId,
+          targetUserId,
+          input.polygons,
+          (message) => broadcastToScene(input.sceneId, message)
+        );
+        return { revealedAreas };
+      } catch (error: any) {
+        if (error.statusCode === 400) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: error.message,
+          });
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Failed to reveal areas',
+        });
+      }
+    }),
+
+  /**
    * Remove a specific revealed area by ID
    */
   conceal: protectedProcedure
     .input(z.object({
       sceneId: z.string().uuid(),
       areaId: z.string().uuid(),
+      targetUserId: z.string().uuid().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       try {
+        const targetUserId = input.targetUserId || ctx.user.userId;
         const success = await FogOfWarService.concealArea(
           input.sceneId,
-          ctx.user.userId,
-          input.areaId
+          targetUserId,
+          input.areaId,
+          (message) => broadcastToScene(input.sceneId, message)
         );
 
         if (!success) {
@@ -113,6 +153,33 @@ export const fogOfWarRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: error.message || 'Failed to conceal area',
+        });
+      }
+    }),
+
+  /**
+   * Remove multiple revealed areas by IDs (batch operation)
+   */
+  concealBatch: protectedProcedure
+    .input(z.object({
+      sceneId: z.string().uuid(),
+      areaIds: z.array(z.string().uuid()),
+      targetUserId: z.string().uuid().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const targetUserId = input.targetUserId || ctx.user.userId;
+        const concealedAreas = await FogOfWarService.concealAreas(
+          input.sceneId,
+          targetUserId,
+          input.areaIds,
+          (message) => broadcastToScene(input.sceneId, message)
+        );
+        return { concealedAreas };
+      } catch (error: any) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Failed to conceal areas',
         });
       }
     }),

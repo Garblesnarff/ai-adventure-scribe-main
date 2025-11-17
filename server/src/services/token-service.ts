@@ -203,7 +203,8 @@ export class TokenService {
   static async updateToken(
     tokenId: string,
     userId: string,
-    updates: Partial<NewToken>
+    updates: Partial<NewToken>,
+    onBroadcast?: (sceneId: string, token: Token) => void
   ): Promise<Token | null> {
     // Get existing token
     const existingToken = await this.getTokenById(tokenId, userId);
@@ -218,6 +219,11 @@ export class TokenService {
       })
       .where(eq(tokens.id, tokenId))
       .returning();
+
+    // Broadcast update via WebSocket if callback provided
+    if (updated && onBroadcast) {
+      onBroadcast(updated.sceneId, updated);
+    }
 
     return updated || null;
   }
@@ -245,12 +251,13 @@ export class TokenService {
     tokenId: string,
     userId: string,
     newX: number,
-    newY: number
+    newY: number,
+    onBroadcast?: (sceneId: string, token: Token) => void
   ): Promise<Token | null> {
     return this.updateToken(tokenId, userId, {
       positionX: String(newX),
       positionY: String(newY),
-    });
+    }, onBroadcast);
   }
 
   /**

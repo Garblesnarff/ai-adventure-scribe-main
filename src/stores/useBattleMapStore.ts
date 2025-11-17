@@ -73,6 +73,12 @@ interface BattleMapState {
   hoveredTokenId: string | null;
   draggedTokenId: string | null;
 
+  // Optimistic Updates
+  optimisticTokenUpdates: Map<string, { x: number; y: number; optimisticId: string }>;
+  addOptimisticUpdate: (tokenId: string, x: number, y: number, optimisticId: string) => void;
+  removeOptimisticUpdate: (optimisticId: string) => void;
+  clearOptimisticUpdates: () => void;
+
   // Fog of War
   fogEnabled: boolean;
   showFogToGM: boolean;
@@ -184,6 +190,8 @@ const initialState = {
   targetedTokenIds: [],
   hoveredTokenId: null,
   draggedTokenId: null,
+  // Optimistic Updates
+  optimisticTokenUpdates: new Map(),
   // Fog of War
   fogEnabled: true,
   showFogToGM: false,
@@ -372,6 +380,40 @@ export const useBattleMapStore = create<BattleMapState>()(
 
         setDraggedToken: (tokenId) =>
           set({ draggedTokenId: tokenId }, false, 'battleMap/setDraggedToken'),
+
+        // ===========================
+        // Optimistic Update Actions
+        // ===========================
+
+        addOptimisticUpdate: (tokenId, x, y, optimisticId) =>
+          set(
+            (state) => {
+              const updates = new Map(state.optimisticTokenUpdates);
+              updates.set(tokenId, { x, y, optimisticId });
+              return { optimisticTokenUpdates: updates };
+            },
+            false,
+            'battleMap/addOptimisticUpdate'
+          ),
+
+        removeOptimisticUpdate: (optimisticId) =>
+          set(
+            (state) => {
+              const updates = new Map(state.optimisticTokenUpdates);
+              for (const [tokenId, update] of updates.entries()) {
+                if (update.optimisticId === optimisticId) {
+                  updates.delete(tokenId);
+                  break;
+                }
+              }
+              return { optimisticTokenUpdates: updates };
+            },
+            false,
+            'battleMap/removeOptimisticUpdate'
+          ),
+
+        clearOptimisticUpdates: () =>
+          set({ optimisticTokenUpdates: new Map() }, false, 'battleMap/clearOptimisticUpdates'),
 
         // ===========================
         // Reset Actions

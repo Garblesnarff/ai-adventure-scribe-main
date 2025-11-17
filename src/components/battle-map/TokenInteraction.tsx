@@ -20,6 +20,7 @@ import { TokenDragGhost2D } from './TokenDragGhost';
 import { useTokenSelection } from '@/hooks/use-token-selection';
 import { useTokenDrag } from '@/hooks/use-token-drag';
 import { useBattleMapStore } from '@/stores/useBattleMapStore';
+import { trpc } from '@/infrastructure/api/trpc-client';
 import type { Token } from '@/types/token';
 import type { SceneSettings } from '@/types/scene';
 import type { LayerType } from '@/types/scene';
@@ -87,21 +88,54 @@ export function TokenInteraction({
   const [isHovered, setIsHovered] = useState(false);
 
   const setHoveredToken = useBattleMapStore((state) => state.setHoveredToken);
+  const addOptimisticUpdate = useBattleMapStore((state) => state.addOptimisticUpdate);
+  const removeOptimisticUpdate = useBattleMapStore((state) => state.removeOptimisticUpdate);
+
+  // tRPC mutation for moving tokens
+  const moveTokenMutation = trpc.tokens.move.useMutation();
 
   // Selection hook
   const { isSelected, handleTokenClick } = useTokenSelection({
     enableKeyboardShortcuts: true,
   });
 
-  // Drag hook
+  // Drag hook with optimistic updates
   const { dragState, handlePointerDown, handlePointerMove, handlePointerUp } = useTokenDrag({
     token,
     sceneSettings,
     validateMovement,
     onDragEnd: (tokenId, position) => {
-      if (onMoveComplete) {
-        onMoveComplete(token, position.x, position.y);
-      }
+      // Generate optimistic ID for reconciliation
+      const optimisticId = `${tokenId}-${Date.now()}-${Math.random()}`;
+
+      // Add optimistic update immediately
+      addOptimisticUpdate(tokenId, position.x, position.y, optimisticId);
+
+      // Call tRPC mutation
+      moveTokenMutation.mutate(
+        {
+          tokenId,
+          x: position.x,
+          y: position.y,
+          optimisticId,
+        },
+        {
+          onSuccess: () => {
+            // Remove optimistic update when server confirms
+            removeOptimisticUpdate(optimisticId);
+
+            // Call original callback if provided
+            if (onMoveComplete) {
+              onMoveComplete(token, position.x, position.y);
+            }
+          },
+          onError: (error) => {
+            // Remove failed optimistic update
+            removeOptimisticUpdate(optimisticId);
+            console.error('[TokenInteraction] Failed to move token:', error);
+          },
+        }
+      );
     },
   });
 

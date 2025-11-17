@@ -10,6 +10,8 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc.js';
 import { TokenService } from '../../services/token-service.js';
+import { broadcastToScene } from '../../ws.js';
+import type { Token } from '../../../../db/schema/index.js';
 
 /**
  * Zod validation schemas
@@ -153,10 +155,32 @@ export const tokensRouter = router({
       z.object({
         tokenId: z.string().uuid(),
         updates: updateTokenSchema,
+        optimisticId: z.string().optional(), // For client reconciliation
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const token = await TokenService.updateToken(input.tokenId, ctx.user.userId, input.updates);
+      const token = await TokenService.updateToken(
+        input.tokenId,
+        ctx.user.userId,
+        input.updates,
+        (sceneId: string, updatedToken: Token) => {
+          // Broadcast token update to scene room
+          broadcastToScene(sceneId, {
+            type: 'token:update',
+            sceneId,
+            userId: ctx.user.userId,
+            timestamp: Date.now(),
+            data: {
+              tokenId: updatedToken.id,
+              positionX: parseFloat(updatedToken.positionX),
+              positionY: parseFloat(updatedToken.positionY),
+              rotation: updatedToken.rotation ? parseFloat(updatedToken.rotation) : 0,
+              optimisticId: input.optimisticId,
+              updates: input.updates,
+            },
+          });
+        }
+      );
       return token;
     }),
 
@@ -179,10 +203,31 @@ export const tokensRouter = router({
         tokenId: z.string().uuid(),
         x: z.number(),
         y: z.number(),
+        optimisticId: z.string().optional(), // For client reconciliation
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const token = await TokenService.moveToken(input.tokenId, ctx.user.userId, input.x, input.y);
+      const token = await TokenService.moveToken(
+        input.tokenId,
+        ctx.user.userId,
+        input.x,
+        input.y,
+        (sceneId: string, updatedToken: Token) => {
+          // Broadcast token move to scene room
+          broadcastToScene(sceneId, {
+            type: 'token:update',
+            sceneId,
+            userId: ctx.user.userId,
+            timestamp: Date.now(),
+            data: {
+              tokenId: updatedToken.id,
+              positionX: parseFloat(updatedToken.positionX),
+              positionY: parseFloat(updatedToken.positionY),
+              optimisticId: input.optimisticId,
+            },
+          });
+        }
+      );
       return token;
     }),
 
