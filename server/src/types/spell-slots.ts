@@ -14,7 +14,7 @@ export interface SpellSlot {
   spellLevel: number; // 1-9
   totalSlots: number;
   usedSlots: number;
-  availableSlots: number; // Computed: totalSlots - usedSlots
+  remainingSlots: number; // Computed: totalSlots - usedSlots
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +40,8 @@ export interface CharacterSpellSlots {
   slots: SpellSlot[]; // Array of slots for levels 1-9
   totalAvailableSlots: number; // Total across all levels
   totalUsedSlots: number; // Total used across all levels
+  // Index signature for direct access by spell level
+  [level: number]: SpellSlot;
 }
 
 /**

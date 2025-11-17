@@ -381,7 +381,7 @@ export class SpellSlotsService {
       spellLevel: updatedSlot.spell_level,
       totalSlots: updatedSlot.total_slots,
       usedSlots: updatedSlot.used_slots,
-      availableSlots: updatedSlot.total_slots - updatedSlot.used_slots,
+      remainingSlots: updatedSlot.total_slots - updatedSlot.used_slots,
       createdAt: new Date(updatedSlot.created_at),
       updatedAt: new Date(updatedSlot.updated_at),
     };
