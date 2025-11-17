@@ -31,6 +31,8 @@ const CharacterCreateEntry = lazy(() => import('./pages/CharacterCreateEntry'));
 const CampaignHubWithErrorBoundary = lazy(
   () => import('./pages/campaigns/CampaignHubWithErrorBoundary'),
 );
+const SceneManagementPage = lazy(() => import('./pages/SceneManagementPage'));
+const BattleMapPage = lazy(() => import('./pages/BattleMapPage'));
 
 // TODO [legacy-character-deprecation]: Feature flag for legacy character entry. When disabling legacy character creation, set to false and then remove this flag following docs/cleanup/campaign-character-migration.md
 const ENABLE_LEGACY_CHARACTER_ENTRY = true;
@@ -159,6 +161,22 @@ function App() {
                                   element={
                                     <Suspense fallback={<RouteLoading />}>
                                       <CampaignWizard />
+                                    </Suspense>
+                                  }
+                                />
+                                <Route
+                                  path="/campaigns/:campaignId/scenes/:sceneId"
+                                  element={
+                                    <Suspense fallback={<RouteLoading />}>
+                                      <BattleMapPage />
+                                    </Suspense>
+                                  }
+                                />
+                                <Route
+                                  path="/campaigns/:campaignId/scenes"
+                                  element={
+                                    <Suspense fallback={<RouteLoading />}>
+                                      <SceneManagementPage />
                                     </Suspense>
                                   }
                                 />
