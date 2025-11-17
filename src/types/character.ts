@@ -129,6 +129,61 @@ export interface CharacterBackground {
   suggestedFlaws?: string[];
 }
 
+// ===========================
+// Character Sharing & Permissions
+// ===========================
+
+/**
+ * Sharing mode for characters
+ */
+export enum SharingMode {
+  PRIVATE = 'private',
+  VIEW_ONLY = 'view_only',
+  CAN_EDIT = 'can_edit',
+  CO_OWNER = 'co_owner',
+}
+
+/**
+ * Permission level for character access
+ */
+export enum PermissionLevel {
+  VIEWER = 'viewer',
+  EDITOR = 'editor',
+  OWNER = 'owner',
+}
+
+/**
+ * Character permission entry
+ */
+export interface CharacterPermission {
+  id: string;
+  characterId: string;
+  userId: string;
+  permissionLevel: PermissionLevel;
+  grantedBy: string; // User ID who granted permission
+  grantedAt: string; // ISO timestamp
+  expiresAt?: string; // Optional expiration timestamp
+  canShare?: boolean; // Can this user share with others
+}
+
+/**
+ * Character folder for organization
+ */
+export interface CharacterFolder {
+  id: string;
+  userId: string;
+  campaignId?: string;
+  name: string;
+  description?: string;
+  color?: string; // Hex color for folder
+  icon?: string; // Icon identifier
+  parentFolderId?: string; // For nested folders
+  characterIds: string[];
+  sharingMode: SharingMode;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Character {
   id?: string;
   user_id?: string;

@@ -305,6 +305,11 @@ export interface CombatParticipant {
   reactionTaken: boolean;
   movementUsed: number;
 
+  // Foundry VTT integration
+  position?: { x: number; y: number; sceneId: string };
+  tokenId?: string;
+  movementRemaining: number;
+
   // Reaction tracking
   reactionOpportunities: ReactionOpportunity[];
 

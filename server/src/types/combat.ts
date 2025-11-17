@@ -819,9 +819,9 @@ export interface CheckConditionConflictsResponse {
 /**
  * Aggregated mechanical effects from multiple conditions
  */
-export interface AggregatedMechanicalEffects extends MechanicalEffects {
+export type AggregatedMechanicalEffects = MechanicalEffects & {
   appliedConditions: string[]; // Names of conditions contributing to effects
-}
+};
 
 /**
  * Result of parsing mechanical effects JSON
