@@ -52,7 +52,8 @@ export default defineConfig({
       'src/engine/**/*.test.ts',
       'src/agents/langgraph/nodes/__tests__/memory-retrieval.test.ts',
       'src/agents/langgraph/nodes/__tests__/dice-roller.test.ts',
-      'src/agents/langgraph/adapters/__tests__/agent-adapter.test.ts'
+      'src/agents/langgraph/adapters/__tests__/agent-adapter.test.ts',
+      'src/__tests__/integration/langgraph-integration.test.ts'
     ],
     exclude: [
       'node_modules/**',
@@ -63,7 +64,7 @@ export default defineConfig({
       'src/archive/**',
       'supabase/**',
       // Exclude heavy/integration and env-dependent suites until mocks are stabilized
-      'src/__tests__/integration/**',
+      // 'src/__tests__/integration/**',  // Now including langgraph-integration.test.ts
       'src/__tests__/performance/**',
       'src/__tests__/summary/**',
       // Keep components tests excluded by default; curated ones are included explicitly above
@@ -92,6 +93,8 @@ export default defineConfig({
         'src/agents/langgraph/nodes/memory-retrieval.ts',
         'src/agents/langgraph/nodes/dice-roller.ts',
         'src/agents/langgraph/adapters/agent-adapter.ts',
+        'src/agents/langgraph/dm-service.ts',
+        'src/agents/langgraph/dm-graph.ts',
       ],
       exclude: [
         '**/__tests__/**',

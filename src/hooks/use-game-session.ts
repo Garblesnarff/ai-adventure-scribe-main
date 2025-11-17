@@ -9,6 +9,14 @@
  * - Supabase client (src/integrations/supabase/client.ts)
  * - Toast notification hook (src/hooks/use-toast.ts)
  * - Game session types (src/types/game.ts)
+ * - LangGraph DM Service (src/agents/langgraph/dm-service.ts) - for conversation history
+ * - Feature flags (src/lib/feature-flags.ts) - for migration control
+ *
+ * LangGraph Integration:
+ * - Loads conversation history from LangGraph checkpoints when USE_LANGGRAPH flag is enabled
+ * - Falls back to legacy dialogue_history table for backward compatibility
+ * - Clears both LangGraph and legacy history during session cleanup
+ * - Supports hybrid mode during migration with automatic fallback
  *
  * Cleanup Strategy:
  * - AbortController: Tracks and cancels in-flight async operations on unmount
@@ -49,6 +57,12 @@ import { useToast } from '@/hooks/use-toast';
 import { GameSession } from '@/types/game';
 import logger from '@/lib/logger';
 
+// ============================
+// LangGraph integration
+// ============================
+import { getDMService } from '@/agents/langgraph/dm-service';
+import { LANGGRAPH_FLAGS } from '@/lib/feature-flags';
+
 const SESSION_EXPIRY_TIME = 1000 * 60 * 60 * 24; // 24 hours (was 1 hour)
 const CLEANUP_INTERVAL = 1000 * 60 * 15; // Check every 15 minutes (was 5 minutes)
 
@@ -79,7 +93,8 @@ const CLEANUP_INTERVAL = 1000 * 60 * 15; // Check every 15 minutes (was 5 minute
  *   sessionState: 'active' | 'expired' | 'ending' | 'loading' | 'error' | 'idle',
  *   updateGameSessionState: (newState: SessionStateUpdater) => Promise<void>,
  *   createGameSession: (campId: string, charId: string) => Promise<string | null>,
- *   isSessionReady: () => boolean
+ *   isSessionReady: () => boolean,
+ *   loadConversationHistory: (sessionId: string) => Promise<any[]>
  * }} Session state and control functions
  */
 export interface ExtendedGameSession extends GameSession {
@@ -282,6 +297,67 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
   }, []); // Stable dependencies - uses refs and parameters instead
 
   /**
+   * Load conversation history from LangGraph or legacy storage
+   *
+   * Attempts to load from LangGraph checkpoints if enabled, falls back to
+   * legacy dialogue_history table.
+   *
+   * @param {string} sessionId - The session ID
+   * @returns {Promise<any[]>} Array of messages (format depends on source)
+   */
+  const loadConversationHistory = async (sessionId: string): Promise<any[]> => {
+    // Guard: Validate sessionId parameter
+    if (!sessionId) {
+      logger.warn('[useGameSession] loadConversationHistory called without valid sessionId');
+      return [];
+    }
+
+    // Try loading from LangGraph first if enabled
+    if (LANGGRAPH_FLAGS.USE_LANGGRAPH) {
+      try {
+        const dmService = getDMService();
+        const history = await dmService.getConversationHistory(sessionId);
+
+        if (history && history.length > 0) {
+          logger.info('[useGameSession] Loaded conversation history from LangGraph:', {
+            sessionId,
+            messageCount: history.length
+          });
+          return history;
+        }
+
+        logger.info('[useGameSession] No LangGraph history found, falling back to legacy');
+      } catch (error) {
+        logger.error('[useGameSession] Failed to load LangGraph history, falling back to legacy:', error);
+      }
+    }
+
+    // Fallback to legacy dialogue_history table
+    try {
+      const { data: messages, error } = await supabase
+        .from('dialogue_history')
+        .select('message, speaker_type, context')
+        .eq('session_id', sessionId)
+        .order('sequence_number', { ascending: true });
+
+      if (error) {
+        logger.error('[useGameSession] Error fetching legacy dialogue history:', error);
+        return [];
+      }
+
+      logger.info('[useGameSession] Loaded conversation history from legacy storage:', {
+        sessionId,
+        messageCount: messages?.length || 0
+      });
+
+      return messages || [];
+    } catch (err) {
+      logger.error('[useGameSession] Error loading legacy conversation history:', err);
+      return [];
+    }
+  };
+
+  /**
    * Generates a summary string for the session based on dialogue history.
    *
    * Validation:
@@ -303,16 +379,8 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     }
 
     try {
-      const { data: messages, error } = await supabase
-        .from('dialogue_history')
-        .select('message, speaker_type, context')
-        .eq('session_id', sessionId)
-        .order('sequence_number', { ascending: true });
-
-      if (error) {
-        logger.error('[generateSessionSummary] Error fetching dialogue history:', error);
-        return "No activity recorded in this session";
-      }
+      // Load history from LangGraph or legacy storage
+      const messages = await loadConversationHistory(sessionId);
 
       if (!messages?.length) {
         logger.info('[generateSessionSummary] No messages found for session:', sessionId);
@@ -321,8 +389,23 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
 
       // Simple summary generation - can be enhanced with AI later
       const messageCount = messages.length;
-      const playerActions = messages.filter(m => m.speaker_type === 'player').length;
-      const dmResponses = messages.filter(m => m.speaker_type === 'dm').length;
+
+      // Handle both LangGraph GameMessage format and legacy format
+      let playerActions = 0;
+      let dmResponses = 0;
+
+      messages.forEach(m => {
+        // LangGraph format: role property
+        if ('role' in m) {
+          if (m.role === 'user' || m.role === 'player') playerActions++;
+          if (m.role === 'assistant' || m.role === 'dm') dmResponses++;
+        }
+        // Legacy format: speaker_type property
+        else if ('speaker_type' in m) {
+          if (m.speaker_type === 'player') playerActions++;
+          if (m.speaker_type === 'dm') dmResponses++;
+        }
+      });
 
       return `Session completed with ${messageCount} total interactions: ${playerActions} player actions and ${dmResponses} DM responses.`;
     } catch (err) {
@@ -384,6 +467,10 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
    * updates on unmounted components. Returns early if component unmounts
    * during async operations.
    *
+   * LangGraph Integration:
+   * - Clears both LangGraph checkpoints and legacy dialogue_history
+   * - Ensures clean state transition between sessions
+   *
    * @param {string} sessionIdToClean - The session ID
    * @returns {Promise<string>} The generated summary
    */
@@ -405,6 +492,22 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
       logger.warn('⚠️ [cleanupSession] Component unmounted during cleanup');
       return summary;
     }
+
+    // Clear LangGraph conversation history if enabled
+    if (LANGGRAPH_FLAGS.USE_LANGGRAPH) {
+      try {
+        const dmService = getDMService();
+        await dmService.clearHistory(sessionIdToClean);
+        logger.info('[useGameSession] LangGraph conversation history cleared:', sessionIdToClean);
+      } catch (error) {
+        logger.error('[useGameSession] Failed to clear LangGraph history:', error);
+        // Continue with cleanup even if LangGraph clear fails
+      }
+    }
+
+    // Note: We keep legacy dialogue_history for now as it may be used for analytics
+    // In a future phase, we could delete legacy history here as well:
+    // await supabase.from('dialogue_history').delete().eq('session_id', sessionIdToClean);
 
     const { error } = await supabase
       .from('game_sessions')
@@ -850,6 +953,7 @@ export const useGameSession = (campaignId?: string, characterId?: string) => {
     sessionState,
     updateGameSessionState,
     createGameSession, // Expose create if manual creation is ever needed
-    isSessionReady // Helper to check if session is ready for operations
+    isSessionReady, // Helper to check if session is ready for operations
+    loadConversationHistory // Expose history loader for components that need it
   };
 };

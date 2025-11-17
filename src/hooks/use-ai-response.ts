@@ -19,6 +19,10 @@ import logger from '@/lib/logger';
 import { SessionStateService } from '@/services/session-state-service';
 import { RollManager } from '@/services/roll-manager';
 
+// LangGraph Integration
+import { getDMService } from '@/agents/langgraph/dm-service';
+import { LANGGRAPH_FLAGS, MIGRATION_STATE } from '@/lib/feature-flags';
+
 // Project Types
 import { Memory, isValidMemoryType, isValidMemorySubcategory } from '@/components/game/memory/types';
 import { ChatMessage } from '@/types/game';
@@ -166,8 +170,188 @@ export const useAIResponse = () => {
   };
 
   /**
+   * Legacy AI response generation using AIService
+   *
+   * This function encapsulates the original AI response logic for fallback scenarios
+   * during the LangGraph migration.
+   *
+   * @private
+   */
+  const legacyGenerateResponse = async (
+    messages: ChatMessage[],
+    sessionId: string,
+    turnCount: number | undefined,
+    latestMessage: ChatMessage,
+    gameContext: any,
+    conversationHistory: any[],
+    aiContext: any,
+    combatDetection: any
+  ): Promise<EnhancedChatMessage> => {
+    logger.info('[useAIResponse] Using legacy AIService for response generation');
+
+    // Use AIService directly which has local Gemini integration and combat detection
+    const result = await AIService.chatWithDM({
+      message: latestMessage.text,
+      context: aiContext,
+      conversationHistory: conversationHistory,
+      userPlan: userPlan || undefined,
+      turnCount: turnCount
+    });
+
+    // Extract response data
+    const responseText = result.text;
+    const narrationSegments = (result as any).narration_segments || (result as any).narrationSegments;
+    const imageRequests = (result as any).image_requests || (result as any).imageRequests || undefined;
+
+    // Parse roll requests from the response and process through GameContext
+    let rollRequests: RollRequest[] = result.roll_requests || [];
+    if (rollRequests.length === 0) {
+      // Check for roll requests in the text
+      const parsedRequests = parseRollRequests(responseText);
+      logger.info(`🎲 Parsed roll requests from DM text: ${parsedRequests.length}`);
+      rollRequests = parsedRequests.map(req => ({
+        type: req.type,
+        formula: req.formula,
+        purpose: req.purpose,
+        dc: req.dc,
+        ac: req.ac,
+        advantage: req.advantage,
+        disadvantage: req.disadvantage
+      }));
+
+      // Check for context-dependent roll requests (like damage after successful attacks)
+      if (detectsSuccessfulAttack(responseText)) {
+        logger.info('🎯 Detected successful attack, checking for damage roll requirement');
+        const isCritical = detectsCriticalHit(responseText);
+
+        // Check if we're already waiting for damage and this confirms the hit
+        if (rollStateManager.isAwaitingDamage()) {
+          const awaitingRoll = rollStateManager.getAwaitingDamageRoll();
+          if (awaitingRoll) {
+            // Extract weapon name from context (this could be enhanced)
+            const weaponMatch = responseText.match(/(?:your|the)\s+(\w+)/i);
+            const weaponName = weaponMatch ? weaponMatch[1] : 'weapon';
+
+            // Create damage roll request based on hit confirmation
+            const damageRequest = DiceEngine.createDamageRollRequest(weaponName, isCritical);
+
+            rollRequests.push({
+              type: 'damage',
+              formula: damageRequest.formula,
+              purpose: damageRequest.purpose
+            });
+
+            logger.info('🗡️ Added automatic damage roll request:', damageRequest);
+          }
+        }
+      }
+    }
+
+    // Track attack rolls in roll state manager
+    rollRequests.forEach(request => {
+      if (request.type === 'attack') {
+        const rollId = rollStateManager.addPendingRoll({
+          type: 'attack',
+          targetAC: request.ac,
+          context: request.purpose || 'Attack roll',
+          actorId: gameContext.character?.id || 'player'
+        });
+        logger.info('⚔️ Tracking attack roll:', rollId);
+      }
+    });
+
+    // NOTE: Roll requests are returned in the message object and will be processed
+    // by MessageHandler AFTER the AI message is displayed to prevent premature response.
+    // Logging is done here for tracking purposes.
+    if (rollRequests.length > 0) {
+      logger.info('🎲 Found', rollRequests.length, 'roll requests in AI response (will process after message display)');
+
+      // Persist roll request events to session state (lightweight logging)
+      try {
+        await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_requests', payload: rollRequests });
+        // Durable roll request logging (flag-gated)
+        for (const rr of rollRequests) {
+          const kindMap: Record<string, 'check'|'save'|'attack'|'initiative'|'damage'> = {
+            check: 'check', save: 'save', attack: 'attack', initiative: 'initiative', damage: 'damage'
+          };
+          const kind = kindMap[rr.type] || 'check';
+          await RollManager.recordRollRequest({
+            sessionId,
+            kind,
+            purpose: rr.purpose,
+            formula: rr.formula,
+            dc: typeof rr.dc === 'number' ? rr.dc : undefined,
+            ac: typeof rr.ac === 'number' ? rr.ac : undefined,
+            advantage: !!rr.advantage,
+            disadvantage: !!rr.disadvantage,
+          });
+        }
+      } catch (e) {
+        logger.warn('Non-fatal: failed to append roll request log', e);
+      }
+    }
+
+    // Update game phase based on combat detection (use currentPhase for idempotent transitions)
+    if (result.combatDetection?.isCombat && gameState.currentPhase !== 'combat') {
+      logger.info('⚔️ Combat detected, updating game phase');
+      setGamePhase('combat');
+    } else if (!result.combatDetection?.isCombat && gameState.currentPhase === 'combat' && !combatState.isInCombat) {
+      logger.info('🕊️ Combat ended, returning to exploration');
+      setGamePhase('exploration');
+    }
+
+    // Process voice assignments if we have narration segments
+    if (narrationSegments && narrationSegments.length > 0) {
+      logger.info('🎭 Received structured response with', narrationSegments.length, 'narration segments');
+
+      try {
+        await voiceConsistencyService.processVoiceAssignments(sessionId, narrationSegments);
+        logger.info('✅ Processed voice assignments successfully');
+      } catch (voiceError) {
+        logger.warn('Warning: Failed to process voice assignments:', voiceError);
+        // Don't fail the entire response for voice processing errors
+      }
+    } else {
+      logger.info('📝 Received text-only response');
+    }
+
+    // Clamp combat intent flags to be mutually exclusive for logging/UX clarity
+    let startHint = !!combatDetection.shouldStartCombat;
+    let endHint = !!combatDetection.shouldEndCombat;
+    if (startHint && endHint) {
+      if (combatState.isInCombat) startHint = false; else endHint = false;
+    }
+
+    // Format the response as an EnhancedChatMessage
+    return {
+      text: responseText,
+      sender: 'dm',
+      timestamp: new Date().toISOString(),
+      context: {
+        emotion: 'neutral',
+        intent: 'response',
+      },
+      narrationSegments: narrationSegments,
+      diceRolls: (result as any).dice_rolls || [],
+      rollRequests: rollRequests,
+      imageRequests,
+      combatDetection: {
+        isCombat: combatDetection.isCombat,
+        confidence: combatDetection.confidence,
+        combatType: combatDetection.combatType,
+        shouldStartCombat: startHint,
+        shouldEndCombat: endHint,
+        enemies: combatDetection.enemies || [],
+        combatActions: combatDetection.combatActions || []
+      }
+    };
+  };
+
+  /**
    * Calls the DM Agent to generate a response based on chat history and game context.
    * Now handles structured responses with narration segments for voice synthesis.
+   *
+   * Supports both LangGraph and legacy AIService based on feature flags.
    *
    * @param {ChatMessage[]} messages - The full message history
    * @param {string} sessionId - The session ID
@@ -332,162 +516,115 @@ export const useAIResponse = () => {
         currentTurn: combatState.activeEncounter?.currentTurnParticipantId
       });
 
-      // Use AIService directly which has local Gemini integration and combat detection
-      const result = await AIService.chatWithDM({
-        message: latestMessage.text,
-        context: aiContext,
-        conversationHistory: conversationHistory,
-        userPlan: userPlan || undefined,
-        turnCount: turnCount
-      });
+      // ========================================
+      // LangGraph Integration with Feature Flags
+      // ========================================
 
-      // Extract response data
-      const responseText = result.text;
-      const narrationSegments = (result as any).narration_segments || (result as any).narrationSegments;
-      const imageRequests = (result as any).image_requests || (result as any).imageRequests || undefined;
+      // Use LangGraph if enabled
+      if (LANGGRAPH_FLAGS.USE_LANGGRAPH) {
+        try {
+          logger.info('[useAIResponse] Using LangGraph for AI response generation');
 
-      // Parse roll requests from the response and process through GameContext
-      let rollRequests: RollRequest[] = result.roll_requests || [];
-      if (rollRequests.length === 0) {
-        // Check for roll requests in the text
-        const parsedRequests = parseRollRequests(responseText);
-        logger.info(`🎲 Parsed roll requests from DM text: ${parsedRequests.length}`);
-        rollRequests = parsedRequests.map(req => ({
-          type: req.type,
-          formula: req.formula,
-          purpose: req.purpose,
-          dc: req.dc,
-          ac: req.ac,
-          advantage: req.advantage,
-          disadvantage: req.disadvantage
-        }));
+          const dmService = getDMService();
 
-        // Check for context-dependent roll requests (like damage after successful attacks)
-        if (detectsSuccessfulAttack(responseText)) {
-          logger.info('🎯 Detected successful attack, checking for damage roll requirement');
-          const isCritical = detectsCriticalHit(responseText);
+          // Convert game messages to LangGraph format
+          const langGraphHistory = conversationHistory.map(msg => ({
+            role: msg.role === 'user' ? 'player' as const : 'dm' as const,
+            content: msg.content,
+            timestamp: msg.timestamp
+          }));
 
-          // Check if we're already waiting for damage and this confirms the hit
-          if (rollStateManager.isAwaitingDamage()) {
-            const awaitingRoll = rollStateManager.getAwaitingDamageRoll();
-            if (awaitingRoll) {
-              // Extract weapon name from context (this could be enhanced)
-              const weaponMatch = responseText.match(/(?:your|the)\s+(\w+)/i);
-              const weaponName = weaponMatch ? weaponMatch[1] : 'weapon';
-
-              // Create damage roll request based on hit confirmation
-              const damageRequest = DiceEngine.createDamageRollRequest(weaponName, isCritical);
-
-              rollRequests.push({
-                type: 'damage',
-                formula: damageRequest.formula,
-                purpose: damageRequest.purpose
-              });
-
-              logger.info('🗡️ Added automatic damage roll request:', damageRequest);
-            }
-          }
-        }
-      }
-
-      // Track attack rolls in roll state manager
-      rollRequests.forEach(request => {
-        if (request.type === 'attack') {
-          const rollId = rollStateManager.addPendingRoll({
-            type: 'attack',
-            targetAC: request.ac,
-            context: request.purpose || 'Attack roll',
-            actorId: gameContext.character?.id || 'player'
+          // Call LangGraph DM service
+          const result = await dmService.sendMessage({
+            sessionId: sessionId,
+            message: latestMessage.text,
+            context: {
+              campaignId: aiContext.campaignId,
+              characterId: aiContext.characterId,
+              sessionId: sessionId,
+              campaignDetails: aiContext.campaignDetails,
+              characterDetails: aiContext.characterDetails,
+              recentEvents: selectedMemories.map(m => m.content).slice(0, 5)
+            },
+            conversationHistory: langGraphHistory
           });
-          logger.info('⚔️ Tracking attack roll:', rollId);
-        }
-      });
 
-      // NOTE: Roll requests are returned in the message object and will be processed
-      // by MessageHandler AFTER the AI message is displayed to prevent premature response.
-      // Logging is done here for tracking purposes.
-      if (rollRequests.length > 0) {
-        logger.info('🎲 Found', rollRequests.length, 'roll requests in AI response (will process after message display)');
+          logger.info('[useAIResponse] LangGraph response received successfully');
 
-        // Persist roll request events to session state (lightweight logging)
-        try {
-          await SessionStateService.appendRollEvent(sessionId, { kind: 'roll_requests', payload: rollRequests });
-          // Durable roll request logging (flag-gated)
-          for (const rr of rollRequests) {
-            const kindMap: Record<string, 'check'|'save'|'attack'|'initiative'|'damage'> = {
-              check: 'check', save: 'save', attack: 'attack', initiative: 'initiative', damage: 'damage'
-            };
-            const kind = kindMap[rr.type] || 'check';
-            await RollManager.recordRollRequest({
-              sessionId,
-              kind,
-              purpose: rr.purpose,
-              formula: rr.formula,
-              dc: typeof rr.dc === 'number' ? rr.dc : undefined,
-              ac: typeof rr.ac === 'number' ? rr.ac : undefined,
-              advantage: !!rr.advantage,
-              disadvantage: !!rr.disadvantage,
-            });
+          // Parse roll requests from LangGraph response if needed
+          let rollRequests: RollRequest[] = [];
+          if (result.requiresDiceRoll) {
+            // Parse roll requests from the response text
+            const parsedRequests = parseRollRequests(result.response);
+            logger.info(`🎲 Parsed ${parsedRequests.length} roll requests from LangGraph response`);
+            rollRequests = parsedRequests.map(req => ({
+              type: req.type,
+              formula: req.formula,
+              purpose: req.purpose,
+              dc: req.dc,
+              ac: req.ac,
+              advantage: req.advantage,
+              disadvantage: req.disadvantage
+            }));
           }
-        } catch (e) {
-          logger.warn('Non-fatal: failed to append roll request log', e);
+
+          // Format LangGraph response as EnhancedChatMessage
+          return {
+            text: result.response,
+            sender: 'dm',
+            timestamp: new Date().toISOString(),
+            context: {
+              emotion: result.emotionalTone || 'neutral',
+              intent: 'response',
+            },
+            rollRequests: rollRequests,
+            combatDetection: {
+              isCombat: combatDetection.isCombat,
+              confidence: combatDetection.confidence,
+              combatType: combatDetection.combatType,
+              shouldStartCombat: combatDetection.shouldStartCombat,
+              shouldEndCombat: combatDetection.shouldEndCombat,
+              enemies: combatDetection.enemies || [],
+              combatActions: combatDetection.combatActions || []
+            }
+          };
+        } catch (error) {
+          logger.error('[useAIResponse] LangGraph failed:', error);
+
+          // Fallback to legacy if hybrid mode enabled
+          if (MIGRATION_STATE.LEGACY_FALLBACK) {
+            logger.warn('[useAIResponse] Falling back to legacy AIService');
+            return await legacyGenerateResponse(
+              messages,
+              sessionId,
+              turnCount,
+              latestMessage,
+              gameContext,
+              conversationHistory,
+              aiContext,
+              combatDetection
+            );
+          }
+
+          // Re-throw error if no fallback
+          throw error;
         }
       }
 
-      // Update game phase based on combat detection (use currentPhase for idempotent transitions)
-      if (result.combatDetection?.isCombat && gameState.currentPhase !== 'combat') {
-        logger.info('⚔️ Combat detected, updating game phase');
-        setGamePhase('combat');
-      } else if (!result.combatDetection?.isCombat && gameState.currentPhase === 'combat' && !combatState.isInCombat) {
-        logger.info('🕊️ Combat ended, returning to exploration');
-        setGamePhase('exploration');
-      }
+      // ========================================
+      // Legacy AIService (fallback or default)
+      // ========================================
 
-      // Process voice assignments if we have narration segments
-      if (narrationSegments && narrationSegments.length > 0) {
-        logger.info('🎭 Received structured response with', narrationSegments.length, 'narration segments');
-        
-        try {
-          await voiceConsistencyService.processVoiceAssignments(sessionId, narrationSegments);
-          logger.info('✅ Processed voice assignments successfully');
-        } catch (voiceError) {
-          logger.warn('Warning: Failed to process voice assignments:', voiceError);
-          // Don't fail the entire response for voice processing errors
-        }
-      } else {
-        logger.info('📝 Received text-only response');
-      }
-
-      // Clamp combat intent flags to be mutually exclusive for logging/UX clarity
-      let startHint = !!combatDetection.shouldStartCombat;
-      let endHint = !!combatDetection.shouldEndCombat;
-      if (startHint && endHint) {
-        if (combatState.isInCombat) startHint = false; else endHint = false;
-      }
-
-      // Format the response as an EnhancedChatMessage
-      return {
-        text: responseText,
-        sender: 'dm',
-        timestamp: new Date().toISOString(),
-        context: {
-          emotion: 'neutral',
-          intent: 'response',
-        },
-        narrationSegments: narrationSegments,
-        diceRolls: (result as any).dice_rolls || [],
-        rollRequests: rollRequests,
-        imageRequests,
-        combatDetection: {
-          isCombat: combatDetection.isCombat,
-          confidence: combatDetection.confidence,
-          combatType: combatDetection.combatType,
-          shouldStartCombat: startHint,
-          shouldEndCombat: endHint,
-          enemies: combatDetection.enemies || [],
-          combatActions: combatDetection.combatActions || []
-        }
-      };
+      return await legacyGenerateResponse(
+        messages,
+        sessionId,
+        turnCount,
+        latestMessage,
+        gameContext,
+        conversationHistory,
+        aiContext,
+        combatDetection
+      );
     } catch (error) {
       logger.error('Error in getAIResponse:', error);
       throw error;
