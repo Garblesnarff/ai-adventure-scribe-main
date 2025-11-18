@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Shield",
+    "value": 1,
+    "slots": 1,
+    "description": "Provides +1 armor protection"
+  },
+  {
+    "name": "Helmet",
+    "value": 1,
+    "slots": 1,
+    "description": "Provides +1 armor protection"
+  },
+  {
+    "name": "Gambeson",
+    "value": 1,
+    "slots": 1,
+    "description": "Quilted armor jacket, +1 armor"
+  },
+  {
+    "name": "Brigandine",
+    "value": 2,
+    "slots": 2,
+    "description": "Reinforced leather with metal plates, +2 armor, bulky"
+  },
+  {
+    "name": "Chain Mail",
+    "value": 2,
+    "slots": 2,
+    "description": "Metal chain armor, +2 armor, bulky"
+  },
+  {
+    "name": "Plate Mail",
+    "value": 3,
+    "slots": 3,
+    "description": "Full metal plate armor, +3 armor, bulky"
+  },
+  {
+    "name": "Leather Armor",
+    "value": 1,
+    "slots": 1,
+    "description": "Light leather protection, +1 armor"
+  }
+]

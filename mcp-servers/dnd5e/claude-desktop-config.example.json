@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "dnd5e": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/ai-adventure-scribe-main/mcp-servers/dnd5e/dist/index.js"
+      ],
+      "env": {}
+    }
+  }
+}

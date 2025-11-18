@@ -1,0 +1,85 @@
+{
+  "mcpServers": {
+    "ai-adventure-scribe-dnd5e": {
+      "command": "node",
+      "args": [
+        "/path/to/ai-adventure-scribe/mcp-servers/dist/servers/dnd5e.js"
+      ],
+      "env": {
+        "GAME_SYSTEM": "dnd5e",
+        "LOG_LEVEL": "info"
+      },
+      "description": "D&D 5th Edition game system server for AI Adventure Scribe",
+      "capabilities": {
+        "tools": true,
+        "resources": true,
+        "prompts": true
+      }
+    },
+    "ai-adventure-scribe-ose": {
+      "command": "node",
+      "args": [
+        "/path/to/ai-adventure-scribe/mcp-servers/dist/servers/ose.js"
+      ],
+      "env": {
+        "GAME_SYSTEM": "ose_classic",
+        "LOG_LEVEL": "info"
+      },
+      "description": "Old-School Essentials Classic game system server for AI Adventure Scribe",
+      "capabilities": {
+        "tools": true,
+        "resources": true,
+        "prompts": true
+      }
+    },
+    "ai-adventure-scribe-cairn": {
+      "command": "node",
+      "args": [
+        "/path/to/ai-adventure-scribe/mcp-servers/dist/servers/cairn.js"
+      ],
+      "env": {
+        "GAME_SYSTEM": "cairn",
+        "LOG_LEVEL": "info"
+      },
+      "description": "Cairn RPG game system server for AI Adventure Scribe",
+      "capabilities": {
+        "tools": true,
+        "resources": true,
+        "prompts": true
+      }
+    },
+    "ai-adventure-scribe-knave": {
+      "command": "node",
+      "args": [
+        "/path/to/ai-adventure-scribe/mcp-servers/dist/servers/knave.js"
+      ],
+      "env": {
+        "GAME_SYSTEM": "knave",
+        "LOG_LEVEL": "info"
+      },
+      "description": "Knave RPG game system server for AI Adventure Scribe",
+      "capabilities": {
+        "tools": true,
+        "resources": true,
+        "prompts": true
+      }
+    }
+  },
+  "settings": {
+    "autoStart": false,
+    "healthCheckInterval": 30000,
+    "reconnectAttempts": 3,
+    "reconnectDelay": 5000
+  },
+  "notes": {
+    "installation": "Replace '/path/to/ai-adventure-scribe' with the actual path to your installation",
+    "usage": "Copy the 'mcpServers' object to your Claude Desktop config file",
+    "configLocation": {
+      "macos": "~/Library/Application Support/Claude/claude_desktop_config.json",
+      "windows": "%APPDATA%/Claude/claude_desktop_config.json",
+      "linux": "~/.config/Claude/claude_desktop_config.json"
+    },
+    "multipleServers": "You can enable multiple game system servers simultaneously",
+    "selectiveLoading": "Comment out or remove servers you don't want to use"
+  }
+}

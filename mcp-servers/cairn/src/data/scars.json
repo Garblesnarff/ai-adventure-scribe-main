@@ -1,0 +1,55 @@
+[
+  {
+    "range": [1, 10],
+    "description": "Lasting Scar",
+    "effect": "Noticeable but no mechanical effect"
+  },
+  {
+    "range": [11, 20],
+    "description": "Rattling Blow",
+    "effect": "Deprived until rest",
+    "ability": "str"
+  },
+  {
+    "range": [21, 30],
+    "description": "Walloped",
+    "effect": "Deprived until rest",
+    "ability": "dex"
+  },
+  {
+    "range": [31, 40],
+    "description": "Broken Limb",
+    "effect": "Cannot use one arm/leg until healed"
+  },
+  {
+    "range": [41, 50],
+    "description": "Diseased",
+    "effect": "Deprived until cured"
+  },
+  {
+    "range": [51, 60],
+    "description": "Reorienting Head Wound",
+    "effect": "Deprived until rest",
+    "ability": "wil"
+  },
+  {
+    "range": [61, 70],
+    "description": "Hamstrung",
+    "effect": "Movement reduced by half"
+  },
+  {
+    "range": [71, 80],
+    "description": "Deafened",
+    "effect": "Cannot hear, fail all hearing-related saves"
+  },
+  {
+    "range": [81, 90],
+    "description": "Disarmed",
+    "effect": "Weapon is knocked away"
+  },
+  {
+    "range": [91, 100],
+    "description": "Knocked Out",
+    "effect": "Unconscious for 1d4 hours"
+  }
+]

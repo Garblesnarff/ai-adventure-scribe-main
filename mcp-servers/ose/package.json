@@ -1,0 +1,34 @@
+{
+  "name": "@ai-adventure-scribe/mcp-ose-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for Old-School Essentials (OSE) rules",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-ose-server": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch & node --watch dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ose",
+    "old-school-essentials",
+    "ttrpg",
+    "rpg",
+    "tabletop"
+  ],
+  "author": "AI Adventure Scribe",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "typescript": "^5.5.3"
+  }
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Torch",
+    "slots": 1,
+    "description": "Provides light for several hours"
+  },
+  {
+    "name": "Rope (50ft)",
+    "slots": 1,
+    "description": "50 feet of sturdy rope"
+  },
+  {
+    "name": "Rations (3 days)",
+    "slots": 1,
+    "description": "Food for 3 days of travel"
+  },
+  {
+    "name": "Waterskin",
+    "slots": 1,
+    "description": "Holds water for a day"
+  },
+  {
+    "name": "Lantern & Oil",
+    "slots": 1,
+    "description": "Provides bright light"
+  },
+  {
+    "name": "Bedroll",
+    "slots": 1,
+    "description": "For sleeping comfortably"
+  },
+  {
+    "name": "Backpack",
+    "slots": 0,
+    "description": "Holds up to 10 items (included in inventory)"
+  },
+  {
+    "name": "Grappling Hook",
+    "slots": 1,
+    "description": "For climbing and scaling"
+  },
+  {
+    "name": "Crowbar",
+    "slots": 1,
+    "description": "For prying and leverage"
+  },
+  {
+    "name": "Chalk",
+    "slots": 1,
+    "description": "For marking passages"
+  },
+  {
+    "name": "Lockpicks",
+    "slots": 1,
+    "description": "For opening locks"
+  },
+  {
+    "name": "Mirror (hand)",
+    "slots": 1,
+    "description": "Small mirror for peeking around corners"
+  },
+  {
+    "name": "Pole (10ft)",
+    "slots": 1,
+    "description": "For prodding and testing"
+  },
+  {
+    "name": "Chain (10ft)",
+    "slots": 1,
+    "description": "Strong metal chain"
+  },
+  {
+    "name": "Spikes (5)",
+    "slots": 1,
+    "description": "Iron spikes for climbing or jamming doors"
+  },
+  {
+    "name": "Tinderbox",
+    "slots": 1,
+    "description": "For starting fires"
+  },
+  {
+    "name": "Bag of Marbles",
+    "slots": 1,
+    "description": "Can be scattered to slow pursuers"
+  },
+  {
+    "name": "Healing Salve",
+    "slots": 1,
+    "description": "Restores 1d4 STR when applied during rest"
+  },
+  {
+    "name": "Antitoxin",
+    "slots": 1,
+    "description": "Cures poison"
+  },
+  {
+    "name": "Horn",
+    "slots": 1,
+    "description": "For signaling"
+  }
+]

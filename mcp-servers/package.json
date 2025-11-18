@@ -1,0 +1,75 @@
+{
+  "name": "@ai-adventure-scribe/mcp-servers",
+  "version": "1.0.0",
+  "description": "MCP servers for AI Adventure Scribe - providing game system tools for AI DMs",
+  "type": "module",
+  "main": "dist/manager.js",
+  "types": "dist/manager.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "start": "node dist/manager.js",
+    "start:dnd5e": "GAME_SYSTEM=dnd5e node dist/servers/dnd5e.js",
+    "start:ose": "GAME_SYSTEM=ose_classic node dist/servers/ose.js",
+    "start:cairn": "GAME_SYSTEM=cairn node dist/servers/cairn.js",
+    "start:knave": "GAME_SYSTEM=knave node dist/servers/knave.js",
+    "dev:dnd5e": "GAME_SYSTEM=dnd5e tsx watch servers/dnd5e.ts",
+    "dev:ose": "GAME_SYSTEM=ose_classic tsx watch servers/ose.ts",
+    "dev:cairn": "GAME_SYSTEM=cairn tsx watch servers/cairn.ts",
+    "dev:knave": "GAME_SYSTEM=knave tsx watch servers/knave.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "dnd",
+    "dnd5e",
+    "ttrpg",
+    "rpg",
+    "tabletop",
+    "ose",
+    "cairn",
+    "knave",
+    "ai",
+    "dm",
+    "dungeon-master"
+  ],
+  "author": "AI Adventure Scribe",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "events": "^3.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.9.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "config.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ai-adventure-scribe.git",
+    "directory": "mcp-servers"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/ai-adventure-scribe/issues"
+  },
+  "homepage": "https://github.com/yourusername/ai-adventure-scribe#readme"
+}

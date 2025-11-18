@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Dagger",
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Sword",
+    "damageDice": "1d8",
+    "damageType": "slashing",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Greatsword",
+    "damageDice": "1d10",
+    "damageType": "slashing",
+    "slots": 2,
+    "hands": 2,
+    "properties": ["bulky"]
+  },
+  {
+    "name": "Spear",
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "slots": 1,
+    "hands": 1,
+    "properties": ["reach"]
+  },
+  {
+    "name": "Staff",
+    "damageDice": "1d6",
+    "damageType": "bludgeoning",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Club",
+    "damageDice": "1d6",
+    "damageType": "bludgeoning",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Mace",
+    "damageDice": "1d8",
+    "damageType": "bludgeoning",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Warhammer",
+    "damageDice": "1d10",
+    "damageType": "bludgeoning",
+    "slots": 2,
+    "hands": 2,
+    "properties": ["bulky"]
+  },
+  {
+    "name": "Bow",
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "slots": 2,
+    "hands": 2,
+    "properties": ["bulky"]
+  },
+  {
+    "name": "Crossbow",
+    "damageDice": "1d8",
+    "damageType": "piercing",
+    "slots": 2,
+    "hands": 2,
+    "properties": ["bulky", "reload"]
+  },
+  {
+    "name": "Axe",
+    "damageDice": "1d6",
+    "damageType": "slashing",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Battleaxe",
+    "damageDice": "1d10",
+    "damageType": "slashing",
+    "slots": 2,
+    "hands": 2,
+    "properties": ["bulky"]
+  },
+  {
+    "name": "Sling",
+    "damageDice": "1d4",
+    "damageType": "bludgeoning",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Flail",
+    "damageDice": "1d8",
+    "damageType": "bludgeoning",
+    "slots": 1,
+    "hands": 1,
+    "properties": []
+  },
+  {
+    "name": "Halberd",
+    "damageDice": "1d10",
+    "damageType": "slashing",
+    "slots": 2,
+    "hands": 2,
+    "properties": ["bulky", "reach"]
+  }
+]

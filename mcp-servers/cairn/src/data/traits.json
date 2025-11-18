@@ -1,0 +1,252 @@
+[
+  {
+    "type": "background",
+    "name": "Alchemist",
+    "description": "You know the secrets of potions and elixirs. Start with 2 random spellbooks and a healing salve."
+  },
+  {
+    "type": "background",
+    "name": "Herbalist",
+    "description": "You know which plants heal and which harm. Start with healing salves and antitoxin."
+  },
+  {
+    "type": "background",
+    "name": "Blacksmith",
+    "description": "You forge weapons and armor. Start with a warhammer and repair tools."
+  },
+  {
+    "type": "background",
+    "name": "Burglar",
+    "description": "You're skilled at getting into places you shouldn't be. Start with lockpicks and a grappling hook."
+  },
+  {
+    "type": "background",
+    "name": "Cleric",
+    "description": "You serve a higher power. Start with a holy symbol and healing knowledge."
+  },
+  {
+    "type": "background",
+    "name": "Gambler",
+    "description": "You know how to read people and take risks. Start with loaded dice and extra coin."
+  },
+  {
+    "type": "background",
+    "name": "Gravedigger",
+    "description": "You know death intimately. Start with a shovel and knowledge of the undead."
+  },
+  {
+    "type": "background",
+    "name": "Hunter",
+    "description": "You track and trap game. Start with a bow and knowledge of animals."
+  },
+  {
+    "type": "background",
+    "name": "Minstrel",
+    "description": "You tell stories and play music. Start with an instrument and charm."
+  },
+  {
+    "type": "background",
+    "name": "Mercenary",
+    "description": "You fight for coin. Start with quality weapons and armor."
+  },
+  {
+    "type": "background",
+    "name": "Merchant",
+    "description": "You know the value of things. Start with extra coin and trade goods."
+  },
+  {
+    "type": "background",
+    "name": "Outlaw",
+    "description": "You live outside the law. Start with a disguise kit and a wanted poster."
+  },
+  {
+    "type": "background",
+    "name": "Performer",
+    "description": "You entertain crowds. Start with stage props and costumes."
+  },
+  {
+    "type": "background",
+    "name": "Pickpocket",
+    "description": "Your hands are quick and light. Start with stolen trinkets and lockpicks."
+  },
+  {
+    "type": "background",
+    "name": "Ranger",
+    "description": "You survive in the wilderness. Start with survival gear and tracking skills."
+  },
+  {
+    "type": "background",
+    "name": "Rat-Catcher",
+    "description": "You deal with vermin. Start with a small dog, net, and poison."
+  },
+  {
+    "type": "background",
+    "name": "Scribe",
+    "description": "You record knowledge. Start with writing supplies and books."
+  },
+  {
+    "type": "background",
+    "name": "Smuggler",
+    "description": "You move contraband. Start with hidden pockets and contacts."
+  },
+  {
+    "type": "background",
+    "name": "Servant",
+    "description": "You know how to serve and observe. Start with knowledge of etiquette."
+  },
+  {
+    "type": "background",
+    "name": "Wizard",
+    "description": "You study arcane arts. Start with 3 random spellbooks and a staff."
+  },
+  {
+    "type": "physique",
+    "name": "Athletic",
+    "description": "Muscular and well-built"
+  },
+  {
+    "type": "physique",
+    "name": "Brawny",
+    "description": "Broad and strong"
+  },
+  {
+    "type": "physique",
+    "name": "Flabby",
+    "description": "Soft and overweight"
+  },
+  {
+    "type": "physique",
+    "name": "Lanky",
+    "description": "Tall and thin"
+  },
+  {
+    "type": "physique",
+    "name": "Rugged",
+    "description": "Hardy and weathered"
+  },
+  {
+    "type": "physique",
+    "name": "Scrawny",
+    "description": "Thin and weak-looking"
+  },
+  {
+    "type": "physique",
+    "name": "Short",
+    "description": "Below average height"
+  },
+  {
+    "type": "physique",
+    "name": "Statuesque",
+    "description": "Tall and impressive"
+  },
+  {
+    "type": "physique",
+    "name": "Stout",
+    "description": "Thick and sturdy"
+  },
+  {
+    "type": "physique",
+    "name": "Towering",
+    "description": "Exceptionally tall"
+  },
+  {
+    "type": "skin",
+    "name": "Birthmark",
+    "description": "Distinctive mark on skin"
+  },
+  {
+    "type": "skin",
+    "name": "Dark",
+    "description": "Deep brown complexion"
+  },
+  {
+    "type": "skin",
+    "name": "Elongated",
+    "description": "Stretched or unusual features"
+  },
+  {
+    "type": "skin",
+    "name": "Pockmarked",
+    "description": "Scarred from disease"
+  },
+  {
+    "type": "skin",
+    "name": "Rosy",
+    "description": "Healthy pink complexion"
+  },
+  {
+    "type": "skin",
+    "name": "Round",
+    "description": "Soft, rounded features"
+  },
+  {
+    "type": "skin",
+    "name": "Soft",
+    "description": "Smooth and unblemished"
+  },
+  {
+    "type": "skin",
+    "name": "Tanned",
+    "description": "Sun-darkened skin"
+  },
+  {
+    "type": "skin",
+    "name": "Tattooed",
+    "description": "Marked with ink designs"
+  },
+  {
+    "type": "skin",
+    "name": "Weathered",
+    "description": "Aged by the elements"
+  },
+  {
+    "type": "hair",
+    "name": "Bald",
+    "description": "No hair"
+  },
+  {
+    "type": "hair",
+    "name": "Braided",
+    "description": "Woven into plaits"
+  },
+  {
+    "type": "hair",
+    "name": "Curly",
+    "description": "Natural curls"
+  },
+  {
+    "type": "hair",
+    "name": "Filthy",
+    "description": "Dirty and unkempt"
+  },
+  {
+    "type": "hair",
+    "name": "Frizzy",
+    "description": "Wild and untamed"
+  },
+  {
+    "type": "hair",
+    "name": "Long",
+    "description": "Flowing and lengthy"
+  },
+  {
+    "type": "hair",
+    "name": "Luxurious",
+    "description": "Thick and beautiful"
+  },
+  {
+    "type": "hair",
+    "name": "Oily",
+    "description": "Greasy and slick"
+  },
+  {
+    "type": "hair",
+    "name": "Wavy",
+    "description": "Gentle waves"
+  },
+  {
+    "type": "hair",
+    "name": "Wispy",
+    "description": "Thin and delicate"
+  }
+]

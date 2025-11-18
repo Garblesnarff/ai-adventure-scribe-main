@@ -1,0 +1,37 @@
+{
+  "name": "@ai-adventure-scribe/mcp-dnd5e",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for D&D 5E rules",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mcp-dnd5e": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "npm run build && node dist/examples/test-server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "dnd",
+    "d&d",
+    "dungeons-and-dragons",
+    "5e",
+    "ttrpg"
+  ],
+  "author": "AI Adventure Scribe",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "typescript": "^5.5.3"
+  }
+}
