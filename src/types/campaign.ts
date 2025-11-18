@@ -1,3 +1,5 @@
+import type { GameSystem } from './game-systems';
+
 /**
  * Interface for campaign setting details
  */
@@ -69,6 +71,10 @@ export interface Campaign {
   art_style?: string;
   style_config?: Record<string, any>;
   rules_config?: Record<string, any>;
+  /**
+   * The game system used for this campaign (e.g., D&D 5e, Pathfinder 2e)
+   */
+  gameSystem?: GameSystem;
   created_at?: string;
   updated_at?: string;
 }

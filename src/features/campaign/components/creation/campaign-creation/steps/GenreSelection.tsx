@@ -10,6 +10,7 @@ import {
   Eye,
   Check,
   Sparkles,
+  Info,
 } from 'lucide-react';
 import React from 'react';
 
@@ -22,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { useCampaign } from '@/contexts/CampaignContext';
+import { getSystemConfigs } from '@/data/game-systems';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 
 type GenreMeta = {
@@ -101,16 +103,33 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
   const [viewMode, setViewMode] = React.useState<'grid' | 'list' | 'compact'>('compact');
   const [hovered, setHovered] = React.useState<string | null>(null);
 
+  // Get selected game system and its compatible genres
+  const selectedSystemConfig = React.useMemo(() => {
+    if (!state.campaign?.gameSystem) return null;
+    const allSystems = getSystemConfigs();
+    return allSystems.find((s) => s.id === state.campaign?.gameSystem);
+  }, [state.campaign?.gameSystem]);
+
+  const compatibleGenres = React.useMemo(() => {
+    if (!selectedSystemConfig) return GENRES;
+    // Filter genres based on system's compatibleGenres (which use label format)
+    return GENRES.filter((genre) => selectedSystemConfig.compatibleGenres.includes(genre.label));
+  }, [selectedSystemConfig]);
+
   const filteredGenres = React.useMemo(() => {
-    if (!searchQuery.trim()) return GENRES;
+    // First filter by compatible genres
+    let genres = compatibleGenres;
+
+    // Then apply search filter
+    if (!searchQuery.trim()) return genres;
     const q = searchQuery.toLowerCase();
-    return GENRES.filter(
+    return genres.filter(
       (g) =>
         g.label.toLowerCase().includes(q) ||
         g.description.toLowerCase().includes(q) ||
         g.themes.some((t) => t.toLowerCase().includes(q)),
     );
-  }, [searchQuery]);
+  }, [searchQuery, compatibleGenres]);
 
   const handleGenreChange = (value: string) => {
     dispatch({
@@ -154,6 +173,15 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
         <p className="text-sm text-muted-foreground mt-2">
           Select the world and tone for your epic adventure
         </p>
+        {selectedSystemConfig && (
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm text-blue-700 dark:text-blue-300">
+              Showing genres compatible with{' '}
+              <span className="font-semibold">{selectedSystemConfig.name}</span>
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Controls: search + view toggles */}
@@ -196,7 +224,7 @@ const GenreSelection: React.FC<{ isLoading?: boolean }> = ({ isLoading = false }
             </Button>
           </div>
           <div className="text-sm text-muted-foreground ml-auto">
-            Showing {filteredGenres.length} of {GENRES.length}
+            Showing {filteredGenres.length} of {compatibleGenres.length}
           </div>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import type { GameSystem } from './game-systems';
+
 export interface Ability {
   score: number;
   modifier: number;
@@ -382,6 +384,10 @@ export interface Character {
     current_hit_points?: number;
     armor_class?: number;
   };
+  /**
+   * The game system used for this character (e.g., D&D 5e, Pathfinder 2e)
+   */
+  gameSystem?: GameSystem;
 }
 
 // Helper function to transform Character object for Supabase

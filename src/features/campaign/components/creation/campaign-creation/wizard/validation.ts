@@ -1,4 +1,22 @@
 /**
+ * Validates the game system selection step
+ * @param campaign - The campaign data to validate
+ * @param toast - Toast function for displaying validation messages
+ * @returns boolean indicating if validation passed
+ */
+export const validateGameSystemSelection = (campaign: any, toast: any): boolean => {
+  if (!campaign?.gameSystem) {
+    toast({
+      title: 'Missing Game System',
+      description: 'Please select a game system for your campaign.',
+      variant: 'destructive',
+    });
+    return false;
+  }
+  return true;
+};
+
+/**
  * Validates the basic details step of campaign creation
  * @param campaign - The campaign data to validate
  * @param toast - Toast function for displaying validation messages
@@ -74,9 +92,10 @@ export const validateCampaignEnhancements = (campaign: any, toast: any): boolean
 
 /**
  * Validates the complete campaign data in the correct order:
- * 1. Genre
- * 2. Parameters
- * 3. Basic Details
+ * 1. Game System
+ * 2. Genre
+ * 3. Parameters
+ * 4. Basic Details
  * @param campaign - The campaign data to validate
  * @param toast - Toast function for displaying validation messages
  * @returns boolean indicating if validation passed
@@ -92,6 +111,7 @@ export const validateCompleteCampaign = (campaign: any, toast: any): boolean => 
   }
 
   // Validate in the same order as the wizard steps
+  if (!validateGameSystemSelection(campaign, toast)) return false;
   if (!validateGenreSelection(campaign, toast)) return false;
   if (!validateCampaignParameters(campaign, toast)) return false;
   if (!validateBasicDetails(campaign, toast)) return false;

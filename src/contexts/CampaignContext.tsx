@@ -24,7 +24,17 @@ import React, { createContext, useContext, useReducer } from 'react'; // Added R
 
 import type { ReactNode } from 'react';
 
-// Interfaces and Types (defined in-file, specific to this context)
+// Type Imports
+import { GameSystem } from '@/types/game-systems';
+
+/**
+ * Campaign interface
+ *
+ * Represents a campaign in the application. Each campaign must have a game system
+ * that defines the rules, mechanics, and character creation options available.
+ * The game system determines how characters are built, what abilities they have,
+ * and how the game mechanics function throughout the campaign.
+ */
 interface Campaign {
   id?: string;
   name: string;
@@ -34,6 +44,8 @@ interface Campaign {
   campaign_length?: 'one-shot' | 'short' | 'full';
   tone?: 'serious' | 'humorous' | 'gritty';
   setting_details?: Record<string, unknown>;
+  /** The game system used for this campaign (e.g., D&D 5E, OSE, Cairn) */
+  gameSystem: GameSystem;
   // Defaults and configuration for scoped flows
   defaultArtStyle?: string; // e.g., 'fantasy', 'cyberpunk'
   rules?: Record<string, unknown> | string; // ruleset identifier or config blob
@@ -61,8 +73,15 @@ type CampaignAction =
       type: 'RESET_CAMPAIGN';
     };
 
+/**
+ * Initial campaign state with default values.
+ * Campaigns start with D&D 5E as the default game system.
+ */
 const initialState: CampaignState = {
-  campaign: null,
+  campaign: {
+    name: '',
+    gameSystem: GameSystem.DND5E,
+  },
 };
 
 /**
@@ -78,6 +97,11 @@ const CampaignContext = createContext<
 
 /**
  * Reducer function to handle campaign state updates
+ *
+ * Campaigns must have a game system (e.g., D&D 5E, OSE, Cairn) that defines
+ * the rules and mechanics used throughout the campaign. The game system
+ * determines character creation, abilities, and gameplay mechanics.
+ *
  * @param state - Current campaign state
  * @param action - Action to perform on the state
  * @returns Updated campaign state
@@ -85,6 +109,8 @@ const CampaignContext = createContext<
 function campaignReducer(state: CampaignState, action: CampaignAction): CampaignState {
   switch (action.type) {
     case 'UPDATE_CAMPAIGN':
+      // Merge partial campaign updates into existing campaign state
+      // This properly handles all fields including gameSystem
       return {
         ...state,
         campaign: {

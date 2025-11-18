@@ -14,6 +14,7 @@ import type { InferSelectModel, InferInsertModel} from 'drizzle-orm';
  * Enums
  */
 export const sharingModeEnum = pgEnum('sharing_mode', ['private', 'view_only', 'can_edit', 'co_owner']);
+export const gameSystemEnum = pgEnum('game_system', ['dnd5e', 'ose_classic', 'ose_advanced', 'cairn', 'knave', 'pathfinder2e', '13th_age', 'fate_core', 'mork_borg']);
 
 /**
  * Campaigns Table
@@ -36,6 +37,7 @@ export const campaigns = pgTable(
     settingDetails: jsonb('setting_details'),
     thematicElements: jsonb('thematic_elements'),
     status: text('status').default('active').notNull(),
+    gameSystem: gameSystemEnum('game_system').default('dnd5e').notNull(),
     backgroundImage: text('background_image'),
     artStyle: text('art_style'),
     styleConfig: jsonb('style_config'),
@@ -64,6 +66,7 @@ export const characters = pgTable(
     race: text('race'),
     class: text('class'),
     level: integer('level').default(1).notNull(),
+    gameSystem: gameSystemEnum('game_system').default('dnd5e').notNull(),
     alignment: text('alignment'),
     experiencePoints: integer('experience_points').default(0),
     background: text('background'),
@@ -116,9 +119,10 @@ export const characterStats = pgTable(
     strength: integer('strength').default(10).notNull(),
     dexterity: integer('dexterity').default(10).notNull(),
     constitution: integer('constitution').default(10).notNull(),
-    intelligence: integer('intelligence').default(10).notNull(),
-    wisdom: integer('wisdom').default(10).notNull(),
-    charisma: integer('charisma').default(10).notNull(),
+    intelligence: integer('intelligence'),
+    wisdom: integer('wisdom'),
+    charisma: integer('charisma'),
+    willpower: integer('willpower'),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).defaultNow(),
   },
