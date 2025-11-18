@@ -1,0 +1,76 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+*.tsbuildinfo
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Testing
+coverage/
+.nyc_output/
+e2e/
+tests/
+*.test.ts
+*.test.tsx
+*.test.js
+*.spec.ts
+*.spec.tsx
+*.spec.js
+playwright-report/
+test-results/
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment files (will be injected at runtime)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Scripts and tools
+scripts/legacy-tests/
+benchmark-results/
+refactor-plan/
+archive/
+
+# Python/Backend services (excluded from frontend build)
+crewai-service/
+server/
+supabase/
+db/
+
+# Misc
+*.log
+.cache/
+tmp/
+temp/

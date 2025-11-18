@@ -46,6 +46,7 @@
   "dependencies": {
     "@11labs/react": "^0.0.4",
     "@anthropic-ai/sdk": "^0.32.0",
+    "@workos-inc/node": "^7.29.0",
     "@dice-roller/rpg-dice-roller": "^5.5.1",
     "@fontsource/medievalsharp": "^5.1.0",
     "@google/generative-ai": "^0.24.1",
