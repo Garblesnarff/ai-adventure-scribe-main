@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { useCharacter } from '@/contexts/CharacterContext';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import {
   metamagicOptions,
   MetamagicOption,
@@ -41,6 +42,15 @@ const AdvancedSpellcastingSelection: React.FC = () => {
   const abilityModifier = spellcastingAbility
     ? character?.abilityScores?.[spellcastingAbility]?.modifier || 0
     : 0;
+
+  // Get system provider to check if system supports spells
+  const provider = useSystemProvider();
+
+  // If the system doesn't support traditional spellcasting, skip this step entirely
+  // Systems without traditional spellcasting (Cairn uses spellbooks as items)
+  if (!provider.config.hasSpells) {
+    return null;
+  }
 
   const [preparedSpells, setPreparedSpells] = useState<string[]>([]);
   const [selectedMetamagic, setSelectedMetamagic] = useState<string[]>([]);
@@ -161,27 +171,12 @@ const AdvancedSpellcastingSelection: React.FC = () => {
     );
   }
 
-  // If no advanced features are needed, show completion message
+  // If no advanced features are needed, skip this step
   if (
     !hasSpellcasting ||
     (!canPrepareSpells && !usesMetamagic && !usesPactMagic && !usesRitualCasting)
   ) {
-    return (
-      <div className="text-center space-y-4">
-        <Sparkles className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">
-          {!hasSpellcasting ? 'No Spellcasting' : 'No Advanced Features'}
-        </h2>
-        <p className="text-muted-foreground">
-          {!hasSpellcasting
-            ? 'Your character class does not have spellcasting abilities.'
-            : 'Your character does not have advanced spellcasting features at this level.'}
-        </p>
-        <p className="text-sm text-green-600 font-medium">
-          ✓ This step is complete - you can continue to the next step.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   /**

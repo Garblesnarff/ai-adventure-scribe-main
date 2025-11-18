@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/components/ui/use-toast';
 import { useCharacter } from '@/contexts/CharacterContext';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { useSpellSelection } from '@/hooks/useSpellSelection';
 import logger from '@/lib/logger';
@@ -47,6 +48,9 @@ const SpellSelection: React.FC = () => {
   const { scrollToNavigation } = useAutoScroll();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('cantrips');
+
+  // Get the system provider to check if system supports spells
+  const provider = useSystemProvider();
 
   // Use the enhanced spell selection hook
   const {
@@ -75,6 +79,12 @@ const SpellSelection: React.FC = () => {
   } = useSpellSelection();
 
   const currentClass = character?.class as CharacterClass | undefined;
+
+  // If the system doesn't support traditional spellcasting, skip this step entirely
+  // Systems without traditional spellcasting (Cairn uses spellbooks as items)
+  if (!provider.config.hasSpells) {
+    return null;
+  }
 
   // Get available schools for filtering
   const availableSchools = Array.from(

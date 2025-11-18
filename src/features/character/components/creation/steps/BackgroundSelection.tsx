@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Z_INDEX } from '@/constants/z-index';
 import { useCharacter } from '@/contexts/CharacterContext';
-import { backgrounds } from '@/data/backgroundOptions';
+import { useSystemProvider } from '@/contexts/SystemProviderContext';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import logger from '@/lib/logger';
 
@@ -20,6 +20,13 @@ const BackgroundSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
   const { scrollToNavigation } = useAutoScroll();
+  const provider = useSystemProvider();
+
+  // OSE, Knave, and some other systems don't use backgrounds
+  const backgrounds = provider.getBackgrounds();
+  if (!backgrounds || backgrounds.length === 0) {
+    return null;
+  }
 
   /**
    * Handles the selection of a background

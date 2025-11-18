@@ -17,8 +17,23 @@ import ProficienciesSelection from '../steps/ProficienciesSelection';
 import type { WizardStep } from './types';
 
 /**
- * Array of steps for the character creation wizard
- * Order determines the sequence of steps in the creation process
+ * Array of all possible steps for the character creation wizard.
+ * Order determines the sequence of steps in the creation process.
+ *
+ * SYSTEM-SPECIFIC FILTERING:
+ * Steps are automatically filtered based on the active game system. Each step component
+ * checks the system provider and returns `null` if not applicable to that system.
+ * For example:
+ * - RaceSelection returns null for systems without races (Cairn, Knave)
+ * - ClassSelection returns null for classless systems (Cairn, Knave)
+ * - SpellSelection returns null for systems without traditional spellcasting
+ *
+ * This allows the same wizard to support multiple game systems (D&D 5E, OSE, Cairn, Knave)
+ * without requiring separate wizard configurations for each system.
+ *
+ * Additionally, some steps have skipCondition functions that dynamically determine
+ * if a step should be shown based on the current character state (e.g., SubraceSelection
+ * is only shown if the selected race has subraces).
  */
 /**
  * D&D 5E Character Creation Flow:

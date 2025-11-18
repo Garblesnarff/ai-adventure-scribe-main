@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Z_INDEX } from '@/constants/z-index';
 import { useCharacter } from '@/contexts/CharacterContext';
-import { classes } from '@/data/classOptions';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import logger from '@/lib/logger';
 
 const ClassSelection: React.FC = () => {
@@ -17,6 +17,15 @@ const ClassSelection: React.FC = () => {
   const { toast } = useToast();
   const { scrollToNavigation } = useAutoScroll();
   const [hoveredClassId, setHoveredClassId] = useState<string | null>(null);
+
+  // Get classes from the current game system provider
+  const provider = useSystemProvider();
+  const classes = provider.getClasses();
+
+  // Classless systems (Cairn, Knave) return null - skip this step
+  if (!classes) {
+    return null;
+  }
 
   const handleClassSelect = (characterClass: CharacterClass) => {
     logger.info('🎯 handleClassSelect called with:', characterClass);

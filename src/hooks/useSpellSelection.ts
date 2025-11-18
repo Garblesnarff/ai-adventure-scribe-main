@@ -5,6 +5,7 @@ import type { Spell, Character } from '@/types/character';
 import type { SpellValidationResult } from '@/utils/spell-validation';
 
 import { useCharacter } from '@/contexts/CharacterContext';
+import { useSystemProvider } from './useSystemProvider';
 import logger from '@/lib/logger';
 import { characterSpellService } from '@/services/characterSpellApi';
 import { spellApi } from '@/services/spellApi';
@@ -72,6 +73,7 @@ interface UseSpellSelectionReturn {
 export function useSpellSelection(): UseSpellSelectionReturn {
   const { state, dispatch } = useCharacter();
   const character = state.character;
+  const provider = useSystemProvider();
 
   // Selection state
   const [selectedCantrips, setSelectedCantrips] = useState<string[]>([]);
@@ -122,6 +124,16 @@ export function useSpellSelection(): UseSpellSelectionReturn {
 
   // Spell fetching function
   const fetchSpells = async () => {
+    // Systems without traditional spellcasting (Cairn uses spellbooks as items)
+    if (!provider.config.hasSpells) {
+      logger.debug(
+        '🚫 [useSpellSelection] System does not support traditional spellcasting',
+      );
+      setAvailableCantrips([]);
+      setAvailableSpells([]);
+      return;
+    }
+
     if (!isSpellcaster || !currentClass?.name) {
       logger.debug(
         '🚫 [useSpellSelection] Not a spellcaster or no class name, skipping spell fetch',
@@ -139,21 +151,41 @@ export function useSpellSelection(): UseSpellSelectionReturn {
       characterLevel: character?.level || 1,
       isSpellcaster,
       spellcastingInfo,
+      systemHasSpells: provider.config.hasSpells,
     });
 
     try {
-      const { cantrips, spells } = await spellApi.getClassSpells(
-        currentClass.name,
-        character?.level || 1,
-      );
+      // Try to get spells from the provider first
+      const providerCantrips = provider.getCantrips(currentClass.name);
+      const providerSpells = provider.getSpells(1, currentClass.name); // Get 1st level spells
 
-      logger.debug('✅ [useSpellSelection] Spells fetched successfully:', {
-        className: currentClass.name,
-        cantripsFound: cantrips.length,
-        spellsFound: spells.length,
-        cantripNames: cantrips.slice(0, 3).map((c) => c.name),
-        spellNames: spells.slice(0, 3).map((s) => s.name),
-      });
+      // If provider returns null, fall back to API (for backward compatibility)
+      let cantrips: Spell[] = [];
+      let spells: Spell[] = [];
+
+      if (providerCantrips !== null && providerSpells !== null) {
+        // Use provider data
+        cantrips = providerCantrips;
+        spells = providerSpells;
+        logger.debug('✅ [useSpellSelection] Spells retrieved from provider:', {
+          className: currentClass.name,
+          cantripsFound: cantrips.length,
+          spellsFound: spells.length,
+        });
+      } else {
+        // Fall back to API for D&D 5E compatibility
+        const apiResult = await spellApi.getClassSpells(
+          currentClass.name,
+          character?.level || 1,
+        );
+        cantrips = apiResult.cantrips;
+        spells = apiResult.spells;
+        logger.debug('✅ [useSpellSelection] Spells fetched from API:', {
+          className: currentClass.name,
+          cantripsFound: cantrips.length,
+          spellsFound: spells.length,
+        });
+      }
 
       setAvailableCantrips(cantrips);
       setAvailableSpells(spells);
@@ -167,10 +199,10 @@ export function useSpellSelection(): UseSpellSelectionReturn {
     }
   };
 
-  // Fetch available spells from API
+  // Fetch available spells from provider or API
   useEffect(() => {
     fetchSpells();
-  }, [isSpellcaster, currentClass?.name, character?.level]);
+  }, [isSpellcaster, currentClass?.name, character?.level, provider.config.hasSpells]);
 
   // Racial spells
   const racialSpells = useMemo(() => {

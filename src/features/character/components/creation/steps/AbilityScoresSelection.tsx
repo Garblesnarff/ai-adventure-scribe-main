@@ -11,6 +11,7 @@ import DiceRoller from '@/components/ui/dice-roller';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { useCharacter } from '@/contexts/CharacterContext';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import { calculateModifier } from '@/utils/abilityScoreUtils';
 import {
   generateAbilityScores,
@@ -28,12 +29,38 @@ import {
 
 /**
  * Component for handling ability score selection in character creation
- * Implements point-buy system, standard array, and 4d6 drop lowest rolling
+ * Supports different systems: D&D 5E (6 abilities), Cairn (3 abilities), OSE (6 abilities)
+ * Adapts generation methods and modifier display based on system
  */
 const AbilityScoresSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
-  const [method, setMethod] = React.useState<'pointBuy' | 'standardArray' | 'roll'>('pointBuy');
+  const provider = useSystemProvider();
+
+  // Get system-specific ability configuration
+  const systemAbilities = provider.config.abilityScores.scores;
+  const modifierFormula = provider.config.abilityScores.modifierFormula;
+  const scoreRange = provider.config.abilityScores.scoreRange;
+  const systemName = provider.config.shortName;
+
+  // Determine available methods based on system
+  const availableMethods = useMemo(() => {
+    const features = provider.getSystemFeatures();
+    if (modifierFormula === 'cairn') {
+      // Cairn only supports rolling (3d6, swap any two)
+      return ['roll'] as const;
+    }
+    if (modifierFormula === 'ose') {
+      // OSE supports rolling (3d6 in order) or standard array
+      return ['standardArray', 'roll'] as const;
+    }
+    // D&D 5E supports all methods
+    return ['pointBuy', 'standardArray', 'roll'] as const;
+  }, [modifierFormula, provider]);
+
+  const [method, setMethod] = React.useState<'pointBuy' | 'standardArray' | 'roll'>(
+    availableMethods[0] as 'pointBuy' | 'standardArray' | 'roll'
+  );
   const [rollHistory, setRollHistory] = React.useState<number[][]>([]);
   const [currentRollDetails, setCurrentRollDetails] = React.useState<AbilityScoreRollResult | null>(
     null,
@@ -83,7 +110,7 @@ const AbilityScoresSelection: React.FC = () => {
         ...state.character?.abilityScores,
         [ability]: {
           score: currentScore + 1,
-          modifier: calculateModifier(currentScore + 1),
+          modifier: calculateAbilityModifier(currentScore + 1),
           savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false,
         },
       };
@@ -113,7 +140,7 @@ const AbilityScoresSelection: React.FC = () => {
         ...state.character?.abilityScores,
         [ability]: {
           score: currentScore - 1,
-          modifier: calculateModifier(currentScore - 1),
+          modifier: calculateAbilityModifier(currentScore - 1),
           savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false,
         },
       };
@@ -145,7 +172,7 @@ const AbilityScoresSelection: React.FC = () => {
     abilities.forEach((ability, index) => {
       newScores[ability] = {
         score: rollResult.scores[index],
-        modifier: calculateModifier(rollResult.scores[index]),
+        modifier: calculateAbilityModifier(rollResult.scores[index]),
         savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false,
       };
     });
@@ -192,7 +219,7 @@ const AbilityScoresSelection: React.FC = () => {
     abilities.forEach((ability, index) => {
       newScores[ability] = {
         score: updatedResult.scores[index],
-        modifier: calculateModifier(updatedResult.scores[index]),
+        modifier: calculateAbilityModifier(updatedResult.scores[index]),
         savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false,
       };
     });
@@ -218,10 +245,16 @@ const AbilityScoresSelection: React.FC = () => {
   };
 
   /**
-   * Applies the standard array to ability scores
+   * Applies the standard array to ability scores (system-aware)
    */
   const handleStandardArray = () => {
-    const standardArray = [15, 14, 13, 12, 10, 8];
+    // Get standard array from system features or use default
+    const features = provider.getSystemFeatures();
+    const standardArray = features.standardArray || [15, 14, 13, 12, 10, 8];
+
+    // For Cairn (3 abilities), use first 3 values
+    const arrayToUse = standardArray.slice(0, abilities.length);
+
     const newScores: AbilityScores = {
       strength: { score: 8, modifier: -1, savingThrow: false },
       dexterity: { score: 8, modifier: -1, savingThrow: false },
@@ -234,8 +267,8 @@ const AbilityScoresSelection: React.FC = () => {
 
     abilities.forEach((ability, index) => {
       newScores[ability] = {
-        score: standardArray[index],
-        modifier: calculateModifier(standardArray[index]),
+        score: arrayToUse[index],
+        modifier: calculateAbilityModifier(arrayToUse[index]),
         savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false,
       };
     });
@@ -247,7 +280,7 @@ const AbilityScoresSelection: React.FC = () => {
 
     toast({
       title: 'Standard Array Applied!',
-      description: 'Scores set to: 15, 14, 13, 12, 10, 8',
+      description: `Scores set to: ${arrayToUse.join(', ')}`,
     });
   };
 
@@ -268,7 +301,7 @@ const AbilityScoresSelection: React.FC = () => {
     abilities.forEach((ability) => {
       newScores[ability] = {
         score: 8,
-        modifier: calculateModifier(8),
+        modifier: calculateAbilityModifier(8),
         savingThrow: state.character?.abilityScores?.[ability]?.savingThrow || false,
       };
     });
@@ -282,26 +315,44 @@ const AbilityScoresSelection: React.FC = () => {
     setRollHistory([]);
   };
 
-  const abilities: (keyof AbilityScores)[] = [
-    'strength',
-    'dexterity',
-    'constitution',
-    'intelligence',
-    'wisdom',
-    'charisma',
-  ];
-
-  const getAbilityDescription = (ability: keyof AbilityScores) => {
-    const descriptions = {
-      strength: 'Physical power, athletic ability, melee attacks',
-      dexterity: 'Agility, reflexes, ranged attacks, AC, initiative',
-      constitution: 'Health, stamina, hit points, concentration',
-      intelligence: 'Reasoning, memory, arcane magic, investigation',
-      wisdom: 'Awareness, insight, divine magic, perception',
-      charisma: 'Force of personality, leadership, social skills',
-    };
-    return descriptions[ability];
+  // Map system ability IDs to character state keys
+  const abilityIdToStateKey: Record<string, keyof AbilityScores> = {
+    str: 'strength',
+    dex: 'dexterity',
+    con: 'constitution',
+    int: 'intelligence',
+    wis: 'wisdom',
+    cha: 'charisma',
+    wil: 'wisdom', // Cairn's WIL maps to wisdom slot
   };
+
+  // Generate dynamic abilities list from system config
+  const abilities: (keyof AbilityScores)[] = useMemo(() => {
+    return systemAbilities.map((ability) => abilityIdToStateKey[ability.id] || 'strength');
+  }, [systemAbilities]);
+
+  const getAbilityName = (abilityKey: keyof AbilityScores): string => {
+    const ability = systemAbilities.find((a) => abilityIdToStateKey[a.id] === abilityKey);
+    return ability?.name || abilityKey;
+  };
+
+  const getAbilityAbbreviation = (abilityKey: keyof AbilityScores): string => {
+    const ability = systemAbilities.find((a) => abilityIdToStateKey[a.id] === abilityKey);
+    return ability?.abbreviation || abilityKey.substring(0, 3).toUpperCase();
+  };
+
+  const getAbilityDescription = (abilityKey: keyof AbilityScores): string => {
+    const ability = systemAbilities.find((a) => abilityIdToStateKey[a.id] === abilityKey);
+    return ability?.description || '';
+  };
+
+  // Calculate modifier using system-specific formula
+  const calculateAbilityModifier = (score: number): number => {
+    return provider.calculateAbilityModifier(score);
+  };
+
+  // Check if system shows modifiers (Cairn doesn't use modifiers)
+  const showModifiers = modifierFormula !== 'cairn';
 
   // Calculate racial bonuses (useMemo to avoid recalculation)
   const racialBonuses = useMemo(
@@ -318,8 +369,8 @@ const AbilityScoresSelection: React.FC = () => {
   const getFinalScore = (ability: keyof AbilityScores): number => {
     const baseScore = state.character?.abilityScores?.[ability]?.score || 8;
     const totalRacialBonus = getTotalRacialBonus(ability as AbilityScoreName, racialBonuses);
-    // Cap at 20 per D&D 5E rules
-    return Math.min(baseScore + totalRacialBonus, 20);
+    // Cap at maximum score from system config
+    return Math.min(baseScore + totalRacialBonus, scoreRange.max);
   };
 
   // Validate point buy: 27 points total
@@ -333,15 +384,17 @@ const AbilityScoresSelection: React.FC = () => {
 
   const pointBuyValid = method !== 'pointBuy' || pointsUsed <= 27;
 
-  // Validate standard array: must use exactly [15,14,13,12,10,8]
+  // Validate standard array: must use exactly the expected array for the system
   const standardArrayValid = useMemo(() => {
     if (method !== 'standardArray') return true;
+    const features = provider.getSystemFeatures();
+    const standardArray = features.standardArray || [15, 14, 13, 12, 10, 8];
+    const expectedArray = standardArray.slice(0, abilities.length).sort((a, b) => b - a);
     const usedScores = abilities
       .map((ability) => state.character?.abilityScores?.[ability]?.score || 8)
       .sort((a, b) => b - a);
-    const expectedArray = [15, 14, 13, 12, 10, 8];
     return JSON.stringify(usedScores) === JSON.stringify(expectedArray);
-  }, [method, state.character?.abilityScores]);
+  }, [method, state.character?.abilityScores, abilities.length, provider]);
 
   // Calculate total modifier bonus
   const totalModifier = abilities.reduce((total, ability) => {
@@ -352,30 +405,46 @@ const AbilityScoresSelection: React.FC = () => {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-2">Assign Ability Scores</h2>
-        <p className="text-muted-foreground">Choose your method for generating ability scores</p>
+        <p className="text-muted-foreground">
+          {modifierFormula === 'cairn'
+            ? 'Roll 3d6 for each ability score. You may swap any two scores.'
+            : modifierFormula === 'ose'
+              ? 'Choose your method for generating ability scores (3d6 in order or standard array)'
+              : 'Choose your method for generating ability scores'}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          System: {systemName} ({systemAbilities.length} abilities)
+        </p>
       </div>
 
       <Tabs
-        defaultValue="pointBuy"
+        defaultValue={availableMethods[0]}
         className="w-full"
         onValueChange={(value) => setMethod(value as 'pointBuy' | 'standardArray' | 'roll')}
       >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="pointBuy">Point Buy</TabsTrigger>
-          <TabsTrigger value="standardArray">Standard Array</TabsTrigger>
-          <TabsTrigger value="roll">Roll Scores</TabsTrigger>
+        <TabsList className={`grid w-full grid-cols-${availableMethods.length}`}>
+          {availableMethods.includes('pointBuy') && (
+            <TabsTrigger value="pointBuy">Point Buy</TabsTrigger>
+          )}
+          {availableMethods.includes('standardArray') && (
+            <TabsTrigger value="standardArray">Standard Array</TabsTrigger>
+          )}
+          {availableMethods.includes('roll') && (
+            <TabsTrigger value="roll">Roll Scores</TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="pointBuy" className="space-y-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-info" />
-              <h3 className="font-semibold">Point Buy System</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              Distribute 27 points among your abilities. Scores range from 8-15, with higher scores
-              costing more points.
-            </p>
+        {availableMethods.includes('pointBuy') && (
+          <TabsContent value="pointBuy" className="space-y-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-4 h-4 text-info" />
+                <h3 className="font-semibold">Point Buy System</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Distribute 27 points among your abilities. Scores range from 8-15, with higher
+                scores costing more points.
+              </p>
             <div className="flex items-center justify-between">
               <div className="text-lg">
                 Points Remaining: <Badge variant="outline">{remainingPoints}</Badge>
@@ -387,23 +456,32 @@ const AbilityScoresSelection: React.FC = () => {
             </div>
           </Card>
         </TabsContent>
+        )}
 
-        <TabsContent value="standardArray" className="space-y-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-success" />
-              <h3 className="font-semibold">Standard Array</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              Use the standard D&D ability scores: 15, 14, 13, 12, 10, 8. Balanced and predictable.
-            </p>
+        {availableMethods.includes('standardArray') && (
+          <TabsContent value="standardArray" className="space-y-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-4 h-4 text-success" />
+                <h3 className="font-semibold">Standard Array</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                {modifierFormula === 'ose'
+                  ? 'Use the standard OSE ability scores: 15, 14, 13, 12, 10, 8. Balanced and predictable.'
+                  : 'Use the standard D&D ability scores: 15, 14, 13, 12, 10, 8. Balanced and predictable.'}
+              </p>
             <div className="flex items-center justify-between">
               <div className="flex gap-1">
-                {[15, 14, 13, 12, 10, 8].map((score, i) => (
-                  <Badge key={i} variant="secondary">
-                    {score}
-                  </Badge>
-                ))}
+                {(() => {
+                  const features = provider.getSystemFeatures();
+                  const standardArray = features.standardArray || [15, 14, 13, 12, 10, 8];
+                  const arrayToShow = standardArray.slice(0, abilities.length);
+                  return arrayToShow.map((score, i) => (
+                    <Badge key={i} variant="secondary">
+                      {score}
+                    </Badge>
+                  ));
+                })()}
               </div>
               <Button onClick={handleStandardArray} variant="default">
                 Apply Standard Array
@@ -411,17 +489,28 @@ const AbilityScoresSelection: React.FC = () => {
             </div>
           </Card>
         </TabsContent>
+        )}
 
-        <TabsContent value="roll" className="space-y-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-warning" />
-              <h3 className="font-semibold">Roll 4d6 Drop Lowest</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              Roll four six-sided dice, drop the lowest, for each ability. More random and
-              potentially powerful.
-            </p>
+        {availableMethods.includes('roll') && (
+          <TabsContent value="roll" className="space-y-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-4 h-4 text-warning" />
+                <h3 className="font-semibold">
+                  {modifierFormula === 'cairn'
+                    ? 'Roll 3d6 for Each Ability'
+                    : modifierFormula === 'ose'
+                      ? 'Roll 3d6 in Order'
+                      : 'Roll 4d6 Drop Lowest'}
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                {modifierFormula === 'cairn'
+                  ? 'Roll three six-sided dice for each ability. You may swap any two ability scores after rolling.'
+                  : modifierFormula === 'ose'
+                    ? 'Roll three six-sided dice for each ability in order (STR, DEX, CON, INT, WIS, CHA). Classic old-school method.'
+                    : 'Roll four six-sided dice, drop the lowest, for each ability. More random and potentially powerful.'}
+              </p>
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
                 <Button onClick={handleRollScores} variant="default">
@@ -499,6 +588,7 @@ const AbilityScoresSelection: React.FC = () => {
             )}
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       {/* Validation Alerts */}
@@ -515,7 +605,11 @@ const AbilityScoresSelection: React.FC = () => {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Standard Array must use exactly: 15, 14, 13, 12, 10, 8 (each value once).
+            Standard Array must use exactly: {(() => {
+              const features = provider.getSystemFeatures();
+              const standardArray = features.standardArray || [15, 14, 13, 12, 10, 8];
+              return standardArray.slice(0, abilities.length).join(', ');
+            })()} (each value once).
           </AlertDescription>
         </Alert>
       )}
@@ -532,12 +626,12 @@ const AbilityScoresSelection: React.FC = () => {
       )}
 
       {/* Ability Scores Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${systemAbilities.length <= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-3'} gap-4`}>
         {abilities.map((ability) => {
           const baseScore = state.character?.abilityScores?.[ability]?.score || 8;
           const racialBonus = getTotalRacialBonus(ability as AbilityScoreName, racialBonuses);
           const finalScore = getFinalScore(ability);
-          const modifier = calculateModifier(finalScore);
+          const modifier = calculateAbilityModifier(finalScore);
           const nextCost =
             method === 'pointBuy' ? pointCost[baseScore + 1] - pointCost[baseScore] : 0;
 
@@ -545,8 +639,11 @@ const AbilityScoresSelection: React.FC = () => {
             <Card key={ability} className="p-4 hover:shadow-md transition-shadow">
               <div className="space-y-3">
                 <div className="text-center">
-                  <h3 className="text-lg font-bold capitalize">{ability}</h3>
-                  <p className="text-xs text-muted-foreground">{getAbilityDescription(ability)}</p>
+                  <h3 className="text-lg font-bold">{getAbilityName(ability)}</h3>
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {getAbilityAbbreviation(ability)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{getAbilityDescription(ability)}</p>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -571,18 +668,25 @@ const AbilityScoresSelection: React.FC = () => {
                       </Badge>
                     )}
                     <div className="text-3xl font-bold">{finalScore}</div>
-                    <div
-                      className={`text-sm font-medium ${
-                        modifier > 0
-                          ? 'text-green-600'
-                          : modifier < 0
-                            ? 'text-red-600'
-                            : 'text-muted-foreground'
-                      }`}
-                    >
-                      {modifier >= 0 ? '+' : ''}
-                      {modifier}
-                    </div>
+                    {showModifiers && (
+                      <div
+                        className={`text-sm font-medium ${
+                          modifier > 0
+                            ? 'text-green-600'
+                            : modifier < 0
+                              ? 'text-red-600'
+                              : 'text-muted-foreground'
+                        }`}
+                      >
+                        {modifier >= 0 ? '+' : ''}
+                        {modifier}
+                      </div>
+                    )}
+                    {!showModifiers && (
+                      <div className="text-xs text-muted-foreground">
+                        Roll under {finalScore}
+                      </div>
+                    )}
                   </div>
 
                   <Button
@@ -617,8 +721,14 @@ const AbilityScoresSelection: React.FC = () => {
           <div>
             <h3 className="font-semibold">Ability Score Summary</h3>
             <p className="text-sm text-muted-foreground">
-              Total modifier bonus: {totalModifier >= 0 ? '+' : ''}
-              {totalModifier}
+              {showModifiers ? (
+                <>
+                  Total modifier bonus: {totalModifier >= 0 ? '+' : ''}
+                  {totalModifier}
+                </>
+              ) : (
+                <>Cairn uses roll-under saves (no modifiers)</>
+              )}
             </p>
           </div>
           <div className="flex gap-4">

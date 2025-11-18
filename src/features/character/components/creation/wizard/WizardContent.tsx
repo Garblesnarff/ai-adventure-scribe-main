@@ -7,11 +7,14 @@ import CharacterPreview from '../shared/CharacterPreview';
 import ProgressIndicator from '../shared/ProgressIndicator';
 import StepNavigation from '../shared/StepNavigation';
 
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { useCampaign } from '@/contexts/CampaignContext';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { useCharacterSave } from '@/hooks/use-character-save';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import logger from '@/lib/logger';
 import { analytics } from '@/services/analytics';
 import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
@@ -22,6 +25,8 @@ import { getSpellcastingInfo, getRacialSpells } from '@/utils/spell-validation';
  */
 const WizardContent: React.FC = () => {
   const { state } = useCharacter();
+  const { state: campaignState } = useCampaign();
+  const systemProvider = useSystemProvider();
   const [currentStep, setCurrentStep] = React.useState(0);
   const { saveCharacter, isSaving } = useCharacterSave();
   const navigate = useNavigate();
@@ -29,15 +34,60 @@ const WizardContent: React.FC = () => {
   const { scrollToTop } = useAutoScroll();
   const [searchParams] = useSearchParams();
 
-  // Filter steps based on character state
+  // Get system configuration for display
+  const systemConfig = systemProvider.config;
+  const campaignName = campaignState.campaign?.name;
+
+  // Filter steps based on character state AND system compatibility
   const getFilteredSteps = React.useCallback(() => {
     return wizardSteps.filter((step) => {
-      if (step.skipCondition) {
-        return !step.skipCondition(state.character);
+      // Skip based on character-specific conditions
+      if (step.skipCondition && step.skipCondition(state.character)) {
+        return false;
       }
+
+      // Skip based on system compatibility
+      // Check if step is applicable to the current game system
+      const stepLabel = step.label;
+
+      // Race selection - skip for systems without races
+      if (stepLabel === 'Race' && !systemProvider.getRaces()) {
+        return false;
+      }
+
+      // Subrace selection - skip for systems without races
+      if (stepLabel === 'Subrace' && !systemProvider.getRaces()) {
+        return false;
+      }
+
+      // Class selection - skip for classless systems
+      if (stepLabel === 'Class' && !systemProvider.getClasses()) {
+        return false;
+      }
+
+      // Class features - skip for classless systems
+      if (stepLabel === 'Class Features' && !systemProvider.getClasses()) {
+        return false;
+      }
+
+      // Background selection - skip for systems without backgrounds
+      if (stepLabel === 'Background' && !systemProvider.getBackgrounds()) {
+        return false;
+      }
+
+      // Spells - skip for systems without traditional spellcasting
+      if (stepLabel === 'Spells' && !systemProvider.config.hasSpells) {
+        return false;
+      }
+
+      // Advanced spellcasting - skip for systems without traditional spellcasting
+      if (stepLabel === 'Advanced Spellcasting' && !systemProvider.config.hasSpells) {
+        return false;
+      }
+
       return true;
     });
-  }, [state.character]);
+  }, [state.character, systemProvider]);
 
   const filteredSteps = getFilteredSteps();
 
@@ -560,9 +610,25 @@ const WizardContent: React.FC = () => {
           {/* Main Character Creation Area */}
           <div className="xl:col-span-2">
             <Card className="p-6 glass-strong rounded-2xl hover-lift shadow-xl border-2 border-white/20">
-              <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-infinite-purple via-infinite-gold to-infinite-teal bg-clip-text text-transparent">
-                Create Your Character
-              </h1>
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-infinite-purple via-infinite-gold to-infinite-teal bg-clip-text text-transparent">
+                  Create Your Character
+                </h1>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <Badge variant="purple" className="text-sm px-3 py-1.5">
+                    <span className="mr-1.5">{systemConfig.icon}</span>
+                    <span className="font-semibold">{systemConfig.name}</span>
+                  </Badge>
+                  {campaignName && (
+                    <>
+                      <span className="text-muted-foreground">for</span>
+                      <Badge variant="teal" className="text-sm px-3 py-1.5">
+                        <span className="font-semibold">{campaignName}</span>
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              </div>
               <ProgressIndicator currentStep={currentStep} totalSteps={filteredSteps.length} />
               <div className="min-h-[600px] transition-all duration-500 ease-in-out">
                 <div

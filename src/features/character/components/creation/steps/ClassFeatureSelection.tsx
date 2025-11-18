@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/components/ui/use-toast';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import { ClassFeature } from '@/types/character';
 
 /**
@@ -24,13 +25,20 @@ const ClassFeatureSelection: React.FC = () => {
   const character = state.character;
   const currentClass = character?.class as CharacterClass | undefined;
 
+  // Get classes from the system provider
+  const provider = useSystemProvider();
+  const classes = provider.getClasses();
+
+  // Classless systems (Cairn, Knave) return null - skip this step
+  if (!classes) {
+    return null;
+  }
+
   const [selectedFeatures, setSelectedFeatures] = useState<Record<string, string>>({});
 
   // Get class features that require choices
   const featuresWithChoices =
     currentClass?.classFeatures.filter((feature) => feature.choices) || [];
-
-  // Note: No early returns before hooks to satisfy rules-of-hooks
 
   /**
    * Updates character class features in context

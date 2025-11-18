@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Z_INDEX } from '@/constants/z-index';
 import { useCharacter } from '@/contexts/CharacterContext';
-import { baseRaces } from '@/data/raceOptions';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import logger from '@/lib/logger';
 import type { CharacterRace, Subrace } from '@/types/character';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
@@ -32,6 +32,18 @@ const RaceSelection: React.FC = () => {
   const { state, dispatch } = useCharacter();
   const { toast } = useToast();
   const { scrollToNavigation } = useAutoScroll();
+  const provider = useSystemProvider();
+
+  // Get races from the system provider
+  // Returns null for systems without separate race mechanics:
+  // - Classless systems (Cairn, Knave) have no races
+  // - Race-as-class systems (OSE Classic) include races within class selection
+  const baseRaces = provider.getRaces();
+
+  // If this system doesn't use races, skip this step entirely
+  if (!baseRaces) {
+    return null;
+  }
   const [selectedBaseRace, setSelectedBaseRace] = useState<CharacterRace | null>(null);
   const [showSubraces, setShowSubraces] = useState(false);
 

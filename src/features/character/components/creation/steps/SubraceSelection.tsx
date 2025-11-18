@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useCharacter } from '@/contexts/CharacterContext';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
+import { useSystemProvider } from '@/hooks/useSystemProvider';
 import logger from '@/lib/logger';
 
 /**
@@ -21,22 +22,18 @@ const SubraceSelection: React.FC = () => {
   const character = state.character;
   const currentRace = character?.race as CharacterRace | undefined;
 
+  // Get races from the system provider
+  const provider = useSystemProvider();
+  const races = provider.getRaces();
+
+  // If system doesn't have races (Cairn, Knave), skip this step
+  if (!races) {
+    return null;
+  }
+
   // If no race selected or no subraces available, don't show this step
   if (!currentRace || !currentRace.subraces || currentRace.subraces.length === 0) {
-    return (
-      <div className="text-center space-y-4">
-        <Users className="w-16 h-16 mx-auto text-muted-foreground" />
-        <h2 className="text-2xl font-bold">No Subrace Options</h2>
-        <p className="text-muted-foreground">
-          {currentRace
-            ? `The ${currentRace.name} race does not have subrace variants.`
-            : 'Please select a race first.'}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          You can proceed to the next step of character creation.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   const handleSubraceSelect = (subrace: Subrace) => {
