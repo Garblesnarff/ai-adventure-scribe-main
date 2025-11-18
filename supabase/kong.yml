@@ -1,0 +1,116 @@
+## Kong API Gateway Configuration for Self-Hosted Supabase
+## This file routes requests to the appropriate Supabase services
+
+_format_version: "2.1"
+_transform: true
+
+###############################################################################
+# Services and Routes Configuration
+###############################################################################
+
+services:
+  # Auth Service (GoTrue)
+  - name: auth-v1
+    url: http://supabase-auth:9999/
+    routes:
+      - name: auth-v1-all
+        strip_path: true
+        paths:
+          - /auth/v1/
+    plugins:
+      - name: cors
+
+  # REST API (PostgREST)
+  - name: rest-v1
+    url: http://supabase-rest:3000/
+    routes:
+      - name: rest-v1-all
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: cors
+
+  # Realtime (WebSocket)
+  - name: realtime-v1
+    url: http://supabase-realtime:4000/socket
+    routes:
+      - name: realtime-v1-all
+        strip_path: true
+        paths:
+          - /realtime/v1/
+    plugins:
+      - name: cors
+
+  # Storage API
+  - name: storage-v1
+    url: http://supabase-storage:5000/
+    routes:
+      - name: storage-v1-all
+        strip_path: true
+        paths:
+          - /storage/v1/
+    plugins:
+      - name: cors
+
+###############################################################################
+# Global Plugins
+###############################################################################
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - HEAD
+        - PUT
+        - PATCH
+        - POST
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - X-Auth-Token
+        - X-Client-Info
+        - apikey
+        - Authorization
+      exposed_headers:
+        - X-RateLimit-Limit
+        - X-RateLimit-Remaining
+        - X-RateLimit-Reset
+      credentials: true
+      max_age: 3600
+
+###############################################################################
+# Consumers (API Keys)
+###############################################################################
+
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: ${SUPABASE_ANON_KEY}
+
+  - username: service_role
+    keyauth_credentials:
+      - key: ${SUPABASE_SERVICE_KEY}
+
+###############################################################################
+# Notes
+###############################################################################
+#
+# This configuration creates a unified API gateway that routes requests to:
+# - /auth/v1/*     → GoTrue (Authentication)
+# - /rest/v1/*     → PostgREST (Database API)
+# - /realtime/v1/* → Realtime Server (WebSockets)
+# - /storage/v1/*  → Storage API (File uploads)
+#
+# All services have CORS enabled for cross-origin requests.
+# API key authentication is configured for anon and service_role keys.
+#
