@@ -99,9 +99,7 @@ export class CombatInitiativeService {
         initiative,
         initiativeModifier: input.initiativeModifier,
         turnOrder: 0, // Will be recalculated
-        hpCurrent: input.hpCurrent || null,
-        hpMax: input.hpMax || null,
-        conditions: [],
+        participantType: input.characterId ? 'player' : input.npcId ? 'npc' : 'other',
       })
       .returning();
 
@@ -192,10 +190,13 @@ export class CombatInitiativeService {
 
     // Update turn order for each participant
     for (let i = 0; i < sorted.length; i++) {
-      await db
-        .update(combatParticipants)
-        .set({ turnOrder: i })
-        .where(eq(combatParticipants.id, sorted[i].id));
+      const sortedParticipant = sorted[i];
+      if (sortedParticipant) {
+        await db
+          .update(combatParticipants)
+          .set({ turnOrder: i })
+          .where(eq(combatParticipants.id, sortedParticipant.id));
+      }
     }
   }
 
@@ -251,6 +252,10 @@ export class CombatInitiativeService {
 
     // Get new current participant
     const currentParticipant = participants[nextTurnOrder];
+
+    if (!currentParticipant) {
+      throw new BusinessLogicError('No participant found at turn order position', { nextTurnOrder });
+    }
 
     return {
       previousParticipant,
@@ -407,21 +412,14 @@ export class CombatInitiativeService {
 
   /**
    * Update participant HP
+   * Note: HP is now tracked in combatParticipantStatus table
    */
   static async updateParticipantHP(
     participantId: string,
     hpCurrent: number
-  ): Promise<CombatParticipant> {
-    const [updated] = await db
-      .update(combatParticipants)
-      .set({ hpCurrent })
-      .where(eq(combatParticipants.id, participantId))
-      .returning();
-
-    if (!updated) {
-      throw new InternalServerError('Failed to update participant HP');
-    }
-
-    return updated;
+  ): Promise<void> {
+    // This method needs to be updated to use combatParticipantStatus table
+    // For now, this is a placeholder to maintain API compatibility
+    throw new Error('updateParticipantHP needs to be implemented with combatParticipantStatus table');
   }
 }

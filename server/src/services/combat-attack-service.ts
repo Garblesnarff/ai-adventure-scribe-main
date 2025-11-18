@@ -277,11 +277,11 @@ export class CombatAttackService {
     const damageCalc = this.calculateDamage({
       damageDice: weapon.damageDice,
       damageBonus: weapon.damageBonus,
-      damageType: weapon.damageType,
+      damageType: weapon.damageType as DamageType,
       isCritical: isCrit,
-      resistances: targetStats.resistances,
-      vulnerabilities: targetStats.vulnerabilities,
-      immunities: targetStats.immunities,
+      resistances: (targetStats.resistances || []) as DamageType[],
+      vulnerabilities: (targetStats.vulnerabilities || []) as DamageType[],
+      immunities: (targetStats.immunities || []) as DamageType[],
       damageRoll,
     });
 
@@ -289,7 +289,7 @@ export class CombatAttackService {
     try {
       const hpResult = await CombatHPService.applyDamage(targetId, {
         damageAmount: damageCalc.finalDamage,
-        damageType: weapon.damageType,
+        damageType: weapon.damageType as DamageType,
         sourceParticipantId: attackerId,
         sourceDescription: weapon.name || 'attack',
         ignoreResistances: true, // Already applied in damage calculation
@@ -301,7 +301,7 @@ export class CombatAttackService {
         targetAC: targetStats.armorClass,
         totalAttackRoll: hitCheck.totalAttackRoll,
         damage: damageCalc.baseDamage,
-        damageType: weapon.damageType,
+        damageType: weapon.damageType as DamageType,
         damageBeforeResistances: damageCalc.damageBeforeResistances,
         effectiveResistance: damageCalc.effectiveResistance,
         effectiveVulnerability: damageCalc.effectiveVulnerability,
@@ -379,9 +379,9 @@ export class CombatAttackService {
             damageBonus: 0,
             damageType,
             isCritical: hitCheck.isCritical || isCritical,
-            resistances: targetStats.resistances,
-            vulnerabilities: targetStats.vulnerabilities,
-            immunities: targetStats.immunities,
+            resistances: (targetStats.resistances || []) as DamageType[],
+            vulnerabilities: (targetStats.vulnerabilities || []) as DamageType[],
+            immunities: (targetStats.immunities || []) as DamageType[],
             damageRoll,
           });
 
@@ -422,6 +422,9 @@ export class CombatAttackService {
       } else if (saveDC !== undefined && saveRolls) {
         // Saving throw spell
         const saveRoll = saveRolls[targetId];
+        if (saveRoll === undefined) {
+          continue;
+        }
         const savedSuccessfully = saveRoll >= saveDC;
 
         if (damageDice && damageType) {
@@ -430,9 +433,9 @@ export class CombatAttackService {
             damageBonus: 0,
             damageType,
             isCritical: false, // Spells with saves don't crit
-            resistances: targetStats.resistances,
-            vulnerabilities: targetStats.vulnerabilities,
-            immunities: targetStats.immunities,
+            resistances: (targetStats.resistances || []) as DamageType[],
+            vulnerabilities: (targetStats.vulnerabilities || []) as DamageType[],
+            immunities: (targetStats.immunities || []) as DamageType[],
             damageRoll,
           });
 
@@ -455,7 +458,7 @@ export class CombatAttackService {
             results.push({
               hit: !savedSuccessfully,
               targetAC: 0, // Not applicable for saves
-              totalAttackRoll: saveRoll,
+              totalAttackRoll: saveRoll ?? 0,
               damage: damageCalc.baseDamage,
               damageType,
               damageBeforeResistances: damageCalc.damageBeforeResistances,
@@ -510,6 +513,10 @@ export class CombatAttackService {
       })
       .returning();
 
+    if (!weapon) {
+      throw new InternalServerError('Failed to create weapon attack');
+    }
+
     return weapon;
   }
 
@@ -557,7 +564,7 @@ export class CombatAttackService {
    */
   private rollDamageDice(damageDice: string, isCritical: boolean): number {
     const match = /^(\d+)d(\d+)$/i.exec(damageDice.trim());
-    if (!match) {
+    if (!match || !match[1] || !match[2]) {
       throw new ValidationError(`Invalid dice notation: ${damageDice}`, { damageDice });
     }
 

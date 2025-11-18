@@ -33,10 +33,8 @@ import type {
   AvailableSubclasses,
   CharacterFeaturesWithUsage,
   FeatureUsageHistoryParams,
-  SUBCLASS_CHOICE_LEVELS,
-  AVAILABLE_SUBCLASSES,
 } from '../types/class-features.js';
-import { NotFoundError, ConflictError, ValidationError, BusinessLogicError } from '../lib/errors.js';
+import { NotFoundError, ConflictError, ValidationError, BusinessLogicError, InternalServerError } from '../lib/errors.js';
 
 /**
  * Subclass choice level mapping
@@ -188,6 +186,10 @@ export class ClassFeaturesService {
         acquiredAtLevel,
       })
       .returning();
+
+    if (!granted) {
+      throw new InternalServerError('Failed to grant feature');
+    }
 
     return granted;
   }
@@ -492,6 +494,10 @@ export class ClassFeaturesService {
         context: context || null,
       })
       .returning();
+
+    if (!log) {
+      throw new InternalServerError('Failed to log feature usage');
+    }
 
     return log;
   }

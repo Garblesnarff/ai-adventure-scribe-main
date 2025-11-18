@@ -114,8 +114,8 @@ export class ProgressionService {
    */
   static getXPForLevel(level: number): number {
     if (level < 1) return 0;
-    if (level > 20) return XP_THRESHOLDS[20];
-    return XP_THRESHOLDS[level] || 0;
+    if (level > 20) return XP_THRESHOLDS[20] ?? 0;
+    return XP_THRESHOLDS[level] ?? 0;
   }
 
   /**
@@ -123,7 +123,8 @@ export class ProgressionService {
    */
   static calculateLevelFromXP(totalXp: number): number {
     for (let level = 20; level >= 1; level--) {
-      if (totalXp >= XP_THRESHOLDS[level]) {
+      const threshold = XP_THRESHOLDS[level];
+      if (threshold !== undefined && totalXp >= threshold) {
         return level;
       }
     }
@@ -191,10 +192,14 @@ export class ProgressionService {
         characterId,
         currentLevel: 1,
         currentXp: 0,
-        xpToNextLevel: XP_THRESHOLDS[2], // 300 XP to level 2
+        xpToNextLevel: XP_THRESHOLDS[2] ?? 300, // 300 XP to level 2
         totalXp: 0,
       })
       .returning();
+
+    if (!progression) {
+      throw new Error('Failed to create progression');
+    }
 
     return progression;
   }
@@ -282,6 +287,10 @@ export class ProgressionService {
       })
       .where(eq(levelProgression.characterId, characterId))
       .returning();
+
+    if (!updatedProgression) {
+      throw new Error('Failed to update progression');
+    }
 
     // Also update character level
     if (levelsGained > 0) {

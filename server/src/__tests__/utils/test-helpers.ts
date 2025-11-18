@@ -14,11 +14,11 @@ export function expectToThrow(fn: () => any, errorClass: any, message?: string) 
   } catch (error) {
     if (!(error instanceof errorClass)) {
       throw new Error(
-        `Expected error to be instance of ${errorClass.name}, but got ${error.constructor.name}`
+        `Expected error to be instance of ${errorClass.name}, but got ${(error as any).constructor.name}`
       );
     }
-    if (message && error.message !== message) {
-      throw new Error(`Expected error message "${message}", but got "${error.message}"`);
+    if (message && (error as Error).message !== message) {
+      throw new Error(`Expected error message "${message}", but got "${(error as Error).message}"`);
     }
   }
 }
@@ -37,11 +37,11 @@ export async function expectToThrowAsync(
   } catch (error) {
     if (!(error instanceof errorClass)) {
       throw new Error(
-        `Expected error to be instance of ${errorClass.name}, but got ${error.constructor.name}`
+        `Expected error to be instance of ${errorClass.name}, but got ${(error as any).constructor.name}`
       );
     }
-    if (message && error.message !== message) {
-      throw new Error(`Expected error message "${message}", but got "${error.message}"`);
+    if (message && (error as Error).message !== message) {
+      throw new Error(`Expected error message "${message}", but got "${(error as Error).message}"`);
     }
   }
 }
@@ -165,8 +165,8 @@ export function parseDiceNotation(notation: string): number {
     throw new Error(`Invalid dice notation: ${notation}`);
   }
 
-  const count = parseInt(match[1], 10);
-  const sides = parseInt(match[2], 10);
+  const count = parseInt(match[1]!, 10);
+  const sides = parseInt(match[2]!, 10);
   const modifier = match[3] ? parseInt(match[3], 10) : 0;
 
   // Return average roll for consistent tests

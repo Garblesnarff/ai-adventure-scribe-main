@@ -59,33 +59,33 @@ export class ConditionsService {
     const warnings: string[] = [];
 
     // Get condition from library
-    const conditionLibrary = await db.execute<ConditionLibraryEntry>(
+    const conditionLibrary = await db.execute<Record<string, unknown>>(
       sql`SELECT * FROM conditions_library WHERE name = ${conditionName} LIMIT 1`
     );
 
-    if (conditionLibrary.rows.length === 0) {
+    if (!conditionLibrary || conditionLibrary.length === 0) {
       throw new NotFoundError('Condition', conditionName);
     }
 
-    const conditionEntry = conditionLibrary.rows[0];
+    const conditionEntry = conditionLibrary[0] as unknown as ConditionLibraryEntry;
 
     // Get participant to get current round
-    const participantResult = await db.execute(
+    const participantResult = await db.execute<Record<string, unknown>>(
       sql`SELECT encounter_id FROM combat_participants WHERE id = ${participantId} LIMIT 1`
     );
 
-    if (participantResult.rows.length === 0) {
+    if (!participantResult || participantResult.length === 0) {
       throw new NotFoundError('Participant', participantId);
     }
 
     // Get current round from encounter if not provided
     let appliedAtRound = currentRound || 1;
     if (!currentRound) {
-      const encounterResult = await db.execute(
-        sql`SELECT current_round FROM combat_encounters WHERE id = ${participantResult.rows[0].encounter_id} LIMIT 1`
+      const encounterResult = await db.execute<Record<string, unknown>>(
+        sql`SELECT current_round FROM combat_encounters WHERE id = ${participantResult[0]!.encounter_id} LIMIT 1`
       );
-      if (encounterResult.rows.length > 0) {
-        appliedAtRound = encounterResult.rows[0].current_round as number;
+      if (encounterResult && encounterResult.length > 0) {
+        appliedAtRound = encounterResult[0]!.current_round as number;
       }
     }
 
@@ -114,7 +114,7 @@ export class ConditionsService {
     });
 
     // Insert the condition
-    const result = await db.execute<ParticipantCondition>(
+    const result = await db.execute<Record<string, unknown>>(
       sql`
         INSERT INTO combat_participant_conditions (
           participant_id,
@@ -143,7 +143,7 @@ export class ConditionsService {
       `
     );
 
-    const participantCondition = result.rows[0];
+    const participantCondition = result[0] as unknown as ParticipantCondition;
 
     // Parse mechanical effects
     const condition = this.parseCondition(conditionEntry);
@@ -161,7 +161,7 @@ export class ConditionsService {
    * Remove a condition from a participant
    */
   static async removeCondition(conditionId: string): Promise<boolean> {
-    const result = await db.execute(
+    const result = await db.execute<Record<string, unknown>>(
       sql`
         UPDATE combat_participant_conditions
         SET is_active = false
@@ -170,7 +170,7 @@ export class ConditionsService {
       `
     );
 
-    return result.rows.length > 0;
+    return result ? result.length > 0 : false;
   }
 
   /**
@@ -181,7 +181,7 @@ export class ConditionsService {
     saveRoll: number
   ): Promise<{ saved: boolean; conditionRemoved: boolean; message: string }> {
     // Get the condition
-    const result = await db.execute<ParticipantCondition>(
+    const result = await db.execute<Record<string, unknown>>(
       sql`
         SELECT * FROM combat_participant_conditions
         WHERE id = ${conditionId} AND is_active = true
@@ -189,11 +189,11 @@ export class ConditionsService {
       `
     );
 
-    if (result.rows.length === 0) {
+    if (!result || result.length === 0) {
       throw new NotFoundError('Active condition', conditionId);
     }
 
-    const condition = result.rows[0];
+    const condition = result[0] as unknown as ParticipantCondition;
 
     if (!condition.saveDc || !condition.saveAbility) {
       throw new BusinessLogicError('This condition does not require a saving throw', { conditionId });
@@ -219,7 +219,7 @@ export class ConditionsService {
    * Get all active conditions for a participant
    */
   static async getActiveConditions(participantId: string): Promise<ParticipantConditionWithDetails[]> {
-    const result = await db.execute<ParticipantCondition & ConditionLibraryEntry>(
+    const result = await db.execute<Record<string, unknown>>(
       sql`
         SELECT
           cpc.*,
@@ -235,7 +235,7 @@ export class ConditionsService {
       `
     );
 
-    return result.rows.map(row => {
+    return (result || []).map((row: any) => {
       const mechanicalEffects = this.parseMechanicalEffects(row.mechanical_effects);
 
       return {
@@ -269,9 +269,9 @@ export class ConditionsService {
   static async getMechanicalEffects(participantId: string): Promise<AggregatedMechanicalEffects> {
     const conditions = await this.getActiveConditions(participantId);
 
-    const aggregated: AggregatedMechanicalEffects = {
-      appliedConditions: [],
-    };
+    const aggregated = {
+      appliedConditions: [] as string[],
+    } as AggregatedMechanicalEffects;
 
     // Merge all mechanical effects
     for (const condition of conditions) {
@@ -305,7 +305,7 @@ export class ConditionsService {
     savingThrowsNeeded: Array<{ participantId: string; conditionId: string; saveAbility: SaveAbility; saveDc: number }>;
   }> {
     // Get all active conditions for this encounter's participants
-    const result = await db.execute<ParticipantCondition & ConditionLibraryEntry & { participant_id: string }>(
+    const result = await db.execute<Record<string, unknown>>(
       sql`
         SELECT
           cpc.*,
@@ -325,7 +325,8 @@ export class ConditionsService {
     const expiredConditions: ParticipantConditionWithDetails[] = [];
     const savingThrowsNeeded: Array<{ participantId: string; conditionId: string; saveAbility: SaveAbility; saveDc: number }> = [];
 
-    for (const row of result.rows) {
+    for (const rowData of (result || [])) {
+      const row = rowData as any;
       // Check if condition has expired
       if (row.expires_at_round && row.expires_at_round <= currentRound) {
         await this.removeCondition(row.id);
@@ -429,24 +430,24 @@ export class ConditionsService {
    * Get all available conditions from the library
    */
   static async getConditionsLibrary(): Promise<Condition[]> {
-    const result = await db.execute<ConditionLibraryEntry>(
+    const result = await db.execute<Record<string, unknown>>(
       sql`SELECT * FROM conditions_library ORDER BY name ASC`
     );
 
-    return result.rows.map(row => this.parseCondition(row));
+    return (result || []).map((row: any) => this.parseCondition(row as ConditionLibraryEntry));
   }
 
   /**
    * Parse a condition from the library
    */
-  private static parseCondition(entry: ConditionLibraryEntry): Condition {
+  private static parseCondition(entry: ConditionLibraryEntry | any): Condition {
     return {
       id: entry.id,
       name: entry.name,
       description: entry.description,
-      mechanicalEffects: this.parseMechanicalEffects(entry.mechanical_effects || entry.mechanicalEffects),
-      iconName: entry.icon_name || entry.iconName || null,
-      createdAt: new Date(entry.created_at || entry.createdAt),
+      mechanicalEffects: this.parseMechanicalEffects(entry.mechanicalEffects || entry.mechanical_effects),
+      iconName: entry.iconName || entry.icon_name || null,
+      createdAt: new Date(entry.createdAt || entry.created_at),
     };
   }
 

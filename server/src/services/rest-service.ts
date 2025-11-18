@@ -101,6 +101,10 @@ export class RestService {
         .where(eq(characterHitDice.id, existing.id))
         .returning();
 
+      if (!updated) {
+        throw new Error('Failed to update hit dice');
+      }
+
       return updated;
     }
 
@@ -115,6 +119,10 @@ export class RestService {
         usedDice: 0,
       })
       .returning();
+
+    if (!hitDice) {
+      throw new Error('Failed to create hit dice');
+    }
 
     return hitDice;
   }
@@ -394,6 +402,10 @@ export class RestService {
       })
       .returning();
 
+    if (!restEvent) {
+      throw new Error('Failed to create rest event');
+    }
+
     return {
       characterId,
       restType: 'short',
@@ -453,6 +465,10 @@ export class RestService {
         notes: notes || null,
       })
       .returning();
+
+    if (!restEvent) {
+      throw new Error('Failed to create rest event');
+    }
 
     return {
       characterId,

@@ -71,6 +71,11 @@ export default function spellSlotsRouter() {
     const { characterId } = req.params;
     const userId = req.user!.userId;
 
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
+
     try {
       // Verify user owns the character
       const { data: character, error: charErr } = await supabaseService
@@ -109,6 +114,11 @@ export default function spellSlotsRouter() {
       'characterId'
     >;
     const userId = req.user!.userId;
+
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
 
     try {
       // Verify user owns the character
@@ -165,6 +175,11 @@ export default function spellSlotsRouter() {
     const { level, amount } = req.body as Omit<RestoreSpellSlotsInput, 'characterId'>;
     const userId = req.user!.userId;
 
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
+
     try {
       // Verify user owns the character
       const { data: character, error: charErr } = await supabaseService
@@ -204,6 +219,11 @@ export default function spellSlotsRouter() {
     const { characterId } = req.params;
     const { sessionId, limit, offset } = req.query;
     const userId = req.user!.userId;
+
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
 
     try {
       // Verify user owns the character
@@ -320,6 +340,11 @@ export default function spellSlotsRouter() {
     const { characterId } = req.params;
     const { classes } = req.body as { classes: Array<{ className: ClassName; level: number }> };
     const userId = req.user!.userId;
+
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
 
     try {
       // Verify user owns the character

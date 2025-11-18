@@ -274,7 +274,10 @@ export interface CombatEncounter {
   endedAt: Date | null;
   currentRound: number;
   currentTurnOrder: number;
-  status: CombatStatus;
+  status: string; // CombatStatus but stored as text in DB
+  location: string | null;
+  difficulty: string | null;
+  experienceAwarded: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -289,6 +292,7 @@ export interface CreateCombatEncounterInput {
 
 /**
  * Combat participant in an encounter
+ * Note: HP and conditions are tracked separately in combatParticipantStatus
  */
 export interface CombatParticipant {
   id: string;
@@ -300,10 +304,12 @@ export interface CombatParticipant {
   initiativeModifier: number;
   turnOrder: number;
   isActive: boolean;
-  hpCurrent: number | null;
-  hpMax: number | null;
-  conditions: string[];
   createdAt: Date;
+  updatedAt: Date;
+  participantType: string;
+  armorClass: number;
+  maxHp: number;
+  speed: number;
 }
 
 /**

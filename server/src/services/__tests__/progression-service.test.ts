@@ -32,7 +32,7 @@ describe('ProgressionService', () => {
         race: 'Human',
       })
       .returning();
-    testCharacterId = character.id;
+    testCharacterId = character!.id;
 
     // Create character stats
     const [stats] = await db
@@ -47,7 +47,7 @@ describe('ProgressionService', () => {
         charisma: 8,
       })
       .returning();
-    testCharacterStatsId = stats.id;
+    testCharacterStatsId = stats!.id;
   });
 
   afterEach(async () => {
@@ -220,8 +220,8 @@ describe('ProgressionService', () => {
 
       const history = await ProgressionService.getXPHistory(testCharacterId);
       expect(history.length).toBe(1);
-      expect(history[0].xpGained).toBe(150);
-      expect(history[0].source).toBe('roleplay');
+      expect(history[0]!.xpGained).toBe(150);
+      expect(history[0]!.source).toBe('roleplay');
     });
   });
 
@@ -307,7 +307,7 @@ describe('ProgressionService', () => {
 
       expect(result.newLevel).toBe(4);
       expect(result.abilityScoreImprovements).toBeDefined();
-      expect(result.abilityScoreImprovements![0].ability).toBe('strength');
+      expect(result.abilityScoreImprovements![0]!.ability).toBe('strength');
 
       // Verify stats were updated
       const stats = await db.query.characterStats.findFirst({
@@ -409,8 +409,8 @@ describe('ProgressionService', () => {
 
       expect(history.length).toBe(3);
       // Should be in reverse chronological order
-      expect(history[0].source).toBe('roleplay');
-      expect(history[2].source).toBe('combat');
+      expect(history[0]!.source).toBe('roleplay');
+      expect(history[2]!.source).toBe('combat');
     });
 
     it('should limit history results', async () => {

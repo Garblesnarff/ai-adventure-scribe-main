@@ -183,7 +183,7 @@ describe('InventoryService', () => {
       });
 
       expect(inventory.items).toHaveLength(1);
-      expect(inventory.items[0].name).toBe('Longsword');
+      expect(inventory.items[0]!.name).toBe('Longsword');
     });
 
     it('should filter by equipped status', async () => {
@@ -192,7 +192,7 @@ describe('InventoryService', () => {
       });
 
       expect(inventory.items).toHaveLength(1);
-      expect(inventory.items[0].isEquipped).toBe(true);
+      expect(inventory.items[0]!.isEquipped).toBe(true);
     });
 
     it('should calculate total weight correctly', async () => {
@@ -289,7 +289,7 @@ describe('InventoryService', () => {
       expect(result.itemDeleted).toBe(false);
 
       const inventory = await InventoryService.getInventory(testCharacterId);
-      expect(inventory.items[0].quantity).toBe(3);
+      expect(inventory.items[0]!.quantity).toBe(3);
     });
 
     it('should delete item when quantity reaches zero', async () => {
@@ -787,8 +787,8 @@ describe('InventoryService', () => {
       });
 
       expect(history).toHaveLength(2);
-      expect(history[0].quantityUsed).toBe(1); // Most recent first
-      expect(history[1].quantityUsed).toBe(2);
+      expect(history[0]!.quantityUsed).toBe(1); // Most recent first
+      expect(history[1]!.quantityUsed).toBe(2);
     });
 
     it('should filter by item ID', async () => {
@@ -822,7 +822,7 @@ describe('InventoryService', () => {
       });
 
       expect(history).toHaveLength(1);
-      expect(history[0].itemId).toBe(item1.id);
+      expect(history[0]!.itemId).toBe(item1.id);
     });
 
     it('should respect limit parameter', async () => {
@@ -910,11 +910,11 @@ describe('InventoryService', () => {
         .returning();
 
       await expect(
-        InventoryService.checkEncumbrance(character.id)
+        InventoryService.checkEncumbrance(character!.id)
       ).rejects.toThrow('Character stats not found');
 
       // Cleanup
-      await db.delete(characters).where(eq(characters.id, character.id));
+      await db.delete(characters).where(eq(characters.id, character!.id));
     });
   });
 });

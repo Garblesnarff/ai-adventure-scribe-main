@@ -32,7 +32,7 @@ describe('RestService', () => {
         race: 'Human',
       })
       .returning();
-    testCharacterId = character.id;
+    testCharacterId = character!.id;
 
     // Create character stats
     const [stats] = await db
@@ -47,7 +47,7 @@ describe('RestService', () => {
         charisma: 8,
       })
       .returning();
-    testCharacterStatsId = stats.id;
+    testCharacterStatsId = stats!.id;
   });
 
   afterEach(async () => {
@@ -101,12 +101,12 @@ describe('RestService', () => {
       const allHitDice = await RestService.getHitDice(testCharacterId);
 
       expect(allHitDice).toHaveLength(2);
-      expect(allHitDice[0].className).toBe('Fighter');
-      expect(allHitDice[0].dieType).toBe('d10');
-      expect(allHitDice[0].totalDice).toBe(3);
-      expect(allHitDice[1].className).toBe('Wizard');
-      expect(allHitDice[1].dieType).toBe('d6');
-      expect(allHitDice[1].totalDice).toBe(2);
+      expect(allHitDice[0]!.className).toBe('Fighter');
+      expect(allHitDice[0]!.dieType).toBe('d10');
+      expect(allHitDice[0]!.totalDice).toBe(3);
+      expect(allHitDice[1]!.className).toBe('Wizard');
+      expect(allHitDice[1]!.dieType).toBe('d6');
+      expect(allHitDice[1]!.totalDice).toBe(2);
     });
 
     it('should get available hit dice count', async () => {
@@ -301,8 +301,8 @@ describe('RestService', () => {
       // Verify rest event was created
       const events = await RestService.getRestHistory(testCharacterId);
       expect(events).toHaveLength(1);
-      expect(events[0].restType).toBe('short');
-      expect(events[0].hitDiceSpent).toBe(3);
+      expect(events[0]!.restType).toBe('short');
+      expect(events[0]!.hitDiceSpent).toBe(3);
     });
 
     it('should restore short rest features', async () => {
@@ -318,7 +318,7 @@ describe('RestService', () => {
 
       const events = await RestService.getRestHistory(testCharacterId, sessionId);
       expect(events).toHaveLength(1);
-      expect(events[0].sessionId).toBe(sessionId);
+      expect(events[0]!.sessionId).toBe(sessionId);
     });
 
     it('should record notes if provided', async () => {
@@ -326,7 +326,7 @@ describe('RestService', () => {
       const result = await RestService.takeShortRest(testCharacterId, 0, undefined, notes);
 
       const events = await RestService.getRestHistory(testCharacterId);
-      expect(events[0].notes).toBe(notes);
+      expect(events[0]!.notes).toBe(notes);
     });
   });
 
@@ -366,9 +366,9 @@ describe('RestService', () => {
 
       const events = await RestService.getRestHistory(testCharacterId);
       expect(events).toHaveLength(1);
-      expect(events[0].restType).toBe('long');
-      expect(events[0].interrupted).toBe(false);
-      expect(events[0].completedAt).toBeDefined();
+      expect(events[0]!.restType).toBe('long');
+      expect(events[0]!.interrupted).toBe(false);
+      expect(events[0]!.completedAt).toBeDefined();
     });
 
     it('should record session ID if provided', async () => {
@@ -377,7 +377,7 @@ describe('RestService', () => {
 
       const events = await RestService.getRestHistory(testCharacterId, sessionId);
       expect(events).toHaveLength(1);
-      expect(events[0].sessionId).toBe(sessionId);
+      expect(events[0]!.sessionId).toBe(sessionId);
     });
 
     it('should restore minimum 1 hit die', async () => {
@@ -406,9 +406,9 @@ describe('RestService', () => {
 
       expect(history).toHaveLength(3);
       // Most recent first
-      expect(history[0].restType).toBe('short');
-      expect(history[1].restType).toBe('long');
-      expect(history[2].restType).toBe('short');
+      expect(history[0]!.restType).toBe('short');
+      expect(history[1]!.restType).toBe('long');
+      expect(history[2]!.restType).toBe('short');
     });
 
     it('should filter by session ID', async () => {
@@ -419,8 +419,8 @@ describe('RestService', () => {
       const history = await RestService.getRestHistory(testCharacterId, 'session-1');
 
       expect(history).toHaveLength(2);
-      expect(history[0].sessionId).toBe('session-1');
-      expect(history[1].sessionId).toBe('session-1');
+      expect(history[0]!.sessionId).toBe('session-1');
+      expect(history[1]!.sessionId).toBe('session-1');
     });
 
     it('should respect limit parameter', async () => {

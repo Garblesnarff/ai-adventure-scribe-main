@@ -29,7 +29,7 @@ async function createTestData(): Promise<{ encounterId: string; participantId: s
       RETURNING id
     `
   );
-  const sessionId = sessionResult.rows[0].id;
+  const sessionId = (sessionResult as any)[0].id;
 
   // Create a test encounter
   const encounterResult = await db.execute(
@@ -39,7 +39,7 @@ async function createTestData(): Promise<{ encounterId: string; participantId: s
       RETURNING id
     `
   );
-  const encounterId = encounterResult.rows[0].id;
+  const encounterId = (encounterResult as any)[0].id;
 
   // Create a test participant
   const participantResult = await db.execute(
@@ -49,7 +49,7 @@ async function createTestData(): Promise<{ encounterId: string; participantId: s
       RETURNING id
     `
   );
-  const participantId = participantResult.rows[0].id;
+  const participantId = (participantResult as any)[0].id;
 
   return { encounterId, participantId };
 }
@@ -479,7 +479,7 @@ describe('ConditionsService', () => {
       const result = await ConditionsService.advanceConditionDurations(testEncounterId, 3);
 
       expect(result.expiredConditions).toHaveLength(1);
-      expect(result.expiredConditions[0].condition.name).toBe('Blinded');
+      expect(result.expiredConditions[0]!.condition.name).toBe('Blinded');
 
       // Verify condition is no longer active
       const activeConditions = await ConditionsService.getActiveConditions(testParticipantId);
@@ -530,8 +530,8 @@ describe('ConditionsService', () => {
       const result = await ConditionsService.advanceConditionDurations(testEncounterId, 2);
 
       expect(result.savingThrowsNeeded).toHaveLength(1);
-      expect(result.savingThrowsNeeded[0].saveAbility).toBe('wisdom');
-      expect(result.savingThrowsNeeded[0].saveDc).toBe(14);
+      expect(result.savingThrowsNeeded[0]!.saveAbility).toBe('wisdom');
+      expect(result.savingThrowsNeeded[0]!.saveDc).toBe(14);
     });
   });
 
@@ -547,7 +547,7 @@ describe('ConditionsService', () => {
       );
 
       expect(conflicts).toHaveLength(1);
-      expect(conflicts[0].conflictType).toBe('duplicate');
+      expect(conflicts[0]!.conflictType).toBe('duplicate');
     });
 
     it('should detect superseded conditions', async () => {
@@ -561,7 +561,7 @@ describe('ConditionsService', () => {
       );
 
       expect(conflicts).toHaveLength(1);
-      expect(conflicts[0].conflictType).toBe('superseded');
+      expect(conflicts[0]!.conflictType).toBe('superseded');
     });
 
     it('should return empty array when no conflicts', async () => {

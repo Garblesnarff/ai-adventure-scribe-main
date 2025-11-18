@@ -528,6 +528,10 @@ export class CombatHPService {
       })
       .returning();
 
+    if (!status) {
+      throw new NotFoundError('Failed to initialize participant status', participantId);
+    }
+
     return status;
   }
 }

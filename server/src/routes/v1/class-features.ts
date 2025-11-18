@@ -51,6 +51,11 @@ export default function classFeaturesRouter() {
     const { featureId } = req.params;
 
     try {
+      // Validate featureId
+      if (!featureId) {
+        return res.status(400).json({ error: 'Feature ID is required' });
+      }
+
       const feature = await ClassFeaturesService.getFeatureById(featureId);
 
       if (!feature) {
@@ -73,6 +78,11 @@ export default function classFeaturesRouter() {
     const { className } = req.params;
 
     try {
+      // Validate className
+      if (!className) {
+        return res.status(400).json({ error: 'Class name is required' });
+      }
+
       const result = ClassFeaturesService.getAvailableSubclasses(className);
       return res.status(200).json(result);
     } catch (e) {
@@ -91,6 +101,11 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -127,6 +142,14 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!featureId) {
+        return res.status(400).json({ error: 'Feature ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -174,6 +197,14 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!featureId) {
+        return res.status(400).json({ error: 'Feature ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -219,6 +250,11 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -266,6 +302,11 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -314,6 +355,14 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!className) {
+        return res.status(400).json({ error: 'Class name is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -358,6 +407,11 @@ export default function classFeaturesRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')

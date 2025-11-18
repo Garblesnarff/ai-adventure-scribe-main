@@ -55,7 +55,7 @@ export class VisionBlockerService {
   static async listVisionBlockers(sceneId: string): Promise<VisionBlockingShape[]> {
     const blockers = await db.query.visionBlockingShapes.findMany({
       where: eq(visionBlockingShapes.sceneId, sceneId),
-      orderBy: (vbs: typeof visionBlockingShapes, { asc }: any) => [asc(vbs.createdAt)],
+      orderBy: (vbs, { asc }) => [asc(vbs.createdAt)],
     });
 
     return blockers;
@@ -323,7 +323,7 @@ export class VisionBlockerService {
         eq(visionBlockingShapes.sceneId, sceneId),
         eq(visionBlockingShapes.shapeType, 'door')
       ),
-      orderBy: (vbs: typeof visionBlockingShapes, { asc }: any) => [asc(vbs.createdAt)],
+      orderBy: (vbs, { asc }) => [asc(vbs.createdAt)],
     });
 
     return doors;

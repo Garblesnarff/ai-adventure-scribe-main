@@ -99,6 +99,11 @@ export default function progressionRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -151,6 +156,11 @@ export default function progressionRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -186,6 +196,11 @@ export default function progressionRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -231,6 +246,11 @@ export default function progressionRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -280,6 +300,11 @@ export default function progressionRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')
@@ -322,6 +347,11 @@ export default function progressionRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
         .from('characters')

@@ -100,13 +100,13 @@ export class SceneService {
   /**
    * Get single scene by ID with settings and layers
    */
-  static async getSceneById(sceneId: string, userId: string): Promise<Scene & { settings?: SceneSetting; layers: SceneLayer[] } | null> {
+  static async getSceneById(sceneId: string, userId: string): Promise<(Scene & { settings?: SceneSetting; layers: SceneLayer[] }) | null> {
     const scene = await db.query.scenes.findFirst({
       where: and(eq(scenes.id, sceneId), eq(scenes.userId, userId)),
       with: {
         settings: true,
         layers: {
-          orderBy: (layers: typeof sceneLayers, { asc }: any) => [asc(layers.zIndex)],
+          orderBy: (layers, { asc }) => [asc(layers.zIndex)],
         },
       },
     });
@@ -115,7 +115,7 @@ export class SceneService {
       return null;
     }
 
-    return scene;
+    return scene as Scene & { settings?: SceneSetting; layers: SceneLayer[] };
   }
 
   /**

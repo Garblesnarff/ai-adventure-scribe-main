@@ -33,7 +33,7 @@ describe('ClassFeaturesService', () => {
         race: 'Human',
       })
       .returning();
-    testCharacterId = character.id;
+    testCharacterId = character!.id;
 
     // Create some test features
     const testFeatures = [
@@ -151,10 +151,10 @@ describe('ClassFeaturesService', () => {
     });
 
     it('should get specific feature by ID', async () => {
-      const feature = await ClassFeaturesService.getFeatureById(testFeatureIds[0]);
+      const feature = await ClassFeaturesService.getFeatureById(testFeatureIds[0]!);
 
       expect(feature).toBeDefined();
-      expect(feature?.id).toBe(testFeatureIds[0]);
+      expect(feature?.id).toBe(testFeatureIds[0]!);
       expect(feature?.featureName).toBe('Test Second Wind');
     });
 
@@ -186,13 +186,13 @@ describe('ClassFeaturesService', () => {
     it('should grant a feature to a character', async () => {
       const granted = await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         acquiredAtLevel: 1,
       });
 
       expect(granted).toBeDefined();
       expect(granted.characterId).toBe(testCharacterId);
-      expect(granted.featureId).toBe(testFeatureIds[0]);
+      expect(granted.featureId).toBe(testFeatureIds[0]!);
       expect(granted.acquiredAtLevel).toBe(1);
       expect(granted.usesRemaining).toBe(1); // Test Second Wind has 1 use
       expect(granted.isActive).toBe(true);
@@ -211,14 +211,14 @@ describe('ClassFeaturesService', () => {
     it('should throw error when granting duplicate feature', async () => {
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         acquiredAtLevel: 1,
       });
 
       await expect(
         ClassFeaturesService.grantFeature({
           characterId: testCharacterId,
-          featureId: testFeatureIds[0],
+          featureId: testFeatureIds[0]!,
           acquiredAtLevel: 1,
         })
       ).rejects.toThrow('already granted');
@@ -227,32 +227,32 @@ describe('ClassFeaturesService', () => {
     it('should get all features for a character', async () => {
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         acquiredAtLevel: 1,
       });
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[1],
+        featureId: testFeatureIds[1]!,
         acquiredAtLevel: 2,
       });
 
       const features = await ClassFeaturesService.getCharacterFeatures(testCharacterId);
 
       expect(features).toHaveLength(2);
-      expect(features[0].featureId).toBe(testFeatureIds[0]);
-      expect(features[1].featureId).toBe(testFeatureIds[1]);
+      expect(features[0]!.featureId).toBe(testFeatureIds[0]!);
+      expect(features[1]!.featureId).toBe(testFeatureIds[1]!);
     });
 
     it('should get feature usage information', async () => {
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         acquiredAtLevel: 1,
       });
 
       const usesRemaining = await ClassFeaturesService.getFeatureUsage(
         testCharacterId,
-        testFeatureIds[0]
+        testFeatureIds[0]!
       );
 
       expect(usesRemaining).toBe(1);
@@ -260,27 +260,27 @@ describe('ClassFeaturesService', () => {
 
     it('should throw error for non-existent character feature', async () => {
       await expect(
-        ClassFeaturesService.getFeatureUsage(testCharacterId, testFeatureIds[0])
+        ClassFeaturesService.getFeatureUsage(testCharacterId, testFeatureIds[0]!)
       ).rejects.toThrow('Feature not found for character');
     });
 
     it('should get character features with usage information', async () => {
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         acquiredAtLevel: 1,
       });
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[1],
+        featureId: testFeatureIds[1]!,
         acquiredAtLevel: 2,
       });
 
       const result = await ClassFeaturesService.getCharacterFeaturesWithUsage(testCharacterId);
 
       expect(result.features).toHaveLength(2);
-      expect(result.usesRemaining[testFeatureIds[0]]).toBe(1);
-      expect(result.usesRemaining[testFeatureIds[1]]).toBe(1);
+      expect(result.usesRemaining[testFeatureIds[0]!]).toBe(1);
+      expect(result.usesRemaining[testFeatureIds[1]!]).toBe(1);
     });
   });
 
@@ -289,17 +289,17 @@ describe('ClassFeaturesService', () => {
       // Grant test features to character
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0], // Second Wind - short rest
+        featureId: testFeatureIds[0]!, // Second Wind - short rest
         acquiredAtLevel: 1,
       });
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[2], // Improved Critical - passive
+        featureId: testFeatureIds[2]!, // Improved Critical - passive
         acquiredAtLevel: 3,
       });
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[3], // Indomitable - long rest
+        featureId: testFeatureIds[3]!, // Indomitable - long rest
         acquiredAtLevel: 9,
       });
     });
@@ -307,7 +307,7 @@ describe('ClassFeaturesService', () => {
     it('should use a limited-use feature successfully', async () => {
       const result = await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
       });
 
       expect(result.success).toBe(true);
@@ -319,13 +319,13 @@ describe('ClassFeaturesService', () => {
       // Use the feature once
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
       });
 
       // Try to use it again
       const result = await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
       });
 
       expect(result.success).toBe(false);
@@ -335,7 +335,7 @@ describe('ClassFeaturesService', () => {
     it('should handle passive features (unlimited uses)', async () => {
       const result = await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[2], // Passive feature
+        featureId: testFeatureIds[2]!, // Passive feature
       });
 
       expect(result.success).toBe(true);
@@ -345,7 +345,7 @@ describe('ClassFeaturesService', () => {
     it('should log feature usage', async () => {
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         context: 'Used in combat',
         sessionId: 'test-session',
       });
@@ -355,8 +355,8 @@ describe('ClassFeaturesService', () => {
       });
 
       expect(history.length).toBeGreaterThan(0);
-      expect(history[0].featureId).toBe(testFeatureIds[0]);
-      expect(history[0].context).toBe('Used in combat');
+      expect(history[0]!.featureId).toBe(testFeatureIds[0]!);
+      expect(history[0]!.context).toBe('Used in combat');
     });
 
     it('should return error for non-existent feature', async () => {
@@ -375,32 +375,32 @@ describe('ClassFeaturesService', () => {
       // Grant multiple features with different rest types
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0], // Second Wind - short rest
+        featureId: testFeatureIds[0]!, // Second Wind - short rest
         acquiredAtLevel: 1,
       });
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[1], // Action Surge - short rest
+        featureId: testFeatureIds[1]!, // Action Surge - short rest
         acquiredAtLevel: 2,
       });
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[3], // Indomitable - long rest
+        featureId: testFeatureIds[3]!, // Indomitable - long rest
         acquiredAtLevel: 9,
       });
 
       // Use all features
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
       });
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[1],
+        featureId: testFeatureIds[1]!,
       });
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[3],
+        featureId: testFeatureIds[3]!,
       });
     });
 
@@ -418,7 +418,7 @@ describe('ClassFeaturesService', () => {
       // Verify uses are restored
       const secondWindUses = await ClassFeaturesService.getFeatureUsage(
         testCharacterId,
-        testFeatureIds[0]
+        testFeatureIds[0]!
       );
       expect(secondWindUses).toBe(1);
     });
@@ -437,7 +437,7 @@ describe('ClassFeaturesService', () => {
       // Verify all uses are restored
       const indomitableUses = await ClassFeaturesService.getFeatureUsage(
         testCharacterId,
-        testFeatureIds[3]
+        testFeatureIds[3]!
       );
       expect(indomitableUses).toBe(1);
     });
@@ -537,7 +537,7 @@ describe('ClassFeaturesService', () => {
     beforeEach(async () => {
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         acquiredAtLevel: 1,
       });
     });
@@ -545,7 +545,7 @@ describe('ClassFeaturesService', () => {
     it('should get feature usage history', async () => {
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
         context: 'First use',
       });
 
@@ -554,34 +554,34 @@ describe('ClassFeaturesService', () => {
       });
 
       expect(history.length).toBeGreaterThan(0);
-      expect(history[0].characterId).toBe(testCharacterId);
-      expect(history[0].featureId).toBe(testFeatureIds[0]);
+      expect(history[0]!.characterId).toBe(testCharacterId);
+      expect(history[0]!.featureId).toBe(testFeatureIds[0]!);
     });
 
     it('should filter history by feature ID', async () => {
       await ClassFeaturesService.grantFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[1],
+        featureId: testFeatureIds[1]!,
         acquiredAtLevel: 2,
       });
 
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
       });
       await ClassFeaturesService.useFeature({
         characterId: testCharacterId,
-        featureId: testFeatureIds[1],
+        featureId: testFeatureIds[1]!,
       });
 
       const history = await ClassFeaturesService.getFeatureUsageHistory({
         characterId: testCharacterId,
-        featureId: testFeatureIds[0],
+        featureId: testFeatureIds[0]!,
       });
 
       expect(history.length).toBeGreaterThan(0);
       history.forEach((entry) => {
-        expect(entry.featureId).toBe(testFeatureIds[0]);
+        expect(entry.featureId).toBe(testFeatureIds[0]!);
       });
     });
 
@@ -590,7 +590,7 @@ describe('ClassFeaturesService', () => {
       for (let i = 0; i < 10; i++) {
         await ClassFeaturesService.logFeatureUsage(
           testCharacterId,
-          testFeatureIds[0]
+          testFeatureIds[0]!
         );
       }
 

@@ -179,7 +179,7 @@ export class SpellSlotsService {
             break;
           }
 
-          if (slotCount > 0) {
+          if (slotCount !== undefined && slotCount > 0) {
             slots[spellLevel] = slotCount;
           }
         }
@@ -235,7 +235,7 @@ export class SpellSlotsService {
         for (let i = 0; i < slotArray.length; i++) {
           const spellLevel = i + 1;
           const slotCount = slotArray[i];
-          if (slotCount > 0) {
+          if (slotCount !== undefined && slotCount > 0) {
             slots[spellLevel] = slotCount;
           }
         }
@@ -285,12 +285,12 @@ export class SpellSlotsService {
       spellLevel: row.spell_level,
       totalSlots: row.total_slots,
       usedSlots: row.used_slots,
-      availableSlots: row.total_slots - row.used_slots,
+      remainingSlots: row.total_slots - row.used_slots,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
     }));
 
-    const totalAvailableSlots = slots.reduce((sum, slot) => sum + slot.availableSlots, 0);
+    const totalAvailableSlots = slots.reduce((sum, slot) => sum + slot.remainingSlots, 0);
     const totalUsedSlots = slots.reduce((sum, slot) => sum + slot.usedSlots, 0);
 
     return {
@@ -593,7 +593,7 @@ export class SpellSlotsService {
     // Calculate spell slots
     const calculation =
       classes.length === 1
-        ? this.calculateSpellSlots(classes[0].className, classes[0].level)
+        ? this.calculateSpellSlots(classes[0]?.className ?? 'Fighter', classes[0]?.level ?? 1)
         : this.calculateMulticlassSpellSlots(classes);
 
     const slots = 'slots' in calculation ? calculation.slots : {};

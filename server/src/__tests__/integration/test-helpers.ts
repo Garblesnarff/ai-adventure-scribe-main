@@ -39,6 +39,10 @@ export async function createTestCampaign(
     } as any)
     .returning();
 
+  if (!campaign) {
+    throw new Error('Failed to create test campaign');
+  }
+
   return campaign;
 }
 
@@ -65,6 +69,10 @@ export async function createTestCharacter(
     } as any)
     .returning();
 
+  if (!character) {
+    throw new Error('Failed to create test character');
+  }
+
   // Create stats
   const [stats] = await db
     .insert(characterStats)
@@ -74,6 +82,10 @@ export async function createTestCharacter(
       ...overrides.stats,
     } as any)
     .returning();
+
+  if (!stats) {
+    throw new Error('Failed to create test character stats');
+  }
 
   return { character, stats };
 }
@@ -100,6 +112,10 @@ export async function createTestNPC(
     } as any)
     .returning();
 
+  if (!npc) {
+    throw new Error('Failed to create test NPC');
+  }
+
   return npc;
 }
 
@@ -120,6 +136,10 @@ export async function createTestSession(
       characterId: characterId || null,
     } as any)
     .returning();
+
+  if (!session) {
+    throw new Error('Failed to create test session');
+  }
 
   return session;
 }
@@ -215,6 +235,10 @@ export async function createCombatParticipantWithStatus(
     } as any)
     .returning();
 
+  if (!participant) {
+    throw new Error('Failed to create combat participant');
+  }
+
   // Initialize HP status
   await CombatHPService.initializeParticipantStatus(
     participant.id,
@@ -244,6 +268,9 @@ export function rollDice(diceNotation: string, bonus: number = 0): number {
   }
 
   const [, numDiceStr, dieSizeStr] = match;
+  if (!numDiceStr || !dieSizeStr) {
+    throw new Error(`Invalid dice notation: ${diceNotation}`);
+  }
   const numDice = parseInt(numDiceStr, 10);
   const dieSize = parseInt(dieSizeStr, 10);
 
@@ -280,7 +307,11 @@ export async function wait(ms: number): Promise<void> {
  * Get a random element from an array
  */
 export function randomElement<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
+  const element = array[Math.floor(Math.random() * array.length)];
+  if (element === undefined) {
+    throw new Error('Cannot get random element from empty array');
+  }
+  return element;
 }
 
 /**
@@ -324,6 +355,10 @@ export async function createCombatScenario(
     } as any)
     .returning();
 
+  if (!combat) {
+    throw new Error('Failed to create combat encounter');
+  }
+
   const createdParticipants: CombatParticipant[] = [];
 
   // Add character participants
@@ -336,7 +371,7 @@ export async function createCombatScenario(
         characterId: character.id,
         name: fixture.character.name!,
         participantType: 'player',
-        initiativeModifier: calculateModifier(fixture.stats.dexterity),
+        initiativeModifier: calculateModifier(fixture.stats.dexterity ?? 10),
         armorClass: fixture.armorClass,
         maxHp: fixture.maxHp,
         speed: fixture.speed,

@@ -548,10 +548,10 @@ export async function seedFoundryData() {
 
     if (campaign.length === 0) {
       const [newCampaign] = await db.insert(campaigns).values(campaignData).returning();
-      campaignId = newCampaign.id;
+      campaignId = newCampaign!.id;
       console.log(`✅ Created campaign: "${campaignData.name}" (ID: ${campaignId})`);
     } else {
-      campaignId = campaign[0].id;
+      campaignId = campaign[0]!.id;
       console.log(`✅ Campaign already exists: "${campaignData.name}" (ID: ${campaignId})`);
     }
 
@@ -589,11 +589,11 @@ export async function seedFoundryData() {
         isActive: sceneData.isActive,
       }).returning();
 
-      console.log(`  ✅ Created scene (ID: ${newScene.id})`);
+      console.log(`  ✅ Created scene (ID: ${newScene!.id})`);
 
       // Create scene settings
       await db.insert(sceneSettings).values({
-        sceneId: newScene.id,
+        sceneId: newScene!.id,
         ...sceneData.settings,
       });
       console.log(`  ✅ Created scene settings`);
@@ -602,8 +602,8 @@ export async function seedFoundryData() {
       const layerTypes = ['background', 'grid', 'tokens', 'effects', 'drawings', 'ui'];
       for (let i = 0; i < layerTypes.length; i++) {
         await db.insert(sceneLayers).values({
-          sceneId: newScene.id,
-          layerType: layerTypes[i],
+          sceneId: newScene!.id,
+          layerType: layerTypes[i]!,
           zIndex: i,
           isVisible: true,
           opacity: '1.00',
@@ -615,7 +615,7 @@ export async function seedFoundryData() {
       // Create tokens
       for (const tokenData of sceneData.tokens) {
         await db.insert(tokens).values({
-          sceneId: newScene.id,
+          sceneId: newScene!.id,
           createdBy: EXAMPLE_USER_ID,
           ...tokenData,
         });
@@ -625,7 +625,7 @@ export async function seedFoundryData() {
       // Create vision blocking shapes (walls, doors, etc.)
       for (const wall of sceneData.walls) {
         await db.insert(visionBlockingShapes).values({
-          sceneId: newScene.id,
+          sceneId: newScene!.id,
           createdBy: EXAMPLE_USER_ID,
           ...wall,
         });

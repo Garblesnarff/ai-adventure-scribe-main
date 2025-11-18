@@ -85,6 +85,8 @@ async function createTestParticipant(
       name: 'Test Fighter',
       participantType: 'player',
       initiative: 15,
+      initiativeModifier: 2,
+      turnOrder: 0,
       armorClass: 16,
       maxHp,
       damageResistances: resistances,
@@ -304,9 +306,9 @@ describe('CombatHPService', () => {
       const logs = await CombatHPService.getDamageLog(testEncounterId);
 
       expect(logs.length).toBe(1);
-      expect(logs[0].damageAmount).toBe(15);
-      expect(logs[0].damageType).toBe('fire');
-      expect(logs[0].participantId).toBe(testParticipantId);
+      expect(logs[0]!.damageAmount).toBe(15);
+      expect(logs[0]!.damageType).toBe('fire');
+      expect(logs[0]!.participantId).toBe(testParticipantId);
     });
   });
 
@@ -569,7 +571,7 @@ describe('CombatHPService', () => {
       const logs = await CombatHPService.getDamageLog(testEncounterId);
 
       expect(logs.length).toBe(2);
-      expect(logs[0].encounterId).toBe(testEncounterId);
+      expect(logs[0]!.encounterId).toBe(testEncounterId);
     });
 
     it('should filter damage log by participant', async () => {
@@ -589,7 +591,7 @@ describe('CombatHPService', () => {
       const logs = await CombatHPService.getDamageLog(testEncounterId, testParticipantId);
 
       expect(logs.length).toBe(1);
-      expect(logs[0].participantId).toBe(testParticipantId);
+      expect(logs[0]!.participantId).toBe(testParticipantId);
     });
 
     it('should filter damage log by round', async () => {

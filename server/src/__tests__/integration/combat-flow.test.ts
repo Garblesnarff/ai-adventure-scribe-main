@@ -53,7 +53,7 @@ describe('Complete Combat Flow', () => {
     });
 
     // Manually add participants for more control
-    const fighterParticipant = await createCombatParticipantWithStatus(combat.id, {
+    const fighterParticipant = await createCombatParticipantWithStatus(combat!.id, {
       characterId: fighter.id,
       name: 'Test Fighter',
       participantType: 'player',
@@ -63,7 +63,7 @@ describe('Complete Combat Flow', () => {
       speed: testCharacters.fighter.speed,
     });
 
-    const goblinParticipant = await createCombatParticipantWithStatus(combat.id, {
+    const goblinParticipant = await createCombatParticipantWithStatus(combat!.id, {
       npcId: goblin.id,
       name: 'Goblin',
       participantType: 'monster',
@@ -73,16 +73,16 @@ describe('Complete Combat Flow', () => {
       speed: testMonsters.goblin.speed,
     });
 
-    expect(combat.status).toBe('active');
+    expect(combat!.status).toBe('active');
 
     // 3. Roll initiative
-    await CombatInitiativeService.rollInitiative(combat.id, fighterParticipant.id, 15);
-    await CombatInitiativeService.rollInitiative(combat.id, goblinParticipant.id, 12);
+    await CombatInitiativeService.rollInitiative(combat!.id, fighterParticipant.id, 15);
+    await CombatInitiativeService.rollInitiative(combat!.id, goblinParticipant.id, 12);
 
     // Verify turn order
-    const combatState = await CombatInitiativeService.getCombatState(combat.id);
+    const combatState = await CombatInitiativeService.getCombatState(combat!.id);
     expect(combatState.turnOrder.length).toBe(2);
-    expect(combatState.turnOrder[0].participant.id).toBe(fighterParticipant.id); // Higher initiative
+    expect(combatState.turnOrder[0]!.participant.id).toBe(fighterParticipant.id); // Higher initiative
 
     // 4. Reduce goblin HP to near death
     await CombatHPService.applyDamage(goblinParticipant.id, {
@@ -94,10 +94,11 @@ describe('Complete Combat Flow', () => {
 
     // 5. Goblin should be unconscious at 0 HP
     const statusAfterDamage = await CombatHPService.getParticipantStatus(goblinParticipant.id);
-    expect(statusAfterDamage?.isConscious).toBe(false);
-    expect(statusAfterDamage?.currentHp).toBe(0);
-    expect(statusAfterDamage?.deathSaveSuccesses).toBe(0);
-    expect(statusAfterDamage?.deathSaveFailures).toBe(0);
+    expect(statusAfterDamage).toBeDefined();
+    expect(statusAfterDamage!.isConscious).toBe(false);
+    expect(statusAfterDamage!.currentHp).toBe(0);
+    expect(statusAfterDamage!.deathSavesSuccesses).toBe(0);
+    expect(statusAfterDamage!.deathSavesFailures).toBe(0);
 
     // 6. Roll death saves (3 successes to stabilize)
     const deathSave1 = await CombatHPService.rollDeathSave(goblinParticipant.id, 15); // Success
@@ -115,8 +116,9 @@ describe('Complete Combat Flow', () => {
     expect(deathSave3.isStabilized).toBe(true);
 
     const statusAfterSaves = await CombatHPService.getParticipantStatus(goblinParticipant.id);
-    expect(statusAfterSaves?.isConscious).toBe(false); // Still unconscious but stabilized
-    expect(statusAfterSaves?.deathSaveSuccesses).toBe(3);
+    expect(statusAfterSaves).toBeDefined();
+    expect(statusAfterSaves!.isConscious).toBe(false); // Still unconscious but stabilized
+    expect(statusAfterSaves!.deathSavesSuccesses).toBe(3);
 
     // 7. Heal goblin to revive
     const healResult = await CombatHPService.healDamage(goblinParticipant.id, 5, 'healing potion');
@@ -125,13 +127,14 @@ describe('Complete Combat Flow', () => {
     expect(healResult.newCurrentHp).toBe(5);
 
     const finalStatus = await CombatHPService.getParticipantStatus(goblinParticipant.id);
-    expect(finalStatus?.isConscious).toBe(true);
-    expect(finalStatus?.currentHp).toBe(5);
-    expect(finalStatus?.deathSaveSuccesses).toBe(0); // Cleared on revival
-    expect(finalStatus?.deathSaveFailures).toBe(0);
+    expect(finalStatus).toBeDefined();
+    expect(finalStatus!.isConscious).toBe(true);
+    expect(finalStatus!.currentHp).toBe(5);
+    expect(finalStatus!.deathSavesSuccesses).toBe(0); // Cleared on revival
+    expect(finalStatus!.deathSavesFailures).toBe(0);
 
     // 8. End combat
-    const endedCombat = await CombatInitiativeService.endCombat(combat.id);
+    const endedCombat = await CombatInitiativeService.endCombat(combat!.id);
     expect(endedCombat.status).toBe('completed');
     expect(endedCombat.endedAt).toBeTruthy();
   }, 30000);
@@ -143,22 +146,22 @@ describe('Complete Combat Flow', () => {
       monsters: ['goblin'],
     });
 
-    const goblin = participants[0];
+    const goblin = participants[0]!;
 
     // Reduce to 0 HP
-    await CombatHPService.applyDamage(goblin.id, {
+    await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: testMonsters.goblin.maxHp,
       damageType: 'bludgeoning',
     });
 
     // Roll natural 1 (2 failures)
-    const critFail = await CombatHPService.rollDeathSave(goblin.id, 1);
+    const critFail = await CombatHPService.rollDeathSave(goblin!.id, 1);
     expect(critFail.isCritical).toBe(true);
     expect(critFail.isSuccess).toBe(false);
     expect(critFail.failures).toBe(2);
 
     // One more failure should kill
-    const finalFail = await CombatHPService.rollDeathSave(goblin.id, 5);
+    const finalFail = await CombatHPService.rollDeathSave(goblin!.id, 5);
     expect(finalFail.failures).toBe(3);
     expect(finalFail.isDead).toBe(true);
   }, 30000);
@@ -170,27 +173,29 @@ describe('Complete Combat Flow', () => {
       monsters: ['goblin'],
     });
 
-    const goblin = participants[0];
+    const goblin = participants[0]!;
 
     // Reduce to 0 HP
-    await CombatHPService.applyDamage(goblin.id, {
+    await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: testMonsters.goblin.maxHp,
       damageType: 'piercing',
     });
 
-    const status = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(status?.isConscious).toBe(false);
+    const status = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(status).toBeDefined();
+    expect(status!.isConscious).toBe(false);
 
     // Roll natural 20 (instant revival with 1 HP)
-    const critSuccess = await CombatHPService.rollDeathSave(goblin.id, 20);
+    const critSuccess = await CombatHPService.rollDeathSave(goblin!.id, 20);
     expect(critSuccess.isCritical).toBe(true);
     expect(critSuccess.isSuccess).toBe(true);
     expect(critSuccess.wasRevived).toBe(true);
     expect(critSuccess.newCurrentHp).toBe(1);
 
-    const revivedStatus = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(revivedStatus?.isConscious).toBe(true);
-    expect(revivedStatus?.currentHp).toBe(1);
+    const revivedStatus = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(revivedStatus).toBeDefined();
+    expect(revivedStatus!.isConscious).toBe(true);
+    expect(revivedStatus!.currentHp).toBe(1);
   }, 30000);
 
   test('massive damage causes instant death', async () => {
@@ -200,20 +205,21 @@ describe('Complete Combat Flow', () => {
       monsters: ['goblin'],
     });
 
-    const goblin = participants[0];
+    const goblin = participants[0]!;
 
     // First, reduce to 0 HP
-    await CombatHPService.applyDamage(goblin.id, {
+    await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: testMonsters.goblin.maxHp,
       damageType: 'slashing',
     });
 
-    const unconscious = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(unconscious?.currentHp).toBe(0);
-    expect(unconscious?.isConscious).toBe(false);
+    const unconscious = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(unconscious).toBeDefined();
+    expect(unconscious!.currentHp).toBe(0);
+    expect(unconscious!.isConscious).toBe(false);
 
     // Now apply massive damage (>= max HP while at 0)
-    const massiveDamageResult = await CombatHPService.applyDamage(goblin.id, {
+    const massiveDamageResult = await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: testMonsters.goblin.maxHp,
       damageType: 'slashing',
     });
@@ -221,8 +227,9 @@ describe('Complete Combat Flow', () => {
     expect(massiveDamageResult.massiveDamage).toBe(true);
     expect(massiveDamageResult.isDead).toBe(true);
 
-    const deadStatus = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(deadStatus?.deathSavesFailures).toBe(3); // Auto-killed
+    const deadStatus = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(deadStatus).toBeDefined();
+    expect(deadStatus!.deathSavesFailures).toBe(3); // Auto-killed
   }, 30000);
 
   test('temporary HP shields damage before real HP', async () => {
@@ -232,17 +239,18 @@ describe('Complete Combat Flow', () => {
       monsters: ['goblin'],
     });
 
-    const goblin = participants[0];
+    const goblin = participants[0]!;
 
     // Give goblin 5 temp HP
-    await CombatHPService.setTempHP(goblin.id, 5);
+    await CombatHPService.setTempHP(goblin!.id, 5);
 
-    const withTempHp = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(withTempHp?.tempHp).toBe(5);
-    expect(withTempHp?.currentHp).toBe(testMonsters.goblin.maxHp);
+    const withTempHp = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(withTempHp).toBeDefined();
+    expect(withTempHp!.tempHp).toBe(5);
+    expect(withTempHp!.currentHp).toBe(testMonsters.goblin.maxHp);
 
     // Apply 3 damage (should only affect temp HP)
-    const damage1 = await CombatHPService.applyDamage(goblin.id, {
+    const damage1 = await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: 3,
       damageType: 'fire',
     });
@@ -253,7 +261,7 @@ describe('Complete Combat Flow', () => {
     expect(damage1.newCurrentHp).toBe(testMonsters.goblin.maxHp);
 
     // Apply 5 more damage (2 temp HP + 3 real HP)
-    const damage2 = await CombatHPService.applyDamage(goblin.id, {
+    const damage2 = await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: 5,
       damageType: 'cold',
     });
@@ -273,7 +281,7 @@ describe('Complete Combat Flow', () => {
 
     // Create a goblin with fire resistance
     const goblin = await createTestNPC('goblin');
-    const resistantGoblin = await createCombatParticipantWithStatus(combat.id, {
+    const resistantGoblin = await createCombatParticipantWithStatus(combat!.id, {
       npcId: goblin.id,
       name: 'Fire-Resistant Goblin',
       participantType: 'monster',
@@ -304,7 +312,7 @@ describe('Complete Combat Flow', () => {
 
     // Create a goblin with cold vulnerability
     const goblin = await createTestNPC('goblin');
-    const vulnerableGoblin = await createCombatParticipantWithStatus(combat.id, {
+    const vulnerableGoblin = await createCombatParticipantWithStatus(combat!.id, {
       npcId: goblin.id,
       name: 'Cold-Vulnerable Goblin',
       participantType: 'monster',
@@ -335,7 +343,7 @@ describe('Complete Combat Flow', () => {
 
     // Create a goblin with poison immunity
     const goblin = await createTestNPC('goblin');
-    const immuneGoblin = await createCombatParticipantWithStatus(combat.id, {
+    const immuneGoblin = await createCombatParticipantWithStatus(combat!.id, {
       npcId: goblin.id,
       name: 'Poison-Immune Goblin',
       participantType: 'monster',
@@ -379,22 +387,22 @@ describe('Complete Combat Flow', () => {
     });
 
     // Verify each combat has correct participants
-    const state1 = await CombatInitiativeService.getCombatState(combat1.id);
-    const state2 = await CombatInitiativeService.getCombatState(combat2.id);
-    const state3 = await CombatInitiativeService.getCombatState(combat3.id);
+    const state1 = await CombatInitiativeService.getCombatState(combat1!.id);
+    const state2 = await CombatInitiativeService.getCombatState(combat2!.id);
+    const state3 = await CombatInitiativeService.getCombatState(combat3!.id);
 
     expect(state1.participants.length).toBe(2); // 2 goblins
     expect(state2.participants.length).toBe(1); // 1 orc
     expect(state3.participants.length).toBe(2); // 1 goblin + 1 orc
 
     // Advance turn in combat1
-    await CombatInitiativeService.rollInitiative(combat1.id, state1.participants[0].id, 15);
-    await CombatInitiativeService.rollInitiative(combat1.id, state1.participants[1].id, 10);
-    await CombatInitiativeService.advanceTurn(combat1.id);
+    await CombatInitiativeService.rollInitiative(combat1!.id, state1.participants[0]!.id, 15);
+    await CombatInitiativeService.rollInitiative(combat1!.id, state1.participants[1]!.id, 10);
+    await CombatInitiativeService.advanceTurn(combat1!.id);
 
     // Verify combat2 and combat3 are unaffected
-    const state2After = await CombatInitiativeService.getCombatState(combat2.id);
-    const state3After = await CombatInitiativeService.getCombatState(combat3.id);
+    const state2After = await CombatInitiativeService.getCombatState(combat2!.id);
+    const state3After = await CombatInitiativeService.getCombatState(combat3!.id);
 
     expect(state2After.encounter.currentRound).toBe(1);
     expect(state2After.encounter.currentTurnOrder).toBe(0);
@@ -402,11 +410,11 @@ describe('Complete Combat Flow', () => {
     expect(state3After.encounter.currentTurnOrder).toBe(0);
 
     // End combat1 and verify others are still active
-    await CombatInitiativeService.endCombat(combat1.id);
+    await CombatInitiativeService.endCombat(combat1!.id);
 
-    const finalState1 = await CombatInitiativeService.getCombatState(combat1.id);
-    const finalState2 = await CombatInitiativeService.getCombatState(combat2.id);
-    const finalState3 = await CombatInitiativeService.getCombatState(combat3.id);
+    const finalState1 = await CombatInitiativeService.getCombatState(combat1!.id);
+    const finalState2 = await CombatInitiativeService.getCombatState(combat2!.id);
+    const finalState3 = await CombatInitiativeService.getCombatState(combat3!.id);
 
     expect(finalState1.encounter.status).toBe('completed');
     expect(finalState2.encounter.status).toBe('active');
@@ -421,26 +429,26 @@ describe('Complete Combat Flow', () => {
     });
 
     // Roll specific initiatives
-    await CombatInitiativeService.rollInitiative(combat.id, participants[0].id, 20); // Goblin 1: 20
-    await CombatInitiativeService.rollInitiative(combat.id, participants[1].id, 15); // Orc: 15
-    await CombatInitiativeService.rollInitiative(combat.id, participants[2].id, 10); // Goblin 2: 10
+    await CombatInitiativeService.rollInitiative(combat!.id, participants[0]!.id, 20); // Goblin 1: 20
+    await CombatInitiativeService.rollInitiative(combat!.id, participants[1]!.id, 15); // Orc: 15
+    await CombatInitiativeService.rollInitiative(combat!.id, participants[2]!.id, 10); // Goblin 2: 10
 
-    const state = await CombatInitiativeService.getCombatState(combat.id);
+    const state = await CombatInitiativeService.getCombatState(combat!.id);
 
     // Verify order: highest initiative first
-    expect(state.turnOrder[0].participant.initiative).toBe(20);
-    expect(state.turnOrder[1].participant.initiative).toBe(15);
-    expect(state.turnOrder[2].participant.initiative).toBe(10);
+    expect(state.turnOrder[0]!.participant.initiative).toBe(20);
+    expect(state.turnOrder[1]!.participant.initiative).toBe(15);
+    expect(state.turnOrder[2]!.participant.initiative).toBe(10);
 
     // Advance through all turns and verify round increments
-    await CombatInitiativeService.advanceTurn(combat.id); // Turn 0 → 1
-    await CombatInitiativeService.advanceTurn(combat.id); // Turn 1 → 2
-    const result = await CombatInitiativeService.advanceTurn(combat.id); // Turn 2 → 0, round++
+    await CombatInitiativeService.advanceTurn(combat!.id); // Turn 0 → 1
+    await CombatInitiativeService.advanceTurn(combat!.id); // Turn 1 → 2
+    const result = await CombatInitiativeService.advanceTurn(combat!.id); // Turn 2 → 0, round++
 
     expect(result.newRound).toBe(true);
     expect(result.roundNumber).toBe(2);
 
-    const finalState = await CombatInitiativeService.getCombatState(combat.id);
+    const finalState = await CombatInitiativeService.getCombatState(combat!.id);
     expect(finalState.encounter.currentRound).toBe(2);
     expect(finalState.encounter.currentTurnOrder).toBe(0);
   }, 30000);
@@ -452,26 +460,28 @@ describe('Complete Combat Flow', () => {
       monsters: ['goblin'],
     });
 
-    const goblin = participants[0];
+    const goblin = participants[0]!;
 
     // Damage goblin
-    await CombatHPService.applyDamage(goblin.id, {
+    await CombatHPService.applyDamage(goblin!.id, {
       damageAmount: 5,
       damageType: 'slashing',
     });
 
-    const damaged = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(damaged?.currentHp).toBe(testMonsters.goblin.maxHp - 5);
+    const damaged = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(damaged).toBeDefined();
+    expect(damaged!.currentHp).toBe(testMonsters.goblin.maxHp - 5);
 
     // Try to heal 10 HP (more than needed)
-    const healResult = await CombatHPService.healDamage(goblin.id, 10);
+    const healResult = await CombatHPService.healDamage(goblin!.id, 10);
 
     expect(healResult.healingAmount).toBe(10);
     expect(healResult.healingApplied).toBe(5); // Only 5 was actually needed
     expect(healResult.overheal).toBe(5);
     expect(healResult.newCurrentHp).toBe(testMonsters.goblin.maxHp);
 
-    const healed = await CombatHPService.getParticipantStatus(goblin.id);
-    expect(healed?.currentHp).toBe(testMonsters.goblin.maxHp);
+    const healed = await CombatHPService.getParticipantStatus(goblin!.id);
+    expect(healed).toBeDefined();
+    expect(healed!.currentHp).toBe(testMonsters.goblin.maxHp);
   }, 30000);
 });

@@ -204,7 +204,7 @@ describe('CombatInitiativeService', () => {
         where: eq(combatParticipants.encounterId, testEncounterId),
       });
 
-      const participantId = participants[0].id;
+      const participantId = participants[0]!.id;
 
       const result = await CombatInitiativeService.rollInitiative(
         testEncounterId,
@@ -226,7 +226,7 @@ describe('CombatInitiativeService', () => {
         where: eq(combatParticipants.encounterId, testEncounterId),
       });
 
-      const participantId = participants[0].id;
+      const participantId = participants[0]!.id;
 
       const result = await CombatInitiativeService.rollInitiative(
         testEncounterId,
@@ -245,7 +245,7 @@ describe('CombatInitiativeService', () => {
         where: eq(combatParticipants.encounterId, testEncounterId),
       });
 
-      const participantId = participants[0].id;
+      const participantId = participants[0]!.id;
 
       const result = await CombatInitiativeService.rollInitiative(
         testEncounterId,
@@ -284,15 +284,15 @@ describe('CombatInitiativeService', () => {
       });
 
       // Set specific initiatives
-      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[0].id, 10, 0);
-      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[1].id, 20, 0);
-      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[2].id, 15, 0);
+      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[0]!.id, 10, 0);
+      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[1]!.id, 20, 0);
+      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[2]!.id, 15, 0);
 
       const updatedState = await CombatInitiativeService.getCombatState(encounterId);
 
-      expect(updatedState.turnOrder[0].participant.name).toBe('B'); // 20
-      expect(updatedState.turnOrder[1].participant.name).toBe('C'); // 15
-      expect(updatedState.turnOrder[2].participant.name).toBe('A'); // 10
+      expect(updatedState.turnOrder[0]!.participant.name).toBe('B'); // 20
+      expect(updatedState.turnOrder[1]!.participant.name).toBe('C'); // 15
+      expect(updatedState.turnOrder[2]!.participant.name).toBe('A'); // 10
     });
 
     it('should break ties by DEX modifier', async () => {
@@ -315,14 +315,14 @@ describe('CombatInitiativeService', () => {
       });
 
       // Set same initiative for both
-      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[0].id, 15, 1);
-      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[1].id, 15, 4);
+      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[0]!.id, 15, 1);
+      await CombatInitiativeService.rollInitiative(encounterId, allParticipants[1]!.id, 15, 4);
 
       const updatedState = await CombatInitiativeService.getCombatState(encounterId);
 
       // Higher DEX modifier should go first
-      expect(updatedState.turnOrder[0].participant.name).toBe('High DEX');
-      expect(updatedState.turnOrder[1].participant.name).toBe('Low DEX');
+      expect(updatedState.turnOrder[0]!.participant.name).toBe('High DEX');
+      expect(updatedState.turnOrder[1]!.participant.name).toBe('Low DEX');
     });
   });
 
@@ -375,7 +375,7 @@ describe('CombatInitiativeService', () => {
       if (!process.env.DATABASE_URL) return;
 
       const initialState = await CombatInitiativeService.getCombatState(testEncounterId);
-      const firstParticipant = initialState.turnOrder[0].participant;
+      const firstParticipant = initialState.turnOrder[0]!.participant;
 
       // Advance through all participants
       await CombatInitiativeService.advanceTurn(testEncounterId);
@@ -466,7 +466,7 @@ describe('CombatInitiativeService', () => {
         where: eq(combatParticipants.encounterId, testEncounterId),
       });
 
-      const participantId = participants[0].id;
+      const participantId = participants[0]!.id;
 
       await CombatInitiativeService.reorderInitiative(testEncounterId, participantId, 25);
 
@@ -474,7 +474,7 @@ describe('CombatInitiativeService', () => {
       const updatedParticipant = updatedState.participants.find(p => p.id === participantId);
 
       expect(updatedParticipant?.initiative).toBe(25);
-      expect(updatedState.turnOrder[0].participant.id).toBe(participantId);
+      expect(updatedState.turnOrder[0]!.participant.id).toBe(participantId);
     });
   });
 

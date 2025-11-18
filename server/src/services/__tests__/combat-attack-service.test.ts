@@ -565,9 +565,11 @@ describe('CombatAttackService', () => {
         vulnerabilities: [],
         immunities: [],
         conditionImmunities: [],
+        characterId: null,
+        npcId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as CreatureStats);
+      } as any);
 
       const mockGetWeaponAttack = vi.spyOn(service, 'getWeaponAttack').mockResolvedValue({
         id: 'weapon-1',
@@ -578,8 +580,9 @@ describe('CombatAttackService', () => {
         damageBonus: 3,
         damageType: 'slashing',
         properties: [],
+        description: null,
         createdAt: new Date(),
-      } as WeaponAttack);
+      } as any);
 
       // Mock HP service
       const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage').mockResolvedValue({
@@ -635,9 +638,11 @@ describe('CombatAttackService', () => {
         vulnerabilities: [],
         immunities: [],
         conditionImmunities: [],
+        characterId: null,
+        npcId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as CreatureStats);
+      } as any);
 
       const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage');
 
@@ -663,9 +668,11 @@ describe('CombatAttackService', () => {
         vulnerabilities: [],
         immunities: [],
         conditionImmunities: [],
+        characterId: null,
+        npcId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as CreatureStats);
+      } as any);
 
       const mockGetWeaponAttack = vi.spyOn(service, 'getWeaponAttack').mockResolvedValue({
         id: 'weapon-1',
@@ -676,8 +683,9 @@ describe('CombatAttackService', () => {
         damageBonus: 3,
         damageType: 'piercing',
         properties: [],
+        description: null,
         createdAt: new Date(),
-      } as WeaponAttack);
+      } as any);
 
       const mockApplyDamage = vi
         .spyOn(CombatHPService, 'applyDamage')
@@ -707,9 +715,11 @@ describe('CombatAttackService', () => {
         vulnerabilities: [],
         immunities: [],
         conditionImmunities: [],
+        characterId: null,
+        npcId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as CreatureStats);
+      } as any);
 
       const mockGetWeaponAttack = vi.spyOn(service, 'getWeaponAttack').mockResolvedValue({
         id: 'weapon-1',
@@ -720,8 +730,9 @@ describe('CombatAttackService', () => {
         damageBonus: 4,
         damageType: 'slashing',
         properties: [],
+        description: null,
         createdAt: new Date(),
-      } as WeaponAttack);
+      } as any);
 
       const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage').mockResolvedValue({
         participantId: 'target-1',
@@ -766,9 +777,11 @@ describe('CombatAttackService', () => {
         vulnerabilities: [],
         immunities: [],
         conditionImmunities: [],
+        characterId: null,
+        npcId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as CreatureStats);
+      } as any);
 
       const mockApplyDamage = vi.spyOn(CombatHPService, 'applyDamage').mockResolvedValue({
         participantId: 'target-1',

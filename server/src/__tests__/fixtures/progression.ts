@@ -216,7 +216,7 @@ export function getXpForNextLevel(currentLevel: number): number {
 export function getLevelFromXp(totalXp: number): number {
   let level = 1;
   for (let i = 20; i >= 1; i--) {
-    if (totalXp >= XP_THRESHOLDS[i]) {
+    if (totalXp >= XP_THRESHOLDS[i]!) {
       level = i;
       break;
     }

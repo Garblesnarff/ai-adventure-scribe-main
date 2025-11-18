@@ -87,6 +87,11 @@ export default function restRouter() {
     };
     const userId = req.user!.userId;
 
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
+
     try {
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
@@ -131,6 +136,11 @@ export default function restRouter() {
     };
     const userId = req.user!.userId;
 
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
+
     try {
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
@@ -165,6 +175,11 @@ export default function restRouter() {
   router.get('/characters/:characterId/hit-dice', async (req: Request, res: Response) => {
     const { characterId } = req.params;
     const userId = req.user!.userId;
+
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
 
     try {
       // Verify user owns the character
@@ -203,6 +218,11 @@ export default function restRouter() {
       roll?: number;
     };
     const userId = req.user!.userId;
+
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
 
     try {
       // Verify user owns the character
@@ -253,6 +273,11 @@ export default function restRouter() {
     };
     const userId = req.user!.userId;
 
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
+
     try {
       // Verify user owns the character
       const { data: character, error: characterErr } = await supabaseService
@@ -294,6 +319,11 @@ export default function restRouter() {
       level: number;
     };
     const userId = req.user!.userId;
+
+    // Validate characterId
+    if (!characterId) {
+      return res.status(400).json({ error: 'characterId is required' });
+    }
 
     try {
       // Verify user owns the character

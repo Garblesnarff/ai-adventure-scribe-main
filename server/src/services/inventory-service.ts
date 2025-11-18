@@ -216,6 +216,10 @@ export class InventoryService {
       })
       .returning();
 
+    if (!usageLog) {
+      throw new InternalServerError('Failed to log consumable usage');
+    }
+
     const newQuantity = item.quantity - quantityToUse;
     let itemDeleted = false;
 
@@ -261,6 +265,9 @@ export class InventoryService {
     }
 
     const item = items[0];
+    if (!item) {
+      throw new NotFoundError(`Ammunition "${ammoType}"`, characterId);
+    }
 
     return this.useConsumable({
       characterId,
@@ -294,6 +301,9 @@ export class InventoryService {
     if (items.length > 0) {
       // Add to existing
       const item = items[0];
+      if (!item) {
+        throw new InternalServerError('Failed to find ammunition item');
+      }
       const updated = await this.updateItem(item.id, {
         quantity: item.quantity + count,
       });
@@ -414,17 +424,17 @@ export class InventoryService {
 
     // Determine encumbrance level using variant rule
     let encumbranceLevel: EncumbranceLevel = 'normal';
-    let speedPenalty = SPEED_PENALTIES.NORMAL;
+    let speedPenalty = SPEED_PENALTIES.NORMAL as number;
 
     // Heavily Encumbered: weight > STR × 10
     if (currentWeight > stats.strength * ENCUMBRANCE_THRESHOLDS.HEAVILY_ENCUMBERED) {
       encumbranceLevel = 'heavily_encumbered';
-      speedPenalty = SPEED_PENALTIES.HEAVILY_ENCUMBERED;
+      speedPenalty = SPEED_PENALTIES.HEAVILY_ENCUMBERED as number;
     }
     // Encumbered: weight > STR × 5
     else if (currentWeight > stats.strength * ENCUMBRANCE_THRESHOLDS.ENCUMBERED) {
       encumbranceLevel = 'encumbered';
-      speedPenalty = SPEED_PENALTIES.ENCUMBERED;
+      speedPenalty = SPEED_PENALTIES.ENCUMBERED as number;
     }
 
     return {

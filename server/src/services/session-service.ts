@@ -85,7 +85,7 @@ export class SessionService {
     // Get messages with pagination
     const messages = await db.query.dialogueHistory.findMany({
       where: eq(dialogueHistory.sessionId, sessionId),
-      orderBy: asc(dialogueHistory.sequenceNumber),
+      orderBy: asc(dialogueHistory.timestamp),
       limit,
       offset,
     });
@@ -148,33 +148,22 @@ export class SessionService {
   }
 
   /**
-   * Update session state (JSONB column)
+   * Update session notes (used for session state tracking)
    */
-  static async updateSessionState(
+  static async updateSessionNotes(
     sessionId: string,
-    stateUpdate: Record<string, unknown>
+    notes: string
   ): Promise<GameSession> {
-    // Get current state
-    const current = await this.getSessionById(sessionId);
-    const currentState = (current?.sessionState as Record<string, unknown>) || {};
-
-    // Merge with update
-    const newState = {
-      ...currentState,
-      ...stateUpdate,
-      lastUpdate: new Date().toISOString(),
-    };
-
     const [updated] = await db
       .update(gameSessions)
       .set({
-        sessionState: newState,
+        sessionNotes: notes,
         updatedAt: new Date(),
       })
       .where(eq(gameSessions.id, sessionId))
       .returning();
 
-    if (!updated) throw new InternalServerError('Failed to update session state');
+    if (!updated) throw new InternalServerError('Failed to update session notes');
     return updated;
   }
 
@@ -213,10 +202,10 @@ export class SessionService {
     limit: number = 50,
     offset: number = 0
   ): Promise<MessagePage> {
-    // Get messages ordered by sequence number (newest first for pagination)
+    // Get messages ordered by timestamp (newest first for pagination)
     const messages = await db.query.dialogueHistory.findMany({
       where: eq(dialogueHistory.sessionId, sessionId),
-      orderBy: desc(dialogueHistory.sequenceNumber),
+      orderBy: desc(dialogueHistory.timestamp),
       limit,
       offset,
     });
@@ -250,7 +239,7 @@ export class SessionService {
   }
 
   /**
-   * Append combat log entry to session state
+   * Append combat log entry to session notes
    */
   static async appendCombatLog(
     sessionId: string,
@@ -260,8 +249,16 @@ export class SessionService {
     const session = await this.getSessionById(sessionId);
     if (!session) return;
 
-    const currentState = (session.sessionState as Record<string, unknown>) || {};
-    const combatLog = (currentState.combatLog as unknown[]) || [];
+    // Parse existing combat log from session notes
+    let combatLog: unknown[] = [];
+    if (session.sessionNotes) {
+      try {
+        const parsed = JSON.parse(session.sessionNotes);
+        combatLog = Array.isArray(parsed.combatLog) ? parsed.combatLog : [];
+      } catch {
+        combatLog = [];
+      }
+    }
 
     const newEntry = {
       timestamp: new Date().toISOString(),
@@ -273,9 +270,8 @@ export class SessionService {
       ? merged.slice(merged.length - maxEntries)
       : merged;
 
-    await this.updateSessionState(sessionId, {
-      combatLog: trimmed,
-    });
+    // Store updated log back to session notes
+    await this.updateSessionNotes(sessionId, JSON.stringify({ combatLog: trimmed }));
   }
 
   /**

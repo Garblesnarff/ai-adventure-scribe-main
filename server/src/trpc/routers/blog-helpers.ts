@@ -9,7 +9,7 @@
 
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
-import { blogAuthors, blogPostCategories, blogPostTags } from '../../../../db/schema.js';
+import { blogAuthors, blogPostCategories, blogPostTags } from '../../../../db/schema/index.js';
 import type { Context } from '../context.js';
 
 /**

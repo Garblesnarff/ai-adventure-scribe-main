@@ -40,6 +40,11 @@ export default function inventoryRouter() {
     const { itemType, equipped } = req.query;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Verify character ownership (basic check via service will happen)
       const options: GetInventoryOptions = {};
 
@@ -72,6 +77,11 @@ export default function inventoryRouter() {
     const itemData = req.body;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       // Validate required fields
       if (!itemData.name || !itemData.itemType) {
         return res.status(400).json({
@@ -114,6 +124,14 @@ export default function inventoryRouter() {
     const updates = req.body;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const input: UpdateInventoryItemInput = {};
 
       if (updates.name !== undefined) input.name = updates.name;
@@ -149,6 +167,14 @@ export default function inventoryRouter() {
     const { characterId, itemId } = req.params;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const deleted = await InventoryService.removeItem(itemId);
 
       if (!deleted) {
@@ -179,6 +205,14 @@ export default function inventoryRouter() {
     const { quantity, sessionId, context } = req.body;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const input: UseConsumableInput = {
         characterId,
         itemId,
@@ -215,6 +249,11 @@ export default function inventoryRouter() {
     const { characterId } = req.params;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       const encumbrance = await InventoryService.checkEncumbrance(characterId);
 
       return res.json(encumbrance);
@@ -240,6 +279,14 @@ export default function inventoryRouter() {
     const { characterId, itemId } = req.params;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const result = await InventoryService.attuneItem(characterId, itemId);
 
       if (!result.success) {
@@ -274,6 +321,14 @@ export default function inventoryRouter() {
     const { characterId, itemId } = req.params;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const item = await InventoryService.unattuneItem(itemId);
 
       if (!item) {
@@ -299,6 +354,11 @@ export default function inventoryRouter() {
     const { characterId } = req.params;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       const items = await InventoryService.getAttunedItems(characterId);
 
       return res.json({ items });
@@ -324,6 +384,14 @@ export default function inventoryRouter() {
     const { characterId, itemId } = req.params;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const result = await InventoryService.equipItem(characterId, itemId);
 
       if (!result.success) {
@@ -349,6 +417,14 @@ export default function inventoryRouter() {
     const { characterId, itemId } = req.params;
 
     try {
+      // Validate parameters
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+      if (!itemId) {
+        return res.status(400).json({ error: 'Item ID is required' });
+      }
+
       const item = await InventoryService.unequipItem(itemId);
 
       if (!item) {
@@ -379,6 +455,11 @@ export default function inventoryRouter() {
     const { itemId, sessionId, limit } = req.query;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'Character ID is required' });
+      }
+
       const history = await InventoryService.getUsageHistory({
         characterId,
         itemId: itemId as string | undefined,

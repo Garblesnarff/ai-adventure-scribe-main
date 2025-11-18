@@ -119,6 +119,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate sessionId
+      if (!sessionId) {
+        return res.status(400).json({ error: 'sessionId is required' });
+      }
+
       // Verify user owns the session
       const { data: session, error: sessionErr } = await supabaseService
         .from('game_sessions')
@@ -219,6 +224,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -302,6 +312,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -396,6 +411,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -480,6 +500,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -550,6 +575,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -677,6 +707,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -791,6 +826,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -850,6 +890,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'characterId is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: charErr } = await supabaseService
         .from('characters')
@@ -886,6 +931,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate characterId
+      if (!characterId) {
+        return res.status(400).json({ error: 'characterId is required' });
+      }
+
       // Verify user owns the character
       const { data: character, error: charErr } = await supabaseService
         .from('characters')
@@ -952,6 +1002,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1014,6 +1069,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1073,6 +1133,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1128,6 +1193,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1183,6 +1253,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1238,6 +1313,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1303,6 +1383,14 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate parameters
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+      if (!conditionId) {
+        return res.status(400).json({ error: 'conditionId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1353,6 +1441,14 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate parameters
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+      if (!conditionId) {
+        return res.status(400).json({ error: 'conditionId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1408,6 +1504,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate encounterId
+      if (!encounterId) {
+        return res.status(400).json({ error: 'encounterId is required' });
+      }
+
       // Get encounter and verify ownership
       const encounter = await CombatInitiativeService.getEncounterById(encounterId);
       if (!encounter) {
@@ -1484,6 +1585,11 @@ export default function combatRouter() {
     const userId = req.user!.userId;
 
     try {
+      // Validate participantId
+      if (!participantId) {
+        return res.status(400).json({ error: 'participantId is required' });
+      }
+
       // Get participant and verify access through encounter
       const { data: participant } = await supabaseService
         .from('combat_participants')
