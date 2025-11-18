@@ -19,9 +19,19 @@ import { AgentOrchestrator } from './crewai/agent-orchestrator';
 import type { RollRequest } from '@/components/game/DiceRollRequest';
 import { PassiveSkillsService, getCharacterPassiveScores } from './passive-skills-service';
 import type { Character } from '@/types/character';
-import { getLegacyCompatibilityAdapter } from '@/agents/langgraph/adapters/legacy-compatibility';
-import type { LegacyChatMessage } from '@/agents/langgraph/adapters/legacy-compatibility';
+// Lazy import for LangGraph to avoid loading dependencies when feature is disabled
+// import { getLegacyCompatibilityAdapter } from '@/agents/langgraph/adapters/legacy-compatibility';
+// import type { LegacyChatMessage } from '@/agents/langgraph/adapters/legacy-compatibility';
 import migrationMonitoringService from './migration-monitoring';
+
+// Type-only import for LegacyChatMessage (doesn't load the module)
+type LegacyChatMessage = {
+  id: string;
+  role: string;
+  content: string;
+  timestamp: Date;
+  narrationSegments?: any[];
+};
 
 // In-flight request deduplication with 2s TTL
 const inFlight = new Map<string, { ts: number; promise: Promise<any> }>();
@@ -463,6 +473,10 @@ When combat is detected, you MUST:
               '[AIService] Using LangGraph agent system (VITE_FEATURE_USE_LANGGRAPH=true)',
             );
 
+            // Dynamic import to avoid loading LangGraph when feature is disabled
+            const { getLegacyCompatibilityAdapter } = await import(
+              '@/agents/langgraph/adapters/legacy-compatibility'
+            );
             const adapter = getLegacyCompatibilityAdapter();
 
             // Convert ChatMessage[] to LegacyChatMessage[]

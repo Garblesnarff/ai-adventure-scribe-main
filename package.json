@@ -190,5 +190,13 @@
     "vite": "^5.4.1",
     "vitest": "^2.0.5",
     "web-vitals": "^5.1.0"
+  },
+  "overrides": {
+    "camelcase": "^7.0.1",
+    "decamelize": "^6.0.0",
+    "p-queue": "^8.0.1",
+    "p-retry": "^6.2.1",
+    "semver": "^7.6.0",
+    "ansi-styles": "^4.3.0"
   }
 }

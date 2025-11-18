@@ -5,6 +5,7 @@
     "rootDir": "..",
     "outDir": "dist",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
 
     // Strict mode enabled for improved type safety
     "strict": true,
