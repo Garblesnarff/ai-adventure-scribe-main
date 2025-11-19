@@ -19,19 +19,16 @@ import { geminiService } from './gemini-service';
 
 export interface CharacterVoiceMapping {
   id: string;
-  campaign_id: string;
+  session_id: string | null;
   character_name: string;
-  character_type: string;
-  voice_id: string;
-  voice_provider: string;
-  voice_settings: Record<string, unknown>;
-  voice_description?: string;
-  gender?: string;
-  age_range?: string;
-  personality_traits?: string[];
-  accent?: string;
-  created_at: Date;
-  updated_at: Date;
+  voice_id: string | null;
+  voice_category: string;
+  appearance_count: number | null;
+  first_appearance: string | null;
+  last_used: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface VoiceAssignment {
@@ -211,30 +208,8 @@ export class VoiceConsistencyService {
   }
 
   /**
-   * Get all voice mappings for a campaign
-   */
-  private async getCampaignMappings(campaignId: string): Promise<CharacterVoiceMapping[]> {
-    try {
-      const { data, error } = await supabase
-        .from('character_voice_mappings')
-        .select('*')
-        .eq('campaign_id', campaignId);
-
-      if (error) {
-        logger.error('Error fetching voice mappings:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      logger.error('Error accessing voice mappings database:', error);
-      return [];
-    }
-  }
-
-  /**
    * Get voice mappings for a session
-   * Retrieves all character voice mappings for the campaign associated with this session
+   * Retrieves all character voice mappings for this specific session
    */
   private async getSessionMappings(sessionId: string): Promise<
     Array<{
@@ -246,28 +221,29 @@ export class VoiceConsistencyService {
     }>
   > {
     try {
-      // First, get the campaign_id from the session
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('game_sessions')
-        .select('campaign_id')
-        .eq('id', sessionId)
-        .single();
+      // Query voice mappings directly by session_id
+      const { data, error } = await supabase
+        .from('character_voice_mappings')
+        .select('*')
+        .eq('session_id', sessionId);
 
-      if (sessionError || !sessionData?.campaign_id) {
-        logger.warn(`Could not find campaign for session: ${sessionId}`);
+      if (error) {
+        logger.error('Error fetching voice mappings:', error);
         return [];
       }
 
-      // Get all voice mappings for this campaign
-      const mappings = await this.getCampaignMappings(sessionData.campaign_id);
+      if (!data || data.length === 0) {
+        logger.debug(`No voice mappings found for session: ${sessionId}`);
+        return [];
+      }
 
       // Transform to the expected format
-      return mappings.map((mapping) => ({
+      return data.map((mapping) => ({
         id: mapping.id,
         characterName: mapping.character_name,
-        voiceCategory: mapping.voice_id, // Using voice_id as category for now
-        lastUsed: new Date(mapping.updated_at),
-        appearanceCount: 1, // This could be tracked separately in future
+        voiceCategory: mapping.voice_category,
+        lastUsed: new Date(mapping.last_used || mapping.updated_at || Date.now()),
+        appearanceCount: mapping.appearance_count || 1,
       }));
     } catch (error) {
       logger.error('Error getting session mappings:', error);
@@ -279,25 +255,27 @@ export class VoiceConsistencyService {
    * Save a new character voice mapping
    */
   private async saveCharacterVoiceMapping(
-    campaignId: string,
+    sessionId: string,
     characterName: string,
-    characterType: string,
+    voiceCategory: string,
     voiceId: string,
-    voiceProvider: string = 'elevenlabs',
   ): Promise<void> {
     try {
+      const now = new Date().toISOString();
       const { error } = await supabase.from('character_voice_mappings').insert({
-        campaign_id: campaignId,
+        session_id: sessionId,
         character_name: characterName,
-        character_type: characterType,
+        voice_category: voiceCategory,
         voice_id: voiceId,
-        voice_provider: voiceProvider,
-        voice_settings: {},
+        appearance_count: 1,
+        first_appearance: now,
+        last_used: now,
+        metadata: {},
       });
 
       if (error) throw error;
 
-      logger.info(`💾 Saved voice mapping: ${characterName} -> ${voiceId}`);
+      logger.info(`💾 Saved voice mapping: ${characterName} -> ${voiceCategory} (${voiceId})`);
     } catch (error) {
       logger.error('Error saving character voice mapping:', error);
     }
@@ -308,16 +286,30 @@ export class VoiceConsistencyService {
    */
   private async updateCharacterUsage(mappingId: string): Promise<void> {
     try {
+      // First, get the current appearance count
+      const { data: mapping, error: fetchError } = await supabase
+        .from('character_voice_mappings')
+        .select('appearance_count')
+        .eq('id', mappingId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const currentCount = mapping?.appearance_count || 0;
+
+      // Update with incremented count and new timestamp
       const { error } = await supabase
         .from('character_voice_mappings')
         .update({
+          appearance_count: currentCount + 1,
+          last_used: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', mappingId);
 
       if (error) throw error;
 
-      logger.debug(`📊 Updated character usage for mapping: ${mappingId}`);
+      logger.debug(`📊 Updated character usage for mapping: ${mappingId} (count: ${currentCount + 1})`);
     } catch (error) {
       logger.error('Error updating character usage:', error);
     }
