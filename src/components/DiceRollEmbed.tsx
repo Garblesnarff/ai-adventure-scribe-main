@@ -237,12 +237,12 @@ export const DiceRollEmbed: React.FC<DiceRollEmbedProps> = ({
         setResult(rollResult);
         setIsRolling(false);
 
-        // Show result for 2 seconds before calling callback
+        // Show result briefly (500ms) before calling callback to allow next roll
         setTimeout(() => {
           if (onRoll) {
             onRoll(rollResult);
           }
-        }, 2000);
+        }, 500);
       },
       showAnimation ? 1500 : 100,
     );

@@ -65,6 +65,14 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
   const { state: characterState } = useCharacter();
   const character = characterState.character;
 
+  // Reset animation state when request changes (for batch rolls)
+  React.useEffect(() => {
+    setShowDiceAnimation(false);
+    setIsRolling(false);
+    setManualMode(false);
+    setManualResult('');
+  }, [request.purpose, request.formula]); // Reset when request changes
+
   // Calculate the actual roll formula with character modifiers
   const rollCalculation = useMemo(() => {
     // For damage rolls, ALWAYS use the exact formula from the DM - no modifier calculations

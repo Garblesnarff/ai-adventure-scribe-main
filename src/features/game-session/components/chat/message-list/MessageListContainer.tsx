@@ -215,70 +215,40 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
         // Complete the roll in context
         completeDiceRoll(currentRoll.id, rollResult);
 
-        // Check if this completes a batch
+        // ALWAYS send individual roll result to DM (regardless of batch status)
+        // This ensures DM gets each result immediately, like in real D&D
+        const formattedRoll = formatDiceRoll({ ...currentRoll, result: rollResult });
+
+        const diceRollMessage: ChatMessage = {
+          text: formattedRoll,
+          sender: 'player',
+          timestamp: new Date().toISOString(),
+          context: {
+            intent: 'dice_roll',
+            diceRoll: {
+              formula,
+              count,
+              dieType,
+              modifier,
+              advantage: advantage || false,
+              disadvantage: disadvantage || false,
+              results: rollResult.results,
+              keptResults: rollResult.keptResults,
+              total: rollResult.total,
+              naturalRoll: rollResult.naturalRoll,
+              critical: rollResult.critical,
+              timestamp: new Date().toISOString(),
+            },
+          },
+        };
+
+        await onSendMessage(diceRollMessage);
+
+        // Check if this completes a batch (for cleanup purposes only)
         const batchComplete = isBatchComplete();
-
         if (batchComplete) {
-          // Get all completed rolls in the batch
-          const batchRolls = getBatchResults();
-          logger.info('[MessageListContainer] Batch complete! Sending all rolls:', batchRolls);
-
-          // Format all rolls together
-          const formattedRolls = batchRolls.map(formatDiceRoll).join('\n');
-
-          const batchMessage: ChatMessage = {
-            text: formattedRolls,
-            sender: 'player',
-            timestamp: new Date().toISOString(),
-            context: {
-              intent: 'dice_roll_batch',
-              diceRollBatch: batchRolls.map((roll) => ({
-                formula: `${roll.rollConfig.count}d${roll.rollConfig.dieType}${roll.rollConfig.modifier >= 0 ? '+' : ''}${roll.rollConfig.modifier}`,
-                count: roll.rollConfig.count,
-                dieType: roll.rollConfig.dieType,
-                modifier: roll.rollConfig.modifier,
-                advantage: roll.rollConfig.advantage || false,
-                disadvantage: roll.rollConfig.disadvantage || false,
-                results: roll.result?.results || [],
-                keptResults: roll.result?.keptResults || [],
-                total: roll.result?.total || 0,
-                naturalRoll: roll.result?.naturalRoll,
-                critical: roll.result?.critical,
-                timestamp: new Date().toISOString(),
-              })),
-            },
-          };
-
-          await onSendMessage(batchMessage);
+          logger.info('[MessageListContainer] Batch complete! Clearing batch state');
           clearBatch();
-        } else if (!currentRoll.batchId) {
-          // Single roll (no batch) - send immediately with enhanced format
-          const formattedRoll = formatDiceRoll({ ...currentRoll, result: rollResult });
-
-          const diceRollMessage: ChatMessage = {
-            text: formattedRoll,
-            sender: 'player',
-            timestamp: new Date().toISOString(),
-            context: {
-              intent: 'dice_roll',
-              diceRoll: {
-                formula,
-                count,
-                dieType,
-                modifier,
-                advantage: advantage || false,
-                disadvantage: disadvantage || false,
-                results: rollResult.results,
-                keptResults: rollResult.keptResults,
-                total: rollResult.total,
-                naturalRoll: rollResult.naturalRoll,
-                critical: rollResult.critical,
-                timestamp: new Date().toISOString(),
-              },
-            },
-          };
-
-          await onSendMessage(diceRollMessage);
         }
 
         // Capture last roll meta
@@ -337,49 +307,29 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
 
         completeDiceRoll(currentRoll.id, { total: numericResult });
 
-        // Check if this completes a batch
+        // ALWAYS send individual roll result to DM (regardless of batch status)
+        // This ensures DM gets each result immediately, like in real D&D
+        const formattedRoll = formatDiceRoll({
+          ...currentRoll,
+          result: { total: numericResult },
+        });
+
+        if (onSendFullMessage) {
+          await onSendFullMessage(formattedRoll);
+        } else {
+          const playerMessage: ChatMessage = {
+            text: formattedRoll,
+            sender: 'player',
+            timestamp: new Date().toISOString(),
+          };
+          await onSendMessage(playerMessage);
+        }
+
+        // Check if this completes a batch (for cleanup purposes only)
         const batchComplete = isBatchComplete();
-
         if (batchComplete) {
-          // Get all completed rolls in the batch
-          const batchRolls = getBatchResults();
-          logger.info(
-            '[MessageListContainer] Batch complete (manual)! Sending all rolls:',
-            batchRolls,
-          );
-
-          // Format all rolls together
-          const formattedRolls = batchRolls.map(formatDiceRoll).join('\n');
-
-          if (onSendFullMessage) {
-            await onSendFullMessage(formattedRolls);
-          } else {
-            const batchMessage: ChatMessage = {
-              text: formattedRolls,
-              sender: 'player',
-              timestamp: new Date().toISOString(),
-            };
-            await onSendMessage(batchMessage);
-          }
-
+          logger.info('[MessageListContainer] Batch complete (manual)! Clearing batch state');
           clearBatch();
-        } else if (!currentRoll.batchId) {
-          // Single roll (no batch) - send immediately with enhanced format
-          const formattedRoll = formatDiceRoll({
-            ...currentRoll,
-            result: { total: numericResult },
-          });
-
-          if (onSendFullMessage) {
-            await onSendFullMessage(formattedRoll);
-          } else {
-            const playerMessage: ChatMessage = {
-              text: formattedRoll,
-              sender: 'player',
-              timestamp: new Date().toISOString(),
-            };
-            await onSendMessage(playerMessage);
-          }
         }
       } catch (error) {
         handleAsyncError(error, {
@@ -488,6 +438,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
           className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[${Z_INDEX.POPOVER}]`}
         >
           <DiceRollRequest
+            key={currentRoll.id}
             request={{
               type: currentRoll.requestType as any,
               formula: `${currentRoll.rollConfig.count}d${currentRoll.rollConfig.dieType}${currentRoll.rollConfig.modifier >= 0 ? '+' : ''}${currentRoll.rollConfig.modifier}`,
