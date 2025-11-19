@@ -137,6 +137,20 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
     );
   }, [state.diceRollQueue.currentRollId, state.diceRollQueue.pendingRolls]);
 
+  // Calculate batch progress for multi-roll scenarios
+  const batchProgress = React.useMemo(() => {
+    if (!currentRoll?.batchId) return null;
+
+    const batchRolls = state.diceRollQueue.pendingRolls.filter(
+      (roll) => roll.batchId === currentRoll.batchId,
+    );
+    const completedInBatch = batchRolls.filter((roll) => roll.status === 'completed').length;
+    const currentPosition = completedInBatch + 1;
+    const totalRolls = batchRolls.length;
+
+    return { current: currentPosition, total: totalRolls };
+  }, [currentRoll, state.diceRollQueue.pendingRolls]);
+
   // Group consecutive messages from the same sender
   const groupedMessages = useMemo(() => {
     if (!messages.length) {
@@ -484,6 +498,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
             onRoll={handleDiceRoll}
             onManualResult={handleManualResult}
             onCancel={() => cancelDiceRoll(currentRoll.id)}
+            batchProgress={batchProgress}
             className="shadow-2xl animate-in slide-in-from-bottom-4 duration-300"
           />
         </div>

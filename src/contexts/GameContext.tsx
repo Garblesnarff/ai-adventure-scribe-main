@@ -365,12 +365,19 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [combatState.isInCombat, combatState.activeEncounter?.currentTurnParticipantId]);
 
   // Auto-cleanup completed/cancelled rolls after delay
+  // Only clear when ALL rolls are done (no pending rolls remaining)
   useEffect(() => {
     const completedOrCancelled = state.diceRollQueue.pendingRolls.filter(
       (roll) => roll.status === 'completed' || roll.status === 'cancelled',
     );
 
-    if (completedOrCancelled.length > 0) {
+    const stillPending = state.diceRollQueue.pendingRolls.filter(
+      (roll) => roll.status === 'pending',
+    );
+
+    // Only clear if we have completed/cancelled rolls AND no pending rolls
+    // This ensures batch rolls display sequentially without being prematurely cleared
+    if (completedOrCancelled.length > 0 && stillPending.length === 0) {
       const timeoutId = setTimeout(() => {
         dispatch({
           type: 'CLEAR_DICE_ROLL_QUEUE',

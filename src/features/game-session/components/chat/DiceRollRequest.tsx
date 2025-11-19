@@ -39,6 +39,7 @@ interface DiceRollRequestProps {
   onRoll: (formula: string, advantage?: boolean, disadvantage?: boolean) => void;
   onManualResult: (result: number) => void;
   onCancel?: () => void;
+  batchProgress?: { current: number; total: number } | null;
   className?: string;
 }
 
@@ -51,6 +52,7 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
   onRoll,
   onManualResult,
   onCancel,
+  batchProgress,
   className,
 }) => {
   const [manualMode, setManualMode] = useState(false);
@@ -277,11 +279,16 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
     <Card className={cn('w-full max-w-md mx-auto border-2 shadow-lg', getTypeColor(), className)}>
       <div className="p-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
             {getTypeIcon()}
             <span className="font-semibold text-slate-700">{getTypeLabel()} Requested</span>
           </div>
+          {batchProgress && batchProgress.total > 1 && (
+            <Badge variant="secondary" className="text-xs">
+              Roll {batchProgress.current} of {batchProgress.total}
+            </Badge>
+          )}
         </div>
 
         {/* Purpose */}
