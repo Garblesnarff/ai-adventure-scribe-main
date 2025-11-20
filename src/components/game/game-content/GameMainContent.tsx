@@ -84,7 +84,7 @@ export const GameMainContent: React.FC<GameMainContentProps> = ({
     <div
       className={`flex-1 min-w-0 min-h-0 ${isLeftCollapsed ? 'order-1' : 'order-2'} layout-main flex flex-col h-full`}
     >
-      <Card className="flex flex-col glass-strong shadow-2xl border-2 border-infinite-purple/40 overflow-hidden transition-all duration-300 hover:shadow-3xl hover-glow mobile-chat h-full bg-gradient-to-b from-card/95 to-card/90 backdrop-blur-sm">
+      <Card className="flex flex-col shadow-2xl border-2 border-infinite-purple/40 overflow-hidden transition-all duration-300 hover:shadow-3xl hover:scale-100 mobile-chat h-full bg-gradient-to-b from-card/95 to-card/90">
         {/* Enhanced Cinematic Header with Improved Visual Hierarchy */}
         <div className="relative p-3 md:p-4 border-b border-white/10 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-md overflow-hidden transition-all duration-500">
           {/* Enhanced Animated Background Particles */}

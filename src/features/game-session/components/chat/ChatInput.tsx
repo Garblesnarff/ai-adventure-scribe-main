@@ -97,7 +97,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isDisabled 
 
   return (
     <div className="px-4 pb-4">
-      <div className="chat-composer transition-all duration-300 focus-within:ring-2 focus-within:ring-infinite-purple/30 focus-within:ring-offset-2 focus-within:ring-offset-background rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 hover:border-border hover:shadow-lg">
+      <div className="chat-composer transition-all duration-300 focus-within:ring-2 focus-within:ring-infinite-purple/30 focus-within:ring-offset-2 focus-within:ring-offset-background rounded-2xl bg-card/90 border border-border/60 hover:border-border hover:shadow-lg">
         <div className="flex items-end gap-3 p-3">
           {/* Enhanced Quick action buttons with better touch targets */}
           <div className="flex items-center gap-1 pb-1">

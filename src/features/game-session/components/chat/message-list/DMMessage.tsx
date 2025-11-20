@@ -76,8 +76,8 @@ export const DMMessage: React.FC<DMMessageProps> = ({
       <article
         aria-label="Dungeon Master message"
         className={cn(
-          'message-bubble dm-bubble relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#2d1155]/90 via-[#251147]/88 to-[#0b2336]/85',
-          'px-5 py-4 md:px-6 md:py-5 shadow-lg md:shadow-xl transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-infinite-purple/20',
+          'message-bubble dm-bubble relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#2d1155]/95 via-[#251147]/93 to-[#0b2336]/90',
+          'px-5 py-4 md:px-6 md:py-5 shadow-lg md:shadow-xl transition-all duration-300 hover:shadow-2xl hover:shadow-infinite-purple/20',
         )}
       >
         <div className={narrativeClass}>{content}</div>
