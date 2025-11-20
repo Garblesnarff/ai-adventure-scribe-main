@@ -33,13 +33,13 @@ export function explainRoll(
   let baseExplanation = '';
   switch (rollType) {
     case 'check':
-      baseExplanation = `${actorId} rolled ${result}${dcText ? ` vs DC ${dc}` : ''}`;
+      baseExplanation = `${actorId} rolled ${result}`;
       break;
     case 'save':
-      baseExplanation = `${actorId} saving throw for ${result}${dcText ? ` vs DC ${dc}` : ''}`;
+      baseExplanation = `${actorId} saving throw for ${result}`;
       break;
     case 'attack':
-      baseExplanation = `${actorId} attack roll: ${result}${dcText ? ` vs AC ${dc}` : ''}`;
+      baseExplanation = `${actorId} attack roll: ${result}`;
       break;
     case 'damage':
       baseExplanation = `${actorId} damage: ${result}`;

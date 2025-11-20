@@ -300,16 +300,16 @@ def respond(req: DMRequest):
             if kind == "attack":
                 if ac is None:
                     return f"Your attack roll is {total}."
-                return f"Your attack roll is {total} {'(hit)' if total >= ac else '(miss)'} vs AC {ac}."
+                return f"Your attack roll is {total} {'(hit)' if total >= ac else '(miss)'}."
             if kind == "save":
                 if dc is None:
                     return f"Your saving throw total is {total}."
-                return f"Your {skill or 'saving'} throw is {total} {'(success)' if total >= dc else '(failure)'} vs DC {dc}."
+                return f"Your {skill or 'saving'} throw is {total} {'(success)' if total >= dc else '(failure)'}."
             if kind == "check":
                 if dc is None:
                     return f"Your {skill or 'ability'} check totals {total}."
                 ok = total >= dc
-                return f"Your {skill or 'ability'} check is {total} {'(success)' if ok else '(failure)'} vs DC {dc}."
+                return f"Your {skill or 'ability'} check is {total} {'(success)' if ok else '(failure)'}."
             # Unknown kind
             return f"Roll total recorded: {total}."
 

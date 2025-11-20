@@ -207,9 +207,9 @@ export class ConditionsService {
       // Remove the condition
       await this.removeCondition(conditionId);
       conditionRemoved = true;
-      message = `Saving throw successful (${saveRoll} vs DC ${condition.saveDc})! Condition removed.`;
+      message = `Saving throw successful (${saveRoll})! Condition removed.`;
     } else {
-      message = `Saving throw failed (${saveRoll} vs DC ${condition.saveDc}). Condition persists.`;
+      message = `Saving throw failed (${saveRoll}). Condition persists.`;
     }
 
     return { saved, conditionRemoved, message };

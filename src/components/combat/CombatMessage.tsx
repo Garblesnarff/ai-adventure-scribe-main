@@ -164,7 +164,6 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
             >
               {success ? 'Maintained' : 'Lost'}
             </HexagonalBadge>
-            <span className="text-sm text-muted-foreground">vs DC {data.dc}</span>
           </div>
         );
       }
@@ -194,7 +193,6 @@ export const CombatMessage: React.FC<CombatMessageProps> = ({ data, timestamp })
           <Badge variant={success ? 'default' : 'destructive'} className="text-xs">
             {success ? 'Success' : 'Failure'}
           </Badge>
-          <span className="text-sm text-muted-foreground">vs DC {data.dc}</span>
         </div>
       );
     }

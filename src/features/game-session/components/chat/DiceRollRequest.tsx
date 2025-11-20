@@ -312,7 +312,8 @@ export const DiceRollRequest: React.FC<DiceRollRequestProps> = ({
             <div className="text-lg font-mono font-bold text-slate-800">
               {rollCalculation.formula}
             </div>
-            {(request.dc || request.ac) && (
+            {/* DC/AC hidden from players - AI DM still receives it in data model */}
+            {false && (request.dc || request.ac) && (
               <Badge variant="outline" className="text-sm">
                 {request.dc ? `DC ${request.dc}` : `AC ${request.ac}`}
               </Badge>

@@ -575,7 +575,7 @@ const CombatInterface: React.FC<CombatInterfaceProps> = ({ isDM = false }) => {
     const saveBonus = conMod + proficiencyBonus; // Assuming proficiency in Con saves
     const rollResult = Math.floor(Math.random() * 20) + 1 + saveBonus;
     const succeeded = rollResult >= dc;
-    const description = `${participant.name} makes concentration save: ${rollResult} vs DC ${dc} ${succeeded ? '(Success)' : '(Failure)'}`;
+    const description = `${participant.name} makes concentration save: ${rollResult} ${succeeded ? '(Success)' : '(Failure)'}`;
 
     const action = {
       participantId,

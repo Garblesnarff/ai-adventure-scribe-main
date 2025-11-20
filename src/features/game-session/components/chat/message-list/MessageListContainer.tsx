@@ -87,7 +87,7 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
 
     const { result, rollConfig, requestType, dc, ac } = roll;
     const total = result.total;
-    const nat = result.naturalRoll ?? total;
+    const nat = result.naturalRoll ?? (total - rollConfig.modifier);
     const modifier = rollConfig.modifier;
 
     // Build base format: "Description: Total (nat Natural+Modifier)"
@@ -105,12 +105,10 @@ export const MessageListContainer: React.FC<MessageListContainerProps> = ({
     if (rollConfig.advantage) formatted += ' [ADV]';
     if (rollConfig.disadvantage) formatted += ' [DIS]';
 
-    // Add DC/AC comparison
+    // Add success/failure indicator (DC/AC hidden from players, but AI DM still receives it)
     if (dc !== undefined) {
-      formatted += ` vs DC ${dc}`;
       formatted += total >= dc ? ' ✓' : ' ✗';
     } else if (ac !== undefined && requestType === 'attack') {
-      formatted += ` vs AC ${ac}`;
       formatted += total >= ac ? ' ✓' : ' ✗';
     }
 
